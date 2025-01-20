@@ -1,0 +1,42 @@
+[package]
+name = "gql-parser"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+lalrpop-util = { version = "0.22.0", default-features = false, features = [
+  "lexer",
+] }
+serde = { version = "1.0.217", default-features = false, features = [
+  "alloc",
+  "derive",
+], optional = true }
+macro_rules_attribute = "0.2.0"
+logos = { version = "0.15.0", default-features = false, features = [
+  "export_derive",
+] }
+thiserror = { version = "2.0.11", default-features = false }
+itertools = { version = "0.14.0", default-features = false, features = [
+  "use_alloc",
+] }
+
+[build-dependencies]
+lalrpop = "0.22.0"
+
+[dev-dependencies]
+insta = { version = "1.42.0", features = ["yaml"] }
+paste = "1.0.15"
+
+[features]
+default = ["std"]
+serde = ["dep:serde"]
+std = [
+  "lalrpop-util/std",
+  "logos/std",
+  "thiserror/std",
+  "serde?/std",
+  "itertools/use_std",
+]
+
+[lints]
+workspace = true
