@@ -127,8 +127,66 @@ mod tests {
 
     #[test]
     fn test_boolean_literal() {
-        assert_yaml_snapshot!(parse!("true", UnsignedLiteral), @r#""True""#);
-        assert_yaml_snapshot!(parse!("False", UnsignedLiteral), @r#""False""#);
-        assert_yaml_snapshot!(parse!("UnknoWn", UnsignedLiteral), @"Unknown");
+        assert_yaml_snapshot!(parse!("true", UnsignedLiteral), @r#"Boolean: "True""#);
+        assert_yaml_snapshot!(parse!("False", UnsignedLiteral), @r#"Boolean: "False""#);
+        assert_yaml_snapshot!(parse!("UnknoWn", UnsignedLiteral), @"Boolean: Unknown");
+    }
+
+    #[test]
+    fn test_list_constructor() {
+        assert_yaml_snapshot!(parse!("LIST []", ListValueConstructor), @r"
+        type_name:
+          group: false
+          synonym: List
+        values: []
+        ");
+    }
+
+    #[test]
+    fn test_record_constructor() {
+        assert_yaml_snapshot!(parse!("RECORD {}", RecordConstructor), @"[]");
+    }
+
+    #[test]
+    fn test_unsigned_integer() {
+        assert_yaml_snapshot!(parse!("123_456", UnsignedInteger), @r"
+        kind: Decimal
+        integer: 123_456
+        ");
+        assert_yaml_snapshot!(parse!("0x123a_bCeF", UnsignedInteger), @r#"
+        kind: Hex
+        integer: "0x123a_bCeF"
+        "#);
+        assert_yaml_snapshot!(parse!("0o123_67", UnsignedInteger), @r"
+        kind: Octal
+        integer: 0o123_67
+        ");
+        assert_yaml_snapshot!(parse!("0b0000_1111", UnsignedInteger), @r"
+        kind: Binary
+        integer: 0b0000_1111
+        ");
+    }
+
+    #[test]
+    fn test_comment() {
+        assert_yaml_snapshot!(parse!(r"
+        // This is a comment introduced by double solidus.
+        -- This is a comment introduced by double minus.
+        0b0000_1111", UnsignedInteger), @r"
+        kind: Binary
+        integer: 0b0000_1111
+        ");
+
+        assert_yaml_snapshot!(parse!(r"
+        /*
+          This is a bracketed comment.
+        */
+        /*** This is a bracketed comment. ***/
+        /**/
+        /***/
+        0b0000_1111", UnsignedInteger), @r"
+        kind: Binary
+        integer: 0b0000_1111
+        ");
     }
 }

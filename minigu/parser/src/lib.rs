@@ -11,7 +11,7 @@ pub mod ast;
 pub mod error;
 mod lexer;
 mod macros;
-mod parser;
+// mod parser;
 mod span;
 mod unescape;
 

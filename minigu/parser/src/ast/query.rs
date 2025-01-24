@@ -12,12 +12,6 @@ pub enum SetOperator {
     Intersect,
 }
 
-#[apply(ext)]
-pub enum SetQuantifier {
-    Distinct,
-    All,
-}
-
 #[apply(base)]
 pub enum SimpleQueryStatement {
     Match,

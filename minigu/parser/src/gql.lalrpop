@@ -14,364 +14,633 @@ extern {
     type Error = UserError;
 
     enum Token<'a> {
-        "regular identifier" => Token { kind: TokenKind::RegularIdent(<&'a str>), .. },
+        "regular identifier" => Token { kind: TokenKind::RegularIdentifier(<&'a str>), .. },
+        "unsigned decimal integer" => Token { kind: TokenKind::UnsignedDecimalInteger(<&'a str>), .. },
+        "unsigned octal integer" => Token { kind: TokenKind::UnsignedOctalInteger(<&'a str>), .. },
+        "unsigned hex integer" => Token { kind: TokenKind::UnsignedHexInteger(<&'a str>), .. },
+        "unsigned binary integer" => Token { kind: TokenKind::UnsignedBinaryInteger(<&'a str>), .. },
         "double quoted" => Token { kind: TokenKind::DoubleQuoted(<&'a str>), .. },
         "single quoted" => Token { kind: TokenKind::SingleQuoted(<&'a str>), .. },
         "accent quoted" => Token { kind: TokenKind::AccentQuoted(<&'a str>), .. },
         "unescaped double quoted" => Token { kind: TokenKind::UnescapedDoubleQuoted(<&'a str>), .. },
         "unescaped single quoted" => Token { kind: TokenKind::UnescapedSingleQuoted(<&'a str>), .. },
         "unescaped accent quoted" => Token { kind: TokenKind::UnescapedAccentQuoted(<&'a str>), .. },
-        "+" => Token { kind: TokenKind::Plus, .. },
-        "-" => Token { kind: TokenKind::Minus, .. },
-        "*" => Token { kind: TokenKind::Asterisk, .. },
-        "/" => Token { kind: TokenKind::Solidus, .. },
-        "&" => Token { kind: TokenKind::Ampersand, .. },
-        "|" => Token { kind: TokenKind::VerticalBar, .. },
-        "(" => Token { kind: TokenKind::LeftParen, .. },
-        ")" => Token { kind: TokenKind::RightParen, .. },
-        "%" => Token { kind: TokenKind::Percent, .. },
-        "!" => Token { kind: TokenKind::Exclamation, .. },
-        ":" => Token { kind: TokenKind::Colon, .. },
-        "{" => Token { kind: TokenKind::LeftBrace, .. },
-        "}" => Token { kind: TokenKind::RightBrace, .. },
-        "," => Token { kind: TokenKind::Comma, .. },
+        
+        "]->" => Token { kind: TokenKind::BracketRightArrow, .. },
+        "]~>" => Token { kind: TokenKind::BracketTildeRightArrow, .. },
         "||" => Token { kind: TokenKind::Concatenation, .. },
+        "::" => Token { kind: TokenKind::DoubleColon, .. },
+        ".." => Token { kind: TokenKind::DoublePeriod, .. },
+        ">=" => Token { kind: TokenKind::GreaterThanOrEquals, .. },
+        "<-" => Token { kind: TokenKind::LeftArrow, .. },
+        "<~" => Token { kind: TokenKind::LeftArrowTilde, .. },
+        "<-[" => Token { kind: TokenKind::LeftArrowBracket, .. },
+        "<~[" => Token { kind: TokenKind::LeftArrowTildeBracket, .. },
+        "<->" => Token { kind: TokenKind::LeftMinusRight, .. },
+        "<-/" => Token { kind: TokenKind::LeftMinusSlash, .. },
+        "<~/" => Token { kind: TokenKind::LeftTildeSlash, .. },
+        "<=" => Token { kind: TokenKind::LessThanOrEquals, .. },
+        "-[" => Token { kind: TokenKind::MinusLeftBracket, .. },
+        "-/" => Token { kind: TokenKind::MinusSlash, .. },
+        "<>" => Token { kind: TokenKind::NotEquals, .. },
+        "->" => Token { kind: TokenKind::RightArrow, .. },
+        "]-" => Token { kind: TokenKind::RightBracketMinus, .. },
+        "]~" => Token { kind: TokenKind::RightBracketTilde, .. },
+        "=>" => Token { kind: TokenKind::RightDoubleArrow, .. },
+        "/-" => Token { kind: TokenKind::SlashMinus, .. },
+        "/->" => Token { kind: TokenKind::SlashMinusRight, .. },
+        "/~" => Token { kind: TokenKind::SlashTilde, .. },
+        "/~>" => Token { kind: TokenKind::SlashTildeRight, .. },
+        "~[" => Token { kind: TokenKind::TildeLeftBracket, .. },
+        "~>" => Token { kind: TokenKind::TildeRightArrow, .. },
+        "~/" => Token { kind: TokenKind::TildeSlash, .. },
+        "&" => Token { kind: TokenKind::Ampersand, .. },
+        "*" => Token { kind: TokenKind::Asterisk, .. },
+        ":" => Token { kind: TokenKind::Colon, .. },
+        "," => Token { kind: TokenKind::Comma, .. },
+        "=" => Token { kind: TokenKind::Equals, .. },
+        "!" => Token { kind: TokenKind::Exclamation, .. },
+        ">" => Token { kind: TokenKind::RightAngleBracket, .. },
+        "{" => Token { kind: TokenKind::LeftBrace, .. },
+        "[" => Token { kind: TokenKind::LeftBracket, .. },
+        "(" => Token { kind: TokenKind::LeftParen, .. },
+        "<" => Token { kind: TokenKind::LeftAngleBracket, .. },
+        "-" => Token { kind: TokenKind::Minus, .. },
+        "%" => Token { kind: TokenKind::Percent, .. },
+        "." => Token { kind: TokenKind::Period, .. },
+        "+" => Token { kind: TokenKind::Plus, .. },
+        "?" => Token { kind: TokenKind::QuestionMark, .. },
+        "}" => Token { kind: TokenKind::RightBrace, .. },
+        "]" => Token { kind: TokenKind::RightBracket, .. },
+        ")" => Token { kind: TokenKind::RightParen, .. },
+        "/" => Token { kind: TokenKind::Solidus, .. },
+        "~" => Token { kind: TokenKind::Tilde, .. },
+        "|" => Token { kind: TokenKind::VerticalBar, .. },
 
-        "ABS" => Token { kind: TokenKind::ReservedWord(ReservedWord::Abs), .. },
-        "ACOS" => Token { kind: TokenKind::ReservedWord(ReservedWord::Acos), .. },
-        "ALL" => Token { kind: TokenKind::ReservedWord(ReservedWord::All), .. },
-        "ALLDIFFERENT" => Token { kind: TokenKind::ReservedWord(ReservedWord::AllDifferent), .. },
-        "AND" => Token { kind: TokenKind::ReservedWord(ReservedWord::And), .. },
-        "ANY" => Token { kind: TokenKind::ReservedWord(ReservedWord::Any), .. },
-        "ARRAY" => Token { kind: TokenKind::ReservedWord(ReservedWord::Array), .. },
-        "AS" => Token { kind: TokenKind::ReservedWord(ReservedWord::As), .. },
-        "ASC" => Token { kind: TokenKind::ReservedWord(ReservedWord::Asc), .. },
-        "ASCENDING" => Token { kind: TokenKind::ReservedWord(ReservedWord::Ascending), .. },
-        "ASIN" => Token { kind: TokenKind::ReservedWord(ReservedWord::Asin), .. },
-        "AT" => Token { kind: TokenKind::ReservedWord(ReservedWord::At), .. },
-        "ATAN" => Token { kind: TokenKind::ReservedWord(ReservedWord::Atan), .. },
-        "AVG" => Token { kind: TokenKind::ReservedWord(ReservedWord::Avg), .. },
-        "BIG" => Token { kind: TokenKind::ReservedWord(ReservedWord::Big), .. },
-        "BIGINT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Bigint), .. },
-        "BINARY" => Token { kind: TokenKind::ReservedWord(ReservedWord::Binary), .. },
-        "BOOL" => Token { kind: TokenKind::ReservedWord(ReservedWord::Bool), .. },
-        "BOOLEAN" => Token { kind: TokenKind::ReservedWord(ReservedWord::Boolean), .. },
-        "BOTH" => Token { kind: TokenKind::ReservedWord(ReservedWord::Both), .. },
-        "BTRIM" => Token { kind: TokenKind::ReservedWord(ReservedWord::Btrim), .. },
-        "BY" => Token { kind: TokenKind::ReservedWord(ReservedWord::By), .. },
-        "BYTELENGTH" => Token { kind: TokenKind::ReservedWord(ReservedWord::ByteLength), .. },
-        "BYTES" => Token { kind: TokenKind::ReservedWord(ReservedWord::Bytes), .. },
-        "CALL" => Token { kind: TokenKind::ReservedWord(ReservedWord::Call), .. },
-        "CARDINALITY" => Token { kind: TokenKind::ReservedWord(ReservedWord::Cardinality), .. },
-        "CASE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Case), .. },
-        "CAST" => Token { kind: TokenKind::ReservedWord(ReservedWord::Cast), .. },
-        "CEIL" => Token { kind: TokenKind::ReservedWord(ReservedWord::Ceil), .. },
-        "CEILING" => Token { kind: TokenKind::ReservedWord(ReservedWord::Ceiling), .. },
-        "CHAR" => Token { kind: TokenKind::ReservedWord(ReservedWord::Char), .. },
-        "CHAR_LENGTH" => Token { kind: TokenKind::ReservedWord(ReservedWord::CharLength), .. },
-        "CHARACTER_LENGTH" => Token { kind: TokenKind::ReservedWord(ReservedWord::CharacterLength), .. },
-        "CHARACTERISTICS" => Token { kind: TokenKind::ReservedWord(ReservedWord::Characteristics), .. },
-        "CLOSE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Close), .. },
-        "COALESCE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Coalesce), .. },
-        "COLLECTLIST" => Token { kind: TokenKind::ReservedWord(ReservedWord::CollectList), .. },
-        "COMMIT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Commit), .. },
-        "COPY" => Token { kind: TokenKind::ReservedWord(ReservedWord::Copy), .. },
-        "COS" => Token { kind: TokenKind::ReservedWord(ReservedWord::Cos), .. },
-        "COSH" => Token { kind: TokenKind::ReservedWord(ReservedWord::Cosh), .. },
-        "COT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Cot), .. },
-        "COUNT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Count), .. },
-        "CREATE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Create), .. },
-        "CURRENTDATE" => Token { kind: TokenKind::ReservedWord(ReservedWord::CurrentDate), .. },
-        "CURRENTGRAPH" => Token { kind: TokenKind::ReservedWord(ReservedWord::CurrentGraph), .. },
-        "CURRENTPROPERTYGRAPH" => Token { kind: TokenKind::ReservedWord(ReservedWord::CurrentPropertyGraph), .. },
-        "CURRENTSCHEMA" => Token { kind: TokenKind::ReservedWord(ReservedWord::CurrentSchema), .. },
-        "CURRENTTIME" => Token { kind: TokenKind::ReservedWord(ReservedWord::CurrentTime), .. },
-        "CURRENTTIMESTAMP" => Token { kind: TokenKind::ReservedWord(ReservedWord::CurrentTimestamp), .. },
-        "DATE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Date), .. },
-        "DATETIME" => Token { kind: TokenKind::ReservedWord(ReservedWord::Datetime), .. },
-        "DAY" => Token { kind: TokenKind::ReservedWord(ReservedWord::Day), .. },
-        "DEC" => Token { kind: TokenKind::ReservedWord(ReservedWord::Dec), .. },
-        "DECIMAL" => Token { kind: TokenKind::ReservedWord(ReservedWord::Decimal), .. },
-        "DEGREES" => Token { kind: TokenKind::ReservedWord(ReservedWord::Degrees), .. },
-        "DELETE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Delete), .. },
-        "DESC" => Token { kind: TokenKind::ReservedWord(ReservedWord::Desc), .. },
-        "DESCENDING" => Token { kind: TokenKind::ReservedWord(ReservedWord::Descending), .. },
-        "DETACH" => Token { kind: TokenKind::ReservedWord(ReservedWord::Detach), .. },
-        "DISTINCT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Distinct), .. },
-        "DOUBLE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Double), .. },
-        "DROP" => Token { kind: TokenKind::ReservedWord(ReservedWord::Drop), .. },
-        "DURATION" => Token { kind: TokenKind::ReservedWord(ReservedWord::Duration), .. },
-        "DURATIONBETWEEN" => Token { kind: TokenKind::ReservedWord(ReservedWord::DurationBetween), .. },
-        "ELEMENTID" => Token { kind: TokenKind::ReservedWord(ReservedWord::ElementId), .. },
-        "ELSE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Else), .. },
-        "END" => Token { kind: TokenKind::ReservedWord(ReservedWord::End), .. },
-        "EXCEPT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Except), .. },
-        "EXISTS" => Token { kind: TokenKind::ReservedWord(ReservedWord::Exists), .. },
-        "EXP" => Token { kind: TokenKind::ReservedWord(ReservedWord::Exp), .. },
-        "FALSE" => Token { kind: TokenKind::ReservedWord(ReservedWord::False), .. },
-        "FILTER" => Token { kind: TokenKind::ReservedWord(ReservedWord::Filter), .. },
-        "FINISH" => Token { kind: TokenKind::ReservedWord(ReservedWord::Finish), .. },
-        "FLOAT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Float), .. },
-        "FLOAT16" => Token { kind: TokenKind::ReservedWord(ReservedWord::Float16), .. },
-        "FLOAT32" => Token { kind: TokenKind::ReservedWord(ReservedWord::Float32), .. },
-        "FLOAT64" => Token { kind: TokenKind::ReservedWord(ReservedWord::Float64), .. },
-        "FLOAT128" => Token { kind: TokenKind::ReservedWord(ReservedWord::Float128), .. },
-        "FLOAT256" => Token { kind: TokenKind::ReservedWord(ReservedWord::Float256), .. },
-        "FLOOR" => Token { kind: TokenKind::ReservedWord(ReservedWord::Floor), .. },
-        "FOR" => Token { kind: TokenKind::ReservedWord(ReservedWord::For), .. },
-        "FROM" => Token { kind: TokenKind::ReservedWord(ReservedWord::From), .. },
-        "GROUP" => Token { kind: TokenKind::ReservedWord(ReservedWord::Group), .. },
-        "HAVING" => Token { kind: TokenKind::ReservedWord(ReservedWord::Having), .. },
-        "HOMEGRAPH" => Token { kind: TokenKind::ReservedWord(ReservedWord::HomeGraph), .. },
-        "HOMEPROPERTYGRAPH" => Token { kind: TokenKind::ReservedWord(ReservedWord::HomePropertyGraph), .. },
-        "HOMESCHEMA" => Token { kind: TokenKind::ReservedWord(ReservedWord::HomeSchema), .. },
-        "HOUR" => Token { kind: TokenKind::ReservedWord(ReservedWord::Hour), .. },
-        "IF" => Token { kind: TokenKind::ReservedWord(ReservedWord::If), .. },
-        "IMPLIES" => Token { kind: TokenKind::ReservedWord(ReservedWord::Implies), .. },
-        "IN" => Token { kind: TokenKind::ReservedWord(ReservedWord::In), .. },
-        "INSERT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Insert), .. },
-        "INT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Int), .. },
-        "INTEGER" => Token { kind: TokenKind::ReservedWord(ReservedWord::Integer), .. },
-        "INT8" => Token { kind: TokenKind::ReservedWord(ReservedWord::Int8), .. },
-        "INTEGER8" => Token { kind: TokenKind::ReservedWord(ReservedWord::Integer8), .. },
-        "INT16" => Token { kind: TokenKind::ReservedWord(ReservedWord::Int16), .. },
-        "INTEGER16" => Token { kind: TokenKind::ReservedWord(ReservedWord::Integer16), .. },
-        "INT32" => Token { kind: TokenKind::ReservedWord(ReservedWord::Int32), .. },
-        "INTERVAL" => Token { kind: TokenKind::ReservedWord(ReservedWord::Interval), .. },
-        "IS" => Token { kind: TokenKind::ReservedWord(ReservedWord::Is), .. },
-        "INTEGER32" => Token { kind: TokenKind::ReservedWord(ReservedWord::Integer32), .. },
-        "INT64" => Token { kind: TokenKind::ReservedWord(ReservedWord::Int64), .. },
-        "INTEGER64" => Token { kind: TokenKind::ReservedWord(ReservedWord::Integer64), .. },
-        "INT128" => Token { kind: TokenKind::ReservedWord(ReservedWord::Int128), .. },
-        "INTEGER128" => Token { kind: TokenKind::ReservedWord(ReservedWord::Integer128), .. },
-        "INT256" => Token { kind: TokenKind::ReservedWord(ReservedWord::Int256), .. },
-        "INTEGER256" => Token { kind: TokenKind::ReservedWord(ReservedWord::Integer256), .. },
-        "INTERSECT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Intersect), .. },
-        "LEADING" => Token { kind: TokenKind::ReservedWord(ReservedWord::Leading), .. },
-        "LEFT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Left), .. },
-        "LET" => Token { kind: TokenKind::ReservedWord(ReservedWord::Let), .. },
-        "LIKE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Like), .. },
-        "LIMIT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Limit), .. },
-        "LIST" => Token { kind: TokenKind::ReservedWord(ReservedWord::List), .. },
-        "LN" => Token { kind: TokenKind::ReservedWord(ReservedWord::Ln), .. },
-        "LOCAL" => Token { kind: TokenKind::ReservedWord(ReservedWord::Local), .. },
-        "LOCALDATETIME" => Token { kind: TokenKind::ReservedWord(ReservedWord::LocalDatetime), .. },
-        "LOCALTIME" => Token { kind: TokenKind::ReservedWord(ReservedWord::LocalTime), .. },
-        "LOCALTIMESTAMP" => Token { kind: TokenKind::ReservedWord(ReservedWord::LocalTimestamp), .. },
-        "LOG" => Token { kind: TokenKind::ReservedWord(ReservedWord::Log), .. },
-        "LOG10" => Token { kind: TokenKind::ReservedWord(ReservedWord::Log10), .. },
-        "LOWER" => Token { kind: TokenKind::ReservedWord(ReservedWord::Lower), .. },
-        "LTRIM" => Token { kind: TokenKind::ReservedWord(ReservedWord::Ltrim), .. },
-        "MATCH" => Token { kind: TokenKind::ReservedWord(ReservedWord::Match), .. },
-        "MAX" => Token { kind: TokenKind::ReservedWord(ReservedWord::Max), .. },
-        "MIN" => Token { kind: TokenKind::ReservedWord(ReservedWord::Min), .. },
-        "MINUTE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Minute), .. },
-        "MOD" => Token { kind: TokenKind::ReservedWord(ReservedWord::Mod), .. },
-        "MONTH" => Token { kind: TokenKind::ReservedWord(ReservedWord::Month), .. },
-        "NEXT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Next), .. },
-        "NODETACH" => Token { kind: TokenKind::ReservedWord(ReservedWord::Nodetach), .. },
-        "NORMALIZE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Normalize), .. },
-        "NOT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Not), .. },
-        "NOTHING" => Token { kind: TokenKind::ReservedWord(ReservedWord::Nothing), .. },
-        "NULL" => Token { kind: TokenKind::ReservedWord(ReservedWord::Null), .. },
-        "NULLS" => Token { kind: TokenKind::ReservedWord(ReservedWord::Nulls), .. },
-        "NULLIF" => Token { kind: TokenKind::ReservedWord(ReservedWord::Nullif), .. },
-        "OCTETLENGTH" => Token { kind: TokenKind::ReservedWord(ReservedWord::OctetLength), .. },
-        "OF" => Token { kind: TokenKind::ReservedWord(ReservedWord::Of), .. },
-        "OFFSET" => Token { kind: TokenKind::ReservedWord(ReservedWord::Offset), .. },
-        "OPTIONAL" => Token { kind: TokenKind::ReservedWord(ReservedWord::Optional), .. },
-        "OR" => Token { kind: TokenKind::ReservedWord(ReservedWord::Or), .. },
-        "ORDER" => Token { kind: TokenKind::ReservedWord(ReservedWord::Order), .. },
-        "OTHERWISE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Otherwise), .. },
-        "PARAMETER" => Token { kind: TokenKind::ReservedWord(ReservedWord::Parameter), .. },
-        "PARAMETERS" => Token { kind: TokenKind::ReservedWord(ReservedWord::Parameters), .. },
-        "PATH" => Token { kind: TokenKind::ReservedWord(ReservedWord::Path), .. },
-        "PATHLENGTH" => Token { kind: TokenKind::ReservedWord(ReservedWord::PathLength), .. },
-        "PATHS" => Token { kind: TokenKind::ReservedWord(ReservedWord::Paths), .. },
-        "PERCENTILECONT" => Token { kind: TokenKind::ReservedWord(ReservedWord::PercentileCont), .. },
-        "PERCENTILEDISC" => Token { kind: TokenKind::ReservedWord(ReservedWord::PercentileDisc), .. },
-        "POWER" => Token { kind: TokenKind::ReservedWord(ReservedWord::Power), .. },
-        "PRECISION" => Token { kind: TokenKind::ReservedWord(ReservedWord::Precision), .. },
-        "PROPERTYEXISTS" => Token { kind: TokenKind::ReservedWord(ReservedWord::PropertyExists), .. },
-        "RADIANS" => Token { kind: TokenKind::ReservedWord(ReservedWord::Radians), .. },
-        "REAL" => Token { kind: TokenKind::ReservedWord(ReservedWord::Real), .. },
-        "RECORD" => Token { kind: TokenKind::ReservedWord(ReservedWord::Record), .. },
-        "REMOVE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Remove), .. },
-        "REPLACE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Replace), .. },
-        "RESET" => Token { kind: TokenKind::ReservedWord(ReservedWord::Reset), .. },
-        "RETURN" => Token { kind: TokenKind::ReservedWord(ReservedWord::Return), .. },
-        "RIGHT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Right), .. },
-        "ROLLBACK" => Token { kind: TokenKind::ReservedWord(ReservedWord::Rollback), .. },
-        "RTRIM" => Token { kind: TokenKind::ReservedWord(ReservedWord::Rtrim), .. },
-        "SAME" => Token { kind: TokenKind::ReservedWord(ReservedWord::Same), .. },
-        "SCHEMA" => Token { kind: TokenKind::ReservedWord(ReservedWord::Schema), .. },
-        "SECOND" => Token { kind: TokenKind::ReservedWord(ReservedWord::Second), .. },
-        "SELECT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Select), .. },
-        "SESSION" => Token { kind: TokenKind::ReservedWord(ReservedWord::Session), .. },
-        "SESSION_USER" => Token { kind: TokenKind::ReservedWord(ReservedWord::SessionUser), .. },
-        "SET" => Token { kind: TokenKind::ReservedWord(ReservedWord::Set), .. },
-        "SIGNED" => Token { kind: TokenKind::ReservedWord(ReservedWord::Signed), .. },
-        "SIN" => Token { kind: TokenKind::ReservedWord(ReservedWord::Sin), .. },
-        "SINH" => Token { kind: TokenKind::ReservedWord(ReservedWord::Sinh), .. },
-        "SIZE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Size), .. },
-        "SKIP" => Token { kind: TokenKind::ReservedWord(ReservedWord::Skip), .. },
-        "SMALL" => Token { kind: TokenKind::ReservedWord(ReservedWord::Small), .. },
-        "SMALLINT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Smallint), .. },
-        "SQRT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Sqrt), .. },
-        "START" => Token { kind: TokenKind::ReservedWord(ReservedWord::Start), .. },
-        "STDDEVPOP" => Token { kind: TokenKind::ReservedWord(ReservedWord::StddevPop), .. },
-        "STDDEVSAMP" => Token { kind: TokenKind::ReservedWord(ReservedWord::StddevSamp), .. },
-        "STRING" => Token { kind: TokenKind::ReservedWord(ReservedWord::String), .. },
-        "SUM" => Token { kind: TokenKind::ReservedWord(ReservedWord::Sum), .. },
-        "TAN" => Token { kind: TokenKind::ReservedWord(ReservedWord::Tan), .. },
-        "TANH" => Token { kind: TokenKind::ReservedWord(ReservedWord::Tanh), .. },
-        "THEN" => Token { kind: TokenKind::ReservedWord(ReservedWord::Then), .. },
-        "TIME" => Token { kind: TokenKind::ReservedWord(ReservedWord::Time), .. },
-        "TIMESTAMP" => Token { kind: TokenKind::ReservedWord(ReservedWord::Timestamp), .. },
-        "TRAILING" => Token { kind: TokenKind::ReservedWord(ReservedWord::Trailing), .. },
-        "TRIM" => Token { kind: TokenKind::ReservedWord(ReservedWord::Trim), .. },
-        "TRUE" => Token { kind: TokenKind::ReservedWord(ReservedWord::True), .. },
-        "TYPED" => Token { kind: TokenKind::ReservedWord(ReservedWord::Typed), .. },
-        "UBIGINT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Ubigint), .. },
-        "UINT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Uint), .. },
-        "UINT8" => Token { kind: TokenKind::ReservedWord(ReservedWord::Uint8), .. },
-        "UINT16" => Token { kind: TokenKind::ReservedWord(ReservedWord::Uint16), .. },
-        "UINT32" => Token { kind: TokenKind::ReservedWord(ReservedWord::Uint32), .. },
-        "UINT64" => Token { kind: TokenKind::ReservedWord(ReservedWord::Uint64), .. },
-        "UINT128" => Token { kind: TokenKind::ReservedWord(ReservedWord::Uint128), .. },
-        "UINT256" => Token { kind: TokenKind::ReservedWord(ReservedWord::Uint256), .. },
-        "UNION" => Token { kind: TokenKind::ReservedWord(ReservedWord::Union), .. },
-        "UNKNOWN" => Token { kind: TokenKind::ReservedWord(ReservedWord::Unknown), .. },
-        "UNSIGNED" => Token { kind: TokenKind::ReservedWord(ReservedWord::Unsigned), .. },
-        "UPPER" => Token { kind: TokenKind::ReservedWord(ReservedWord::Upper), .. },
-        "USE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Use), .. },
-        "USMALLINT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Usmallint), .. },
-        "VALUE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Value), .. },
-        "VARBINARY" => Token { kind: TokenKind::ReservedWord(ReservedWord::Varbinary), .. },
-        "VARCHAR" => Token { kind: TokenKind::ReservedWord(ReservedWord::Varchar), .. },
-        "VARIABLE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Variable), .. },
-        "WHEN" => Token { kind: TokenKind::ReservedWord(ReservedWord::When), .. },
-        "WHERE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Where), .. },
-        "WITH" => Token { kind: TokenKind::ReservedWord(ReservedWord::With), .. },
-        "XOR" => Token { kind: TokenKind::ReservedWord(ReservedWord::Xor), .. },
-        "YEAR" => Token { kind: TokenKind::ReservedWord(ReservedWord::Year), .. },
-        "YIELD" => Token { kind: TokenKind::ReservedWord(ReservedWord::Yield), .. },
-        "ZONED" => Token { kind: TokenKind::ReservedWord(ReservedWord::Zoned), .. },
-        "ZONEDDATETIME" => Token { kind: TokenKind::ReservedWord(ReservedWord::ZonedDatetime), .. },
-        "ZONEDTIME" => Token { kind: TokenKind::ReservedWord(ReservedWord::ZonedTime), .. },
-        "ABSTRACT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Abstract), .. },
-        "AGGREGATE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Aggregate), .. },
-        "AGGREGATES" => Token { kind: TokenKind::ReservedWord(ReservedWord::Aggregates), .. },
-        "ALTER" => Token { kind: TokenKind::ReservedWord(ReservedWord::Alter), .. },
-        "CATALOG" => Token { kind: TokenKind::ReservedWord(ReservedWord::Catalog), .. },
-        "CLEAR" => Token { kind: TokenKind::ReservedWord(ReservedWord::Clear), .. },
-        "CLONE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Clone), .. },
-        "CONSTRAINT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Constraint), .. },
-        "CURRENTROLE" => Token { kind: TokenKind::ReservedWord(ReservedWord::CurrentRole), .. },
-        "CURRENTUSER" => Token { kind: TokenKind::ReservedWord(ReservedWord::CurrentUser), .. },
-        "DATA" => Token { kind: TokenKind::ReservedWord(ReservedWord::Data), .. },
-        "DIRECTORY" => Token { kind: TokenKind::ReservedWord(ReservedWord::Directory), .. },
-        "DRYRUN" => Token { kind: TokenKind::ReservedWord(ReservedWord::Dryrun), .. },
-        "EXACT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Exact), .. },
-        "EXISTING" => Token { kind: TokenKind::ReservedWord(ReservedWord::Existing), .. },
-        "FUNCTION" => Token { kind: TokenKind::ReservedWord(ReservedWord::Function), .. },
-        "GQLSTATUS" => Token { kind: TokenKind::ReservedWord(ReservedWord::Gqlstatus), .. },
-        "GRANT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Grant), .. },
-        "INSTANT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Instant), .. },
-        "INFINITY" => Token { kind: TokenKind::ReservedWord(ReservedWord::Infinity), .. },
-        "NUMBER" => Token { kind: TokenKind::ReservedWord(ReservedWord::Number), .. },
-        "NUMERIC" => Token { kind: TokenKind::ReservedWord(ReservedWord::Numeric), .. },
-        "ON" => Token { kind: TokenKind::ReservedWord(ReservedWord::On), .. },
-        "OPEN" => Token { kind: TokenKind::ReservedWord(ReservedWord::Open), .. },
-        "PARTITION" => Token { kind: TokenKind::ReservedWord(ReservedWord::Partition), .. },
-        "PROCEDURE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Procedure), .. },
-        "PRODUCT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Product), .. },
-        "PROJECT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Project), .. },
-        "QUERY" => Token { kind: TokenKind::ReservedWord(ReservedWord::Query), .. },
-        "RECORDS" => Token { kind: TokenKind::ReservedWord(ReservedWord::Records), .. },
-        "REFERENCE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Reference), .. },
-        "RENAME" => Token { kind: TokenKind::ReservedWord(ReservedWord::Rename), .. },
-        "REVOKE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Revoke), .. },
-        "SUBSTRING" => Token { kind: TokenKind::ReservedWord(ReservedWord::Substring), .. },
-        "SYSTEMUSER" => Token { kind: TokenKind::ReservedWord(ReservedWord::SystemUser), .. },
-        "TEMPORAL" => Token { kind: TokenKind::ReservedWord(ReservedWord::Temporal), .. },
-        "UNIQUE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Unique), .. },
-        "UNIT" => Token { kind: TokenKind::ReservedWord(ReservedWord::Unit), .. },
-        "VALUES" => Token { kind: TokenKind::ReservedWord(ReservedWord::Values), .. },
-        "WHITESPACE" => Token { kind: TokenKind::ReservedWord(ReservedWord::Whitespace), .. },
+        "ABS" => Token { kind: TokenKind::Abs, .. },
+        "ACOS" => Token { kind: TokenKind::Acos, .. },
+        "ALL" => Token { kind: TokenKind::All, .. },
+        "ALL_DIFFERENT" => Token { kind: TokenKind::AllDifferent, .. },
+        "AND" => Token { kind: TokenKind::And, .. },
+        "ANY" => Token { kind: TokenKind::Any, .. },
+        "ARRAY" => Token { kind: TokenKind::Array, .. },
+        "AS" => Token { kind: TokenKind::As, .. },
+        "ASC" => Token { kind: TokenKind::Asc, .. },
+        "ASCENDING" => Token { kind: TokenKind::Ascending, .. },
+        "ASIN" => Token { kind: TokenKind::Asin, .. },
+        "AT" => Token { kind: TokenKind::At, .. },
+        "ATAN" => Token { kind: TokenKind::Atan, .. },
+        "AVG" => Token { kind: TokenKind::Avg, .. },
+        "BIG" => Token { kind: TokenKind::Big, .. },
+        "BIGINT" => Token { kind: TokenKind::Bigint, .. },
+        "BINARY" => Token { kind: TokenKind::Binary, .. },
+        "BOOL" => Token { kind: TokenKind::Bool, .. },
+        "BOOLEAN" => Token { kind: TokenKind::Boolean, .. },
+        "BOTH" => Token { kind: TokenKind::Both, .. },
+        "BTRIM" => Token { kind: TokenKind::Btrim, .. },
+        "BY" => Token { kind: TokenKind::By, .. },
+        "BYTE_LENGTH" => Token { kind: TokenKind::ByteLength, .. },
+        "BYTES" => Token { kind: TokenKind::Bytes, .. },
+        "CALL" => Token { kind: TokenKind::Call, .. },
+        "CARDINALITY" => Token { kind: TokenKind::Cardinality, .. },
+        "CASE" => Token { kind: TokenKind::Case, .. },
+        "CAST" => Token { kind: TokenKind::Cast, .. },
+        "CEIL" => Token { kind: TokenKind::Ceil, .. },
+        "CEILING" => Token { kind: TokenKind::Ceiling, .. },
+        "CHAR" => Token { kind: TokenKind::Char, .. },
+        "CHAR_LENGTH" => Token { kind: TokenKind::CharLength, .. },
+        "CHARACTER_LENGTH" => Token { kind: TokenKind::CharacterLength, .. },
+        "CHARACTERISTICS" => Token { kind: TokenKind::Characteristics, .. },
+        "CLOSE" => Token { kind: TokenKind::Close, .. },
+        "COALESCE" => Token { kind: TokenKind::Coalesce, .. },
+        "COLLECT_LIST" => Token { kind: TokenKind::CollectList, .. },
+        "COMMIT" => Token { kind: TokenKind::Commit, .. },
+        "COPY" => Token { kind: TokenKind::Copy, .. },
+        "COS" => Token { kind: TokenKind::Cos, .. },
+        "COSH" => Token { kind: TokenKind::Cosh, .. },
+        "COT" => Token { kind: TokenKind::Cot, .. },
+        "COUNT" => Token { kind: TokenKind::Count, .. },
+        "CREATE" => Token { kind: TokenKind::Create, .. },
+        "CURRENT_DATE" => Token { kind: TokenKind::CurrentDate, .. },
+        "CURRENT_GRAPH" => Token { kind: TokenKind::CurrentGraph, .. },
+        "CURRENT_PROPERTY_GRAPH" => Token { kind: TokenKind::CurrentPropertyGraph, .. },
+        "CURRENT_SCHEMA" => Token { kind: TokenKind::CurrentSchema, .. },
+        "CURRENT_TIME" => Token { kind: TokenKind::CurrentTime, .. },
+        "CURRENT_TIMESTAMP" => Token { kind: TokenKind::CurrentTimestamp, .. },
+        "DATE" => Token { kind: TokenKind::Date, .. },
+        "DATETIME" => Token { kind: TokenKind::Datetime, .. },
+        "DAY" => Token { kind: TokenKind::Day, .. },
+        "DEC" => Token { kind: TokenKind::Dec, .. },
+        "DECIMAL" => Token { kind: TokenKind::Decimal, .. },
+        "DEGREES" => Token { kind: TokenKind::Degrees, .. },
+        "DELETE" => Token { kind: TokenKind::Delete, .. },
+        "DESC" => Token { kind: TokenKind::Desc, .. },
+        "DESCENDING" => Token { kind: TokenKind::Descending, .. },
+        "DETACH" => Token { kind: TokenKind::Detach, .. },
+        "DISTINCT" => Token { kind: TokenKind::Distinct, .. },
+        "DOUBLE" => Token { kind: TokenKind::Double, .. },
+        "DROP" => Token { kind: TokenKind::Drop, .. },
+        "DURATION" => Token { kind: TokenKind::Duration, .. },
+        "DURATION_BETWEEN" => Token { kind: TokenKind::DurationBetween, .. },
+        "ELEMENT_ID" => Token { kind: TokenKind::ElementId, .. },
+        "ELSE" => Token { kind: TokenKind::Else, .. },
+        "END" => Token { kind: TokenKind::End, .. },
+        "EXCEPT" => Token { kind: TokenKind::Except, .. },
+        "EXISTS" => Token { kind: TokenKind::Exists, .. },
+        "EXP" => Token { kind: TokenKind::Exp, .. },
+        "FALSE" => Token { kind: TokenKind::False, .. },
+        "FILTER" => Token { kind: TokenKind::Filter, .. },
+        "FINISH" => Token { kind: TokenKind::Finish, .. },
+        "FLOAT" => Token { kind: TokenKind::Float, .. },
+        "FLOAT16" => Token { kind: TokenKind::Float16, .. },
+        "FLOAT32" => Token { kind: TokenKind::Float32, .. },
+        "FLOAT64" => Token { kind: TokenKind::Float64, .. },
+        "FLOAT128" => Token { kind: TokenKind::Float128, .. },
+        "FLOAT256" => Token { kind: TokenKind::Float256, .. },
+        "FLOOR" => Token { kind: TokenKind::Floor, .. },
+        "FOR" => Token { kind: TokenKind::For, .. },
+        "FROM" => Token { kind: TokenKind::From, .. },
+        "GROUP" => Token { kind: TokenKind::Group, .. },
+        "HAVING" => Token { kind: TokenKind::Having, .. },
+        "HOME_GRAPH" => Token { kind: TokenKind::HomeGraph, .. },
+        "HOME_PROPERTY_GRAPH" => Token { kind: TokenKind::HomePropertyGraph, .. },
+        "HOME_SCHEMA" => Token { kind: TokenKind::HomeSchema, .. },
+        "HOUR" => Token { kind: TokenKind::Hour, .. },
+        "IF" => Token { kind: TokenKind::If, .. },
+        "IMPLIES" => Token { kind: TokenKind::Implies, .. },
+        "IN" => Token { kind: TokenKind::In, .. },
+        "INSERT" => Token { kind: TokenKind::Insert, .. },
+        "INT" => Token { kind: TokenKind::Int, .. },
+        "INTEGER" => Token { kind: TokenKind::Integer, .. },
+        "INT8" => Token { kind: TokenKind::Int8, .. },
+        "INTEGER8" => Token { kind: TokenKind::Integer8, .. },
+        "INT16" => Token { kind: TokenKind::Int16, .. },
+        "INTEGER16" => Token { kind: TokenKind::Integer16, .. },
+        "INT32" => Token { kind: TokenKind::Int32, .. },
+        "INTERVAL" => Token { kind: TokenKind::Interval, .. },
+        "IS" => Token { kind: TokenKind::Is, .. },
+        "INTEGER32" => Token { kind: TokenKind::Integer32, .. },
+        "INT64" => Token { kind: TokenKind::Int64, .. },
+        "INTEGER64" => Token { kind: TokenKind::Integer64, .. },
+        "INT128" => Token { kind: TokenKind::Int128, .. },
+        "INTEGER128" => Token { kind: TokenKind::Integer128, .. },
+        "INT256" => Token { kind: TokenKind::Int256, .. },
+        "INTEGER256" => Token { kind: TokenKind::Integer256, .. },
+        "INTERSECT" => Token { kind: TokenKind::Intersect, .. },
+        "LEADING" => Token { kind: TokenKind::Leading, .. },
+        "LEFT" => Token { kind: TokenKind::Left, .. },
+        "LET" => Token { kind: TokenKind::Let, .. },
+        "LIKE" => Token { kind: TokenKind::Like, .. },
+        "LIMIT" => Token { kind: TokenKind::Limit, .. },
+        "LIST" => Token { kind: TokenKind::List, .. },
+        "LN" => Token { kind: TokenKind::Ln, .. },
+        "LOCAL" => Token { kind: TokenKind::Local, .. },
+        "LOCAL_DATETIME" => Token { kind: TokenKind::LocalDatetime, .. },
+        "LOCAL_TIME" => Token { kind: TokenKind::LocalTime, .. },
+        "LOCAL_TIMESTAMP" => Token { kind: TokenKind::LocalTimestamp, .. },
+        "LOG" => Token { kind: TokenKind::Log, .. },
+        "LOG10" => Token { kind: TokenKind::Log10, .. },
+        "LOWER" => Token { kind: TokenKind::Lower, .. },
+        "LTRIM" => Token { kind: TokenKind::Ltrim, .. },
+        "MATCH" => Token { kind: TokenKind::Match, .. },
+        "MAX" => Token { kind: TokenKind::Max, .. },
+        "MIN" => Token { kind: TokenKind::Min, .. },
+        "MINUTE" => Token { kind: TokenKind::Minute, .. },
+        "MOD" => Token { kind: TokenKind::Mod, .. },
+        "MONTH" => Token { kind: TokenKind::Month, .. },
+        "NEXT" => Token { kind: TokenKind::Next, .. },
+        "NODETACH" => Token { kind: TokenKind::Nodetach, .. },
+        "NORMALIZE" => Token { kind: TokenKind::Normalize, .. },
+        "NOT" => Token { kind: TokenKind::Not, .. },
+        "NOTHING" => Token { kind: TokenKind::Nothing, .. },
+        "NULL" => Token { kind: TokenKind::Null, .. },
+        "NULLS" => Token { kind: TokenKind::Nulls, .. },
+        "NULLIF" => Token { kind: TokenKind::Nullif, .. },
+        "OCTET_LENGTH" => Token { kind: TokenKind::OctetLength, .. },
+        "OF" => Token { kind: TokenKind::Of, .. },
+        "OFFSET" => Token { kind: TokenKind::Offset, .. },
+        "OPTIONAL" => Token { kind: TokenKind::Optional, .. },
+        "OR" => Token { kind: TokenKind::Or, .. },
+        "ORDER" => Token { kind: TokenKind::Order, .. },
+        "OTHERWISE" => Token { kind: TokenKind::Otherwise, .. },
+        "PARAMETER" => Token { kind: TokenKind::Parameter, .. },
+        "PARAMETERS" => Token { kind: TokenKind::Parameters, .. },
+        "PATH" => Token { kind: TokenKind::Path, .. },
+        "PATH_LENGTH" => Token { kind: TokenKind::PathLength, .. },
+        "PATHS" => Token { kind: TokenKind::Paths, .. },
+        "PERCENTILE_CONT" => Token { kind: TokenKind::PercentileCont, .. },
+        "PERCENTILE_DISC" => Token { kind: TokenKind::PercentileDisc, .. },
+        "POWER" => Token { kind: TokenKind::Power, .. },
+        "PRECISION" => Token { kind: TokenKind::Precision, .. },
+        "PROPERTY_EXISTS" => Token { kind: TokenKind::PropertyExists, .. },
+        "RADIANS" => Token { kind: TokenKind::Radians, .. },
+        "REAL" => Token { kind: TokenKind::Real, .. },
+        "RECORD" => Token { kind: TokenKind::Record, .. },
+        "REMOVE" => Token { kind: TokenKind::Remove, .. },
+        "REPLACE" => Token { kind: TokenKind::Replace, .. },
+        "RESET" => Token { kind: TokenKind::Reset, .. },
+        "RETURN" => Token { kind: TokenKind::Return, .. },
+        "RIGHT" => Token { kind: TokenKind::Right, .. },
+        "ROLLBACK" => Token { kind: TokenKind::Rollback, .. },
+        "RTRIM" => Token { kind: TokenKind::Rtrim, .. },
+        "SAME" => Token { kind: TokenKind::Same, .. },
+        "SCHEMA" => Token { kind: TokenKind::Schema, .. },
+        "SECOND" => Token { kind: TokenKind::Second, .. },
+        "SELECT" => Token { kind: TokenKind::Select, .. },
+        "SESSION" => Token { kind: TokenKind::Session, .. },
+        "SESSION_USER" => Token { kind: TokenKind::SessionUser, .. },
+        "SET" => Token { kind: TokenKind::Set, .. },
+        "SIGNED" => Token { kind: TokenKind::Signed, .. },
+        "SIN" => Token { kind: TokenKind::Sin, .. },
+        "SINH" => Token { kind: TokenKind::Sinh, .. },
+        "SIZE" => Token { kind: TokenKind::Size, .. },
+        "SKIP" => Token { kind: TokenKind::Skip, .. },
+        "SMALL" => Token { kind: TokenKind::Small, .. },
+        "SMALLINT" => Token { kind: TokenKind::Smallint, .. },
+        "SQRT" => Token { kind: TokenKind::Sqrt, .. },
+        "START" => Token { kind: TokenKind::Start, .. },
+        "STDDEV_POP" => Token { kind: TokenKind::StddevPop, .. },
+        "STDDEV_SAMP" => Token { kind: TokenKind::StddevSamp, .. },
+        "STRING" => Token { kind: TokenKind::String, .. },
+        "SUM" => Token { kind: TokenKind::Sum, .. },
+        "TAN" => Token { kind: TokenKind::Tan, .. },
+        "TANH" => Token { kind: TokenKind::Tanh, .. },
+        "THEN" => Token { kind: TokenKind::Then, .. },
+        "TIME" => Token { kind: TokenKind::Time, .. },
+        "TIMESTAMP" => Token { kind: TokenKind::Timestamp, .. },
+        "TRAILING" => Token { kind: TokenKind::Trailing, .. },
+        "TRIM" => Token { kind: TokenKind::Trim, .. },
+        "TRUE" => Token { kind: TokenKind::True, .. },
+        "TYPED" => Token { kind: TokenKind::Typed, .. },
+        "UBIGINT" => Token { kind: TokenKind::Ubigint, .. },
+        "UINT" => Token { kind: TokenKind::Uint, .. },
+        "UINT8" => Token { kind: TokenKind::Uint8, .. },
+        "UINT16" => Token { kind: TokenKind::Uint16, .. },
+        "UINT32" => Token { kind: TokenKind::Uint32, .. },
+        "UINT64" => Token { kind: TokenKind::Uint64, .. },
+        "UINT128" => Token { kind: TokenKind::Uint128, .. },
+        "UINT256" => Token { kind: TokenKind::Uint256, .. },
+        "UNION" => Token { kind: TokenKind::Union, .. },
+        "UNKNOWN" => Token { kind: TokenKind::Unknown, .. },
+        "UNSIGNED" => Token { kind: TokenKind::Unsigned, .. },
+        "UPPER" => Token { kind: TokenKind::Upper, .. },
+        "USE" => Token { kind: TokenKind::Use, .. },
+        "USMALLINT" => Token { kind: TokenKind::Usmallint, .. },
+        "VALUE" => Token { kind: TokenKind::Value, .. },
+        "VARBINARY" => Token { kind: TokenKind::Varbinary, .. },
+        "VARCHAR" => Token { kind: TokenKind::Varchar, .. },
+        "VARIABLE" => Token { kind: TokenKind::Variable, .. },
+        "WHEN" => Token { kind: TokenKind::When, .. },
+        "WHERE" => Token { kind: TokenKind::Where, .. },
+        "WITH" => Token { kind: TokenKind::With, .. },
+        "XOR" => Token { kind: TokenKind::Xor, .. },
+        "YEAR" => Token { kind: TokenKind::Year, .. },
+        "YIELD" => Token { kind: TokenKind::Yield, .. },
+        "ZONED" => Token { kind: TokenKind::Zoned, .. },
+        "ZONED_DATETIME" => Token { kind: TokenKind::ZonedDatetime, .. },
+        "ZONED_TIME" => Token { kind: TokenKind::ZonedTime, .. },
 
-        "ACYCLIC" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Acyclic), slice: <&'a str> },
-        "BINDING" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Binding), slice: <&'a str> },
-        "BINDINGS" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Bindings), slice: <&'a str> },
-        "CONNECTING" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Connecting), slice: <&'a str> },
-        "DESTINATION" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Destination), slice: <&'a str> },
-        "DIFFERENT" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Different), slice: <&'a str> },
-        "DIRECTED" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Directed), slice: <&'a str> },
-        "EDGE" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Edge), slice: <&'a str> },
-        "EDGES" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Edges), slice: <&'a str> },
-        "ELEMENT" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Element), slice: <&'a str> },
-        "ELEMENTS" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Elements), slice: <&'a str> },
-        "FIRST" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::First), slice: <&'a str> },
-        "GRAPH" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Graph), slice: <&'a str> },
-        "GROUPS" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Groups), slice: <&'a str> },
-        "KEEP" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Keep), slice: <&'a str> },
-        "LABEL" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Label), slice: <&'a str> },
-        "LABELED" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Labeled), slice: <&'a str> },
-        "LABELS" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Labels), slice: <&'a str> },
-        "LAST" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Last), slice: <&'a str> },
-        "NFC" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Nfc), slice: <&'a str> },
-        "NFD" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Nfd), slice: <&'a str> },
-        "NFKC" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Nfkc), slice: <&'a str> },
-        "NFKD" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Nfkd), slice: <&'a str> },
-        "NO" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::No), slice: <&'a str> },
-        "NODE" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Node), slice: <&'a str> },
-        "NORMALIZED" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Normalized), slice: <&'a str> },
-        "ONLY" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Only), slice: <&'a str> },
-        "ORDINALITY" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Ordinality), slice: <&'a str> },
-        "PROPERTY" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Property), slice: <&'a str> },
-        "READ" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Read), slice: <&'a str> },
-        "RELATIONSHIP" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Relationship), slice: <&'a str> },
-        "RELATIONSHIPS" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Relationships), slice: <&'a str> },
-        "REPEATABLE" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Repeatable), slice: <&'a str> },
-        "SHORTEST" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Shortest), slice: <&'a str> },
-        "SIMPLE" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Simple), slice: <&'a str> },
-        "SOURCE" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Source), slice: <&'a str> },
-        "TABLE" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Table), slice: <&'a str> },
-        "TEMP" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Temp), slice: <&'a str> },
-        "TO" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::To), slice: <&'a str> },
-        "TRAIL" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Trail), slice: <&'a str> },
-        "TRANSACTION" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Transaction), slice: <&'a str> },
-        "TYPE" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Type), slice: <&'a str> },
-        "UNDIRECTED" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Undirected), slice: <&'a str> },
-        "VERTEX" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Vertex), slice: <&'a str> },
-        "WALK" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Walk), slice: <&'a str> },
-        "WITHOUT" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Without), slice: <&'a str> },
-        "WRITE" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Write), slice: <&'a str> },
-        "ZONE" => Token { kind: TokenKind::NonReservedWord(NonReservedWord::Zone), slice: <&'a str> },
+        "ABSTRACT" => Token { kind: TokenKind::Abstract, .. },
+        "AGGREGATE" => Token { kind: TokenKind::Aggregate, .. },
+        "AGGREGATES" => Token { kind: TokenKind::Aggregates, .. },
+        "ALTER" => Token { kind: TokenKind::Alter, .. },
+        "CATALOG" => Token { kind: TokenKind::Catalog, .. },
+        "CLEAR" => Token { kind: TokenKind::Clear, .. },
+        "CLONE" => Token { kind: TokenKind::Clone, .. },
+        "CONSTRAINT" => Token { kind: TokenKind::Constraint, .. },
+        "CURRENT_ROLE" => Token { kind: TokenKind::CurrentRole, .. },
+        "CURRENT_USER" => Token { kind: TokenKind::CurrentUser, .. },
+        "DATA" => Token { kind: TokenKind::Data, .. },
+        "DIRECTORY" => Token { kind: TokenKind::Directory, .. },
+        "DRYRUN" => Token { kind: TokenKind::Dryrun, .. },
+        "EXACT" => Token { kind: TokenKind::Exact, .. },
+        "EXISTING" => Token { kind: TokenKind::Existing, .. },
+        "FUNCTION" => Token { kind: TokenKind::Function, .. },
+        "GQLSTATUS" => Token { kind: TokenKind::Gqlstatus, .. },
+        "GRANT" => Token { kind: TokenKind::Grant, .. },
+        "INSTANT" => Token { kind: TokenKind::Instant, .. },
+        "INFINITY" => Token { kind: TokenKind::Infinity, .. },
+        "NUMBER" => Token { kind: TokenKind::Number, .. },
+        "NUMERIC" => Token { kind: TokenKind::Numeric, .. },
+        "ON" => Token { kind: TokenKind::On, .. },
+        "OPEN" => Token { kind: TokenKind::Open, .. },
+        "PARTITION" => Token { kind: TokenKind::Partition, .. },
+        "PROCEDURE" => Token { kind: TokenKind::Procedure, .. },
+        "PRODUCT" => Token { kind: TokenKind::Product, .. },
+        "PROJECT" => Token { kind: TokenKind::Project, .. },
+        "QUERY" => Token { kind: TokenKind::Query, .. },
+        "RECORDS" => Token { kind: TokenKind::Records, .. },
+        "REFERENCE" => Token { kind: TokenKind::Reference, .. },
+        "RENAME" => Token { kind: TokenKind::Rename, .. },
+        "REVOKE" => Token { kind: TokenKind::Revoke, .. },
+        "SUBSTRING" => Token { kind: TokenKind::Substring, .. },
+        "SYSTEM_USER" => Token { kind: TokenKind::SystemUser, .. },
+        "TEMPORAL" => Token { kind: TokenKind::Temporal, .. },
+        "UNIQUE" => Token { kind: TokenKind::Unique, .. },
+        "UNIT" => Token { kind: TokenKind::Unit, .. },
+        "VALUES" => Token { kind: TokenKind::Values, .. },
+        "WHITESPACE" => Token { kind: TokenKind::Whitespace, .. },
+
+        "ACYCLIC" => Token { kind: TokenKind::Acyclic, slice: <&'a str> },
+        "BINDING" => Token { kind: TokenKind::Binding, slice: <&'a str> },
+        "BINDINGS" => Token { kind: TokenKind::Bindings, slice: <&'a str> },
+        "CONNECTING" => Token { kind: TokenKind::Connecting, slice: <&'a str> },
+        "DESTINATION" => Token { kind: TokenKind::Destination, slice: <&'a str> },
+        "DIFFERENT" => Token { kind: TokenKind::Different, slice: <&'a str> },
+        "DIRECTED" => Token { kind: TokenKind::Directed, slice: <&'a str> },
+        "EDGE" => Token { kind: TokenKind::Edge, slice: <&'a str> },
+        "EDGES" => Token { kind: TokenKind::Edges, slice: <&'a str> },
+        "ELEMENT" => Token { kind: TokenKind::Element, slice: <&'a str> },
+        "ELEMENTS" => Token { kind: TokenKind::Elements, slice: <&'a str> },
+        "FIRST" => Token { kind: TokenKind::First, slice: <&'a str> },
+        "GRAPH" => Token { kind: TokenKind::Graph, slice: <&'a str> },
+        "GROUPS" => Token { kind: TokenKind::Groups, slice: <&'a str> },
+        "KEEP" => Token { kind: TokenKind::Keep, slice: <&'a str> },
+        "LABEL" => Token { kind: TokenKind::Label, slice: <&'a str> },
+        "LABELED" => Token { kind: TokenKind::Labeled, slice: <&'a str> },
+        "LABELS" => Token { kind: TokenKind::Labels, slice: <&'a str> },
+        "LAST" => Token { kind: TokenKind::Last, slice: <&'a str> },
+        "NFC" => Token { kind: TokenKind::Nfc, slice: <&'a str> },
+        "NFD" => Token { kind: TokenKind::Nfd, slice: <&'a str> },
+        "NFKC" => Token { kind: TokenKind::Nfkc, slice: <&'a str> },
+        "NFKD" => Token { kind: TokenKind::Nfkd, slice: <&'a str> },
+        "NO" => Token { kind: TokenKind::No, slice: <&'a str> },
+        "NODE" => Token { kind: TokenKind::Node, slice: <&'a str> },
+        "NORMALIZED" => Token { kind: TokenKind::Normalized, slice: <&'a str> },
+        "ONLY" => Token { kind: TokenKind::Only, slice: <&'a str> },
+        "ORDINALITY" => Token { kind: TokenKind::Ordinality, slice: <&'a str> },
+        "PROPERTY" => Token { kind: TokenKind::Property, slice: <&'a str> },
+        "READ" => Token { kind: TokenKind::Read, slice: <&'a str> },
+        "RELATIONSHIP" => Token { kind: TokenKind::Relationship, slice: <&'a str> },
+        "RELATIONSHIPS" => Token { kind: TokenKind::Relationships, slice: <&'a str> },
+        "REPEATABLE" => Token { kind: TokenKind::Repeatable, slice: <&'a str> },
+        "SHORTEST" => Token { kind: TokenKind::Shortest, slice: <&'a str> },
+        "SIMPLE" => Token { kind: TokenKind::Simple, slice: <&'a str> },
+        "SOURCE" => Token { kind: TokenKind::Source, slice: <&'a str> },
+        "TABLE" => Token { kind: TokenKind::Table, slice: <&'a str> },
+        "TEMP" => Token { kind: TokenKind::Temp, slice: <&'a str> },
+        "TO" => Token { kind: TokenKind::To, slice: <&'a str> },
+        "TRAIL" => Token { kind: TokenKind::Trail, slice: <&'a str> },
+        "TRANSACTION" => Token { kind: TokenKind::Transaction, slice: <&'a str> },
+        "TYPE" => Token { kind: TokenKind::Type, slice: <&'a str> },
+        "UNDIRECTED" => Token { kind: TokenKind::Undirected, slice: <&'a str> },
+        "VERTEX" => Token { kind: TokenKind::Vertex, slice: <&'a str> },
+        "WALK" => Token { kind: TokenKind::Walk, slice: <&'a str> },
+        "WITHOUT" => Token { kind: TokenKind::Without, slice: <&'a str> },
+        "WRITE" => Token { kind: TokenKind::Write, slice: <&'a str> },
+        "ZONE" => Token { kind: TokenKind::Zone, slice: <&'a str> },
     }
 }
 
+pub LabelExpression: LabelExpression<'a> = {
+    #[precedence(level = "0")]
+    Identifier => LabelExpression::Label(<>),
+    "%" => LabelExpression::Wildcard,
+    "(" <LabelExpressionReset> ")",
+
+    #[precedence(level = "1")]
+    "!" <LabelExpression> => LabelExpression::Negation(Box::new(<>)),
+
+    #[precedence(level = "2")]
+    #[assoc(side = "left")]
+    <l: LabelExpression> "&" <r: LabelExpression> => LabelExpression::Conjunction(Box::new(l), Box::new(r)),
+
+    #[precedence(level = "3")]
+    #[assoc(side = "left")]
+    <l: LabelExpression> "|" <r: LabelExpression> => LabelExpression::Disjunction(Box::new(l), Box::new(r)),
+}
+
+// Add this rule to handle parenthesized label expressions due to LALRPOP's issue.
+// See https://github.com/lalrpop/lalrpop/issues/596 for more details.
+LabelExpressionReset = LabelExpression; 
+
+pub IsLabelExpression = {
+    "IS" <LabelExpression>,
+    ":" <LabelExpression>
+}
+
+pub ElementVariableDeclaration: ElementVariableDeclaration<'a> = {
+    <temp: "TEMP"?> <variable: RegularIdentifier> => {
+        ElementVariableDeclaration {
+            variable,
+            temp: temp.is_some(),
+        }
+    }
+}
+
+// pub ElementPatternPredicate: ElementPatternPredicate<'a> = {
+//     "WHERE" 
+// }
+
+// pub BooleanValueExpression: Expression<'a> = {
+//     #[precedence(level = "0")]
+//     <l: BooleanValueExpression> "IS" <right: BooleanLiteral> => Expression::Is { left: Box::new(l), right },
+//     <l: BooleanValueExpression> "IS" "NOT" <right: BooleanLiteral> => Expression::IsNot { left: Box::new(l), right },
+
+//     #[precedence(level = "1")]
+//     "NOT" <BooleanValueExpression> => Expression::Unary { op: UnaryOp::Not, child: Box::new(<>) },
+
+//     #[precedence(level = "2")]
+//     #[assoc(side = "left")]
+//     <l: BooleanValueExpression> "AND" <r: BooleanValueExpression> => Expression::Binary { op: BinaryOp::And, left: Box::new(l), right: Box::new(r) },
+
+//     #[precedence(level = "3")]
+//     #[assoc(side = "left")]
+//     <l: BooleanValueExpression> "OR" <r: BooleanValueExpression> => Expression::Binary { op: BinaryOp::Or, left: Box::new(l), right: Box::new(r) },
+//     <l: BooleanValueExpression> "XOR" <r: BooleanValueExpression> => Expression::Binary { op: BinaryOp::Xor, left: Box::new(l), right: Box::new(r) },
+// }
+
+// pub ListValueExpression: Expression<'a> = {
+
+// }
+
+// // TODO: Add other numeric value functions.
+// NumericValueFunction: Expression<'a> = {
+//     LengthExpression => Expression::BuiltinFunction(<>),
+// }
+
+FunctionHelper1<F, A1> = F "(" <A1> ")";
+
+FunctionHelper2<F, A1, A2> = F "(" <A1> "," <A2> ")";
+
+// LengthExpression: BuiltinFunction<'a> = {
+//     CharLengthExpression,
+//     CardinalityExpression,
+// }
+
+// CharLengthExpression: BuiltinFunction<'a> = {
+//     FunctionHelper1<"CHAR_LENGTH", CharStringValueExpression> => BuiltinFunction::CharLength(Box::new(<>)),
+//     FunctionHelper1<"CHARACTER_LENGTH", CharStringValueExpression> => BuiltinFunction::CharLength(Box::new(<>)),
+// }
+
+// CardinalityExpression: BuiltinFunction<'a> = {
+//     FunctionHelper1<"CARDINALITY", CardinalityExpressionArgument> => BuiltinFunction::Cardinality(Box::new(<>)),
+//     FunctionHelper1<"SIZE", ListValueExpression> => BuiltinFunction::Size(Box::new(<>)),
+// }
+
+// CardinalityExpressionArgument: Expression<'a> = {
+//     ListValueExpression,
+//     RecordExpression,
+// }
+
+// CharStringValueExpression: Expression<'a> = {
+
+// }
+
+// CommonValueExpression: Expression<'a> = {
+//     NumericValueExpression,
+// }
+
+// NonParenthesizedValueExpressionPrimary: Expression<'a> = {
+//     NonParenthesizedValueExpressionPrimarySpecialCase,
+//     BindingVariable => Expression::Variable(<>)
+// }
+
+// NonParenthesizedValueExpressionPrimarySpecialCase: Expression<'a> = {
+    
+// }
+
+// ValueExpressionPrimary = { NonParenthesizedValueExpressionPrimary, "(" <ValueExpression> ")" }
+
+// 20.1 <value expression>
+pub ValueExpression: Expression<'a> = {
+    #[precedence(level = "0")]
+    ValueExpressionPrimary,
+    "+" <ValueExpression> => Expression::Unary { op: UnaryOp::Plus, child: Box::new(<>) },
+    "-" <ValueExpression> => Expression::Unary { op: UnaryOp::Minus, child: Box::new(<>) },
+    "NOT" <ValueExpression> => Expression::Unary { op: UnaryOp::Not, child: Box::new(<>) },
+
+    #[precedence(level = "1")]
+    #[assoc(side = "left")]
+    <l: ValueExpression> "*" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Mul, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> "/" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Div, left: Box::new(l), right: Box::new(r) },
+
+    #[precedence(level = "2")]
+    #[assoc(side = "left")]
+    <l: ValueExpression> "+" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Add, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> "-" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Sub, left: Box::new(l), right: Box::new(r) },
+
+    #[precedence(level = "3")]
+    #[assoc(side = "left")]
+    <l: ValueExpression> "||" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Concat, left: Box::new(l), right: Box::new(r) },
+
+    #[precedence(level = "4")]
+    #[assoc(side = "left")]
+    <l: ValueExpression> "<" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Lt, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> "<=" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Le, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> ">" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Gt, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> ">=" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Ge, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> "=" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Eq, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> "<>" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Ne, left: Box::new(l), right: Box::new(r) },
+
+    #[precedence(level = "5")]
+    #[assoc(side = "left")]
+    <l: ValueExpression> "IS" <right: BooleanLiteral> => Expression::Is { left: Box::new(l), right },
+    <l: ValueExpression> "IS" "NOT" <right: BooleanLiteral> => Expression::IsNot { left: Box::new(l), right },
+
+    #[precedence(level = "6")]
+    #[assoc(side = "left")]
+    <l: ValueExpression> "AND" <r: ValueExpression> => Expression::Binary { op: BinaryOp::And, left: Box::new(l), right: Box::new(r) },
+
+    #[precedence(level = "7")]
+    #[assoc(side = "left")]
+    <l: ValueExpression> "OR" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Or, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> "XOR" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Xor, left: Box::new(l), right: Box::new(r) },
+}
+
+// 20.2 <value expression primary>
+ValueExpressionPrimary: Expression<'a> = {
+    ParenthesizedValueExpression
+}
+
+ParenthesizedValueExpression = "(" <ValueExpression> ")";
+
+SetQuantifier: SetQuantifier = {
+    "DISTINCT" => SetQuantifier::Distinct, 
+    "ALL" => SetQuantifier::All
+}
+
+// 20.3 <value specification>
+UnsignedValueSpecification = {
+    UnsignedLiteral,
+}
+
+GeneralValueSpecification: Value = {
+    "SESSION_USER" => Value::SessionUser,
+}
+
+// 20.4 <dynamic parameter specification>
+// DynamicParameterSpecification = {
+
+// }
+
+// 20.17 <list value constructor>
+pub ListValueConstructor: ListConstructor<'a> = {
+    <type_name: ListValueTypeName?> "[" <values: ListElementList?> "]" => ListConstructor { 
+        type_name, values: values.unwrap_or_default() 
+    }
+}
+
+ListElementList: Vec<Expression<'a>> = {
+    <first: ValueExpression> <other: ("," <ValueExpression>)*> => {
+        let mut v = Vec::with_capacity(1 + other.len());
+        v.push(first);
+        v.extend(other);
+        v
+    }
+}
+
+ListValueTypeName: ListTypeName = {
+    <group: "GROUP"?> <synonym: ListValueTypeNameSynonym> => ListTypeName { group: group.is_some(), synonym }
+}
+
+ListValueTypeNameSynonym: ListTypeNameSynonym = {
+    "LIST" => ListTypeNameSynonym::List,
+    "ARRAY" => ListTypeNameSynonym::Array,
+}
+
+// 20.18 <record constructor>
+pub RecordConstructor: RecordConstructor<'a> = {
+    "RECORD"? "{" <FieldList?> "}" => RecordConstructor(<>.unwrap_or_default())
+}
+
+FieldList: Vec<Field<'a>> = {
+    <first: Field> <other: ("," <Field>)*> => {
+        let mut v = Vec::with_capacity(1 + other.len());
+        v.push(first);
+        v.extend(other);
+        v
+    }
+}
+
+Field: Field<'a> = <name: FieldName> <value: ValueExpression> => Field { name, value };
+
+// 21.2 <literal>
 pub Identifier = { RegularIdentifier, DelimitedIdentifier }
+
+pub SeparatedIdentifier = {
+    DelimitedIdentifier
+}
 
 DelimitedIdentifier: Ident<'a> = {
     <start: @L> <name: "double quoted"> <end: @R> =>? {
         let span = Span { start, end };
-        let name = unescape::<'"', false>(name).ok_or_else(|| ParseError::User { error: UserError::InvalidEscapeSequence(span)})?;
+        let name = unescape::<'"', false>(name).ok_or_else(|| ParseError::User { error: UserError::invalid_escape_sequence(span)})?;
         Ok(Ident { name, span }) 
     },
     <start: @L> <name: "unescaped double quoted"> <end: @R> =>? {
         let span = Span { start, end };
-        let name = unescape::<'"', true>(name).ok_or_else(|| ParseError::User { error: UserError::InvalidEscapeSequence(span)})?;
+        let name = unescape::<'"', true>(name).ok_or_else(|| ParseError::User { error: UserError::invalid_escape_sequence(span)})?;
         Ok(Ident { name, span }) 
     },
     <start: @L> <name: "accent quoted"> <end: @R> =>? {
         let span = Span { start, end };
-        let name = unescape::<'`', false>(name).ok_or_else(|| ParseError::User { error: UserError::InvalidEscapeSequence(span)})?;
+        let name = unescape::<'`', false>(name).ok_or_else(|| ParseError::User { error: UserError::invalid_escape_sequence(span)})?;
         Ok(Ident { name, span })
     },
     <start: @L> <name: "unescaped accent quoted"> <end: @R> =>? {
         let span = Span { start, end };
-        let name = unescape::<'`', true>(name).ok_or_else(|| ParseError::User { error: UserError::InvalidEscapeSequence(span)})?;
+        let name = unescape::<'`', true>(name).ok_or_else(|| ParseError::User { error: UserError::invalid_escape_sequence(span)})?;
         Ok(Ident { name, span })
     }
 }
@@ -432,213 +701,15 @@ NonReservedWord = {
     "ZONE",
 }
 
-pub LabelExpression: LabelExpression<'a> = {
-    #[precedence(level = "0")]
-    Identifier => LabelExpression::Label(<>),
-    "%" => LabelExpression::Wildcard,
-    "(" <LabelExpressionReset> ")" => <>,
-
-    #[precedence(level = "1")]
-    "!" <LabelExpression> => LabelExpression::Negation(Box::new(<>)),
-
-    #[precedence(level = "2")]
-    #[assoc(side = "left")]
-    <l: LabelExpression> "&" <r: LabelExpression> => LabelExpression::Conjunction(Box::new(l), Box::new(r)),
-
-    #[precedence(level = "3")]
-    #[assoc(side = "left")]
-    <l: LabelExpression> "|" <r: LabelExpression> => LabelExpression::Disjunction(Box::new(l), Box::new(r)),
-}
-
-// Add this rule to handle parenthesized label expressions due to LALRPOP's issue.
-// See https://github.com/lalrpop/lalrpop/issues/596 for more details.
-LabelExpressionReset = { LabelExpression } 
-
-pub IsLabelExpression = {
-    "IS" <LabelExpression>,
-    ":" <LabelExpression>
-}
-
-pub ElementVariableDeclaration: ElementVariableDeclaration<'a> = {
-    <temp: "TEMP"?> <variable: RegularIdentifier> => {
-        ElementVariableDeclaration {
-            variable,
-            temp: temp.is_some(),
-        }
-    }
-}
-
-// pub ElementPatternPredicate: ElementPatternPredicate<'a> = {
-//     "WHERE" 
-// }
-
-pub BooleanValueExpression: Expression<'a> = {
-    #[precedence(level = "0")]
-    <l: BooleanValueExpression> "IS" <right: BooleanLiteral> => Expression::Is { left: Box::new(l), right },
-    <l: BooleanValueExpression> "IS" "NOT" <right: BooleanLiteral> => Expression::IsNot { left: Box::new(l), right },
-
-    #[precedence(level = "1")]
-    "NOT" <BooleanValueExpression> => Expression::Unary { op: UnaryOp::Not, child: Box::new(<>) },
-
-    #[precedence(level = "2")]
-    #[assoc(side = "left")]
-    <l: BooleanValueExpression> "AND" <r: BooleanValueExpression> => Expression::Binary { op: BinaryOp::And, left: Box::new(l), right: Box::new(r) },
-
-    #[precedence(level = "3")]
-    #[assoc(side = "left")]
-    <l: BooleanValueExpression> "OR" <r: BooleanValueExpression> => Expression::Binary { op: BinaryOp::Or, left: Box::new(l), right: Box::new(r) },
-    <l: BooleanValueExpression> "XOR" <r: BooleanValueExpression> => Expression::Binary { op: BinaryOp::Xor, left: Box::new(l), right: Box::new(r) },
-}
-
-pub ListValueExpression: Expression<'a> = {
-
-}
-
-NumericValueExpression: Expression<'a> = {
-    #[precedence(level = "0")]
-    ValueExpressionPrimary,
-    NumericValueFunction,
-
-    #[precedence(level = "1")]
-    "+" <NumericValueExpression>,
-    "-" <NumericValueExpression> => Expression::Unary { op: UnaryOp::Neg, child: Box::new(<>) },
-
-    #[precedence(level = "2")]
-    #[assoc(side = "left")]
-    <l: NumericValueExpression> "*" <r: NumericValueExpression> => Expression::Binary { op: BinaryOp::Mul, left: Box::new(l), right: Box::new(r) },
-    <l: NumericValueExpression> "/" <r: NumericValueExpression> => Expression::Binary { op: BinaryOp::Div, left: Box::new(l), right: Box::new(r) },
-
-    #[precedence(level = "3")]
-    #[assoc(side = "left")]
-    <l: NumericValueExpression> "+" <r: NumericValueExpression> => Expression::Binary { op: BinaryOp::Add, left: Box::new(l), right: Box::new(r) },
-    <l: NumericValueExpression> "-" <r: NumericValueExpression> => Expression::Binary { op: BinaryOp::Sub, left: Box::new(l), right: Box::new(r) },
-}
-
-NumericValueFunction: Expression<'a> = {
-    LengthExpression => Expression::BuiltinFunction(<>),
-}
-
-FunctionHelper1<F, A1> = {
-    F "(" <A1> ")"
-}
-
-FunctionHelper2<F, A1, A2> = {
-    F "(" <A1> "," <A2> ")"
-}
-
-LengthExpression: BuiltinFunction<'a> = {
-    CharLengthExpression,
-    CardinalityExpression,
-}
-
-CharLengthExpression: BuiltinFunction<'a> = {
-    FunctionHelper1<"CHAR_LENGTH", CharStringValueExpression> => BuiltinFunction::CharLength(Box::new(<>)),
-    FunctionHelper1<"CHARACTER_LENGTH", CharStringValueExpression> => BuiltinFunction::CharLength(Box::new(<>)),
-}
-
-CardinalityExpression: BuiltinFunction<'a> = {
-    FunctionHelper1<"CARDINALITY", CardinalityExpressionArgument> => BuiltinFunction::Cardinality(Box::new(<>)),
-    FunctionHelper1<"SIZE", ListValueExpression> => BuiltinFunction::Size(Box::new(<>)),
-}
-
-CardinalityExpressionArgument: Expression<'a> = {
-    ListValueExpression,
-    RecordExpression,
-}
-
-CharStringValueExpression: Expression<'a> = {
-
-}
-
-CommonValueExpression: Expression<'a> = {
-    NumericValueExpression,
-}
-
-NonParenthesizedValueExpressionPrimary: Expression<'a> = {
-    NonParenthesizedValueExpressionPrimarySpecialCase,
-    BindingVariable => Expression::Variable(<>)
-}
-
-NonParenthesizedValueExpressionPrimarySpecialCase: Expression<'a> = {
-    
-}
-
-ValueExpressionPrimary = { NonParenthesizedValueExpressionPrimary, "(" <ValueExpression> ")" }
-
-pub ValueExpression = { CommonValueExpression, BooleanValueExpression }
-
-pub RecordConstructor: RecordConstructor<'a> = {
-    "RECORD"? "{" <FieldList?> "}" => RecordConstructor(<>.unwrap_or_default())
-}
-
-FieldList: Vec<Field<'a>> = {
-    <first: Field> <other: ("," <Field>)*> => {
-        let mut v = Vec::with_capacity(1 + other.len());
-        v.push(first);
-        v.extend(other);
-        v
-    }
-}
-
-pub Field: Field<'a> = {
-    <name: FieldName> <value: ValueExpression> => Field { name, value }
-}
-
-// UnsignedValueSpecification = {
-
-// }
-
-GeneralValueSpecification: Value = {
-    "SESSION_USER" => Value::SessionUser,
-}
-
-// DynamicParameterSpecification = {
-
-// }
-
-// GeneralParameterReference = {
-
-// }
-
-// pub RecordConstructor: RecordConstructor<'a> = {
-//     "RECORD"? "{" <FieldList?> "}" => RecordConstructor(<>.unwrap_or_default())
-// }
-
-// FieldList: Vec<Field<'a>> = {
-//     <first: Field> <other: ("," <Field>)*> => {
-//         let mut v = Vec::with_capacity(1 + other.len());
-//         v.push(first);
-//         v.extend(other);
-//         v
-//     }
-// }
-
-// pub Field: Field<'a> = {
-//     <name: FieldName> <value: ValueExpression> => Field { name, value }
-// }
-
-// Value expressions
-ListValueConstructor: ListConstructor<'a> = {
-
-}
-
-ListElementList: Vec<Expression<'a>> = {
-    <first: ValueExpression> <other: ("," <ValueExpression>)*> => {
-        let mut v = Vec::with_capacity(1 + other.len());
-        v.push(first);
-        v.extend(other);
-        v
-    }
-}
-
-ListValueTypeName = { "GROUP"? "LIST", "GROUP"? "ARRAY" }
-
-// Literals
+// TODO: Add byte string literal
 pub UnsignedLiteral: Literal<'a> = {
+    UnsignedNumericLiteral => Literal::Numeric(<>),
     BooleanLiteral => Literal::Boolean(<>),
     CharStringLiteral => Literal::String(<>),
     TemporalLiteral => Literal::Temporal(<>),
     DurationLiteral => Literal::Duration(<>),
+    ListValueConstructor => Literal::List(<>),
+    RecordConstructor => Literal::Record(<>),
     "NULL" => Literal::Null,
 }
 
@@ -650,12 +721,10 @@ BooleanLiteral: BooleanLiteral = {
 
 CharStringLiteralHelper: Cow<'a, str> = {
     <start: @L> <literal: "single quoted"> <end: @R> =>? {
-        let span = Span { start, end };
-        unescape::<'\'', false>(literal).ok_or_else(|| ParseError::User { error: UserError::InvalidEscapeSequence(span)})
+        unescape::<'\'', false>(literal).ok_or_else(|| ParseError::User { error: UserError::invalid_escape_sequence(start..end)})
     },
     <start: @L> <literal: "double quoted"> <end: @R> =>? {
-        let span = Span { start, end };
-        unescape::<'\'', false>(literal).ok_or_else(|| ParseError::User { error: UserError::InvalidEscapeSequence(span)})
+        unescape::<'\'', false>(literal).ok_or_else(|| ParseError::User { error: UserError::invalid_escape_sequence(start..end)})
     }
 }
 
@@ -676,8 +745,18 @@ DurationLiteral: DurationLiteral<'a> = {
     "DURATION" <literal: CharStringLiteralHelper> => DurationLiteral { kind: DurationLiteralKind::Duration, literal },
 }
 
-// Rule aliases
-RecordExpression = ValueExpressionPrimary;
+// TODO: Add other literals.
+UnsignedNumericLiteral: UnsignedNumericLiteral<'a> = {
+    UnsignedInteger => UnsignedNumericLiteral::Integer(<>)
+}
+
+pub UnsignedInteger: UnsignedInteger<'a> = {
+    <integer: "unsigned decimal integer"> => UnsignedInteger { kind: UnsignedIntegerKind::Decimal, integer },
+    <integer: "unsigned octal integer"> => UnsignedInteger { kind: UnsignedIntegerKind::Octal, integer },
+    <integer: "unsigned hex integer"> => UnsignedInteger { kind: UnsignedIntegerKind::Hex, integer },
+    <integer: "unsigned binary integer"> => UnsignedInteger { kind: UnsignedIntegerKind::Binary, integer },
+}
+
 
 FieldName = Identifier;
 

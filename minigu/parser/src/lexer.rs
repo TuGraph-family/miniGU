@@ -1,6 +1,8 @@
-use logos::{Logos, SpannedIter};
+use logos::{Lexer as LogosLexer, Logos, Skip, SpannedIter};
 
+use crate::Cow;
 use crate::error::UserError;
+use crate::unescape::unescape;
 
 type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
 
@@ -31,9 +33,19 @@ impl<'a> Iterator for Lexer<'a> {
                     span.end,
                 )
             })
-            .map_err(|()| UserError::InvalidToken(span.into()))
+            .map_err(|e| match e {
+                LexerError::InvalidToken => UserError::invalid_token(span),
+                LexerError::IncompleteComment => UserError::incomplete_comment(span),
+            })
         })
     }
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub(crate) enum LexerError {
+    #[default]
+    InvalidToken,
+    IncompleteComment,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -43,321 +55,639 @@ pub(crate) struct Token<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Logos)]
+#[logos(error = LexerError)]
+// Whitespaces should be skipped.
 #[logos(skip r"[\p{White_Space}]+")]
+// Simple comments introduced by double solidus.
+#[logos(skip r"//[^\r\n]*")]
+// Simple comments introduced by double minus.
+#[logos(skip r"--[^\r\n]*")]
 pub(crate) enum TokenKind<'a> {
-    #[token("abs", |_| ReservedWord::Abs, ignore(case))]
-    #[token("acos", |_| ReservedWord::Acos, ignore(case))]
-    #[token("all", |_| ReservedWord::All, ignore(case))]
-    #[token("alldifferent", |_| ReservedWord::AllDifferent, ignore(case))]
-    #[token("and", |_| ReservedWord::And, ignore(case))]
-    #[token("any", |_| ReservedWord::Any, ignore(case))]
-    #[token("array", |_| ReservedWord::Array, ignore(case))]
-    #[token("as", |_| ReservedWord::As, ignore(case))]
-    #[token("asc", |_| ReservedWord::Asc, ignore(case))]
-    #[token("ascending", |_| ReservedWord::Ascending, ignore(case))]
-    #[token("asin", |_| ReservedWord::Asin, ignore(case))]
-    #[token("at", |_| ReservedWord::At, ignore(case))]
-    #[token("atan", |_| ReservedWord::Atan, ignore(case))]
-    #[token("avg", |_| ReservedWord::Avg, ignore(case))]
-    #[token("big", |_| ReservedWord::Big, ignore(case))]
-    #[token("bigint", |_| ReservedWord::Bigint, ignore(case))]
-    #[token("binary", |_| ReservedWord::Binary, ignore(case))]
-    #[token("bool", |_| ReservedWord::Bool, ignore(case))]
-    #[token("boolean", |_| ReservedWord::Boolean, ignore(case))]
-    #[token("both", |_| ReservedWord::Both, ignore(case))]
-    #[token("btrim", |_| ReservedWord::Btrim, ignore(case))]
-    #[token("by", |_| ReservedWord::By, ignore(case))]
-    #[token("bytelength", |_| ReservedWord::ByteLength, ignore(case))]
-    #[token("bytes", |_| ReservedWord::Bytes, ignore(case))]
-    #[token("call", |_| ReservedWord::Call, ignore(case))]
-    #[token("cardinality", |_| ReservedWord::Cardinality, ignore(case))]
-    #[token("case", |_| ReservedWord::Case, ignore(case))]
-    #[token("cast", |_| ReservedWord::Cast, ignore(case))]
-    #[token("ceil", |_| ReservedWord::Ceil, ignore(case))]
-    #[token("ceiling", |_| ReservedWord::Ceiling, ignore(case))]
-    #[token("char", |_| ReservedWord::Char, ignore(case))]
-    #[token("charlength", |_| ReservedWord::CharLength, ignore(case))]
-    #[token("characterlength", |_| ReservedWord::CharacterLength, ignore(case))]
-    #[token("characteristics", |_| ReservedWord::Characteristics, ignore(case))]
-    #[token("close", |_| ReservedWord::Close, ignore(case))]
-    #[token("coalesce", |_| ReservedWord::Coalesce, ignore(case))]
-    #[token("collectlist", |_| ReservedWord::CollectList, ignore(case))]
-    #[token("commit", |_| ReservedWord::Commit, ignore(case))]
-    #[token("copy", |_| ReservedWord::Copy, ignore(case))]
-    #[token("cos", |_| ReservedWord::Cos, ignore(case))]
-    #[token("cosh", |_| ReservedWord::Cosh, ignore(case))]
-    #[token("cot", |_| ReservedWord::Cot, ignore(case))]
-    #[token("count", |_| ReservedWord::Count, ignore(case))]
-    #[token("create", |_| ReservedWord::Create, ignore(case))]
-    #[token("currentdate", |_| ReservedWord::CurrentDate, ignore(case))]
-    #[token("currentgraph", |_| ReservedWord::CurrentGraph, ignore(case))]
-    #[token("currentpropertygraph", |_| ReservedWord::CurrentPropertyGraph, ignore(case))]
-    #[token("currentschema", |_| ReservedWord::CurrentSchema, ignore(case))]
-    #[token("currenttime", |_| ReservedWord::CurrentTime, ignore(case))]
-    #[token("currenttimestamp", |_| ReservedWord::CurrentTimestamp, ignore(case))]
-    #[token("date", |_| ReservedWord::Date, ignore(case))]
-    #[token("datetime", |_| ReservedWord::Datetime, ignore(case))]
-    #[token("day", |_| ReservedWord::Day, ignore(case))]
-    #[token("dec", |_| ReservedWord::Dec, ignore(case))]
-    #[token("decimal", |_| ReservedWord::Decimal, ignore(case))]
-    #[token("degrees", |_| ReservedWord::Degrees, ignore(case))]
-    #[token("delete", |_| ReservedWord::Delete, ignore(case))]
-    #[token("desc", |_| ReservedWord::Desc, ignore(case))]
-    #[token("descending", |_| ReservedWord::Descending, ignore(case))]
-    #[token("detach", |_| ReservedWord::Detach, ignore(case))]
-    #[token("distinct", |_| ReservedWord::Distinct, ignore(case))]
-    #[token("double", |_| ReservedWord::Double, ignore(case))]
-    #[token("drop", |_| ReservedWord::Drop, ignore(case))]
-    #[token("duration", |_| ReservedWord::Duration, ignore(case))]
-    #[token("durationbetween", |_| ReservedWord::DurationBetween, ignore(case))]
-    #[token("elementid", |_| ReservedWord::ElementId, ignore(case))]
-    #[token("else", |_| ReservedWord::Else, ignore(case))]
-    #[token("end", |_| ReservedWord::End, ignore(case))]
-    #[token("except", |_| ReservedWord::Except, ignore(case))]
-    #[token("exists", |_| ReservedWord::Exists, ignore(case))]
-    #[token("exp", |_| ReservedWord::Exp, ignore(case))]
-    #[token("false", |_| ReservedWord::False, ignore(case))]
-    #[token("filter", |_| ReservedWord::Filter, ignore(case))]
-    #[token("finish", |_| ReservedWord::Finish, ignore(case))]
-    #[token("float", |_| ReservedWord::Float, ignore(case))]
-    #[token("float16", |_| ReservedWord::Float16, ignore(case))]
-    #[token("float32", |_| ReservedWord::Float32, ignore(case))]
-    #[token("float64", |_| ReservedWord::Float64, ignore(case))]
-    #[token("float128", |_| ReservedWord::Float128, ignore(case))]
-    #[token("float256", |_| ReservedWord::Float256, ignore(case))]
-    #[token("floor", |_| ReservedWord::Floor, ignore(case))]
-    #[token("for", |_| ReservedWord::For, ignore(case))]
-    #[token("from", |_| ReservedWord::From, ignore(case))]
-    #[token("group", |_| ReservedWord::Group, ignore(case))]
-    #[token("having", |_| ReservedWord::Having, ignore(case))]
-    #[token("homegraph", |_| ReservedWord::HomeGraph, ignore(case))]
-    #[token("homepropertygraph", |_| ReservedWord::HomePropertyGraph, ignore(case))]
-    #[token("homeschema", |_| ReservedWord::HomeSchema, ignore(case))]
-    #[token("hour", |_| ReservedWord::Hour, ignore(case))]
-    #[token("if", |_| ReservedWord::If, ignore(case))]
-    #[token("implies", |_| ReservedWord::Implies, ignore(case))]
-    #[token("in", |_| ReservedWord::In, ignore(case))]
-    #[token("insert", |_| ReservedWord::Insert, ignore(case))]
-    #[token("int", |_| ReservedWord::Int, ignore(case))]
-    #[token("integer", |_| ReservedWord::Integer, ignore(case))]
-    #[token("int8", |_| ReservedWord::Int8, ignore(case))]
-    #[token("integer8", |_| ReservedWord::Integer8, ignore(case))]
-    #[token("int16", |_| ReservedWord::Int16, ignore(case))]
-    #[token("integer16", |_| ReservedWord::Integer16, ignore(case))]
-    #[token("int32", |_| ReservedWord::Int32, ignore(case))]
-    #[token("interval", |_| ReservedWord::Interval, ignore(case))]
-    #[token("is", |_| ReservedWord::Is, ignore(case))]
-    #[token("integer32", |_| ReservedWord::Integer32, ignore(case))]
-    #[token("int64", |_| ReservedWord::Int64, ignore(case))]
-    #[token("integer64", |_| ReservedWord::Integer64, ignore(case))]
-    #[token("int128", |_| ReservedWord::Int128, ignore(case))]
-    #[token("integer128", |_| ReservedWord::Integer128, ignore(case))]
-    #[token("int256", |_| ReservedWord::Int256, ignore(case))]
-    #[token("integer256", |_| ReservedWord::Integer256, ignore(case))]
-    #[token("intersect", |_| ReservedWord::Intersect, ignore(case))]
-    #[token("leading", |_| ReservedWord::Leading, ignore(case))]
-    #[token("left", |_| ReservedWord::Left, ignore(case))]
-    #[token("let", |_| ReservedWord::Let, ignore(case))]
-    #[token("like", |_| ReservedWord::Like, ignore(case))]
-    #[token("limit", |_| ReservedWord::Limit, ignore(case))]
-    #[token("list", |_| ReservedWord::List, ignore(case))]
-    #[token("ln", |_| ReservedWord::Ln, ignore(case))]
-    #[token("local", |_| ReservedWord::Local, ignore(case))]
-    #[token("localdatetime", |_| ReservedWord::LocalDatetime, ignore(case))]
-    #[token("localtime", |_| ReservedWord::LocalTime, ignore(case))]
-    #[token("localtimestamp", |_| ReservedWord::LocalTimestamp, ignore(case))]
-    #[token("log", |_| ReservedWord::Log, ignore(case))]
-    #[token("log10", |_| ReservedWord::Log10, ignore(case))]
-    #[token("lower", |_| ReservedWord::Lower, ignore(case))]
-    #[token("ltrim", |_| ReservedWord::Ltrim, ignore(case))]
-    #[token("match", |_| ReservedWord::Match, ignore(case))]
-    #[token("max", |_| ReservedWord::Max, ignore(case))]
-    #[token("min", |_| ReservedWord::Min, ignore(case))]
-    #[token("minute", |_| ReservedWord::Minute, ignore(case))]
-    #[token("mod", |_| ReservedWord::Mod, ignore(case))]
-    #[token("month", |_| ReservedWord::Month, ignore(case))]
-    #[token("next", |_| ReservedWord::Next, ignore(case))]
-    #[token("nodetach", |_| ReservedWord::Nodetach, ignore(case))]
-    #[token("normalize", |_| ReservedWord::Normalize, ignore(case))]
-    #[token("not", |_| ReservedWord::Not, ignore(case))]
-    #[token("nothing", |_| ReservedWord::Nothing, ignore(case))]
-    #[token("null", |_| ReservedWord::Null, ignore(case))]
-    #[token("nulls", |_| ReservedWord::Nulls, ignore(case))]
-    #[token("nullif", |_| ReservedWord::Nullif, ignore(case))]
-    #[token("octetlength", |_| ReservedWord::OctetLength, ignore(case))]
-    #[token("of", |_| ReservedWord::Of, ignore(case))]
-    #[token("offset", |_| ReservedWord::Offset, ignore(case))]
-    #[token("optional", |_| ReservedWord::Optional, ignore(case))]
-    #[token("or", |_| ReservedWord::Or, ignore(case))]
-    #[token("order", |_| ReservedWord::Order, ignore(case))]
-    #[token("otherwise", |_| ReservedWord::Otherwise, ignore(case))]
-    #[token("parameter", |_| ReservedWord::Parameter, ignore(case))]
-    #[token("parameters", |_| ReservedWord::Parameters, ignore(case))]
-    #[token("path", |_| ReservedWord::Path, ignore(case))]
-    #[token("pathlength", |_| ReservedWord::PathLength, ignore(case))]
-    #[token("paths", |_| ReservedWord::Paths, ignore(case))]
-    #[token("percentilecont", |_| ReservedWord::PercentileCont, ignore(case))]
-    #[token("percentiledisc", |_| ReservedWord::PercentileDisc, ignore(case))]
-    #[token("power", |_| ReservedWord::Power, ignore(case))]
-    #[token("precision", |_| ReservedWord::Precision, ignore(case))]
-    #[token("propertyexists", |_| ReservedWord::PropertyExists, ignore(case))]
-    #[token("radians", |_| ReservedWord::Radians, ignore(case))]
-    #[token("real", |_| ReservedWord::Real, ignore(case))]
-    #[token("record", |_| ReservedWord::Record, ignore(case))]
-    #[token("remove", |_| ReservedWord::Remove, ignore(case))]
-    #[token("replace", |_| ReservedWord::Replace, ignore(case))]
-    #[token("reset", |_| ReservedWord::Reset, ignore(case))]
-    #[token("return", |_| ReservedWord::Return, ignore(case))]
-    #[token("right", |_| ReservedWord::Right, ignore(case))]
-    #[token("rollback", |_| ReservedWord::Rollback, ignore(case))]
-    #[token("rtrim", |_| ReservedWord::Rtrim, ignore(case))]
-    #[token("same", |_| ReservedWord::Same, ignore(case))]
-    #[token("schema", |_| ReservedWord::Schema, ignore(case))]
-    #[token("second", |_| ReservedWord::Second, ignore(case))]
-    #[token("select", |_| ReservedWord::Select, ignore(case))]
-    #[token("session", |_| ReservedWord::Session, ignore(case))]
-    #[token("sessionuser", |_| ReservedWord::SessionUser, ignore(case))]
-    #[token("set", |_| ReservedWord::Set, ignore(case))]
-    #[token("signed", |_| ReservedWord::Signed, ignore(case))]
-    #[token("sin", |_| ReservedWord::Sin, ignore(case))]
-    #[token("sinh", |_| ReservedWord::Sinh, ignore(case))]
-    #[token("size", |_| ReservedWord::Size, ignore(case))]
-    #[token("skip", |_| ReservedWord::Skip, ignore(case))]
-    #[token("small", |_| ReservedWord::Small, ignore(case))]
-    #[token("smallint", |_| ReservedWord::Smallint, ignore(case))]
-    #[token("sqrt", |_| ReservedWord::Sqrt, ignore(case))]
-    #[token("start", |_| ReservedWord::Start, ignore(case))]
-    #[token("stddevpop", |_| ReservedWord::StddevPop, ignore(case))]
-    #[token("stddevsamp", |_| ReservedWord::StddevSamp, ignore(case))]
-    #[token("string", |_| ReservedWord::String, ignore(case))]
-    #[token("sum", |_| ReservedWord::Sum, ignore(case))]
-    #[token("tan", |_| ReservedWord::Tan, ignore(case))]
-    #[token("tanh", |_| ReservedWord::Tanh, ignore(case))]
-    #[token("then", |_| ReservedWord::Then, ignore(case))]
-    #[token("time", |_| ReservedWord::Time, ignore(case))]
-    #[token("timestamp", |_| ReservedWord::Timestamp, ignore(case))]
-    #[token("trailing", |_| ReservedWord::Trailing, ignore(case))]
-    #[token("trim", |_| ReservedWord::Trim, ignore(case))]
-    #[token("true", |_| ReservedWord::True, ignore(case))]
-    #[token("typed", |_| ReservedWord::Typed, ignore(case))]
-    #[token("ubigint", |_| ReservedWord::Ubigint, ignore(case))]
-    #[token("uint", |_| ReservedWord::Uint, ignore(case))]
-    #[token("uint8", |_| ReservedWord::Uint8, ignore(case))]
-    #[token("uint16", |_| ReservedWord::Uint16, ignore(case))]
-    #[token("uint32", |_| ReservedWord::Uint32, ignore(case))]
-    #[token("uint64", |_| ReservedWord::Uint64, ignore(case))]
-    #[token("uint128", |_| ReservedWord::Uint128, ignore(case))]
-    #[token("uint256", |_| ReservedWord::Uint256, ignore(case))]
-    #[token("union", |_| ReservedWord::Union, ignore(case))]
-    #[token("unknown", |_| ReservedWord::Unknown, ignore(case))]
-    #[token("unsigned", |_| ReservedWord::Unsigned, ignore(case))]
-    #[token("upper", |_| ReservedWord::Upper, ignore(case))]
-    #[token("use", |_| ReservedWord::Use, ignore(case))]
-    #[token("usmallint", |_| ReservedWord::Usmallint, ignore(case))]
-    #[token("value", |_| ReservedWord::Value, ignore(case))]
-    #[token("varbinary", |_| ReservedWord::Varbinary, ignore(case))]
-    #[token("varchar", |_| ReservedWord::Varchar, ignore(case))]
-    #[token("variable", |_| ReservedWord::Variable, ignore(case))]
-    #[token("when", |_| ReservedWord::When, ignore(case))]
-    #[token("where", |_| ReservedWord::Where, ignore(case))]
-    #[token("with", |_| ReservedWord::With, ignore(case))]
-    #[token("xor", |_| ReservedWord::Xor, ignore(case))]
-    #[token("year", |_| ReservedWord::Year, ignore(case))]
-    #[token("yield", |_| ReservedWord::Yield, ignore(case))]
-    #[token("zoned", |_| ReservedWord::Zoned, ignore(case))]
-    #[token("zoneddatetime", |_| ReservedWord::ZonedDatetime, ignore(case))]
-    #[token("zonedtime", |_| ReservedWord::ZonedTime, ignore(case))]
-    #[token("abstract", |_| ReservedWord::Abstract, ignore(case))]
-    #[token("aggregate", |_| ReservedWord::Aggregate, ignore(case))]
-    #[token("aggregates", |_| ReservedWord::Aggregates, ignore(case))]
-    #[token("alter", |_| ReservedWord::Alter, ignore(case))]
-    #[token("catalog", |_| ReservedWord::Catalog, ignore(case))]
-    #[token("clear", |_| ReservedWord::Clear, ignore(case))]
-    #[token("clone", |_| ReservedWord::Clone, ignore(case))]
-    #[token("constraint", |_| ReservedWord::Constraint, ignore(case))]
-    #[token("currentrole", |_| ReservedWord::CurrentRole, ignore(case))]
-    #[token("currentuser", |_| ReservedWord::CurrentUser, ignore(case))]
-    #[token("data", |_| ReservedWord::Data, ignore(case))]
-    #[token("directory", |_| ReservedWord::Directory, ignore(case))]
-    #[token("dryrun", |_| ReservedWord::Dryrun, ignore(case))]
-    #[token("exact", |_| ReservedWord::Exact, ignore(case))]
-    #[token("existing", |_| ReservedWord::Existing, ignore(case))]
-    #[token("function", |_| ReservedWord::Function, ignore(case))]
-    #[token("gqlstatus", |_| ReservedWord::Gqlstatus, ignore(case))]
-    #[token("grant", |_| ReservedWord::Grant, ignore(case))]
-    #[token("instant", |_| ReservedWord::Instant, ignore(case))]
-    #[token("infinity", |_| ReservedWord::Infinity, ignore(case))]
-    #[token("number", |_| ReservedWord::Number, ignore(case))]
-    #[token("numeric", |_| ReservedWord::Numeric, ignore(case))]
-    #[token("on", |_| ReservedWord::On, ignore(case))]
-    #[token("open", |_| ReservedWord::Open, ignore(case))]
-    #[token("partition", |_| ReservedWord::Partition, ignore(case))]
-    #[token("procedure", |_| ReservedWord::Procedure, ignore(case))]
-    #[token("product", |_| ReservedWord::Product, ignore(case))]
-    #[token("project", |_| ReservedWord::Project, ignore(case))]
-    #[token("query", |_| ReservedWord::Query, ignore(case))]
-    #[token("records", |_| ReservedWord::Records, ignore(case))]
-    #[token("reference", |_| ReservedWord::Reference, ignore(case))]
-    #[token("rename", |_| ReservedWord::Rename, ignore(case))]
-    #[token("revoke", |_| ReservedWord::Revoke, ignore(case))]
-    #[token("substring", |_| ReservedWord::Substring, ignore(case))]
-    #[token("systemuser", |_| ReservedWord::SystemUser, ignore(case))]
-    #[token("temporal", |_| ReservedWord::Temporal, ignore(case))]
-    #[token("unique", |_| ReservedWord::Unique, ignore(case))]
-    #[token("unit", |_| ReservedWord::Unit, ignore(case))]
-    #[token("values", |_| ReservedWord::Values, ignore(case))]
-    #[token("whitespace", |_| ReservedWord::Whitespace, ignore(case))]
-    ReservedWord(ReservedWord),
+    // The followings are *reserved words*.
+    #[token("abs", ignore(case))]
+    Abs,
+    #[token("acos", ignore(case))]
+    Acos,
+    #[token("all", ignore(case))]
+    All,
+    #[token("all_different", ignore(case))]
+    AllDifferent,
+    #[token("and", ignore(case))]
+    And,
+    #[token("any", ignore(case))]
+    Any,
+    #[token("array", ignore(case))]
+    Array,
+    #[token("as", ignore(case))]
+    As,
+    #[token("asc", ignore(case))]
+    Asc,
+    #[token("ascending", ignore(case))]
+    Ascending,
+    #[token("asin", ignore(case))]
+    Asin,
+    #[token("at", ignore(case))]
+    At,
+    #[token("atan", ignore(case))]
+    Atan,
+    #[token("avg", ignore(case))]
+    Avg,
+    #[token("big", ignore(case))]
+    Big,
+    #[token("bigint", ignore(case))]
+    Bigint,
+    #[token("binary", ignore(case))]
+    Binary,
+    #[token("bool", ignore(case))]
+    Bool,
+    #[token("boolean", ignore(case))]
+    Boolean,
+    #[token("both", ignore(case))]
+    Both,
+    #[token("btrim", ignore(case))]
+    Btrim,
+    #[token("by", ignore(case))]
+    By,
+    #[token("byte_length", ignore(case))]
+    ByteLength,
+    #[token("bytes", ignore(case))]
+    Bytes,
+    #[token("call", ignore(case))]
+    Call,
+    #[token("cardinality", ignore(case))]
+    Cardinality,
+    #[token("case", ignore(case))]
+    Case,
+    #[token("cast", ignore(case))]
+    Cast,
+    #[token("ceil", ignore(case))]
+    Ceil,
+    #[token("ceiling", ignore(case))]
+    Ceiling,
+    #[token("char", ignore(case))]
+    Char,
+    #[token("char_length", ignore(case))]
+    CharLength,
+    #[token("character_length", ignore(case))]
+    CharacterLength,
+    #[token("characteristics", ignore(case))]
+    Characteristics,
+    #[token("close", ignore(case))]
+    Close,
+    #[token("coalesce", ignore(case))]
+    Coalesce,
+    #[token("collect_list", ignore(case))]
+    CollectList,
+    #[token("commit", ignore(case))]
+    Commit,
+    #[token("copy", ignore(case))]
+    Copy,
+    #[token("cos", ignore(case))]
+    Cos,
+    #[token("cosh", ignore(case))]
+    Cosh,
+    #[token("cot", ignore(case))]
+    Cot,
+    #[token("count", ignore(case))]
+    Count,
+    #[token("create", ignore(case))]
+    Create,
+    #[token("current_date", ignore(case))]
+    CurrentDate,
+    #[token("current_graph", ignore(case))]
+    CurrentGraph,
+    #[token("current_property_graph", ignore(case))]
+    CurrentPropertyGraph,
+    #[token("current_schema", ignore(case))]
+    CurrentSchema,
+    #[token("current_time", ignore(case))]
+    CurrentTime,
+    #[token("current_timestamp", ignore(case))]
+    CurrentTimestamp,
+    #[token("date", ignore(case))]
+    Date,
+    #[token("datetime", ignore(case))]
+    Datetime,
+    #[token("day", ignore(case))]
+    Day,
+    #[token("dec", ignore(case))]
+    Dec,
+    #[token("decimal", ignore(case))]
+    Decimal,
+    #[token("degrees", ignore(case))]
+    Degrees,
+    #[token("delete", ignore(case))]
+    Delete,
+    #[token("desc", ignore(case))]
+    Desc,
+    #[token("descending", ignore(case))]
+    Descending,
+    #[token("detach", ignore(case))]
+    Detach,
+    #[token("distinct", ignore(case))]
+    Distinct,
+    #[token("double", ignore(case))]
+    Double,
+    #[token("drop", ignore(case))]
+    Drop,
+    #[token("duration", ignore(case))]
+    Duration,
+    #[token("duration_between", ignore(case))]
+    DurationBetween,
+    #[token("element_id", ignore(case))]
+    ElementId,
+    #[token("else", ignore(case))]
+    Else,
+    #[token("end", ignore(case))]
+    End,
+    #[token("except", ignore(case))]
+    Except,
+    #[token("exists", ignore(case))]
+    Exists,
+    #[token("exp", ignore(case))]
+    Exp,
+    #[token("false", ignore(case))]
+    False,
+    #[token("filter", ignore(case))]
+    Filter,
+    #[token("finish", ignore(case))]
+    Finish,
+    #[token("float", ignore(case))]
+    Float,
+    #[token("float16", ignore(case))]
+    Float16,
+    #[token("float32", ignore(case))]
+    Float32,
+    #[token("float64", ignore(case))]
+    Float64,
+    #[token("float128", ignore(case))]
+    Float128,
+    #[token("float256", ignore(case))]
+    Float256,
+    #[token("floor", ignore(case))]
+    Floor,
+    #[token("for", ignore(case))]
+    For,
+    #[token("from", ignore(case))]
+    From,
+    #[token("group", ignore(case))]
+    Group,
+    #[token("having", ignore(case))]
+    Having,
+    #[token("home_graph", ignore(case))]
+    HomeGraph,
+    #[token("home_property_graph", ignore(case))]
+    HomePropertyGraph,
+    #[token("home_schema", ignore(case))]
+    HomeSchema,
+    #[token("hour", ignore(case))]
+    Hour,
+    #[token("if", ignore(case))]
+    If,
+    #[token("implies", ignore(case))]
+    Implies,
+    #[token("in", ignore(case))]
+    In,
+    #[token("insert", ignore(case))]
+    Insert,
+    #[token("int", ignore(case))]
+    Int,
+    #[token("integer", ignore(case))]
+    Integer,
+    #[token("int8", ignore(case))]
+    Int8,
+    #[token("integer8", ignore(case))]
+    Integer8,
+    #[token("int16", ignore(case))]
+    Int16,
+    #[token("integer16", ignore(case))]
+    Integer16,
+    #[token("int32", ignore(case))]
+    Int32,
+    #[token("interval", ignore(case))]
+    Interval,
+    #[token("is", ignore(case))]
+    Is,
+    #[token("integer32", ignore(case))]
+    Integer32,
+    #[token("int64", ignore(case))]
+    Int64,
+    #[token("integer64", ignore(case))]
+    Integer64,
+    #[token("int128", ignore(case))]
+    Int128,
+    #[token("integer128", ignore(case))]
+    Integer128,
+    #[token("int256", ignore(case))]
+    Int256,
+    #[token("integer256", ignore(case))]
+    Integer256,
+    #[token("intersect", ignore(case))]
+    Intersect,
+    #[token("leading", ignore(case))]
+    Leading,
+    #[token("left", ignore(case))]
+    Left,
+    #[token("let", ignore(case))]
+    Let,
+    #[token("like", ignore(case))]
+    Like,
+    #[token("limit", ignore(case))]
+    Limit,
+    #[token("list", ignore(case))]
+    List,
+    #[token("ln", ignore(case))]
+    Ln,
+    #[token("local", ignore(case))]
+    Local,
+    #[token("local_datetime", ignore(case))]
+    LocalDatetime,
+    #[token("local_time", ignore(case))]
+    LocalTime,
+    #[token("local_timestamp", ignore(case))]
+    LocalTimestamp,
+    #[token("log", ignore(case))]
+    Log,
+    #[token("log10", ignore(case))]
+    Log10,
+    #[token("lower", ignore(case))]
+    Lower,
+    #[token("ltrim", ignore(case))]
+    Ltrim,
+    #[token("match", ignore(case))]
+    Match,
+    #[token("max", ignore(case))]
+    Max,
+    #[token("min", ignore(case))]
+    Min,
+    #[token("minute", ignore(case))]
+    Minute,
+    #[token("mod", ignore(case))]
+    Mod,
+    #[token("month", ignore(case))]
+    Month,
+    #[token("next", ignore(case))]
+    Next,
+    #[token("nodetach", ignore(case))]
+    Nodetach,
+    #[token("normalize", ignore(case))]
+    Normalize,
+    #[token("not", ignore(case))]
+    Not,
+    #[token("nothing", ignore(case))]
+    Nothing,
+    #[token("null", ignore(case))]
+    Null,
+    #[token("nulls", ignore(case))]
+    Nulls,
+    #[token("nullif", ignore(case))]
+    Nullif,
+    #[token("octet_length", ignore(case))]
+    OctetLength,
+    #[token("of", ignore(case))]
+    Of,
+    #[token("offset", ignore(case))]
+    Offset,
+    #[token("optional", ignore(case))]
+    Optional,
+    #[token("or", ignore(case))]
+    Or,
+    #[token("order", ignore(case))]
+    Order,
+    #[token("otherwise", ignore(case))]
+    Otherwise,
+    #[token("parameter", ignore(case))]
+    Parameter,
+    #[token("parameters", ignore(case))]
+    Parameters,
+    #[token("path", ignore(case))]
+    Path,
+    #[token("path_length", ignore(case))]
+    PathLength,
+    #[token("paths", ignore(case))]
+    Paths,
+    #[token("percentile_cont", ignore(case))]
+    PercentileCont,
+    #[token("percentile_disc", ignore(case))]
+    PercentileDisc,
+    #[token("power", ignore(case))]
+    Power,
+    #[token("precision", ignore(case))]
+    Precision,
+    #[token("property_exists", ignore(case))]
+    PropertyExists,
+    #[token("radians", ignore(case))]
+    Radians,
+    #[token("real", ignore(case))]
+    Real,
+    #[token("record", ignore(case))]
+    Record,
+    #[token("remove", ignore(case))]
+    Remove,
+    #[token("replace", ignore(case))]
+    Replace,
+    #[token("reset", ignore(case))]
+    Reset,
+    #[token("return", ignore(case))]
+    Return,
+    #[token("right", ignore(case))]
+    Right,
+    #[token("rollback", ignore(case))]
+    Rollback,
+    #[token("rtrim", ignore(case))]
+    Rtrim,
+    #[token("same", ignore(case))]
+    Same,
+    #[token("schema", ignore(case))]
+    Schema,
+    #[token("second", ignore(case))]
+    Second,
+    #[token("select", ignore(case))]
+    Select,
+    #[token("session", ignore(case))]
+    Session,
+    #[token("session_user", ignore(case))]
+    SessionUser,
+    #[token("set", ignore(case))]
+    Set,
+    #[token("signed", ignore(case))]
+    Signed,
+    #[token("sin", ignore(case))]
+    Sin,
+    #[token("sinh", ignore(case))]
+    Sinh,
+    #[token("size", ignore(case))]
+    Size,
+    #[token("skip", ignore(case))]
+    Skip,
+    #[token("small", ignore(case))]
+    Small,
+    #[token("smallint", ignore(case))]
+    Smallint,
+    #[token("sqrt", ignore(case))]
+    Sqrt,
+    #[token("start", ignore(case))]
+    Start,
+    #[token("stddev_pop", ignore(case))]
+    StddevPop,
+    #[token("stddev_samp", ignore(case))]
+    StddevSamp,
+    #[token("string", ignore(case))]
+    String,
+    #[token("sum", ignore(case))]
+    Sum,
+    #[token("tan", ignore(case))]
+    Tan,
+    #[token("tanh", ignore(case))]
+    Tanh,
+    #[token("then", ignore(case))]
+    Then,
+    #[token("time", ignore(case))]
+    Time,
+    #[token("timestamp", ignore(case))]
+    Timestamp,
+    #[token("trailing", ignore(case))]
+    Trailing,
+    #[token("trim", ignore(case))]
+    Trim,
+    #[token("true", ignore(case))]
+    True,
+    #[token("typed", ignore(case))]
+    Typed,
+    #[token("ubigint", ignore(case))]
+    Ubigint,
+    #[token("uint", ignore(case))]
+    Uint,
+    #[token("uint8", ignore(case))]
+    Uint8,
+    #[token("uint16", ignore(case))]
+    Uint16,
+    #[token("uint32", ignore(case))]
+    Uint32,
+    #[token("uint64", ignore(case))]
+    Uint64,
+    #[token("uint128", ignore(case))]
+    Uint128,
+    #[token("uint256", ignore(case))]
+    Uint256,
+    #[token("union", ignore(case))]
+    Union,
+    #[token("unknown", ignore(case))]
+    Unknown,
+    #[token("unsigned", ignore(case))]
+    Unsigned,
+    #[token("upper", ignore(case))]
+    Upper,
+    #[token("use", ignore(case))]
+    Use,
+    #[token("usmallint", ignore(case))]
+    Usmallint,
+    #[token("value", ignore(case))]
+    Value,
+    #[token("varbinary", ignore(case))]
+    Varbinary,
+    #[token("varchar", ignore(case))]
+    Varchar,
+    #[token("variable", ignore(case))]
+    Variable,
+    #[token("when", ignore(case))]
+    When,
+    #[token("where", ignore(case))]
+    Where,
+    #[token("with", ignore(case))]
+    With,
+    #[token("xor", ignore(case))]
+    Xor,
+    #[token("year", ignore(case))]
+    Year,
+    #[token("yield", ignore(case))]
+    Yield,
+    #[token("zoned", ignore(case))]
+    Zoned,
+    #[token("zoned_datetime", ignore(case))]
+    ZonedDatetime,
+    #[token("zoned_time", ignore(case))]
+    ZonedTime,
 
-    #[token("acyclic", |_| NonReservedWord::Acyclic, ignore(case))]
-    #[token("binding", |_| NonReservedWord::Binding, ignore(case))]
-    #[token("bindings", |_| NonReservedWord::Bindings, ignore(case))]
-    #[token("connecting", |_| NonReservedWord::Connecting, ignore(case))]
-    #[token("destination", |_| NonReservedWord::Destination, ignore(case))]
-    #[token("different", |_| NonReservedWord::Different, ignore(case))]
-    #[token("directed", |_| NonReservedWord::Directed, ignore(case))]
-    #[token("edge", |_| NonReservedWord::Edge, ignore(case))]
-    #[token("edges", |_| NonReservedWord::Edges, ignore(case))]
-    #[token("element", |_| NonReservedWord::Element, ignore(case))]
-    #[token("elements", |_| NonReservedWord::Elements, ignore(case))]
-    #[token("first", |_| NonReservedWord::First, ignore(case))]
-    #[token("graph", |_| NonReservedWord::Graph, ignore(case))]
-    #[token("groups", |_| NonReservedWord::Groups, ignore(case))]
-    #[token("keep", |_| NonReservedWord::Keep, ignore(case))]
-    #[token("label", |_| NonReservedWord::Label, ignore(case))]
-    #[token("labeled", |_| NonReservedWord::Labeled, ignore(case))]
-    #[token("labels", |_| NonReservedWord::Labels, ignore(case))]
-    #[token("last", |_| NonReservedWord::Last, ignore(case))]
-    #[token("nfc", |_| NonReservedWord::Nfc, ignore(case))]
-    #[token("nfd", |_| NonReservedWord::Nfd, ignore(case))]
-    #[token("nfkc", |_| NonReservedWord::Nfkc, ignore(case))]
-    #[token("nfkd", |_| NonReservedWord::Nfkd, ignore(case))]
-    #[token("no", |_| NonReservedWord::No, ignore(case))]
-    #[token("node", |_| NonReservedWord::Node, ignore(case))]
-    #[token("normalized", |_| NonReservedWord::Normalized, ignore(case))]
-    #[token("only", |_| NonReservedWord::Only, ignore(case))]
-    #[token("ordinality", |_| NonReservedWord::Ordinality, ignore(case))]
-    #[token("property", |_| NonReservedWord::Property, ignore(case))]
-    #[token("read", |_| NonReservedWord::Read, ignore(case))]
-    #[token("relationship", |_| NonReservedWord::Relationship, ignore(case))]
-    #[token("relationships", |_| NonReservedWord::Relationships, ignore(case))]
-    #[token("repeatable", |_| NonReservedWord::Repeatable, ignore(case))]
-    #[token("shortest", |_| NonReservedWord::Shortest, ignore(case))]
-    #[token("simple", |_| NonReservedWord::Simple, ignore(case))]
-    #[token("source", |_| NonReservedWord::Source, ignore(case))]
-    #[token("table", |_| NonReservedWord::Table, ignore(case))]
-    #[token("temp", |_| NonReservedWord::Temp, ignore(case))]
-    #[token("to", |_| NonReservedWord::To, ignore(case))]
-    #[token("trail", |_| NonReservedWord::Trail, ignore(case))]
-    #[token("transaction", |_| NonReservedWord::Transaction, ignore(case))]
-    #[token("type", |_| NonReservedWord::Type, ignore(case))]
-    #[token("undirected", |_| NonReservedWord::Undirected, ignore(case))]
-    #[token("vertex", |_| NonReservedWord::Vertex, ignore(case))]
-    #[token("walk", |_| NonReservedWord::Walk, ignore(case))]
-    #[token("without", |_| NonReservedWord::Without, ignore(case))]
-    #[token("write", |_| NonReservedWord::Write, ignore(case))]
-    #[token("zone", |_| NonReservedWord::Zone, ignore(case))]
-    NonReservedWord(NonReservedWord),
+    // The followings are *pre-reserved words*.
+    #[token("abstract", ignore(case))]
+    Abstract,
+    #[token("aggregate", ignore(case))]
+    Aggregate,
+    #[token("aggregates", ignore(case))]
+    Aggregates,
+    #[token("alter", ignore(case))]
+    Alter,
+    #[token("catalog", ignore(case))]
+    Catalog,
+    #[token("clear", ignore(case))]
+    Clear,
+    #[token("clone", ignore(case))]
+    Clone,
+    #[token("constraint", ignore(case))]
+    Constraint,
+    #[token("current_role", ignore(case))]
+    CurrentRole,
+    #[token("current_user", ignore(case))]
+    CurrentUser,
+    #[token("data", ignore(case))]
+    Data,
+    #[token("directory", ignore(case))]
+    Directory,
+    #[token("dryrun", ignore(case))]
+    Dryrun,
+    #[token("exact", ignore(case))]
+    Exact,
+    #[token("existing", ignore(case))]
+    Existing,
+    #[token("function", ignore(case))]
+    Function,
+    #[token("gqlstatus", ignore(case))]
+    Gqlstatus,
+    #[token("grant", ignore(case))]
+    Grant,
+    #[token("instant", ignore(case))]
+    Instant,
+    #[token("infinity", ignore(case))]
+    Infinity,
+    #[token("number", ignore(case))]
+    Number,
+    #[token("numeric", ignore(case))]
+    Numeric,
+    #[token("on", ignore(case))]
+    On,
+    #[token("open", ignore(case))]
+    Open,
+    #[token("partition", ignore(case))]
+    Partition,
+    #[token("procedure", ignore(case))]
+    Procedure,
+    #[token("product", ignore(case))]
+    Product,
+    #[token("project", ignore(case))]
+    Project,
+    #[token("query", ignore(case))]
+    Query,
+    #[token("records", ignore(case))]
+    Records,
+    #[token("reference", ignore(case))]
+    Reference,
+    #[token("rename", ignore(case))]
+    Rename,
+    #[token("revoke", ignore(case))]
+    Revoke,
+    #[token("substring", ignore(case))]
+    Substring,
+    #[token("system_user", ignore(case))]
+    SystemUser,
+    #[token("temporal", ignore(case))]
+    Temporal,
+    #[token("unique", ignore(case))]
+    Unique,
+    #[token("unit", ignore(case))]
+    Unit,
+    #[token("values", ignore(case))]
+    Values,
+    #[token("whitespace", ignore(case))]
+    Whitespace,
+
+    // The followings are *non-reserved words*.
+    #[token("acyclic", ignore(case))]
+    Acyclic,
+    #[token("binding", ignore(case))]
+    Binding,
+    #[token("bindings", ignore(case))]
+    Bindings,
+    #[token("connecting", ignore(case))]
+    Connecting,
+    #[token("destination", ignore(case))]
+    Destination,
+    #[token("different", ignore(case))]
+    Different,
+    #[token("directed", ignore(case))]
+    Directed,
+    #[token("edge", ignore(case))]
+    Edge,
+    #[token("edges", ignore(case))]
+    Edges,
+    #[token("element", ignore(case))]
+    Element,
+    #[token("elements", ignore(case))]
+    Elements,
+    #[token("first", ignore(case))]
+    First,
+    #[token("graph", ignore(case))]
+    Graph,
+    #[token("groups", ignore(case))]
+    Groups,
+    #[token("keep", ignore(case))]
+    Keep,
+    #[token("label", ignore(case))]
+    Label,
+    #[token("labeled", ignore(case))]
+    Labeled,
+    #[token("labels", ignore(case))]
+    Labels,
+    #[token("last", ignore(case))]
+    Last,
+    #[token("nfc", ignore(case))]
+    Nfc,
+    #[token("nfd", ignore(case))]
+    Nfd,
+    #[token("nfkc", ignore(case))]
+    Nfkc,
+    #[token("nfkd", ignore(case))]
+    Nfkd,
+    #[token("no", ignore(case))]
+    No,
+    #[token("node", ignore(case))]
+    Node,
+    #[token("normalized", ignore(case))]
+    Normalized,
+    #[token("only", ignore(case))]
+    Only,
+    #[token("ordinality", ignore(case))]
+    Ordinality,
+    #[token("property", ignore(case))]
+    Property,
+    #[token("read", ignore(case))]
+    Read,
+    #[token("relationship", ignore(case))]
+    Relationship,
+    #[token("relationships", ignore(case))]
+    Relationships,
+    #[token("repeatable", ignore(case))]
+    Repeatable,
+    #[token("shortest", ignore(case))]
+    Shortest,
+    #[token("simple", ignore(case))]
+    Simple,
+    #[token("source", ignore(case))]
+    Source,
+    #[token("table", ignore(case))]
+    Table,
+    #[token("temp", ignore(case))]
+    Temp,
+    #[token("to", ignore(case))]
+    To,
+    #[token("trail", ignore(case))]
+    Trail,
+    #[token("transaction", ignore(case))]
+    Transaction,
+    #[token("type", ignore(case))]
+    Type,
+    #[token("undirected", ignore(case))]
+    Undirected,
+    #[token("vertex", ignore(case))]
+    Vertex,
+    #[token("walk", ignore(case))]
+    Walk,
+    #[token("without", ignore(case))]
+    Without,
+    #[token("write", ignore(case))]
+    Write,
+    #[token("zone", ignore(case))]
+    Zone,
 
     // The followings are *delimiter tokens*.
     #[token("]->")]
@@ -368,10 +698,6 @@ pub(crate) enum TokenKind<'a> {
     Concatenation,
     #[token("::")]
     DoubleColon,
-    #[token("$$")]
-    DoubleDollar,
-    #[token("--")]
-    DoubleMinus,
     #[token("..")]
     DoublePeriod,
     #[token(">=")]
@@ -420,8 +746,6 @@ pub(crate) enum TokenKind<'a> {
     TildeRightArrow,
     #[token("~/")]
     TildeSlash,
-    #[token("//")]
-    DoubleSolidus,
 
     // The followings are *GQL special characters*.
     #[token("&")]
@@ -432,20 +756,12 @@ pub(crate) enum TokenKind<'a> {
     Colon,
     #[token(",")]
     Comma,
-    #[token("@")]
-    CommercialAt,
-    #[token("$")]
-    Dollar,
-    #[token("\"")]
-    DoubleQuote,
     #[token("=")]
     Equals,
     #[token("!")]
     Exclamation,
     #[token(">")]
     RightAngleBracket,
-    #[token("`")]
-    GraveAccent,
     #[token("{")]
     LeftBrace,
     #[token("[")]
@@ -464,10 +780,6 @@ pub(crate) enum TokenKind<'a> {
     Plus,
     #[token("?")]
     QuestionMark,
-    #[token("'")]
-    Quote,
-    #[token("\\")]
-    ReverseSolidus,
     #[token("}")]
     RightBrace,
     #[token("]")]
@@ -483,341 +795,66 @@ pub(crate) enum TokenKind<'a> {
 
     // The followings are identifiers and literals.
     #[regex(r"[\p{XID_Start}\p{Pc}][\p{XID_Continue}]*")]
-    RegularIdent(&'a str),
+    RegularIdentifier(&'a str),
+    #[token("$", handle_parameter)]
+    GeneralParameterReference(ParameterName<'a>),
+    #[token("$$", handle_parameter)]
+    SubstitutedParameterReference(ParameterName<'a>),
+    #[regex(r"[0-9](_?[0-9])*")]
+    UnsignedDecimalInteger(&'a str),
+    #[regex(r"0o(_?[0-7])+")]
+    UnsignedOctalInteger(&'a str),
+    #[regex(r"0x(_?[0-9a-fA-F])+")]
+    UnsignedHexInteger(&'a str),
+    #[regex(r"0b(_?[01])+")]
+    UnsignedBinaryInteger(&'a str),
 
     // The followings are quoted character sequences.
+    #[regex(r#"'|"|`|@"#, handle_quoted)]
+    Quoted(Quoted<'a>),
+
+    // Bracketed comments. This token should never be produced.
+    #[regex(r"/\*", handle_comment)]
+    _BracketedComment,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Logos)]
+#[logos(error = LexerError)]
+pub(crate) enum ParameterName<'a> {
+    #[regex(r#""|`|@"|@`"#, handle_quoted)]
+    Delimited(Quoted<'a>),
+    #[regex(r"[\p{XID_Continue}]+")]
+    Extended(&'a str),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Logos)]
+#[logos(error = LexerError)]
+pub(crate) enum Quoted<'a> {
     #[regex(r#"'([^'\\]|(\\[\\'"`tbnrf])|(\\u[0-9a-fA-F]{4})|(\\U[0-9a-fA-F]{6})|'')*'"#, |lex| strip::<false>(lex.slice()))]
-    SingleQuoted(&'a str),
-    #[regex(r#"@'([^']|'')*'"#, |lex| strip::<true>(lex.slice()))]
-    UnescapedSingleQuoted(&'a str),
+    Single(&'a str),
     #[regex(r#""([^"\\]|(\\[\\'"`tbnrf])|(\\u[0-9a-fA-F]{4})|(\\U[0-9a-fA-F]{6})|"")*""#, |lex| strip::<false>(lex.slice()))]
-    DoubleQuoted(&'a str),
-    #[regex(r#"@"([^"]|"")*""#, |lex| strip::<true>(lex.slice()))]
-    UnescapedDoubleQuoted(&'a str),
+    Double(&'a str),
     #[regex(r#"`([^`\\]|(\\[\\'"`tbnrf])|(\\u[0-9a-fA-F]{4})|(\\U[0-9a-fA-F]{6})|``)*`"#, |lex| strip::<false>(lex.slice()))]
-    AccentQuoted(&'a str),
+    Accent(&'a str),
+    #[regex(r#"@'([^']|'')*'"#, |lex| strip::<true>(lex.slice()))]
+    UnescapedSingle(&'a str),
+    #[regex(r#"@"([^"]|"")*""#, |lex| strip::<true>(lex.slice()))]
+    UnescapedDouble(&'a str),
     #[regex(r#"@`([^`]|``)*`"#, |lex| strip::<true>(lex.slice()))]
-    UnescapedAccentQuoted(&'a str),
+    UnescapedAccent(&'a str),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub(crate) enum ReservedWord {
-    Abs,
-    Acos,
-    All,
-    AllDifferent,
-    And,
-    Any,
-    Array,
-    As,
-    Asc,
-    Ascending,
-    Asin,
-    At,
-    Atan,
-    Avg,
-    Big,
-    Bigint,
-    Binary,
-    Bool,
-    Boolean,
-    Both,
-    Btrim,
-    By,
-    ByteLength,
-    Bytes,
-    Call,
-    Cardinality,
-    Case,
-    Cast,
-    Ceil,
-    Ceiling,
-    Char,
-    CharLength,
-    CharacterLength,
-    Characteristics,
-    Close,
-    Coalesce,
-    CollectList,
-    Commit,
-    Copy,
-    Cos,
-    Cosh,
-    Cot,
-    Count,
-    Create,
-    CurrentDate,
-    CurrentGraph,
-    CurrentPropertyGraph,
-    CurrentSchema,
-    CurrentTime,
-    CurrentTimestamp,
-    Date,
-    Datetime,
-    Day,
-    Dec,
-    Decimal,
-    Degrees,
-    Delete,
-    Desc,
-    Descending,
-    Detach,
-    Distinct,
-    Double,
-    Drop,
-    Duration,
-    DurationBetween,
-    ElementId,
-    Else,
-    End,
-    Except,
-    Exists,
-    Exp,
-    False,
-    Filter,
-    Finish,
-    Float,
-    Float16,
-    Float32,
-    Float64,
-    Float128,
-    Float256,
-    Floor,
-    For,
-    From,
-    Group,
-    Having,
-    HomeGraph,
-    HomePropertyGraph,
-    HomeSchema,
-    Hour,
-    If,
-    Implies,
-    In,
-    Insert,
-    Int,
-    Integer,
-    Int8,
-    Integer8,
-    Int16,
-    Integer16,
-    Int32,
-    Interval,
-    Is,
-    Integer32,
-    Int64,
-    Integer64,
-    Int128,
-    Integer128,
-    Int256,
-    Integer256,
-    Intersect,
-    Leading,
-    Left,
-    Let,
-    Like,
-    Limit,
-    List,
-    Ln,
-    Local,
-    LocalDatetime,
-    LocalTime,
-    LocalTimestamp,
-    Log,
-    Log10,
-    Lower,
-    Ltrim,
-    Match,
-    Max,
-    Min,
-    Minute,
-    Mod,
-    Month,
-    Next,
-    Nodetach,
-    Normalize,
-    Not,
-    Nothing,
-    Null,
-    Nulls,
-    Nullif,
-    OctetLength,
-    Of,
-    Offset,
-    Optional,
-    Or,
-    Order,
-    Otherwise,
-    Parameter,
-    Parameters,
-    Path,
-    PathLength,
-    Paths,
-    PercentileCont,
-    PercentileDisc,
-    Power,
-    Precision,
-    PropertyExists,
-    Radians,
-    Real,
-    Record,
-    Remove,
-    Replace,
-    Reset,
-    Return,
-    Right,
-    Rollback,
-    Rtrim,
-    Same,
-    Schema,
-    Second,
-    Select,
-    Session,
-    SessionUser,
-    Set,
-    Signed,
-    Sin,
-    Sinh,
-    Size,
-    Skip,
-    Small,
-    Smallint,
-    Sqrt,
-    Start,
-    StddevPop,
-    StddevSamp,
-    String,
-    Sum,
-    Tan,
-    Tanh,
-    Then,
-    Time,
-    Timestamp,
-    Trailing,
-    Trim,
-    True,
-    Typed,
-    Ubigint,
-    Uint,
-    Uint8,
-    Uint16,
-    Uint32,
-    Uint64,
-    Uint128,
-    Uint256,
-    Union,
-    Unknown,
-    Unsigned,
-    Upper,
-    Use,
-    Usmallint,
-    Value,
-    Varbinary,
-    Varchar,
-    Variable,
-    When,
-    Where,
-    With,
-    Xor,
-    Year,
-    Yield,
-    Zoned,
-    ZonedDatetime,
-    ZonedTime,
-
-    // The followings are *pre-reserved words*.
-    Abstract,
-    Aggregate,
-    Aggregates,
-    Alter,
-    Catalog,
-    Clear,
-    Clone,
-    Constraint,
-    CurrentRole,
-    CurrentUser,
-    Data,
-    Directory,
-    Dryrun,
-    Exact,
-    Existing,
-    Function,
-    Gqlstatus,
-    Grant,
-    Instant,
-    Infinity,
-    Number,
-    Numeric,
-    On,
-    Open,
-    Partition,
-    Procedure,
-    Product,
-    Project,
-    Query,
-    Records,
-    Reference,
-    Rename,
-    Revoke,
-    Substring,
-    SystemUser,
-    Temporal,
-    Unique,
-    Unit,
-    Values,
-    Whitespace,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub(crate) enum NonReservedWord {
-    Acyclic,
-    Binding,
-    Bindings,
-    Connecting,
-    Destination,
-    Different,
-    Directed,
-    Edge,
-    Edges,
-    Element,
-    Elements,
-    First,
-    Graph,
-    Groups,
-    Keep,
-    Label,
-    Labeled,
-    Labels,
-    Last,
-    Nfc,
-    Nfd,
-    Nfkc,
-    Nfkd,
-    No,
-    Node,
-    Normalized,
-    Only,
-    Ordinality,
-    Property,
-    Read,
-    Relationship,
-    Relationships,
-    Repeatable,
-    Shortest,
-    Simple,
-    Source,
-    Table,
-    Temp,
-    To,
-    Trail,
-    Transaction,
-    Type,
-    Undirected,
-    Vertex,
-    Walk,
-    Without,
-    Write,
-    Zone,
+impl<'a> Quoted<'a> {
+    pub(crate) fn unescape(&self) -> Option<Cow<'a, str>> {
+        match self {
+            Self::Single(s) => unescape::<'\'', false>(s),
+            Self::Double(s) => unescape::<'"', false>(s),
+            Self::Accent(s) => unescape::<'`', false>(s),
+            Self::UnescapedSingle(s) => unescape::<'\'', true>(s),
+            Self::UnescapedDouble(s) => unescape::<'"', true>(s),
+            Self::UnescapedAccent(s) => unescape::<'`', true>(s),
+        }
+    }
 }
 
 /// Return the input with the first (or with '@' if `NO_ESCAPE`) and last characters removed.
@@ -829,5 +866,117 @@ fn strip<const NO_ESCAPE: bool>(input: &str) -> &str {
         } else {
             input.get_unchecked(1..(input.len() - 1))
         }
+    }
+}
+
+fn handle_comment<'a>(lex: &mut LogosLexer<'a, TokenKind<'a>>) -> Result<Skip, LexerError> {
+    let remainder = lex.remainder();
+    if let Some(len) = remainder.find("*/") {
+        lex.bump(len + 2);
+        Ok(Skip)
+    } else {
+        lex.bump(remainder.len());
+        Err(LexerError::IncompleteComment)
+    }
+}
+
+fn handle_quoted<'a, T>(lex: &mut LogosLexer<'a, T>) -> Result<Quoted<'a>, LexerError>
+where
+    T: Logos<'a, Source = str>,
+{
+    // SAFETY: `input` should be valid.
+    let span = lex.span();
+    let input = unsafe { lex.source().get_unchecked(span.start..) };
+    let mut quoted_lex = Quoted::lexer(input);
+    // SAFETY: `input` should have at least `span.len()` character.
+    let token = unsafe { quoted_lex.next().unwrap_unchecked() };
+    lex.bump(quoted_lex.span().len() - span.len());
+    token
+}
+
+fn handle_parameter<'a>(
+    lex: &mut LogosLexer<'a, TokenKind<'a>>,
+) -> Result<ParameterName<'a>, LexerError> {
+    let mut param_lex = ParameterName::lexer(lex.remainder());
+    let token = param_lex.next();
+    lex.bump(param_lex.span().len());
+    token.ok_or(LexerError::InvalidToken)?
+}
+
+#[cfg(all(test, feature = "std"))]
+mod tests {
+    use logos::Logos;
+
+    use super::TokenKind;
+    use crate::lexer::{LexerError, ParameterName, Quoted};
+
+    #[test]
+    fn test_simple_comment() {
+        let mut lexer = TokenKind::lexer("// This is a comment");
+        assert_eq!(lexer.next(), None);
+        let mut lexer = TokenKind::lexer("-- This is a comment");
+        assert_eq!(lexer.next(), None);
+    }
+
+    #[test]
+    fn test_bracketed_comment() {
+        let mut lexer = TokenKind::lexer("/* This is a comment */");
+        assert_eq!(lexer.next(), None);
+        let mut lexer = TokenKind::lexer("/***/");
+        assert_eq!(lexer.next(), None);
+        let mut lexer = TokenKind::lexer("/***");
+        assert_eq!(lexer.next(), Some(Err(LexerError::IncompleteComment)));
+        assert_eq!(lexer.next(), None);
+    }
+
+    #[test]
+    fn test_quoted() {
+        let lexer = TokenKind::lexer(r#"'ab\ncd'"#);
+        let tokens: Vec<_> = lexer.collect();
+        assert_eq!(tokens, vec![Ok(TokenKind::Quoted(Quoted::Single(
+            r"ab\ncd"
+        )))]);
+
+        let lexer = TokenKind::lexer(r#""ab\ncd""#);
+        let tokens: Vec<_> = lexer.collect();
+        assert_eq!(tokens, vec![Ok(TokenKind::Quoted(Quoted::Double(
+            r"ab\ncd"
+        )))]);
+
+        let lexer = TokenKind::lexer(r#"`ab\ncd`"#);
+        let tokens: Vec<_> = lexer.collect();
+        assert_eq!(tokens, vec![Ok(TokenKind::Quoted(Quoted::Accent(
+            r"ab\ncd"
+        )))]);
+    }
+
+    #[test]
+    fn test_parameter_name() {
+        let lexer = TokenKind::lexer(r#"$_abc"#);
+        let tokens: Vec<_> = lexer.collect();
+        assert_eq!(tokens, vec![Ok(TokenKind::GeneralParameterReference(
+            ParameterName::Extended("_abc")
+        ))]);
+
+        let lexer = TokenKind::lexer(r#"$$_abc"#);
+        let tokens: Vec<_> = lexer.collect();
+        assert_eq!(tokens, vec![Ok(TokenKind::SubstitutedParameterReference(
+            ParameterName::Extended("_abc")
+        ))]);
+
+        let lexer = TokenKind::lexer(r#"$@"a""bc""#);
+        let tokens: Vec<_> = lexer.collect();
+        assert_eq!(tokens, vec![Ok(TokenKind::GeneralParameterReference(
+            ParameterName::Delimited(Quoted::UnescapedDouble("a\"\"bc"))
+        ))]);
+
+        let lexer = TokenKind::lexer(r#"$'abc'"#);
+        let tokens: Vec<_> = lexer.collect();
+        // Single quoted sequence is not allowed in parameter reference.
+        assert_eq!(tokens, vec![
+            Err(LexerError::InvalidToken),
+            Ok(TokenKind::RegularIdentifier("abc")),
+            Err(LexerError::InvalidToken)
+        ]);
     }
 }

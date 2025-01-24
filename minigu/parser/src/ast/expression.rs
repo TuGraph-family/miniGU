@@ -1,5 +1,6 @@
-//! AST definitions for *value expressions*.
+//! AST definitions for *Value expressions and specifications*.
 
+use crate::ast::element::ListTypeName;
 use crate::ast::lexical::{BooleanLiteral, Ident};
 use crate::macros::{base, ext};
 use crate::{Box, Vec};
@@ -30,36 +31,51 @@ pub enum Expression<'a> {
         right: BooleanLiteral,
     },
     Variable(Ident<'a>),
+    Value(Value),
     Invalid,
 }
 
-/// Binary operator.
+/// Binary operators.
 #[apply(ext)]
 pub enum BinaryOp {
-    /// numeric/datetime/duration addition operator, i.e., '+'.
+    /// Addition, e.g., `a + b`.
     Add,
-    /// numeric/datetime/duration subtraction operator, i.e., '-'.
+    /// Subtraction, e.g., `a - b`.
     Sub,
-    /// numeric/duration multiplication operator, i.e., '*'.
+    /// Multiplication, e.g., `a * b`.
     Mul,
-    /// numeric/duration division operator, i.e., '/'.
+    /// Division, e.g., `a / b`.
     Div,
-    /// string/list/path concatenation operator, i.e., '||'.
+    /// Concatenation, e.g., `a || b`.
     Concat,
-    /// boolean OR operator.
+    /// OR, e.g., `a OR b`.
     Or,
-    /// boolean XOR operator.
+    /// XOR, e.g., `a XOR b`.
     Xor,
-    /// boolean AND operator.
+    /// AND, e.g., `a AND b`.
     And,
+    /// Less than, e.g., `a < b`.
+    Lt,
+    /// Less than or equal, e.g., `a <= b`.
+    Le,
+    /// Greater than, e.g., `a > b`.
+    Gt,
+    /// Greater than or equal, e.g., `a >= b`.
+    Ge,
+    /// Equal, e.g., `a = b`.
+    Eq,
+    /// Not equal, e.g., `a <> b`.
+    Ne,
 }
 
-/// Unary operator.
+/// Unary operators.
 #[apply(ext)]
 pub enum UnaryOp {
-    /// The numeric negation operator, i.e., '-'.
-    Neg,
-    /// The boolean NOT operator.
+    /// Plus, e.g., `+a`.
+    Plus,
+    /// Minus, e.g., `-a`.
+    Minus,
+    /// Not, e.g., `NOT a`.
     Not,
 }
 
@@ -74,9 +90,11 @@ pub enum BuiltinFunction<'a> {
 }
 
 #[apply(base)]
-pub struct ListConstructor<'a>(
-    #[cfg_attr(feature = "serde", serde(borrow))] pub Vec<Expression<'a>>,
-);
+pub struct ListConstructor<'a> {
+    pub type_name: Option<ListTypeName>,
+    #[cfg_attr(feature = "serde", serde(borrow))]
+    pub values: Vec<Expression<'a>>,
+}
 
 #[apply(base)]
 pub struct RecordConstructor<'a>(#[cfg_attr(feature = "serde", serde(borrow))] pub Vec<Field<'a>>);
@@ -91,4 +109,10 @@ pub struct Field<'a> {
 #[apply(base)]
 pub enum Value {
     SessionUser,
+}
+
+#[apply(ext)]
+pub enum SetQuantifier {
+    Distinct,
+    All,
 }

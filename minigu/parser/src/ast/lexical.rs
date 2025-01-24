@@ -1,10 +1,10 @@
 //! AST definitions for *lexical elements*.
 
-use super::expression::RecordConstructor;
 use super::ListConstructor;
+use super::expression::RecordConstructor;
+use crate::Cow;
 use crate::macros::{base, ext};
 use crate::span::Span;
-use crate::Cow;
 
 /// An identifier in the query string.
 #[apply(base)]
@@ -15,14 +15,15 @@ pub struct Ident<'a> {
 
 #[apply(base)]
 pub enum Literal<'a> {
-    Numeric(&'a str),
+    #[cfg_attr(feature = "serde", serde(borrow))]
+    Numeric(UnsignedNumericLiteral<'a>),
     Boolean(BooleanLiteral),
     String(StringLiteral<'a>),
     Temporal(TemporalLiteral<'a>),
     Duration(DurationLiteral<'a>),
-    Null,
     List(ListConstructor<'a>),
     Record(RecordConstructor<'a>),
+    Null,
 }
 
 #[apply(base)]
@@ -69,4 +70,24 @@ pub struct DurationLiteral<'a> {
 pub enum DurationLiteralKind {
     Duration,
     SqlInterval,
+}
+
+#[apply(ext)]
+pub enum UnsignedNumericLiteral<'a> {
+    #[cfg_attr(feature = "serde", serde(borrow))]
+    Integer(UnsignedInteger<'a>),
+}
+
+#[apply(ext)]
+pub enum UnsignedIntegerKind {
+    Binary,
+    Octal,
+    Decimal,
+    Hex,
+}
+
+#[apply(ext)]
+pub struct UnsignedInteger<'a> {
+    pub kind: UnsignedIntegerKind,
+    pub integer: &'a str,
 }
