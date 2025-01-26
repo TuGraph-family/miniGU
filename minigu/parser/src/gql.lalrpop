@@ -19,12 +19,14 @@ extern {
         "unsigned octal integer" => Token { kind: TokenKind::UnsignedOctalInteger(<&'a str>), .. },
         "unsigned hex integer" => Token { kind: TokenKind::UnsignedHexInteger(<&'a str>), .. },
         "unsigned binary integer" => Token { kind: TokenKind::UnsignedBinaryInteger(<&'a str>), .. },
-        "double quoted" => Token { kind: TokenKind::DoubleQuoted(<&'a str>), .. },
-        "single quoted" => Token { kind: TokenKind::SingleQuoted(<&'a str>), .. },
-        "accent quoted" => Token { kind: TokenKind::AccentQuoted(<&'a str>), .. },
-        "unescaped double quoted" => Token { kind: TokenKind::UnescapedDoubleQuoted(<&'a str>), .. },
-        "unescaped single quoted" => Token { kind: TokenKind::UnescapedSingleQuoted(<&'a str>), .. },
-        "unescaped accent quoted" => Token { kind: TokenKind::UnescapedAccentQuoted(<&'a str>), .. },
+        "double quoted" => Token { kind: TokenKind::Quoted(Quoted::Double(<&'a str>)), .. },
+        "single quoted" => Token { kind: TokenKind::Quoted(Quoted::Single(<&'a str>)), .. },
+        "accent quoted" => Token { kind: TokenKind::Quoted(Quoted::Accent(<&'a str>)), .. },
+        "unescaped double quoted" => Token { kind: TokenKind::Quoted(Quoted::UnescapedDouble(<&'a str>)), .. },
+        "unescaped single quoted" => Token { kind: TokenKind::Quoted(Quoted::UnescapedSingle(<&'a str>)), .. },
+        "unescaped accent quoted" => Token { kind: TokenKind::Quoted(Quoted::UnescapedAccent(<&'a str>)), .. },
+        "general parameter reference" => Token { kind: TokenKind::GeneralParameterReference(<ParameterName<'a>>), .. },
+        "substituted parameter reference" => Token { kind: TokenKind::SubstitutedParameterReference(<ParameterName<'a>>), .. },
         
         "]->" => Token { kind: TokenKind::BracketRightArrow, .. },
         "]~>" => Token { kind: TokenKind::BracketTildeRightArrow, .. },
@@ -567,12 +569,8 @@ UnsignedValueSpecification = {
 
 GeneralValueSpecification: Value = {
     "SESSION_USER" => Value::SessionUser,
+    "general parameter reference" => Value::Parameter(<>.unescape())
 }
-
-// 20.4 <dynamic parameter specification>
-// DynamicParameterSpecification = {
-
-// }
 
 // 20.17 <list value constructor>
 pub ListValueConstructor: ListConstructor<'a> = {

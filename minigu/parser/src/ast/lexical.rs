@@ -6,7 +6,7 @@ use crate::Cow;
 use crate::macros::{base, ext};
 use crate::span::Span;
 
-/// An identifier in the query string.
+/// An identifier or parameter in the query string.
 #[apply(base)]
 pub struct Ident<'a> {
     pub name: Cow<'a, str>,

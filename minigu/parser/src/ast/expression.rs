@@ -31,7 +31,7 @@ pub enum Expression<'a> {
         right: BooleanLiteral,
     },
     Variable(Ident<'a>),
-    Value(Value),
+    Value(Value<'a>),
     Invalid,
 }
 
@@ -107,8 +107,9 @@ pub struct Field<'a> {
 }
 
 #[apply(base)]
-pub enum Value {
+pub enum Value<'a> {
     SessionUser,
+    Parameter(Ident<'a>),
 }
 
 #[apply(ext)]
