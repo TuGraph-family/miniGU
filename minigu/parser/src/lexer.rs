@@ -1,7 +1,7 @@
 use logos::{Lexer as LogosLexer, Logos, Skip, SpannedIter};
 
-use crate::Cow;
 use crate::error::UserError;
+use crate::imports::Cow;
 use crate::unescape::unescape;
 
 type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
@@ -810,8 +810,12 @@ pub(crate) enum TokenKind<'a> {
     UnsignedBinaryInteger(&'a str),
 
     // The followings are quoted character sequences.
-    #[regex(r#"'|"|`|@"#, handle_quoted)]
-    Quoted(Quoted<'a>),
+    #[regex(r#"'|@'"#, handle_quoted)]
+    SingleQuoted(Quoted<'a>),
+    #[regex(r#""|@"#, handle_quoted)]
+    DoubleQuoted(Quoted<'a>),
+    #[regex(r#"`|@`"#, handle_quoted)]
+    AccentQuoted(Quoted<'a>),
 
     // Bracketed comments. This token should never be produced.
     #[regex(r"/\*", handle_comment)]
@@ -825,6 +829,15 @@ pub(crate) enum ParameterName<'a> {
     Delimited(Quoted<'a>),
     #[regex(r"[\p{XID_Continue}]+")]
     Extended(&'a str),
+}
+
+impl<'a> ParameterName<'a> {
+    pub(crate) fn unescape(&self) -> Option<Cow<'a, str>> {
+        match self {
+            Self::Delimited(quoted) => quoted.unescape(),
+            Self::Extended(s) => Some(Cow::Borrowed(s)),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Logos)]
@@ -933,19 +946,19 @@ mod tests {
     fn test_quoted() {
         let lexer = TokenKind::lexer(r#"'ab\ncd'"#);
         let tokens: Vec<_> = lexer.collect();
-        assert_eq!(tokens, vec![Ok(TokenKind::Quoted(Quoted::Single(
+        assert_eq!(tokens, vec![Ok(TokenKind::SingleQuoted(Quoted::Single(
             r"ab\ncd"
         )))]);
 
         let lexer = TokenKind::lexer(r#""ab\ncd""#);
         let tokens: Vec<_> = lexer.collect();
-        assert_eq!(tokens, vec![Ok(TokenKind::Quoted(Quoted::Double(
+        assert_eq!(tokens, vec![Ok(TokenKind::DoubleQuoted(Quoted::Double(
             r"ab\ncd"
         )))]);
 
         let lexer = TokenKind::lexer(r#"`ab\ncd`"#);
         let tokens: Vec<_> = lexer.collect();
-        assert_eq!(tokens, vec![Ok(TokenKind::Quoted(Quoted::Accent(
+        assert_eq!(tokens, vec![Ok(TokenKind::AccentQuoted(Quoted::Accent(
             r"ab\ncd"
         )))]);
     }

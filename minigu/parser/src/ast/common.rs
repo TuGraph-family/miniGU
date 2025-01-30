@@ -1,9 +1,8 @@
 //! AST definitions for *common elements*.
 
-use super::expression::Expression;
-use super::lexical::Ident;
+use crate::ast::{Expr, Ident};
+use crate::imports::{Box, Vec};
 use crate::macros::{base, ext};
-use crate::{Box, Vec};
 
 #[apply(ext)]
 pub enum MatchMode {
@@ -60,7 +59,7 @@ pub enum EdgePatternKind {
 pub struct ElementPatternFilter<'a> {
     #[cfg_attr(feature = "serde", serde(borrow))]
     pub variable: Option<ElementVariableDeclaration<'a>>,
-    pub label: Option<LabelExpression<'a>>,
+    pub label: Option<LabelExpr<'a>>,
     pub predicate: Option<ElementPatternPredicate<'a>>,
 }
 
@@ -74,7 +73,7 @@ pub struct ElementVariableDeclaration<'a> {
 #[apply(base)]
 pub enum ElementPatternPredicate<'a> {
     #[cfg_attr(feature = "serde", serde(borrow))]
-    Where(Expression<'a>),
+    Where(Expr<'a>),
     Property(Vec<PropertyKeyValuePair<'a>>),
 }
 
@@ -108,13 +107,13 @@ pub enum PathSearch {
 }
 
 #[apply(base)]
-pub enum LabelExpression<'a> {
+pub enum LabelExpr<'a> {
     /// Label conjunction, i.e., 'label1 & label2'.
-    Conjunction(Box<LabelExpression<'a>>, Box<LabelExpression<'a>>),
+    Conjunction(Box<LabelExpr<'a>>, Box<LabelExpr<'a>>),
     /// Label disjunction, i.e., 'label1 | label2'.
-    Disjunction(Box<LabelExpression<'a>>, Box<LabelExpression<'a>>),
+    Disjunction(Box<LabelExpr<'a>>, Box<LabelExpr<'a>>),
     /// Label negation, i.e., '!label'.
-    Negation(Box<LabelExpression<'a>>),
+    Negation(Box<LabelExpr<'a>>),
     /// A single label.
     #[cfg_attr(feature = "serde", serde(borrow))]
     Label(Ident<'a>),
@@ -126,5 +125,5 @@ pub enum LabelExpression<'a> {
 pub struct PropertyKeyValuePair<'a> {
     #[cfg_attr(feature = "serde", serde(borrow))]
     pub name: Ident<'a>,
-    pub value: Expression<'a>,
+    pub value: Expr<'a>,
 }

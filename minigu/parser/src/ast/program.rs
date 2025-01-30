@@ -1,5 +1,6 @@
-use super::session::SessionActivity;
-use super::transaction::TransactionActivity;
+//! AST definitions for *GQL-program*.
+
+use crate::ast::{SessionActivity, TransactionActivity};
 use crate::macros::base;
 
 #[apply(base)]
@@ -13,7 +14,5 @@ pub struct Program<'a> {
 pub enum ProgramActivity<'a> {
     #[cfg_attr(feature = "serde", serde(borrow))]
     Session(SessionActivity<'a>),
-
-    #[cfg_attr(feature = "serde", serde(borrow))]
     Transaction(TransactionActivity<'a>),
 }

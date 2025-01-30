@@ -8,6 +8,7 @@ pub(crate) enum UserErrorKind {
     InvalidToken,
     InvalidEscapeSequence,
     IncompleteComment,
+    InvalidObjectRef,
 }
 
 #[derive(Debug)]
@@ -34,6 +35,13 @@ impl UserError {
     pub(crate) fn incomplete_comment<S: Into<Span>>(span: S) -> Self {
         Self {
             kind: UserErrorKind::IncompleteComment,
+            span: span.into(),
+        }
+    }
+
+    pub(crate) fn invalid_object_ref<S: Into<Span>>(span: S) -> Self {
+        Self {
+            kind: UserErrorKind::InvalidObjectRef,
             span: span.into(),
         }
     }

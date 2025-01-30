@@ -1,5 +1,7 @@
+//! AST definitions for *transaction management*.
+
+use crate::imports::Vec;
 use crate::macros::{base, ext};
-use crate::Vec;
 
 #[apply(base)]
 pub struct TransactionActivity<'a> {

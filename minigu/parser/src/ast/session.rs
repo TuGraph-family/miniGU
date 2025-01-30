@@ -1,11 +1,12 @@
+//! AST definitions for *session management*.
+
+use crate::imports::Vec;
 use crate::macros::{base, ext};
-use crate::Vec;
 
 #[apply(base)]
 pub struct SessionActivity<'a> {
     #[cfg_attr(feature = "serde", serde(borrow))]
     pub set: Vec<SessionSet<'a>>,
-    #[cfg_attr(feature = "serde", serde(borrow))]
     pub reset: Vec<SessionReset<'a>>,
 }
 

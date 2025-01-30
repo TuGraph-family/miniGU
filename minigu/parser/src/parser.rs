@@ -189,4 +189,9 @@ mod tests {
         integer: 0b0000_1111
         ");
     }
+
+    #[test]
+    fn test_expression() {
+        assert_yaml_snapshot!(parse!("(a + 1) * b", ValueExpression), @r"")
+    }
 }

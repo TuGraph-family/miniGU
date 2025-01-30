@@ -1,37 +1,38 @@
 //! AST definitions for *Value expressions and specifications*.
 
-use crate::ast::element::ListTypeName;
-use crate::ast::lexical::{BooleanLiteral, Ident};
+use crate::ast::{BooleanLiteral, Ident, ListTypeName, Literal};
+use crate::imports::{Box, Vec};
 use crate::macros::{base, ext};
-use crate::{Box, Vec};
 
 #[apply(base)]
-pub enum Expression<'a> {
+pub enum Expr<'a> {
     Binary {
         op: BinaryOp,
-        left: Box<Expression<'a>>,
-        right: Box<Expression<'a>>,
+        left: Box<Expr<'a>>,
+        right: Box<Expr<'a>>,
     },
     Unary {
         op: UnaryOp,
-        child: Box<Expression<'a>>,
+        child: Box<Expr<'a>>,
     },
     #[cfg_attr(feature = "serde", serde(borrow))]
     BuiltinFunction(BuiltinFunction<'a>),
     DurationBetween {
-        arg1: Box<Expression<'a>>,
-        arg2: Box<Expression<'a>>,
+        arg1: Box<Expr<'a>>,
+        arg2: Box<Expr<'a>>,
     },
     Is {
-        left: Box<Expression<'a>>,
+        left: Box<Expr<'a>>,
         right: BooleanLiteral,
     },
     IsNot {
-        left: Box<Expression<'a>>,
+        left: Box<Expr<'a>>,
         right: BooleanLiteral,
     },
     Variable(Ident<'a>),
     Value(Value<'a>),
+    Path(Box<PathConstructor<'a>>),
+    Property(Box<PropertyRef<'a>>),
     Invalid,
 }
 
@@ -82,18 +83,32 @@ pub enum UnaryOp {
 #[apply(base)]
 pub enum BuiltinFunction<'a> {
     #[cfg_attr(feature = "serde", serde(borrow))]
-    CharLength(Box<Expression<'a>>),
-    ByteLength(Box<Expression<'a>>),
-    OctetLength(Box<Expression<'a>>),
-    Cardinality(Box<Expression<'a>>),
-    Size(Box<Expression<'a>>),
+    CharLength(Box<Expr<'a>>),
+    ByteLength(Box<Expr<'a>>),
+    OctetLength(Box<Expr<'a>>),
+    Cardinality(Box<Expr<'a>>),
+    Size(Box<Expr<'a>>),
+}
+
+#[apply(base)]
+pub struct PathConstructor<'a> {
+    #[cfg_attr(feature = "serde", serde(borrow))]
+    pub start: Expr<'a>,
+    pub steps: Vec<PathStep<'a>>,
+}
+
+#[apply(base)]
+pub struct PathStep<'a> {
+    #[cfg_attr(feature = "serde", serde(borrow))]
+    pub edge: Expr<'a>,
+    pub node: Expr<'a>,
 }
 
 #[apply(base)]
 pub struct ListConstructor<'a> {
     pub type_name: Option<ListTypeName>,
     #[cfg_attr(feature = "serde", serde(borrow))]
-    pub values: Vec<Expression<'a>>,
+    pub values: Vec<Expr<'a>>,
 }
 
 #[apply(base)]
@@ -103,17 +118,26 @@ pub struct RecordConstructor<'a>(#[cfg_attr(feature = "serde", serde(borrow))] p
 pub struct Field<'a> {
     #[cfg_attr(feature = "serde", serde(borrow))]
     pub name: Ident<'a>,
-    pub value: Expression<'a>,
+    pub value: Expr<'a>,
 }
 
 #[apply(base)]
 pub enum Value<'a> {
     SessionUser,
+    #[cfg_attr(feature = "serde", serde(borrow))]
     Parameter(Ident<'a>),
+    Literal(Literal<'a>),
 }
 
 #[apply(ext)]
 pub enum SetQuantifier {
     Distinct,
     All,
+}
+
+#[apply(base)]
+pub struct PropertyRef<'a> {
+    #[cfg_attr(feature = "serde", serde(borrow))]
+    pub source: Expr<'a>,
+    pub name: Ident<'a>,
 }

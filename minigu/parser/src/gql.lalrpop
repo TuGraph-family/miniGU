@@ -4,8 +4,7 @@ use crate::ast::*;
 use crate::error::UserError;
 use crate::lexer::*;
 use crate::span::Span;
-use crate::unescape::unescape;
-use crate::{Box, Cow, Vec};
+use crate::imports::*;
 
 grammar<'a>(input: &'a str);
 
@@ -19,12 +18,9 @@ extern {
         "unsigned octal integer" => Token { kind: TokenKind::UnsignedOctalInteger(<&'a str>), .. },
         "unsigned hex integer" => Token { kind: TokenKind::UnsignedHexInteger(<&'a str>), .. },
         "unsigned binary integer" => Token { kind: TokenKind::UnsignedBinaryInteger(<&'a str>), .. },
-        "double quoted" => Token { kind: TokenKind::Quoted(Quoted::Double(<&'a str>)), .. },
-        "single quoted" => Token { kind: TokenKind::Quoted(Quoted::Single(<&'a str>)), .. },
-        "accent quoted" => Token { kind: TokenKind::Quoted(Quoted::Accent(<&'a str>)), .. },
-        "unescaped double quoted" => Token { kind: TokenKind::Quoted(Quoted::UnescapedDouble(<&'a str>)), .. },
-        "unescaped single quoted" => Token { kind: TokenKind::Quoted(Quoted::UnescapedSingle(<&'a str>)), .. },
-        "unescaped accent quoted" => Token { kind: TokenKind::Quoted(Quoted::UnescapedAccent(<&'a str>)), .. },
+        "double quoted" => Token { kind: TokenKind::DoubleQuoted(<Quoted<'a>>), .. },
+        "single quoted" => Token { kind: TokenKind::SingleQuoted(<Quoted<'a>>), .. },
+        "accent quoted" => Token { kind: TokenKind::AccentQuoted(<Quoted<'a>>), .. },
         "general parameter reference" => Token { kind: TokenKind::GeneralParameterReference(<ParameterName<'a>>), .. },
         "substituted parameter reference" => Token { kind: TokenKind::SubstitutedParameterReference(<ParameterName<'a>>), .. },
         
@@ -394,32 +390,68 @@ extern {
     }
 }
 
-pub LabelExpression: LabelExpression<'a> = {
+// 6 <GQL-program>
+// This is the entry point of the GQL parser.
+pub GqlProgram: Program<'a> = {
+    SessionCloseCommand => Program { activity: None, session_close: true },
+
+}
+
+EndTransactionCommand: EndTransaction = {
+    "ROLLBACK" => EndTransaction::Rollback,
+    "COMMIT" => EndTransaction::Commit,
+}
+
+// 7.3 <session close command>
+SessionCloseCommand = "SESSION" "CLOSE";
+
+// gqlProgram
+//     : programActivity sessionCloseCommand? EOF
+//     | sessionCloseCommand EOF
+//     ;
+
+// 11.1 <graph expression>
+pub GraphExpression: GraphExpr<'a> = {
+    ObjectNameOrBindingVariable => GraphExpr::Object(<>),
+    CurrentGraph => GraphExpr::Current,
+    // GraphReference => GraphExpr::Ref(<>),
+}
+
+// graphExpression
+//     : objectExpressionPrimary
+//     | graphReference
+//     | objectNameOrBindingVariable
+//     | currentGraph
+//     ;
+
+CurrentGraph = { "CURRENT_PROPERTY_GRAPH", "CURRENT_GRAPH" };
+
+// 11.3 <object expression primary>
+
+// 16.8 <label expression>
+pub LabelExpression: LabelExpr<'a> = {
     #[precedence(level = "0")]
-    Identifier => LabelExpression::Label(<>),
-    "%" => LabelExpression::Wildcard,
+    LabelName => LabelExpr::Label(<>),
+    "%" => LabelExpr::Wildcard,
     "(" <LabelExpressionReset> ")",
 
     #[precedence(level = "1")]
-    "!" <LabelExpression> => LabelExpression::Negation(Box::new(<>)),
+    "!" <LabelExpression> => LabelExpr::Negation(Box::new(<>)),
 
     #[precedence(level = "2")]
     #[assoc(side = "left")]
-    <l: LabelExpression> "&" <r: LabelExpression> => LabelExpression::Conjunction(Box::new(l), Box::new(r)),
+    <l: LabelExpression> "&" <r: LabelExpression> => LabelExpr::Conjunction(Box::new(l), Box::new(r)),
 
     #[precedence(level = "3")]
     #[assoc(side = "left")]
-    <l: LabelExpression> "|" <r: LabelExpression> => LabelExpression::Disjunction(Box::new(l), Box::new(r)),
+    <l: LabelExpression> "|" <r: LabelExpression> => LabelExpr::Disjunction(Box::new(l), Box::new(r)),
 }
 
 // Add this rule to handle parenthesized label expressions due to LALRPOP's issue.
 // See https://github.com/lalrpop/lalrpop/issues/596 for more details.
 LabelExpressionReset = LabelExpression; 
 
-pub IsLabelExpression = {
-    "IS" <LabelExpression>,
-    ":" <LabelExpression>
-}
+pub IsLabelExpression = { "IS" <LabelExpression>, ":" <LabelExpression> }
 
 pub ElementVariableDeclaration: ElementVariableDeclaration<'a> = {
     <temp: "TEMP"?> <variable: RegularIdentifier> => {
@@ -434,36 +466,11 @@ pub ElementVariableDeclaration: ElementVariableDeclaration<'a> = {
 //     "WHERE" 
 // }
 
-// pub BooleanValueExpression: Expression<'a> = {
-//     #[precedence(level = "0")]
-//     <l: BooleanValueExpression> "IS" <right: BooleanLiteral> => Expression::Is { left: Box::new(l), right },
-//     <l: BooleanValueExpression> "IS" "NOT" <right: BooleanLiteral> => Expression::IsNot { left: Box::new(l), right },
-
-//     #[precedence(level = "1")]
-//     "NOT" <BooleanValueExpression> => Expression::Unary { op: UnaryOp::Not, child: Box::new(<>) },
-
-//     #[precedence(level = "2")]
-//     #[assoc(side = "left")]
-//     <l: BooleanValueExpression> "AND" <r: BooleanValueExpression> => Expression::Binary { op: BinaryOp::And, left: Box::new(l), right: Box::new(r) },
-
-//     #[precedence(level = "3")]
-//     #[assoc(side = "left")]
-//     <l: BooleanValueExpression> "OR" <r: BooleanValueExpression> => Expression::Binary { op: BinaryOp::Or, left: Box::new(l), right: Box::new(r) },
-//     <l: BooleanValueExpression> "XOR" <r: BooleanValueExpression> => Expression::Binary { op: BinaryOp::Xor, left: Box::new(l), right: Box::new(r) },
-// }
-
-// pub ListValueExpression: Expression<'a> = {
-
-// }
-
 // // TODO: Add other numeric value functions.
 // NumericValueFunction: Expression<'a> = {
 //     LengthExpression => Expression::BuiltinFunction(<>),
 // }
 
-FunctionHelper1<F, A1> = F "(" <A1> ")";
-
-FunctionHelper2<F, A1, A2> = F "(" <A1> "," <A2> ")";
 
 // LengthExpression: BuiltinFunction<'a> = {
 //     CharLengthExpression,
@@ -489,70 +496,159 @@ FunctionHelper2<F, A1, A2> = F "(" <A1> "," <A2> ")";
 
 // }
 
-// CommonValueExpression: Expression<'a> = {
-//     NumericValueExpression,
-// }
+// 17.1 <schema reference> and <catalog schema parent name>
+pub SchemaReference: SchemaRef<'a> = {
+    ReferenceParameterSpecification => SchemaRef::Parameter(<>),
+    AbsoluteSchemaPath => SchemaRef::Path(<>),
+    RelativeSchemaPath => SchemaRef::Path(<>),
+    PredefinedSchemaReference => SchemaRef::Predefined(<>),
+}
 
-// NonParenthesizedValueExpressionPrimary: Expression<'a> = {
-//     NonParenthesizedValueExpressionPrimarySpecialCase,
-//     BindingVariable => Expression::Variable(<>)
-// }
+PredefinedSchemaReference: PredefinedSchemaRef = {
+    "HOME_SCHEMA" => PredefinedSchemaRef::Home,
+    "CURRENT_SCHEMA" => PredefinedSchemaRef::Current,
+    "." => PredefinedSchemaRef::Current,
+}
 
-// NonParenthesizedValueExpressionPrimarySpecialCase: Expression<'a> = {
-    
-// }
+AbsoluteSchemaPath: SchemaPath<'a> = {
+    <start: @L> "/" <end: @R>=> {
+        let components = vec![SchemaPathComponent::Root];
+        SchemaPath { components, span: Span { start, end } }
+    },
+    <start: @L> "/" <path: SimpleSchemaPath> <end: @R>=> {
+        let mut components = Vec::with_capacity(1 + path.len());
+        components.push(SchemaPathComponent::Root);
+        components.extend(path);
+        SchemaPath { components, span: Span { start, end } }
+    }
+}
 
-// ValueExpressionPrimary = { NonParenthesizedValueExpressionPrimary, "(" <ValueExpression> ")" }
+RelativeSchemaPath: SchemaPath<'a> = {
+    <start: @L> ".." <head: ("/" "..")*> "/" <path: SimpleSchemaPath> <end: @R> => {
+        let mut components = Vec::with_capacity(1 + head.len() + path.len());
+        components.push(SchemaPathComponent::Parent);
+        components.extend(head.into_iter().map(|_| SchemaPathComponent::Parent));
+        components.extend(path);
+        SchemaPath { components, span: Span { start, end } }
+    }
+}
+
+SimpleSchemaPath: Vec<SchemaPathComponent<'a>> = {
+    <head: DirectoryOrSchemaName> <tail: ("/" <DirectoryOrSchemaName>)*> => {
+        let mut v = Vec::with_capacity(1 + tail.len());
+        v.push(SchemaPathComponent::Name(head));
+        v.extend(tail.into_iter().map(|n| SchemaPathComponent::Name(n)));
+        v
+    }
+}
+
+// 17.2 <graph reference> and <catalog graph parent and name>
+pub GraphReference: GraphRef<'a> = {
+    DelimitedGraphName => GraphRef::Name(<>),
+    ReferenceParameterSpecification => GraphRef::Parameter(<>),
+    <mut parent: CatalogObjectParentReference> <name: GraphName> => {
+        parent.name.push(name);
+        GraphRef::Ref(parent)
+    },
+    HomeGraph => GraphRef::Home,
+}
+
+// 17.6 <catalog object parent reference>
+CatalogObjectReference: ObjectRef<'a> = {
+    <start: @L> <schema: SchemaReference> <sep: "/"?> <ObjectName> <name: (<ObjectName> ".")*> <end: @R> =>? {
+
+    }
+}
+
+CatalogObjectParentReference: ObjectRef<'a> = {
+    <start: @L> <schema: SchemaReference> <sep: "/"?> <name: (<ObjectName> ".")*> <end: @R> =>? {
+        let is_root = matches!(
+            &schema, 
+            SchemaRef::Path(SchemaPath { components, .. })
+            if components == &[SchemaPathComponent::Root]
+        );
+        if let (true, true) | (false, false) = (is_root, sep.is_some()) {
+            return Err(ParseError::User { error: UserError::invalid_object_ref(start..end) })
+        }
+        Ok(ObjectRef { schema: Some(schema), name })
+    },
+    <name: (<ObjectName> ".")+> => ObjectRef { schema: None, name }
+}
+
+HomeGraph = { "HOME_PROPERTY_GRAPH", "HOME_GRAPH" };
+
+// 17.7 <reference parameter specification>
+ReferenceParameterSpecification = SubstitutedParameterReference;
 
 // 20.1 <value expression>
-pub ValueExpression: Expression<'a> = {
+pub ValueExpression: Expr<'a> = {
     #[precedence(level = "0")]
     ValueExpressionPrimary,
-    "+" <ValueExpression> => Expression::Unary { op: UnaryOp::Plus, child: Box::new(<>) },
-    "-" <ValueExpression> => Expression::Unary { op: UnaryOp::Minus, child: Box::new(<>) },
-    "NOT" <ValueExpression> => Expression::Unary { op: UnaryOp::Not, child: Box::new(<>) },
+    "+" <ValueExpression> => Expr::Unary { op: UnaryOp::Plus, child: Box::new(<>) },
+    "-" <ValueExpression> => Expr::Unary { op: UnaryOp::Minus, child: Box::new(<>) },
+    "NOT" <ValueExpression> => Expr::Unary { op: UnaryOp::Not, child: Box::new(<>) },
 
     #[precedence(level = "1")]
     #[assoc(side = "left")]
-    <l: ValueExpression> "*" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Mul, left: Box::new(l), right: Box::new(r) },
-    <l: ValueExpression> "/" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Div, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> "*" <r: ValueExpression> => Expr::Binary { op: BinaryOp::Mul, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> "/" <r: ValueExpression> => Expr::Binary { op: BinaryOp::Div, left: Box::new(l), right: Box::new(r) },
 
     #[precedence(level = "2")]
     #[assoc(side = "left")]
-    <l: ValueExpression> "+" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Add, left: Box::new(l), right: Box::new(r) },
-    <l: ValueExpression> "-" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Sub, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> "+" <r: ValueExpression> => Expr::Binary { op: BinaryOp::Add, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> "-" <r: ValueExpression> => Expr::Binary { op: BinaryOp::Sub, left: Box::new(l), right: Box::new(r) },
 
     #[precedence(level = "3")]
     #[assoc(side = "left")]
-    <l: ValueExpression> "||" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Concat, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> "||" <r: ValueExpression> => Expr::Binary { op: BinaryOp::Concat, left: Box::new(l), right: Box::new(r) },
 
     #[precedence(level = "4")]
     #[assoc(side = "left")]
-    <l: ValueExpression> "<" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Lt, left: Box::new(l), right: Box::new(r) },
-    <l: ValueExpression> "<=" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Le, left: Box::new(l), right: Box::new(r) },
-    <l: ValueExpression> ">" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Gt, left: Box::new(l), right: Box::new(r) },
-    <l: ValueExpression> ">=" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Ge, left: Box::new(l), right: Box::new(r) },
-    <l: ValueExpression> "=" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Eq, left: Box::new(l), right: Box::new(r) },
-    <l: ValueExpression> "<>" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Ne, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> "<" <r: ValueExpression> => Expr::Binary { op: BinaryOp::Lt, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> "<=" <r: ValueExpression> => Expr::Binary { op: BinaryOp::Le, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> ">" <r: ValueExpression> => Expr::Binary { op: BinaryOp::Gt, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> ">=" <r: ValueExpression> => Expr::Binary { op: BinaryOp::Ge, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> "=" <r: ValueExpression> => Expr::Binary { op: BinaryOp::Eq, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> "<>" <r: ValueExpression> => Expr::Binary { op: BinaryOp::Ne, left: Box::new(l), right: Box::new(r) },
 
     #[precedence(level = "5")]
     #[assoc(side = "left")]
-    <l: ValueExpression> "IS" <right: BooleanLiteral> => Expression::Is { left: Box::new(l), right },
-    <l: ValueExpression> "IS" "NOT" <right: BooleanLiteral> => Expression::IsNot { left: Box::new(l), right },
+    <l: ValueExpression> "IS" <right: BooleanLiteral> => Expr::Is { left: Box::new(l), right },
+    <l: ValueExpression> "IS" "NOT" <right: BooleanLiteral> => Expr::IsNot { left: Box::new(l), right },
 
     #[precedence(level = "6")]
     #[assoc(side = "left")]
-    <l: ValueExpression> "AND" <r: ValueExpression> => Expression::Binary { op: BinaryOp::And, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> "AND" <r: ValueExpression> => Expr::Binary { op: BinaryOp::And, left: Box::new(l), right: Box::new(r) },
 
     #[precedence(level = "7")]
     #[assoc(side = "left")]
-    <l: ValueExpression> "OR" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Or, left: Box::new(l), right: Box::new(r) },
-    <l: ValueExpression> "XOR" <r: ValueExpression> => Expression::Binary { op: BinaryOp::Xor, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> "OR" <r: ValueExpression> => Expr::Binary { op: BinaryOp::Or, left: Box::new(l), right: Box::new(r) },
+    <l: ValueExpression> "XOR" <r: ValueExpression> => Expr::Binary { op: BinaryOp::Xor, left: Box::new(l), right: Box::new(r) },
 }
 
+FunctionHelper1<F, A1> = F "(" <A1> ")";
+
+FunctionHelper2<F, A1, A2> = F "(" <A1> "," <A2> ")";
+
+
+NodeReferenceValueExpression = ValueExpressionPrimary;
+
+EdgeReferenceValueExpression = ValueExpressionPrimary;
+
+RecordExpression = ValueExpressionPrimary;
+
+AggregatingValueExpression = ValueExpression;
+
 // 20.2 <value expression primary>
-ValueExpressionPrimary: Expression<'a> = {
-    ParenthesizedValueExpression
+// TODO: Add case expression.
+// TODO: Add cast specification.
+// TODO: Add let expression.
+ValueExpressionPrimary: Expr<'a> = {
+    ParenthesizedValueExpression,
+    UnsignedValueSpecification => Expr::Value(<>),
+    PathValueConstructor => Expr::Path(Box::new(<>)),
+    PropertyReference => Expr::Property(Box::new(<>)),
+    BindingVariableReference => Expr::Variable(<>),
 }
 
 ParenthesizedValueExpression = "(" <ValueExpression> ")";
@@ -563,13 +659,34 @@ SetQuantifier: SetQuantifier = {
 }
 
 // 20.3 <value specification>
-UnsignedValueSpecification = {
-    UnsignedLiteral,
+UnsignedValueSpecification: Value<'a> = {
+    UnsignedLiteral => Value::Literal(<>),
+    "SESSION_USER" => Value::SessionUser,
+    DynamicParameterSpecification => Value::Parameter(<>),
 }
 
-GeneralValueSpecification: Value = {
-    "SESSION_USER" => Value::SessionUser,
-    "general parameter reference" => Value::Parameter(<>.unescape())
+// 20.4 <dynamic parameter specification>
+DynamicParameterSpecification = GeneralParameterReference;
+
+// 20.9 <aggregate function>
+
+// 20.11 <property reference>
+PropertyReference: PropertyRef<'a> = {
+    <source: ValueExpressionPrimary> "." <name: PropertyName> => PropertyRef { source, name }
+}
+
+// 20.12 <binding variable reference>
+BindingVariableReference = BindingVariable;
+
+// 20.14 <path value constructor>
+PathValueConstructor = "PATH" "[" <PathElementList> "]";
+
+PathElementList: PathConstructor<'a> = {
+    <start: NodeReferenceValueExpression> <steps: PathElementListStep*> => PathConstructor { start, steps }
+}
+
+PathElementListStep: PathStep<'a> = {
+    "," <edge: EdgeReferenceValueExpression> "," <node: NodeReferenceValueExpression> => PathStep { edge, node }
 }
 
 // 20.17 <list value constructor>
@@ -579,7 +696,7 @@ pub ListValueConstructor: ListConstructor<'a> = {
     }
 }
 
-ListElementList: Vec<Expression<'a>> = {
+ListElementList: Vec<Expr<'a>> = {
     <first: ValueExpression> <other: ("," <ValueExpression>)*> => {
         let mut v = Vec::with_capacity(1 + other.len());
         v.push(first);
@@ -613,34 +730,118 @@ FieldList: Vec<Field<'a>> = {
 
 Field: Field<'a> = <name: FieldName> <value: ValueExpression> => Field { name, value };
 
-// 21.2 <literal>
-pub Identifier = { RegularIdentifier, DelimitedIdentifier }
+// 21.1 Names and variables
+ObjectName = Identifier;
 
-pub SeparatedIdentifier = {
-    DelimitedIdentifier
+ObjectNameOrBindingVariable = RegularIdentifier;
+
+DirectoryOrSchemaName = Identifier;
+
+GraphName = Identifier;
+
+DelimitedGraphName = DelimitedIdentifier;
+
+GraphTypeName = Identifier;
+
+NodeTypeName = Identifier;
+
+EdgeTypeName = Identifier;
+
+BindingTableName = Identifier;
+
+DelimitedBindingTableName = DelimitedIdentifier;
+
+ProcedureName = Identifier;
+
+LabelName = Identifier;
+
+PropertyName = Identifier;
+
+FieldName = Identifier;
+
+GraphPatternVariable = RegularIdentifier;
+
+PathOrSubpathVariable = RegularIdentifier;
+
+ElementVariable = BindingVariable;
+
+PathVariable = BindingVariable;
+
+SubpathVariable = RegularIdentifier;
+
+BindingVariable = RegularIdentifier;
+
+// 21.2 <literal>
+// TODO: Add byte string literal
+pub UnsignedLiteral: Literal<'a> = {
+    UnsignedNumericLiteral => Literal::Numeric(<>),
+    BooleanLiteral => Literal::Boolean(<>),
+    CharStringLiteral => Literal::String(<>),
+    TemporalLiteral => Literal::Temporal(<>),
+    DurationLiteral => Literal::Duration(<>),
+    ListValueConstructor => Literal::List(<>),
+    RecordConstructor => Literal::Record(<>),
+    "NULL" => Literal::Null,
 }
 
-DelimitedIdentifier: Ident<'a> = {
-    <start: @L> <name: "double quoted"> <end: @R> =>? {
-        let span = Span { start, end };
-        let name = unescape::<'"', false>(name).ok_or_else(|| ParseError::User { error: UserError::invalid_escape_sequence(span)})?;
-        Ok(Ident { name, span }) 
+BooleanLiteral: BooleanLiteral = {
+    "TRUE" => BooleanLiteral::True,
+    "FALSE" => BooleanLiteral::False,
+    "UNKNOWN" => BooleanLiteral::Unknown,
+}
+
+CharStringLiteralHelper: Cow<'a, str> = {
+    <start: @L> <quoted: "single quoted"> <end: @R> =>? {
+        quoted.unescape().ok_or_else(|| ParseError::User { error: UserError::invalid_escape_sequence(start..end)})
     },
-    <start: @L> <name: "unescaped double quoted"> <end: @R> =>? {
-        let span = Span { start, end };
-        let name = unescape::<'"', true>(name).ok_or_else(|| ParseError::User { error: UserError::invalid_escape_sequence(span)})?;
-        Ok(Ident { name, span }) 
-    },
-    <start: @L> <name: "accent quoted"> <end: @R> =>? {
-        let span = Span { start, end };
-        let name = unescape::<'`', false>(name).ok_or_else(|| ParseError::User { error: UserError::invalid_escape_sequence(span)})?;
-        Ok(Ident { name, span })
-    },
-    <start: @L> <name: "unescaped accent quoted"> <end: @R> =>? {
-        let span = Span { start, end };
-        let name = unescape::<'`', true>(name).ok_or_else(|| ParseError::User { error: UserError::invalid_escape_sequence(span)})?;
-        Ok(Ident { name, span })
+    <start: @L> <quoted: "double quoted"> <end: @R> =>? {
+        quoted.unescape().ok_or_else(|| ParseError::User { error: UserError::invalid_escape_sequence(start..end)})
     }
+}
+
+CharStringLiteral: StringLiteral<'a> = {
+    <literal: CharStringLiteralHelper> => StringLiteral { kind: StringLiteralKind::Char, literal }
+}
+
+// TODO: Add SQL-datetime literal.
+TemporalLiteral: TemporalLiteral<'a> = {
+    "DATE" <literal: CharStringLiteralHelper> => TemporalLiteral { kind: TemporalLiteralKind::Date, literal },
+    "TIME" <literal: CharStringLiteralHelper> => TemporalLiteral { kind: TemporalLiteralKind::Time, literal },
+    "DATETIME" <literal: CharStringLiteralHelper> => TemporalLiteral { kind: TemporalLiteralKind::Datetime, literal },
+    "TIMESTAMP" <literal: CharStringLiteralHelper> => TemporalLiteral { kind: TemporalLiteralKind::Timestamp, literal },
+}
+
+// TODO: Add SQL-interval literal.
+DurationLiteral: DurationLiteral<'a> = {
+    "DURATION" <literal: CharStringLiteralHelper> => DurationLiteral { kind: DurationLiteralKind::Duration, literal },
+}
+
+// TODO: Add other literals.
+UnsignedNumericLiteral: UnsignedNumericLiteral<'a> = {
+    UnsignedInteger => UnsignedNumericLiteral::Integer(<>)
+}
+
+pub UnsignedInteger: UnsignedInteger<'a> = {
+    <integer: "unsigned decimal integer"> => UnsignedInteger { kind: UnsignedIntegerKind::Decimal, integer },
+    <integer: "unsigned octal integer"> => UnsignedInteger { kind: UnsignedIntegerKind::Octal, integer },
+    <integer: "unsigned hex integer"> => UnsignedInteger { kind: UnsignedIntegerKind::Hex, integer },
+    <integer: "unsigned binary integer"> => UnsignedInteger { kind: UnsignedIntegerKind::Binary, integer },
+}
+
+// 21.3 <token>, <separator>, and <identifier>
+pub Identifier = { RegularIdentifier, DelimitedIdentifier }
+
+DelimitedIdentifier: Ident<'a> = {
+    <start: @L> <quoted: "double quoted"> <end: @R> =>? {
+        let span = Span { start, end };
+        let name = quoted.unescape().ok_or_else(|| ParseError::User { error: UserError::invalid_escape_sequence(span)})?;
+        Ok(Ident { name, span }) 
+    },
+    <start: @L> <quoted: "accent quoted"> <end: @R> =>? {
+        let span = Span { start, end };
+        let name = quoted.unescape().ok_or_else(|| ParseError::User { error: UserError::invalid_escape_sequence(span)})?;
+        Ok(Ident { name, span })
+    },
 }
 
 RegularIdentifier: Ident<'a> = {
@@ -699,69 +900,18 @@ NonReservedWord = {
     "ZONE",
 }
 
-// TODO: Add byte string literal
-pub UnsignedLiteral: Literal<'a> = {
-    UnsignedNumericLiteral => Literal::Numeric(<>),
-    BooleanLiteral => Literal::Boolean(<>),
-    CharStringLiteral => Literal::String(<>),
-    TemporalLiteral => Literal::Temporal(<>),
-    DurationLiteral => Literal::Duration(<>),
-    ListValueConstructor => Literal::List(<>),
-    RecordConstructor => Literal::Record(<>),
-    "NULL" => Literal::Null,
-}
-
-BooleanLiteral: BooleanLiteral = {
-    "TRUE" => BooleanLiteral::True,
-    "FALSE" => BooleanLiteral::False,
-    "UNKNOWN" => BooleanLiteral::Unknown,
-}
-
-CharStringLiteralHelper: Cow<'a, str> = {
-    <start: @L> <literal: "single quoted"> <end: @R> =>? {
-        unescape::<'\'', false>(literal).ok_or_else(|| ParseError::User { error: UserError::invalid_escape_sequence(start..end)})
-    },
-    <start: @L> <literal: "double quoted"> <end: @R> =>? {
-        unescape::<'\'', false>(literal).ok_or_else(|| ParseError::User { error: UserError::invalid_escape_sequence(start..end)})
+GeneralParameterReference: Ident<'a> = {
+    <start: @L> <name: "general parameter reference"> <end: @R> =>? {
+        let span = Span { start, end };
+        let name = name.unescape().ok_or_else(|| ParseError::User { error: UserError::invalid_escape_sequence(span)})?;
+        Ok(Ident { name: name.into(), span })
     }
 }
 
-CharStringLiteral: StringLiteral<'a> = {
-    <literal: CharStringLiteralHelper> => StringLiteral { kind: StringLiteralKind::Char, literal }
+SubstitutedParameterReference: Ident<'a> = {
+    <start: @L> <name: "substituted parameter reference"> <end: @R> =>? {
+        let span = Span { start, end };
+        let name = name.unescape().ok_or_else(|| ParseError::User { error: UserError::invalid_escape_sequence(span)})?;
+        Ok(Ident { name: name.into(), span })
+    }
 }
-
-// TODO: Add SQL-datetime literal.
-TemporalLiteral: TemporalLiteral<'a> = {
-    "DATE" <literal: CharStringLiteralHelper> => TemporalLiteral { kind: TemporalLiteralKind::Date, literal },
-    "TIME" <literal: CharStringLiteralHelper> => TemporalLiteral { kind: TemporalLiteralKind::Time, literal },
-    "DATETIME" <literal: CharStringLiteralHelper> => TemporalLiteral { kind: TemporalLiteralKind::Datetime, literal },
-    "TIMESTAMP" <literal: CharStringLiteralHelper> => TemporalLiteral { kind: TemporalLiteralKind::Timestamp, literal },
-}
-
-// TODO: Add SQL-interval literal.
-DurationLiteral: DurationLiteral<'a> = {
-    "DURATION" <literal: CharStringLiteralHelper> => DurationLiteral { kind: DurationLiteralKind::Duration, literal },
-}
-
-// TODO: Add other literals.
-UnsignedNumericLiteral: UnsignedNumericLiteral<'a> = {
-    UnsignedInteger => UnsignedNumericLiteral::Integer(<>)
-}
-
-pub UnsignedInteger: UnsignedInteger<'a> = {
-    <integer: "unsigned decimal integer"> => UnsignedInteger { kind: UnsignedIntegerKind::Decimal, integer },
-    <integer: "unsigned octal integer"> => UnsignedInteger { kind: UnsignedIntegerKind::Octal, integer },
-    <integer: "unsigned hex integer"> => UnsignedInteger { kind: UnsignedIntegerKind::Hex, integer },
-    <integer: "unsigned binary integer"> => UnsignedInteger { kind: UnsignedIntegerKind::Binary, integer },
-}
-
-
-FieldName = Identifier;
-
-ElementVariable = BindingVariable;
-
-PathVariable = BindingVariable;
-
-SubpathVariable = RegularIdentifier;
-
-BindingVariable = RegularIdentifier;

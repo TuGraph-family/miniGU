@@ -1,8 +1,7 @@
 //! AST definitions for *lexical elements*.
 
-use super::ListConstructor;
-use super::expression::RecordConstructor;
-use crate::Cow;
+use crate::ast::{ListConstructor, RecordConstructor};
+use crate::imports::Cow;
 use crate::macros::{base, ext};
 use crate::span::Span;
 
