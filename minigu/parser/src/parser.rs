@@ -20,13 +20,13 @@ mod tests {
             let input = $input;
             let lexer = Lexer::new(input);
             paste! {
-              [<$t Parser>]::new().parse(input, lexer).unwrap()
+              [<$t Parser>]::new().parse(input, lexer).ok()
             }
         }};
     }
 
     #[test]
-    fn test_ident() {
+    fn test_identifier() {
         assert_yaml_snapshot!(parse!("_abcd", Identifier), @r"
         name: _abcd
         span:
@@ -133,7 +133,7 @@ mod tests {
     }
 
     #[test]
-    fn test_list_constructor() {
+    fn test_list_value_constructor() {
         assert_yaml_snapshot!(parse!("LIST []", ListValueConstructor), @r"
         type_name:
           group: false
@@ -191,7 +191,190 @@ mod tests {
     }
 
     #[test]
-    fn test_expression() {
-        assert_yaml_snapshot!(parse!("(a + 1) * b", ValueExpression), @r"")
+    fn test_value_expression() {
+        assert_yaml_snapshot!(parse!("c = (a + 1) * b", ValueExpression), @r#"
+        Binary:
+          op: Eq
+          left:
+            Variable:
+              name: c
+              span:
+                start: 0
+                end: 1
+          right:
+            Binary:
+              op: Mul
+              left:
+                Binary:
+                  op: Add
+                  left:
+                    Variable:
+                      name: a
+                      span:
+                        start: 5
+                        end: 6
+                  right:
+                    Value:
+                      Literal:
+                        Numeric:
+                          Integer:
+                            kind: Decimal
+                            integer: "1"
+              right:
+                Variable:
+                  name: b
+                  span:
+                    start: 14
+                    end: 15
+        "#);
+    }
+
+    #[test]
+    fn test_catalog_object_reference() {
+        assert_yaml_snapshot!(parse!("/a/b/c.d.e", CatalogObjectReference), @r"
+        schema:
+          Path:
+            - Root
+            - Name:
+                name: a
+                span:
+                  start: 1
+                  end: 2
+            - Name:
+                name: b
+                span:
+                  start: 3
+                  end: 4
+        objects:
+          - name: c
+            span:
+              start: 5
+              end: 6
+          - name: d
+            span:
+              start: 7
+              end: 8
+          - name: e
+            span:
+              start: 9
+              end: 10
+        ");
+        assert_yaml_snapshot!(parse!("../../a/`b`/c.`d`.e", CatalogObjectReference), @r"
+        schema:
+          Path:
+            - Parent
+            - Parent
+            - Name:
+                name: a
+                span:
+                  start: 6
+                  end: 7
+            - Name:
+                name: b
+                span:
+                  start: 8
+                  end: 11
+        objects:
+          - name: c
+            span:
+              start: 12
+              end: 13
+          - name: d
+            span:
+              start: 14
+              end: 17
+          - name: e
+            span:
+              start: 18
+              end: 19
+        ");
+        assert_yaml_snapshot!(parse!("./a.b.c", CatalogObjectReference), @r"
+        schema:
+          Predefined: Current
+        objects:
+          - name: a
+            span:
+              start: 2
+              end: 3
+          - name: b
+            span:
+              start: 4
+              end: 5
+          - name: c
+            span:
+              start: 6
+              end: 7
+        ");
+        assert_yaml_snapshot!(parse!("a.b.c", CatalogObjectReference), @r"
+        schema: ~
+        objects:
+          - name: a
+            span:
+              start: 0
+              end: 1
+          - name: b
+            span:
+              start: 2
+              end: 3
+          - name: c
+            span:
+              start: 4
+              end: 5
+        ");
+        assert_yaml_snapshot!(parse!("a", CatalogObjectReferenceOptional), @r"
+        schema: ~
+        objects:
+          - name: a
+            span:
+              start: 0
+              end: 1
+        ");
+        assert_yaml_snapshot!(parse!("//", CatalogObjectReference), @"~");
+    }
+
+    #[test]
+    fn test_graph_reference() {
+        assert_yaml_snapshot!(parse!("`this is a graph`", GraphReference), @r"
+        Name:
+          name: this is a graph
+          span:
+            start: 0
+            end: 17
+        ");
+        assert_yaml_snapshot!(parse!("$$g", GraphReference), @r"
+        Parameter:
+          name: g
+          span:
+            start: 0
+            end: 3
+        ");
+        assert_yaml_snapshot!(parse!("/my_graph", GraphReference), @r"
+        Ref:
+          schema:
+            Path:
+              - Root
+          objects:
+            - name: my_graph
+              span:
+                start: 1
+                end: 9
+        ");
+        assert_yaml_snapshot!(parse!("/my_schema/my_graph", GraphReference), @r"
+        Ref:
+          schema:
+            Path:
+              - Root
+              - Name:
+                  name: my_schema
+                  span:
+                    start: 1
+                    end: 10
+          objects:
+            - name: my_graph
+              span:
+                start: 11
+                end: 19
+        ");
+        assert_yaml_snapshot!(parse!("home_graph", GraphReference), @"Home");
     }
 }

@@ -4,7 +4,7 @@ version = "0.1.0"
 edition.workspace = true
 
 [dependencies]
-lalrpop-util = { version = "0.22.0", default-features = false, features = [
+lalrpop-util = { version = "0.22.1", default-features = false, features = [
   "lexer",
 ] }
 serde = { version = "1.0.217", default-features = false, features = [

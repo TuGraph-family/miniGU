@@ -497,11 +497,13 @@ pub ElementVariableDeclaration: ElementVariableDeclaration<'a> = {
 // }
 
 // 17.1 <schema reference> and <catalog schema parent name>
+// The following rules are rewritten to resolve shift-reduce conflicts.
 pub SchemaReference: SchemaRef<'a> = {
     ReferenceParameterSpecification => SchemaRef::Parameter(<>),
-    AbsoluteSchemaPath => SchemaRef::Path(<>),
-    RelativeSchemaPath => SchemaRef::Path(<>),
     PredefinedSchemaReference => SchemaRef::Predefined(<>),
+    AbsolutePathHelper => SchemaRef::Path(<>),
+    RelativePathHelper => SchemaRef::Path(<>),
+    RootPathHelper => SchemaRef::Path(<>)
 }
 
 PredefinedSchemaReference: PredefinedSchemaRef = {
@@ -510,35 +512,36 @@ PredefinedSchemaReference: PredefinedSchemaRef = {
     "." => PredefinedSchemaRef::Current,
 }
 
-AbsoluteSchemaPath: SchemaPath<'a> = {
-    <start: @L> "/" <end: @R>=> {
-        let components = vec![SchemaPathComponent::Root];
-        SchemaPath { components, span: Span { start, end } }
-    },
-    <start: @L> "/" <path: SimpleSchemaPath> <end: @R>=> {
+RootPathHelper: SchemaPath<'a> = {
+    "/" => SchemaPath(vec![SchemaPathComponent::Root])
+}
+
+AbsolutePathHelper: SchemaPath<'a> = {
+    "/" <path: SimpleObjectPath> => {
         let mut components = Vec::with_capacity(1 + path.len());
         components.push(SchemaPathComponent::Root);
         components.extend(path);
-        SchemaPath { components, span: Span { start, end } }
+        SchemaPath(components)
     }
 }
 
-RelativeSchemaPath: SchemaPath<'a> = {
-    <start: @L> ".." <head: ("/" "..")*> "/" <path: SimpleSchemaPath> <end: @R> => {
+RelativePathHelper: SchemaPath<'a> = {
+    ".." <head: ("/" "..")*> "/" <path: SimpleObjectPath> => {
         let mut components = Vec::with_capacity(1 + head.len() + path.len());
         components.push(SchemaPathComponent::Parent);
         components.extend(head.into_iter().map(|_| SchemaPathComponent::Parent));
         components.extend(path);
-        SchemaPath { components, span: Span { start, end } }
+        SchemaPath(components)
     }
 }
 
-SimpleSchemaPath: Vec<SchemaPathComponent<'a>> = {
-    <head: DirectoryOrSchemaName> <tail: ("/" <DirectoryOrSchemaName>)*> => {
-        let mut v = Vec::with_capacity(1 + tail.len());
-        v.push(SchemaPathComponent::Name(head));
-        v.extend(tail.into_iter().map(|n| SchemaPathComponent::Name(n)));
-        v
+// Path that ends with an object name. 
+SimpleObjectPath: Vec<SchemaPathComponent<'a>> = {
+    <head: ObjectName> <tail: ("/" <ObjectName>)*> => {
+        let mut path = Vec::with_capacity(1 + tail.len());
+        path.push(SchemaPathComponent::Name(head));
+        path.extend(tail.into_iter().map(|n| SchemaPathComponent::Name(n)));
+        path
     }
 }
 
@@ -546,33 +549,60 @@ SimpleSchemaPath: Vec<SchemaPathComponent<'a>> = {
 pub GraphReference: GraphRef<'a> = {
     DelimitedGraphName => GraphRef::Name(<>),
     ReferenceParameterSpecification => GraphRef::Parameter(<>),
-    <mut parent: CatalogObjectParentReference> <name: GraphName> => {
-        parent.name.push(name);
-        GraphRef::Ref(parent)
-    },
+    CatalogObjectReference => GraphRef::Ref(<>),
     HomeGraph => GraphRef::Home,
 }
 
 // 17.6 <catalog object parent reference>
-CatalogObjectReference: ObjectRef<'a> = {
-    <start: @L> <schema: SchemaReference> <sep: "/"?> <ObjectName> <name: (<ObjectName> ".")*> <end: @R> =>? {
+// This part is rewritten to resolve shift-reduce conflicts:
+// CatalogObjectReferenceOptional <- CatalogObjectParentReference? ObjectName
+// CatalogObjectReference <- CatalogObjectParentReference ObjectName
+// TODO: Refactor this part to make it cleaner.
+pub CatalogObjectReference: ObjectRef<'a> = {
+    <schema: ReferenceParameterSpecification> "/" <objects: ObjectNameList> => {
+        let schema = Some(SchemaRef::Parameter(schema));
+        ObjectRef { schema, objects }
+    },
+    <schema: PredefinedSchemaReference> "/" <objects: ObjectNameList> => {
+        let schema = Some(SchemaRef::Predefined(schema));
+        ObjectRef { schema, objects }
+    },
+    CatalogObjectReferenceHelper<AbsolutePathHelper>,
+    CatalogObjectReferenceHelper<RelativePathHelper>,
+    <first: ObjectName> <remaining: ("." <ObjectName>)+> => {
+        let mut objects = Vec::with_capacity(1 + remaining.len());
+        objects.push(first);
+        objects.extend(remaining);
+        ObjectRef { schema: None, objects }
+    },
+}
 
+pub CatalogObjectReferenceOptional: ObjectRef<'a> = {
+    CatalogObjectReference,
+    <object: ObjectName> => {
+        ObjectRef { schema: None, objects: vec![object] }
     }
 }
 
-CatalogObjectParentReference: ObjectRef<'a> = {
-    <start: @L> <schema: SchemaReference> <sep: "/"?> <name: (<ObjectName> ".")*> <end: @R> =>? {
-        let is_root = matches!(
-            &schema, 
-            SchemaRef::Path(SchemaPath { components, .. })
-            if components == &[SchemaPathComponent::Root]
-        );
-        if let (true, true) | (false, false) = (is_root, sep.is_some()) {
-            return Err(ParseError::User { error: UserError::invalid_object_ref(start..end) })
-        }
-        Ok(ObjectRef { schema: Some(schema), name })
-    },
-    <name: (<ObjectName> ".")+> => ObjectRef { schema: None, name }
+CatalogObjectReferenceHelper<P>: ObjectRef<'a> = {
+    <schema_and_first_object: P> <remaining: ("." <ObjectName>)*> => {
+        let mut schema_path = schema_and_first_object.0;
+        let first = schema_path.pop().unwrap().into_name().unwrap();
+        let schema = Some(SchemaRef::Path(SchemaPath(schema_path)));
+        let mut objects = Vec::with_capacity(1 + remaining.len());
+        objects.push(first);
+        objects.extend(remaining);
+        ObjectRef { schema, objects }
+    }
+}
+
+ObjectNameList: Vec<Ident<'a>> = {
+    <first: ObjectName> <remaining: ("." <ObjectName>)*> => {
+        let mut v = Vec::with_capacity(1 + remaining.len());
+        v.push(first);
+        v.extend(remaining);
+        v
+    }
 }
 
 HomeGraph = { "HOME_PROPERTY_GRAPH", "HOME_GRAPH" };
@@ -735,23 +765,23 @@ ObjectName = Identifier;
 
 ObjectNameOrBindingVariable = RegularIdentifier;
 
-DirectoryOrSchemaName = Identifier;
+// DirectoryOrSchemaName = Identifier;
 
-GraphName = Identifier;
+// GraphName = Identifier;
 
 DelimitedGraphName = DelimitedIdentifier;
 
-GraphTypeName = Identifier;
+// GraphTypeName = Identifier;
 
-NodeTypeName = Identifier;
+// NodeTypeName = Identifier;
 
-EdgeTypeName = Identifier;
+// EdgeTypeName = Identifier;
 
 BindingTableName = Identifier;
 
 DelimitedBindingTableName = DelimitedIdentifier;
 
-ProcedureName = Identifier;
+// ProcedureName = Identifier;
 
 LabelName = Identifier;
 

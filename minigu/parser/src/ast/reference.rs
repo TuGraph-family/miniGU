@@ -2,7 +2,6 @@
 
 use crate::ast::Ident;
 use crate::macros::{base, ext};
-use crate::span::Span;
 
 #[apply(ext)]
 pub enum PredefinedSchemaRef {
@@ -18,30 +17,37 @@ pub enum SchemaRef<'a> {
 }
 
 #[apply(base)]
-pub struct SchemaPath<'a> {
-    pub components: Vec<SchemaPathComponent<'a>>,
-    pub span: Span,
-}
+pub struct SchemaPath<'a>(pub Vec<SchemaPathComponent<'a>>);
 
 #[apply(base)]
 pub enum SchemaPathComponent<'a> {
-    /// Named component, e.g., `a`.
+    /// A named object (schema or directory), e.g., `a`.
     Name(Ident<'a>),
     /// Parent directory, e.g., `..`.
     Parent,
     /// The root indicator, e.g., `/`.
     ///
-    /// # NOTE
-    /// This should only appear as the first element of path components. Accordingly, this can be
+    /// # Note
+    /// This should only appear as the first component of an object path. Accordingly, this can be
     /// used to distinguish between absolute path and relative path.
     Root,
+}
+
+impl<'a> SchemaPathComponent<'a> {
+    pub(crate) fn into_name(self) -> Option<Ident<'a>> {
+        if let Self::Name(name) = self {
+            Some(name)
+        } else {
+            None
+        }
+    }
 }
 
 #[apply(base)]
 pub struct ObjectRef<'a> {
     #[cfg_attr(feature = "serde", serde(borrow))]
     pub schema: Option<SchemaRef<'a>>,
-    pub name: Vec<Ident<'a>>,
+    pub objects: Vec<Ident<'a>>,
 }
 
 #[apply(base)]
