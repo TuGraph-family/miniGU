@@ -1,5 +1,5 @@
 [workspace]
-members = ["minigu/binder", "minigu/catalog", "minigu/common"]
+members = ["minigu/binder", "minigu/catalog", "minigu/common", "minigu/storage"]
 resolver = "3"
 
 [workspace.package]
