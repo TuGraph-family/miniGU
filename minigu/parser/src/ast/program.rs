@@ -1,6 +1,6 @@
 //! AST definitions for *GQL-program*.
 
-use crate::ast::{SessionActivity, TransactionActivity};
+use super::{SessionActivity, TransactionActivity};
 use crate::macros::base;
 
 #[apply(base)]

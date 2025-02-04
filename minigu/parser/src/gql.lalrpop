@@ -414,19 +414,147 @@ SessionCloseCommand = "SESSION" "CLOSE";
 pub GraphExpression: GraphExpr<'a> = {
     ObjectNameOrBindingVariable => GraphExpr::Object(<>),
     CurrentGraph => GraphExpr::Current,
-    // GraphReference => GraphExpr::Ref(<>),
+    GraphReference => GraphExpr::Ref(<>),
+    // objectExpressionPrimary
 }
-
-// graphExpression
-//     : objectExpressionPrimary
-//     | graphReference
-//     | objectNameOrBindingVariable
-//     | currentGraph
-//     ;
 
 CurrentGraph = { "CURRENT_PROPERTY_GRAPH", "CURRENT_GRAPH" };
 
+// 11.2 <binding table expression>
+// TODO: Add binding table expression.
+
 // 11.3 <object expression primary>
+// TODO: Add object expression primary.
+
+// 12.1 <linear catalog-modifying statement>
+LinearCatalogModifyingStatement = SimpleCatalogModifyingStatement+;
+
+SimpleCatalogModifyingStatement = { PrimitiveCatalogModifyingStatement, CallCatalogModifyingProcedureStatement };
+
+PrimitiveCatalogModifyingStatement: CatalogModifyingStatement<'a> = {
+    CreateSchemaStatement => CatalogModifyingStatement::CreateSchema(<>),
+    DropSchemaStatement => CatalogModifyingStatement::DropSchema(<>),
+    CreateGraphStatement => CatalogModifyingStatement::CreateGraph(<>),
+    DropGraphStatement => CatalogModifyingStatement::DropGraph(<>),
+    CreateGraphTypeStatement => CatalogModifyingStatement::CreateGraphType(<>),
+    DropGraphTypeStatement => CatalogModifyingStatement::DropGraphType(<>),
+}
+
+// 12.2 <insert schema statement>
+CreateSchemaStatement: CreateSchemaStatement<'a> = {
+    "CREATE" "SCHEMA" <if_not_exists: ("IF" "NOT" "EXISTS")?> <path: CatalogSchemaParentAndName> => {
+        CreateSchemaStatement { if_not_exists: if_not_exists.is_some(), path }
+    }
+}
+
+// 12.3 <drop schema statement>
+DropSchemaStatement: DropSchemaStatement<'a> = {
+    "DROP" "SCHEMA" <if_exists: ("IF" "EXISTS")?> <path: CatalogSchemaParentAndName> => {
+        DropSchemaStatement { if_exists: if_exists.is_some(), path }
+    }
+}
+
+// 12.4 <insert graph statement>
+CreateGraphStatement: CreateGraphStatement<'a> = {
+    "CREATE" <kind: CreateGraphStatementKind> <path: CatalogGraphParentAndName> <graph_type: OpenOrOfGraphType> <source: GraphSource?> => {
+        CreateGraphStatement { kind, path, graph_type, source }
+    } 
+}
+
+CreateGraphStatementKind: CreateGraphOrGraphTypeStatementKind = {
+    "PROPERTY"? "GRAPH" => CreateGraphOrGraphTypeStatementKind::Create,
+    "PROPERTY"? "GRAPH" "IF" "NOT" "EXISTS" => CreateGraphOrGraphTypeStatementKind::CreateIfNotExists,
+    "OR" "REPLACE" "PROPERTY"? "GRAPH" => CreateGraphOrGraphTypeStatementKind::CreateOrReplace,
+}
+
+OpenOrOfGraphType: OfGraphType<'a> = {
+    OpenGraphType => OfGraphType::Any,
+    OfGraphType,
+}
+
+OpenGraphType = {
+    Typed? "ANY" ("PROPERTY"? "GRAPH")?
+}
+
+// TODO: Add nested graph type specification.
+OfGraphType: OfGraphType<'a> = {
+    GraphTypeLikeGraph => OfGraphType::Like(<>),
+    Typed? <GraphTypeReference> => OfGraphType::Ref(<>),
+    // Typed? ("PROPERTY"? "GRAPH")? NestedGraphTypeSpecification,
+}
+
+GraphTypeLikeGraph = "LIKE" <GraphExpression>;
+
+GraphSource = "AS" "COPY" "OF" <GraphExpression>;
+
+// 12.5 <drop graph statement>
+DropGraphStatement: DropGraphStatement<'a> = {
+    "DROP" "PROPERTY"? "GRAPH" <if_exists: ("IF" "EXISTS")?> <path: CatalogGraphParentAndName> => {
+        DropGraphStatement { if_exists: if_exists.is_some(), path }
+    }
+}
+
+// 12.6 <graph type statement>
+CreateGraphTypeStatement: CreateGraphTypeStatement<'a> = {
+    "CREATE" <kind: CreateGraphTypeStatementKind> <path: CatalogGraphTypeParentAndName> <source: GraphTypeSource> => {
+        CreateGraphTypeStatement { kind, path, source }
+    }
+}
+
+CreateGraphTypeStatementKind: CreateGraphOrGraphTypeStatementKind = {
+    "PROPERTY"? "GRAPH" "TYPE" => CreateGraphOrGraphTypeStatementKind::Create,
+    "PROPERTY"? "GRAPH" "TYPE" "IF" "NOT" "EXISTS" => CreateGraphOrGraphTypeStatementKind::CreateIfNotExists,
+    "OR" "REPLACE" "PROPERTY"? "GRAPH" "TYPE" => CreateGraphOrGraphTypeStatementKind::CreateOrReplace,
+}
+
+GraphTypeSource: GraphTypeSource<'a> = {
+    "AS"? <CopyOfGraphType> => GraphTypeSource::Copy(<>),
+    GraphTypeLikeGraph => GraphTypeSource::Like(<>),
+    // "AS"? NestedGraphTypeSpecification => GraphTypeSource::Nested(<>),
+}
+
+CopyOfGraphType = "COPY" "OF" <GraphTypeReference>;
+
+// 12.7 <drop graph statement>
+DropGraphTypeStatement: DropGraphTypeStatement<'a> = {
+    "DROP" "PROPERTY"? "GRAPH" "TYPE" <if_exists: ("IF" "EXISTS")?> <path: CatalogGraphTypeParentAndName> => {
+        DropGraphTypeStatement { if_exists: if_exists.is_some(), path }
+    }
+}
+
+// 12.8 <call catalog-modifying statement>
+CallCatalogModifyingProcedureStatement: CatalogModifyingStatement<'a> = {
+    CallProcedureStatement => CatalogModifyingStatement::Call(<>),
+}
+
+// 15.1 <call procedure statement> and <procedure call>
+CallProcedureStatement: CallProcedureStatement<'a> = {
+    <optional: "OPTIONAL"?> "CALL" <procedure: ProcedureCall> => {
+        CallProcedureStatement { procedure, optional: optional.is_some() }
+    }
+}
+
+// TODO: Add inline procedure call.
+ProcedureCall: ProcedureCall<'a> = {
+    NamedProcedureCall => ProcedureCall::Named(<>),
+    // InlineProcedureCall,
+}
+
+// 15.3 <named procedure call>
+NamedProcedureCall: NamedProcedureCall<'a> = {
+    <name: ProcedureReference> "(" <args: ListHelper<ValueExpression, ",">?> ")" <yield_clause: YieldClause?> => {
+        NamedProcedureCall { name, args: args.unwrap_or_default(), yield_clause }
+    }
+}
+
+// 16.1 <at schema clasue>
+AtSchemaClause = "AT" SchemaReference;
+
+// 16.2 <use graph clause>
+UseGraphClause = "USE" GraphExpression;
+
+// 16.7 <path pattern expression>
+IsOrColon = { "IS", ":" }
 
 // 16.8 <label expression>
 pub LabelExpression: LabelExpr<'a> = {
@@ -451,7 +579,7 @@ pub LabelExpression: LabelExpr<'a> = {
 // See https://github.com/lalrpop/lalrpop/issues/596 for more details.
 LabelExpressionReset = LabelExpression; 
 
-pub IsLabelExpression = { "IS" <LabelExpression>, ":" <LabelExpression> }
+pub IsLabelExpression = IsOrColon <LabelExpression>;
 
 pub ElementVariableDeclaration: ElementVariableDeclaration<'a> = {
     <temp: "TEMP"?> <variable: RegularIdentifier> => {
@@ -462,39 +590,14 @@ pub ElementVariableDeclaration: ElementVariableDeclaration<'a> = {
     }
 }
 
-// pub ElementPatternPredicate: ElementPatternPredicate<'a> = {
-//     "WHERE" 
-// }
+// 16.14 <yield clause>
+pub YieldClause: Yield<'a> = {
+    "YIELD" <ListHelper<YieldItem, ",">> => Yield(<>)
+}
 
-// // TODO: Add other numeric value functions.
-// NumericValueFunction: Expression<'a> = {
-//     LengthExpression => Expression::BuiltinFunction(<>),
-// }
-
-
-// LengthExpression: BuiltinFunction<'a> = {
-//     CharLengthExpression,
-//     CardinalityExpression,
-// }
-
-// CharLengthExpression: BuiltinFunction<'a> = {
-//     FunctionHelper1<"CHAR_LENGTH", CharStringValueExpression> => BuiltinFunction::CharLength(Box::new(<>)),
-//     FunctionHelper1<"CHARACTER_LENGTH", CharStringValueExpression> => BuiltinFunction::CharLength(Box::new(<>)),
-// }
-
-// CardinalityExpression: BuiltinFunction<'a> = {
-//     FunctionHelper1<"CARDINALITY", CardinalityExpressionArgument> => BuiltinFunction::Cardinality(Box::new(<>)),
-//     FunctionHelper1<"SIZE", ListValueExpression> => BuiltinFunction::Size(Box::new(<>)),
-// }
-
-// CardinalityExpressionArgument: Expression<'a> = {
-//     ListValueExpression,
-//     RecordExpression,
-// }
-
-// CharStringValueExpression: Expression<'a> = {
-
-// }
+YieldItem: YieldItem<'a> = {
+    <name: FieldName> <alias: ("AS" <BindingVariable>)?> => YieldItem { name, alias }
+}
 
 // 17.1 <schema reference> and <catalog schema parent name>
 // The following rules are rewritten to resolve shift-reduce conflicts.
@@ -512,26 +615,26 @@ PredefinedSchemaReference: PredefinedSchemaRef = {
     "." => PredefinedSchemaRef::Current,
 }
 
-RootPathHelper: SchemaPath<'a> = {
-    "/" => SchemaPath(vec![SchemaPathComponent::Root])
+RootPathHelper: Vec<SchemaPathComponent<'a>> = {
+    "/" => vec![SchemaPathComponent::Root]
 }
 
-AbsolutePathHelper: SchemaPath<'a> = {
+AbsolutePathHelper: Vec<SchemaPathComponent<'a>> = {
     "/" <path: SimpleObjectPath> => {
         let mut components = Vec::with_capacity(1 + path.len());
         components.push(SchemaPathComponent::Root);
         components.extend(path);
-        SchemaPath(components)
+        components
     }
 }
 
-RelativePathHelper: SchemaPath<'a> = {
+RelativePathHelper: Vec<SchemaPathComponent<'a>> = {
     ".." <head: ("/" "..")*> "/" <path: SimpleObjectPath> => {
         let mut components = Vec::with_capacity(1 + head.len() + path.len());
         components.push(SchemaPathComponent::Parent);
         components.extend(head.into_iter().map(|_| SchemaPathComponent::Parent));
         components.extend(path);
-        SchemaPath(components)
+        components
     }
 }
 
@@ -545,6 +648,8 @@ SimpleObjectPath: Vec<SchemaPathComponent<'a>> = {
     }
 }
 
+CatalogSchemaParentAndName = AbsolutePathHelper;
+
 // 17.2 <graph reference> and <catalog graph parent and name>
 pub GraphReference: GraphRef<'a> = {
     DelimitedGraphName => GraphRef::Name(<>),
@@ -553,17 +658,35 @@ pub GraphReference: GraphRef<'a> = {
     HomeGraph => GraphRef::Home,
 }
 
+CatalogGraphParentAndName = CatalogObjectReferenceOptional;
+
+// 17.3 <graph type reference> and <catalog graph type parent and name>
+GraphTypeReference: GraphTypeRef<'a> = {
+    CatalogGraphTypeParentAndName => GraphTypeRef::Ref(<>),
+    ReferenceParameterSpecification => GraphTypeRef::Parameter(<>),
+}
+
+CatalogGraphTypeParentAndName = CatalogObjectReferenceOptional;
+
+// 17.5 <procedure reference> and <catalog procedure parent and name>
+ProcedureReference: ProcedureRef<'a> = {
+    CatalogProcedureParentAndName => ProcedureRef::Ref(<>),
+    ReferenceParameterSpecification => ProcedureRef::Parameter(<>),
+}
+
+CatalogProcedureParentAndName = CatalogObjectReferenceOptional;
+
 // 17.6 <catalog object parent reference>
 // This part is rewritten to resolve shift-reduce conflicts:
 // CatalogObjectReferenceOptional <- CatalogObjectParentReference? ObjectName
 // CatalogObjectReference <- CatalogObjectParentReference ObjectName
 // TODO: Refactor this part to make it cleaner.
 pub CatalogObjectReference: ObjectRef<'a> = {
-    <schema: ReferenceParameterSpecification> "/" <objects: ObjectNameList> => {
+    <schema: ReferenceParameterSpecification> "/" <objects: ListHelper<ObjectName, ".">> => {
         let schema = Some(SchemaRef::Parameter(schema));
         ObjectRef { schema, objects }
     },
-    <schema: PredefinedSchemaReference> "/" <objects: ObjectNameList> => {
+    <schema: PredefinedSchemaReference> "/" <objects: ListHelper<ObjectName, ".">> => {
         let schema = Some(SchemaRef::Predefined(schema));
         ObjectRef { schema, objects }
     },
@@ -585,23 +708,13 @@ pub CatalogObjectReferenceOptional: ObjectRef<'a> = {
 }
 
 CatalogObjectReferenceHelper<P>: ObjectRef<'a> = {
-    <schema_and_first_object: P> <remaining: ("." <ObjectName>)*> => {
-        let mut schema_path = schema_and_first_object.0;
-        let first = schema_path.pop().unwrap().into_name().unwrap();
-        let schema = Some(SchemaRef::Path(SchemaPath(schema_path)));
+    <mut schema_and_first_object: P> <remaining: ("." <ObjectName>)*> => {
+        let first = schema_and_first_object.pop().unwrap().into_name().unwrap();
+        let schema = Some(SchemaRef::Path(schema_and_first_object));
         let mut objects = Vec::with_capacity(1 + remaining.len());
         objects.push(first);
         objects.extend(remaining);
         ObjectRef { schema, objects }
-    }
-}
-
-ObjectNameList: Vec<Ident<'a>> = {
-    <first: ObjectName> <remaining: ("." <ObjectName>)*> => {
-        let mut v = Vec::with_capacity(1 + remaining.len());
-        v.push(first);
-        v.extend(remaining);
-        v
     }
 }
 
@@ -610,13 +723,408 @@ HomeGraph = { "HOME_PROPERTY_GRAPH", "HOME_GRAPH" };
 // 17.7 <reference parameter specification>
 ReferenceParameterSpecification = SubstitutedParameterReference;
 
+// 18.1 <nested graph type specification>
+// NestedGraphTypeSpecification = "LEFT_BRACE" <GraphTypeSpecificationBody> "RIGHT_BRACE";
+
+// GraphTypeSpecificationBody = ListHelper<ElementTypeSpecification, ",">;
+
+// ElementTypeSpecification = {
+//     NodeTypeSpecification,
+//     EdgeTypeSpecification
+// }
+
+// 18.2 <node type specification>
+// nodeTypeSpecification
+//     : nodeTypePattern
+//     | nodeTypePhrase
+//     ;
+
+NodeTypePattern = {
+    (NodeSynonym "TYPE"? ObjectName)? "(" LocalNodeTypeAlias?
+}
+
+// nodeTypePattern
+//     : (nodeSynonym TYPE? nodeTypeName)? LEFT_PAREN localNodeTypeAlias? nodeTypeFiller? RIGHT_PAREN
+//     ;
+
+// nodeTypePhrase
+//     : nodeSynonym TYPE? nodeTypePhraseFiller (AS localNodeTypeAlias)?
+//     ;
+
+// nodeTypePhraseFiller
+//     : nodeTypeName nodeTypeFiller?
+//     | nodeTypeFiller
+//     ;
+
+NodeTypeFiller = {
+    NodeTypeKeyLabelSet NodeTypeImpliedContent?,
+    // NodeTypeImpliedContent
+}
+
+LocalNodeTypeAlias = RegularIdentifier;
+
+NodeTypeImpliedContent = {
+    NodeTypeLabelSet,
+    // NodeTypePropertyTypes,
+    // NodeTypeLabelSet NodeTypePropertyTypes
+}
+
+NodeTypeKeyLabelSet = <LabelSetPhrase?> "IMPLIES";
+
+NodeTypeLabelSet = LabelSetPhrase;
+
+NodeTypePropertyTypes = PropertyTypesSpecification;
+
+// 18.3 <edge type specification>
+
+// edgeTypeSpecification
+//     : edgeTypePattern
+//     | edgeTypePhrase
+//     ;
+
+// edgeTypePattern
+//     : (edgeKind? edgeSynonym TYPE? edgeTypeName)? (edgeTypePatternDirected | edgeTypePatternUndirected)
+//     ;
+
+// edgeTypePhrase
+//     : edgeKind edgeSynonym TYPE? edgeTypePhraseFiller endpointPairPhrase
+//     ;
+
+// edgeTypePhraseFiller
+//     : edgeTypeName edgeTypeFiller?
+//     | edgeTypeFiller
+//     ;
+
+// edgeTypeFiller
+//     : edgeTypeKeyLabelSet edgeTypeImpliedContent?
+//     | edgeTypeImpliedContent
+//     ;
+
+// edgeTypeImpliedContent
+//     : edgeTypeLabelSet
+//     | edgeTypePropertyTypes
+//     | edgeTypeLabelSet edgeTypePropertyTypes
+//     ;
+
+// edgeTypeKeyLabelSet
+//     : labelSetPhrase? IMPLIES
+//     ;
+
+// edgeTypeLabelSet
+//     : labelSetPhrase
+//     ;
+
+// edgeTypePropertyTypes
+//     : propertyTypesSpecification
+//     ;
+
+// edgeTypePatternDirected
+//     : edgeTypePatternPointingRight
+//     | edgeTypePatternPointingLeft
+//     ;
+
+// edgeTypePatternPointingRight
+//     : sourceNodeTypeReference arcTypePointingRight destinationNodeTypeReference
+//     ;
+
+// edgeTypePatternPointingLeft
+//     : destinationNodeTypeReference arcTypePointingLeft sourceNodeTypeReference
+//     ;
+
+// edgeTypePatternUndirected
+//     : sourceNodeTypeReference arcTypeUndirected destinationNodeTypeReference
+//     ;
+
+// arcTypePointingRight
+//     : MINUS_LEFT_BRACKET edgeTypeFiller BRACKET_RIGHT_ARROW
+//     ;
+
+// arcTypePointingLeft
+//     : LEFT_ARROW_BRACKET edgeTypeFiller RIGHT_BRACKET_MINUS
+//     ;
+
+// arcTypeUndirected
+//     : TILDE_LEFT_BRACKET edgeTypeFiller RIGHT_BRACKET_TILDE
+//     ;
+
+// sourceNodeTypeReference
+//     : LEFT_PAREN sourceNodeTypeAlias RIGHT_PAREN
+//     | LEFT_PAREN nodeTypeFiller? RIGHT_PAREN
+//     ;
+
+// destinationNodeTypeReference
+//     : LEFT_PAREN destinationNodeTypeAlias RIGHT_PAREN
+//     | LEFT_PAREN nodeTypeFiller? RIGHT_PAREN
+//     ;
+
+// edgeKind
+//     : DIRECTED
+//     | UNDIRECTED
+//     ;
+
+// endpointPairPhrase
+//     : CONNECTING endpointPair
+//     ;
+
+// endpointPair
+//     : endpointPairDirected
+//     | endpointPairUndirected
+//     ;
+
+// endpointPairDirected
+//     : endpointPairPointingRight
+//     | endpointPairPointingLeft
+//     ;
+
+// endpointPairPointingRight
+//     : LEFT_PAREN sourceNodeTypeAlias connectorPointingRight destinationNodeTypeAlias RIGHT_PAREN
+//     ;
+
+// endpointPairPointingLeft
+//     : LEFT_PAREN destinationNodeTypeAlias LEFT_ARROW sourceNodeTypeAlias RIGHT_PAREN
+//     ;
+
+// endpointPairUndirected
+//     : LEFT_PAREN sourceNodeTypeAlias connectorUndirected destinationNodeTypeAlias RIGHT_PAREN
+//     ;
+
+// connectorPointingRight
+//     : TO
+//     | RIGHT_ARROW
+//     ;
+
+// connectorUndirected
+//     : TO
+//     | TILDE
+//     ;
+
+// sourceNodeTypeAlias
+//     : regularIdentifier
+//     ;
+
+// destinationNodeTypeAlias
+//     : regularIdentifier
+//     ;
+
+// 18.4 <label set phrase> and <label set specification>
+LabelSetPhrase: LabelSet<'a> = {
+    "LABEL" <LabelName> => LabelSet::Label(<>),
+    "LABELS" <LabelSetSpecification> => LabelSet::Labels(<>),
+    IsOrColon <LabelSetSpecification> => LabelSet::Labels(<>),
+}
+
+LabelSetSpecification = ListHelper<LabelName, "&">;
+
+// 18.5 <property types specification>
+PropertyTypesSpecification: Vec<FieldOrPropertyType<'a>> = {
+    "{" <ListHelper<PropertyType, ",">?> "}" => <>.unwrap_or_default()
+}
+
+// 18.6 <property type>
+PropertyType: FieldOrPropertyType<'a> = {
+    <name: PropertyName> Typed? <value_type: PropertyValueType> => FieldOrPropertyType { name, value_type }
+}
+
+// 18.7 <property value type>
+PropertyValueType = ValueType;
+
+// 18.8 <binding table type>
+BindingTableType = "BINDING"? "TABLE" <FieldTypesSpecification>;
+
+// 18.9 <value type>
+// TODO: Add dynamic union type.
+// TODO: Add closed dynamic union type.
+ValueType: ValueType<'a> = {
+    PredefinedType,
+    "PATH" <NotNull?> => ValueType { kind: ValueTypeKind::Path, not_null: <>.is_some() },
+    <type_name: ListValueTypeName> <value_type: ("<" <ValueType> ">")?> <max_length: ("[" <MaxLength> "]")?> <not_null: NotNull?> => {
+        ValueType { 
+            kind: ValueTypeKind::List { 
+                type_name,
+                value_type: value_type.map(Box::new),
+                max_length
+            }, 
+            not_null: not_null.is_some()
+        }
+    },
+    <value_type: ValueType> <type_name: ListValueTypeName> <max_length: ("[" <MaxLength> "]")?> <not_null: NotNull?> => {
+        ValueType { 
+            kind: ValueTypeKind::List {
+                type_name,
+                value_type: Some(Box::new(value_type)),
+                max_length
+            },
+            not_null: not_null.is_some()
+        }
+    },
+    RecordType
+}
+
+Typed = { "::", "TYPED"}
+
+// TODO: Add temporal type.
+// TODO: Add reference value type.
+PredefinedType = {
+    BooleanType,
+    CharacterStringType,
+    ByteStringType,
+    NumericType,
+    ImmaterialValueType
+}
+
+BooleanType: ValueType<'a> = {
+    "BOOL" <NotNull?> => ValueType { kind: ValueTypeKind::Bool, not_null: <>.is_some() },
+    "BOOLEAN" <NotNull?> => ValueType { kind: ValueTypeKind::Bool, not_null: <>.is_some() },
+}
+
+CharacterStringType: ValueType<'a> = {
+    "STRING" <min_max_length: MinMaxLength?> <not_null: NotNull?> => {
+        let (min_length, max_length) = min_max_length.map(|(min, max)| (min, Some(max))).unwrap_or_default();
+        ValueType { kind: ValueTypeKind::String { min_length, max_length }, not_null: not_null.is_some() }
+    },
+    "CHAR" <fixed_length: ("(" <FixedLength> ")")?> <not_null: NotNull?> => {
+        ValueType { kind: ValueTypeKind::Char(fixed_length), not_null: not_null.is_some() }
+    },
+    "VARCHAR" <max_length: ("(" <MaxLength> ")")?> <not_null: NotNull?> => {
+        ValueType { kind: ValueTypeKind::Varchar(max_length), not_null: not_null.is_some() }
+    }
+}
+
+ByteStringType: ValueType<'a> = {
+    "BYTES" <min_max_length: MinMaxLength?> <not_null: NotNull?> => {
+        let (min_length, max_length) = min_max_length.map(|(min, max)| (min, Some(max))).unwrap_or_default();
+        ValueType { kind: ValueTypeKind::Bytes { min_length, max_length }, not_null: not_null.is_some() }
+    },
+    "BINARY" <fixed_length: ("(" <FixedLength> ")")?> <not_null: NotNull?> => {
+        ValueType { kind: ValueTypeKind::Binary(fixed_length), not_null: not_null.is_some() }
+    },
+    "VARBINARY" <max_length: ("(" <MaxLength> ")")?> <not_null: NotNull?> => {
+        ValueType { kind: ValueTypeKind::Varbinary(max_length), not_null: not_null.is_some() }
+    }
+}
+
+MinMaxLength: (Option<UnsignedInteger<'a>>, UnsignedInteger<'a>) = {
+    "(" <min_length: MinLength> "," <max_length: MaxLength> ")" => (Some(min_length), max_length),
+    "(" <max_length: MaxLength> ")" => (None, max_length)
+}
+
+NumericType = { ExactNumericType, ApproximateNumericType }
+
+ExactNumericType = { BinaryExactNumericType, DecimalExactNumericType }
+
+BinaryExactNumericType = { SignedBinaryExactNumericType, UnsignedBinaryExactNumericType }
+
+SignedBinaryExactNumericType: ValueType<'a> = {
+    "INT8" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::SignedNumeric(NumericTypeKind::Int8), not_null: not_null.is_some() },
+    "INT16" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::SignedNumeric(NumericTypeKind::Int16), not_null: not_null.is_some() },
+    "INT32" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::SignedNumeric(NumericTypeKind::Int32), not_null: not_null.is_some() },
+    "INT64" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::SignedNumeric(NumericTypeKind::Int64), not_null: not_null.is_some() },
+    "INT128" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::SignedNumeric(NumericTypeKind::Int128), not_null: not_null.is_some() },
+    "INT256" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::SignedNumeric(NumericTypeKind::Int256), not_null: not_null.is_some() },
+    "SMALLINT" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::SignedNumeric(NumericTypeKind::Small), not_null: not_null.is_some() },
+    "INT" <precision: ("(" <Precision> ")")?> <not_null: NotNull?> => ValueType { kind: ValueTypeKind::SignedNumeric(NumericTypeKind::Int(precision)), not_null: not_null.is_some() },
+    "BIGINT" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::SignedNumeric(NumericTypeKind::Big), not_null: not_null.is_some() },
+    "SIGNED"? <VerboseBinaryExactNumericType> => ValueType { kind: ValueTypeKind::SignedNumeric(<>.0), not_null: <>.1 },
+}
+
+UnsignedBinaryExactNumericType: ValueType<'a> = {
+    "UINT8" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::UnsignedNumeric(NumericTypeKind::Int8), not_null: not_null.is_some() },
+    "UINT16" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::UnsignedNumeric(NumericTypeKind::Int16), not_null: not_null.is_some() },
+    "UINT32" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::UnsignedNumeric(NumericTypeKind::Int32), not_null: not_null.is_some() },
+    "UINT64" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::UnsignedNumeric(NumericTypeKind::Int64), not_null: not_null.is_some() },
+    "UINT128" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::UnsignedNumeric(NumericTypeKind::Int128), not_null: not_null.is_some() },
+    "UINT256" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::UnsignedNumeric(NumericTypeKind::Int256), not_null: not_null.is_some() },
+    "USMALLINT" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::UnsignedNumeric(NumericTypeKind::Small), not_null: not_null.is_some() },
+    "UINT" <precision: ("(" <Precision> ")")?> <not_null: NotNull?> => ValueType { kind: ValueTypeKind::UnsignedNumeric(NumericTypeKind::Int(precision)), not_null: not_null.is_some() },
+    "UBIGINT" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::UnsignedNumeric(NumericTypeKind::Big), not_null: not_null.is_some() },
+    "UNSIGNED" <VerboseBinaryExactNumericType> => ValueType { kind: ValueTypeKind::UnsignedNumeric(<>.0), not_null: <>.1 },
+}
+
+VerboseBinaryExactNumericType: (NumericTypeKind<'a>, bool) = {
+    "INTEGER8" <NotNull?> => (NumericTypeKind::Int8, <>.is_some()),
+    "INTEGER16" <NotNull?> => (NumericTypeKind::Int16, <>.is_some()),
+    "INTEGER32" <NotNull?> => (NumericTypeKind::Int32, <>.is_some()),
+    "INTEGER64" <NotNull?> => (NumericTypeKind::Int64, <>.is_some()),
+    "INTEGER128" <NotNull?> => (NumericTypeKind::Int128, <>.is_some()),
+    "INTEGER256" <NotNull?> => (NumericTypeKind::Int256, <>.is_some()),
+    "SMALL" "INTEGER" <NotNull?> => (NumericTypeKind::Small, <>.is_some()),
+    "INTEGER" <precision: ("(" <Precision> ")")?> <not_null: NotNull?> => (NumericTypeKind::Int(precision), not_null.is_some()),
+    "BIG" "INTEGER" <NotNull?> => (NumericTypeKind::Big, <>.is_some()),
+}
+
+DecimalExactNumericType: ValueType<'a> = {
+    DecimalOrDec <precision_scale_not_null: PrecisionScaleNotNull?> => {
+        let (precision, scale, not_null) = precision_scale_not_null.map(|(a, b, c)| (Some(a), b, c)).unwrap_or_default();
+        ValueType { kind: ValueTypeKind::Decimal { precision, scale }, not_null }
+    }
+}
+
+DecimalOrDec = { "DECIMAL", "DEC" }
+
+PrecisionScaleNotNull: (UnsignedInteger<'a>, Option<UnsignedInteger<'a>>, bool) = {
+    "(" <precision: Precision> <scale: ("," <Scale>)?> ")" <not_null: NotNull?> => {
+        (precision, scale, not_null.is_some())
+    }
+}
+
+PrecisionScale: (UnsignedInteger<'a>, Option<UnsignedInteger<'a>>) = {
+    "(" <precision: Precision> <scale: ("," <Scale>)?> ")" => {
+        (precision, scale)
+    }
+}
+
+Precision = UnsignedDecimalInteger;
+
+Scale = UnsignedDecimalInteger;
+
+ApproximateNumericType: ValueType<'a> = {
+    "FLOAT16" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::Float(FloatTypeKind::Float16), not_null: not_null.is_some() },
+    "FLOAT32" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::Float(FloatTypeKind::Float32), not_null: not_null.is_some() },
+    "FLOAT64" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::Float(FloatTypeKind::Float64), not_null: not_null.is_some() },
+    "FLOAT128" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::Float(FloatTypeKind::Float128), not_null: not_null.is_some() },
+    "FLOAT256" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::Float(FloatTypeKind::Float256), not_null: not_null.is_some() },
+    "FLOAT" <precision_scale: PrecisionScale?> <not_null: NotNull?> => {
+        let (precision, scale) = precision_scale.map(|(a, b)| (Some(a), b)).unwrap_or_default();
+        ValueType { kind: ValueTypeKind::Float(FloatTypeKind::Float { precision, scale }), not_null: not_null.is_some() }
+    },
+    "REAL" <not_null: NotNull?> => ValueType { kind: ValueTypeKind::Float(FloatTypeKind::Real), not_null: not_null.is_some() },
+    "DOUBLE" "PRECISION"? <not_null: NotNull?> => ValueType { kind: ValueTypeKind::Float(FloatTypeKind::Double), not_null: not_null.is_some() },
+}
+
+MinLength = UnsignedInteger;
+
+MaxLength = UnsignedInteger;
+
+FixedLength = UnsignedInteger;
+
+RecordType: ValueType<'a> = {
+    "ANY"? "RECORD" <NotNull?> => ValueType { kind: ValueTypeKind::Record(None), not_null: <>.is_some() },
+    "RECORD"? <field_types: FieldTypesSpecification> <not_null: NotNull?> => ValueType { kind: ValueTypeKind::Record(Some(field_types)), not_null: not_null.is_some() },
+}
+
+FieldTypesSpecification: Vec<FieldOrPropertyType<'a>> = {
+    "{" <ListHelper<FieldType, ",">?> "}" => <>.unwrap_or_default()
+}
+
+ImmaterialValueType: ValueType<'a> = {
+    "NULL" => ValueType { kind: ValueTypeKind::Null, not_null: false },
+    "NULL" NotNull => ValueType { kind: ValueTypeKind::Empty, not_null: true},
+    "NOTHING" => ValueType { kind: ValueTypeKind::Empty, not_null: true},
+}
+
+NotNull = "NOT" "NULL";
+
+// 18.10 <field type>
+FieldType: FieldOrPropertyType<'a> = {
+    <name: FieldName> Typed? <value_type: ValueType> => FieldOrPropertyType { name, value_type }
+}
+
 // 20.1 <value expression>
 pub ValueExpression: Expr<'a> = {
     #[precedence(level = "0")]
     ValueExpressionPrimary,
     "+" <ValueExpression> => Expr::Unary { op: UnaryOp::Plus, child: Box::new(<>) },
     "-" <ValueExpression> => Expr::Unary { op: UnaryOp::Minus, child: Box::new(<>) },
-    "NOT" <ValueExpression> => Expr::Unary { op: UnaryOp::Not, child: Box::new(<>) },
 
     #[precedence(level = "1")]
     #[assoc(side = "left")]
@@ -642,24 +1150,25 @@ pub ValueExpression: Expr<'a> = {
     <l: ValueExpression> "<>" <r: ValueExpression> => Expr::Binary { op: BinaryOp::Ne, left: Box::new(l), right: Box::new(r) },
 
     #[precedence(level = "5")]
+    "NOT" <ValueExpression> => Expr::Unary { op: UnaryOp::Not, child: Box::new(<>) },
+
+    #[precedence(level = "6")]
     #[assoc(side = "left")]
     <l: ValueExpression> "IS" <right: BooleanLiteral> => Expr::Is { left: Box::new(l), right },
     <l: ValueExpression> "IS" "NOT" <right: BooleanLiteral> => Expr::IsNot { left: Box::new(l), right },
 
-    #[precedence(level = "6")]
+    #[precedence(level = "7")]
     #[assoc(side = "left")]
     <l: ValueExpression> "AND" <r: ValueExpression> => Expr::Binary { op: BinaryOp::And, left: Box::new(l), right: Box::new(r) },
 
-    #[precedence(level = "7")]
+    #[precedence(level = "8")]
     #[assoc(side = "left")]
     <l: ValueExpression> "OR" <r: ValueExpression> => Expr::Binary { op: BinaryOp::Or, left: Box::new(l), right: Box::new(r) },
     <l: ValueExpression> "XOR" <r: ValueExpression> => Expr::Binary { op: BinaryOp::Xor, left: Box::new(l), right: Box::new(r) },
+
+    #[precedence(level = "9")]
+    "PROPERTY"? "GRAPH" <GraphExpression> => Expr::Graph(<>),
 }
-
-FunctionHelper1<F, A1> = F "(" <A1> ")";
-
-FunctionHelper2<F, A1, A2> = F "(" <A1> "," <A2> ")";
-
 
 NodeReferenceValueExpression = ValueExpressionPrimary;
 
@@ -721,17 +1230,8 @@ PathElementListStep: PathStep<'a> = {
 
 // 20.17 <list value constructor>
 pub ListValueConstructor: ListConstructor<'a> = {
-    <type_name: ListValueTypeName?> "[" <values: ListElementList?> "]" => ListConstructor { 
+    <type_name: ListValueTypeName?> "[" <values: ListHelper<ValueExpression, ",">?> "]" => ListConstructor { 
         type_name, values: values.unwrap_or_default() 
-    }
-}
-
-ListElementList: Vec<Expr<'a>> = {
-    <first: ValueExpression> <other: ("," <ValueExpression>)*> => {
-        let mut v = Vec::with_capacity(1 + other.len());
-        v.push(first);
-        v.extend(other);
-        v
     }
 }
 
@@ -746,42 +1246,20 @@ ListValueTypeNameSynonym: ListTypeNameSynonym = {
 
 // 20.18 <record constructor>
 pub RecordConstructor: RecordConstructor<'a> = {
-    "RECORD"? "{" <FieldList?> "}" => RecordConstructor(<>.unwrap_or_default())
-}
-
-FieldList: Vec<Field<'a>> = {
-    <first: Field> <other: ("," <Field>)*> => {
-        let mut v = Vec::with_capacity(1 + other.len());
-        v.push(first);
-        v.extend(other);
-        v
-    }
+    "RECORD"? "{" <ListHelper<Field, ",">?> "}" => RecordConstructor(<>.unwrap_or_default())
 }
 
 Field: Field<'a> = <name: FieldName> <value: ValueExpression> => Field { name, value };
 
 // 21.1 Names and variables
+// Object: Directory, Schema, Graph, GraphType, NodeType, EdgeType, BindingTable, Procedure
 ObjectName = Identifier;
 
 ObjectNameOrBindingVariable = RegularIdentifier;
 
-// DirectoryOrSchemaName = Identifier;
-
-// GraphName = Identifier;
-
 DelimitedGraphName = DelimitedIdentifier;
 
-// GraphTypeName = Identifier;
-
-// NodeTypeName = Identifier;
-
-// EdgeTypeName = Identifier;
-
-BindingTableName = Identifier;
-
 DelimitedBindingTableName = DelimitedIdentifier;
-
-// ProcedureName = Identifier;
 
 LabelName = Identifier;
 
@@ -852,10 +1330,14 @@ UnsignedNumericLiteral: UnsignedNumericLiteral<'a> = {
 }
 
 pub UnsignedInteger: UnsignedInteger<'a> = {
-    <integer: "unsigned decimal integer"> => UnsignedInteger { kind: UnsignedIntegerKind::Decimal, integer },
+    UnsignedDecimalInteger,
     <integer: "unsigned octal integer"> => UnsignedInteger { kind: UnsignedIntegerKind::Octal, integer },
     <integer: "unsigned hex integer"> => UnsignedInteger { kind: UnsignedIntegerKind::Hex, integer },
     <integer: "unsigned binary integer"> => UnsignedInteger { kind: UnsignedIntegerKind::Binary, integer },
+}
+
+UnsignedDecimalInteger: UnsignedInteger<'a> = {
+    <integer: "unsigned decimal integer"> => UnsignedInteger { kind: UnsignedIntegerKind::Decimal, integer }
 }
 
 // 21.3 <token>, <separator>, and <identifier>
@@ -874,61 +1356,63 @@ DelimitedIdentifier: Ident<'a> = {
     },
 }
 
+// TODO: Non-reserved words here will cause shift-reduce conflicts in later rules. 
+// Add them back if conflicts can be resolved.
 RegularIdentifier: Ident<'a> = {
     <start: @L> <name: "regular identifier"> <end: @R> => Ident { name: name.into(), span: Span { start, end } },
-    <start: @L> <name: NonReservedWord> <end: @R> => Ident { name: name.into(), span: Span { start, end } }
+    // <start: @L> <name: NonReservedWord> <end: @R> => Ident { name: name.into(), span: Span { start, end } }
 }
 
-NonReservedWord = {
-    "ACYCLIC",
-    "BINDING",
-    "BINDINGS",
-    "CONNECTING",
-    "DESTINATION",
-    "DIFFERENT",
-    "DIRECTED",
-    "EDGE",
-    "EDGES",
-    "ELEMENT",
-    "ELEMENTS",
-    "FIRST",
-    "GRAPH",
-    "GROUPS",
-    "KEEP",
-    "LABEL",
-    "LABELED",
-    "LABELS",
-    "LAST",
-    "NFC",
-    "NFD",
-    "NFKC",
-    "NFKD",
-    "NO",
-    "NODE",
-    "NORMALIZED",
-    "ONLY",
-    "ORDINALITY",
-    "PROPERTY",
-    "READ",
-    "RELATIONSHIP",
-    "RELATIONSHIPS",
-    "REPEATABLE",
-    "SHORTEST",
-    "SIMPLE",
-    "SOURCE",
-    "TABLE",
-    "TEMP",
-    "TO",
-    "TRAIL",
-    "TRANSACTION",
-    "TYPE",
-    "UNDIRECTED",
-    "VERTEX",
-    "WALK",
-    "WITHOUT",
-    "WRITE",
-    "ZONE",
-}
+// NonReservedWord = {
+//     "ACYCLIC",
+//     "BINDING",
+//     "BINDINGS",
+//     "CONNECTING",
+//     "DESTINATION",
+//     "DIFFERENT",
+//     "DIRECTED",
+//     "EDGE",
+//     "EDGES",
+//     "ELEMENT",
+//     "ELEMENTS",
+//     "FIRST",
+//     "GRAPH",
+//     "GROUPS",
+//     "KEEP",
+//     "LABEL",
+//     "LABELED",
+//     "LABELS",
+//     "LAST",
+//     "NFC",
+//     "NFD",
+//     "NFKC",
+//     "NFKD",
+//     "NO",
+//     "NODE",
+//     "NORMALIZED",
+//     "ONLY",
+//     "ORDINALITY",
+//     "PROPERTY",
+//     "READ",
+//     "RELATIONSHIP",
+//     "RELATIONSHIPS",
+//     "REPEATABLE",
+//     "SHORTEST",
+//     "SIMPLE",
+//     "SOURCE",
+//     "TABLE",
+//     "TEMP",
+//     "TO",
+//     "TRAIL",
+//     "TRANSACTION",
+//     "TYPE",
+//     "UNDIRECTED",
+//     "VERTEX",
+//     "WALK",
+//     "WITHOUT",
+//     "WRITE",
+//     "ZONE",
+// }
 
 GeneralParameterReference: Ident<'a> = {
     <start: @L> <name: "general parameter reference"> <end: @R> =>? {
@@ -945,3 +1429,23 @@ SubstitutedParameterReference: Ident<'a> = {
         Ok(Ident { name: name.into(), span })
     }
 }
+
+NodeSynonym = { "NODE", "VERTEX" }
+
+EdgesSynonym = { "EDGES", "RELATIONSHIPS" }
+
+EdgeSynonym = { "EDGE", "RELATIONSHIP" }
+
+// Helper rules.
+ListHelper<Item, Sep>: Vec<Item> = {
+    <first: Item> <remaining: (Sep <Item>)*> => {
+        let mut items = Vec::with_capacity(1 + remaining.len());
+        items.push(first);
+        items.extend(remaining);
+        items
+    }
+}
+
+FunctionHelper1<F, A1> = F "(" <A1> ")";
+
+FunctionHelper2<F, A1, A2> = F "(" <A1> "," <A2> ")";

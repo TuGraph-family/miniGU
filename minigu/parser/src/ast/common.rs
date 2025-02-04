@@ -1,6 +1,6 @@
 //! AST definitions for *common elements*.
 
-use crate::ast::{Expr, Ident};
+use super::{Expr, Ident};
 use crate::imports::{Box, Vec};
 use crate::macros::{base, ext};
 
@@ -126,4 +126,14 @@ pub struct PropertyKeyValuePair<'a> {
     #[cfg_attr(feature = "serde", serde(borrow))]
     pub name: Ident<'a>,
     pub value: Expr<'a>,
+}
+
+#[apply(base)]
+pub struct Yield<'a>(#[cfg_attr(feature = "serde", serde(borrow))] pub Vec<YieldItem<'a>>);
+
+#[apply(base)]
+pub struct YieldItem<'a> {
+    #[cfg_attr(feature = "serde", serde(borrow))]
+    pub name: Ident<'a>,
+    pub alias: Option<Ident<'a>>,
 }

@@ -1,6 +1,6 @@
 //! AST definitions for *object references*.
 
-use crate::ast::Ident;
+use super::Ident;
 use crate::macros::{base, ext};
 
 #[apply(ext)]
@@ -11,13 +11,10 @@ pub enum PredefinedSchemaRef {
 
 #[apply(base)]
 pub enum SchemaRef<'a> {
-    Path(SchemaPath<'a>),
+    Path(Vec<SchemaPathComponent<'a>>),
     Predefined(PredefinedSchemaRef),
     Parameter(Ident<'a>),
 }
-
-#[apply(base)]
-pub struct SchemaPath<'a>(pub Vec<SchemaPathComponent<'a>>);
 
 #[apply(base)]
 pub enum SchemaPathComponent<'a> {
@@ -57,4 +54,18 @@ pub enum GraphRef<'a> {
     Parameter(Ident<'a>),
     Ref(ObjectRef<'a>),
     Home,
+}
+
+#[apply(base)]
+pub enum ProcedureRef<'a> {
+    #[cfg_attr(feature = "serde", serde(borrow))]
+    Ref(ObjectRef<'a>),
+    Parameter(Ident<'a>),
+}
+
+#[apply(base)]
+pub enum GraphTypeRef<'a> {
+    #[cfg_attr(feature = "serde", serde(borrow))]
+    Ref(ObjectRef<'a>),
+    Parameter(Ident<'a>),
 }

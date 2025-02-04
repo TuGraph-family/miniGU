@@ -1,6 +1,6 @@
 //! AST definitions for *Value expressions and specifications*.
 
-use crate::ast::{BooleanLiteral, Ident, ListTypeName, Literal};
+use super::{BooleanLiteral, GraphExpr, Ident, ListTypeName, Literal};
 use crate::imports::{Box, Vec};
 use crate::macros::{base, ext};
 
@@ -33,6 +33,7 @@ pub enum Expr<'a> {
     Value(Value<'a>),
     Path(Box<PathConstructor<'a>>),
     Property(Box<PropertyRef<'a>>),
+    Graph(GraphExpr<'a>),
     Invalid,
 }
 

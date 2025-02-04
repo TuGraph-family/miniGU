@@ -1,6 +1,6 @@
 //! AST definitions for *object expressions*.
 
-use crate::ast::{GraphRef, Ident};
+use super::{GraphRef, Ident};
 use crate::macros::base;
 
 #[apply(base)]

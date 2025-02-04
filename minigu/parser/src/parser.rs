@@ -329,6 +329,7 @@ mod tests {
               start: 0
               end: 1
         ");
+        assert_yaml_snapshot!(parse!("/a b", CatalogObjectReference), @"~");
         assert_yaml_snapshot!(parse!("//", CatalogObjectReference), @"~");
     }
 

@@ -13,6 +13,7 @@ pub mod reference;
 pub mod session;
 pub mod transaction;
 
+pub use catalog::*;
 pub use common::*;
 pub use data::*;
 pub use element::*;
