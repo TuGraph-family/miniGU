@@ -1,9 +1,6 @@
 use crate::macros::{base, ext};
 
-pub struct CompositeQueryExpression {
-    
-}
-
+pub struct CompositeQueryExpression {}
 
 #[apply(ext)]
 pub enum SetOperator {
@@ -18,5 +15,5 @@ pub enum SimpleQueryStatement {
     Let,
     For,
     Filter,
-    OrderBy
+    OrderBy,
 }

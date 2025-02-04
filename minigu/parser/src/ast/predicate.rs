@@ -1,2 +1,1 @@
 //! AST definitions for *predicates*.
-
