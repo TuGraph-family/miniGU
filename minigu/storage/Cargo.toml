@@ -4,7 +4,9 @@ version = "0.1.0"
 edition.workspace = true
 
 [dependencies]
+crossbeam-skiplist = "0.1"
 thiserror = "2.0.0"
+dashmap = "6.1"
 
 [lints]
 workspace = true

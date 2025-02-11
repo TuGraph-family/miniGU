@@ -1,22 +1,32 @@
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::LinkedList;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
+
+use dashmap::{DashMap, DashSet};
 
 use crate::error::{StorageError, StorageResult};
 use crate::storage::{Direction, Graph, MutGraph, StorageTransaction};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-struct TransactionId(u64);
+struct TxnId(u64);
 
 /// Vertex
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vertex {
+    // Transaction information of the versioned vertex
+    begin_ts: TxnId,
+    end_ts: TxnId,
+    // The internal vertex data
     pub id: u64,
 }
 
 /// Edge
 #[derive(Clone, Debug, PartialEq, Copy)]
 pub struct Edge {
+    // Transaction information of the versioned edges
+    begin_ts: TxnId,
+    end_ts: TxnId,
+    // The internal edge data
     id: u64,
     from: u64,
     to: u64,
@@ -29,35 +39,86 @@ pub struct Adjacency {
     pub vertex_id: u64,
 }
 
+impl Adjacency {
+    fn new(eid: u64, vid: u64) -> Self {
+        Self {
+            edge_id: eid,
+            vertex_id: vid,
+        }
+    }
+}
+
 /// Vertex with version information
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct VersionedVertex {
-    versions: BTreeMap<TransactionId, Vertex>,
-    deleted: bool,
+    versions: RwLock<LinkedList<Vertex>>,
 }
 
 impl VersionedVertex {
     fn new() -> Self {
         Self {
-            versions: BTreeMap::new(),
-            deleted: false,
+            versions: RwLock::new(LinkedList::new()),
         }
+    }
+
+    fn get_visible(&self, ts: TxnId) -> Option<Vertex> {
+        self.versions
+            .read()
+            .unwrap()
+            .iter()
+            .find(|v| v.begin_ts <= ts && ts <= v.end_ts)
+            .cloned()
+    }
+
+    fn visit_front<T: FnOnce(&mut Vertex)>(&self, visitor: T) -> StorageResult<()> {
+        match self.versions.write().unwrap().front_mut().map(visitor) {
+            Some(()) => Ok(()),
+            None => Err(StorageError::VertexNotFound(
+                "Vertex {}is not found".to_string(),
+            )),
+        }
+    }
+
+    fn insert_version(&self, version: Vertex) -> StorageResult<()> {
+        self.versions.write().unwrap().push_front(version);
+        Ok(())
     }
 }
 
 /// Edge with version information
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct VersionedEdge {
-    versions: BTreeMap<TransactionId, Edge>,
-    deleted: bool,
+    versions: RwLock<LinkedList<Edge>>,
 }
 
 impl VersionedEdge {
+    /// Get the latest visible version of the edge at or before the given timestamp
     fn new() -> Self {
         Self {
-            versions: BTreeMap::new(),
-            deleted: false,
+            versions: RwLock::new(LinkedList::new()),
         }
+    }
+
+    fn get_visible(&self, ts: TxnId) -> Option<Edge> {
+        self.versions
+            .read()
+            .unwrap()
+            .iter()
+            .find(|v| v.begin_ts <= ts && ts <= v.end_ts)
+            .cloned()
+    }
+
+    fn visit_front<T: FnOnce(&mut Edge)>(&self, visitor: T) -> StorageResult<()> {
+        match self.versions.write().unwrap().front_mut().map(visitor) {
+            Some(()) => Ok(()),
+            None => Err(StorageError::VertexNotFound(
+                "Vertex is not found".to_string(),
+            )),
+        }
+    }
+
+    fn insert_version(&self, version: Edge) {
+        self.versions.write().unwrap().push_front(version);
     }
 }
 
@@ -66,107 +127,120 @@ pub struct MvccGraphStorage {
     // TransactionID which represents the latest timestamp
     tx_id_counter: AtomicU64,
     // Vertex table
-    vertices: RwLock<HashMap<u64, Arc<RwLock<VersionedVertex>>>>,
+    vertices: DashMap<u64, Arc<VersionedVertex>>,
     // Edge table
-    edges: RwLock<HashMap<u64, Arc<RwLock<VersionedEdge>>>>,
+    edges: DashMap<u64, Arc<VersionedEdge>>,
     // Adjacency list
-    adjacency_forward: RwLock<HashMap<u64, Vec<Adjacency>>>,
-    adjacency_reversed: RwLock<HashMap<u64, Vec<Adjacency>>>,
+    adjacency_forward: DashMap<u64, Vec<Adjacency>>,
+    adjacency_reversed: DashMap<u64, Vec<Adjacency>>,
+    // Allow only one writer for committing
+    commit_mutex: Mutex<()>,
+}
+
+enum UpdateVertexOp {
+    Delete,
+    Insert(Vertex),
+}
+
+enum UpdateEdgeOp {
+    Delete,
+    Insert(Edge),
 }
 
 /// MVCC Transaction instance
 pub struct MvccTransaction {
+    txn_id: TxnId,
     storage: Arc<MvccGraphStorage>,
-    tx_id: TransactionId,
-    snapshot_time: TransactionId,
+    // Transaction read set
+    vertex_read: DashSet<u64>,
+    edge_read: DashSet<u64>,
     // Local transaction modifications
-    vertex_updates: RwLock<HashMap<u64, Vertex>>,
-    edge_updates: RwLock<HashMap<u64, Edge>>,
-    deleted_vertices: RwLock<HashSet<u64>>,
-    deleted_edges: RwLock<HashSet<u64>>,
+    vertex_updates: DashMap<u64, UpdateVertexOp>,
+    edge_updates: DashMap<u64, UpdateEdgeOp>,
 }
 
 impl StorageTransaction for MvccTransaction {
     fn commit(self) -> StorageResult<()> {
-        // Acquiring the global wirte locks
-        let mut vertices = self.storage.vertices.write().unwrap();
-        let mut edges = self.storage.edges.write().unwrap();
-        
-        // Validate the write conflicts
-        for (id, _) in self.vertex_updates.read().unwrap().iter() {
-            if let Some(v) = vertices.get(id) {
-                let v_guard = v.read().unwrap();
-                if v_guard.versions.keys().any(|&v_tx| v_tx > self.snapshot_time) {
-                    return Err(StorageError::TransactionError(format!("VertexID: {}, write conflict.", id)));
+        // Acquiring the commit lock
+        let _commit_guard = self.storage.commit_mutex.lock().unwrap();
+
+        // Validate the read-write conflicts
+        for vid in self.vertex_read.into_iter() {
+            if let Some(rv) = self.storage.vertices.get(&vid) {
+                if let Some(vv) = rv.get_visible(self.txn_id) {
+                    if vv.end_ts < self.txn_id {
+                        return Err(StorageError::TransactionError(format!(
+                            "Read-write confict happens for vertex {} and version {:?}",
+                            vid, self.txn_id
+                        )));
+                    } else {
+                        // without conflicts
+                    }
+                } else {
+                    return Err(StorageError::VertexNotFound(format!(
+                        "Vertex {} with timestamp {:?} is invisible",
+                        vid, self.txn_id
+                    )));
                 }
             }
         }
-        
-        for (id, vertex) in self.vertex_updates.write().unwrap().drain() {
-            let entry = vertices.entry(id).or_insert_with(|| 
-                Arc::new(RwLock::new(VersionedVertex::new()))
-            );
-            entry.write().unwrap().versions.insert(self.tx_id, vertex);
-        }
-
-        let mut adj_forward = self.storage.adjacency_forward.write().unwrap();
-        let mut adj_reversed = self.storage.adjacency_reversed.write().unwrap();
-        
-        // delete the committed vertices
-        let deleted_vertices = self.deleted_vertices.read().unwrap().clone();
-        for vid in deleted_vertices.iter() {
-            // @TODO more elegent deletion mechanism
-            // vertices.remove(vid);
-            // adj_forward.remove(vid);
-            // adj_reversed.remove(vid);
-            vertices.entry(*vid).and_modify(|v| {
-                v.write().unwrap().deleted = true;
-            });
-        }
-        
-        for (id, edge) in self.edge_updates.write().unwrap().drain() {
-            let entry = edges.entry(id).or_insert_with(|| 
-                Arc::new(RwLock::new(VersionedEdge::new()))
-            );
-            entry.write().unwrap().versions.insert(self.tx_id, edge);
-            // Update the forward adjacency
-            adj_forward.entry(edge.from)
-            .and_modify(|v| v.push(Adjacency {
-                edge_id: edge.id,
-                vertex_id: edge.to,
-            }))
-            .or_insert_with(|| vec![Adjacency {
-                edge_id: edge.id,
-                vertex_id: edge.to,
-            }]);
-
-            // Update the reversed adjacency
-            adj_reversed.entry(edge.to)
-                .and_modify(|v| v.push(Adjacency {
-                    edge_id: edge.id,
-                    vertex_id: edge.from,
-                }))
-                .or_insert_with(|| vec![Adjacency {
-                    edge_id: edge.id,
-                    vertex_id: edge.from,
-                }]);
-        }
-        
-        for eid in self.deleted_edges.read().unwrap().iter() {
-            if let Some(edge) = edges.get(eid) {
-                let mut edge_guard = edge.write().unwrap();
-                edge_guard.deleted = true;
-                // if let Some(latest) = edge_guard.versions.values().last() {
-                    // if let Some(adjs) = adj_forward.get_mut(&latest.from) {
-                    //     adjs.retain(|a| a.edge_id != *eid);
-                    // }
-                    // if let Some(adjs) = adj_reversed.get_mut(&latest.to) {
-                    //     adjs.retain(|a| a.edge_id != *eid);
-                    // }
-                // }
+        for eid in self.edge_read.into_iter() {
+            if let Some(re) = self.storage.edges.get(&eid) {
+                if let Some(ve) = re.get_visible(self.txn_id) {
+                    if ve.end_ts < self.txn_id {
+                        return Err(StorageError::EdgeNotFound(format!(
+                            "Read-write conflict happens for edge {} and version {:?}",
+                            eid, self.txn_id
+                        )));
+                    }
+                } else {
+                    // without conflicts
+                }
+            } else {
+                return Err(StorageError::VertexNotFound(format!(
+                    "Edge {} with timestamp {:?} is invisible",
+                    eid, self.txn_id
+                )));
             }
         }
- 
+
+        // Acquire the commit timestamp to perform the modifications
+        let commit_ts = self.storage.acquire_commit_ts();
+
+        for (id, op) in self.vertex_updates.into_iter() {
+            let entry = self
+                .storage
+                .vertices
+                .entry(id)
+                .or_insert_with(|| Arc::new(VersionedVertex::new()));
+            match op {
+                UpdateVertexOp::Delete => entry.visit_front(|v| v.end_ts = commit_ts),
+                UpdateVertexOp::Insert(v) => entry.insert_version(v),
+            }?;
+        }
+
+        for (id, op) in self.edge_updates.into_iter() {
+            let entry = self
+                .storage
+                .edges
+                .entry(id)
+                .or_insert_with(|| Arc::new(VersionedEdge::new()));
+            match op {
+                UpdateEdgeOp::Delete => entry.visit_front(|v| v.end_ts = commit_ts).unwrap(),
+                UpdateEdgeOp::Insert(e) => {
+                    entry.insert_version(e);
+                    if let Some(mut v) = self.storage.adjacency_forward.get_mut(&e.from) {
+                        v.push(Adjacency::new(e.id, e.to));
+                        v.sort_by_key(|s| s.vertex_id);
+                    }
+                    if let Some(mut v) = self.storage.adjacency_reversed.get_mut(&e.to) {
+                        v.push(Adjacency::new(e.id, e.from));
+                        v.sort_by_key(|s| s.vertex_id);
+                    }
+                }
+            };
+        }
+
         Ok(())
     }
 
@@ -177,201 +251,229 @@ impl StorageTransaction for MvccTransaction {
 }
 
 impl Graph for MvccGraphStorage {
-    type Transaction = MvccTransaction;
-    type VertexID = u64;
-    type EdgeID = u64;
-    type Vertex = Vertex;
-    type Edge = Edge;
     type Adjacency = Adjacency;
-    type VertexIter = Box<dyn Iterator<Item = Vertex>>;
-    type EdgeIter = Box<dyn Iterator<Item = Edge>>;
     type AdjacencyIter = Box<dyn Iterator<Item = Adjacency>>;
+    type Edge = Edge;
+    type EdgeID = u64;
+    type EdgeIter = Box<dyn Iterator<Item = Edge>>;
+    type Transaction = MvccTransaction;
+    type Vertex = Vertex;
+    type VertexID = u64;
+    type VertexIter = Box<dyn Iterator<Item = Vertex>>;
 
     fn get_vertex(&self, txn: &Self::Transaction, id: u64) -> StorageResult<Option<Vertex>> {
         // Check transaction local modification
-        if let Some(v) = txn.vertex_updates.read().unwrap().get(&id) {
-            return Ok(Some(v.clone()));
+        if let Some(v) = txn.vertex_updates.get(&id) {
+            return match v.value() {
+                UpdateVertexOp::Delete => Ok(None),
+                UpdateVertexOp::Insert(v) => Ok(Some(v.clone())),
+            };
         }
 
-        // Check whether vertex has been deleted
-        if txn.deleted_vertices.read().unwrap().contains(&id) {
-            return Err(StorageError::VertexNotFound(id.to_string()));
-        }
-        
         // Check global graph data
-        let vertices = self.vertices.read().unwrap();
-        if let Some(v_arc) = vertices.get(&id) {
-            let v_guard = v_arc.read().unwrap();
-            // Find the latest version that is less than or equal to snapshot_time
-            if let Some((_, version)) = v_guard.versions.range(..=txn.snapshot_time).next_back() {
-                return Ok(Some(version.clone()));
-            }
+        if let Some(v) = self.vertices.get(&id) {
+            txn.vertex_read.insert(id);
+            Ok(v.get_visible(txn.txn_id))
+        } else {
+            Err(StorageError::VertexNotFound(format!(
+                "Vertex {} is not found",
+                id
+            )))
         }
-        
-        Err(StorageError::TransactionError(format!("test")))
     }
 
-    fn neighbors(&self, txn: &Self::Transaction, id: u64, direction: Direction) -> StorageResult<Self::AdjacencyIter> {
+    fn neighbors(
+        &self,
+        txn: &Self::Transaction,
+        id: u64,
+        direction: Direction,
+    ) -> StorageResult<Self::AdjacencyIter> {
+        // brute force version
+        // clone the neighbors as a snapshot, and then remove or insert updated neighors with the
+        // txn_id
+
         // Get the global adjacency list
+        let mut is_forward = true;
         let global_adjs = match direction {
-            Direction::Forward => &self.adjacency_forward,
-            Direction::Reversed => &self.adjacency_reversed,
-        }.read()
-        .unwrap()
-        .get(&id)
-        .cloned()
-        .unwrap_or_default();
+            Direction::Forward => &self.adjacency_forward.get(&id),
+            Direction::Reversed => {
+                is_forward = false;
+                &self.adjacency_reversed.get(&id)
+            }
+        };
 
-        // Filter the deleted edges
-        let deleted_edges = txn.deleted_edges.read().unwrap();
-        let filtered_global: Vec<Adjacency> = global_adjs
-            .into_iter()
-            .filter(|adj| !deleted_edges.contains(&adj.edge_id))
-            .collect();
-
-        // Resolve the local updated adjacency
-        let local_edges: Vec<Adjacency> = txn.edge_updates.read().unwrap()
-            .values()
-            .filter(|e| match direction {
-                Direction::Forward => e.from == id,
-                Direction::Reversed => e.to == id,
-            })
-            .map(|e| Adjacency {
-                edge_id: e.id,
-                vertex_id: match direction {
-                    Direction::Forward => e.to,
-                    Direction::Reversed => e.from,
-                },
-            })
-            .collect();
+        let mut adjs = match global_adjs {
+            Some(adjs) => adjs.value().clone(),
+            None => vec![],
+        };
+        for e in txn.edge_updates.iter() {
+            match e.value() {
+                UpdateEdgeOp::Delete => {
+                    if let Ok(i) = adjs.binary_search_by(|v| v.edge_id.cmp(e.key())) {
+                        adjs.remove(i);
+                    }
+                }
+                UpdateEdgeOp::Insert(e) => {
+                    if is_forward {
+                        adjs.push(Adjacency::new(e.id, e.to))
+                    } else {
+                        adjs.push(Adjacency::new(e.id, e.from))
+                    }
+                }
+            }
+        }
 
         // Merge the neighbor results
-        Ok(Box::new(filtered_global.into_iter().chain(local_edges.into_iter())))
+        Ok(Box::new(adjs.into_iter()))
     }
-    
-    fn get_edge(&self, txn: &Self::Transaction, id: Self::EdgeID) -> StorageResult<Option<Self::Edge>> {
+
+    fn get_edge(
+        &self,
+        txn: &Self::Transaction,
+        id: Self::EdgeID,
+    ) -> StorageResult<Option<Self::Edge>> {
         // 1. Check transaction-local modifications
-        if let Some(edge) = txn.edge_updates.read().unwrap().get(&id) {
-            return Ok(Some(edge.clone()));
+        if let Some(edge) = txn.edge_updates.get(&id) {
+            return Ok(match edge.value() {
+                UpdateEdgeOp::Delete => None,
+                UpdateEdgeOp::Insert(e) => Some(*e),
+            });
         }
-    
-        // 2. Check transaction delete markers
-        if txn.deleted_edges.read().unwrap().contains(&id) {
-            return Ok(None);
+
+        // 2. Check global graph data
+        if let Some(e) = self.edges.get(&id) {
+            txn.edge_read.insert(id);
+            Ok(e.get_visible(txn.txn_id))
+        } else {
+            Err(StorageError::EdgeNotFound(format!(
+                "Edge {} is not found",
+                id
+            )))
         }
-    
-        // 3. Check global storage
-        let edges = self.edges.read().unwrap();
-        if let Some(edge_arc) = edges.get(&id) {
-            let edge_guard = edge_arc.read().unwrap();
-            // Find the latest version less than or equal to the snapshot time
-            if let Some((_, edge)) = edge_guard.versions.range(..=txn.snapshot_time).next_back() {
-                return Ok(Some(edge.clone()));
+    }
+
+    fn vertices(&self, txn: &Self::Transaction) -> StorageResult<Self::VertexIter> {
+        // brute force version
+
+        let mut vertices = self
+            .vertices
+            .iter()
+            .filter_map(|v| v.value().get_visible(txn.txn_id))
+            .collect::<Vec<_>>();
+
+        for v_update in &txn.vertex_updates {
+            match v_update.value() {
+                UpdateVertexOp::Delete => {
+                    if let Ok(i) = vertices.binary_search_by(|v| v.id.cmp(v_update.key())) {
+                        vertices.remove(i);
+                    }
+                }
+                UpdateVertexOp::Insert(v) => vertices.push(v.clone()),
             }
         }
-    
-        // 4. Edge does not exist
-        Ok(None)
+
+        Ok(Box::new(vertices.into_iter()))
     }
-    
-    fn vertices(&self, txn: &Self::Transaction) -> StorageResult<Self::VertexIter> {
-        // 1. Get global vertex iterator
-        let global_vertices = self.vertices.read().unwrap();
-        let global_iter = global_vertices.values().filter_map(move |v_arc| {
-            let v_guard = v_arc.read().unwrap();
-            // Find the latest version less than or equal to the snapshot time
-            v_guard.versions
-                .range(..=txn.snapshot_time)
-                .next_back()
-                .map(|(_, v)| v.clone())
-        });
-    
-        // 2. Get transaction-local added vertices
-        let local_vertices: Vec<Vertex> = txn.vertex_updates.read().unwrap().values().cloned().collect();
-    
-        // 3. Filter out deleted vertices within the transaction
-        let deleted_vertices = txn.deleted_vertices.read().unwrap();
-        let filtered_global: Vec<Vertex> = global_iter.filter(move |v| !deleted_vertices.contains(&v.id)).collect();
-    
-        // 4. Merge global and local vertices
-        Ok(Box::new(filtered_global.into_iter().chain(local_vertices)))
-    }
-    
+
     fn edges(&self, txn: &Self::Transaction) -> StorageResult<Self::EdgeIter> {
-        // 1. Get global edge iterator
-        let global_edges = self.edges.read().unwrap();
-        let global_iter = global_edges.values().filter_map(move |e_arc| {
-            let e_guard = e_arc.read().unwrap();
-            // Find the latest version less than or equal to the snapshot time
-            e_guard.versions
-                .range(..=txn.snapshot_time)
-                .next_back()
-                .map(|(_, e)| e.clone())
-        });
-    
-        // 2. Get transaction-local added edges
-        let local_edges: Vec<Edge> = txn.edge_updates.read().unwrap().values().cloned().collect();
-    
-        // 3. Filter out deleted edges within the transaction
-        let deleted_edges = txn.deleted_edges.read().unwrap();
-        let filtered_global: Vec<Edge> = global_iter.filter(move |e| !deleted_edges.contains(&e.id)).collect();
-    
-        // 4. Merge global and local edges
-        Ok(Box::new(filtered_global.into_iter().chain(local_edges.into_iter())))
+        // brute force version
+
+        let mut edges = self
+            .edges
+            .iter()
+            .filter_map(|e| e.value().get_visible(txn.txn_id))
+            .collect::<Vec<_>>();
+
+        for e_update in &txn.edge_updates {
+            match e_update.value() {
+                UpdateEdgeOp::Delete => {
+                    if let Ok(i) = edges.binary_search_by(|e| e.id.cmp(e_update.key())) {
+                        edges.remove(i);
+                    }
+                }
+                UpdateEdgeOp::Insert(e) => edges.push(*e),
+            }
+        }
+
+        Ok(Box::new(edges.into_iter()))
     }
 }
 
 impl MutGraph for MvccGraphStorage {
-    fn add_vertex(&self, txn: &Self::Transaction, vertex: Vertex) -> StorageResult<()> {
-        let mut updates = txn.vertex_updates.write().unwrap();
-        if updates.contains_key(&vertex.id) {
-            return Err(StorageError::TransactionError(format!("test")));
+    fn create_vertex(&self, txn: &Self::Transaction, vertex: Vertex) -> StorageResult<()> {
+        let mut vertex = vertex;
+        vertex.begin_ts = txn.txn_id;
+
+        if let Some(txn_v) = txn.vertex_updates.get(&vertex.id) {
+            match txn_v.value() {
+                UpdateVertexOp::Delete => {
+                    txn.vertex_updates.entry(vertex.id).and_modify(|v| {
+                        *v = UpdateVertexOp::Insert(vertex);
+                    });
+                }
+                UpdateVertexOp::Insert(v) => {
+                    return Err(StorageError::TransactionError(format!(
+                        "Vertex {} has been inserted",
+                        v.id
+                    )));
+                }
+            };
+        } else {
+            txn.vertex_updates
+                .insert(vertex.id, UpdateVertexOp::Insert(vertex));
         }
-        
-        // Check the global storage
-        let vertices = self.vertices.read().unwrap();
-        if let Some(v_arc) = vertices.get(&vertex.id) {
-            let v_guard = v_arc.read().unwrap();
-            if v_guard.versions.range(..=txn.snapshot_time).next_back().is_some() {
-                return Err(StorageError::TransactionError(format!("test")));
-            }
-        }
-        
-        updates.insert(vertex.id, vertex);
+
         Ok(())
     }
-    
-    fn add_edge(&self, txn: &Self::Transaction, edge: Edge) -> StorageResult<()> {
-        // 1. Check if the edge ID already exists (including transaction-local modifications)
-        let edge_id = edge.id;
-        if txn.edge_updates.read().unwrap().contains_key(&edge_id) {
-            return Err(StorageError::TransactionError(format!("Edge already exists")));
+
+    fn create_edge(&self, txn: &Self::Transaction, edge: Edge) -> StorageResult<()> {
+        let mut edge = edge;
+        edge.begin_ts = txn.txn_id;
+
+        if let Some(txn_v) = txn.edge_updates.get(&edge.id) {
+            match txn_v.value() {
+                UpdateEdgeOp::Delete => {
+                    txn.edge_updates.entry(edge.id).and_modify(|e| {
+                        *e = UpdateEdgeOp::Insert(edge);
+                    });
+                }
+                UpdateEdgeOp::Insert(e) => {
+                    return Err(StorageError::EdgeNotFound(format!(
+                        "Edge {} has been inserted",
+                        e.id
+                    )));
+                }
+            };
+        } else {
+            txn.edge_updates.insert(edge.id, UpdateEdgeOp::Insert(edge));
         }
-    
-        // 2. Check if the edge exists in the global storage
-        let edges = self.edges.read().unwrap();
-        if let Some(edge_arc) = edges.get(&edge_id) {
-            let edge_guard = edge_arc.read().unwrap();
-            // Check if there is an un-deleted version
-            if edge_guard.versions.range(..=txn.snapshot_time).next_back().is_some() {
-                return Err(StorageError::TransactionError(format!("Edge already exists")));
-            }
+
+        Ok(())
+    }
+
+    fn delete_vertices(
+        &self,
+        txn: &Self::Transaction,
+        vertices: Vec<Self::Vertex>,
+    ) -> StorageResult<()> {
+        for v in vertices {
+            txn.vertex_updates
+                .entry(v.id)
+                .and_modify(|v| *v = UpdateVertexOp::Delete)
+                .or_insert(UpdateVertexOp::Delete);
         }
-    
-        // 3. Check if the start and end vertices of the edge exist
-        let vertices = self.vertices.read().unwrap();
-        let from_exists = vertices.contains_key(&edge.from)
-            || txn.vertex_updates.read().unwrap().contains_key(&edge.from);
-        let to_exists = vertices.contains_key(&edge.to)
-            || txn.vertex_updates.read().unwrap().contains_key(&edge.to);
-    
-        if !from_exists || !to_exists {
-            return Err(StorageError::VertexNotFound(format!("Vertex is not found")));
+
+        Ok(())
+    }
+
+    fn delete_edges(&self, txn: &Self::Transaction, edges: Vec<Self::Edge>) -> StorageResult<()> {
+        for e in edges {
+            txn.edge_updates
+                .entry(e.id)
+                .and_modify(|v| *v = UpdateEdgeOp::Delete)
+                .or_insert(UpdateEdgeOp::Delete);
         }
-    
-        // 4. Add the edge to the transaction-local modifications
-        txn.edge_updates.write().unwrap().insert(edge_id, edge);
-    
+
         Ok(())
     }
 }
@@ -380,23 +482,163 @@ impl MvccGraphStorage {
     pub fn new() -> Arc<Self> {
         Arc::new(Self {
             tx_id_counter: AtomicU64::new(1),
-            vertices: RwLock::new(HashMap::new()),
-            edges: RwLock::new(HashMap::new()),
-            adjacency_forward: RwLock::new(HashMap::new()),
-            adjacency_reversed: RwLock::new(HashMap::new()),
+            vertices: DashMap::new(),
+            edges: DashMap::new(),
+            adjacency_forward: DashMap::new(),
+            adjacency_reversed: DashMap::new(),
+            commit_mutex: Mutex::new(()),
         })
     }
 
     pub fn begin_transaction(self: &Arc<Self>) -> MvccTransaction {
-        let tx_id = TransactionId(self.tx_id_counter.fetch_add(1, Ordering::SeqCst));
+        let tx_id = TxnId(self.tx_id_counter.fetch_add(1, Ordering::SeqCst));
         MvccTransaction {
+            txn_id: tx_id,
             storage: self.clone(),
-            tx_id,
-            snapshot_time: tx_id,
-            vertex_updates: RwLock::new(HashMap::new()),
-            edge_updates: RwLock::new(HashMap::new()),
-            deleted_edges: RwLock::new(HashSet::new()),
-            deleted_vertices: RwLock::new(HashSet::new()),
+            vertex_read: DashSet::new(),
+            edge_read: DashSet::new(),
+            vertex_updates: DashMap::new(),
+            edge_updates: DashMap::new(),
         }
+    }
+
+    fn acquire_commit_ts(&self) -> TxnId {
+        TxnId(self.tx_id_counter.fetch_add(1, Ordering::SeqCst))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_and_get_vertex() {
+        let storage = MvccGraphStorage::new();
+        let txn = storage.begin_transaction();
+
+        let vertex = Vertex {
+            begin_ts: TxnId(1),
+            end_ts: TxnId(u64::MAX),
+            id: 1,
+        };
+
+        storage.create_vertex(&txn, vertex.clone()).unwrap();
+        let fetched_vertex = storage.get_vertex(&txn, 1).unwrap().unwrap();
+        assert_eq!(fetched_vertex, vertex);
+    }
+
+    #[test]
+    fn test_create_and_get_edge() {
+        let storage = MvccGraphStorage::new();
+        let txn = storage.begin_transaction();
+
+        let edge = Edge {
+            begin_ts: TxnId(1),
+            end_ts: TxnId(u64::MAX),
+            id: 1,
+            from: 1,
+            to: 2,
+        };
+
+        storage.create_edge(&txn, edge).unwrap();
+        let fetched_edge = storage.get_edge(&txn, 1).unwrap().unwrap();
+        assert_eq!(fetched_edge, edge);
+    }
+
+    #[test]
+    fn test_delete_vertex() {
+        let storage = MvccGraphStorage::new();
+        let txn = storage.begin_transaction();
+
+        let vertex = Vertex {
+            begin_ts: TxnId(1),
+            end_ts: TxnId(u64::MAX),
+            id: 1,
+        };
+
+        storage.create_vertex(&txn, vertex.clone()).unwrap();
+        storage.delete_vertices(&txn, vec![vertex]).unwrap();
+        let fetched_vertex = storage.get_vertex(&txn, 1).unwrap();
+        assert!(fetched_vertex.is_none());
+    }
+
+    #[test]
+    fn test_delete_edge() {
+        let storage = MvccGraphStorage::new();
+        let txn = storage.begin_transaction();
+
+        let edge = Edge {
+            begin_ts: TxnId(1),
+            end_ts: TxnId(u64::MAX),
+            id: 1,
+            from: 1,
+            to: 2,
+        };
+
+        storage.create_edge(&txn, edge).unwrap();
+        storage.delete_edges(&txn, vec![edge]).unwrap();
+        let fetched_edge = storage.get_edge(&txn, 1).unwrap();
+        assert!(fetched_edge.is_none());
+    }
+
+    #[test]
+    fn test_neighbors() {
+        let storage = MvccGraphStorage::new();
+        let txn = storage.begin_transaction();
+
+        let edge = Edge {
+            begin_ts: TxnId(1),
+            end_ts: TxnId(u64::MAX),
+            id: 1,
+            from: 1,
+            to: 2,
+        };
+
+        storage
+            .create_vertex(&txn, Vertex {
+                begin_ts: TxnId(1),
+                end_ts: TxnId(u64::MAX),
+                id: 1,
+            })
+            .unwrap();
+        storage
+            .create_vertex(&txn, Vertex {
+                begin_ts: TxnId(1),
+                end_ts: TxnId(u64::MAX),
+                id: 2,
+            })
+            .unwrap();
+        storage.create_edge(&txn, edge).unwrap();
+        let neighbors = storage
+            .neighbors(&txn, 1, Direction::Forward)
+            .unwrap()
+            .collect::<Vec<_>>();
+        assert_eq!(neighbors.len(), 1);
+        assert_eq!(neighbors[0].vertex_id, 2);
+        let neighbors = storage
+            .neighbors(&txn, 2, Direction::Reversed)
+            .unwrap()
+            .collect::<Vec<_>>();
+        assert_eq!(neighbors.len(), 1);
+        assert_eq!(neighbors[0].vertex_id, 1);
+    }
+
+    #[test]
+    fn test_transaction_commit() {
+        let storage = MvccGraphStorage::new();
+        let txn = storage.begin_transaction();
+
+        let vertex = Vertex {
+            begin_ts: TxnId(1),
+            end_ts: TxnId(u64::MAX),
+            id: 1,
+        };
+
+        storage.create_vertex(&txn, vertex.clone()).unwrap();
+        txn.commit().unwrap();
+
+        let new_txn = storage.begin_transaction();
+        let fetched_vertex = storage.get_vertex(&new_txn, 1).unwrap().unwrap();
+        assert_eq!(fetched_vertex, vertex);
     }
 }
