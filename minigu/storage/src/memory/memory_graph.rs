@@ -170,7 +170,7 @@ impl StorageTransaction for MvccTransaction {
                 if let Some(vv) = rv.get_visible(self.txn_id) {
                     if vv.end_ts < self.txn_id {
                         return Err(StorageError::TransactionError(format!(
-                            "Read-write confict happens for vertex {} and version {:?}",
+                            "Read-write conflict happens for vertex {} and version {:?}",
                             vid, self.txn_id
                         )));
                     } else {
@@ -289,7 +289,7 @@ impl Graph for MvccGraphStorage {
         direction: Direction,
     ) -> StorageResult<Self::AdjacencyIter> {
         // brute force version
-        // clone the neighbors as a snapshot, and then remove or insert updated neighors with the
+        // clone the neighbors as a snapshot, and then remove or insert updated neighbors with the
         // txn_id
 
         // Get the global adjacency list
