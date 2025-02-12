@@ -1,6 +1,7 @@
 use std::collections::LinkedList;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
+use std::u64;
 
 use dashmap::{DashMap, DashSet};
 
@@ -10,14 +11,44 @@ use crate::storage::{Direction, Graph, MutGraph, StorageTransaction};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct TxnId(u64);
 
+impl TxnId {
+    fn is_updated(&self) -> bool {
+        self.0 != u64::MAX
+    }
+
+    fn empty() -> Self {
+        Self(0)
+    }
+
+    fn max() -> Self {
+        Self(u64::MAX)
+    }
+}
+
 /// Vertex
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct Vertex {
     // Transaction information of the versioned vertex
     begin_ts: TxnId,
     end_ts: TxnId,
     // The internal vertex data
     pub id: u64,
+}
+
+impl Vertex {
+    fn with_vid(vid: u64) -> Self {
+        Self {
+            begin_ts: TxnId::empty(),
+            end_ts: TxnId::empty(),
+            id: vid,
+        }
+    }
+}
+
+impl PartialEq for Vertex {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
 }
 
 /// Edge
@@ -168,7 +199,7 @@ impl StorageTransaction for MvccTransaction {
         for vid in self.vertex_read.into_iter() {
             if let Some(rv) = self.storage.vertices.get(&vid) {
                 if let Some(vv) = rv.get_visible(self.txn_id) {
-                    if vv.end_ts < self.txn_id {
+                    if vv.end_ts.is_updated() {
                         return Err(StorageError::TransactionError(format!(
                             "Read-write conflict happens for vertex {} and version {:?}",
                             vid, self.txn_id
@@ -187,7 +218,7 @@ impl StorageTransaction for MvccTransaction {
         for eid in self.edge_read.into_iter() {
             if let Some(re) = self.storage.edges.get(&eid) {
                 if let Some(ve) = re.get_visible(self.txn_id) {
-                    if ve.end_ts < self.txn_id {
+                    if ve.end_ts.is_updated() {
                         return Err(StorageError::EdgeNotFound(format!(
                             "Read-write conflict happens for edge {} and version {:?}",
                             eid, self.txn_id
@@ -403,6 +434,7 @@ impl MutGraph for MvccGraphStorage {
     fn create_vertex(&self, txn: &Self::Transaction, vertex: Vertex) -> StorageResult<()> {
         let mut vertex = vertex;
         vertex.begin_ts = txn.txn_id;
+        vertex.end_ts = TxnId::max();
 
         if let Some(txn_v) = txn.vertex_updates.get(&vertex.id) {
             match txn_v.value() {
@@ -429,6 +461,7 @@ impl MutGraph for MvccGraphStorage {
     fn create_edge(&self, txn: &Self::Transaction, edge: Edge) -> StorageResult<()> {
         let mut edge = edge;
         edge.begin_ts = txn.txn_id;
+        edge.end_ts = TxnId::max();
 
         if let Some(txn_v) = txn.edge_updates.get(&edge.id) {
             match txn_v.value() {
@@ -640,5 +673,53 @@ mod tests {
         let new_txn = storage.begin_transaction();
         let fetched_vertex = storage.get_vertex(&new_txn, 1).unwrap().unwrap();
         assert_eq!(fetched_vertex, vertex);
+    }
+
+    #[test]
+    fn test_multi_transaction_commit_success() {
+        let storage = MvccGraphStorage::new();
+
+        // Transaction 1 creates a vertex
+        let txn1 = storage.begin_transaction();
+        let vertex1 = Vertex::with_vid(1);
+        storage.create_vertex(&txn1, vertex1.clone()).unwrap();
+        txn1.commit().unwrap();
+
+        // Transaction 2 creates another vertex
+        let txn2 = storage.begin_transaction();
+        let vertex2 = Vertex::with_vid(2);
+        storage.create_vertex(&txn2, vertex2.clone()).unwrap();
+        txn2.commit().unwrap();
+
+        // Verify both vertices are present
+        let txn3 = storage.begin_transaction();
+        let fetched_vertex1 = storage.get_vertex(&txn3, 1).unwrap().unwrap();
+        let fetched_vertex2 = storage.get_vertex(&txn3, 2).unwrap().unwrap();
+        assert_eq!(fetched_vertex1, vertex1);
+        assert_eq!(fetched_vertex2, vertex2);
+    }
+
+    #[test]
+    fn test_multi_transaction_commit_conflict() {
+        let storage = MvccGraphStorage::new();
+
+        // Transaction 1 creates a vertex
+        let txn1 = storage.begin_transaction();
+        let vertex1 = Vertex::with_vid(1);
+        storage.create_vertex(&txn1, vertex1.clone()).unwrap();
+        txn1.commit().unwrap();
+
+        // Transaction 2 tries to read the vertex
+        let txn2 = storage.begin_transaction();
+        storage.get_vertex(&txn2, 1).unwrap();
+
+        // Transaction 3 delete the vertex
+        let txn3 = storage.begin_transaction();
+        storage.delete_vertices(&txn3, vec![Vertex::with_vid(1)]).unwrap();
+        txn3.commit().unwrap();
+
+        // Commit transaction 2 should fail due to conflict
+        let result = txn2.commit();
+        assert!(result.is_err());
     }
 }
