@@ -1,9 +1,12 @@
 [package]
-name = "minigu-common"
+name = "common"
 version = "0.1.0"
 edition.workspace = true
 
 [dependencies]
+thiserror = "2.0.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 
 [lints]
 workspace = true
