@@ -1,4 +1,6 @@
-use crate::error::StorageResult;
+use common::datatype::value::{PropertyMeta, PropertyValue};
+
+use crate::{error::StorageResult, model::edge::Direction};
 
 /// Storage transaction
 pub trait StorageTransaction {
@@ -42,19 +44,21 @@ pub trait Graph {
 
 /// Mutable graph store
 pub trait MutGraph: Graph {
+    /// Insert a vertex
     fn create_vertex(&self, txn: &Self::Transaction, vertex: Self::Vertex) -> StorageResult<()>;
+
+    /// Insert an edge
     fn create_edge(&self, txn: &Self::Transaction, edge: Self::Edge) -> StorageResult<()>;
+
     fn delete_vertices(
         &self,
         txn: &Self::Transaction,
         vertices: Vec<Self::Vertex>,
     ) -> StorageResult<()>;
-    fn delete_edges(&self, txn: &Self::Transaction, edges: Vec<Self::Edge>) -> StorageResult<()>;
-}
 
-/// The neighbor access direction
-#[derive(Clone, Copy)]
-pub enum Direction {
-    Forward,
-    Reversed,
+    fn delete_edges(&self, txn: &Self::Transaction, edges: Vec<Self::Edge>) -> StorageResult<()>;
+
+    fn set_vertex_property(&self, txn: &Self::Transaction, vid: u64, indices: Vec<usize>, props: Vec<PropertyValue>) -> StorageResult<()>;
+
+    fn set_edge_propoerty(&self, txn: &Self::Transaction, eid: u64, indices: Vec<usize>, props: Vec<PropertyValue>) -> StorageResult<()>;
 }

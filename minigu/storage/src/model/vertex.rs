@@ -1,7 +1,8 @@
+use common::datatype::value::PropertyValue;
 use serde::{Serialize, Deserialize};
 use super::properties::PropertyStore;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Vertex {
     pub vid: u64,  
     pub label_id: u64,
@@ -15,6 +16,17 @@ impl Vertex {
             vid,
             label_id,
             properties,
+        }
+    }
+
+    /// Get the vid
+    pub fn vid(&self) -> u64 {
+        self.vid
+    }
+
+    pub fn set_props(&mut self, indices: &Vec<usize>, props: Vec<PropertyValue>) {
+        for (&index, prop) in indices.into_iter().zip(props.into_iter()) {
+            self.properties.set_prop(index, prop);
         }
     }
 }

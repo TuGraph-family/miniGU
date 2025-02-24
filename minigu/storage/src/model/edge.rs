@@ -1,3 +1,4 @@
+use common::datatype::value::PropertyValue;
 use serde::{Serialize, Deserialize};
 use super::properties::PropertyStore;
 
@@ -26,6 +27,12 @@ impl Edge {
             label_id,
             direction,
             properties,
+        }
+    }
+
+    pub fn set_props(&mut self, indices: &Vec<usize>, props: Vec<PropertyValue>) {
+        for (&index, prop) in indices.into_iter().zip(props.into_iter()) {
+            self.properties.set_prop(index, prop);
         }
     }
 }

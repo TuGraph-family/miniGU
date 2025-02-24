@@ -1,6 +1,8 @@
 use serde::{Serialize, Deserialize};
 use common::datatype::value::PropertyMeta;
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
+
+pub type Identifier = String;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct VertexSchema {                  
@@ -34,10 +36,10 @@ impl EdgeSchema {
 
 #[derive(Debug, Default)]
 pub struct SchemaManager {
-    pub vertex_schemas: HashMap<String, VertexSchema>,          // vertex_label_name -> VertexSchema
-    pub edge_schemas: HashMap<String, EdgeSchema>,              // edge_label_name -> EdgeSchema
-    pub id_to_vertex_schema_map: HashMap<u64, String>,          // label_id -> vertex_schema_name
-    pub id_to_edge_schema_map: HashMap<u64, String>,            // label_id -> edge_schema_name
+    pub vertex_schemas: HashMap<Identifier, Arc<VertexSchema>>,          // vertex_label_name -> VertexSchema
+    pub edge_schemas: HashMap<Identifier, Arc<EdgeSchema>>,              // edge_label_name -> EdgeSchema
+    pub id_to_vertex_schema_map: HashMap<u64, Identifier>,          // label_id -> vertex_schema_name
+    pub id_to_edge_schema_map: HashMap<u64, Identifier>,            // label_id -> edge_schema_name
     pub vertex_label_id: u64,
     pub edge_label_id: u64,
 }
@@ -63,7 +65,7 @@ impl SchemaManager {
     }
 
     // Add a new vertex schema
-    pub fn add_vertex_schema(&mut self, vertex_label: String, schema: VertexSchema) -> Result<(), SchemaError> {
+    pub fn add_vertex_schema(&mut self, vertex_label: String, schema: Arc<VertexSchema>) -> Result<(), SchemaError> {
         if self.vertex_schemas.contains_key(&vertex_label) {
             return Err(SchemaError::VertexSchemaAlreadyExists);
         }
@@ -73,17 +75,17 @@ impl SchemaManager {
         Ok(())
     }
 
-    pub fn get_vertex_schema_by_name(&self, name: &str) -> Result<&VertexSchema, SchemaError> {
-        self.vertex_schemas.get(name).ok_or(SchemaError::VertexSchemaNotFound)
+    pub fn get_vertex_schema_by_name(&self, name: &str) -> Result<Arc<VertexSchema>, SchemaError> {
+        self.vertex_schemas.get(name).ok_or(SchemaError::VertexSchemaNotFound).cloned()
     }
 
-    pub fn get_vertex_schema_by_id(&self, id: u64) -> Result<&VertexSchema, SchemaError> {
+    pub fn get_vertex_schema_by_id(&self, id: u64) -> Result<Arc<VertexSchema>, SchemaError> {
         let name = self.id_to_vertex_schema_map.get(&id).ok_or(SchemaError::VertexSchemaNotFound)?;
-        self.vertex_schemas.get(name).ok_or(SchemaError::VertexSchemaNotFound)
+        self.vertex_schemas.get(name).ok_or(SchemaError::VertexSchemaNotFound).cloned()
     }
 
     // Add a new edge schema
-    pub fn add_edge_schema(&mut self, edge_label: String, schema: EdgeSchema) -> Result<(), SchemaError> {
+    pub fn add_edge_schema(&mut self, edge_label: String, schema: Arc<EdgeSchema>) -> Result<(), SchemaError> {
         if self.edge_schemas.contains_key(&edge_label) {
             return Err(SchemaError::EdgeSchemaAlreadyExists);
         }
@@ -94,14 +96,14 @@ impl SchemaManager {
     }
 
     // Get the schema for an edge by label
-    pub fn get_edge_schema_by_name(&self, name: &str) -> Result<&EdgeSchema, SchemaError> {
-        self.edge_schemas.get(name).ok_or(SchemaError::EdgeSchemaNotFound)
+    pub fn get_edge_schema_by_name(&self, name: &str) -> Result<Arc<EdgeSchema>, SchemaError> {
+        self.edge_schemas.get(name).ok_or(SchemaError::EdgeSchemaNotFound).cloned()
     }
 
     // Get the schema for an edge by ID
-    pub fn get_edge_schema_by_id(&self, id: u64) -> Result<&EdgeSchema, SchemaError> {
+    pub fn get_edge_schema_by_id(&self, id: u64) -> Result<Arc<EdgeSchema>, SchemaError> {
         let name = self.id_to_edge_schema_map.get(&id).ok_or(SchemaError::EdgeSchemaNotFound)?;
-        self.edge_schemas.get(name).ok_or(SchemaError::EdgeSchemaNotFound)
+        self.edge_schemas.get(name).ok_or(SchemaError::EdgeSchemaNotFound).cloned()
     }
 }
 
@@ -148,8 +150,8 @@ mod tests {
     #[test]
     fn test_schema_manager() {
         let mut schema_manager = SchemaManager::new();
-        let person_vertex_schema = create_vertex_schema();
-        let knows_edge_schema = create_edge_schema();
+        let person_vertex_schema = Arc::new(create_vertex_schema());
+        let knows_edge_schema = Arc::new(create_edge_schema());
 
         // Add vertex schema
         schema_manager.add_vertex_schema("person".to_string(), person_vertex_schema.to_owned()).unwrap();

@@ -3,10 +3,13 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 use std::u64;
 
+use common::datatype::value::PropertyValue;
 use dashmap::{DashMap, DashSet};
 
 use crate::error::{StorageError, StorageResult};
-use crate::storage::{Direction, Graph, MutGraph, StorageTransaction};
+use crate::model::vertex::Vertex;
+use crate::storage::{Graph, MutGraph, StorageTransaction};
+use crate::model::edge::{Direction, Edge};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct TxnId(u64);
@@ -27,40 +30,79 @@ impl TxnId {
 
 /// Vertex
 #[derive(Clone, Debug)]
-pub struct Vertex {
+pub struct VVertex {
     // Transaction information of the versioned vertex
     begin_ts: TxnId,
     end_ts: TxnId,
     // The internal vertex data
-    pub id: u64,
+    inner: Vertex,
 }
 
-impl Vertex {
-    fn with_vid(vid: u64) -> Self {
+impl VVertex {
+    fn new(vertex: Vertex) -> Self {
         Self {
             begin_ts: TxnId::empty(),
             end_ts: TxnId::empty(),
-            id: vid,
+            inner: vertex,
         }
+    }
+
+    fn vid(&self) -> u64 {
+        self.inner.vid()
+    }
+
+    fn inner(&self) -> &Vertex {
+        &self.inner
+    }
+
+    fn inner_mut(&mut self) -> &mut Vertex {
+        &mut self.inner
     }
 }
 
-impl PartialEq for Vertex {
+impl PartialEq for VVertex {
     fn eq(&self, other: &Self) -> bool {
-        self.id == other.id
+        self.inner.vid() == other.inner.vid()
     }
 }
 
 /// Edge
-#[derive(Clone, Debug, PartialEq, Copy)]
-pub struct Edge {
+#[derive(Clone, Debug)]
+pub struct VEdge {
     // Transaction information of the versioned edges
     begin_ts: TxnId,
     end_ts: TxnId,
     // The internal edge data
-    id: u64,
-    from: u64,
-    to: u64,
+    inner: Edge,
+}
+
+impl VEdge {
+    fn new(edge: Edge) -> Self {
+        Self {
+            begin_ts: TxnId::empty(),
+            end_ts: TxnId::empty(),
+            inner: edge,
+        }
+    }
+    fn edge_id(&self) -> u64 {
+        self.inner.eid
+    }
+
+    fn dst_id(&self) -> u64 {
+        self.inner.dst_id
+    }
+
+    fn source_id(&self) -> u64 {
+        self.inner.source_id
+    }
+
+    fn inner(&self) -> &Edge {
+        &self.inner
+    }
+
+    fn inner_mut(&mut self) -> &mut Edge {
+        &mut self.inner
+    }
 }
 
 /// Adjacency
@@ -82,7 +124,7 @@ impl Adjacency {
 /// Vertex with version information
 #[derive(Debug)]
 struct VersionedVertex {
-    versions: RwLock<LinkedList<Vertex>>,
+    versions: RwLock<LinkedList<VVertex>>,
 }
 
 impl VersionedVertex {
@@ -92,7 +134,7 @@ impl VersionedVertex {
         }
     }
 
-    fn get_visible(&self, ts: TxnId) -> Option<Vertex> {
+    fn get_visible(&self, ts: TxnId) -> Option<VVertex> {
         self.versions
             .read()
             .unwrap()
@@ -101,7 +143,11 @@ impl VersionedVertex {
             .cloned()
     }
 
-    fn visit_front<T: FnOnce(&mut Vertex)>(&self, visitor: T) -> StorageResult<()> {
+    fn front(&self) -> Option<VVertex> {
+        self.versions.read().unwrap().front().cloned()
+    }
+
+    fn visit_front<T: FnOnce(&mut VVertex)>(&self, visitor: T) -> StorageResult<()> {
         match self.versions.write().unwrap().front_mut().map(visitor) {
             Some(()) => Ok(()),
             None => Err(StorageError::VertexNotFound(
@@ -110,7 +156,7 @@ impl VersionedVertex {
         }
     }
 
-    fn insert_version(&self, version: Vertex) -> StorageResult<()> {
+    fn insert_version(&self, version: VVertex) -> StorageResult<()> {
         self.versions.write().unwrap().push_front(version);
         Ok(())
     }
@@ -119,7 +165,7 @@ impl VersionedVertex {
 /// Edge with version information
 #[derive(Debug)]
 struct VersionedEdge {
-    versions: RwLock<LinkedList<Edge>>,
+    versions: RwLock<LinkedList<VEdge>>,
 }
 
 impl VersionedEdge {
@@ -130,7 +176,7 @@ impl VersionedEdge {
         }
     }
 
-    fn get_visible(&self, ts: TxnId) -> Option<Edge> {
+    fn get_visible(&self, ts: TxnId) -> Option<VEdge> {
         self.versions
             .read()
             .unwrap()
@@ -139,7 +185,11 @@ impl VersionedEdge {
             .cloned()
     }
 
-    fn visit_front<T: FnOnce(&mut Edge)>(&self, visitor: T) -> StorageResult<()> {
+    fn front(&self) -> Option<VEdge> {
+        self.versions.read().unwrap().front().cloned()
+    }
+
+    fn visit_front<T: FnOnce(&mut VEdge)>(&self, visitor: T) -> StorageResult<()> {
         match self.versions.write().unwrap().front_mut().map(visitor) {
             Some(()) => Ok(()),
             None => Err(StorageError::VertexNotFound(
@@ -148,13 +198,14 @@ impl VersionedEdge {
         }
     }
 
-    fn insert_version(&self, version: Edge) {
+    fn insert_version(&self, version: VEdge) -> StorageResult<()> {
         self.versions.write().unwrap().push_front(version);
+        Ok(())
     }
 }
 
 /// MVCC Transaction
-pub struct MvccGraphStorage {
+pub struct MemGraph {
     // TransactionID which represents the latest timestamp
     tx_id_counter: AtomicU64,
     // Vertex table
@@ -170,18 +221,20 @@ pub struct MvccGraphStorage {
 
 enum UpdateVertexOp {
     Delete,
-    Insert(Vertex),
+    Insert(VVertex),
+    SetProps((Vec<usize>, Vec<PropertyValue>))
 }
 
 enum UpdateEdgeOp {
     Delete,
-    Insert(Edge),
+    Insert(VEdge),
+    SetProps((Vec<usize>, Vec<PropertyValue>))
 }
 
 /// MVCC Transaction instance
 pub struct MvccTransaction {
     txn_id: TxnId,
-    storage: Arc<MvccGraphStorage>,
+    storage: Arc<MemGraph>,
     // Transaction read set
     vertex_read: DashSet<u64>,
     edge_read: DashSet<u64>,
@@ -247,6 +300,14 @@ impl StorageTransaction for MvccTransaction {
             match op {
                 UpdateVertexOp::Delete => entry.visit_front(|v| v.end_ts = commit_ts),
                 UpdateVertexOp::Insert(v) => entry.insert_version(v),
+                UpdateVertexOp::SetProps((indices, props)) => {
+                    if let Some(mut vertex) = entry.front() {
+                        vertex.inner_mut().set_props(&indices, props);
+                        entry.insert_version(vertex)
+                    } else {
+                        Err(StorageError::VertexNotFound(format!("Vertex {} is not found", id)))
+                    }
+                }
             }?;
         }
 
@@ -257,19 +318,27 @@ impl StorageTransaction for MvccTransaction {
                 .entry(id)
                 .or_insert_with(|| Arc::new(VersionedEdge::new()));
             match op {
-                UpdateEdgeOp::Delete => entry.visit_front(|v| v.end_ts = commit_ts).unwrap(),
+                UpdateEdgeOp::Delete => entry.visit_front(|v| v.end_ts = commit_ts),
                 UpdateEdgeOp::Insert(e) => {
-                    entry.insert_version(e);
-                    if let Some(mut v) = self.storage.adjacency_forward.get_mut(&e.from) {
-                        v.push(Adjacency::new(e.id, e.to));
+                    if let Some(mut v) = self.storage.adjacency_forward.get_mut(&e.source_id()) {
+                        v.push(Adjacency::new(e.edge_id(), e.dst_id()));
                         v.sort_by_key(|s| s.vertex_id);
                     }
-                    if let Some(mut v) = self.storage.adjacency_reversed.get_mut(&e.to) {
-                        v.push(Adjacency::new(e.id, e.from));
+                    if let Some(mut v) = self.storage.adjacency_reversed.get_mut(&e.dst_id()) {
+                        v.push(Adjacency::new(e.edge_id(), e.source_id()));
                         v.sort_by_key(|s| s.vertex_id);
+                    }
+                    entry.insert_version(e)
+                }
+                UpdateEdgeOp::SetProps((indices, props)) => {
+                    if let Some(mut edge) = entry.front() {
+                        edge.inner_mut().set_props(&indices, props);
+                        entry.insert_version(edge)
+                    } else {
+                        Err(StorageError::EdgeNotFound(format!("Edge {} is not found", id)))
                     }
                 }
-            };
+            }?;
         }
 
         Ok(())
@@ -281,7 +350,7 @@ impl StorageTransaction for MvccTransaction {
     }
 }
 
-impl Graph for MvccGraphStorage {
+impl Graph for MemGraph {
     type Adjacency = Adjacency;
     type AdjacencyIter = Box<dyn Iterator<Item = Adjacency>>;
     type Edge = Edge;
@@ -294,17 +363,27 @@ impl Graph for MvccGraphStorage {
 
     fn get_vertex(&self, txn: &Self::Transaction, id: u64) -> StorageResult<Option<Vertex>> {
         // Check transaction local modification
+        let mut set_props: Option<(Vec<usize>, Vec<PropertyValue>)> = None;
         if let Some(v) = txn.vertex_updates.get(&id) {
-            return match v.value() {
-                UpdateVertexOp::Delete => Ok(None),
-                UpdateVertexOp::Insert(v) => Ok(Some(v.clone())),
+            match v.value() {
+                UpdateVertexOp::Delete => return Ok(None),
+                UpdateVertexOp::Insert(v) => return Ok(Some(v.inner().clone())),
+                UpdateVertexOp::SetProps((indices, props)) => set_props = Some((indices.clone(), props.clone())),
             };
         }
 
         // Check global graph data
         if let Some(v) = self.vertices.get(&id) {
             txn.vertex_read.insert(id);
-            Ok(v.get_visible(txn.txn_id))
+            if let Some((indices, props)) = set_props {
+                Ok(v.get_visible(txn.txn_id).map(|v| {
+                    let mut vertex = v.inner().clone();
+                    vertex.set_props(&indices, props);
+                    vertex
+                }))
+            } else {
+                Ok(v.get_visible(txn.txn_id).map(|v| v.inner().clone()))
+            }
         } else {
             Err(StorageError::VertexNotFound(format!(
                 "Vertex {} is not found",
@@ -326,8 +405,8 @@ impl Graph for MvccGraphStorage {
         // Get the global adjacency list
         let mut is_forward = true;
         let global_adjs = match direction {
-            Direction::Forward => &self.adjacency_forward.get(&id),
-            Direction::Reversed => {
+            Direction::Out => &self.adjacency_forward.get(&id),
+            Direction::In => {
                 is_forward = false;
                 &self.adjacency_reversed.get(&id)
             }
@@ -346,11 +425,12 @@ impl Graph for MvccGraphStorage {
                 }
                 UpdateEdgeOp::Insert(e) => {
                     if is_forward {
-                        adjs.push(Adjacency::new(e.id, e.to))
+                        adjs.push(Adjacency::new(e.edge_id(), e.dst_id()))
                     } else {
-                        adjs.push(Adjacency::new(e.id, e.from))
+                        adjs.push(Adjacency::new(e.edge_id(), e.source_id()))
                     }
                 }
+                UpdateEdgeOp::SetProps(_) => {}
             }
         }
 
@@ -367,14 +447,15 @@ impl Graph for MvccGraphStorage {
         if let Some(edge) = txn.edge_updates.get(&id) {
             return Ok(match edge.value() {
                 UpdateEdgeOp::Delete => None,
-                UpdateEdgeOp::Insert(e) => Some(*e),
+                UpdateEdgeOp::Insert(e) => Some(e.inner().clone()),
+                UpdateEdgeOp::SetProps(_) => todo!(),
             });
         }
 
         // 2. Check global graph data
         if let Some(e) = self.edges.get(&id) {
             txn.edge_read.insert(id);
-            Ok(e.get_visible(txn.txn_id))
+            Ok(e.get_visible(txn.txn_id).map(|v| v.inner().clone()))
         } else {
             Err(StorageError::EdgeNotFound(format!(
                 "Edge {} is not found",
@@ -389,17 +470,26 @@ impl Graph for MvccGraphStorage {
         let mut vertices = self
             .vertices
             .iter()
-            .filter_map(|v| v.value().get_visible(txn.txn_id))
+            .filter_map(|v| 
+                v.value()
+                .get_visible(txn.txn_id)
+                .map(|v| v.inner().clone())
+            )
             .collect::<Vec<_>>();
 
         for v_update in &txn.vertex_updates {
             match v_update.value() {
                 UpdateVertexOp::Delete => {
-                    if let Ok(i) = vertices.binary_search_by(|v| v.id.cmp(v_update.key())) {
+                    if let Ok(i) = vertices.binary_search_by(|v| v.vid().cmp(v_update.key())) {
                         vertices.remove(i);
                     }
                 }
-                UpdateVertexOp::Insert(v) => vertices.push(v.clone()),
+                UpdateVertexOp::Insert(v) => vertices.push(v.inner().clone()),
+                UpdateVertexOp::SetProps((indices, props)) => {
+                    if let Ok(i) = vertices.binary_search_by(|v| v.vid().cmp(v_update.key())) {
+                        vertices[i].set_props(indices, props.clone());
+                    }
+                }
             }
         }
 
@@ -412,17 +502,26 @@ impl Graph for MvccGraphStorage {
         let mut edges = self
             .edges
             .iter()
-            .filter_map(|e| e.value().get_visible(txn.txn_id))
+            .filter_map(|e| 
+                e.value()
+                .get_visible(txn.txn_id)
+                .map(|v| v.inner().clone())
+            )
             .collect::<Vec<_>>();
 
         for e_update in &txn.edge_updates {
             match e_update.value() {
                 UpdateEdgeOp::Delete => {
-                    if let Ok(i) = edges.binary_search_by(|e| e.id.cmp(e_update.key())) {
+                    if let Ok(i) = edges.binary_search_by(|e| e.eid.cmp(e_update.key())) {
                         edges.remove(i);
                     }
                 }
-                UpdateEdgeOp::Insert(e) => edges.push(*e),
+                UpdateEdgeOp::Insert(e) => edges.push(e.inner().clone()),
+                UpdateEdgeOp::SetProps((indices, props)) => {
+                    if let Ok(i) = edges.binary_search_by(|e| e.eid.cmp(e_update.key())) {
+                        edges[i].set_props(indices, props.clone());
+                    }
+                }
             }
         }
 
@@ -430,55 +529,57 @@ impl Graph for MvccGraphStorage {
     }
 }
 
-impl MutGraph for MvccGraphStorage {
+impl MutGraph for MemGraph {
     fn create_vertex(&self, txn: &Self::Transaction, vertex: Vertex) -> StorageResult<()> {
-        let mut vertex = vertex;
+        let mut vertex = VVertex::new(vertex);
         vertex.begin_ts = txn.txn_id;
         vertex.end_ts = TxnId::max();
 
-        if let Some(txn_v) = txn.vertex_updates.get(&vertex.id) {
+        if let Some(txn_v) = txn.vertex_updates.get(&vertex.vid()) {
             match txn_v.value() {
                 UpdateVertexOp::Delete => {
-                    txn.vertex_updates.entry(vertex.id).and_modify(|v| {
+                    txn.vertex_updates.entry(vertex.vid()).and_modify(|v| {
                         *v = UpdateVertexOp::Insert(vertex);
                     });
                 }
-                UpdateVertexOp::Insert(v) => {
+                UpdateVertexOp::SetProps(_) |
+                UpdateVertexOp::Insert(_) => {
                     return Err(StorageError::TransactionError(format!(
                         "Vertex {} has been inserted",
-                        v.id
+                        vertex.vid()
                     )));
                 }
             };
         } else {
             txn.vertex_updates
-                .insert(vertex.id, UpdateVertexOp::Insert(vertex));
+                .insert(vertex.vid(), UpdateVertexOp::Insert(vertex));
         }
 
         Ok(())
     }
 
     fn create_edge(&self, txn: &Self::Transaction, edge: Edge) -> StorageResult<()> {
-        let mut edge = edge;
+        let mut edge = VEdge::new(edge);
         edge.begin_ts = txn.txn_id;
         edge.end_ts = TxnId::max();
 
-        if let Some(txn_v) = txn.edge_updates.get(&edge.id) {
+        if let Some(txn_v) = txn.edge_updates.get(&edge.edge_id()) {
             match txn_v.value() {
                 UpdateEdgeOp::Delete => {
-                    txn.edge_updates.entry(edge.id).and_modify(|e| {
+                    txn.edge_updates.entry(edge.edge_id()).and_modify(|e| {
                         *e = UpdateEdgeOp::Insert(edge);
                     });
                 }
-                UpdateEdgeOp::Insert(e) => {
+                UpdateEdgeOp::SetProps(_) |
+                UpdateEdgeOp::Insert(_) => {
                     return Err(StorageError::EdgeNotFound(format!(
                         "Edge {} has been inserted",
-                        e.id
+                        edge.edge_id(),
                     )));
                 }
             };
         } else {
-            txn.edge_updates.insert(edge.id, UpdateEdgeOp::Insert(edge));
+            txn.edge_updates.insert(edge.edge_id(), UpdateEdgeOp::Insert(edge));
         }
 
         Ok(())
@@ -491,7 +592,7 @@ impl MutGraph for MvccGraphStorage {
     ) -> StorageResult<()> {
         for v in vertices {
             txn.vertex_updates
-                .entry(v.id)
+                .entry(v.vid())
                 .and_modify(|v| *v = UpdateVertexOp::Delete)
                 .or_insert(UpdateVertexOp::Delete);
         }
@@ -502,16 +603,52 @@ impl MutGraph for MvccGraphStorage {
     fn delete_edges(&self, txn: &Self::Transaction, edges: Vec<Self::Edge>) -> StorageResult<()> {
         for e in edges {
             txn.edge_updates
-                .entry(e.id)
+                .entry(e.eid)
                 .and_modify(|v| *v = UpdateEdgeOp::Delete)
                 .or_insert(UpdateEdgeOp::Delete);
         }
 
         Ok(())
     }
+    
+    fn set_vertex_property(&self, txn: &Self::Transaction, vid: u64, indices: Vec<usize>, props: Vec<common::datatype::value::PropertyValue>) -> StorageResult<()> {
+        txn.vertex_read.insert(vid);
+        if let Some(mut v) = txn.vertex_updates.get_mut(&vid) {
+            match v.value_mut() {
+                UpdateVertexOp::Delete => return Err(StorageError::TransactionError(format!("Set the props of a deleted vertex {:}.", vid))),
+                UpdateVertexOp::Insert(vvertex) => vvertex.inner_mut().set_props(&indices, props),
+                UpdateVertexOp::SetProps((pindices, pprops)) => {
+                    *pindices = indices;
+                    *pprops = props;
+                }
+            }
+        } else {
+            txn.vertex_updates.insert(vid, UpdateVertexOp::SetProps((indices, props)));
+        }
+
+        Ok(())
+    }
+    
+    fn set_edge_propoerty(&self, txn: &Self::Transaction, eid: u64, indices: Vec<usize>, props: Vec<common::datatype::value::PropertyValue>) -> StorageResult<()> {
+        txn.edge_read.insert(eid);
+        if let Some(mut e) = txn.edge_updates.get_mut(&eid) {
+            match e.value_mut() {
+                UpdateEdgeOp::Delete => return Err(StorageError::TransactionError(format!("Set the props of a deleted edge {:}.", eid))),
+                UpdateEdgeOp::Insert(vedge) => vedge.inner_mut().set_props(&indices, props),
+                UpdateEdgeOp::SetProps((pindices, pprops)) => {
+                    *pindices = indices;
+                    *pprops = props;
+                }
+            }
+        } else {
+            txn.edge_updates.insert(eid, UpdateEdgeOp::SetProps((indices, props)));
+        }
+
+        Ok(())
+    }
 }
 
-impl MvccGraphStorage {
+impl MemGraph {
     pub fn new() -> Arc<Self> {
         Arc::new(Self {
             tx_id_counter: AtomicU64::new(1),
@@ -542,114 +679,82 @@ impl MvccGraphStorage {
 
 #[cfg(test)]
 mod tests {
+    use crate::model::properties::PropertyStore;
+
     use super::*;
 
     #[test]
     fn test_create_and_get_vertex() {
-        let storage = MvccGraphStorage::new();
+        let storage = MemGraph::new();
         let txn = storage.begin_transaction();
 
-        let vertex = Vertex {
-            begin_ts: TxnId(1),
-            end_ts: TxnId(u64::MAX),
-            id: 1,
-        };
+        let vertex = Vertex::new(1, 0, PropertyStore::new(Vec::new()));
 
         storage.create_vertex(&txn, vertex.clone()).unwrap();
         let fetched_vertex = storage.get_vertex(&txn, 1).unwrap().unwrap();
-        assert_eq!(fetched_vertex, vertex);
+        assert_eq!(fetched_vertex.vid(), vertex.vid());
     }
 
     #[test]
     fn test_create_and_get_edge() {
-        let storage = MvccGraphStorage::new();
+        let storage = MemGraph::new();
         let txn = storage.begin_transaction();
 
-        let edge = Edge {
-            begin_ts: TxnId(1),
-            end_ts: TxnId(u64::MAX),
-            id: 1,
-            from: 1,
-            to: 2,
-        };
+        let edge = Edge::new(1, 1, 2, 0, Direction::Out, PropertyStore::new(Vec::new()));
 
-        storage.create_edge(&txn, edge).unwrap();
+        storage.create_edge(&txn, edge.clone()).unwrap();
         let fetched_edge = storage.get_edge(&txn, 1).unwrap().unwrap();
-        assert_eq!(fetched_edge, edge);
+        assert_eq!(fetched_edge.eid, edge.eid);
     }
 
     #[test]
     fn test_delete_vertex() {
-        let storage = MvccGraphStorage::new();
+        let storage = MemGraph::new();
         let txn = storage.begin_transaction();
 
-        let vertex = Vertex {
-            begin_ts: TxnId(1),
-            end_ts: TxnId(u64::MAX),
-            id: 1,
-        };
+        let vertex = Vertex::new(1, 0, PropertyStore::new(Vec::new()));
 
         storage.create_vertex(&txn, vertex.clone()).unwrap();
-        storage.delete_vertices(&txn, vec![vertex]).unwrap();
+        storage.delete_vertices(&txn, vec![vertex.clone()]).unwrap();
         let fetched_vertex = storage.get_vertex(&txn, 1).unwrap();
         assert!(fetched_vertex.is_none());
     }
 
     #[test]
     fn test_delete_edge() {
-        let storage = MvccGraphStorage::new();
+        let storage = MemGraph::new();
         let txn = storage.begin_transaction();
 
-        let edge = Edge {
-            begin_ts: TxnId(1),
-            end_ts: TxnId(u64::MAX),
-            id: 1,
-            from: 1,
-            to: 2,
-        };
+        let edge = Edge::new(1, 1, 2, 0, Direction::Out, PropertyStore::new(Vec::new()));
 
-        storage.create_edge(&txn, edge).unwrap();
-        storage.delete_edges(&txn, vec![edge]).unwrap();
+        storage.create_edge(&txn, edge.clone()).unwrap();
+        storage.delete_edges(&txn, vec![edge.clone()]).unwrap();
         let fetched_edge = storage.get_edge(&txn, 1).unwrap();
         assert!(fetched_edge.is_none());
     }
 
     #[test]
     fn test_neighbors() {
-        let storage = MvccGraphStorage::new();
+        let storage = MemGraph::new();
         let txn = storage.begin_transaction();
 
-        let edge = Edge {
-            begin_ts: TxnId(1),
-            end_ts: TxnId(u64::MAX),
-            id: 1,
-            from: 1,
-            to: 2,
-        };
+        let edge = Edge::new(1, 1, 2, 0, Direction::Out, PropertyStore::new(Vec::new()));
 
         storage
-            .create_vertex(&txn, Vertex {
-                begin_ts: TxnId(1),
-                end_ts: TxnId(u64::MAX),
-                id: 1,
-            })
+            .create_vertex(&txn, Vertex::new(1, 0, PropertyStore::new(Vec::new())))
             .unwrap();
         storage
-            .create_vertex(&txn, Vertex {
-                begin_ts: TxnId(1),
-                end_ts: TxnId(u64::MAX),
-                id: 2,
-            })
+            .create_vertex(&txn, Vertex::new(2, 0, PropertyStore::new(Vec::new())))
             .unwrap();
         storage.create_edge(&txn, edge).unwrap();
         let neighbors = storage
-            .neighbors(&txn, 1, Direction::Forward)
+            .neighbors(&txn, 1, Direction::Out)
             .unwrap()
             .collect::<Vec<_>>();
         assert_eq!(neighbors.len(), 1);
         assert_eq!(neighbors[0].vertex_id, 2);
         let neighbors = storage
-            .neighbors(&txn, 2, Direction::Reversed)
+            .neighbors(&txn, 2, Direction::In)
             .unwrap()
             .collect::<Vec<_>>();
         assert_eq!(neighbors.len(), 1);
@@ -658,36 +763,32 @@ mod tests {
 
     #[test]
     fn test_transaction_commit() {
-        let storage = MvccGraphStorage::new();
+        let storage = MemGraph::new();
         let txn = storage.begin_transaction();
 
-        let vertex = Vertex {
-            begin_ts: TxnId(1),
-            end_ts: TxnId(u64::MAX),
-            id: 1,
-        };
+        let vertex = Vertex::new(1, 0, PropertyStore::new(Vec::new()));
 
         storage.create_vertex(&txn, vertex.clone()).unwrap();
         txn.commit().unwrap();
 
         let new_txn = storage.begin_transaction();
         let fetched_vertex = storage.get_vertex(&new_txn, 1).unwrap().unwrap();
-        assert_eq!(fetched_vertex, vertex);
+        assert_eq!(fetched_vertex.vid(), vertex.vid());
     }
 
     #[test]
     fn test_multi_transaction_commit_success() {
-        let storage = MvccGraphStorage::new();
+        let storage = MemGraph::new();
 
         // Transaction 1 creates a vertex
         let txn1 = storage.begin_transaction();
-        let vertex1 = Vertex::with_vid(1);
+        let vertex1 = Vertex::new(1, 0, PropertyStore::new(Vec::new()));
         storage.create_vertex(&txn1, vertex1.clone()).unwrap();
         txn1.commit().unwrap();
 
         // Transaction 2 creates another vertex
         let txn2 = storage.begin_transaction();
-        let vertex2 = Vertex::with_vid(2);
+        let vertex2 = Vertex::new(2, 0, PropertyStore::new(Vec::new()));
         storage.create_vertex(&txn2, vertex2.clone()).unwrap();
         txn2.commit().unwrap();
 
@@ -695,17 +796,17 @@ mod tests {
         let txn3 = storage.begin_transaction();
         let fetched_vertex1 = storage.get_vertex(&txn3, 1).unwrap().unwrap();
         let fetched_vertex2 = storage.get_vertex(&txn3, 2).unwrap().unwrap();
-        assert_eq!(fetched_vertex1, vertex1);
-        assert_eq!(fetched_vertex2, vertex2);
+        assert_eq!(fetched_vertex1.vid(), vertex1.vid());
+        assert_eq!(fetched_vertex2.vid(), vertex2.vid());
     }
 
     #[test]
     fn test_multi_transaction_commit_conflict() {
-        let storage = MvccGraphStorage::new();
+        let storage = MemGraph::new();
 
         // Transaction 1 creates a vertex
         let txn1 = storage.begin_transaction();
-        let vertex1 = Vertex::with_vid(1);
+        let vertex1 = Vertex::new(1, 0, PropertyStore::new(Vec::new()));
         storage.create_vertex(&txn1, vertex1.clone()).unwrap();
         txn1.commit().unwrap();
 
@@ -715,7 +816,7 @@ mod tests {
 
         // Transaction 3 delete the vertex
         let txn3 = storage.begin_transaction();
-        storage.delete_vertices(&txn3, vec![Vertex::with_vid(1)]).unwrap();
+        storage.delete_vertices(&txn3, vec![Vertex::new(1, 0, PropertyStore::new(Vec::new()))]).unwrap();
         txn3.commit().unwrap();
 
         // Commit transaction 2 should fail due to conflict
