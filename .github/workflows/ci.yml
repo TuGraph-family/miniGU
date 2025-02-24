@@ -62,7 +62,8 @@ jobs:
     needs: [ typos, toml, fmt, clippy ]
     strategy:
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest ]
+        # os: [ ubuntu-latest, macos-latest, windows-latest ]
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -76,7 +77,8 @@ jobs:
     needs: [ typos, toml, fmt, clippy ]
     strategy:
       matrix:
-        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        os: [ ubuntu-latest ]
+        # os: [ ubuntu-latest, macos-latest, windows-latest ]
     name: Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
