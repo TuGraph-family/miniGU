@@ -1,0 +1,43 @@
+[package]
+name = "gql-parser"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+winnow = { version = "0.7.2", default-features = false, features = ["alloc"] }
+serde = { version = "1.0.217", default-features = false, features = [
+  "alloc",
+  "derive",
+], optional = true }
+smol_str = { version = "0.3.2", default-features = false }
+macro_rules_attribute = "0.2.0"
+logos = { version = "0.15.0", default-features = false, features = [
+  "export_derive",
+] }
+thiserror = { version = "2.0.11", default-features = false }
+itertools = { version = "0.14.0", default-features = false, features = [
+  "use_alloc",
+] }
+
+[dev-dependencies]
+insta = { version = "1.42.1", features = ["yaml"] }
+divan = "0.1.17"
+
+[features]
+default = ["std"]
+serde = ["dep:serde", "smol_str/serde"]
+std = [
+  "logos/std",
+  "thiserror/std",
+  "serde?/std",
+  "itertools/use_std",
+  "winnow/std",
+  "smol_str/std",
+]
+
+[lints]
+workspace = true
+
+[[bench]]
+name = "alloc"
+harness = false
