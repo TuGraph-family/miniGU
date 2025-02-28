@@ -1,6 +1,7 @@
-use common::datatype::value::{PropertyMeta, PropertyValue};
+use common::datatype::value::PropertyValue;
 
-use crate::{error::StorageResult, model::edge::Direction};
+use crate::error::StorageResult;
+use crate::model::edge::Direction;
 
 /// Storage transaction
 pub trait StorageTransaction {
@@ -58,7 +59,19 @@ pub trait MutGraph: Graph {
 
     fn delete_edges(&self, txn: &Self::Transaction, edges: Vec<Self::Edge>) -> StorageResult<()>;
 
-    fn set_vertex_property(&self, txn: &Self::Transaction, vid: u64, indices: Vec<usize>, props: Vec<PropertyValue>) -> StorageResult<()>;
+    fn set_vertex_property(
+        &self,
+        txn: &Self::Transaction,
+        vid: u64,
+        indices: Vec<usize>,
+        props: Vec<PropertyValue>,
+    ) -> StorageResult<()>;
 
-    fn set_edge_propoerty(&self, txn: &Self::Transaction, eid: u64, indices: Vec<usize>, props: Vec<PropertyValue>) -> StorageResult<()>;
+    fn set_edge_propoerty(
+        &self,
+        txn: &Self::Transaction,
+        eid: u64,
+        indices: Vec<usize>,
+        props: Vec<PropertyValue>,
+    ) -> StorageResult<()>;
 }

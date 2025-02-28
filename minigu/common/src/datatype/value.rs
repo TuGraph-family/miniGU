@@ -1,32 +1,39 @@
-use serde::{Serialize, Deserialize};
-use std::fmt;
-use thiserror::Error;
 use std::collections::HashMap;
+use std::fmt;
+
+use serde::{Deserialize, Serialize};
+use thiserror::Error;
 
 /// Supported primitive data types
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum DataType {
-    Int,                // i32 
-    Long,               // i64
-    Float,              // f32
-    Double,             // f64
-    String,             // String
-    Boolean,            // bool
-    Object,             // reserved for complex data type
+    Int,     // i32
+    Long,    // i64
+    Float,   // f32
+    Double,  // f64
+    String,  // String
+    Boolean, // bool
+    Object,  // reserved for complex data type
 }
 
 /// Property metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PropertyMeta {
-    pub name: String,                       // Property name
-    pub data_type: DataType,                // Data type
-    pub is_optional: bool,                  // Nullable
-    pub is_unique: bool,                    // Unique constraint
-    pub default: Option<PropertyValue>,     // Default value
+    pub name: String,                   // Property name
+    pub data_type: DataType,            // Data type
+    pub is_optional: bool,              // Nullable
+    pub is_unique: bool,                // Unique constraint
+    pub default: Option<PropertyValue>, // Default value
 }
 
 impl PropertyMeta {
-    pub fn new(name: String, data_type: DataType, is_optional: bool, is_unique: bool, default: Option<PropertyValue>) -> Self {
+    pub fn new(
+        name: String,
+        data_type: DataType,
+        is_optional: bool,
+        is_unique: bool,
+        default: Option<PropertyValue>,
+    ) -> Self {
         PropertyMeta {
             name,
             data_type,
@@ -131,7 +138,6 @@ impl PropertyValue {
             }),
         }
     }
-
 }
 
 /// Type conversion errors
@@ -143,7 +149,7 @@ pub enum ConversionError {
         actual: DataType,
     },
     #[error("Null value not allowed")]
-    NullValue
+    NullValue,
 }
 
 /// Primary key type constraints, supports long and string types currently
@@ -174,7 +180,10 @@ mod tests {
         assert_eq!(PropertyValue::Long(42).data_type(), DataType::Long);
         assert_eq!(PropertyValue::Float(42.0).data_type(), DataType::Float);
         assert_eq!(PropertyValue::Double(42.0).data_type(), DataType::Double);
-        assert_eq!(PropertyValue::String("hello".into()).data_type(), DataType::String);
+        assert_eq!(
+            PropertyValue::String("hello".into()).data_type(),
+            DataType::String
+        );
         assert_eq!(PropertyValue::Boolean(true).data_type(), DataType::Boolean);
         let mut map = HashMap::new();
         map.insert("name".to_string(), PropertyValue::String("John".into()));
@@ -189,16 +198,22 @@ mod tests {
         assert_eq!(value.as_int(), Ok(42));
 
         let value = PropertyValue::Long(42);
-        assert_eq!(value.as_int(), Err(ConversionError::TypeMismatch {
-            expected: DataType::Int,
-            actual: DataType::Long,
-        }));
+        assert_eq!(
+            value.as_int(),
+            Err(ConversionError::TypeMismatch {
+                expected: DataType::Int,
+                actual: DataType::Long,
+            })
+        );
 
         let value = PropertyValue::Float(42.0);
-        assert_eq!(value.as_int(), Err(ConversionError::TypeMismatch {
-            expected: DataType::Int,
-            actual: DataType::Float,
-        }));
+        assert_eq!(
+            value.as_int(),
+            Err(ConversionError::TypeMismatch {
+                expected: DataType::Int,
+                actual: DataType::Float,
+            })
+        );
     }
 
     #[test]
@@ -207,10 +222,13 @@ mod tests {
         assert_eq!(value.as_long(), Ok(42));
 
         let value = PropertyValue::Int(42);
-        assert_eq!(value.as_long(), Err(ConversionError::TypeMismatch {
-            expected: DataType::Long,
-            actual: DataType::Int,
-        }));
+        assert_eq!(
+            value.as_long(),
+            Err(ConversionError::TypeMismatch {
+                expected: DataType::Long,
+                actual: DataType::Int,
+            })
+        );
     }
 
     #[test]
@@ -219,10 +237,13 @@ mod tests {
         assert_eq!(value.as_float(), Ok(42.0));
 
         let value = PropertyValue::Int(42);
-        assert_eq!(value.as_float(), Err(ConversionError::TypeMismatch {
-            expected: DataType::Float,
-            actual: DataType::Int,
-        }));
+        assert_eq!(
+            value.as_float(),
+            Err(ConversionError::TypeMismatch {
+                expected: DataType::Float,
+                actual: DataType::Int,
+            })
+        );
     }
 
     #[test]
@@ -231,10 +252,13 @@ mod tests {
         assert_eq!(value.as_double(), Ok(42.0));
 
         let value = PropertyValue::Float(42.0);
-        assert_eq!(value.as_double(), Err(ConversionError::TypeMismatch {
-            expected: DataType::Double,
-            actual: DataType::Float,
-        }));
+        assert_eq!(
+            value.as_double(),
+            Err(ConversionError::TypeMismatch {
+                expected: DataType::Double,
+                actual: DataType::Float,
+            })
+        );
     }
 
     #[test]
@@ -243,10 +267,13 @@ mod tests {
         assert_eq!(value.as_string(), Ok("hello".into()));
 
         let value = PropertyValue::Int(42);
-        assert_eq!(value.as_string(), Err(ConversionError::TypeMismatch {
-            expected: DataType::String,
-            actual: DataType::Int,
-        }));
+        assert_eq!(
+            value.as_string(),
+            Err(ConversionError::TypeMismatch {
+                expected: DataType::String,
+                actual: DataType::Int,
+            })
+        );
     }
 
     #[test]
@@ -255,10 +282,13 @@ mod tests {
         assert_eq!(value.as_boolean(), Ok(true));
 
         let value = PropertyValue::String("hello".into());
-        assert_eq!(value.as_boolean(), Err(ConversionError::TypeMismatch {
-            expected: DataType::Boolean,
-            actual: DataType::String,
-        }));
+        assert_eq!(
+            value.as_boolean(),
+            Err(ConversionError::TypeMismatch {
+                expected: DataType::Boolean,
+                actual: DataType::String,
+            })
+        );
     }
 
     #[test]
@@ -270,10 +300,13 @@ mod tests {
         assert_eq!(value.as_object(), Ok(&map));
 
         let value = PropertyValue::String("hello".into());
-        assert_eq!(value.as_object(), Err(ConversionError::TypeMismatch {
-            expected: DataType::Object,
-            actual: DataType::String,
-        }));
+        assert_eq!(
+            value.as_object(),
+            Err(ConversionError::TypeMismatch {
+                expected: DataType::Object,
+                actual: DataType::String,
+            })
+        );
     }
 
     // Test PrimaryKey display

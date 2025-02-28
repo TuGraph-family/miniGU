@@ -1,15 +1,14 @@
 use std::collections::LinkedList;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
-use std::u64;
 
 use common::datatype::value::PropertyValue;
 use dashmap::{DashMap, DashSet};
 
 use crate::error::{StorageError, StorageResult};
+use crate::model::edge::{Direction, Edge};
 use crate::model::vertex::Vertex;
 use crate::storage::{Graph, MutGraph, StorageTransaction};
-use crate::model::edge::{Direction, Edge};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct TxnId(u64);
@@ -84,6 +83,7 @@ impl VEdge {
             inner: edge,
         }
     }
+
     fn edge_id(&self) -> u64 {
         self.inner.eid
     }
@@ -222,13 +222,13 @@ pub struct MemGraph {
 enum UpdateVertexOp {
     Delete,
     Insert(VVertex),
-    SetProps((Vec<usize>, Vec<PropertyValue>))
+    SetProps((Vec<usize>, Vec<PropertyValue>)),
 }
 
 enum UpdateEdgeOp {
     Delete,
     Insert(VEdge),
-    SetProps((Vec<usize>, Vec<PropertyValue>))
+    SetProps((Vec<usize>, Vec<PropertyValue>)),
 }
 
 /// MVCC Transaction instance
@@ -305,7 +305,10 @@ impl StorageTransaction for MvccTransaction {
                         vertex.inner_mut().set_props(&indices, props);
                         entry.insert_version(vertex)
                     } else {
-                        Err(StorageError::VertexNotFound(format!("Vertex {} is not found", id)))
+                        Err(StorageError::VertexNotFound(format!(
+                            "Vertex {} is not found",
+                            id
+                        )))
                     }
                 }
             }?;
@@ -335,7 +338,10 @@ impl StorageTransaction for MvccTransaction {
                         edge.inner_mut().set_props(&indices, props);
                         entry.insert_version(edge)
                     } else {
-                        Err(StorageError::EdgeNotFound(format!("Edge {} is not found", id)))
+                        Err(StorageError::EdgeNotFound(format!(
+                            "Edge {} is not found",
+                            id
+                        )))
                     }
                 }
             }?;
@@ -368,7 +374,9 @@ impl Graph for MemGraph {
             match v.value() {
                 UpdateVertexOp::Delete => return Ok(None),
                 UpdateVertexOp::Insert(v) => return Ok(Some(v.inner().clone())),
-                UpdateVertexOp::SetProps((indices, props)) => set_props = Some((indices.clone(), props.clone())),
+                UpdateVertexOp::SetProps((indices, props)) => {
+                    set_props = Some((indices.clone(), props.clone()))
+                }
             };
         }
 
@@ -470,11 +478,7 @@ impl Graph for MemGraph {
         let mut vertices = self
             .vertices
             .iter()
-            .filter_map(|v| 
-                v.value()
-                .get_visible(txn.txn_id)
-                .map(|v| v.inner().clone())
-            )
+            .filter_map(|v| v.value().get_visible(txn.txn_id).map(|v| v.inner().clone()))
             .collect::<Vec<_>>();
 
         for v_update in &txn.vertex_updates {
@@ -502,11 +506,7 @@ impl Graph for MemGraph {
         let mut edges = self
             .edges
             .iter()
-            .filter_map(|e| 
-                e.value()
-                .get_visible(txn.txn_id)
-                .map(|v| v.inner().clone())
-            )
+            .filter_map(|e| e.value().get_visible(txn.txn_id).map(|v| v.inner().clone()))
             .collect::<Vec<_>>();
 
         for e_update in &txn.edge_updates {
@@ -542,8 +542,7 @@ impl MutGraph for MemGraph {
                         *v = UpdateVertexOp::Insert(vertex);
                     });
                 }
-                UpdateVertexOp::SetProps(_) |
-                UpdateVertexOp::Insert(_) => {
+                UpdateVertexOp::SetProps(_) | UpdateVertexOp::Insert(_) => {
                     return Err(StorageError::TransactionError(format!(
                         "Vertex {} has been inserted",
                         vertex.vid()
@@ -570,8 +569,7 @@ impl MutGraph for MemGraph {
                         *e = UpdateEdgeOp::Insert(edge);
                     });
                 }
-                UpdateEdgeOp::SetProps(_) |
-                UpdateEdgeOp::Insert(_) => {
+                UpdateEdgeOp::SetProps(_) | UpdateEdgeOp::Insert(_) => {
                     return Err(StorageError::EdgeNotFound(format!(
                         "Edge {} has been inserted",
                         edge.edge_id(),
@@ -579,7 +577,8 @@ impl MutGraph for MemGraph {
                 }
             };
         } else {
-            txn.edge_updates.insert(edge.edge_id(), UpdateEdgeOp::Insert(edge));
+            txn.edge_updates
+                .insert(edge.edge_id(), UpdateEdgeOp::Insert(edge));
         }
 
         Ok(())
@@ -610,12 +609,23 @@ impl MutGraph for MemGraph {
 
         Ok(())
     }
-    
-    fn set_vertex_property(&self, txn: &Self::Transaction, vid: u64, indices: Vec<usize>, props: Vec<common::datatype::value::PropertyValue>) -> StorageResult<()> {
+
+    fn set_vertex_property(
+        &self,
+        txn: &Self::Transaction,
+        vid: u64,
+        indices: Vec<usize>,
+        props: Vec<common::datatype::value::PropertyValue>,
+    ) -> StorageResult<()> {
         txn.vertex_read.insert(vid);
         if let Some(mut v) = txn.vertex_updates.get_mut(&vid) {
             match v.value_mut() {
-                UpdateVertexOp::Delete => return Err(StorageError::TransactionError(format!("Set the props of a deleted vertex {:}.", vid))),
+                UpdateVertexOp::Delete => {
+                    return Err(StorageError::TransactionError(format!(
+                        "Set the props of a deleted vertex {:}.",
+                        vid
+                    )));
+                }
                 UpdateVertexOp::Insert(vvertex) => vvertex.inner_mut().set_props(&indices, props),
                 UpdateVertexOp::SetProps((pindices, pprops)) => {
                     *pindices = indices;
@@ -623,17 +633,29 @@ impl MutGraph for MemGraph {
                 }
             }
         } else {
-            txn.vertex_updates.insert(vid, UpdateVertexOp::SetProps((indices, props)));
+            txn.vertex_updates
+                .insert(vid, UpdateVertexOp::SetProps((indices, props)));
         }
 
         Ok(())
     }
-    
-    fn set_edge_propoerty(&self, txn: &Self::Transaction, eid: u64, indices: Vec<usize>, props: Vec<common::datatype::value::PropertyValue>) -> StorageResult<()> {
+
+    fn set_edge_propoerty(
+        &self,
+        txn: &Self::Transaction,
+        eid: u64,
+        indices: Vec<usize>,
+        props: Vec<common::datatype::value::PropertyValue>,
+    ) -> StorageResult<()> {
         txn.edge_read.insert(eid);
         if let Some(mut e) = txn.edge_updates.get_mut(&eid) {
             match e.value_mut() {
-                UpdateEdgeOp::Delete => return Err(StorageError::TransactionError(format!("Set the props of a deleted edge {:}.", eid))),
+                UpdateEdgeOp::Delete => {
+                    return Err(StorageError::TransactionError(format!(
+                        "Set the props of a deleted edge {:}.",
+                        eid
+                    )));
+                }
                 UpdateEdgeOp::Insert(vedge) => vedge.inner_mut().set_props(&indices, props),
                 UpdateEdgeOp::SetProps((pindices, pprops)) => {
                     *pindices = indices;
@@ -641,7 +663,8 @@ impl MutGraph for MemGraph {
                 }
             }
         } else {
-            txn.edge_updates.insert(eid, UpdateEdgeOp::SetProps((indices, props)));
+            txn.edge_updates
+                .insert(eid, UpdateEdgeOp::SetProps((indices, props)));
         }
 
         Ok(())
@@ -679,9 +702,8 @@ impl MemGraph {
 
 #[cfg(test)]
 mod tests {
-    use crate::model::properties::PropertyStore;
-
     use super::*;
+    use crate::model::properties::PropertyStore;
 
     #[test]
     fn test_create_and_get_vertex() {
@@ -816,7 +838,13 @@ mod tests {
 
         // Transaction 3 delete the vertex
         let txn3 = storage.begin_transaction();
-        storage.delete_vertices(&txn3, vec![Vertex::new(1, 0, PropertyStore::new(Vec::new()))]).unwrap();
+        storage
+            .delete_vertices(&txn3, vec![Vertex::new(
+                1,
+                0,
+                PropertyStore::new(Vec::new()),
+            )])
+            .unwrap();
         txn3.commit().unwrap();
 
         // Commit transaction 2 should fail due to conflict

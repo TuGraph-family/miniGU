@@ -1,6 +1,5 @@
 use common::datatype::value::PropertyValue;
-use serde::{Serialize, Deserialize};
-
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct PropertyStore {
@@ -10,7 +9,7 @@ pub struct PropertyStore {
 impl PropertyStore {
     pub fn new(properties: Vec<PropertyValue>) -> Self {
         PropertyStore {
-            properties: properties,
+            properties,
         }
     }
 
