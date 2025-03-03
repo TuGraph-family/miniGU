@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package wal;
+
+// TODO: add more operations
+enum Operation {
+  BEGIN_TX = 0;
+  COMMIT_TX = 1;
+  INSERT_VERTEX = 2;
+  INSERT_EDGE = 3;
+  DELETE_VERTEX = 4;
+  DELETE_EDGE = 5;
+  UPDATE_PROPERTY = 6;
+}
+
+message Properties {
+  map<uint64, string> properties = 1;
+}
+
+message InsertVertexData {
+  uint64 id = 1;
+  Properties properties = 2;
+}
+
+message InsertEdgeData {
+  uint64 from = 1;
+  uint64 to = 2;
+  Properties properties = 3;
+}
+
+message UpdatePropertyData {
+  uint64 element_id = 1;
+  uint64 key = 2;
+  string value = 3;
+}
+
+message LogEntry {
+  uint64 tx_id = 1;
+  Operation op = 2;
+  bytes data = 3;       // serialized operation data
+  uint32 checksum = 4;  // CRC32 checksum of data
+  int64 timestamp = 5;  // Unix timestamp in milliseconds
+}
