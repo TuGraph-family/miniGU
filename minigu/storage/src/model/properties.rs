@@ -1,8 +1,7 @@
 use common::datatype::value::PropertyValue;
 use serde::{Serialize, Deserialize};
 
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Default)]
 pub struct PropertyStore {
     properties: Vec<PropertyValue>,
 }

@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 use common::datatype::value::PropertyMeta;
 use std::collections::HashMap;
+use common::datatype::types::LabelId;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct VertexSchema {                  
@@ -17,13 +18,13 @@ impl VertexSchema {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct EdgeSchema {
-    pub source_label_id: u64,
-    pub target_label_id: u64,
+    pub source_label_id: LabelId,
+    pub target_label_id: LabelId,
     pub schema: Vec<PropertyMeta>,
 }
 
 impl EdgeSchema {
-    pub fn new(source_label_id: u64, target_label_id: u64, schema: Vec<PropertyMeta>) -> Self {
+    pub fn new(source_label_id: LabelId, target_label_id: LabelId, schema: Vec<PropertyMeta>) -> Self {
         EdgeSchema {
             source_label_id,
             target_label_id,
@@ -36,10 +37,10 @@ impl EdgeSchema {
 pub struct SchemaManager {
     pub vertex_schemas: HashMap<String, VertexSchema>,          // vertex_label_name -> VertexSchema
     pub edge_schemas: HashMap<String, EdgeSchema>,              // edge_label_name -> EdgeSchema
-    pub id_to_vertex_schema_map: HashMap<u64, String>,          // label_id -> vertex_schema_name
-    pub id_to_edge_schema_map: HashMap<u64, String>,            // label_id -> edge_schema_name
-    pub vertex_label_id: u64,
-    pub edge_label_id: u64,
+    pub id_to_vertex_schema_map: HashMap<LabelId, String>,      // label_id -> vertex_schema_name
+    pub id_to_edge_schema_map: HashMap<LabelId, String>,        // label_id -> edge_schema_name
+    pub vertex_label_id: LabelId,
+    pub edge_label_id: LabelId,
 }
 
 #[derive(Debug)]
@@ -77,7 +78,7 @@ impl SchemaManager {
         self.vertex_schemas.get(name).ok_or(SchemaError::VertexSchemaNotFound)
     }
 
-    pub fn get_vertex_schema_by_id(&self, id: u64) -> Result<&VertexSchema, SchemaError> {
+    pub fn get_vertex_schema_by_id(&self, id: LabelId) -> Result<&VertexSchema, SchemaError> {
         let name = self.id_to_vertex_schema_map.get(&id).ok_or(SchemaError::VertexSchemaNotFound)?;
         self.vertex_schemas.get(name).ok_or(SchemaError::VertexSchemaNotFound)
     }
@@ -99,7 +100,7 @@ impl SchemaManager {
     }
 
     // Get the schema for an edge by ID
-    pub fn get_edge_schema_by_id(&self, id: u64) -> Result<&EdgeSchema, SchemaError> {
+    pub fn get_edge_schema_by_id(&self, id: LabelId) -> Result<&EdgeSchema, SchemaError> {
         let name = self.id_to_edge_schema_map.get(&id).ok_or(SchemaError::EdgeSchemaNotFound)?;
         self.edge_schemas.get(name).ok_or(SchemaError::EdgeSchemaNotFound)
     }
