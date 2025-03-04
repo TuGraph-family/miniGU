@@ -71,6 +71,7 @@ impl<'a> VertexIterator for MemVertexIter<'a> {
 
                 if self.vertex_inserts.is_empty() {
                     self.end = true;
+                    self.current_vertex = None;
                     return Ok(());
                 }
                 if let Some(vertex) = self.vertex_inserts.first() {
@@ -87,6 +88,7 @@ impl<'a> VertexIterator for MemVertexIter<'a> {
                     return Ok(());
                 } else {
                     self.end = true;
+                    self.current_vertex = None;
                 }
             }
             std::cmp::Ordering::Less => {}
@@ -290,7 +292,9 @@ pub struct MemEdgeIter<'a> {
     txn: &'a MemTransaction,
     current_edge: Option<Edge>,
     edge_iter: Iter<'a, u64, Arc<VersionedEdge>>,
+    edge_inserts: Vec<Edge>,
     end: bool,
+    current_index: usize,
 }
 
 impl<'a> MemEdgeIter<'a> {
@@ -300,7 +304,9 @@ impl<'a> MemEdgeIter<'a> {
             txn,
             current_edge: None,
             edge_iter,
+            edge_inserts: vec![],
             end: false,
+            current_index: 0,
         }
     }
 }
@@ -319,24 +325,44 @@ impl EdgeIterator for MemEdgeIter<'_> {
             }
         }
 
-        // If we've exhausted the iterator, check for local transaction inserts
-        // This is a fallback to ensure we don't miss any edges added in the current transaction
-        let edge_inserts = self
-            .txn
-            .edge_updates
-            .iter()
-            .filter_map(|entry| match entry.value() {
-                UpdateEdgeOp::Insert(e) => Some(e.inner().clone()),
-                _ => None,
-            })
-            .collect::<Vec<_>>();
+        match self.current_index.cmp(&0) {
+            std::cmp::Ordering::Equal => {
+                // Only collect once when we first need it
+                self.edge_inserts = self
+                    .txn
+                    .edge_updates
+                    .iter()
+                    .filter_map(|entry| match entry.value() {
+                        UpdateEdgeOp::Insert(e) => Some(e.inner().clone()),
+                        _ => None,
+                    })
+                    .collect::<Vec<_>>();
+                if self.edge_inserts.is_empty() {
+                    self.end = true;
+                    self.current_edge = None;
+                    return Ok(());
+                }
 
-        if !edge_inserts.is_empty() {
-            self.current_edge = Some(edge_inserts[0].clone());
-            return Ok(());
-        }
+                if let Some(edge) = self.edge_inserts.first() {
+                    self.current_index += 1;
+                    self.current_edge = Some(edge.clone());
+                    return Ok(());
+                }
+                return Ok(());
+            }
+            std::cmp::Ordering::Greater => {
+                // Continue iterating through local inserts if we've started
+                if let Some(edge) = self.edge_inserts.get(self.current_index) {
+                    self.current_index += 1;
+                    self.current_edge = Some(edge.clone());
+                } else {
+                    self.end = true;
+                    self.current_edge = None;
+                }
+            }
+            std::cmp::Ordering::Less => {}
+        };
 
-        self.end = true;
         Ok(())
     }
 

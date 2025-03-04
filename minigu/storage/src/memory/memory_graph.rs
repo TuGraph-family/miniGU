@@ -626,7 +626,7 @@ impl MemGraph {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::iterators::EdgeIterator;
+    use crate::iterators::{EdgeIterator, VertexIterator};
     use crate::model::properties::PropertyStore;
 
     #[test]
@@ -801,5 +801,144 @@ mod tests {
         // Commit transaction 2 should fail due to conflict
         let result = txn2.commit();
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_vertex_iterator() {
+        let storage = MemGraph::new();
+        let txn = storage.begin_transaction();
+
+        // Test empty graph
+        let mut empty_iter = storage.vertices(&txn).unwrap();
+        empty_iter.next().unwrap();
+        assert!(
+            empty_iter.vertex().is_none(),
+            "Empty graph should have no vertices"
+        );
+
+        // Create multiple vertices
+        let vertex1 = Vertex::new(1, 0, PropertyStore::new(Vec::new()));
+        let vertex2 = Vertex::new(2, 0, PropertyStore::new(Vec::new()));
+        let vertex3 = Vertex::new(3, 0, PropertyStore::new(Vec::new()));
+
+        storage.create_vertex(&txn, vertex1.clone()).unwrap();
+        storage.create_vertex(&txn, vertex2.clone()).unwrap();
+        storage.create_vertex(&txn, vertex3.clone()).unwrap();
+
+        // Test vertex iteration
+        let mut vertex_iter = storage.vertices(&txn).unwrap();
+        let mut vertex_count = 0;
+        let mut found_vids = Vec::new();
+        vertex_iter.next().unwrap();
+        while vertex_iter.vertex().is_some() {
+            if let Some(vertex) = vertex_iter.vertex() {
+                found_vids.push(vertex.vid());
+                vertex_count += 1;
+            }
+            vertex_iter.next().unwrap();
+        }
+
+        assert_eq!(vertex_count, 3, "Should find all three vertices");
+        assert!(found_vids.contains(&1));
+        assert!(found_vids.contains(&2));
+        assert!(found_vids.contains(&3));
+
+        // Test iteration after deletion
+        storage
+            .delete_vertices(&txn, vec![vertex2.clone()])
+            .unwrap();
+
+        let mut after_delete_iter = storage.vertices(&txn).unwrap();
+        let mut after_delete_count = 0;
+        let mut after_delete_vids = Vec::new();
+        after_delete_iter.next().unwrap();
+        while after_delete_iter.vertex().is_some() {
+            if let Some(vertex) = after_delete_iter.vertex() {
+                after_delete_vids.push(vertex.vid());
+                after_delete_count += 1;
+            }
+            after_delete_iter.next().unwrap();
+        }
+
+        assert_eq!(
+            after_delete_count, 2,
+            "Should find two vertices after deletion"
+        );
+        assert!(after_delete_vids.contains(&1));
+        assert!(after_delete_vids.contains(&3));
+        assert!(!after_delete_vids.contains(&2));
+    }
+
+    #[test]
+    fn test_edge_iterator() {
+        let storage = MemGraph::new();
+        let txn = storage.begin_transaction();
+
+        // Test empty graph
+        let mut empty_iter = storage.edges(&txn).unwrap();
+        empty_iter.next().unwrap();
+        assert!(
+            empty_iter.edge().is_none(),
+            "Empty graph should have no edges"
+        );
+
+        // Create vertices and edges
+        let vertex1 = Vertex::new(1, 0, PropertyStore::new(Vec::new()));
+        let vertex2 = Vertex::new(2, 0, PropertyStore::new(Vec::new()));
+        let vertex3 = Vertex::new(3, 0, PropertyStore::new(Vec::new()));
+
+        storage.create_vertex(&txn, vertex1.clone()).unwrap();
+        storage.create_vertex(&txn, vertex2.clone()).unwrap();
+        storage.create_vertex(&txn, vertex3.clone()).unwrap();
+
+        let edge1 = Edge::new(1, 1, 2, 0, Direction::Out, PropertyStore::new(Vec::new()));
+        let edge2 = Edge::new(2, 2, 3, 0, Direction::Out, PropertyStore::new(Vec::new()));
+        let edge3 = Edge::new(3, 1, 3, 0, Direction::Out, PropertyStore::new(Vec::new()));
+
+        storage.create_edge(&txn, edge1.clone()).unwrap();
+        storage.create_edge(&txn, edge2.clone()).unwrap();
+        storage.create_edge(&txn, edge3.clone()).unwrap();
+
+        // Test edge iteration
+        let mut edge_iter = storage.edges(&txn).unwrap();
+        let mut edge_count = 0;
+        let mut found_eids = Vec::new();
+
+        edge_iter.next().unwrap();
+        while edge_iter.edge().is_some() {
+            if let Some(edge) = edge_iter.edge() {
+                found_eids.push(edge.eid);
+                edge_count += 1;
+            }
+            edge_iter.next().unwrap();
+        }
+
+        assert_eq!(edge_count, 3, "Should find all three edges");
+        assert!(found_eids.contains(&1));
+        assert!(found_eids.contains(&2));
+        assert!(found_eids.contains(&3));
+
+        // Test iteration after deletion
+        storage.delete_edges(&txn, vec![edge2.clone()]).unwrap();
+
+        let mut after_delete_iter = storage.edges(&txn).unwrap();
+        let mut after_delete_count = 0;
+        let mut after_delete_eids = Vec::new();
+        after_delete_iter.next().unwrap();
+        while after_delete_iter.edge().is_some() {
+            if let Some(edge) = after_delete_iter.edge() {
+                after_delete_eids.push(edge.eid);
+                after_delete_count += 1;
+            }
+            after_delete_iter.next().unwrap();
+        }
+
+        assert_eq!(
+            after_delete_count, 2,
+            "Should find two edges after deletion"
+        );
+        assert!(after_delete_eids.contains(&1));
+        assert!(after_delete_eids.contains(&3));
+        assert!(!after_delete_eids.contains(&2));
     }
 }
