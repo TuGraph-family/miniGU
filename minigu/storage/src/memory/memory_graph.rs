@@ -5,13 +5,14 @@ use std::sync::{Arc, Mutex, RwLock};
 use common::datatype::value::PropertyValue;
 use dashmap::{DashMap, DashSet};
 
+use super::memory_iters::{MemAdjIter, MemEdgeIter, MemVertexIter};
 use crate::error::{StorageError, StorageResult};
 use crate::model::edge::{Direction, Edge};
 use crate::model::vertex::Vertex;
 use crate::storage::{Graph, MutGraph, StorageTransaction};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-struct TxnId(u64);
+pub(super) struct TxnId(u64);
 
 impl TxnId {
     fn is_updated(&self) -> bool {
@@ -50,7 +51,7 @@ impl VVertex {
         self.inner.vid()
     }
 
-    fn inner(&self) -> &Vertex {
+    pub fn inner(&self) -> &Vertex {
         &self.inner
     }
 
@@ -96,7 +97,7 @@ impl VEdge {
         self.inner.source_id
     }
 
-    fn inner(&self) -> &Edge {
+    pub(super) fn inner(&self) -> &Edge {
         &self.inner
     }
 
@@ -123,7 +124,7 @@ impl Adjacency {
 
 /// Vertex with version information
 #[derive(Debug)]
-struct VersionedVertex {
+pub(crate) struct VersionedVertex {
     versions: RwLock<LinkedList<VVertex>>,
 }
 
@@ -134,7 +135,7 @@ impl VersionedVertex {
         }
     }
 
-    fn get_visible(&self, ts: TxnId) -> Option<VVertex> {
+    pub fn get_visible(&self, ts: TxnId) -> Option<VVertex> {
         self.versions
             .read()
             .unwrap()
@@ -164,7 +165,7 @@ impl VersionedVertex {
 
 /// Edge with version information
 #[derive(Debug)]
-struct VersionedEdge {
+pub(super) struct VersionedEdge {
     versions: RwLock<LinkedList<VEdge>>,
 }
 
@@ -176,7 +177,7 @@ impl VersionedEdge {
         }
     }
 
-    fn get_visible(&self, ts: TxnId) -> Option<VEdge> {
+    pub(super) fn get_visible(&self, ts: TxnId) -> Option<VEdge> {
         self.versions
             .read()
             .unwrap()
@@ -209,41 +210,48 @@ pub struct MemGraph {
     // TransactionID which represents the latest timestamp
     tx_id_counter: AtomicU64,
     // Vertex table
-    vertices: DashMap<u64, Arc<VersionedVertex>>,
+    pub(super) vertices: DashMap<u64, Arc<VersionedVertex>>,
     // Edge table
-    edges: DashMap<u64, Arc<VersionedEdge>>,
+    pub(super) edges: DashMap<u64, Arc<VersionedEdge>>,
     // Adjacency list
-    adjacency_forward: DashMap<u64, Vec<Adjacency>>,
-    adjacency_reversed: DashMap<u64, Vec<Adjacency>>,
+    pub(super) adjacency_out: DashMap<u64, Vec<Adjacency>>,
+    pub(super) adjacency_in: DashMap<u64, Vec<Adjacency>>,
     // Allow only one writer for committing
     commit_mutex: Mutex<()>,
 }
 
-enum UpdateVertexOp {
+pub(super) enum UpdateVertexOp {
     Delete,
     Insert(VVertex),
     SetProps((Vec<usize>, Vec<PropertyValue>)),
 }
 
-enum UpdateEdgeOp {
+pub(super) enum UpdateEdgeOp {
     Delete,
     Insert(VEdge),
     SetProps((Vec<usize>, Vec<PropertyValue>)),
 }
 
 /// MVCC Transaction instance
-pub struct MvccTransaction {
+pub struct MemTransaction {
     txn_id: TxnId,
-    storage: Arc<MemGraph>,
+    pub(super) storage: Arc<MemGraph>,
     // Transaction read set
-    vertex_read: DashSet<u64>,
-    edge_read: DashSet<u64>,
+    pub(super) vertex_read: DashSet<u64>,
+    pub(super) edge_read: DashSet<u64>,
     // Local transaction modifications
-    vertex_updates: DashMap<u64, UpdateVertexOp>,
-    edge_updates: DashMap<u64, UpdateEdgeOp>,
+    pub(super) vertex_updates: DashMap<u64, UpdateVertexOp>,
+    pub(super) edge_updates: DashMap<u64, UpdateEdgeOp>,
 }
 
-impl StorageTransaction for MvccTransaction {
+impl MemTransaction {
+    #[allow(dead_code)]
+    pub(super) fn id(&self) -> TxnId {
+        self.txn_id
+    }
+}
+
+impl StorageTransaction for MemTransaction {
     fn commit(self) -> StorageResult<()> {
         // Acquiring the commit lock
         let _commit_guard = self.storage.commit_mutex.lock().unwrap();
@@ -323,11 +331,11 @@ impl StorageTransaction for MvccTransaction {
             match op {
                 UpdateEdgeOp::Delete => entry.visit_front(|v| v.end_ts = commit_ts),
                 UpdateEdgeOp::Insert(e) => {
-                    if let Some(mut v) = self.storage.adjacency_forward.get_mut(&e.source_id()) {
+                    if let Some(mut v) = self.storage.adjacency_out.get_mut(&e.source_id()) {
                         v.push(Adjacency::new(e.edge_id(), e.dst_id()));
                         v.sort_by_key(|s| s.vertex_id);
                     }
-                    if let Some(mut v) = self.storage.adjacency_reversed.get_mut(&e.dst_id()) {
+                    if let Some(mut v) = self.storage.adjacency_in.get_mut(&e.dst_id()) {
                         v.push(Adjacency::new(e.edge_id(), e.source_id()));
                         v.sort_by_key(|s| s.vertex_id);
                     }
@@ -358,14 +366,14 @@ impl StorageTransaction for MvccTransaction {
 
 impl Graph for MemGraph {
     type Adjacency = Adjacency;
-    type AdjacencyIter = Box<dyn Iterator<Item = Adjacency>>;
+    type AdjacencyIter<'a> = MemAdjIter<'a>;
     type Edge = Edge;
     type EdgeID = u64;
-    type EdgeIter = Box<dyn Iterator<Item = Edge>>;
-    type Transaction = MvccTransaction;
+    type EdgeIter<'a> = MemEdgeIter<'a>;
+    type Transaction = MemTransaction;
     type Vertex = Vertex;
     type VertexID = u64;
-    type VertexIter = Box<dyn Iterator<Item = Vertex>>;
+    type VertexIter<'a> = MemVertexIter<'a>;
 
     fn get_vertex(&self, txn: &Self::Transaction, id: u64) -> StorageResult<Option<Vertex>> {
         // Check transaction local modification
@@ -400,50 +408,13 @@ impl Graph for MemGraph {
         }
     }
 
-    fn neighbors(
+    fn neighbors<'a>(
         &self,
-        txn: &Self::Transaction,
+        txn: &'a Self::Transaction,
         id: u64,
         direction: Direction,
-    ) -> StorageResult<Self::AdjacencyIter> {
-        // brute force version
-        // clone the neighbors as a snapshot, and then remove or insert updated neighbors with the
-        // txn_id
-
-        // Get the global adjacency list
-        let mut is_forward = true;
-        let global_adjs = match direction {
-            Direction::Out => &self.adjacency_forward.get(&id),
-            Direction::In => {
-                is_forward = false;
-                &self.adjacency_reversed.get(&id)
-            }
-        };
-
-        let mut adjs = match global_adjs {
-            Some(adjs) => adjs.value().clone(),
-            None => vec![],
-        };
-        for e in txn.edge_updates.iter() {
-            match e.value() {
-                UpdateEdgeOp::Delete => {
-                    if let Ok(i) = adjs.binary_search_by(|v| v.edge_id.cmp(e.key())) {
-                        adjs.remove(i);
-                    }
-                }
-                UpdateEdgeOp::Insert(e) => {
-                    if is_forward {
-                        adjs.push(Adjacency::new(e.edge_id(), e.dst_id()))
-                    } else {
-                        adjs.push(Adjacency::new(e.edge_id(), e.source_id()))
-                    }
-                }
-                UpdateEdgeOp::SetProps(_) => {}
-            }
-        }
-
-        // Merge the neighbor results
-        Ok(Box::new(adjs.into_iter()))
+    ) -> StorageResult<Self::AdjacencyIter<'a>> {
+        MemAdjIter::new(txn, id, direction)
     }
 
     fn get_edge(
@@ -472,60 +443,12 @@ impl Graph for MemGraph {
         }
     }
 
-    fn vertices(&self, txn: &Self::Transaction) -> StorageResult<Self::VertexIter> {
-        // brute force version
-
-        let mut vertices = self
-            .vertices
-            .iter()
-            .filter_map(|v| v.value().get_visible(txn.txn_id).map(|v| v.inner().clone()))
-            .collect::<Vec<_>>();
-
-        for v_update in &txn.vertex_updates {
-            match v_update.value() {
-                UpdateVertexOp::Delete => {
-                    if let Ok(i) = vertices.binary_search_by(|v| v.vid().cmp(v_update.key())) {
-                        vertices.remove(i);
-                    }
-                }
-                UpdateVertexOp::Insert(v) => vertices.push(v.inner().clone()),
-                UpdateVertexOp::SetProps((indices, props)) => {
-                    if let Ok(i) = vertices.binary_search_by(|v| v.vid().cmp(v_update.key())) {
-                        vertices[i].set_props(indices, props.clone());
-                    }
-                }
-            }
-        }
-
-        Ok(Box::new(vertices.into_iter()))
+    fn vertices<'a>(&self, txn: &'a Self::Transaction) -> StorageResult<Self::VertexIter<'a>> {
+        Ok(MemVertexIter::new(txn))
     }
 
-    fn edges(&self, txn: &Self::Transaction) -> StorageResult<Self::EdgeIter> {
-        // brute force version
-
-        let mut edges = self
-            .edges
-            .iter()
-            .filter_map(|e| e.value().get_visible(txn.txn_id).map(|v| v.inner().clone()))
-            .collect::<Vec<_>>();
-
-        for e_update in &txn.edge_updates {
-            match e_update.value() {
-                UpdateEdgeOp::Delete => {
-                    if let Ok(i) = edges.binary_search_by(|e| e.eid.cmp(e_update.key())) {
-                        edges.remove(i);
-                    }
-                }
-                UpdateEdgeOp::Insert(e) => edges.push(e.inner().clone()),
-                UpdateEdgeOp::SetProps((indices, props)) => {
-                    if let Ok(i) = edges.binary_search_by(|e| e.eid.cmp(e_update.key())) {
-                        edges[i].set_props(indices, props.clone());
-                    }
-                }
-            }
-        }
-
-        Ok(Box::new(edges.into_iter()))
+    fn edges<'a>(&self, txn: &'a Self::Transaction) -> StorageResult<Self::EdgeIter<'a>> {
+        Ok(MemEdgeIter::new(txn))
     }
 }
 
@@ -640,7 +563,7 @@ impl MutGraph for MemGraph {
         Ok(())
     }
 
-    fn set_edge_propoerty(
+    fn set_edge_property(
         &self,
         txn: &Self::Transaction,
         eid: u64,
@@ -677,15 +600,15 @@ impl MemGraph {
             tx_id_counter: AtomicU64::new(1),
             vertices: DashMap::new(),
             edges: DashMap::new(),
-            adjacency_forward: DashMap::new(),
-            adjacency_reversed: DashMap::new(),
+            adjacency_out: DashMap::new(),
+            adjacency_in: DashMap::new(),
             commit_mutex: Mutex::new(()),
         })
     }
 
-    pub fn begin_transaction(self: &Arc<Self>) -> MvccTransaction {
+    pub fn begin_transaction(self: &Arc<Self>) -> MemTransaction {
         let tx_id = TxnId(self.tx_id_counter.fetch_add(1, Ordering::SeqCst));
-        MvccTransaction {
+        MemTransaction {
             txn_id: tx_id,
             storage: self.clone(),
             vertex_read: DashSet::new(),
@@ -703,6 +626,7 @@ impl MemGraph {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::iterators::EdgeIterator;
     use crate::model::properties::PropertyStore;
 
     #[test]
@@ -760,27 +684,54 @@ mod tests {
         let storage = MemGraph::new();
         let txn = storage.begin_transaction();
 
-        let edge = Edge::new(1, 1, 2, 0, Direction::Out, PropertyStore::new(Vec::new()));
+        // Create vertices
+        let vertex1 = Vertex::new(1, 0, PropertyStore::new(Vec::new()));
+        let vertex2 = Vertex::new(2, 0, PropertyStore::new(Vec::new()));
+        storage.create_vertex(&txn, vertex1).unwrap();
+        storage.create_vertex(&txn, vertex2).unwrap();
 
-        storage
-            .create_vertex(&txn, Vertex::new(1, 0, PropertyStore::new(Vec::new())))
-            .unwrap();
-        storage
-            .create_vertex(&txn, Vertex::new(2, 0, PropertyStore::new(Vec::new())))
-            .unwrap();
-        storage.create_edge(&txn, edge).unwrap();
-        let neighbors = storage
-            .neighbors(&txn, 1, Direction::Out)
-            .unwrap()
-            .collect::<Vec<_>>();
-        assert_eq!(neighbors.len(), 1);
-        assert_eq!(neighbors[0].vertex_id, 2);
-        let neighbors = storage
-            .neighbors(&txn, 2, Direction::In)
-            .unwrap()
-            .collect::<Vec<_>>();
-        assert_eq!(neighbors.len(), 1);
-        assert_eq!(neighbors[0].vertex_id, 1);
+        // Create edge from vertex1 to vertex2
+        let edge = Edge::new(1, 1, 2, 0, Direction::Out, PropertyStore::new(Vec::new()));
+        storage.create_edge(&txn, edge.clone()).unwrap();
+
+        // Test outgoing neighbors of vertex1
+        let mut out_neighbors = storage.neighbors(&txn, 1, Direction::Out).unwrap();
+        out_neighbors.next().unwrap();
+        assert_eq!(out_neighbors.edge().unwrap().eid, 1, "Edge ID should match");
+        assert_eq!(
+            out_neighbors.edge().unwrap().dst_id,
+            2,
+            "Neighbor vertex ID should be 2"
+        );
+        out_neighbors.next().unwrap();
+        assert!(out_neighbors.edge().is_none(), "No more neighbors");
+
+        // Test incoming neighbors of vertex2
+        let mut in_neighbors = storage.neighbors(&txn, 2, Direction::In).unwrap();
+        in_neighbors.next().unwrap();
+        assert_eq!(in_neighbors.edge().unwrap().eid, 1, "Edge ID should match");
+        assert_eq!(
+            in_neighbors.edge().unwrap().source_id,
+            1,
+            "Neighbor vertex ID should be 1"
+        );
+
+        // Test no outgoing neighbors for vertex2
+        let mut no_out_neighbors = storage.neighbors(&txn, 2, Direction::Out).unwrap();
+        no_out_neighbors.next().unwrap();
+        assert!(
+            no_out_neighbors.edge().is_none(),
+            "Vertex2 should have no outgoing neighbors"
+        );
+
+        // Test after deleting the edge
+        storage.delete_edges(&txn, vec![edge]).unwrap();
+        let mut neighbors_after_delete = storage.neighbors(&txn, 1, Direction::Out).unwrap();
+        neighbors_after_delete.next().unwrap();
+        assert!(
+            neighbors_after_delete.edge().is_none(),
+            "No neighbors should exist after edge deletion"
+        );
     }
 
     #[test]

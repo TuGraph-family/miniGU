@@ -1,6 +1,7 @@
 use common::datatype::value::PropertyValue;
 
 use crate::error::StorageResult;
+use crate::iterators::{EdgeIterator, VertexIterator};
 use crate::model::edge::Direction;
 
 /// Storage transaction
@@ -19,9 +20,15 @@ pub trait Graph {
     type Edge;
     type Adjacency;
 
-    type VertexIter: Iterator<Item = Self::Vertex>;
-    type EdgeIter: Iterator<Item = Self::Edge>;
-    type AdjacencyIter: Iterator<Item = Self::Adjacency>;
+    type VertexIter<'a>: VertexIterator
+    where
+        Self: 'a;
+    type EdgeIter<'a>: EdgeIterator
+    where
+        Self: 'a;
+    type AdjacencyIter<'a>: EdgeIterator
+    where
+        Self: 'a;
 
     fn get_vertex(
         &self,
@@ -33,14 +40,14 @@ pub trait Graph {
         txn: &Self::Transaction,
         id: Self::EdgeID,
     ) -> StorageResult<Option<Self::Edge>>;
-    fn vertices(&self, txn: &Self::Transaction) -> StorageResult<Self::VertexIter>;
-    fn edges(&self, txn: &Self::Transaction) -> StorageResult<Self::EdgeIter>;
-    fn neighbors(
+    fn vertices<'a>(&self, txn: &'a Self::Transaction) -> StorageResult<Self::VertexIter<'a>>;
+    fn edges<'a>(&self, txn: &'a Self::Transaction) -> StorageResult<Self::EdgeIter<'a>>;
+    fn neighbors<'a>(
         &self,
-        txn: &Self::Transaction,
+        txn: &'a Self::Transaction,
         id: Self::VertexID,
         direction: Direction,
-    ) -> StorageResult<Self::AdjacencyIter>;
+    ) -> StorageResult<Self::AdjacencyIter<'a>>;
 }
 
 /// Mutable graph store
@@ -67,7 +74,7 @@ pub trait MutGraph: Graph {
         props: Vec<PropertyValue>,
     ) -> StorageResult<()>;
 
-    fn set_edge_propoerty(
+    fn set_edge_property(
         &self,
         txn: &Self::Transaction,
         eid: u64,

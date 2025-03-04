@@ -10,4 +10,6 @@ pub enum StorageError {
     VertexNotFound(String),
     #[error("Edge {0} not found")]
     EdgeNotFound(String),
+    #[error("Iterator err: {0}")]
+    IteratorError(String),
 }

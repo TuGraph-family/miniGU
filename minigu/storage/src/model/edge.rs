@@ -43,4 +43,8 @@ impl Edge {
             self.properties.set_prop(index, prop);
         }
     }
+
+    pub fn properties(&self) -> &Vec<PropertyValue> {
+        self.properties.props()
+    }
 }

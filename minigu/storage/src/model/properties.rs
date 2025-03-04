@@ -8,9 +8,7 @@ pub struct PropertyStore {
 
 impl PropertyStore {
     pub fn new(properties: Vec<PropertyValue>) -> Self {
-        PropertyStore {
-            properties,
-        }
+        PropertyStore { properties }
     }
 
     pub fn get(&self, index: usize) -> Option<&PropertyValue> {
@@ -19,5 +17,9 @@ impl PropertyStore {
 
     pub fn set_prop(&mut self, index: usize, prop: PropertyValue) {
         self.properties[index] = prop;
+    }
+
+    pub fn props(&self) -> &Vec<PropertyValue> {
+        &self.properties
     }
 }
