@@ -1,3 +1,4 @@
+use common::datatype::types::{EdgeId, LabelId, VertexId};
 use common::datatype::value::PropertyValue;
 use serde::{Deserialize, Serialize};
 
@@ -9,22 +10,22 @@ pub enum Direction {
     In,  // Incoming edge
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Edge {
-    pub eid: u64,                  // ID of the edge
-    pub source_id: u64,            // ID of the source vertex
-    pub dst_id: u64,               // ID of the target vertex
-    pub label_id: u64,             // Label of the edge
+    pub eid: EdgeId,               // ID of the edge
+    pub source_id: VertexId,       // ID of the source vertex
+    pub dst_id: VertexId,          // ID of the target vertex
+    pub label_id: LabelId,         // Label of the edge
     pub direction: Direction,      // Direction of the edge
     pub properties: PropertyStore, // Properties of the edge
 }
 
 impl Edge {
     pub fn new(
-        eid: u64,
-        source_id: u64,
-        dst_id: u64,
-        label_id: u64,
+        eid: EdgeId,
+        source_id: VertexId,
+        dst_id: VertexId,
+        label_id: LabelId,
         direction: Direction,
         properties: PropertyStore,
     ) -> Self {

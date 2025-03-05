@@ -1,14 +1,16 @@
 use common::datatype::value::PropertyValue;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Default)]
 pub struct PropertyStore {
     properties: Vec<PropertyValue>,
 }
 
 impl PropertyStore {
     pub fn new(properties: Vec<PropertyValue>) -> Self {
-        PropertyStore { properties }
+        PropertyStore {
+            properties: properties,
+        }
     }
 
     pub fn get(&self, index: usize) -> Option<&PropertyValue> {

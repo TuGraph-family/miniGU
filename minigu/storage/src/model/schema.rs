@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use common::datatype::types::LabelId;
 use common::datatype::value::PropertyMeta;
 use serde::{Deserialize, Serialize};
 
@@ -19,13 +20,17 @@ impl VertexSchema {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct EdgeSchema {
-    pub source_label_id: u64,
-    pub target_label_id: u64,
+    pub source_label_id: LabelId,
+    pub target_label_id: LabelId,
     pub schema: Vec<PropertyMeta>,
 }
 
 impl EdgeSchema {
-    pub fn new(source_label_id: u64, target_label_id: u64, schema: Vec<PropertyMeta>) -> Self {
+    pub fn new(
+        source_label_id: LabelId,
+        target_label_id: LabelId,
+        schema: Vec<PropertyMeta>,
+    ) -> Self {
         EdgeSchema {
             source_label_id,
             target_label_id,
@@ -39,10 +44,10 @@ pub struct SchemaManager {
     pub vertex_schemas: HashMap<Identifier, Arc<VertexSchema>>, /* vertex_label_name ->
                                                                  * VertexSchema */
     pub edge_schemas: HashMap<Identifier, Arc<EdgeSchema>>, // edge_label_name -> EdgeSchema
-    pub id_to_vertex_schema_map: HashMap<u64, Identifier>,  // label_id -> vertex_schema_name
-    pub id_to_edge_schema_map: HashMap<u64, Identifier>,    // label_id -> edge_schema_name
-    pub vertex_label_id: u64,
-    pub edge_label_id: u64,
+    pub id_to_vertex_schema_map: HashMap<LabelId, Identifier>, // label_id -> vertex_schema_name
+    pub id_to_edge_schema_map: HashMap<LabelId, Identifier>, // label_id -> edge_schema_name
+    pub vertex_label_id: LabelId,
+    pub edge_label_id: LabelId,
 }
 
 #[derive(Debug)]
@@ -88,7 +93,7 @@ impl SchemaManager {
             .cloned()
     }
 
-    pub fn get_vertex_schema_by_id(&self, id: u64) -> Result<Arc<VertexSchema>, SchemaError> {
+    pub fn get_vertex_schema_by_id(&self, id: LabelId) -> Result<Arc<VertexSchema>, SchemaError> {
         let name = self
             .id_to_vertex_schema_map
             .get(&id)
@@ -124,7 +129,7 @@ impl SchemaManager {
     }
 
     // Get the schema for an edge by ID
-    pub fn get_edge_schema_by_id(&self, id: u64) -> Result<Arc<EdgeSchema>, SchemaError> {
+    pub fn get_edge_schema_by_id(&self, id: LabelId) -> Result<Arc<EdgeSchema>, SchemaError> {
         let name = self
             .id_to_edge_schema_map
             .get(&id)

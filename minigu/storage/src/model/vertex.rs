@@ -1,3 +1,4 @@
+use common::datatype::types::{LabelId, VertexId};
 use common::datatype::value::PropertyValue;
 use serde::{Deserialize, Serialize};
 
@@ -5,14 +6,14 @@ use super::properties::PropertyStore;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Vertex {
-    pub vid: u64,
-    pub label_id: u64,
+    pub vid: VertexId,
+    pub label_id: LabelId,
     pub properties: PropertyStore,
 }
 
 impl Vertex {
     /// create a new vertex
-    pub fn new(vid: u64, label_id: u64, properties: PropertyStore) -> Self {
+    pub fn new(vid: VertexId, label_id: LabelId, properties: PropertyStore) -> Self {
         Vertex {
             vid,
             label_id,
@@ -21,7 +22,7 @@ impl Vertex {
     }
 
     /// Get the vid
-    pub fn vid(&self) -> u64 {
+    pub fn vid(&self) -> VertexId {
         self.vid
     }
 
