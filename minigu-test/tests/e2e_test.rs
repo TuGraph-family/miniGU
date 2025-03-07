@@ -14,6 +14,10 @@ fn setup(snapshot_path: &str) -> SettingsBindDropGuard {
     settings.bind_to_scope()
 }
 
+fn do_something(input: &str) -> usize {
+    input.len()
+}
+
 macro_rules! add_e2e_tests {
     ($dataset:expr, [ $($query:expr),* ]) => {
         paste! {
@@ -22,7 +26,7 @@ macro_rules! add_e2e_tests {
                 fn [<e2e_test $dataset _ $query>]() {
                     let _guard = setup(concat!("snapshots/", $dataset));
                     let query_str = include_str!(concat!("../../resources/gql/", $dataset, "/", $query, ".gql"));
-                    assert_yaml_snapshot!($query, "todo");
+                    assert_yaml_snapshot!($query, do_something(query_str));
                 }
             )*
         }
