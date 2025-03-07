@@ -1,0 +1,12 @@
+-- short reads 4
+MATCH (message WHERE message.id = 274877907096)
+WHERE label(message) = 'Post' OR label(message) = 'Comment'
+RETURN
+    message.creationDate as messageCreationDate,
+    coalesce(message.content, message.imageFile) as messageContent
+
+MATCH (message WHERE message.id = 3)
+WHERE label(message) = 'Post' OR label(message) = 'Comment'
+RETURN
+    message.creationDate as messageCreationDate,
+    coalesce(message.content, message.imageFile) as messageContent

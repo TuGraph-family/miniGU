@@ -20,8 +20,8 @@ itertools = { version = "0.14.0", default-features = false, features = [
 ] }
 
 [dev-dependencies]
-insta = { version = "1.42.1", features = ["yaml"] }
-divan = "0.1.17"
+insta.workspace = true
+divan.workspace = true
 
 [features]
 default = ["std"]

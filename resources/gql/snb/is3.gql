@@ -1,0 +1,10 @@
+-- short reads 3
+MATCH (person:Person {id: 21990232561712})-[knows:knows]-(friend:Person)
+RETURN
+    friend.id AS friendId,
+    friend.firstName AS friendFirstName,
+    friend.lastName AS friendLastName,
+    knows.creationDate AS creationDate
+ORDER BY
+    creationDate DESC,
+    friendLastName ASC

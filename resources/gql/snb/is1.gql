@@ -1,0 +1,11 @@
+-- short reads 1
+MATCH (person:Person {id: 4194})-[e:personIsLocatedIn]->(city)
+RETURN
+    person.firstName AS personFirstName,
+    person.lastName AS personLastName,
+    person.birthday AS personBirthday,
+    person.locationIP AS personLocationIP,
+    person.browserUsed AS personBrowserUsed,
+    city.id AS cityId,
+    person.gender AS personGender,
+    person.creationDate AS personCreationDate

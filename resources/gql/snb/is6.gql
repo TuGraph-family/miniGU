@@ -1,0 +1,8 @@
+-- short reads 6
+MATCH (m WHERE m.id = 274877907096)-[e1:replyOf]->*(p:Post)<-[e2:containerOf]-(forum:Forum)-[e3:hasModerator]->(moderator:Person)
+RETURN
+    forum.id AS forumId,
+    forum.title AS forumTitle,
+    moderator.id AS moderatorId,
+    moderator.firstName AS moderatorFirstName,
+    moderator.lastName AS moderatorLastName

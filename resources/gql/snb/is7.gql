@@ -1,0 +1,15 @@
+-- short reads 7
+MATCH (m WHERE m.id = 274877907096)<-[e1:replyOf]-(c:Comment)-[e2:commentHasCreator]->(p)
+WHERE label(m) = 'Post' OR label(m) = 'Comment'
+RETURN m, c, p
+NEXT
+OPTIONAL MATCH (m)-[e]->(a)-[r:knows]-(p)
+WHERE type(r) = 'postHasCreator' OR type(r) = 'commentHasCreator'
+RETURN
+    c.id AS commentId,
+    c.content AS commentContent,
+    c.creationDate AS commentCreationDate,
+    p.id AS replyAuthorId, p.firstName AS replyAuthorFirstName,
+    p.lastName AS replyAuthorLastName,
+    CASE WHEN r=null THEN false ELSE true END AS replyAuthorKnowsOriginalMessageAuthor
+ORDER BY commentCreationDate DESC, replyAuthorId

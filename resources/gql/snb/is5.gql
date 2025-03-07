@@ -1,0 +1,18 @@
+-- short reads 5
+MATCH (message WHERE message.id = 274877907096)-[e]->(person:Person)
+WHERE
+    (label(message) = 'Post' AND type(e) = 'postHasCreator') OR
+    (label(message) = 'Comment' AND type(e) = 'commentHasCreator')
+RETURN
+    person.id AS personId,
+    person.firstName AS firstName,
+    person.lastName AS lastName
+
+MATCH (message WHERE message.id = 3)-[e]->(person:Person)
+WHERE
+    (label(message) = 'Post' AND type(e) = 'postHasCreator') OR
+    (label(message) = 'Comment' AND type(e) = 'commentHasCreator')
+RETURN
+    person.id AS personId,
+    person.firstName AS firstName,
+    person.lastName AS lastName

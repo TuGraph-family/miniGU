@@ -1,0 +1,17 @@
+-- simple read 4
+MATCH (n:Account{id:12}) RETURN n NEXT
+MATCH (n)-[e:transfer]->(m:Account)
+WHERE
+    e.amount > 20
+    AND e.timestamp > 30
+    AND e.timestamp < 101
+RETURN
+    m.id as dstId,
+    count(e) as numEdges,
+    sum(e.amount) as sumAmount
+NEXT
+RETURN
+    dstId,
+    numEdges,
+    round(sumAmount * 1000) / 1000 as sumAmount
+ORDER BY sumAmount DESC, dstId ASC

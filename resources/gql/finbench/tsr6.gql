@@ -1,0 +1,14 @@
+-- simple read 6
+MATCH
+    (src:Account{id:12})<-[e1:transfer]-(m:Account)
+    -[e2:transfer]->(dst:Account)
+WHERE
+    dst.isBlocked = true
+    AND src.id <> dst.id
+    AND e1.timestamp > 20
+    AND e1.timestamp < 40
+    AND e2.timestamp > 30
+    AND e2.timestamp < 70
+RETURN
+    DISTINCT dst.id as dstId
+ORDER BY dstId ASC
