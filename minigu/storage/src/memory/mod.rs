@@ -1,4 +1,4 @@
+mod adjacency_iterator;
+mod edge_iterator;
 mod memory_graph;
-mod memory_iters;
-
-pub use memory_graph::{MemGraph, MemTransaction};
+mod vertex_iterator;

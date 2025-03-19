@@ -9,6 +9,7 @@ pub struct Vertex {
     pub vid: VertexId,
     pub label_id: LabelId,
     pub properties: PropertyStore,
+    pub is_tombstone: bool,
 }
 
 impl Vertex {
@@ -18,12 +19,26 @@ impl Vertex {
             vid,
             label_id,
             properties,
+            is_tombstone: false,
+        }
+    }
+
+    pub fn tombstone(vertex: Vertex) -> Self {
+        Vertex {
+            vid: vertex.vid,
+            label_id: vertex.label_id,
+            properties: vertex.properties.clone(),
+            is_tombstone: true,
         }
     }
 
     /// Get the vid
     pub fn vid(&self) -> VertexId {
         self.vid
+    }
+
+    pub fn is_tombstone(&self) -> bool {
+        self.is_tombstone
     }
 
     pub fn set_props(&mut self, indices: &[usize], props: Vec<PropertyValue>) {
