@@ -5,8 +5,10 @@ use dashmap::iter::Iter;
 
 use crate::error::StorageResult;
 use crate::iterators::{ChunkData, EdgeIteratorTrait};
-use crate::memory::memory_graph::{MemTransaction, VersionedEdge};
+use crate::memory::memory_graph::VersionedEdge;
 use crate::model::edge::Edge;
+
+use super::transaction::MemTransaction;
 
 /// An edge iterator that supports filtering.
 pub struct EdgeIterator<'a> {

@@ -1,11 +1,12 @@
 use common::datatype::types::{EdgeId, VertexId};
 use dashmap::mapref::one::Ref;
 
-use super::memory_graph::CommitTimestamp;
 use crate::error::StorageResult;
 use crate::iterators::AdjacencyIteratorTrait;
-use crate::memory::memory_graph::{MemTransaction, VersionedAdjEntry};
+use crate::memory::memory_graph::VersionedAdjEntry;
 use crate::model::edge::{Adjacency, Direction};
+
+use super::transaction::{CommitTimestamp, MemTransaction};
 
 /// An adjacency list iterator that supports filtering (for iterating over a single vertex's
 /// adjacency list).

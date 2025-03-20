@@ -6,9 +6,11 @@ use dashmap::iter::Iter;
 use crate::error::StorageResult;
 use crate::iterators::{ChunkData, VertexIteratorTrait};
 use crate::memory::adjacency_iterator::AdjacencyIterator;
-use crate::memory::memory_graph::{MemTransaction, VersionedVertex};
+use crate::memory::memory_graph::VersionedVertex;
 use crate::model::edge::Direction;
 use crate::model::vertex::Vertex;
+
+use super::transaction::MemTransaction;
 
 /// A vertex iterator that supports filtering.
 pub struct VertexIterator<'a> {
