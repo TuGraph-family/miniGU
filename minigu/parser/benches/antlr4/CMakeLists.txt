@@ -8,7 +8,18 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 set(CMAKE_BUILD_TYPE Release)
 
+set(ANTLR4_JAR_LOCATION ${PROJECT_SOURCE_DIR}/antlr-4.13.2-complete.jar)
+
+find_package(antlr4-generator REQUIRED)
 find_package(antlr4-runtime REQUIRED)
+
+antlr4_generate(
+   gql_antlr4_parser
+   ${PROJECT_SOURCE_DIR}/src/GQL.g4
+   BOTH
+   FALSE
+   FALSE
+)
 
 function(bundle_static_library tgt_name bundled_tgt_name)
     list(APPEND static_libs ${tgt_name})
@@ -118,6 +129,7 @@ function(bundle_static_library tgt_name bundled_tgt_name)
     add_dependencies(${bundled_tgt_name} ${tgt_name})
 endfunction()
 
-add_library(gql_antlr4 STATIC src/parser.cpp src/GQLLexer.cpp src/GQLParser.cpp)
+add_library(gql_antlr4 STATIC src/parser.cpp ${ANTLR4_SRC_FILES_gql_antlr4_parser})
+target_include_directories(gql_antlr4 PRIVATE ${ANTLR4_INCLUDE_DIR_gql_antlr4_parser})
 target_link_libraries(gql_antlr4 PRIVATE antlr4_static)
 bundle_static_library(gql_antlr4 gql_antlr4_bundled)
