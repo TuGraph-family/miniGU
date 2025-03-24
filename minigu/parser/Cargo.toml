@@ -7,17 +7,17 @@ edition.workspace = true
 thiserror = { version = "2.0.11", default-features = false }
 winnow = { version = "0.7.3", default-features = false, features = ["alloc"] }
 serde = { version = "1.0.218", default-features = false, features = [
-    "alloc",
-    "derive",
-    "rc",
+  "alloc",
+  "derive",
+  "rc",
 ], optional = true }
 smol_str = { version = "0.3.2", default-features = false }
 macro_rules_attribute = "0.2.0"
 logos = { version = "0.15.0", default-features = false, features = [
-    "export_derive",
+  "export_derive",
 ] }
 itertools = { version = "0.14.0", default-features = false, features = [
-    "use_alloc",
+  "use_alloc",
 ] }
 miette = { version = "7.5.0", features = ["fancy"], optional = true }
 
@@ -34,12 +34,12 @@ default = ["std"]
 serde = ["dep:serde", "smol_str/serde"]
 miette = ["std", "dep:miette"]
 std = [
-    "logos/std",
-    "serde?/std",
-    "itertools/use_std",
-    "winnow/std",
-    "smol_str/std",
-    "thiserror/std",
+  "logos/std",
+  "serde?/std",
+  "itertools/use_std",
+  "winnow/std",
+  "smol_str/std",
+  "thiserror/std",
 ]
 bench_antlr4 = ["std", "dep:cmake"]
 
