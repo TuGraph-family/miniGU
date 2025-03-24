@@ -2787,7 +2787,7 @@ datetimeFunctionParameters
 
 // 20.28 <duration value expression>
 
-// The implemenation should enforce that the data type is a duration value.
+// The implementation should enforce that the data type is a duration value.
 durationValueExpression
     : valueExpression
     ;
