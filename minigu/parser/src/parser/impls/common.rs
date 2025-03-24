@@ -16,6 +16,7 @@ use super::value_expr::{
     aggregating_value_expression, binding_variable_reference, value_expression,
 };
 use crate::ast::*;
+use crate::imports::Box;
 use crate::lexer::TokenKind;
 use crate::parser::impls::value_expr::non_negative_integer_specification;
 use crate::parser::precedence::{Assoc, Precedence, precedence};

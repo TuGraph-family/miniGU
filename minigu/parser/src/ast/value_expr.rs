@@ -1,6 +1,7 @@
 //! AST definitions for *Value expressions and specifications*.
 
 use super::{BooleanLiteral, GraphExpr, Ident, ListTypeName, Literal, UnsignedInteger};
+use crate::imports::Box;
 use crate::macros::base;
 use crate::span::{BoxSpanned, OptSpanned, Spanned, VecSpanned};
 

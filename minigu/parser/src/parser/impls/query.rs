@@ -13,7 +13,7 @@ use super::procedure_spec::nested_query_specification;
 use super::session::{session_close_command, session_reset_command, session_set_command};
 use super::value_expr::{aggregating_value_expression, binding_variable_reference, set_quantifier};
 use crate::ast::*;
-use crate::imports::Vec;
+use crate::imports::{Box, Vec};
 use crate::lexer::TokenKind;
 use crate::parser::impls::common::{limit_clause, offset_clause, order_by_clause};
 use crate::parser::token::{Token, TokenStream};

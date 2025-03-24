@@ -11,6 +11,7 @@ use super::lexical::{
     regular_identifier, unsigned_integer,
 };
 use crate::ast::*;
+use crate::imports::Box;
 use crate::lexer::TokenKind;
 use crate::parser::token::TokenStream;
 use crate::parser::utils::{SpannedParserExt, ToSpanned, def_parser_alias, peek1, take1};

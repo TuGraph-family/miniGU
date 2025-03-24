@@ -1,6 +1,7 @@
 //! AST definitions for *type elements*.
 
 use super::{Ident, UnsignedInteger};
+use crate::imports::Box;
 use crate::macros::base;
 use crate::span::{BoxSpanned, OptSpanned, Spanned, VecSpanned};
 
