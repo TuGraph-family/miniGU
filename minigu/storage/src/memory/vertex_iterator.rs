@@ -31,8 +31,8 @@ impl<'a> Iterator for VertexIterator<'a> {
 
             // Perform MVCC visibility check
             let visible_vertex =
-                match versioned_vertex.get_visible(self.txn.start_ts(), self.txn.tx_id()) {
-                    Some(v) if !v.is_tombstone() => v, // Skip logically deleted vertices
+                match versioned_vertex.get_visible(&self.txn) {
+                    Ok(v) if !v.is_tombstone() => v, // Skip logically deleted vertices
                     _ => continue,
                 };
 

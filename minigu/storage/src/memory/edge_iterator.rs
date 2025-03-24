@@ -29,8 +29,8 @@ impl<'a> Iterator for EdgeIterator<'a> {
 
             // Perform MVCC visibility check
             let visible_edge =
-                match versioned_edge.get_visible(self.txn.start_ts(), self.txn.tx_id()) {
-                    Some(e) if !e.is_tombstone() => e, // Skip logically deleted edges
+                match versioned_edge.get_visible(&self.txn) {
+                    Ok(e) if !e.is_tombstone() => e, // Skip logically deleted edges
                     _ => continue,
                 };
 

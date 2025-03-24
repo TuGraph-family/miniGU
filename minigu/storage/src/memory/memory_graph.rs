@@ -1,8 +1,8 @@
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, RwLock};
 
 use common::datatype::types::{EdgeId, VertexId};
 use common::datatype::value::PropertyValue;
-use dashmap::{DashMap, DashSet};
+use dashmap::DashMap;
 
 use crate::error::{StorageError, StorageResult};
 use crate::memory::adjacency_iterator::AdjacencyIterator;
@@ -10,17 +10,71 @@ use crate::memory::edge_iterator::EdgeIterator;
 use crate::memory::vertex_iterator::VertexIterator;
 use crate::model::edge::{Adjacency, Direction, Edge};
 use crate::model::vertex::Vertex;
-use crate::storage::{Graph, MutGraph, StorageTransaction};
-use crate::transaction::IsolationLevel;
+use crate::storage::{Graph, MutGraph};
+use crate::transaction::{CommitTimestamp, DeltaOp, IsolationLevel, SetPropsOp, UndoEntry, UndoPtr};
 
-use super::transaction::{CommitTimestamp, MemTransaction, TransactionId, UndoEntry};
+use super::transaction::{MemTransaction, MemTxnManager};
+
+// Perform the update properties operation
+macro_rules! update_properties {
+    ($self:expr, $id:expr, $entry:expr, $txn:expr, $indices:expr, $props:expr, $op: ident) => {{
+        // Acquire the lock to modify the properties of the vertex/edge
+        let mut current = $entry.chain.current.write().unwrap();
+
+        // Conflict detection: Ensure the vertex is modified only by this transaction
+        if current.commit_ts != $txn.txn_id() && current.commit_ts > $txn.start_ts() {
+            return Err(StorageError::TransactionError(
+                "Concurrent modification detected".to_string(),
+            ));
+        }
+
+        // Create a new version with updated properties.
+        current.data.set_props(&$indices, $props);
+
+        let delta_props = $indices.iter()
+            .map(|i| current.data.properties.get(*i).unwrap().clone())
+            .collect();
+        let delta = DeltaOp::$op($id, SetPropsOp { indices: $indices, props: delta_props });
+
+        let undo_ptr = $entry.chain.undo_ptr.read().unwrap();
+        let mut undo_buffer = $txn.undo_buffer.write().unwrap();
+        undo_buffer.push(UndoEntry::new(delta, current.commit_ts, undo_ptr.clone()));
+        *$entry.chain.undo_ptr.write().unwrap() = Some(UndoPtr::new($txn.txn_id(), undo_buffer.len() - 1));
+    }};
+}
+
+// Perform the delete vertex/edge operation
+macro_rules! delete_entity {
+    ($self:expr, $entry:expr, $txn:expr, $entity_type:ident, $delta_variant:ident, $error_type:ident) => {{
+        // Acquire the lock to modify the vertex/edge
+        let mut current = $entry.chain.current.write().unwrap();
+
+        // Conflict detection: Ensure the vertex/edge is modified only by this transaction
+        if current.commit_ts != $txn.txn_id() && current.commit_ts > $txn.start_ts() {
+            return Err(StorageError::TransactionError(
+                "Concurrent modification detected".to_string(),
+            ));
+        }
+
+        // Mark the vertex/edge as deleted
+        let tombstone = $entity_type::tombstone(current.data.clone());
+        current.data = tombstone;
+
+        // Record the vertex/edge deletion in the transaction
+        let delta = DeltaOp::$delta_variant(current.data.clone());
+        let undo_ptr = $entry.chain.undo_ptr.read().unwrap();
+        let mut undo_buffer = $txn.undo_buffer.write().unwrap();
+        undo_buffer.push(UndoEntry::new(delta, current.commit_ts, undo_ptr.clone()));
+        *$entry.chain.undo_ptr.write().unwrap() = Some(UndoPtr::new($txn.txn_id(), undo_buffer.len() - 1));
+    }};
+}
 
 // Version metadata (equivalent to version metadata in the referenced paper)
 #[derive(Debug)]
 /// Stores the current version of an entity, along with transaction metadata.
 pub(super) struct CurrentVersion<D> {
     pub(super) data: D,                            // The actual data version
-    pub(super) modified_by: Option<TransactionId>, // Transaction ID marking the modification
+    // pub(super) modified_by: Option<CommitTimestamp>, // Transaction ID marking the modification
     pub(super) commit_ts: CommitTimestamp,         // Commit timestamp indicating when it was committed
 }
 
@@ -29,7 +83,7 @@ pub(super) struct CurrentVersion<D> {
 /// Maintains the version history of an entity, supporting multi-version concurrency control.
 pub(super) struct VersionChain<D: Clone> {
     pub(super) current: RwLock<CurrentVersion<D>>, // The latest version in memory
-    pub(super) undo_lists: RwLock<Vec<UndoEntry<D>>>, // The version history (undo log)
+    pub(super) undo_ptr: RwLock<Option<UndoPtr>>, // The version history (undo log)
 }
 
 #[derive(Debug)]
@@ -45,43 +99,43 @@ impl VersionedVertex {
             chain: Arc::new(VersionChain {
                 current: RwLock::new(CurrentVersion {
                     data: initial,
-                    modified_by: None,
                     commit_ts: CommitTimestamp(0), // Initial commit timestamp set to 0
                 }),
-                undo_lists: RwLock::new(Vec::new()),
+                undo_ptr: RwLock::new(None),
             }),
         }
     }
 
-    /// Retrieves the latest visible version of the vertex based on MVCC rules.
-    pub fn get_visible(&self, start_ts: CommitTimestamp, txn_id: TransactionId) -> Option<Vertex> {
-        let current = self.chain.current.read().unwrap();
+    pub fn current(&self) -> &RwLock<CurrentVersion<Vertex>> {
+        &self.chain.current
+    }
 
-        // Case 1: Return the uncommitted modification if it belongs to the current transaction.
-        // Case 2: Return the current committed version if it is valid at `start_ts`.
-        if current.modified_by == Some(txn_id) || 
-            current.modified_by.is_none() && current.commit_ts <= start_ts
-        {
-            if current.data.is_tombstone() {
-                return None;
-            } else {
-                return Some(current.data.clone());
-            }
+    pub fn with_modified_ts(initial: Vertex, txn_id: CommitTimestamp) -> Self {
+        debug_assert!(txn_id.0 > CommitTimestamp::TXN_ID_START);
+        Self {
+            chain: Arc::new(VersionChain {
+                current: RwLock::new(CurrentVersion {
+                    data: initial,
+                    commit_ts: txn_id, // Initial commit timestamp set to 0
+                }),
+                undo_ptr: RwLock::new(None),
+            }),
         }
+    }
 
-        // Case 3: Search the version history for the most recent valid version.
-        let versions = self.chain.undo_lists.read().unwrap();
-        if let Some(entry) = versions
-                    .iter()
-                    .rev()
-                    .find(|entry| entry.begin_ts() <= start_ts && start_ts < entry.end_ts()) {
-            if entry.data().is_tombstone() {
-                return None;
-            } else {
-                return Some(entry.data().clone());
-            }
+    pub fn get_visible(&self, txn: &MemTransaction) -> StorageResult<Vertex> {
+        let current = self.chain.current.read().unwrap();
+        let mut current_vertex = current.data.clone();
+        if current.commit_ts == txn.txn_id() || current.commit_ts > txn.start_ts() {
+            Ok(current_vertex)
         } else {
-            None
+            let undo_ptr = self.chain.undo_ptr.read().unwrap();
+            if let Some(undo_ptr) = undo_ptr.as_ref() {
+                txn.apply_deltas_for_vertex(*undo_ptr, &mut current_vertex, txn.start_ts())?;
+            }else {
+                return Err(StorageError::VersionNotFound(format!("{:?}", current.commit_ts)));
+            }
+            Ok(current_vertex)
         }
     }
 }
@@ -99,42 +153,43 @@ impl VersionedEdge {
             chain: Arc::new(VersionChain {
                 current: RwLock::new(CurrentVersion {
                     data: initial,
-                    modified_by: None,
                     commit_ts: CommitTimestamp(0), // Initial commit timestamp set to 0
                 }),
-                undo_lists: RwLock::new(Vec::new()),
+                undo_ptr: RwLock::new(None),
             }),
         }
     }
 
-    /// Retrieves the latest visible version of the edge based on MVCC rules.
-    pub fn get_visible(&self, start_ts: CommitTimestamp, txn_id: TransactionId) -> Option<Edge> {
-        let current = self.chain.current.read().unwrap();
+    pub fn current(&self) -> &RwLock<CurrentVersion<Edge>> {
+        &self.chain.current
+    }
 
-        // Case 1: Return the uncommitted modification if it belongs to the current transaction.
-        // Case 2: Return the current committed version if it is valid at `start_ts`.
-        if current.modified_by == Some(txn_id) ||
-            current.modified_by.is_none() && current.commit_ts <= start_ts {
-            if current.data.is_tombstone() {
-                return None;
-            } else {
-                return Some(current.data.clone());
-            }
+    pub fn with_modified_ts(initial: Edge, txn_id: CommitTimestamp) -> Self {
+        debug_assert!(txn_id.0 > CommitTimestamp::TXN_ID_START);
+        Self {
+            chain: Arc::new(VersionChain {
+                current: RwLock::new(CurrentVersion {
+                    data: initial,
+                    commit_ts: txn_id, 
+                }),
+                undo_ptr: RwLock::new(None),
+            })
         }
+    }
 
-        // Case 3: Search the version history for the most recent valid version.
-        let versions = self.chain.undo_lists.read().unwrap();
-        if let Some(vertex) = versions
-            .iter()
-            .rev()
-            .find(|entry| entry.begin_ts() <= start_ts && start_ts < entry.end_ts()) {
-            if vertex.data().is_tombstone() {
-                return None;
-            } else {
-                return Some(vertex.data().clone());
-            }
+    pub fn get_visible(&self, txn: &MemTransaction) -> StorageResult<Edge> {
+        let current = self.chain.current.read().unwrap();
+        let mut current_edge = current.data.clone();
+        if current.commit_ts == txn.txn_id() || current.commit_ts > txn.start_ts() {
+            Ok(current_edge)
         } else {
-            None
+            let undo_ptr = self.chain.undo_ptr.read().unwrap();
+            if let Some(undo_ptr) = undo_ptr.as_ref() {
+                txn.apply_deltas_for_edge(*undo_ptr, &mut current_edge, txn.start_ts())?;
+            }else {
+                return Err(StorageError::VersionNotFound(format!("{:?}", current.commit_ts)));
+            }
+            Ok(current_edge)
         }
     }
 }
@@ -153,7 +208,7 @@ impl VersionedAdjEntry {
         Self {
             inner: Adjacency::new(vertex_id, edge_id),
             begin_ts,
-            end_ts: CommitTimestamp::max(), // Default end timestamp is set to max (not deleted)
+            end_ts: CommitTimestamp::max_commit_ts(), // Default end timestamp is set to max (not deleted)
         }
     }
 
@@ -189,8 +244,7 @@ pub struct MemGraph {
     pub(super) adjacency_in: DashMap<VertexId, Vec<VersionedAdjEntry>>,  // Incoming adjacency list
 
     // ---- Transaction management ----
-    pub(super) active_txns: DashSet<CommitTimestamp>, // Active transactions' start timestamps
-    pub(super) commit_lock: Mutex<()>,                // Commit lock to enforce serial commit order
+    pub(super) txn_manager: MemTxnManager,
 }
 
 #[allow(dead_code)]
@@ -201,23 +255,24 @@ impl MemGraph {
         Arc::new(Self {
             vertices: DashMap::new(),
             edges: DashMap::new(),
-            active_txns: DashSet::new(),
-            commit_lock: Mutex::new(()),
             adjacency_out: DashMap::new(),
             adjacency_in: DashMap::new(),
+            txn_manager: MemTxnManager::new(),
         })
     }
 
     /// Begins a new transaction and returns a `MemTransaction` instance.
-    pub fn begin_transaction(self: &Arc<Self>, isolation_level: IsolationLevel) -> MemTransaction {
+    pub fn begin_transaction(self: &Arc<Self>, isolation_level: IsolationLevel) -> Arc<MemTransaction> {
         // Allocate a new transaction ID and read timestamp.
-        let tx_id = TransactionId::new();
-        let start_ts = CommitTimestamp::new();
+        let txn_id = CommitTimestamp::new_txn_id();
+        let start_ts = CommitTimestamp::new_commit_ts();
 
         // Register the transaction as active (used for garbage collection and visibility checks).
-        self.active_txns.insert(start_ts);
-
-        MemTransaction::with_memgraph(self.clone(), tx_id, start_ts, isolation_level) 
+        let txn = Arc::new(
+            MemTransaction::with_memgraph(self.clone(), txn_id, start_ts, isolation_level) 
+        );
+        self.txn_manager.register(txn.clone());
+        txn
     }
 
     /// Returns a reference to the vertices storage.
@@ -263,18 +318,27 @@ impl Graph for MemGraph {
             .ok_or(StorageError::VertexNotFound(vid.to_string()))?;
 
         // Step 2: Perform MVCC visibility check.
-        let visible_vertex: Vertex = versioned_vertex
-            .get_visible(txn.start_ts(), txn.tx_id())
-            .ok_or_else(|| StorageError::VersionNotFound(vid.to_string()))?;
-
-        // Step 3: Check for logical deletion (tombstone).
-        if visible_vertex.is_tombstone() {
-            return Err(StorageError::VertexNotFound(vid.to_string()));
+        let current_version = versioned_vertex.chain.current.read().unwrap();
+        let commit_ts = current_version.commit_ts;
+        let mut visible_vertex = current_version.data.clone();
+        if let Some(undo_ptr) = *versioned_vertex.chain.undo_ptr.read().unwrap() {
+            txn.apply_deltas_for_vertex(undo_ptr, &mut visible_vertex, txn.start_ts())?;
+        } else {
+            if commit_ts > txn.start_ts() {
+                return Err(StorageError::VersionNotFound(
+                    format!("Can't find a suitable version for this vertex with version {:?}", commit_ts),
+                ));
+            }
         }
 
-        // Step 4: Record the vertex read set for conflict detection.
+        // Step 3: Record the vertex read set for conflict detection.
         if let IsolationLevel::Serializable  = txn.isolation_level() {
             txn.vertex_reads.insert(visible_vertex.vid());
+        }
+
+        // Step 4: Check for logical deletion.
+        if visible_vertex.is_tombstone() {
+            return Err(StorageError::VertexNotFound(vid.to_string()));
         }
 
         Ok(visible_vertex)
@@ -289,18 +353,27 @@ impl Graph for MemGraph {
             .ok_or(StorageError::EdgeNotFound(eid.to_string()))?;
 
         // Step 2: Perform MVCC visibility check.
-        let visible_edge = versioned_edge
-            .get_visible(txn.start_ts(), txn.tx_id())
-            .ok_or_else(|| StorageError::VersionNotFound(eid.to_string()))?;
-
-        // Step 3: Check for logical deletion (tombstone).
-        if visible_edge.is_tombstone() {
-            return Err(StorageError::EdgeNotFound(eid.to_string()));
+        let current_version = versioned_edge.chain.current.read().unwrap();
+        let commit_ts = current_version.commit_ts;
+        let mut visible_edge = current_version.data.clone();
+        if let Some(undo_ptr) = *versioned_edge.chain.undo_ptr.read().unwrap() {
+            txn.apply_deltas_for_edge(undo_ptr, &mut visible_edge, txn.start_ts())?;
+        } else {
+            if commit_ts > txn.start_ts() {
+                return Err(StorageError::VersionNotFound(
+                    format!("Can't find a suitable version for this edge with version {:?}", commit_ts),
+                ));
+            }
         }
 
-        // Step 4: Record the edge read set for conflict detection.
-        if let IsolationLevel::Serializable = txn.isolation_level()  {
-            txn.edge_reads.insert(eid.clone());
+        // Step 3: Record the edge read set for conflict detection.
+        if let IsolationLevel::Serializable = txn.isolation_level() {
+            txn.edge_reads.insert(eid);
+        }
+
+        // Step 4: Check for logical deletion (tombstone).
+        if visible_edge.is_tombstone() {
+            return Err(StorageError::EdgeNotFound(eid.to_string()));
         }
 
         Ok(visible_edge)
@@ -335,24 +408,22 @@ impl MutGraph for MemGraph {
     /// Inserts a new vertex into the graph within a transaction.
     fn create_vertex(&self, txn: &MemTransaction, vertex: Vertex) -> StorageResult<VertexId> {
         let vid = vertex.vid().clone();
+        let entry = self.vertices.entry(vid.clone()).or_insert_with(|| 
+            VersionedVertex::with_modified_ts(vertex, txn.txn_id())
+        );
 
-        // Atomically check if the vertex exists and insert if not.
-        let entry = self.vertices.entry(vid.clone()).or_insert_with(|| {
-            // Create an uncommitted version of the vertex.
-            let version = VersionedVertex::new(vertex);
-            // Mark the vertex as created by this transaction.
-            version.chain.current.write().unwrap().modified_by = Some(txn.tx_id());
-            version
-        });
-
-        // Conflict detection: Ensure the vertex was not created by another transaction.
+        // Conflict detection: Ensure the vertex does not exist
         let current = entry.chain.current.read().unwrap();
-        if current.modified_by != None && current.modified_by != Some(txn.tx_id()) {
+        if current.commit_ts != txn.txn_id() && current.commit_ts > txn.start_ts() {
             return Err(StorageError::VertexAlreadyExists(vid.to_string()));
         }
 
-        // Record in the transaction's write set.
-        txn.vertex_writes.insert(vid.clone());
+        // Record the vertex creation in the transaction
+        let delta = DeltaOp::DelVertex(vid);
+        let delta_ts = entry.chain.undo_ptr.read().unwrap();
+        let mut undo_buffer = txn.undo_buffer.write().unwrap();
+        undo_buffer.push(UndoEntry::new(delta, current.commit_ts, delta_ts.clone()));
+        *entry.chain.undo_ptr.write().unwrap() = Some(UndoPtr::new(txn.txn_id(), undo_buffer.len() - 1));
         Ok(vid)
     }
 
@@ -368,21 +439,23 @@ impl MutGraph for MemGraph {
             return Err(StorageError::VertexNotFound(edge.dst_id().to_string()));
         }
 
-        // Atomically check if the edge exists and insert if not.
-        let entry = self.edges.entry(eid.clone()).or_insert_with(|| {
-            let version = VersionedEdge::new(edge.clone());
-            version.chain.current.write().unwrap().modified_by = Some(txn.tx_id());
-            version
-        });
+        let entry = self.edges.entry(eid.clone()).or_insert_with(|| 
+            VersionedEdge::with_modified_ts(edge, txn.txn_id())
+        );
 
-        // Conflict detection.
+        // Conflict detection: Ensure the edge does not exist
         let current = entry.chain.current.read().unwrap();
-        if current.modified_by != None && current.modified_by != Some(txn.tx_id()) {
+        if current.commit_ts != txn.txn_id() && current.commit_ts > txn.start_ts() {
             return Err(StorageError::EdgeAlreadyExists(eid.to_string()));
         }
 
-        // Record in the transaction's write set.
-        txn.edge_writes.insert(eid.clone());
+        // Record the edge creation in the transaction
+        let delta = DeltaOp::DelEdge(eid);
+        let delta_ts = entry.chain.undo_ptr.read().unwrap();
+        let mut undo_buffer = txn.undo_buffer.write().unwrap();
+        undo_buffer.push(UndoEntry::new(delta, current.commit_ts, delta_ts.clone()));
+        *entry.chain.undo_ptr.write().unwrap() = Some(UndoPtr::new(txn.txn_id(), undo_buffer.len() - 1));
+
         Ok(eid)
     }
 
@@ -394,37 +467,8 @@ impl MutGraph for MemGraph {
             .get(&vid)
             .ok_or(StorageError::VertexNotFound(vid.to_string()))?;
 
-        // Acquire a write lock to modify the vertex.
-        let mut current = entry.chain.current.write().unwrap();
+        delete_entity!(self, entry, txn, Vertex, CreateVertex, VertexNotFound);
 
-        // Conflict detection: Ensure the vertex is modified only by this transaction.
-        if current.modified_by != None && current.modified_by != Some(txn.tx_id()) {
-            return Err(StorageError::TransactionError(
-                "Concurrent modification detected".to_string(),
-            ));
-        }
-
-        // Create a tombstone version to logically delete the vertex.
-        let tombstone = Vertex::tombstone(current.data.clone());
-
-        // Store the previous version in the transaction's undo log.
-        txn.vertex_undos
-            .entry(vid.clone())
-            .or_insert_with(Vec::new)
-            .push(UndoEntry::new(
-                current.data.clone(),
-                current.commit_ts,
-                txn.start_ts(),
-            )
-            );
-
-        // Apply logical deletion (mark as uncommitted).
-        current.data = tombstone;
-        current.modified_by = Some(txn.tx_id());
-        current.commit_ts = txn.start_ts();
-
-        // Record in the transaction's write set.
-        txn.vertex_writes.insert(vid.clone());
         Ok(())
     }
 
@@ -436,36 +480,8 @@ impl MutGraph for MemGraph {
             .get(&eid)
             .ok_or(StorageError::EdgeNotFound(eid.to_string()))?;
 
-        // Acquire a write lock to modify the edge.
-        let mut current = entry.chain.current.write().unwrap();
+        delete_entity!(self, entry, txn, Edge, CreateEdge, EdgeNotFound);
 
-        // Conflict detection: Ensure the edge is modified only by this transaction.
-        if current.modified_by != None && current.modified_by != Some(txn.tx_id()) {
-            return Err(StorageError::TransactionError(
-                "Concurrent modification detected".to_string(),
-            ));
-        }
-
-        // Create a tombstone version to logically delete the edge.
-        let tombstone = Edge::tombstone(current.data.clone());
-
-        // Store the previous version in the transaction's undo log.
-        txn.edge_undos
-            .entry(eid.clone())
-            .or_insert_with(Vec::new)
-            .push(UndoEntry::new(
-                current.data.clone(),
-                current.commit_ts,
-                txn.start_ts(),
-            ));
-
-        // Apply logical deletion (mark as uncommitted).
-        current.data = tombstone;
-        current.modified_by = Some(txn.tx_id());
-        current.commit_ts = txn.start_ts();
-
-        // Record in the transaction's write set.
-        txn.edge_writes.insert(eid.clone());
         Ok(())
     }
 
@@ -483,37 +499,8 @@ impl MutGraph for MemGraph {
             .get(&vid)
             .ok_or(StorageError::VertexNotFound(vid.to_string()))?;
 
-        // Acquire a write lock to modify the vertex.
-        let mut current = entry.chain.current.write().unwrap();
+        update_properties!(self, vid, entry, txn, indices, props, SetVertexProps);
 
-        // Conflict detection: Ensure the vertex is modified only by this transaction.
-        if current.modified_by != None && current.modified_by != Some(txn.tx_id()) {
-            return Err(StorageError::TransactionError(
-                "Concurrent modification detected".to_string(),
-            ));
-        }
-
-        // Create a new version with updated properties.
-        let mut new_data = current.data.clone();
-        new_data.set_props(&indices, props);
-
-        // Store the previous version in the transaction's undo log.
-        txn.vertex_undos
-            .entry(vid)
-            .or_insert_with(Vec::new)
-            .push(UndoEntry::new(
-                current.data.clone(),
-                current.commit_ts,
-                txn.start_ts(),
-            ));
-
-        // Apply the updated version (mark as uncommitted).
-        current.data = new_data;
-        current.modified_by = Some(txn.tx_id());
-        current.commit_ts = txn.start_ts();
-
-        // Record in the transaction's write set.
-        txn.vertex_writes.insert(vid);
         Ok(())
     }
 
@@ -531,37 +518,8 @@ impl MutGraph for MemGraph {
             .get(&eid)
             .ok_or(StorageError::EdgeNotFound(eid.to_string()))?;
 
-        // Acquire a write lock to modify the edge.
-        let mut current = entry.chain.current.write().unwrap();
+        update_properties!(self, eid, entry, txn, indices, props, SetEdgeProps);
 
-        // Conflict detection: Ensure the edge is modified only by this transaction.
-        if current.modified_by != None && current.modified_by != Some(txn.tx_id()) {
-            return Err(StorageError::TransactionError(
-                "Concurrent modification detected".to_string(),
-            ));
-        }
-
-        // Create a new version with updated properties.
-        let mut new_data = current.data.clone();
-        new_data.set_props(&indices, props);
-
-        // Store the previous version in the transaction's undo log.
-        txn.edge_undos
-            .entry(eid)
-            .or_insert_with(Vec::new)
-            .push(UndoEntry::new(
-                current.data.clone(),
-                current.commit_ts,
-                txn.start_ts(),
-            ));
-
-        // Apply the updated version (mark as uncommitted).
-        current.data = new_data;
-        current.modified_by = Some(txn.tx_id());
-        current.commit_ts = txn.start_ts();
-
-        // Record in the transaction's write set.
-        txn.edge_writes.insert(eid);
         Ok(())
     }
 }
@@ -574,7 +532,7 @@ mod tests {
     use {Edge, Vertex};
 
     use super::*;
-    use crate::model::properties::PropertyStore;
+    use crate::{model::properties::PropertyStore, storage::StorageTransaction};
 
     fn create_vertex_alice() -> Vertex {
         let properties = vec![
@@ -604,13 +562,13 @@ mod tests {
     #[test]
     fn test_basic_commit_flow() {
         let graph = MemGraph::new();
-        let mut txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
 
         let v1 = create_vertex_alice();
         let vid1 = graph.create_vertex(&txn1, v1.clone()).unwrap();
         let _ = txn1.commit().unwrap();
 
-        let mut txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
         let read_v1 = graph.get_vertex(&txn2, vid1).unwrap();
         assert_eq!(read_v1, v1);
         assert!(txn2.commit().is_ok());
@@ -704,7 +662,7 @@ mod tests {
 
         {
             let adj = graph.adjacency_out.get(&vid1).unwrap();
-            assert!(adj.len() == 1 && adj[0].end_ts == CommitTimestamp::max());
+            assert!(adj.len() == 1 && adj[0].end_ts == CommitTimestamp::max_commit_ts());
         }
 
         let txn3 = graph.begin_transaction(IsolationLevel::Serializable);

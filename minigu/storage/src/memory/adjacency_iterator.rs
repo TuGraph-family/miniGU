@@ -5,8 +5,9 @@ use crate::error::StorageResult;
 use crate::iterators::AdjacencyIteratorTrait;
 use crate::memory::memory_graph::VersionedAdjEntry;
 use crate::model::edge::{Adjacency, Direction};
+use crate::transaction::CommitTimestamp;
 
-use super::transaction::{CommitTimestamp, MemTransaction};
+use super::transaction::MemTransaction;
 
 /// An adjacency list iterator that supports filtering (for iterating over a single vertex's
 /// adjacency list).
@@ -33,7 +34,7 @@ impl<'a> Iterator for AdjacencyIterator<'a> {
             // Perform MVCC visibility check
             if !(adj_entry.begin_ts() <= self.txn.start_ts()
                 && self.txn.start_ts() < adj_entry.end_ts()
-                && adj_entry.end_ts() == CommitTimestamp::max())
+                && adj_entry.end_ts() == CommitTimestamp::max_commit_ts())
             {
                 continue;
             }

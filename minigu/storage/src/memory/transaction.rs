@@ -1,79 +1,45 @@
-use std::sync::{atomic::{AtomicU64, Ordering}, Arc};
+use std::sync::{Arc, Mutex, OnceLock, RwLock};
 
 use common::datatype::types::{EdgeId, VertexId};
 use dashmap::{DashMap, DashSet};
 
-use crate::{error::{StorageError, StorageResult}, model::{edge::Edge, vertex::Vertex}, storage::StorageTransaction, transaction::IsolationLevel};
+use crate::{error::{StorageError, StorageResult}, model::{edge::Edge, vertex::Vertex}, storage::StorageTransaction, transaction::{CommitTimestamp, DeltaOp, IsolationLevel, SetPropsOp, UndoEntry, UndoPtr}};
 
 use super::memory_graph::{MemGraph, VersionedAdjEntry};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-/// Represents a commit timestamp used for multi-version concurrency control (MVCC).
-pub struct CommitTimestamp(pub u64);
+pub struct MemTxnManager {
+    /// Active transactions' start timestamps.
+    pub(super) active_txns: DashSet<CommitTimestamp>, 
+    /// All transactions, running or committed.
+    pub(super) txn_map: DashMap<CommitTimestamp, Arc<MemTransaction>>,
+    /// Commit lock to enforce serial commit order
+    pub(super) commit_lock: Mutex<()>,
+}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-/// Represents a unique transaction identifier.
-pub struct TransactionId(u64);
-
-impl TransactionId {
-    const START: u64 = 1 << 63;
-
-    /// Generates a new transaction ID, ensuring atomicity using an atomic counter.
+impl MemTxnManager {
+    /// Create a new MemTxnManager
     pub fn new() -> Self {
-        // Static counter initialized once, persists between calls. 
-        static COUNTER: AtomicU64 = AtomicU64::new(TransactionId::START);
-        // Transaction ID only needs to be atomically incremented
-        // and does not require strict memory order.
-        Self(COUNTER.fetch_add(1, Ordering::Relaxed))
-    }
-}
-
-impl CommitTimestamp {
-    /// Generates a new commit timestamp using an atomic counter.
-    pub fn new() -> Self {
-        // Static counter initialized once, persists between calls. 
-        static COUNTER: AtomicU64 = AtomicU64::new(0);
-        // Only one transaction can commit at a time.
-        Self(COUNTER.fetch_add(1, Ordering::Relaxed))
-    }
-
-    /// Returns the maximum possible commit timestamp.
-    pub fn max() -> Self {
-        Self(u64::MAX)
-    }
-}
-
-#[derive(Debug, Clone)]
-/// Represents an undo log entry for multi-version concurrency control.
-pub(super) struct UndoEntry<T> {
-    data: T,                   // Previous version of the data
-    begin_ts: CommitTimestamp, // Timestamp when this version became valid
-    end_ts: CommitTimestamp,   // Timestamp when this version became invalid
-}
-
-impl<T> UndoEntry<T> {
-    /// Create a UndoEntry
-    pub(super) fn new(data: T, begin_ts: CommitTimestamp, end_ts: CommitTimestamp) -> Self {
         Self {
-            data,
-            begin_ts,
-            end_ts,
+            active_txns: DashSet::new(),
+            txn_map: DashMap::new(),
+            commit_lock: Mutex::new(()),
         }
     }
 
-    /// Get the data of the undo entry.
-    pub(super) fn data(&self) -> &T {
-        &self.data
+    /// Register a new transaction.
+    pub fn register(&self, txn: Arc<MemTransaction>) {
+        self.txn_map.insert(txn.txn_id, txn.clone());
     }
 
-    /// Get the begin timestamp of the undo entry.
-    pub(super) fn begin_ts(&self) -> CommitTimestamp {
-        self.begin_ts
+    /// Unregister a transaction.
+    pub fn remove(&self, txn_id: CommitTimestamp) -> StorageResult<()> {
+        self.txn_map.remove(&txn_id);
+        Ok(())
     }
 
-    /// Get the end timestamp of the undo entry.
-    pub(super) fn end_ts(&self) -> CommitTimestamp {
-        self.end_ts
+    /// Start a garbage collection of expired transactions.
+    pub fn garbage_collect(&self) -> StorageResult<()> {
+        todo!()
     }
 }
 
@@ -84,9 +50,10 @@ pub struct MemTransaction {
     isolation_level: IsolationLevel, // Isolation level of the transaction
 
     // ---- Timestamp management ----
-    start_ts: CommitTimestamp, // Start timestamp assigned when the transaction begins
-    commit_ts: Option<CommitTimestamp>, // Commit timestamp assigned upon committing
-    tx_id: TransactionId,      // Unique transaction identifier
+    /// Start timestamp assigned when the transaction begins
+    start_ts: CommitTimestamp, 
+    commit_ts: OnceLock<CommitTimestamp>, // Commit timestamp assigned upon committing
+    txn_id: CommitTimestamp,      // Unique transaction identifier
 
     // ---- Read sets ----
     pub(super) vertex_reads: DashSet<VertexId>, // Set of vertices read by this transaction
@@ -97,14 +64,15 @@ pub struct MemTransaction {
     pub(super) edge_writes: DashSet<EdgeId>,     // Set of edges written by this transaction
 
     // ---- Undo logs ----
-    pub(super) vertex_undos: DashMap<VertexId, Vec<UndoEntry<Vertex>>>, // Vertex undo logs
-    pub(super) edge_undos: DashMap<EdgeId, Vec<UndoEntry<Edge>>>,       // Edge undo logs
+    // pub(super) vertex_undos: DashMap<VertexId, Vec<UndoEntry<Vertex>>>, // Vertex undo logs
+    // pub(super) edge_undos: DashMap<EdgeId, Vec<UndoEntry<Edge>>>,       // Edge undo logs
+    pub(super) undo_buffer: RwLock<Vec<UndoEntry>>,
 }
 
 impl MemTransaction {
     pub(super) fn with_memgraph(
         graph: Arc<MemGraph>,
-        txn_id: TransactionId,
+        txn_id: CommitTimestamp,
         start_ts: CommitTimestamp,
         isolation_level: IsolationLevel
     ) -> Self {
@@ -112,14 +80,15 @@ impl MemTransaction {
             graph,
             isolation_level,
             start_ts,
-            commit_ts: None,
-            tx_id: txn_id,
+            commit_ts: OnceLock::new(),
+            txn_id,
             vertex_reads: DashSet::new(),
             edge_reads: DashSet::new(),
             vertex_writes: DashSet::new(),
             edge_writes: DashSet::new(),
-            vertex_undos: DashMap::new(),
-            edge_undos: DashMap::new(),
+            // vertex_undos: DashMap::new(),
+            // edge_undos: DashMap::new(),
+            undo_buffer: RwLock::new(Vec::new()),
         }
     }
 
@@ -137,9 +106,7 @@ impl MemTransaction {
 
             let current = entry.chain.current.read().unwrap();
             // Check if the vertex was modified after the transaction started.
-            if current.commit_ts > self.start_ts
-                || (current.modified_by != Some(self.tx_id) && current.modified_by != None)
-            {
+            if current.commit_ts != self.txn_id && current.commit_ts > self.start_ts {
                 return Err(StorageError::ReadConflict(vid.to_string()));
             }
         }
@@ -154,9 +121,7 @@ impl MemTransaction {
 
             let current = entry.chain.current.read().unwrap();
             // Check if the edge was modified after the transaction started.
-            if current.commit_ts > self.start_ts
-                || (current.modified_by != Some(self.tx_id) && current.modified_by != None)
-            {
+            if current.commit_ts!= self.txn_id && current.commit_ts > self.start_ts {
                 return Err(StorageError::ReadConflict(eid.to_string()));
             }
         }
@@ -171,7 +136,7 @@ impl MemTransaction {
         vid: u64,
         commit_ts: CommitTimestamp,
     ) -> StorageResult<()> {
-        let max_commit_ts = CommitTimestamp::max();
+        let max_commit_ts = CommitTimestamp::max_commit_ts();
 
         // Invalidate outgoing edges
         if let Some(mut entries) = self.graph.adjacency_out.get_mut(&vid) {
@@ -272,63 +237,14 @@ impl MemTransaction {
         Ok(())
     }
 
-    /// Rolls back modifications to vertices.
-    /// Restores the last committed version of each modified vertex.
-    fn rollback_vertex_writes(&self) {
-        let mut to_remove: Vec<VertexId> = Vec::new();
-        for vid in self.vertex_writes.iter() {
-            if let Some(entry) = self.graph.vertices.get(&vid) {
-                // Restore current vertex from transaction's undo log (using the latest undo entry).
-                if let Some(vertex_undo_entries) = self.vertex_undos.get(&vid) {
-                    let mut current = entry.chain.current.write().unwrap();
-                    let last_undo = vertex_undo_entries[0].clone();
-                    current.data = last_undo.data;
-                    current.commit_ts = last_undo.begin_ts;
-                    current.modified_by = None;
-                } else {
-                    // If no undo entry exists, the vertex was created by this transaction.
-                    to_remove.push(*vid);
-                }
-            }
-        }
-        // Remove newly created vertices.
-        for vid in to_remove.iter() {
-            self.graph.vertices.remove(vid);
-        }
-    }
-
-    /// Rolls back modifications to edges.
-    /// Restores the last committed version of each modified edge.
-    fn rollback_edge_writes(&self) {
-        let mut to_remove: Vec<EdgeId> = Vec::new();
-        for eid in self.edge_writes.iter() {
-            if let Some(entry) = self.graph.edges.get(&eid) {
-                if let Some(edge_undo_entries) = self.edge_undos.get(&eid) {
-                    let mut current = entry.chain.current.write().unwrap();
-                    let last_undo = edge_undo_entries[0].clone();
-                    current.data = last_undo.data;
-                    current.commit_ts = last_undo.begin_ts;
-                    current.modified_by = None;
-                } else {
-                    // If no undo entry exists, the edge was created by this transaction.
-                    to_remove.push(*eid);
-                }
-            }
-        }
-        // Remove newly created edges.
-        for eid in to_remove.iter() {
-            self.graph.edges.remove(eid);
-        }
-    }
-
     /// Returns the start timestamp of the transaction.
     pub fn start_ts(&self) -> CommitTimestamp {
         self.start_ts
     }
 
     /// Returns the transaction ID.
-    pub fn tx_id(&self) -> TransactionId {
-        self.tx_id
+    pub fn txn_id(&self) -> CommitTimestamp {
+        self.txn_id
     }
 
     /// Returns the set of vertex reads in this transaction.
@@ -350,6 +266,77 @@ impl MemTransaction {
     pub fn isolation_level(&self) -> &IsolationLevel {
         &self.isolation_level
     }
+
+    /// Reconstructs a specific version of a Vertex based on the undo chain and a target timestamp
+    pub(super) fn apply_deltas_for_vertex(&self, undo_ptr: UndoPtr, base_vertex: &mut Vertex, target_ts: CommitTimestamp) -> StorageResult<()> {
+        let mut current = undo_ptr;
+        
+        while let Some(entry) = self.graph.txn_manager.txn_map.get(&current.txn_id()) {
+
+            let undo_buffer = entry.undo_buffer.read().unwrap();
+            let undo_entry = &undo_buffer[current.entry_offset()];
+            
+            match undo_entry.delta() {
+                DeltaOp::CreateVertex(original) => *base_vertex = original.clone(),
+                DeltaOp::SetVertexProps(_, SetPropsOp { indices, props }) => {
+                                    base_vertex.set_props(indices, props.clone());
+                                }
+                DeltaOp::DelVertex(_) => {
+                    base_vertex.is_tombstone = true;
+                }
+                _ => unreachable!("Unreachable delta op for a vertex"),
+            }
+            
+            // Continue traversing the undo chain
+            if undo_entry.timestamp() < target_ts {
+                // If the timestamp in the undo chain is less than the target timestamp,
+                // this version's data has been overwritten, no need to continue traversing
+                break;
+            }
+            if let Some(next) = undo_entry.next() {
+                current = next;
+            } else {
+                return Err(StorageError::VersionNotFound("Can't find a suitable version".to_string()))
+            }
+        }
+        
+        Ok(())
+    }
+
+    /// Reconstructs a specific version of an Edge based on the undo chain and a target timestamp
+    pub(super) fn apply_deltas_for_edge(&self, undo_ptr: UndoPtr, base_edge: &mut Edge, target_ts: CommitTimestamp) -> StorageResult<()> {
+        let mut current = undo_ptr;
+        
+        while let Some(entry) = self.graph.txn_manager.txn_map.get(&current.txn_id()) {
+            let undo_buffer = entry.undo_buffer.read().unwrap();
+            let undo_entry = &undo_buffer[current.entry_offset()];
+            
+            match undo_entry.delta() {
+                DeltaOp::CreateEdge(original) => *base_edge = original.clone(),
+                DeltaOp::SetEdgeProps(_, SetPropsOp { indices, props }) => {
+                    base_edge.set_props(indices, props.clone());
+                },
+                DeltaOp::DelEdge(_) => {
+                    base_edge.is_tombstone = true;
+                },
+                _ => unreachable!("Unreachable delta op for an edge"),
+            }
+            
+            // Continue traversing the undo chain
+            if undo_entry.timestamp() < target_ts {
+                // If the timestamp in the undo chain is less than the target timestamp,
+                // this version's data has been overwritten, no need to continue traversing
+                break;
+            }
+            if let Some(next) = undo_entry.next() {
+                current = next;
+            } else {
+                return Err(StorageError::VersionNotFound("Can't find a suitable version".to_string()))
+            }
+        }
+        
+        Ok(())
+    }
 }
 
 impl StorageTransaction for MemTransaction {
@@ -357,9 +344,9 @@ impl StorageTransaction for MemTransaction {
 
     /// Commits the transaction, applying all changes atomically.
     /// Ensures serializability, updates version chains, and manages adjacency lists.
-    fn commit(&mut self) -> StorageResult<CommitTimestamp> {
+    fn commit(&self) -> StorageResult<CommitTimestamp> {
         // Acquire the global commit lock to enforce serial execution of commits.
-        let _guard = self.graph.commit_lock.lock().unwrap();
+        let _guard = self.graph.txn_manager.commit_lock.lock().unwrap();
 
         // Step 1: Validate serializability if isolution level is Serializable.
         if let IsolationLevel::Serializable = self.isolation_level {
@@ -370,94 +357,163 @@ impl StorageTransaction for MemTransaction {
         }
 
         // Step 2: Assign a commit timestamp (atomic operation).
-        let commit_ts = CommitTimestamp::new();
-        self.commit_ts = Some(commit_ts);
-
-        // Step 3: Process vertex write set.
-        {
-            for vid in self.vertex_writes.iter() {
-                let entry = self
-                    .graph
-                    .vertices
-                    .get(&vid)
-                    .ok_or(StorageError::VertexNotFound(vid.to_string()))?;
-
-                // Acquire write lock and update version chain.
-                let mut current = entry.chain.current.write().unwrap();
-                current.modified_by = None; // Remove modification marker.
-                current.commit_ts = commit_ts; // Assign the final commit timestamp.
-
-                // Merge undo logs.
-                let mut undo_list = entry.chain.undo_lists.write().unwrap();
-                if let Some(mut undo_entries) = self.vertex_undos.get_mut(&vid) {
-                    for undo_entry in undo_entries.iter_mut() {
-                        undo_entry.end_ts = commit_ts; // Finalize undo log timestamps.
-                        undo_list.push(undo_entry.clone());
-                    }
-                }
-
-                // Invalidate adjacency list entries if the vertex is deleted.
-                if current.data.is_tombstone() {
-                    self.invalidate_adjacency_by_vid(*vid, commit_ts)?;
-                }
-            }
+        let commit_ts = CommitTimestamp::new_commit_ts();
+        if let Err(e) = self.commit_ts.set(commit_ts) {
+            self.abort()?;
+            return Err(StorageError::TransactionError(format!("Transaction {:?} already committed", e)));
         }
 
-        // Step 4: Process edge write set.
+        // Step 3: Process write in undo buffer.
         {
-            for eid in self.edge_writes.iter() {
-                let entry = self
-                    .graph
-                    .edges
-                    .get(&eid)
-                    .ok_or(StorageError::EdgeNotFound(eid.to_string()))?;
-
-                // Update the current version.
-                {
-                    let mut current = entry.chain.current.write().unwrap();
-                    current.modified_by = None; // Remove modification marker.
-                    current.commit_ts = commit_ts; // Assign the final commit timestamp.
-                } // Drop the write lock on current.
-
-                // Merge undo logs.
-                {
-                    let mut undo_list = entry.chain.undo_lists.write().unwrap();
-                    if let Some(mut undo_entries) = self.edge_undos.get_mut(&eid) {
-                        for undo_entry in undo_entries.iter_mut() {
-                            undo_entry.end_ts = commit_ts; // Finalize undo log timestamps.
-                            undo_list.push(undo_entry.clone());
-                        }
-                    }
-                }
-
-                // Update adjacency list entries.
-                let is_tombstone = {
-                    let current = entry.chain.current.read().unwrap();
-                    current.data.is_tombstone()
+            // 定义宏来简化更新提交时间戳的操作
+            macro_rules! update_commit_ts {
+                ($self:expr, $entity_type:ident, $id:expr) => {
+                    $self.graph().$entity_type().get($id).unwrap().current().write().unwrap().commit_ts = commit_ts
                 };
+            }
 
-                if is_tombstone {
-                    self.invalidate_adjacency_by_eid(&eid, commit_ts)?;
-                } else {
-                    self.update_adjacency_by_eid(&eid, commit_ts)?;
+            let undo_entries = self.undo_buffer.read().unwrap().clone();
+            for undo_entry in undo_entries.iter() {
+                match undo_entry.delta() {
+                    DeltaOp::DelVertex(vid) => update_commit_ts!(self, vertices, vid),
+                    DeltaOp::DelEdge(eid) => update_commit_ts!(self, edges, eid),
+                    DeltaOp::CreateVertex(vertex) => update_commit_ts!(self, vertices, &vertex.vid()),
+                    DeltaOp::CreateEdge(edge) => update_commit_ts!(self, edges, &edge.eid()),
+                    DeltaOp::SetVertexProps(vid, _) => update_commit_ts!(self, vertices, vid),
+                    DeltaOp::SetEdgeProps(eid, _) => update_commit_ts!(self, edges, eid),
+                    DeltaOp::AddLabel(_) => todo!(),
+                    DeltaOp::RemoveLabel(_) => todo!(),
+                    DeltaOp::AddInEdge(edge) => {
+                        // 处理添加入边操作
+                        update_commit_ts!(self, edges, &edge.eid());
+                        // 更新邻接列表
+                        self.update_adjacency_by_eid(&edge.eid(), commit_ts)?;
+                    },
+                    DeltaOp::AddOutEdge(edge) => {
+                        // 处理添加出边操作
+                        update_commit_ts!(self, edges, &edge.eid());
+                        // 更新邻接列表
+                        self.update_adjacency_by_eid(&edge.eid(), commit_ts)?;
+                    },
+                    DeltaOp::RemoveInEdge(eid) => {
+                        // 处理移除入边操作
+                        update_commit_ts!(self, edges, eid);
+                        // 使邻接列表条目失效
+                        self.invalidate_adjacency_by_eid(eid, commit_ts)?;
+                    },
+                    DeltaOp::RemoveOutEdge(eid) => {
+                        // 处理移除出边操作
+                        update_commit_ts!(self, edges, eid);
+                        // 使邻接列表条目失效
+                        self.invalidate_adjacency_by_eid(eid, commit_ts)?;
+                    },
                 }
             }
         }
 
         // Step 5: Clean up transaction state.
-        self.graph.active_txns.remove(&self.start_ts);
+        self.graph.txn_manager.remove(self.txn_id())?;
         Ok(commit_ts)
     }
 
     /// Aborts the transaction, rolling back all changes.
     fn abort(&self) -> StorageResult<()> {
-        // Roll back all vertex modifications.
-        self.rollback_vertex_writes();
-        // Roll back all edge modifications.
-        self.rollback_edge_writes();
-
-        // Remove the transaction from the active transaction list.
-        self.graph.active_txns.remove(&self.start_ts);
+        // 获取 undo_buffer 的只读锁
+        let undo_entries: Vec<_> = self.undo_buffer.write().unwrap().drain(..).collect();
+        
+        // 处理所有 undo 条目
+        for undo_entry in undo_entries.into_iter() {
+            let commit_ts = undo_entry.timestamp();
+            let next = undo_entry.next();
+            match undo_entry.delta() {
+                DeltaOp::CreateVertex(vertex) => {
+                    // 对于新创建的顶点，直接从图中移除或标记为已删除
+                    let vid = vertex.vid();
+                    if let Some(entry) = self.graph.vertices.get(&vid) {
+                        let mut current = entry.chain.current.write().unwrap();
+                        if current.commit_ts == self.txn_id() {
+                            // 如果是当前事务创建的，标记为已删除
+                            current.data = vertex.clone();
+                            current.data.is_tombstone = false;
+                            current.commit_ts = commit_ts; 
+                            *entry.chain.undo_ptr.write().unwrap() = next;
+                        }
+                    }
+                }
+                DeltaOp::CreateEdge(edge) => {
+                    // 对于新创建的边，直接从图中移除或标记为已删除
+                    let eid = edge.eid();
+                    if let Some(entry) = self.graph.edges.get(&eid) {
+                        let mut current = entry.chain.current.write().unwrap();
+                        if current.commit_ts == self.txn_id() {
+                            // 如果是当前事务创建的，标记为已删除
+                            current.data = edge.clone();
+                            current.data.is_tombstone = false;
+                            current.commit_ts = commit_ts;
+                            *entry.chain.undo_ptr.write().unwrap() = next;
+                        }
+                    }
+                },
+                DeltaOp::SetVertexProps(vid, SetPropsOp { indices, props }) => {
+                    // 对于属性修改，需要根据 undo_entry 的 entity_id 确定是顶点还是边
+                    // 恢复顶点属性
+                    if let Some(entry) = self.graph.vertices.get(&vid) {
+                        let mut current = entry.chain.current.write().unwrap();
+                        if current.commit_ts == self.txn_id() {
+                            // 恢复属性
+                            current.data.set_props(indices, props.clone());
+                            // 更新 undo 指针指向前一个版本
+                            *entry.chain.undo_ptr.write().unwrap() = next;
+                        }
+                    }
+                },
+                DeltaOp::SetEdgeProps(eid, SetPropsOp { indices, props }) => {
+                    // 恢复边属性
+                    if let Some(entry) = self.graph.edges.get(&eid) {
+                        let mut current = entry.chain.current.write().unwrap();
+                        if current.commit_ts == self.txn_id() {
+                            // 恢复属性
+                            current.data.set_props(indices, props.clone());
+                            // 更新 undo 指针指向前一个版本
+                            *entry.chain.undo_ptr.write().unwrap() = next;
+                        }
+                    }
+                }
+                DeltaOp::DelVertex(vid) => {
+                    // 恢复顶点
+                    if let Some(entry) = self.graph.vertices.get(&vid) {
+                        let mut current = entry.chain.current.write().unwrap();
+                        if current.commit_ts == self.txn_id() {
+                            // 恢复删除标记
+                            current.data.is_tombstone = false;
+                            // 更新 undo 指针指向前一个版本
+                            *entry.chain.undo_ptr.write().unwrap() = next;
+                        }
+                    }
+                },
+                DeltaOp::DelEdge(eid) => {
+                    // 恢复边
+                    if let Some(entry) = self.graph.edges.get(&eid) {
+                        let mut current = entry.chain.current.write().unwrap();
+                        if current.commit_ts == self.txn_id() {
+                            // 恢复删除标记
+                            current.data.is_tombstone = false;
+                            // 更新 undo 指针指向前一个版本
+                            *entry.chain.undo_ptr.write().unwrap() = next;
+                        }
+                    }
+                }
+                DeltaOp::AddLabel(_) => todo!(),
+                DeltaOp::RemoveLabel(_) => todo!(),
+                DeltaOp::AddInEdge(edge) => todo!(),
+                DeltaOp::AddOutEdge(edge) => todo!(),
+                DeltaOp::RemoveInEdge(eid) => todo!(),
+                DeltaOp::RemoveOutEdge(eid) => todo!(),
+            }
+        }
+        
+        // 从事务管理器中移除事务
+        self.graph.txn_manager.remove(self.txn_id())?;
         Ok(())
     }
 }
