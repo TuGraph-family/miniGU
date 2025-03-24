@@ -1,0 +1,16 @@
+---
+source: minigu/parser/src/parser/impls/type_element.rs
+expression: parsed
+---
+- UnsignedNumeric:
+    kind:
+      - Int:
+          - kind: Decimal
+            integer: "64"
+          - start: 5
+            end: 7
+      - start: 0
+        end: 8
+    not_null: false
+- start: 0
+  end: 8

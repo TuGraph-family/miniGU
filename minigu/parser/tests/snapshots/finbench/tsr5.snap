@@ -1,0 +1,12 @@
+---
+source: minigu/parser/tests/parser_test.rs
+---
+Err:
+  Unexpected:
+    input: "-- simple read 5\nMATCH (n:Account{id:12})<-[e:transfer]-(m:Account)\nWHERE\n    e.amount > 0\n    AND e.timestamp > 0\n    AND e.timestamp < 100\nRETURN\n    m.id as srcId,\n    count(e) as numEdges,\n    sum(e.amount) as sumAmount\nNEXT\nRETURN\n    srcId,\n    numEdges,\n    round(sumAmount * 1000) / 1000 as sumAmount\nORDER BY sumAmount DESC, srcId ASC"
+    span:
+      start: 17
+      end: 22
+    position:
+      - 2
+      - 1

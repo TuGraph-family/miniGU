@@ -1,0 +1,91 @@
+---
+source: minigu/parser/src/parser/impls/value_expr.rs
+expression: parsed
+---
+- Binary:
+    op:
+      - Add
+      - start: 2
+        end: 3
+    left:
+      - Variable: a
+      - start: 0
+        end: 1
+    right:
+      - Binary:
+          op:
+            - Div
+            - start: 16
+              end: 17
+          left:
+            - Binary:
+                op:
+                  - Mul
+                  - start: 6
+                    end: 7
+                left:
+                  - Value:
+                      Literal:
+                        Numeric:
+                          Integer:
+                            - kind: Decimal
+                              integer: "3"
+                            - start: 4
+                              end: 5
+                  - start: 4
+                    end: 5
+                right:
+                  - Binary:
+                      op:
+                        - Sub
+                        - start: 11
+                          end: 12
+                      left:
+                        - Value:
+                            Literal:
+                              Numeric:
+                                Integer:
+                                  - kind: Decimal
+                                    integer: "4"
+                                  - start: 9
+                                    end: 10
+                        - start: 9
+                          end: 10
+                      right:
+                        - Value:
+                            Literal:
+                              Numeric:
+                                Integer:
+                                  - kind: Decimal
+                                    integer: "5"
+                                  - start: 13
+                                    end: 14
+                        - start: 13
+                          end: 14
+                  - start: 8
+                    end: 15
+            - start: 4
+              end: 15
+          right:
+            - Unary:
+                op:
+                  - Minus
+                  - start: 18
+                    end: 19
+                child:
+                  - Value:
+                      Literal:
+                        Numeric:
+                          Integer:
+                            - kind: Decimal
+                              integer: "2"
+                            - start: 19
+                              end: 20
+                  - start: 19
+                    end: 20
+            - start: 18
+              end: 20
+      - start: 4
+        end: 20
+- start: 0
+  end: 20

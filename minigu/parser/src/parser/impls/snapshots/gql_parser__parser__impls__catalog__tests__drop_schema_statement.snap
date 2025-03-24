@@ -1,0 +1,16 @@
+---
+source: minigu/parser/src/parser/impls/catalog.rs
+expression: parsed
+---
+- path:
+    - - - Name: a
+        - start: 23
+          end: 24
+      - - Name: b
+        - start: 25
+          end: 26
+    - start: 22
+      end: 26
+  if_exists: true
+- start: 0
+  end: 26

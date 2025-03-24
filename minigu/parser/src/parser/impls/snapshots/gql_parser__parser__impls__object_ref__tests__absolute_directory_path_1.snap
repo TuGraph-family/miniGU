@@ -1,0 +1,7 @@
+---
+source: minigu/parser/src/parser/impls/object_ref.rs
+expression: parsed
+---
+- - Name: dir
+  - start: 1
+    end: 4

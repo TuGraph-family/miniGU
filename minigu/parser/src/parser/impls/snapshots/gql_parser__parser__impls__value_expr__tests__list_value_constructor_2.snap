@@ -1,0 +1,11 @@
+---
+source: minigu/parser/src/parser/impls/value_expr.rs
+expression: parsed
+---
+- type_name:
+    - List
+    - start: 0
+      end: 4
+  values: []
+- start: 0
+  end: 7

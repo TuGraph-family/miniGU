@@ -1,0 +1,7 @@
+---
+source: minigu/parser/src/parser/impls/session.rs
+expression: parsed
+---
+- ~
+- start: 0
+  end: 13

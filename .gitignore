@@ -25,3 +25,6 @@ target/
 # insta pending snapshots
 *.pending-snap
 *.snap.new
+
+# antlr
+.antlr/

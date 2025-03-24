@@ -1,18 +1,18 @@
 //! AST definitions for *transaction management*.
 
-use crate::imports::Vec;
-use crate::macros::{base, ext};
+use crate::macros::base;
+use crate::span::VecSpanned;
 
 #[apply(base)]
-pub struct StartTransaction(pub Vec<TransactionMode>);
+pub struct StartTransaction(pub VecSpanned<TransactionMode>);
 
-#[apply(ext)]
+#[apply(base)]
 pub enum EndTransaction {
     Rollback,
     Commit,
 }
 
-#[apply(ext)]
+#[apply(base)]
 pub enum TransactionMode {
     ReadOnly,
     ReadWrite,

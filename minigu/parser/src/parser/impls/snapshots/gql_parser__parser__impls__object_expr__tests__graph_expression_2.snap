@@ -1,0 +1,7 @@
+---
+source: minigu/parser/src/parser/impls/object_expr.rs
+expression: parsed
+---
+- Ref: Home
+- start: 0
+  end: 10

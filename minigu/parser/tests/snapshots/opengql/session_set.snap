@@ -1,0 +1,12 @@
+---
+source: minigu/parser/tests/parser_test.rs
+---
+Err:
+  Unexpected:
+    input: "SESSION SET GRAPH CURRENT_GRAPH\n\nSESSION SET GRAPH CURRENT_PROPERTY_GRAPH\n\nSESSION SET VALUE IF NOT EXISTS $exampleProperty = DATE '2022-10-10'\n\nSESSION SET TIME ZONE \"utc\"\n"
+    span:
+      start: 75
+      end: 82
+    position:
+      - 5
+      - 1

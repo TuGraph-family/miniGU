@@ -1,0 +1,13 @@
+---
+source: minigu/parser/src/parser/impls/common.rs
+expression: parsed
+---
+- General:
+    lower_bound: ~
+    upper_bound:
+      - kind: Decimal
+        integer: "456"
+      - start: 2
+        end: 5
+- start: 0
+  end: 6

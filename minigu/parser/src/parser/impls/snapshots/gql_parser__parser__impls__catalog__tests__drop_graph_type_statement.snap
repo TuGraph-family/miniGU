@@ -1,0 +1,24 @@
+---
+source: minigu/parser/src/parser/impls/catalog.rs
+expression: parsed
+---
+- path:
+    - schema:
+        - Absolute:
+            - - Name: a
+              - start: 36
+                end: 37
+            - - Name: b
+              - start: 38
+                end: 39
+        - start: 35
+          end: 39
+      objects:
+        - - c
+          - start: 40
+            end: 41
+    - start: 35
+      end: 41
+  if_exists: true
+- start: 0
+  end: 41

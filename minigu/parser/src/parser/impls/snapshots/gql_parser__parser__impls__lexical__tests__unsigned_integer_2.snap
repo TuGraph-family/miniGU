@@ -1,0 +1,8 @@
+---
+source: minigu/parser/src/parser/impls/lexical.rs
+expression: parsed
+---
+- kind: Octal
+  integer: 0o123
+- start: 0
+  end: 5

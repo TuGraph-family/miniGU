@@ -1,0 +1,52 @@
+---
+source: minigu/parser/src/parser/impls/type_element.rs
+expression: parsed
+---
+- name: ~
+  alias: ~
+  filler:
+    - key:
+        - - - Person1
+            - start: 2
+              end: 9
+        - start: 2
+          end: 9
+      label_set:
+        - - - Person2
+            - start: 14
+              end: 21
+        - start: 14
+          end: 21
+      property_types:
+        - - name:
+              - id
+              - start: 23
+                end: 25
+            value_type:
+              - SignedNumeric:
+                  kind:
+                    - Int: ~
+                    - start: 26
+                      end: 29
+                  not_null: false
+              - start: 26
+                end: 29
+          - start: 23
+            end: 29
+        - - name:
+              - name
+              - start: 31
+                end: 35
+            value_type:
+              - String:
+                  min_length: ~
+                  max_length: ~
+                  not_null: true
+              - start: 36
+                end: 51
+          - start: 31
+            end: 51
+    - start: 1
+      end: 52
+- start: 0
+  end: 53

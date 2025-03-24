@@ -1,0 +1,12 @@
+---
+source: minigu/parser/src/parser/impls/type_element.rs
+expression: parsed
+---
+- SignedNumeric:
+    kind:
+      - Int32
+      - start: 0
+        end: 16
+    not_null: false
+- start: 0
+  end: 16

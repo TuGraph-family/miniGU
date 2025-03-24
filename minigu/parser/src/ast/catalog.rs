@@ -3,9 +3,10 @@
 use super::{
     CallProcedureStatement, CatalogObjectRef, GraphElementType, GraphExpr, GraphTypeRef, SchemaPath,
 };
-use crate::imports::Vec;
-use crate::macros::{base, ext};
-use crate::span::Span;
+use crate::macros::base;
+use crate::span::{OptSpanned, Spanned, VecSpanned};
+
+pub type LinearCatalogModifyingStatement = VecSpanned<CatalogModifyingStatement>;
 
 #[apply(base)]
 pub enum CatalogModifyingStatement {
@@ -20,28 +21,25 @@ pub enum CatalogModifyingStatement {
 
 #[apply(base)]
 pub struct CreateSchemaStatement {
-    pub path: SchemaPath,
+    pub path: Spanned<SchemaPath>,
     pub if_not_exists: bool,
-    pub span: Span,
 }
 
 #[apply(base)]
 pub struct DropSchemaStatement {
-    pub path: SchemaPath,
+    pub path: Spanned<SchemaPath>,
     pub if_exists: bool,
-    pub span: Span,
 }
 
 #[apply(base)]
 pub struct CreateGraphStatement {
-    pub path: CatalogObjectRef,
-    pub kind: CreateGraphOrGraphTypeStatementKind,
-    pub graph_type: OfGraphType,
-    pub source: Option<GraphExpr>,
-    pub span: Span,
+    pub path: Spanned<CatalogObjectRef>,
+    pub kind: Spanned<CreateGraphOrGraphTypeStatementKind>,
+    pub graph_type: Spanned<OfGraphType>,
+    pub source: OptSpanned<GraphExpr>,
 }
 
-#[apply(ext)]
+#[apply(base)]
 pub enum CreateGraphOrGraphTypeStatementKind {
     Create,
     CreateIfNotExists,
@@ -50,37 +48,34 @@ pub enum CreateGraphOrGraphTypeStatementKind {
 
 #[apply(base)]
 pub enum OfGraphType {
-    Like(GraphExpr),
-    Ref(GraphTypeRef),
-    Nested(Vec<GraphElementType>),
+    Like(Spanned<GraphExpr>),
+    Ref(Spanned<GraphTypeRef>),
+    Nested(VecSpanned<GraphElementType>),
     Any,
 }
 
 #[apply(base)]
 pub struct DropGraphStatement {
-    pub path: CatalogObjectRef,
+    pub path: Spanned<CatalogObjectRef>,
     pub if_exists: bool,
-    pub span: Span,
 }
 
 #[apply(base)]
 pub struct DropGraphTypeStatement {
-    pub path: CatalogObjectRef,
+    pub path: Spanned<CatalogObjectRef>,
     pub if_exists: bool,
-    pub span: Span,
 }
 
 #[apply(base)]
 pub struct CreateGraphTypeStatement {
-    pub path: CatalogObjectRef,
-    pub kind: CreateGraphOrGraphTypeStatementKind,
-    pub source: GraphTypeSource,
-    pub span: Span,
+    pub path: Spanned<CatalogObjectRef>,
+    pub kind: Spanned<CreateGraphOrGraphTypeStatementKind>,
+    pub source: Spanned<GraphTypeSource>,
 }
 
 #[apply(base)]
 pub enum GraphTypeSource {
-    Copy(GraphTypeRef),
-    Like(GraphExpr),
-    Nested(GraphElementType),
+    Copy(Spanned<GraphTypeRef>),
+    Like(Spanned<GraphExpr>),
+    Nested(VecSpanned<GraphElementType>),
 }

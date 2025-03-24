@@ -1,0 +1,8 @@
+---
+source: minigu/parser/src/parser/impls/lexical.rs
+expression: parsed
+---
+- kind: Char
+  literal: "ab\ncd"
+- start: 0
+  end: 8

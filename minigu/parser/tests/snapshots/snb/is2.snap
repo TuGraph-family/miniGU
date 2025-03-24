@@ -1,0 +1,12 @@
+---
+source: minigu/parser/tests/parser_test.rs
+---
+Err:
+  Unexpected:
+    input: "-- short reads 2\nMATCH (person:Person WHERE person.id = 4194)\n    <-[e1]-(message)\n    -[e2:replyOf]->{1,}(post:Post)\n    -[e3:postHasCreator]->(originalPoster:Person)\nWHERE\n    type(e1) = 'postHasCreator' OR type(e1) = 'commentHasCreator'\nRETURN\n    message.id AS messageId,\n    message.content AS messageContent,\n    message.imageFile AS messageImageFile,\n    message.creationDate AS messageCreationDate,\n    post.id AS postId,\n    originalPoster.id AS originalPosterId,\n    originalPoster.firstName AS originalPosterFirstName,\n    originalPoster.lastName AS originalPosterLastName\nORDER BY messageCreationDate DESC, messageId DESC\nLIMIT 10"
+    span:
+      start: 17
+      end: 22
+    position:
+      - 2
+      - 1

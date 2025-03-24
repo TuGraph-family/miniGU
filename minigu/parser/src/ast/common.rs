@@ -1,43 +1,122 @@
 //! AST definitions for *common elements*.
 
-use super::{Expr, Ident};
-use crate::imports::{Box, Vec};
-use crate::macros::{base, ext};
-use crate::span::Span;
+use super::{Expr, FieldOrProperty, Ident, NonNegativeInteger, UnsignedInteger};
+use crate::macros::base;
+use crate::span::{BoxSpanned, OptSpanned, Spanned, VecSpanned};
 
-// #[apply(ext)]
-// pub enum MatchMode {
-//     Repeatable,
-//     Different,
-// }
+#[apply(base)]
+pub enum LabelExpr {
+    /// Label conjunction, i.e., 'label1 & label2'.
+    Conjunction(BoxSpanned<LabelExpr>, BoxSpanned<LabelExpr>),
+    /// Label disjunction, i.e., 'label1 | label2'.
+    Disjunction(BoxSpanned<LabelExpr>, BoxSpanned<LabelExpr>),
+    /// Label negation, i.e., '!label'.
+    Negation(BoxSpanned<LabelExpr>),
+    /// A single label.
+    Label(Ident),
+    /// Wildcard label, i.e., '%'.
+    Wildcard,
+}
 
-// #[apply(base)]
-// pub struct PathPattern<'a> {
-//     #[cfg_attr(feature = "serde", serde(borrow))]
-//     pub variable: Option<Ident<'a>>,
-//     pub prefix: PathPatternPrefix,
-// }
+#[apply(base)]
+pub struct PropertyKeyValuePair {
+    pub name: Ident,
+    pub value: Expr,
+}
 
-// #[apply(base)]
-// pub enum ElementPattern<'a> {
-//     #[cfg_attr(feature = "serde", serde(borrow))]
-//     Node(NodePattern<'a>),
-//     Edge(EdgePattern<'a>),
-// }
+pub type Yield = VecSpanned<YieldItem>;
 
-// #[apply(base)]
-// pub struct NodePattern<'a>(
-//     pub ElementPatternFilter<'a>,
-// );
+#[apply(base)]
+pub struct YieldItem {
+    pub name: Spanned<Ident>,
+    pub alias: OptSpanned<Ident>,
+}
 
-// #[apply(base)]
-// pub struct EdgePattern<'a> {
-//     pub kind: EdgePatternKind,
-//     pub filter: ElementPatternFilter<'a>,
-// }
+#[apply(base)]
+pub enum PathMode {
+    Walk,
+    Trail,
+    Simple,
+    Acyclic,
+}
 
-#[apply(ext)]
+#[apply(base)]
+pub enum PathSearchMode {
+    All(OptSpanned<PathMode>),
+    Any {
+        number: OptSpanned<NonNegativeInteger>,
+        mode: OptSpanned<PathMode>,
+    },
+    AllShortest(OptSpanned<PathMode>),
+    AnyShortest(OptSpanned<PathMode>),
+    CountedShortest {
+        number: Spanned<NonNegativeInteger>,
+        mode: OptSpanned<PathMode>,
+    },
+    CountedShortestGroup {
+        number: OptSpanned<NonNegativeInteger>,
+        mode: OptSpanned<PathMode>,
+    },
+}
+
+#[apply(base)]
+pub enum PathPatternPrefix {
+    PathMode(PathMode),
+    PathSearch(PathSearchMode),
+}
+
+#[apply(base)]
+pub struct PathPattern {
+    pub variable: OptSpanned<Ident>,
+    pub prefix: OptSpanned<PathPatternPrefix>,
+    pub expr: Spanned<PathPatternExpr>,
+}
+
+#[apply(base)]
+pub struct GroupedPathPattern {
+    pub variable: OptSpanned<Ident>,
+    pub mode: OptSpanned<PathMode>,
+    pub expr: BoxSpanned<PathPatternExpr>,
+    pub where_clause: OptSpanned<Expr>,
+}
+
+// TODO: Add definition for simplified path pattern expression.
+#[apply(base)]
+pub enum PathPatternExpr {
+    Union(VecSpanned<PathPatternExpr>),
+    Alternation(VecSpanned<PathPatternExpr>),
+    Concat(VecSpanned<PathPatternExpr>),
+    Quantified {
+        path: BoxSpanned<PathPatternExpr>,
+        quantifier: Spanned<PatternQuantifier>,
+    },
+    Optional(BoxSpanned<PathPatternExpr>),
+    Grouped(GroupedPathPattern),
+    Pattern(ElementPattern),
+}
+
+#[apply(base)]
+pub enum PatternQuantifier {
+    Asterisk,
+    Plus,
+    Fixed(Spanned<UnsignedInteger>),
+    General {
+        lower_bound: OptSpanned<UnsignedInteger>,
+        upper_bound: OptSpanned<UnsignedInteger>,
+    },
+}
+
+#[apply(base)]
+pub enum ElementPattern {
+    Node(ElementPatternFiller),
+    Edge {
+        kind: EdgePatternKind,
+        filler: ElementPatternFiller,
+    },
+}
+
 /// The direction of an edge pattern.
+#[apply(base)]
 pub enum EdgePatternKind {
     /// Edge pointing left, i.e., '<-[]-' or '<-'.
     Left,
@@ -55,85 +134,35 @@ pub enum EdgePatternKind {
     Any,
 }
 
-// #[apply(base)]
-// pub struct ElementPatternFilter<'a> {
-//     #[cfg_attr(feature = "serde", serde(borrow))]
-//     pub variable: Option<ElementVariableDeclaration<'a>>,
-//     pub label: Option<LabelExpr<'a>>,
-//     pub predicate: Option<ElementPatternPredicate<'a>>,
-// }
-
 #[apply(base)]
-pub struct ElementVariableDeclaration {
-    pub variable: Ident,
-    pub temp: bool,
+pub struct ElementPatternFiller {
+    pub variable: OptSpanned<Ident>,
+    pub label: OptSpanned<LabelExpr>,
+    pub predicate: OptSpanned<ElementPatternPredicate>,
 }
 
 #[apply(base)]
 pub enum ElementPatternPredicate {
-    Where(Expr),
-    Property(Vec<PropertyKeyValuePair>),
-}
-
-// #[apply(ext)]
-// #[derive(Default)]
-// pub struct PathPatternPrefix {
-//     pub mode: PathMode,
-//     pub search: PathSearch,
-// }
-
-// #[apply(ext)]
-// #[derive(Default)]
-// pub enum PathMode {
-//     #[default]
-//     Walk,
-//     Trail,
-//     Simple,
-//     Acyclic,
-// }
-
-// #[apply(ext)]
-// #[derive(Default)]
-// pub enum PathSearch {
-//     #[default]
-//     All,
-//     Any(usize),
-//     AllShortest,
-//     AnyShortest,
-//     Shortest(usize),
-//     ShortestGroup(usize),
-// }
-
-#[apply(base)]
-pub enum LabelExpr {
-    /// Label conjunction, i.e., 'label1 & label2'.
-    Conjunction(Box<LabelExpr>, Box<LabelExpr>),
-    /// Label disjunction, i.e., 'label1 | label2'.
-    Disjunction(Box<LabelExpr>, Box<LabelExpr>),
-    /// Label negation, i.e., '!label'.
-    Negation(Box<LabelExpr>),
-    /// A single label.
-    Label(Ident),
-    /// Wildcard label, i.e., '%'.
-    Wildcard,
+    Where(Spanned<Expr>),
+    Property(VecSpanned<FieldOrProperty>),
 }
 
 #[apply(base)]
-pub struct PropertyKeyValuePair {
-    pub name: Ident,
-    pub value: Expr,
-    pub span: Span,
+pub enum MatchMode {
+    Repeatable,
+    Different,
 }
 
 #[apply(base)]
-pub struct Yield {
-    pub items: Vec<YieldItem>,
-    pub span: Span,
+pub struct GraphPattern {
+    pub match_mode: OptSpanned<MatchMode>,
+    pub patterns: VecSpanned<PathPattern>,
+    pub keep: OptSpanned<PathPatternPrefix>,
+    pub where_clause: OptSpanned<Expr>,
 }
 
 #[apply(base)]
-pub struct YieldItem {
-    pub name: Ident,
-    pub alias: Option<Ident>,
-    pub span: Span,
+pub struct GraphPatternBindingTable {
+    pub pattern: Spanned<GraphPattern>,
+    pub yield_clause: VecSpanned<Ident>,
 }

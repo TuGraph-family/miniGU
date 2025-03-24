@@ -1,0 +1,9 @@
+---
+source: minigu/parser/src/parser/impls/session.rs
+expression: parsed
+---
+- - AllParameters
+  - start: 14
+    end: 28
+- start: 0
+  end: 28

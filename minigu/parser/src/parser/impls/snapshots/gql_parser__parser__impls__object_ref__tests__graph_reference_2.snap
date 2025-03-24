@@ -1,0 +1,7 @@
+---
+source: minigu/parser/src/parser/impls/object_ref.rs
+expression: parsed
+---
+- Name: graph
+- start: 0
+  end: 7

@@ -4,48 +4,38 @@ use super::{
     GraphExpr, Ident, SchemaRef, StringLiteral, TypedGraphInitializer, TypedValueInitializer,
 };
 use crate::macros::base;
-use crate::span::Span;
+use crate::span::{OptSpanned, Spanned};
 
 #[apply(base)]
-pub struct SessionSet {
-    pub kind: SessionSetKind,
-    pub span: Span,
-}
-
-#[apply(base)]
-pub enum SessionSetKind {
-    Schema(SchemaRef),
-    Graph(GraphExpr),
-    TimeZone(StringLiteral),
-    Parameter(SessionSetParameter),
+pub enum SessionSet {
+    Schema(Spanned<SchemaRef>),
+    Graph(Spanned<GraphExpr>),
+    TimeZone(Spanned<StringLiteral>),
+    Parameter(Spanned<SessionSetParameter>),
 }
 
 #[apply(base)]
 pub struct SessionSetParameter {
-    pub name: Ident,
+    pub name: Spanned<Ident>,
     pub if_not_exists: bool,
     pub kind: SessionSetParameterKind,
-    pub span: Span,
 }
 
 #[apply(base)]
 pub enum SessionSetParameterKind {
-    Graph(TypedGraphInitializer),
-    Value(TypedValueInitializer),
+    Graph(Spanned<TypedGraphInitializer>),
+    Value(Spanned<TypedValueInitializer>),
 }
 
 #[apply(base)]
-pub struct SessionReset {
-    pub kind: SessionResetKind,
-    pub span: Span,
-}
+pub struct SessionReset(pub OptSpanned<SessionResetArgs>);
 
 #[apply(base)]
-pub enum SessionResetKind {
+pub enum SessionResetArgs {
     AllCharacteristics,
     AllParameters,
     Schema,
     Graph,
     TimeZone,
-    Parameter(Ident),
+    Parameter(Spanned<Ident>),
 }

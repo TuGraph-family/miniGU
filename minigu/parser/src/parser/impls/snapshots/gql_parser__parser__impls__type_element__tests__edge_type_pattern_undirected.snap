@@ -1,0 +1,58 @@
+---
+source: minigu/parser/src/parser/impls/type_element.rs
+expression: parsed
+---
+- name: ~
+  direction: Undirected
+  left:
+    - Filler:
+        key: ~
+        label_set:
+          - - - Person
+              - start: 2
+                end: 8
+          - start: 2
+            end: 8
+        property_types: ~
+    - start: 0
+      end: 9
+  filler:
+    - key: ~
+      label_set:
+        - - - knows
+            - start: 13
+              end: 18
+        - start: 13
+          end: 18
+      property_types:
+        - - name:
+              - since
+              - start: 20
+                end: 25
+            value_type:
+              - SignedNumeric:
+                  kind:
+                    - Int: ~
+                    - start: 26
+                      end: 29
+                  not_null: false
+              - start: 26
+                end: 29
+          - start: 20
+            end: 29
+    - start: 10
+      end: 32
+  right:
+    - Filler:
+        key: ~
+        label_set:
+          - - - Person
+              - start: 35
+                end: 41
+          - start: 35
+            end: 41
+        property_types: ~
+    - start: 33
+      end: 42
+- start: 0
+  end: 42

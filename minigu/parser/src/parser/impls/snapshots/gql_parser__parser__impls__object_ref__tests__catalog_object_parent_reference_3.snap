@@ -1,0 +1,12 @@
+---
+source: minigu/parser/src/parser/impls/object_ref.rs
+expression: parsed
+---
+schema: ~
+objects:
+  - - a
+    - start: 0
+      end: 1
+  - - b
+    - start: 2
+      end: 3

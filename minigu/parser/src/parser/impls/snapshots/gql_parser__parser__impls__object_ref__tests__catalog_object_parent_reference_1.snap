@@ -1,0 +1,9 @@
+---
+source: minigu/parser/src/parser/impls/object_ref.rs
+expression: parsed
+---
+schema:
+  - Absolute: []
+  - start: 0
+    end: 1
+objects: []

@@ -1,0 +1,12 @@
+---
+source: minigu/parser/tests/parser_test.rs
+---
+Err:
+  Unexpected:
+    input: "-- simple read 6\nMATCH\n    (src:Account{id:12})<-[e1:transfer]-(m:Account)\n    -[e2:transfer]->(dst:Account)\nWHERE\n    dst.isBlocked = true\n    AND src.id <> dst.id\n    AND e1.timestamp > 20\n    AND e1.timestamp < 40\n    AND e2.timestamp > 30\n    AND e2.timestamp < 70\nRETURN\n    DISTINCT dst.id as dstId\nORDER BY dstId ASC"
+    span:
+      start: 17
+      end: 22
+    position:
+      - 2
+      - 1

@@ -1,0 +1,19 @@
+---
+source: minigu/parser/src/parser/impls/type_element.rs
+expression: parsed
+---
+- name:
+    - id
+    - start: 0
+      end: 2
+  value_type:
+    - SignedNumeric:
+        kind:
+          - Int: ~
+          - start: 3
+            end: 6
+        not_null: false
+    - start: 3
+      end: 6
+- start: 0
+  end: 6
