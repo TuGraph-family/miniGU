@@ -141,7 +141,7 @@ nestedProcedureSpecification
 
 // <catalog-modifying procedure specification>, <data-modifying procedure specification> and <query specification> are
 // identical productions. The specification distinguishes them in the BNF, but in the implementation, the distinction
-// has to be made sematically, in code, based on the kind of statements contained in the <procedure specification>.
+// has to be made semantically, in code, based on the kind of statements contained in the <procedure specification>.
 procedureSpecification
     : procedureBody
 //    : catalogModifyingProcedureSpecification
@@ -788,10 +788,10 @@ graphPatternYieldItemList
     : graphPatternYieldItem (COMMA graphPatternYieldItem)*
     ;
 
-// <elemement variable reference> and <path variable reference> are identical productions, both consisting
+// <element variable reference> and <path variable reference> are identical productions, both consisting
 // of a single non-terminal <binding variable reference>. Thus <graph pattern yield item> is ambiguous
 // from a parsing standpoint. So here we simply use bindingVariableReference. Post parsing code must
-// apply the semantics assocaited with each type of <binding variable reference>.
+// apply the semantics associated with each type of <binding variable reference>.
 graphPatternYieldItem
     : bindingVariableReference
 //    : elementVariableReference
@@ -2073,7 +2073,7 @@ directedPredicatePart2
     : IS NOT? DIRECTED
     ;
 
-// 19.9 <labled predicate>
+// 19.9 <labeled predicate>
 
 labeledPredicate
     : elementVariableReference labeledPredicatePart2
@@ -2137,13 +2137,13 @@ property_existsPredicate
 valueExpression
     // Numeric, datetime and duration types all support roughly the same expressions. So here
     // we define a rule that deals with all of them. It is up to the implementation to post
-    // process the sytnax tree and flag invalid type and function combinations.
+    // process the syntax tree and flag invalid type and function combinations.
     : sign = (PLUS_SIGN | MINUS_SIGN) valueExpression                       #signedExprAlt
     | valueExpression operator = (ASTERISK | SOLIDUS) valueExpression       #multDivExprAlt
     | valueExpression operator = (PLUS_SIGN | MINUS_SIGN) valueExpression   #addSubtractExprAlt
     // Character strings, byte strings, lists and paths all support the same concatenation
     // operator. So here we define a rule that deals with all of them. Of course the types
-    // cannot be combined. So it is up to implementation to post process the sytax tree
+    // cannot be combined. So it is up to implementation to post process the syntax tree
     // and flag invalid type and function combinations.
     | valueExpression CONCATENATION_OPERATOR valueExpression                #concatenationExprAlt
     // The comparisonPredicate productions moved here to eliminate left mutual recursion.

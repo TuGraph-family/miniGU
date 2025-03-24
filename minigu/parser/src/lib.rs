@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "512"]
 // TODO: Remove this once the implementation is complete.
-// #![allow(unused_macros, unused)]
+#![allow(unused_macros, unused)]
 #![deny(clippy::undocumented_unsafe_blocks)]
 
 #[cfg(not(feature = "std"))]
