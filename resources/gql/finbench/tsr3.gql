@@ -2,8 +2,8 @@
 OPTIONAL MATCH (n:Account{id:12})<-[e:transfer]-(m:Account)
 WHERE
     e.amount > 30.0
-    AND e.timestamp > 10
-    AND e.timestamp < 70
+    AND e.ts > 10
+    AND e.ts < 70
     AND m.isBlocked=true
 RETURN count(m) * 1.0 as numM
 NEXT

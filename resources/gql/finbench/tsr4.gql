@@ -3,8 +3,8 @@ MATCH (n:Account{id:12}) RETURN n NEXT
 MATCH (n)-[e:transfer]->(m:Account)
 WHERE
     e.amount > 20
-    AND e.timestamp > 30
-    AND e.timestamp < 101
+    AND e.ts > 30
+    AND e.ts < 101
 RETURN
     m.id as dstId,
     count(e) as numEdges,

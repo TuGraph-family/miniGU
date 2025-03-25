@@ -2,8 +2,8 @@
 MATCH (n:Account{id:12}) RETURN n NEXT
 OPTIONAL MATCH (n)-[e:transfer]->(m:Account)
 WHERE
-    e.timestamp > 45
-    AND e.timestamp < 50
+    e.ts > 45
+    AND e.ts < 50
 RETURN
     n,
     sum(e.amount) as sumEdge1Amount,
@@ -12,8 +12,8 @@ RETURN
 NEXT
 OPTIONAL MATCH (n)<-[e:transfer]-(m:Account)
 WHERE
-    e.timestamp > 0
-    AND e.timestamp < 100
+    e.ts > 0
+    AND e.ts < 100
 RETURN
     sumEdge1Amount,
     maxEdge1Amount,

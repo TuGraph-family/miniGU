@@ -2,8 +2,8 @@
 MATCH (n:Account{id:12})<-[e:transfer]-(m:Account)
 WHERE
     e.amount > 0
-    AND e.timestamp > 0
-    AND e.timestamp < 100
+    AND e.ts > 0
+    AND e.ts < 100
 RETURN
     m.id as srcId,
     count(e) as numEdges,
