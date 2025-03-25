@@ -19,6 +19,20 @@ use crate::parser::token::{TokenStream, any};
 use crate::parser::utils::{SpannedParserExt, ToSpanned, def_parser_alias};
 use crate::span::Spanned;
 
+macro_rules! predefined_value_function {
+    ($name:expr, $arg:expr, $callback:expr) => {
+        move |input: &mut TokenStream| {
+            preceded(
+                $name,
+                delimited(TokenKind::LeftParen, $arg, TokenKind::RightParen),
+            )
+            .map($callback)
+            .spanned()
+            .parse_next(input)
+        }
+    };
+}
+
 const PREC_INIT: Precedence = 0;
 const PREC_OR_XOR: Precedence = 1;
 const PREC_AND: Precedence = 2;
@@ -153,13 +167,21 @@ fn value_expression_operand(input: &mut TokenStream) -> ModalResult<Spanned<Expr
     .parse_next(input)
 }
 
+pub fn value_expression_primary_inner(input: &mut TokenStream) -> ModalResult<Spanned<Expr>> {
+    dispatch! {peek(any);
+        TokenKind::Path => path_value_constructor.map_inner(Expr::Path),
+        TokenKind::Case | TokenKind::Coalesce | TokenKind::Nullif => case_expression,
+        kind if kind.is_prefix_of_aggregate_function() => aggregate_function.map_inner(Expr::Aggregate),
+        _ => unsigned_value_specification.map_inner(Expr::Value),
+    }
+    .parse_next(input)
+}
+
 pub fn value_expression_primary(input: &mut TokenStream) -> ModalResult<Spanned<Expr>> {
     let base = dispatch! {peek(any);
         TokenKind::LeftParen => parenthesized_value_expression,
-        TokenKind::Path => path_value_constructor.map_inner(Expr::Path),
         kind if kind.is_prefix_of_regular_identifier() => binding_variable_reference.map_inner(Expr::Variable),
-        kind if kind.is_prefix_of_aggregate_function() => aggregate_function.map_inner(Expr::Aggregate),
-        _ => unsigned_value_specification.map_inner(Expr::Value),
+        _ => value_expression_primary_inner,
     };
     (
         base,
@@ -200,21 +222,45 @@ pub fn non_parenthesized_value_expression_primary(
     .parse_next(input)
 }
 
+// TODO: Implement this using `value_expression_primary_inner`.
 pub fn non_parenthesized_value_expression_primary_special_case(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<Expr>> {
-    alt((
-        aggregate_function.map_inner(Expr::Aggregate),
-        unsigned_value_specification.map_inner(Expr::Value),
-        path_value_constructor.map_inner(Expr::Path),
-        separated_pair(value_expression_primary, TokenKind::Period, property_name)
-            .map(|(source, trailing_name)| Expr::Property {
-                source: Box::new(source),
-                trailing_names: [trailing_name].into(),
-            })
-            .spanned(),
-        fail,
-    ))
+    fail(input)
+}
+
+pub fn case_expression(input: &mut TokenStream) -> ModalResult<Spanned<Expr>> {
+    dispatch! {peek(any);
+        TokenKind::Nullif | TokenKind::Coalesce => {
+            case_abbreviation.map_inner(Expr::Function)
+        },
+        _ => fail
+    }
+    .parse_next(input)
+}
+
+pub fn case_abbreviation(input: &mut TokenStream) -> ModalResult<Spanned<Function>> {
+    dispatch! {peek(any);
+        TokenKind::Nullif => predefined_value_function!(
+            TokenKind::Nullif,
+            (value_expression, value_expression),
+            |(a, b)| CaseFunction::NullIf(Box::new(a), Box::new(b))
+        ),
+        TokenKind::Coalesce => {
+            preceded(
+                TokenKind::Coalesce,
+                delimited(
+                    TokenKind::LeftParen,
+                    separated(1.., value_expression, TokenKind::Comma),
+                    TokenKind::RightParen
+                )
+            )
+            .map(CaseFunction::Coalesce)
+            .spanned()
+        },
+        _ => fail
+    }
+    .map_inner(Function::Case)
     .parse_next(input)
 }
 
@@ -355,26 +401,11 @@ pub fn numeric_value_function(input: &mut TokenStream) -> ModalResult<Spanned<Nu
     .parse_next(input)
 }
 
-macro_rules! predefined_value_function {
-    ($name:expr, $arg:expr, $callback:expr) => {
-        move |input: &mut TokenStream| {
-            preceded(
-                $name,
-                delimited(TokenKind::LeftParen, $arg, TokenKind::RightParen),
-            )
-            .map(Box::new)
-            .map($callback)
-            .spanned()
-            .parse_next(input)
-        }
-    };
-}
-
 pub fn char_length_function(input: &mut TokenStream) -> ModalResult<Spanned<NumericFunction>> {
     predefined_value_function!(
         one_of((TokenKind::CharLength, TokenKind::CharacterLength)),
         value_expression,
-        NumericFunction::CharLength
+        |a| NumericFunction::CharLength(Box::new(a))
     )
     .parse_next(input)
 }
@@ -383,23 +414,23 @@ pub fn byte_length_function(input: &mut TokenStream) -> ModalResult<Spanned<Nume
     predefined_value_function!(
         one_of((TokenKind::ByteLength, TokenKind::OctetLength)),
         value_expression,
-        NumericFunction::ByteLength
+        |a| NumericFunction::ByteLength(Box::new(a))
     )
     .parse_next(input)
 }
 
 pub fn path_length_function(input: &mut TokenStream) -> ModalResult<Spanned<NumericFunction>> {
-    predefined_value_function!(
-        TokenKind::PathLength,
-        value_expression,
-        NumericFunction::PathLength
-    )
+    predefined_value_function!(TokenKind::PathLength, value_expression, |a| {
+        NumericFunction::PathLength(Box::new(a))
+    })
     .parse_next(input)
 }
 
 pub fn absolute_value_function(input: &mut TokenStream) -> ModalResult<Spanned<NumericFunction>> {
-    predefined_value_function!(TokenKind::Abs, value_expression, NumericFunction::Absolute)
-        .parse_next(input)
+    predefined_value_function!(TokenKind::Abs, value_expression, |a| {
+        NumericFunction::Absolute(Box::new(a))
+    })
+    .parse_next(input)
 }
 
 pub fn aggregate_function(input: &mut TokenStream) -> ModalResult<Spanned<AggregateFunction>> {

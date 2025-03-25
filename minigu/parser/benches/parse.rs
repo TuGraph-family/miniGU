@@ -45,7 +45,7 @@ macro_rules! add_parser_bench {
 // add_parser_bench!("finbench", ["tsr1", "tsr2", "tsr3", "tsr4", "tsr5", "tsr6"]);
 add_parser_bench!("finbench", ["tsr1", "tsr4", "tsr5", "tsr6"]);
 // add_parser_bench!("snb", ["is1", "is2", "is3", "is4", "is5", "is6", "is7"]);
-add_parser_bench!("snb", ["is1", "is2", "is3", "is6"]);
+add_parser_bench!("snb", ["is1", "is2", "is3", "is4", "is6"]);
 // add_parser_bench!("opengql", [
 //     "create_graph",
 //     "create_schema",

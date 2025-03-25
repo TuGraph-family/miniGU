@@ -89,6 +89,7 @@ pub enum UnaryOp {
 pub enum Function {
     Generic(GenericFunction),
     Numeric(NumericFunction),
+    Case(CaseFunction),
 }
 
 #[apply(base)]
@@ -103,6 +104,12 @@ pub enum NumericFunction {
     ByteLength(BoxSpanned<Expr>),
     PathLength(BoxSpanned<Expr>),
     Absolute(BoxSpanned<Expr>),
+}
+
+#[apply(base)]
+pub enum CaseFunction {
+    NullIf(BoxSpanned<Expr>, BoxSpanned<Expr>),
+    Coalesce(VecSpanned<Expr>),
 }
 
 #[apply(base)]
