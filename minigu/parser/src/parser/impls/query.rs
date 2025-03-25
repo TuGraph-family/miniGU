@@ -2,10 +2,11 @@ use winnow::combinator::{
     alt, delimited, dispatch, empty, fail, opt, peek, preceded, repeat, separated,
     separated_foldl1, seq,
 };
-use winnow::token::any;
 use winnow::{ModalResult, Parser};
 
-use super::common::{graph_pattern_binding_table, use_graph_clause};
+use super::common::{
+    graph_pattern_binding_table, limit_clause, offset_clause, order_by_clause, use_graph_clause,
+};
 use super::lexical::identifier;
 use super::object_expr::graph_expression;
 use super::procedure_call::call_procedure_statement;
@@ -15,9 +16,8 @@ use super::value_expr::{aggregating_value_expression, binding_variable_reference
 use crate::ast::*;
 use crate::imports::{Box, Vec};
 use crate::lexer::TokenKind;
-use crate::parser::impls::common::{limit_clause, offset_clause, order_by_clause};
-use crate::parser::token::{Token, TokenStream};
-use crate::parser::utils::{SpannedParserExt, ToSpanned, def_parser_alias, peek1, take1};
+use crate::parser::token::{Token, TokenStream, any};
+use crate::parser::utils::{SpannedParserExt, ToSpanned, def_parser_alias};
 use crate::span::{Spanned, VecSpanned};
 
 pub fn composite_query_statement(
@@ -40,7 +40,7 @@ pub fn composite_query_statement(
 }
 
 pub fn query_conjunction(input: &mut TokenStream) -> ModalResult<Spanned<QueryConjunction>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Union
         | TokenKind::Except
         | TokenKind::Intersect => set_operator.map_inner(QueryConjunction::SetOp),
@@ -60,7 +60,7 @@ pub fn set_operator(input: &mut TokenStream) -> ModalResult<Spanned<SetOp>> {
 }
 
 pub fn set_operator_kind(input: &mut TokenStream) -> ModalResult<Spanned<SetOpKind>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::Union => empty.value(SetOpKind::Union),
         TokenKind::Except => empty.value(SetOpKind::Except),
         TokenKind::Intersect => empty.value(SetOpKind::Intersect),
@@ -81,7 +81,7 @@ pub fn composite_query_primary(
 pub fn linear_query_statement(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<LinearQueryStatement>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Use | TokenKind::Select => {
             focused_linear_query_statement.map_inner(LinearQueryStatement::Focused)
         },
@@ -96,7 +96,7 @@ pub fn linear_query_statement(
 pub fn ambient_linear_query_statement(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<AmbientLinearQueryStatement>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::LeftBrace => {
             nested_query_specification
                 .map(Box::new)
@@ -155,7 +155,7 @@ pub fn select_statement(
 pub fn order_by_and_page_statement(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<OrderByAndPageStatement>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Order => {
             (order_by_clause, opt(offset_clause), opt(limit_clause))
                 .map(|(order_by, offset, limit)| OrderByAndPageStatement {
@@ -189,7 +189,7 @@ pub fn order_by_and_page_statement(
 pub fn primitive_result_statement(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<ResultStatement>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Return => {
             (return_statement, opt(order_by_and_page_statement))
                 .map(|(statement, order_by)| ResultStatement::Return {
@@ -211,7 +211,7 @@ pub fn return_statement(input: &mut TokenStream) -> ModalResult<Spanned<ReturnSt
 }
 
 pub fn return_statement_body(input: &mut TokenStream) -> ModalResult<Spanned<ReturnStatement>> {
-    let mut items = dispatch! {peek1;
+    let mut items = dispatch! {peek(any);
         TokenKind::Asterisk => TokenKind::Asterisk.value(Return::All),
         _ => return_item_list.map(Return::Items)
     }
@@ -249,7 +249,7 @@ pub fn group_by_clause(input: &mut TokenStream) -> ModalResult<Spanned<GroupBy>>
 }
 
 pub fn grouping_element_list(input: &mut TokenStream) -> ModalResult<VecSpanned<Ident>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::LeftParen => (TokenKind::LeftParen, TokenKind::RightParen).value(VecSpanned::new()),
         _ => separated(1.., grouping_element, TokenKind::Comma)
     }
@@ -261,7 +261,7 @@ def_parser_alias!(grouping_element, binding_variable_reference, Spanned<Ident>);
 pub fn simple_query_statement(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<SimpleQueryStatement>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Match => match_statement.map_inner(SimpleQueryStatement::Match),
         // TODO: Add optional call.
         TokenKind::Call => call_query_statement.map_inner(SimpleQueryStatement::Call),
@@ -277,7 +277,7 @@ def_parser_alias!(
 );
 
 pub fn match_statement(input: &mut TokenStream) -> ModalResult<Spanned<MatchStatement>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Match => simple_match_statement.map(MatchStatement::Simple),
         TokenKind::Optional => {
             optional_match_statement.map(MatchStatement::Optional)
@@ -297,7 +297,7 @@ pub fn simple_match_statement(
 pub fn optional_match_statement(
     input: &mut TokenStream,
 ) -> ModalResult<VecSpanned<MatchStatement>> {
-    let operand = dispatch! {peek1;
+    let operand = dispatch! {peek(any);
         TokenKind::Match => {
             simple_match_statement
                 .map(MatchStatement::Simple)

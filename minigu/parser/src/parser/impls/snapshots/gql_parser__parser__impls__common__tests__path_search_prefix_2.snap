@@ -1,0 +1,17 @@
+---
+source: minigu/parser/src/parser/impls/common.rs
+expression: parsed
+---
+- CountedShortestGroup:
+    number:
+      - Integer:
+          kind: Decimal
+          integer: "123"
+      - start: 9
+        end: 12
+    mode:
+      - Simple
+      - start: 13
+        end: 19
+- start: 0
+  end: 31

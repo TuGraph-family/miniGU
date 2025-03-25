@@ -1,5 +1,5 @@
-use winnow::combinator::{cut_err, dispatch, empty, fail};
-use winnow::token::{any, one_of};
+use winnow::combinator::{cut_err, dispatch, empty, fail, peek};
+use winnow::token::one_of;
 use winnow::{ModalResult, Parser};
 
 use crate::ast::{
@@ -7,22 +7,23 @@ use crate::ast::{
     UnsignedIntegerKind, UnsignedNumericLiteral,
 };
 use crate::lexer::TokenKind;
-use crate::parser::token::{Token, TokenStream};
-use crate::parser::utils::{SpannedParserExt, ToSpanned, def_parser_alias, peek1, take1};
+use crate::parser::token::{Token, TokenStream, any};
+use crate::parser::utils::{SpannedParserExt, ToSpanned, def_parser_alias};
 use crate::span::Spanned;
 
 pub fn regular_identifier(input: &mut TokenStream) -> ModalResult<Spanned<Ident>> {
-    any.verify_map(|token: &Token| match &token.kind {
-        &TokenKind::RegularIdentifier(name) => Some(name.into()),
-        kind if kind.is_non_reserved_word() => Some(token.slice.into()),
-        _ => None,
-    })
-    .spanned()
-    .parse_next(input)
+    winnow::token::any
+        .verify_map(|token: &Token| match &token.kind {
+            &TokenKind::RegularIdentifier(name) => Some(name.into()),
+            kind if kind.is_non_reserved_word() => Some(token.slice.into()),
+            _ => None,
+        })
+        .spanned()
+        .parse_next(input)
 }
 
 pub fn delimited_identifier(input: &mut TokenStream) -> ModalResult<Spanned<Ident>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::AccentQuoted(quoted) | TokenKind::DoubleQuoted(quoted) => {
             cut_err(empty.verify_map(|_| quoted.unescape()))
         },
@@ -33,7 +34,7 @@ pub fn delimited_identifier(input: &mut TokenStream) -> ModalResult<Spanned<Iden
 }
 
 pub fn identifier(input: &mut TokenStream) -> ModalResult<Spanned<Ident>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::RegularIdentifier(_) => regular_identifier,
         kind if kind.is_non_reserved_word() => regular_identifier,
         TokenKind::AccentQuoted(_) | TokenKind::DoubleQuoted(_) => delimited_identifier,
@@ -71,7 +72,7 @@ def_parser_alias!(subpath_variable, regular_identifier, Spanned<Ident>);
 def_parser_alias!(binding_variable, regular_identifier, Spanned<Ident>);
 
 pub fn unsigned_literal(input: &mut TokenStream) -> ModalResult<Spanned<Literal>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::True | TokenKind::False | TokenKind::Unknown => {
             boolean_literal.map_inner(Literal::Boolean)
         },
@@ -97,7 +98,7 @@ pub fn unsigned_numeric_literal(
 }
 
 pub fn unsigned_integer(input: &mut TokenStream) -> ModalResult<Spanned<UnsignedInteger>> {
-    dispatch! {take1;
+    dispatch! {any;
         &TokenKind::UnsignedDecimalInteger(integer) => empty
             .value(UnsignedInteger {
                 kind: UnsignedIntegerKind::Decimal,
@@ -125,19 +126,20 @@ pub fn unsigned_integer(input: &mut TokenStream) -> ModalResult<Spanned<Unsigned
 }
 
 pub fn unsigned_decimal_integer(input: &mut TokenStream) -> ModalResult<Spanned<UnsignedInteger>> {
-    any.verify_map(|token: &Token| match token.kind {
-        TokenKind::UnsignedDecimalInteger(integer) => Some(UnsignedInteger {
-            kind: UnsignedIntegerKind::Decimal,
-            integer: integer.into(),
-        }),
-        _ => None,
-    })
-    .spanned()
-    .parse_next(input)
+    winnow::token::any
+        .verify_map(|token: &Token| match token.kind {
+            TokenKind::UnsignedDecimalInteger(integer) => Some(UnsignedInteger {
+                kind: UnsignedIntegerKind::Decimal,
+                integer: integer.into(),
+            }),
+            _ => None,
+        })
+        .spanned()
+        .parse_next(input)
 }
 
 pub fn boolean_literal(input: &mut TokenStream) -> ModalResult<Spanned<BooleanLiteral>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::True => empty.value(BooleanLiteral::True),
         TokenKind::False => empty.value(BooleanLiteral::False),
         TokenKind::Unknown => empty.value(BooleanLiteral::Unknown),
@@ -148,7 +150,7 @@ pub fn boolean_literal(input: &mut TokenStream) -> ModalResult<Spanned<BooleanLi
 }
 
 pub fn general_parameter_reference(input: &mut TokenStream) -> ModalResult<Spanned<Ident>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::GeneralParameterReference(name) => {
             cut_err(empty.verify_map(|_| name.unescape()))
         },
@@ -159,7 +161,7 @@ pub fn general_parameter_reference(input: &mut TokenStream) -> ModalResult<Spann
 }
 
 pub fn substituted_parameter_reference(input: &mut TokenStream) -> ModalResult<Spanned<Ident>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::SubstitutedParameterReference(name) => {
             cut_err(empty.verify_map(|_| name.unescape()))
         },
@@ -170,7 +172,7 @@ pub fn substituted_parameter_reference(input: &mut TokenStream) -> ModalResult<S
 }
 
 pub fn character_string_literal(input: &mut TokenStream) -> ModalResult<Spanned<StringLiteral>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::SingleQuoted(quoted) | TokenKind::DoubleQuoted(quoted) => {
             cut_err(empty.verify_map(|_| {
                 Some(StringLiteral {

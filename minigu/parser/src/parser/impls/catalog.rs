@@ -1,4 +1,4 @@
-use winnow::combinator::{alt, dispatch, fail, opt, preceded, repeat, seq};
+use winnow::combinator::{alt, dispatch, fail, opt, peek, preceded, repeat, seq};
 use winnow::{ModalResult, Parser};
 
 use super::object_expr::graph_expression;
@@ -7,8 +7,8 @@ use super::procedure_call::call_procedure_statement;
 use super::type_element::{nested_graph_type_specification, typed};
 use crate::ast::*;
 use crate::lexer::TokenKind;
-use crate::parser::token::TokenStream;
-use crate::parser::utils::{SpannedParserExt, ToSpanned, def_parser_alias, peek1, peek2};
+use crate::parser::token::{TokenStream, any};
+use crate::parser::utils::{SpannedParserExt, ToSpanned, def_parser_alias};
 use crate::span::Spanned;
 
 pub fn linear_catalog_modifying_statement(
@@ -20,7 +20,7 @@ pub fn linear_catalog_modifying_statement(
 pub fn simple_catalog_modifying_statement(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<CatalogModifyingStatement>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Create | TokenKind::Drop => primitive_catalog_modifying_statement,
         TokenKind::Optional | TokenKind::Call => {
             call_catalog_modifying_procedure_statement
@@ -34,7 +34,7 @@ pub fn simple_catalog_modifying_statement(
 pub fn primitive_catalog_modifying_statement(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<CatalogModifyingStatement>> {
-    dispatch! {peek2;
+    dispatch! {peek((any, any));
         (TokenKind::Create, TokenKind::Schema) => {
             create_schema_statement.map_inner(CatalogModifyingStatement::CreateSchema)
         },
@@ -108,7 +108,7 @@ pub fn open_graph_type(input: &mut TokenStream) -> ModalResult<Spanned<OfGraphTy
 }
 
 pub fn of_graph_type(input: &mut TokenStream) -> ModalResult<Spanned<OfGraphType>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Like => graph_type_like_graph.map(OfGraphType::Like),
         _ => preceded(opt(typed), alt((
             graph_type_reference.map(OfGraphType::Ref),
@@ -216,7 +216,7 @@ fn create_graph_type_statement_kind(
 }
 
 pub fn graph_type_source(input: &mut TokenStream) -> ModalResult<Spanned<GraphTypeSource>> {
-    dispatch! {peek2;
+    dispatch! {peek((any, any));
         (TokenKind::As, TokenKind::Copy) => {
             preceded(TokenKind::As, copy_of_graph_type)
                 .map(GraphTypeSource::Copy)

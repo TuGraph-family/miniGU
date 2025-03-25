@@ -3,8 +3,8 @@ use winnow::{ModalResult, Parser};
 
 use crate::ast::{StartTransaction, TransactionMode};
 use crate::lexer::TokenKind;
-use crate::parser::token::TokenStream;
-use crate::parser::utils::{ToSpanned, take2};
+use crate::parser::token::{TokenStream, any};
+use crate::parser::utils::ToSpanned;
 use crate::span::Spanned;
 
 pub fn start_transaction_command(
@@ -20,7 +20,7 @@ pub fn start_transaction_command(
 }
 
 pub fn transaction_access_mode(input: &mut TokenStream) -> ModalResult<Spanned<TransactionMode>> {
-    dispatch! {take2;
+    dispatch! {(any, any);
         (TokenKind::Read, TokenKind::Only) => empty.value(TransactionMode::ReadOnly),
         (TokenKind::Read, TokenKind::Write) => empty.value(TransactionMode::ReadWrite),
         _ => fail

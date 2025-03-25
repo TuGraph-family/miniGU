@@ -1,0 +1,24 @@
+---
+source: minigu/parser/src/parser/impls/value_expr.rs
+expression: parsed
+---
+- Generic:
+    name:
+      - this_is_a_udf
+      - start: 0
+        end: 13
+    args:
+      - - Variable: a
+        - start: 15
+          end: 16
+      - - Variable: b
+        - start: 18
+          end: 19
+      - - Variable: c
+        - start: 21
+          end: 22
+      - - Variable: d
+        - start: 24
+          end: 25
+- start: 0
+  end: 26

@@ -1,5 +1,5 @@
 use winnow::combinator::{
-    alt, delimited, dispatch, empty, fail, opt, preceded, separated, separated_pair, seq,
+    alt, delimited, dispatch, empty, fail, opt, peek, preceded, separated, separated_pair, seq,
     terminated,
 };
 use winnow::token::one_of;
@@ -13,8 +13,8 @@ use super::lexical::{
 use crate::ast::*;
 use crate::imports::Box;
 use crate::lexer::TokenKind;
-use crate::parser::token::TokenStream;
-use crate::parser::utils::{SpannedParserExt, ToSpanned, def_parser_alias, peek1, take1};
+use crate::parser::token::{TokenStream, any};
+use crate::parser::utils::{SpannedParserExt, ToSpanned, def_parser_alias};
 use crate::span::{OptSpanned, Spanned, VecSpanned};
 
 pub fn typed(input: &mut TokenStream) -> ModalResult<()> {
@@ -41,7 +41,7 @@ pub fn element_type_list(input: &mut TokenStream) -> ModalResult<VecSpanned<Grap
 pub fn element_type_specification(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<GraphElementType>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Node | TokenKind::Vertex => {
             node_type_specification
                 .map_inner(Box::new)
@@ -69,7 +69,7 @@ pub fn element_type_specification(
 }
 
 pub fn node_type_specification(input: &mut TokenStream) -> ModalResult<Spanned<NodeType>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::LeftParen => node_type_pattern,
         TokenKind::Node | TokenKind::Vertex => alt((node_type_pattern, node_type_phrase)),
         _ => fail,
@@ -195,7 +195,7 @@ pub fn node_type_reference(input: &mut TokenStream) -> ModalResult<Spanned<NodeT
 }
 
 pub fn edge_type_specification(input: &mut TokenStream) -> ModalResult<Spanned<EdgeType>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Edge
         | TokenKind::Relationship
         | TokenKind::LeftParen => {
@@ -226,7 +226,7 @@ enum EdgeKind {
 
 /// Indicates whether the edge is directed or not. This will not appear in the AST.
 fn edge_kind(input: &mut TokenStream) -> ModalResult<EdgeKind> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::Directed => empty.value(EdgeKind::Directed),
         TokenKind::Undirected => empty.value(EdgeKind::Undirected),
         _ => fail,
@@ -320,7 +320,7 @@ pub fn edge_type_phrase(input: &mut TokenStream) -> ModalResult<Spanned<EdgeType
 pub fn endpoint_pair_directed(
     input: &mut TokenStream,
 ) -> ModalResult<(Spanned<Ident>, EdgeDirection, Spanned<Ident>)> {
-    let connector = dispatch! {take1;
+    let connector = dispatch! {any;
         TokenKind::To | TokenKind::RightArrow => empty.value(EdgeDirection::LeftToRight),
         TokenKind::LeftArrow => empty.value(EdgeDirection::RightToLeft),
         _ => fail
@@ -351,7 +351,7 @@ pub fn endpoint_pair_undirected(
 pub fn edge_type_pattern_directed(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<EdgeTypePattern>> {
-    let arc = dispatch! {peek1;
+    let arc = dispatch! {peek(any);
         TokenKind::MinusLeftBracket => {
             arc_type_pointing_right
                 .map(|filler| (EdgeDirection::LeftToRight, filler))
@@ -428,7 +428,7 @@ pub fn edge_type_pattern_undirected(
 }
 
 pub fn label_set_phrase(input: &mut TokenStream) -> ModalResult<Spanned<LabelSet>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Label => {
             preceded(TokenKind::Label, label_name)
                 .map(|label| [label].into())
@@ -475,7 +475,7 @@ pub fn property_type(input: &mut TokenStream) -> ModalResult<Spanned<FieldOrProp
 }
 
 pub fn value_type(input: &mut TokenStream) -> ModalResult<Spanned<ValueType>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Path => path_value_type,
         kind if kind.is_prefix_of_predefined_type() => predefined_type,
         _ => fail
@@ -493,7 +493,7 @@ pub fn path_value_type(input: &mut TokenStream) -> ModalResult<Spanned<ValueType
 }
 
 pub fn predefined_type(input: &mut TokenStream) -> ModalResult<Spanned<ValueType>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Bool | TokenKind::Boolean => boolean_type,
         TokenKind::String | TokenKind::Char | TokenKind::Varchar => character_string_type,
         TokenKind::Bytes | TokenKind::Binary | TokenKind::Varbinary => byte_string_type,
@@ -518,7 +518,7 @@ pub fn temporal_type(input: &mut TokenStream) -> ModalResult<Spanned<ValueType>>
 
 // TODO: Add other temporal types.
 pub fn temporal_type_kind(input: &mut TokenStream) -> ModalResult<Spanned<TemporalTypeKind>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::Date => empty.value(TemporalTypeKind::Date),
         _ => fail
     }
@@ -538,7 +538,7 @@ pub fn null_type(input: &mut TokenStream) -> ModalResult<Spanned<ValueType>> {
 }
 
 pub fn empty_type(input: &mut TokenStream) -> ModalResult<Spanned<ValueType>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::Null => not_null.value(ValueType::Empty),
         TokenKind::Nothing => empty.value(ValueType::Empty),
         _ => fail
@@ -605,7 +605,7 @@ pub fn character_string_type(input: &mut TokenStream) -> ModalResult<Spanned<Val
                 not_null,
             }
         });
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::String => parse_string,
         TokenKind::Char => parse_char,
         TokenKind::Varchar => parse_varchar,
@@ -664,7 +664,7 @@ pub fn byte_string_type(input: &mut TokenStream) -> ModalResult<Spanned<ValueTyp
                 not_null,
             }
         });
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::Bytes => parse_bytes,
         TokenKind::Binary => parse_binary,
         TokenKind::Varbinary => parse_varbinary,
@@ -723,7 +723,7 @@ pub fn decimal_numeric_type(input: &mut TokenStream) -> ModalResult<Spanned<Valu
 }
 
 pub fn signed_numeric_type_kind(input: &mut TokenStream) -> ModalResult<Spanned<NumericTypeKind>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Int8 => TokenKind::Int8.value(NumericTypeKind::Int8),
         TokenKind::Int16 => TokenKind::Int16.value(NumericTypeKind::Int16),
         TokenKind::Int32 => TokenKind::Int32.value(NumericTypeKind::Int32),
@@ -756,7 +756,7 @@ pub fn signed_numeric_type_kind(input: &mut TokenStream) -> ModalResult<Spanned<
 pub fn unsigned_numeric_type_kind(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<NumericTypeKind>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::Uint8 => empty.value(NumericTypeKind::Int8),
         TokenKind::Uint16 => empty.value(NumericTypeKind::Int16),
         TokenKind::Uint32 => empty.value(NumericTypeKind::Int32),
@@ -781,7 +781,7 @@ pub fn unsigned_numeric_type_kind(
 }
 
 pub fn verbose_numeric_type_kind(input: &mut TokenStream) -> ModalResult<Spanned<NumericTypeKind>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::Integer8 => empty.value(NumericTypeKind::Int8),
         TokenKind::Integer16 => empty.value(NumericTypeKind::Int16),
         TokenKind::Integer32 => empty.value(NumericTypeKind::Int32),

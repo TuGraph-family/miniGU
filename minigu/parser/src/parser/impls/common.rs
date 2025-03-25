@@ -1,8 +1,8 @@
 use winnow::combinator::{
-    alt, delimited, dispatch, empty, fail, opt, preceded, repeat, separated, separated_pair, seq,
-    terminated,
+    alt, delimited, dispatch, empty, fail, opt, peek, preceded, repeat, separated, separated_pair,
+    seq, terminated,
 };
-use winnow::token::{any, one_of};
+use winnow::token::one_of;
 use winnow::{ModalResult, Parser};
 
 use super::lexical::{
@@ -20,10 +20,8 @@ use crate::imports::Box;
 use crate::lexer::TokenKind;
 use crate::parser::impls::value_expr::non_negative_integer_specification;
 use crate::parser::precedence::{Assoc, Precedence, precedence};
-use crate::parser::token::{Token, TokenStream};
-use crate::parser::utils::{
-    SpannedParserExt, ToSpanned, def_parser_alias, peek1, peek2, peek3, take1, take2,
-};
+use crate::parser::token::{Token, TokenStream, any};
+use crate::parser::utils::{SpannedParserExt, ToSpanned, def_parser_alias};
 use crate::span::{Spanned, VecSpanned};
 
 const PREC_INIT: Precedence = 0;
@@ -104,7 +102,7 @@ pub fn keep_clause(input: &mut TokenStream) -> ModalResult<Spanned<PathPatternPr
 }
 
 pub fn match_mode(input: &mut TokenStream) -> ModalResult<Spanned<MatchMode>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::Repeatable => element_bindings_or_elements.value(MatchMode::Repeatable),
         TokenKind::Different => edge_bindings_or_edges.value(MatchMode::Different),
         _ => fail,
@@ -130,7 +128,7 @@ pub fn edge_bindings_or_edges(input: &mut TokenStream) -> ModalResult<()> {
 }
 
 pub fn element_pattern(input: &mut TokenStream) -> ModalResult<Spanned<ElementPattern>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::LeftParen => node_pattern,
         kind if kind.is_prefix_of_edge_pattern() => edge_pattern,
         _ => fail
@@ -150,7 +148,7 @@ pub fn node_pattern(input: &mut TokenStream) -> ModalResult<Spanned<ElementPatte
 }
 
 pub fn edge_pattern(input: &mut TokenStream) -> ModalResult<Spanned<ElementPattern>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         kind if kind.is_prefix_of_full_edge_pattern() => full_edge_pattern,
         kind if kind.is_prefix_of_abbreviated_edge_pattern() => {
             abbreviated_edge_pattern
@@ -171,11 +169,7 @@ pub fn edge_pattern(input: &mut TokenStream) -> ModalResult<Spanned<ElementPatte
 
 pub fn full_edge_pattern(input: &mut TokenStream) -> ModalResult<Spanned<ElementPattern>> {
     // This avoids matching `element_pattern_filler` multiple times.
-    (
-        any.map(|t: &Token| &t.kind),
-        element_pattern_filler.unspanned(),
-        any.map(|t: &Token| &t.kind),
-    )
+    (any, element_pattern_filler.unspanned(), any)
         .verify_map(|(left, filler, right)| {
             let kind = match (left, right) {
                 (TokenKind::LeftArrowBracket, TokenKind::RightBracketMinus) => {
@@ -206,7 +200,7 @@ pub fn full_edge_pattern(input: &mut TokenStream) -> ModalResult<Spanned<Element
 }
 
 pub fn abbreviated_edge_pattern(input: &mut TokenStream) -> ModalResult<EdgePatternKind> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::LeftArrow => empty.value(EdgePatternKind::Left),
         TokenKind::Tilde => empty.value(EdgePatternKind::Undirected),
         TokenKind::RightArrow => empty.value(EdgePatternKind::Right),
@@ -234,7 +228,7 @@ pub fn element_pattern_filler(
 pub fn element_pattern_predicate(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<ElementPatternPredicate>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Where => {
             preceded(TokenKind::Where, search_condition)
                 .map(ElementPatternPredicate::Where)
@@ -292,7 +286,7 @@ enum InfixLabelOp {
 }
 
 fn label_expression_primary(input: &mut TokenStream) -> ModalResult<Spanned<LabelExpr>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::LeftParen => {
             delimited(TokenKind::LeftParen, label_expression, TokenKind::RightParen).update_span()
         },
@@ -313,7 +307,7 @@ fn label_expression_prefix(input: &mut TokenStream) -> ModalResult<(Precedence, 
 fn label_expression_infix(
     input: &mut TokenStream,
 ) -> ModalResult<(Assoc, Precedence, InfixLabelOp)> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::Ampersand => empty.value((Assoc::Left, PREC_CONJUNCTION, InfixLabelOp::Conjunction)),
         TokenKind::VerticalBar => empty.value((Assoc::Left, PREC_DISJUNCTION, InfixLabelOp::Disjunction)),
         _ => fail
@@ -349,7 +343,7 @@ pub fn label_expression(input: &mut TokenStream) -> ModalResult<Spanned<LabelExp
 pub fn graph_pattern_quantifier(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<PatternQuantifier>> {
-    let mut fixed_or_general = dispatch! {peek3;
+    let mut fixed_or_general = dispatch! {peek((any, any, any));
         (TokenKind::LeftBrace, kind, TokenKind::RightBrace)
             if kind != &TokenKind::Comma =>
         {
@@ -357,7 +351,7 @@ pub fn graph_pattern_quantifier(
         },
         _ => general_quantifier,
     };
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Asterisk => {
             TokenKind::Asterisk
                 .value(PatternQuantifier::Asterisk)
@@ -419,7 +413,7 @@ pub fn path_pattern_expression(input: &mut TokenStream) -> ModalResult<Spanned<P
 
 fn path_pattern_expression_inner(input: &mut TokenStream) -> ModalResult<PathPatternExpr> {
     let paths = path_term.parse_next(input)?;
-    match opt(peek1).parse_next(input)? {
+    match opt(peek(any)).parse_next(input)? {
         Some(TokenKind::Alternation) => {
             let paths = repeat(1.., preceded(TokenKind::Alternation, path_term))
                 .fold(
@@ -464,7 +458,7 @@ pub fn path_factor(input: &mut TokenStream) -> ModalResult<Spanned<PathPatternEx
 
 fn path_factor_inner(input: &mut TokenStream) -> ModalResult<PathPatternExpr> {
     let path = path_primary.parse_next(input)?;
-    match opt(peek1).parse_next(input)? {
+    match opt(peek(any)).parse_next(input)? {
         Some(TokenKind::QuestionMark) => TokenKind::QuestionMark
             .value(PathPatternExpr::Optional(Box::new(path)))
             .parse_next(input),
@@ -481,7 +475,7 @@ fn path_factor_inner(input: &mut TokenStream) -> ModalResult<PathPatternExpr> {
 
 // TODO: Add simplified path pattern expression.
 pub fn path_primary(input: &mut TokenStream) -> ModalResult<Spanned<PathPatternExpr>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::LeftParen => alt((
             parenthesized_path_pattern_expression.map_inner(PathPatternExpr::Grouped),
             element_pattern.map_inner(PathPatternExpr::Pattern),
@@ -516,7 +510,7 @@ pub fn path_or_paths(input: &mut TokenStream) -> ModalResult<()> {
 }
 
 pub fn path_pattern_prefix(input: &mut TokenStream) -> ModalResult<Spanned<PathPatternPrefix>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Walk
         | TokenKind::Trail
         | TokenKind::Simple
@@ -534,7 +528,7 @@ pub fn path_mode_prefix(input: &mut TokenStream) -> ModalResult<Spanned<PathMode
 }
 
 pub fn path_search_prefix(input: &mut TokenStream) -> ModalResult<Spanned<PathSearchMode>> {
-    dispatch! {(peek1, opt(peek1));
+    dispatch! {peek((any, opt(any)));
         (TokenKind::All, Some(TokenKind::Shortest))
         | (TokenKind::Any, Some(TokenKind::Shortest))
         | (TokenKind::Shortest, _) => shortest_path_search,
@@ -589,7 +583,7 @@ pub fn shortest_path_search(input: &mut TokenStream) -> ModalResult<Spanned<Path
         _ => fail
     }
     .spanned();
-    dispatch! {peek2;
+    dispatch! {peek((any, any));
         (TokenKind::All, TokenKind::Shortest) => all_shortest_path_search,
         (TokenKind::Any, TokenKind::Shortest) => any_shortest_path_search,
         (TokenKind::Shortest, _) => path_or_group,
@@ -621,7 +615,7 @@ pub fn any_shortest_path_search(input: &mut TokenStream) -> ModalResult<Spanned<
 }
 
 pub fn path_mode(input: &mut TokenStream) -> ModalResult<Spanned<PathMode>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::Walk => empty.value(PathMode::Walk),
         TokenKind::Trail => empty.value(PathMode::Trail),
         TokenKind::Simple => empty.value(PathMode::Simple),
@@ -669,7 +663,7 @@ pub fn sort_specification(input: &mut TokenStream) -> ModalResult<Spanned<SortSp
 }
 
 pub fn ordering_specification(input: &mut TokenStream) -> ModalResult<Spanned<Ordering>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::Asc | TokenKind::Ascending => empty.value(Ordering::Asc),
         TokenKind::Desc | TokenKind::Descending => empty.value(Ordering::Desc),
         _ => fail,
@@ -679,7 +673,7 @@ pub fn ordering_specification(input: &mut TokenStream) -> ModalResult<Spanned<Or
 }
 
 pub fn null_ordering(input: &mut TokenStream) -> ModalResult<Spanned<NullOrdering>> {
-    dispatch! {take2;
+    dispatch! {(any, any);
         (TokenKind::Nulls, TokenKind::First) => empty.value(NullOrdering::First),
         (TokenKind::Nulls, TokenKind::Last) => empty.value(NullOrdering::Last),
         _ => fail,
@@ -771,6 +765,18 @@ mod tests {
     #[test]
     fn test_graph_pattern_quantifier_4() {
         let parsed = parse!(graph_pattern_quantifier, "{,456}");
+        assert_yaml_snapshot!(parsed);
+    }
+
+    #[test]
+    fn test_path_search_prefix_1() {
+        let parsed = parse!(path_search_prefix, "all shortest");
+        assert_yaml_snapshot!(parsed);
+    }
+
+    #[test]
+    fn test_path_search_prefix_2() {
+        let parsed = parse!(path_search_prefix, "shortest 123 simple paths group");
         assert_yaml_snapshot!(parsed);
     }
 }

@@ -1,0 +1,11 @@
+---
+source: minigu/parser/src/parser/impls/value_expr.rs
+expression: parsed
+---
+- Numeric:
+    CharLength:
+      - Variable: a
+      - start: 13
+        end: 14
+- start: 0
+  end: 15

@@ -1,4 +1,4 @@
-use winnow::combinator::{alt, delimited, dispatch, fail, opt, repeat, seq};
+use winnow::combinator::{alt, delimited, dispatch, fail, opt, peek, repeat, seq};
 use winnow::{ModalResult, Parser};
 
 use super::catalog::linear_catalog_modifying_statement;
@@ -8,12 +8,10 @@ use super::query::composite_query_statement;
 use super::variable::{
     binding_table_variable_definition, graph_variable_definition, value_variable_definition,
 };
-use crate::ast::{
-    BindingVariableDef, BindingVariableDefBlock, NextStatement, Procedure, Statement,
-};
+use crate::ast::*;
 use crate::lexer::TokenKind;
-use crate::parser::token::TokenStream;
-use crate::parser::utils::{SpannedParserExt, ToSpanned, def_parser_alias, peek1};
+use crate::parser::token::{TokenStream, any};
+use crate::parser::utils::{SpannedParserExt, ToSpanned, def_parser_alias};
 use crate::span::Spanned;
 
 pub fn nested_procedure_specification(input: &mut TokenStream) -> ModalResult<Spanned<Procedure>> {
@@ -52,7 +50,7 @@ pub fn procedure_body(input: &mut TokenStream) -> ModalResult<Spanned<Procedure>
 pub fn binding_variable_definition(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<BindingVariableDef>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Property | TokenKind::Graph => {
             graph_variable_definition.map_inner(BindingVariableDef::Graph)
         },

@@ -3,13 +3,26 @@ use core::ops::Range;
 use logos::Logos;
 use winnow::error::ParserError;
 use winnow::stream::{ContainsToken, Location, Stream, StreamIsPartial, TokenSlice};
-use winnow::token::any;
 use winnow::{Parser, Stateful};
 
 use super::options::ParseOptionsInner;
 use crate::error::Error;
 use crate::imports::Vec;
 use crate::lexer::TokenKind;
+
+/// A wrapper around [`winnow::token::any`] to return [`TokenKind`] directly.
+///
+/// If the matched slice is needed, use [`winnow::token::any`] instead.
+#[inline(always)]
+pub(super) fn any<'a: 'b, 'b, I, E>(input: &mut I) -> Result<&'b TokenKind<'a>, E>
+where
+    I: Stream<Token = &'b Token<'a>> + StreamIsPartial,
+    E: ParserError<I>,
+{
+    winnow::token::any
+        .map(|t: &Token| &t.kind)
+        .parse_next(input)
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(super) struct Token<'a> {
@@ -39,7 +52,9 @@ where
 {
     #[inline(always)]
     fn parse_next(&mut self, i: &mut I) -> Result<I::Token, E> {
-        any.verify(|t: &Token| t.kind.eq(self)).parse_next(i)
+        winnow::token::any
+            .verify(|t: &Token| t.kind.eq(self))
+            .parse_next(i)
     }
 }
 

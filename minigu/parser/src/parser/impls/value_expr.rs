@@ -1,6 +1,10 @@
 use winnow::combinator::{
-    alt, delimited, dispatch, empty, fail, opt, preceded, repeat, separated, separated_pair, seq,
+    alt, delimited, dispatch, empty, fail, opt, peek, preceded, repeat, separated, separated_pair,
+    seq,
 };
+use winnow::error::ParserError;
+use winnow::stream::Stream;
+use winnow::token::one_of;
 use winnow::{ModalResult, Parser};
 
 use super::lexical::{
@@ -11,8 +15,8 @@ use crate::ast::*;
 use crate::imports::{Box, Vec};
 use crate::lexer::TokenKind;
 use crate::parser::precedence::{Assoc, Precedence, precedence};
-use crate::parser::token::TokenStream;
-use crate::parser::utils::{SpannedParserExt, ToSpanned, def_parser_alias, peek1, peek2, take1};
+use crate::parser::token::{TokenStream, any};
+use crate::parser::utils::{SpannedParserExt, ToSpanned, def_parser_alias};
 use crate::span::Spanned;
 
 const PREC_INIT: Precedence = 0;
@@ -27,7 +31,7 @@ const PREC_MUL_DIV: Precedence = 8;
 const PREC_PLUS_MINUS: Precedence = 9;
 
 fn value_expression_prefix(input: &mut TokenStream) -> ModalResult<(Precedence, Spanned<UnaryOp>)> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::Not => empty.value((PREC_NOT, UnaryOp::Not)),
         TokenKind::Plus => empty.value((PREC_PLUS_MINUS, UnaryOp::Plus)),
         TokenKind::Minus => empty.value((PREC_PLUS_MINUS, UnaryOp::Minus)),
@@ -44,7 +48,7 @@ enum SuffixOp {
 }
 
 fn value_expression_suffix(input: &mut TokenStream) -> ModalResult<(Precedence, SuffixOp)> {
-    dispatch! {peek2;
+    dispatch! {peek((any, any));
         (TokenKind::Is, TokenKind::Not) => {
             preceded((TokenKind::Is, TokenKind::Not), boolean_literal).map(|truth| (PREC_IS, SuffixOp::IsNot(truth)))
         },
@@ -59,7 +63,7 @@ fn value_expression_suffix(input: &mut TokenStream) -> ModalResult<(Precedence, 
 fn value_expression_infix(
     input: &mut TokenStream,
 ) -> ModalResult<(Assoc, Precedence, Spanned<BinaryOp>)> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::Or => empty.value((Assoc::Left, PREC_OR_XOR, BinaryOp::Or)),
         TokenKind::Xor => empty.value((Assoc::Left, PREC_OR_XOR, BinaryOp::Xor)),
         TokenKind::And => empty.value((Assoc::Left, PREC_AND, BinaryOp::And)),
@@ -84,7 +88,7 @@ fn value_expression_infix(
 pub fn value_expression(input: &mut TokenStream) -> ModalResult<Spanned<Expr>> {
     precedence(
         PREC_INIT,
-        value_expression_primary,
+        value_expression_operand,
         value_expression_prefix,
         value_expression_suffix,
         value_expression_infix,
@@ -135,18 +139,25 @@ pub fn value_expression(input: &mut TokenStream) -> ModalResult<Spanned<Expr>> {
     .parse_next(input)
 }
 
-pub fn value_expression_operand(input: &mut TokenStream) -> ModalResult<Spanned<Expr>> {
-    dispatch! {peek1;
-        _ => fail
+fn value_expression_operand(input: &mut TokenStream) -> ModalResult<Spanned<Expr>> {
+    dispatch! {peek((any, opt(any)));
+        (kind, Some(TokenKind::LeftParen))
+            if kind.is_prefix_of_value_function() =>
+        {
+            value_function.map_inner(Expr::Function)
+        },
+        _ => {
+            value_expression_primary
+        }
     }
     .parse_next(input)
 }
 
 pub fn value_expression_primary(input: &mut TokenStream) -> ModalResult<Spanned<Expr>> {
-    let base = dispatch! {peek1;
+    let base = dispatch! {peek(any);
         TokenKind::LeftParen => parenthesized_value_expression,
         TokenKind::Path => path_value_constructor.map_inner(Expr::Path),
-        TokenKind::RegularIdentifier(_) => binding_variable_reference.map_inner(Expr::Variable),
+        kind if kind.is_prefix_of_regular_identifier() => binding_variable_reference.map_inner(Expr::Variable),
         kind if kind.is_prefix_of_aggregate_function() => aggregate_function.map_inner(Expr::Aggregate),
         _ => unsigned_value_specification.map_inner(Expr::Value),
     };
@@ -208,7 +219,7 @@ pub fn non_parenthesized_value_expression_primary_special_case(
 }
 
 pub fn set_quantifier(input: &mut TokenStream) -> ModalResult<Spanned<SetQuantifier>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::Distinct => empty.value(SetQuantifier::Distinct),
         TokenKind::All => empty.value(SetQuantifier::All),
         _ => fail
@@ -218,7 +229,7 @@ pub fn set_quantifier(input: &mut TokenStream) -> ModalResult<Spanned<SetQuantif
 }
 
 pub fn unsigned_value_specification(input: &mut TokenStream) -> ModalResult<Spanned<Value>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::SessionUser => TokenKind::SessionUser.value(Value::SessionUser).spanned(),
         TokenKind::GeneralParameterReference(_) => {
             dynamic_parameter_specification.map_inner(Value::Parameter)
@@ -231,7 +242,7 @@ pub fn unsigned_value_specification(input: &mut TokenStream) -> ModalResult<Span
 pub fn non_negative_integer_specification(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<NonNegativeInteger>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         kind if kind.is_prefix_of_unsigned_integer() => {
             unsigned_integer.map_inner(NonNegativeInteger::Integer)
         },
@@ -266,7 +277,7 @@ pub fn list_value_constructor(input: &mut TokenStream) -> ModalResult<Spanned<Li
 }
 
 pub fn list_value_type_name(input: &mut TokenStream) -> ModalResult<Spanned<ListTypeName>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::List => empty.value(ListTypeName::List),
         TokenKind::Array => empty.value(ListTypeName::Array),
         _ => fail
@@ -308,8 +319,91 @@ pub fn path_element_list_step(input: &mut TokenStream) -> ModalResult<Spanned<Pa
     .parse_next(input)
 }
 
+pub fn value_function(input: &mut TokenStream) -> ModalResult<Spanned<Function>> {
+    dispatch! {peek(any);
+        kind if kind.is_prefix_of_regular_identifier() => {
+            generic_value_function.map_inner(Function::Generic)
+        },
+        kind if kind.is_prefix_of_numeric_value_function() => {
+            numeric_value_function.map_inner(Function::Numeric)
+        },
+        _ => fail
+    }
+    .parse_next(input)
+}
+
+/// This allows UDFs to be used as value functions.
+pub fn generic_value_function(input: &mut TokenStream) -> ModalResult<Spanned<GenericFunction>> {
+    seq! {GenericFunction {
+        name: regular_identifier,
+        _: TokenKind::LeftParen,
+        args: separated(0.., value_expression, TokenKind::Comma),
+        _: TokenKind::RightParen,
+    }}
+    .spanned()
+    .parse_next(input)
+}
+
+pub fn numeric_value_function(input: &mut TokenStream) -> ModalResult<Spanned<NumericFunction>> {
+    dispatch! {peek(any);
+        TokenKind::CharLength | TokenKind::CharacterLength => char_length_function,
+        TokenKind::ByteLength | TokenKind::OctetLength => byte_length_function,
+        TokenKind::PathLength => path_length_function,
+        TokenKind::Abs => absolute_value_function,
+        _ => fail
+    }
+    .parse_next(input)
+}
+
+macro_rules! predefined_value_function {
+    ($name:expr, $arg:expr, $callback:expr) => {
+        move |input: &mut TokenStream| {
+            preceded(
+                $name,
+                delimited(TokenKind::LeftParen, $arg, TokenKind::RightParen),
+            )
+            .map(Box::new)
+            .map($callback)
+            .spanned()
+            .parse_next(input)
+        }
+    };
+}
+
+pub fn char_length_function(input: &mut TokenStream) -> ModalResult<Spanned<NumericFunction>> {
+    predefined_value_function!(
+        one_of((TokenKind::CharLength, TokenKind::CharacterLength)),
+        value_expression,
+        NumericFunction::CharLength
+    )
+    .parse_next(input)
+}
+
+pub fn byte_length_function(input: &mut TokenStream) -> ModalResult<Spanned<NumericFunction>> {
+    predefined_value_function!(
+        one_of((TokenKind::ByteLength, TokenKind::OctetLength)),
+        value_expression,
+        NumericFunction::ByteLength
+    )
+    .parse_next(input)
+}
+
+pub fn path_length_function(input: &mut TokenStream) -> ModalResult<Spanned<NumericFunction>> {
+    predefined_value_function!(
+        TokenKind::PathLength,
+        value_expression,
+        NumericFunction::PathLength
+    )
+    .parse_next(input)
+}
+
+pub fn absolute_value_function(input: &mut TokenStream) -> ModalResult<Spanned<NumericFunction>> {
+    predefined_value_function!(TokenKind::Abs, value_expression, NumericFunction::Absolute)
+        .parse_next(input)
+}
+
 pub fn aggregate_function(input: &mut TokenStream) -> ModalResult<Spanned<AggregateFunction>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         kind if kind.is_prefix_of_general_set_function() => {
             alt((
                 (
@@ -347,7 +441,7 @@ pub fn general_set_function(input: &mut TokenStream) -> ModalResult<Spanned<Gene
 pub fn general_set_function_type(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<GeneralSetFunctionKind>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::Avg => empty.value(GeneralSetFunctionKind::Avg),
         TokenKind::Count => empty.value(GeneralSetFunctionKind::Count),
         TokenKind::Max => empty.value(GeneralSetFunctionKind::Max),
@@ -363,13 +457,20 @@ pub fn general_set_function_type(
 }
 
 pub fn binary_set_function(input: &mut TokenStream) -> ModalResult<Spanned<BinarySetFunction>> {
-    fail(input)
+    seq! {BinarySetFunction {
+        kind: binary_set_function_kind,
+        quantifier: opt(set_quantifier),
+        dependent: value_expression.map(Box::new),
+        independent: preceded(TokenKind::Comma, value_expression).map(Box::new),
+    }}
+    .spanned()
+    .parse_next(input)
 }
 
 pub fn binary_set_function_kind(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<BinarySetFunctionKind>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::PercentileCont => empty.value(BinarySetFunctionKind::PercentileCont),
         TokenKind::PercentileDisc => empty.value(BinarySetFunctionKind::PercentileDisc),
         _ => fail,
@@ -441,6 +542,12 @@ mod tests {
     }
 
     #[test]
+    fn test_value_expression_3() {
+        let parsed = parse!(value_expression, "a + (my_udf (a, b) * abs(-c))");
+        assert_yaml_snapshot!(parsed);
+    }
+
+    #[test]
     fn test_parenthesized_value_expression() {
         let parsed = parse!(parenthesized_value_expression, "(1 + 1)");
         assert_yaml_snapshot!(parsed);
@@ -473,6 +580,24 @@ mod tests {
     #[test]
     fn test_aggregate_function_2() {
         let parsed = parse!(aggregate_function, "sum(distinct a)");
+        assert_yaml_snapshot!(parsed);
+    }
+
+    #[test]
+    fn test_numeric_value_function_1() {
+        let parsed = parse!(value_function, "char_length (a)");
+        assert_yaml_snapshot!(parsed);
+    }
+
+    #[test]
+    fn test_generic_value_function_1() {
+        let parsed = parse!(value_function, "this_is_a_udf ()");
+        assert_yaml_snapshot!(parsed);
+    }
+
+    #[test]
+    fn test_generic_value_function_2() {
+        let parsed = parse!(value_function, "this_is_a_udf (a, b, c, d)");
         assert_yaml_snapshot!(parsed);
     }
 }

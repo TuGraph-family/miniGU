@@ -1,22 +1,19 @@
-use winnow::combinator::{alt, dispatch, fail, opt, preceded};
+use winnow::combinator::{alt, dispatch, fail, opt, peek, preceded};
 use winnow::{ModalResult, Parser};
 
 use super::lexical::{character_string_literal, general_parameter_reference};
 use super::object_expr::graph_expression;
 use super::object_ref::schema_reference;
-use crate::ast::{
-    GraphExpr, Ident, SchemaRef, SessionReset, SessionResetArgs, SessionSet, SessionSetParameter,
-    StringLiteral,
-};
+use crate::ast::*;
 use crate::lexer::TokenKind;
-use crate::parser::token::TokenStream;
-use crate::parser::utils::{ToSpanned, peek1};
+use crate::parser::token::{TokenStream, any};
+use crate::parser::utils::ToSpanned;
 use crate::span::Spanned;
 
 pub fn session_set_command(input: &mut TokenStream) -> ModalResult<Spanned<SessionSet>> {
     preceded(
         (TokenKind::Session, TokenKind::Set),
-        dispatch! {peek1;
+        dispatch! {peek(any);
             TokenKind::Schema => session_set_schema_clause.map(SessionSet::Schema),
             TokenKind::Time => session_set_time_zone_clause.map(SessionSet::TimeZone),
             TokenKind::Binding | TokenKind::Table | TokenKind::Value => session_set_parameter_clause.map(SessionSet::Parameter),
@@ -65,7 +62,7 @@ pub fn session_reset_command(input: &mut TokenStream) -> ModalResult<Spanned<Ses
 }
 
 pub fn session_reset_arguments(input: &mut TokenStream) -> ModalResult<Spanned<SessionResetArgs>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::All | TokenKind::Parameters | TokenKind::Characteristics => {
             preceded(
                 opt(TokenKind::All),

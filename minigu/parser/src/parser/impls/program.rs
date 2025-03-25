@@ -1,4 +1,4 @@
-use winnow::combinator::{alt, dispatch, empty, fail, opt, repeat};
+use winnow::combinator::{alt, dispatch, empty, fail, opt, peek, repeat};
 use winnow::{ModalResult, Parser};
 
 use super::procedure_spec::procedure_specification;
@@ -7,8 +7,8 @@ use super::transaction::start_transaction_command;
 use crate::ast::{EndTransaction, Program, ProgramActivity, SessionActivity, TransactionActivity};
 use crate::imports::Vec;
 use crate::lexer::TokenKind;
-use crate::parser::token::TokenStream;
-use crate::parser::utils::{SpannedParserExt, ToSpanned, peek1, peek2, take1};
+use crate::parser::token::{TokenStream, any};
+use crate::parser::utils::{SpannedParserExt, ToSpanned};
 use crate::span::Spanned;
 
 pub fn gql_program(input: &mut TokenStream) -> ModalResult<Spanned<Program>> {
@@ -27,7 +27,7 @@ pub fn gql_program(input: &mut TokenStream) -> ModalResult<Spanned<Program>> {
 }
 
 pub fn program_activity(input: &mut TokenStream) -> ModalResult<Spanned<ProgramActivity>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Session => session_activity.map_inner(ProgramActivity::Session),
         _ => transaction_activity.map_inner(ProgramActivity::Transaction),
     }
@@ -35,7 +35,7 @@ pub fn program_activity(input: &mut TokenStream) -> ModalResult<Spanned<ProgramA
 }
 
 pub fn end_transaction_command(input: &mut TokenStream) -> ModalResult<Spanned<EndTransaction>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::Rollback => empty.value(EndTransaction::Rollback),
         TokenKind::Commit => empty.value(EndTransaction::Commit),
         _ => fail,
@@ -45,7 +45,7 @@ pub fn end_transaction_command(input: &mut TokenStream) -> ModalResult<Spanned<E
 }
 
 pub fn session_activity(input: &mut TokenStream) -> ModalResult<Spanned<SessionActivity>> {
-    dispatch! {peek2;
+    dispatch! {peek((any, any));
         (TokenKind::Session, TokenKind::Set) => (
             repeat(1.., session_set_command),
             repeat(0.., session_reset_command),
@@ -63,7 +63,7 @@ pub fn session_activity(input: &mut TokenStream) -> ModalResult<Spanned<SessionA
 }
 
 pub fn transaction_activity(input: &mut TokenStream) -> ModalResult<Spanned<TransactionActivity>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Start => {
             (
                 start_transaction_command,

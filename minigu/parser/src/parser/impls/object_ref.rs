@@ -5,13 +5,10 @@ use super::lexical::{
     binding_table_name, delimited_binding_table_name, delimited_graph_name, directory_name,
     graph_name, object_name, schema_name, substituted_parameter_reference,
 };
-use crate::ast::{
-    BindingTableRef, CatalogObjectRef, GraphRef, GraphTypeRef, Ident, PredefinedSchemaRef,
-    ProcedureRef, SchemaPath, SchemaPathSegment, SchemaRef,
-};
+use crate::ast::*;
 use crate::lexer::TokenKind;
-use crate::parser::token::TokenStream;
-use crate::parser::utils::{SpannedParserExt, ToSpanned, def_parser_alias, peek1, take1};
+use crate::parser::token::{TokenStream, any};
+use crate::parser::utils::{SpannedParserExt, ToSpanned, def_parser_alias};
 use crate::span::Spanned;
 
 pub fn simple_directory_path<const GREEDY: bool>(
@@ -74,7 +71,7 @@ pub fn absolute_directory_path<const GREEDY: bool>(
 pub fn predefined_schema_reference(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<PredefinedSchemaRef>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::HomeSchema => empty.value(PredefinedSchemaRef::Home),
         TokenKind::CurrentSchema | TokenKind::Period => empty.value(PredefinedSchemaRef::Current),
         _ => fail
@@ -134,7 +131,7 @@ pub fn root_schema_reference(input: &mut TokenStream) -> ModalResult<Spanned<Sch
 pub fn non_root_schema_reference<const GREEDY: bool>(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<SchemaRef>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Solidus => absolute_catalog_schema_reference::<GREEDY>,
         TokenKind::DoublePeriod
         | TokenKind::HomeSchema
@@ -159,7 +156,7 @@ def_parser_alias!(
 );
 
 pub fn catalog_object_parent_reference(input: &mut TokenStream) -> ModalResult<CatalogObjectRef> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::Solidus
         | TokenKind::DoublePeriod
         | TokenKind::HomeSchema
@@ -199,7 +196,7 @@ pub fn catalog_object_parent_reference(input: &mut TokenStream) -> ModalResult<C
 }
 
 pub fn graph_reference(input: &mut TokenStream) -> ModalResult<Spanned<GraphRef>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::HomeGraph => home_graph,
         TokenKind::DoubleQuoted(_) | TokenKind::AccentQuoted(_) => delimited_graph_name.map_inner(GraphRef::Name),
         _ => {
@@ -216,7 +213,7 @@ pub fn graph_reference(input: &mut TokenStream) -> ModalResult<Spanned<GraphRef>
 }
 
 pub fn home_graph(input: &mut TokenStream) -> ModalResult<Spanned<GraphRef>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::HomePropertyGraph | TokenKind::HomeGraph => empty.value(GraphRef::Home),
         _ => fail
     }
@@ -264,7 +261,7 @@ def_parser_alias!(
 );
 
 pub fn binding_table_reference(input: &mut TokenStream) -> ModalResult<Spanned<BindingTableRef>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::DoubleQuoted(_) | TokenKind::AccentQuoted(_) => delimited_binding_table_name.map_inner(BindingTableRef::Name),
         _ => alt((
             (catalog_object_parent_reference, binding_table_name).map(|(mut parent, name)| {

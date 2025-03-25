@@ -1,4 +1,4 @@
-use winnow::combinator::{alt, dispatch, empty, fail, preceded};
+use winnow::combinator::{alt, dispatch, empty, fail, peek, preceded};
 use winnow::{ModalResult, Parser};
 
 use super::lexical::object_name_or_binding_variable;
@@ -9,12 +9,12 @@ use super::value_expr::{
 };
 use crate::ast::{GraphExpr, ObjectExpr};
 use crate::lexer::TokenKind;
-use crate::parser::token::TokenStream;
-use crate::parser::utils::{SpannedParserExt, ToSpanned, peek1, take1};
+use crate::parser::token::{TokenStream, any};
+use crate::parser::utils::{SpannedParserExt, ToSpanned};
 use crate::span::Spanned;
 
 pub fn graph_expression(input: &mut TokenStream) -> ModalResult<Spanned<GraphExpr>> {
-    dispatch! {peek1;
+    dispatch! {peek(any);
         TokenKind::CurrentPropertyGraph | TokenKind::CurrentGraph => current_graph,
         _ => alt((
             graph_reference.map_inner(GraphExpr::Ref),
@@ -27,7 +27,7 @@ pub fn graph_expression(input: &mut TokenStream) -> ModalResult<Spanned<GraphExp
 }
 
 pub fn current_graph(input: &mut TokenStream) -> ModalResult<Spanned<GraphExpr>> {
-    dispatch! {take1;
+    dispatch! {any;
         TokenKind::CurrentPropertyGraph | TokenKind::CurrentGraph => empty.value(GraphExpr::Current),
         _ => fail
     }
@@ -36,7 +36,7 @@ pub fn current_graph(input: &mut TokenStream) -> ModalResult<Spanned<GraphExpr>>
 }
 
 pub fn object_expression_primary(input: &mut TokenStream) -> ModalResult<Spanned<ObjectExpr>> {
-    dispatch!{peek1;
+    dispatch!{peek(any);
         TokenKind::Variable => preceded(TokenKind::Variable, value_expression_primary).map(ObjectExpr::Variable),
         TokenKind::LeftParen => parenthesized_value_expression.map(ObjectExpr::Expr),
         _ => non_parenthesized_value_expression_primary_special_case.map(ObjectExpr::Expr),
