@@ -1,7 +1,12 @@
 # Implementation Status of gql-parser
+- :white_check_mark: : fully implemented.
+- :heavy_check_mark: : partially implemented.
+
+TODO: Fill the table below.
+
 | Rule | Status |
 | --- | --- |
-| gqlProgram | :heavy_check_mark: |
+| gqlProgram | :white_check_mark: |
 | programActivity |  |
 | sessionActivity |  |
 | transactionActivity |  |
@@ -496,11 +501,6 @@
 | generalLogarithmArgument |  |
 | commonLogarithm |  |
 | naturalLogarithm |  |
-
-下面是GQL.g4文件中剩余的解析器规则：
-
-| 规则 | 状态 |
-| --- | --- |
 | exponentialFunction |  |
 | powerFunction |  |
 | numericValueExpressionBase |  |
