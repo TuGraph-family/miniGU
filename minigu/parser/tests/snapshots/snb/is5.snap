@@ -5,8 +5,8 @@ Err:
   Unexpected:
     input: "-- short reads 5\nMATCH (message WHERE message.id = 274877907096)-[e]->(person:Person)\nWHERE\n    (label(message) = 'Post' AND type(e) = 'postHasCreator') OR\n    (label(message) = 'Comment' AND type(e) = 'commentHasCreator')\nRETURN\n    person.id AS personId,\n    person.firstName AS firstName,\n    person.lastName AS lastName\n\nMATCH (message WHERE message.id = 3)-[e]->(person:Person)\nWHERE\n    (label(message) = 'Post' AND type(e) = 'postHasCreator') OR\n    (label(message) = 'Comment' AND type(e) = 'commentHasCreator')\nRETURN\n    person.id AS personId,\n    person.firstName AS firstName,\n    person.lastName AS lastName"
     span:
-      start: 17
-      end: 22
+      start: 325
+      end: 330
     position:
-      - 2
+      - 11
       - 1

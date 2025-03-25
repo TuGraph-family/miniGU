@@ -5,8 +5,8 @@ Err:
   Unexpected:
     input: "-- short reads 4\nMATCH (message WHERE message.id = 274877907096)\nWHERE label(message) = 'Post' OR label(message) = 'Comment'\nRETURN\n    message.creationDate as messageCreationDate,\n    coalesce(message.content, message.imageFile) as messageContent\n\nMATCH (message WHERE message.id = 3)\nWHERE label(message) = 'Post' OR label(message) = 'Comment'\nRETURN\n    message.creationDate as messageCreationDate,\n    coalesce(message.content, message.imageFile) as messageContent"
     span:
-      start: 17
-      end: 22
+      start: 179
+      end: 180
     position:
-      - 2
-      - 1
+      - 5
+      - 48
