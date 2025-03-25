@@ -2,19 +2,19 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use common::datatype::{types::{EdgeId, LabelId, VertexId}, value::PropertyValue};
 
-use crate::model::{edge::Edge, vertex::Vertex};
+use crate::model::{edge::{Adjacency, Edge}, vertex::Vertex};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// Represents a commit timestamp used for multi-version concurrency control (MVCC).
-pub struct CommitTimestamp(pub u64);
+pub struct Timestamp(pub u64);
 
-impl CommitTimestamp {
+impl Timestamp {
     pub(crate) const TXN_ID_START: u64 = 1 << 63;
 
     /// Generates a new transaction ID, ensuring atomicity using an atomic counter.
     pub fn new_txn_id() -> Self {
         // Static counter initialized once, persists between calls. 
-        static COUNTER: AtomicU64 = AtomicU64::new(CommitTimestamp::TXN_ID_START);
+        static COUNTER: AtomicU64 = AtomicU64::new(Timestamp::TXN_ID_START);
         // Transaction ID only needs to be atomically incremented
         // and does not require strict memory order.
         Self(COUNTER.fetch_add(1, Ordering::Relaxed))
@@ -37,20 +37,20 @@ impl CommitTimestamp {
 
 #[derive(Debug, Clone, Copy)]
 pub struct UndoPtr {
-    txn_id: CommitTimestamp,
+    txn_id: Timestamp,
     entry_offset: usize,
 }
 
 impl UndoPtr {
     /// Create a UndoPtr
-    pub fn new(txn_id: CommitTimestamp, entry_offset: usize) -> Self {
+    pub fn new(txn_id: Timestamp, entry_offset: usize) -> Self {
         Self {
             txn_id,
             entry_offset,
         }
     }
     /// Get the transaction id of the undo ptr.
-    pub fn txn_id(&self) -> CommitTimestamp {
+    pub fn txn_id(&self) -> Timestamp {
         self.txn_id
     }
 
@@ -64,7 +64,7 @@ impl UndoPtr {
 /// Represents an undo log entry for multi-version concurrency control.
 pub struct UndoEntry {
     delta: DeltaOp,
-    timestamp: CommitTimestamp, // Timestamp when this version is committed
+    timestamp: Timestamp, // Timestamp when this version is committed
     next: Option<UndoPtr>,
 }
 
@@ -72,7 +72,7 @@ impl UndoEntry {
     /// Create a UndoEntry
     pub(super) fn new(
         delta: DeltaOp,
-        timestamp: CommitTimestamp,
+        timestamp: Timestamp,
         next: Option<UndoPtr>,
     ) -> Self {
         Self {
@@ -88,7 +88,7 @@ impl UndoEntry {
     }
 
     /// Get the end timestamp of the undo entry.
-    pub(super) fn timestamp(&self) -> CommitTimestamp {
+    pub(super) fn timestamp(&self) -> Timestamp {
         self.timestamp
     }
 
@@ -115,10 +115,10 @@ pub enum DeltaOp {
     /// Used only for Vertex
     AddLabel(LabelId),
     RemoveLabel(LabelId),
-    AddInEdge(Edge),
-    AddOutEdge(Edge),
-    RemoveInEdge(EdgeId),
-    RemoveOutEdge(EdgeId),
+    // AddInEdge(Edge),
+    // AddOutEdge(Edge),
+    // RemoveInEdge(Adjacency),
+    // RemoveOutEdge(Adjacency),
 }
 
 pub enum IsolationLevel {

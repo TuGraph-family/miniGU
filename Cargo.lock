@@ -741,6 +741,7 @@ dependencies = [
  "chrono",
  "common",
  "crc32fast",
+ "crossbeam-epoch",
  "crossbeam-skiplist",
  "dashmap",
  "postcard",

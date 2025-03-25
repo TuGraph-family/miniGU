@@ -2,6 +2,7 @@ use std::sync::{Arc, RwLock};
 
 use common::datatype::types::{EdgeId, VertexId};
 use common::datatype::value::PropertyValue;
+use crossbeam_skiplist::SkipSet;
 use dashmap::DashMap;
 
 use crate::error::{StorageError, StorageResult};
@@ -11,7 +12,7 @@ use crate::memory::vertex_iterator::VertexIterator;
 use crate::model::edge::{Adjacency, Direction, Edge};
 use crate::model::vertex::Vertex;
 use crate::storage::{Graph, MutGraph};
-use crate::transaction::{CommitTimestamp, DeltaOp, IsolationLevel, SetPropsOp, UndoEntry, UndoPtr};
+use crate::transaction::{Timestamp, DeltaOp, IsolationLevel, SetPropsOp, UndoEntry, UndoPtr};
 
 use super::transaction::{MemTransaction, MemTxnManager};
 
@@ -43,39 +44,13 @@ macro_rules! update_properties {
     }};
 }
 
-// Perform the delete vertex/edge operation
-macro_rules! delete_entity {
-    ($self:expr, $entry:expr, $txn:expr, $entity_type:ident, $delta_variant:ident, $error_type:ident) => {{
-        // Acquire the lock to modify the vertex/edge
-        let mut current = $entry.chain.current.write().unwrap();
-
-        // Conflict detection: Ensure the vertex/edge is modified only by this transaction
-        if current.commit_ts != $txn.txn_id() && current.commit_ts > $txn.start_ts() {
-            return Err(StorageError::TransactionError(
-                "Concurrent modification detected".to_string(),
-            ));
-        }
-
-        // Mark the vertex/edge as deleted
-        let tombstone = $entity_type::tombstone(current.data.clone());
-        current.data = tombstone;
-
-        // Record the vertex/edge deletion in the transaction
-        let delta = DeltaOp::$delta_variant(current.data.clone());
-        let undo_ptr = $entry.chain.undo_ptr.read().unwrap();
-        let mut undo_buffer = $txn.undo_buffer.write().unwrap();
-        undo_buffer.push(UndoEntry::new(delta, current.commit_ts, undo_ptr.clone()));
-        *$entry.chain.undo_ptr.write().unwrap() = Some(UndoPtr::new($txn.txn_id(), undo_buffer.len() - 1));
-    }};
-}
-
 // Version metadata (equivalent to version metadata in the referenced paper)
 #[derive(Debug)]
 /// Stores the current version of an entity, along with transaction metadata.
 pub(super) struct CurrentVersion<D> {
     pub(super) data: D,                            // The actual data version
     // pub(super) modified_by: Option<CommitTimestamp>, // Transaction ID marking the modification
-    pub(super) commit_ts: CommitTimestamp,         // Commit timestamp indicating when it was committed
+    pub(super) commit_ts: Timestamp,         // Commit timestamp indicating when it was committed
 }
 
 // Version chain structure
@@ -94,12 +69,13 @@ pub(super) struct VersionedVertex {
 
 impl VersionedVertex {
     /// Creates a new `VersionedVertex` instance with an initial vertex.
+    #[allow(dead_code)]
     pub fn new(initial: Vertex) -> Self {
         Self {
             chain: Arc::new(VersionChain {
                 current: RwLock::new(CurrentVersion {
                     data: initial,
-                    commit_ts: CommitTimestamp(0), // Initial commit timestamp set to 0
+                    commit_ts: Timestamp(0), // Initial commit timestamp set to 0
                 }),
                 undo_ptr: RwLock::new(None),
             }),
@@ -110,8 +86,8 @@ impl VersionedVertex {
         &self.chain.current
     }
 
-    pub fn with_modified_ts(initial: Vertex, txn_id: CommitTimestamp) -> Self {
-        debug_assert!(txn_id.0 > CommitTimestamp::TXN_ID_START);
+    pub fn with_modified_ts(initial: Vertex, txn_id: Timestamp) -> Self {
+        debug_assert!(txn_id.0 > Timestamp::TXN_ID_START);
         Self {
             chain: Arc::new(VersionChain {
                 current: RwLock::new(CurrentVersion {
@@ -131,11 +107,48 @@ impl VersionedVertex {
         } else {
             let undo_ptr = self.chain.undo_ptr.read().unwrap();
             if let Some(undo_ptr) = undo_ptr.as_ref() {
-                txn.apply_deltas_for_vertex(*undo_ptr, &mut current_vertex, txn.start_ts())?;
+                let apply_deltas = |undo_entry: &UndoEntry| {
+                    match undo_entry.delta() {
+                        DeltaOp::CreateVertex(original) => current_vertex = original.clone(),
+                        DeltaOp::SetVertexProps(_, SetPropsOp { indices, props }) => {
+                            current_vertex.set_props(indices, props.clone());
+                        },
+                        DeltaOp::DelVertex(_) => {
+                            current_vertex.is_tombstone = true;
+                        },
+                        _ => unreachable!("Unreachable delta op for a vertex"),
+                    }
+                };
+                txn.apply_deltas_for_read(undo_ptr.clone(), apply_deltas, txn.start_ts())?
             }else {
                 return Err(StorageError::VersionNotFound(format!("{:?}", current.commit_ts)));
             }
             Ok(current_vertex)
+        }
+    }
+
+    pub(super) fn is_visible(&self, txn: &MemTransaction) -> bool {
+        // Check if the vertex is visible based on the transaction's start timestamp
+        let current = self.chain.current.read().unwrap();
+        if current.commit_ts == txn.txn_id() || current.commit_ts > txn.start_ts() {
+            true
+        } else {
+            let undo_ptr = self.chain.undo_ptr.read().unwrap();
+            if let Some(undo_ptr) = undo_ptr.as_ref() {
+                let mut is_visible = true;
+                let apply_deltas = |undo_entry: &UndoEntry| {
+                    match undo_entry.delta() {
+                        DeltaOp::DelVertex(_) => {
+                            is_visible = false;
+                        },
+                        _ => {}
+                    }
+                };
+                let _ = txn.apply_deltas_for_read(undo_ptr.clone(), apply_deltas, txn.start_ts());
+                is_visible 
+            } else {
+                false
+            }
         }
     }
 }
@@ -148,12 +161,13 @@ pub(super) struct VersionedEdge {
 
 impl VersionedEdge {
     /// Creates a new `VersionedEdge` instance with an initial edge.
+    #[allow(dead_code)]
     pub fn new(initial: Edge) -> Self {
         Self {
             chain: Arc::new(VersionChain {
                 current: RwLock::new(CurrentVersion {
                     data: initial,
-                    commit_ts: CommitTimestamp(0), // Initial commit timestamp set to 0
+                    commit_ts: Timestamp(0), // Initial commit timestamp set to 0
                 }),
                 undo_ptr: RwLock::new(None),
             }),
@@ -164,8 +178,8 @@ impl VersionedEdge {
         &self.chain.current
     }
 
-    pub fn with_modified_ts(initial: Edge, txn_id: CommitTimestamp) -> Self {
-        debug_assert!(txn_id.0 > CommitTimestamp::TXN_ID_START);
+    pub fn with_modified_ts(initial: Edge, txn_id: Timestamp) -> Self {
+        debug_assert!(txn_id.0 > Timestamp::TXN_ID_START);
         Self {
             chain: Arc::new(VersionChain {
                 current: RwLock::new(CurrentVersion {
@@ -185,63 +199,83 @@ impl VersionedEdge {
         } else {
             let undo_ptr = self.chain.undo_ptr.read().unwrap();
             if let Some(undo_ptr) = undo_ptr.as_ref() {
-                txn.apply_deltas_for_edge(*undo_ptr, &mut current_edge, txn.start_ts())?;
+                let apply_deltas = |undo_entry: &UndoEntry| {
+                    match undo_entry.delta() {
+                        DeltaOp::CreateEdge(original) => current_edge = original.clone(),
+                        DeltaOp::SetEdgeProps(_, SetPropsOp { indices, props }) => {
+                            current_edge.set_props(indices, props.clone());
+                        },
+                        DeltaOp::DelEdge(_) => {
+                            current_edge.is_tombstone = true;
+                        },
+                        _ => unreachable!("Unreachable delta op for an edge"),
+                    }
+                };
+                txn.apply_deltas_for_read(*undo_ptr, apply_deltas, txn.start_ts())?;
             }else {
                 return Err(StorageError::VersionNotFound(format!("{:?}", current.commit_ts)));
             }
             Ok(current_edge)
         }
     }
-}
 
-#[derive(Debug, Clone)]
-/// Represents a versioned adjacency entry with timestamps for MVCC.
-pub(super) struct VersionedAdjEntry {
-    pub(super) inner: Adjacency,          // The adjacency data
-    pub(super) begin_ts: CommitTimestamp, // Timestamp when this entry became valid
-    pub(super) end_ts: CommitTimestamp,   // Default u64::MAX indicates not deleted
-}
-
-impl VersionedAdjEntry {
-    /// Creates a new adjacency entry with the given edge ID, vertex ID, and begin timestamp.
-    pub(super) fn new(edge_id: EdgeId, vertex_id: VertexId, begin_ts: CommitTimestamp) -> Self {
-        Self {
-            inner: Adjacency::new(vertex_id, edge_id),
-            begin_ts,
-            end_ts: CommitTimestamp::max_commit_ts(), // Default end timestamp is set to max (not deleted)
+    pub fn is_visible(&self, txn: &MemTransaction) -> bool {
+        // Check if the src and dst vertices of edge are visible
+        let read_guard = self.chain.current.read().unwrap();
+        let src = read_guard.data.dst_id;
+        let dst = read_guard.data.src_id;
+        if txn.graph().vertices().get(&src).map(|v| v.is_visible(&txn)).unwrap_or(false)
+            && txn.graph().vertices().get(&dst).map(|v| v.is_visible(&txn)).unwrap_or(false) {
+            // Check if the vertex is visible based on the transaction's start timestamp
+            let current = self.chain.current.read().unwrap();
+            if current.commit_ts == txn.txn_id() || current.commit_ts > txn.start_ts() {
+                true
+            } else {
+                let undo_ptr = self.chain.undo_ptr.read().unwrap();
+                if let Some(undo_ptr) = undo_ptr.as_ref() {
+                    let mut is_visible = true;
+                    let apply_deltas = |undo_entry: &UndoEntry| {
+                        match undo_entry.delta() {
+                            DeltaOp::DelEdge(_) => {
+                                is_visible = false;
+                            },
+                            _ => {}
+                        }
+                    };
+                    let _ = txn.apply_deltas_for_read(undo_ptr.clone(), apply_deltas, txn.start_ts());
+                    is_visible 
+                } else {
+                    false
+                }
+            }
+        } else {
+            false
         }
     }
+}
 
-    /// Returns a reference to the underlying adjacency information.
-    pub fn inner(&self) -> &Adjacency {
-        &self.inner
-    }
+#[derive(Debug)]
+pub(super) struct VersionedAjdContainer {
+    pub(super) inner: Arc<SkipSet<Adjacency>>,
+}
 
-    /// Returns the begin timestamp of the adjacency entry.
-    pub fn begin_ts(&self) -> CommitTimestamp {
-        self.begin_ts
-    }
-
-    /// Returns the end timestamp of the adjacency entry.
-    pub fn end_ts(&self) -> CommitTimestamp {
-        self.end_ts
-    }
-
-    /// Returns the edge ID of the adjacency entry.
-    pub fn edge_id(&self) -> EdgeId {
-        self.inner.edge_id()
+impl VersionedAjdContainer {
+    pub fn new() -> Self {
+        Self {
+            inner: Arc::new(SkipSet::new()),
+        }
     }
 }
 
 
-pub struct MemGraph {
+pub struct MemoryGraph {
     // ---- Versioned data storage ----
     pub(super) vertices: DashMap<VertexId, VersionedVertex>, // Stores versioned vertices
     pub(super) edges: DashMap<EdgeId, VersionedEdge>,        // Stores versioned edges
 
     // ---- Adjacency lists (with versioning) ----
-    pub(super) adjacency_out: DashMap<VertexId, Vec<VersionedAdjEntry>>, // Outgoing adjacency list
-    pub(super) adjacency_in: DashMap<VertexId, Vec<VersionedAdjEntry>>,  // Incoming adjacency list
+    pub(super) adjacency_out: DashMap<VertexId, VersionedAjdContainer>, // Outgoing adjacency list
+    pub(super) adjacency_in: DashMap<VertexId, VersionedAjdContainer>,  // Incoming adjacency list
 
     // ---- Transaction management ----
     pub(super) txn_manager: MemTxnManager,
@@ -249,7 +283,7 @@ pub struct MemGraph {
 
 #[allow(dead_code)]
 // Basic methods for MemGraph
-impl MemGraph {
+impl MemoryGraph {
     /// Creates a new instance of `MemGraph`.
     pub fn new() -> Arc<Self> {
         Arc::new(Self {
@@ -264,8 +298,8 @@ impl MemGraph {
     /// Begins a new transaction and returns a `MemTransaction` instance.
     pub fn begin_transaction(self: &Arc<Self>, isolation_level: IsolationLevel) -> Arc<MemTransaction> {
         // Allocate a new transaction ID and read timestamp.
-        let txn_id = CommitTimestamp::new_txn_id();
-        let start_ts = CommitTimestamp::new_commit_ts();
+        let txn_id = Timestamp::new_txn_id();
+        let start_ts = Timestamp::new_commit_ts();
 
         // Register the transaction as active (used for garbage collection and visibility checks).
         let txn = Arc::new(
@@ -284,20 +318,10 @@ impl MemGraph {
     pub fn edges(&self) -> &DashMap<EdgeId, VersionedEdge> {
         &self.edges
     }
-
-    /// Returns a reference to the outgoing adjacency list storage.
-    pub fn adjacency_out(&self) -> &DashMap<VertexId, Vec<VersionedAdjEntry>> {
-        &self.adjacency_out
-    }
-
-    /// Returns a reference to the incoming adjacency list storage.
-    pub fn adjacency_in(&self) -> &DashMap<VertexId, Vec<VersionedAdjEntry>> {
-        &self.adjacency_in
-    }
 }
 
 // Immutable graph methods
-impl Graph for MemGraph {
+impl Graph for MemoryGraph {
     type Adjacency = Adjacency;
     type AdjacencyIter<'a> = AdjacencyIterator<'a>;
     type Direction = Direction;
@@ -322,7 +346,19 @@ impl Graph for MemGraph {
         let commit_ts = current_version.commit_ts;
         let mut visible_vertex = current_version.data.clone();
         if let Some(undo_ptr) = *versioned_vertex.chain.undo_ptr.read().unwrap() {
-            txn.apply_deltas_for_vertex(undo_ptr, &mut visible_vertex, txn.start_ts())?;
+            let apply_deltas = |undo_entry: &UndoEntry| {
+                match undo_entry.delta() {
+                    DeltaOp::CreateVertex(original) => visible_vertex = original.clone(),
+                    DeltaOp::SetVertexProps(_, SetPropsOp { indices, props }) => {
+                        visible_vertex.set_props(indices, props.clone());
+                    },
+                    DeltaOp::DelVertex(_) => {
+                        visible_vertex.is_tombstone = true;
+                    },
+                    _ => unreachable!("Unreachable delta op for a vertex"),
+                }
+            };
+            txn.apply_deltas_for_read(undo_ptr.clone(), apply_deltas, txn.start_ts())?;
         } else {
             if commit_ts > txn.start_ts() {
                 return Err(StorageError::VersionNotFound(
@@ -357,7 +393,19 @@ impl Graph for MemGraph {
         let commit_ts = current_version.commit_ts;
         let mut visible_edge = current_version.data.clone();
         if let Some(undo_ptr) = *versioned_edge.chain.undo_ptr.read().unwrap() {
-            txn.apply_deltas_for_edge(undo_ptr, &mut visible_edge, txn.start_ts())?;
+            let apply_deltas = |undo_entry: &UndoEntry| {
+                match undo_entry.delta() {
+                    DeltaOp::CreateEdge(original) => visible_edge = original.clone(),
+                    DeltaOp::SetEdgeProps(_, SetPropsOp { indices, props }) => {
+                        visible_edge.set_props(indices, props.clone());
+                    },
+                    DeltaOp::DelEdge(_) => {
+                        visible_edge.is_tombstone = true;
+                    },
+                    _ => unreachable!("Unreachable delta op for an edge"),
+                }
+            };
+            txn.apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts())?;
         } else {
             if commit_ts > txn.start_ts() {
                 return Err(StorageError::VersionNotFound(
@@ -404,7 +452,7 @@ impl Graph for MemGraph {
 }
 
 // Mutable graph methods
-impl MutGraph for MemGraph {
+impl MutGraph for MemoryGraph {
     /// Inserts a new vertex into the graph within a transaction.
     fn create_vertex(&self, txn: &MemTransaction, vertex: Vertex) -> StorageResult<VertexId> {
         let vid = vertex.vid().clone();
@@ -429,7 +477,9 @@ impl MutGraph for MemGraph {
 
     /// Inserts a new edge into the graph within a transaction.
     fn create_edge(&self, txn: &MemTransaction, edge: Edge) -> StorageResult<EdgeId> {
-        let eid = edge.eid().clone();
+        let eid = edge.eid();
+        let src_id = edge.src_id();
+        let dst_id = edge.dst_id();
 
         // Check if source and destination vertices exist.
         if self.get_vertex(txn, edge.src_id()).is_err() {
@@ -450,12 +500,27 @@ impl MutGraph for MemGraph {
         }
 
         // Record the edge creation in the transaction
-        let delta = DeltaOp::DelEdge(eid);
-        let delta_ts = entry.chain.undo_ptr.read().unwrap();
-        let mut undo_buffer = txn.undo_buffer.write().unwrap();
-        undo_buffer.push(UndoEntry::new(delta, current.commit_ts, delta_ts.clone()));
-        *entry.chain.undo_ptr.write().unwrap() = Some(UndoPtr::new(txn.txn_id(), undo_buffer.len() - 1));
+        let delta_edge = DeltaOp::DelEdge(eid);
+        let undo_ptr = entry.chain.undo_ptr.read().unwrap();
+        {
+            // Update the undo_entry logical pointer
+            let mut undo_buffer = txn.undo_buffer.write().unwrap();
+            undo_buffer.push(UndoEntry::new(delta_edge, current.commit_ts, undo_ptr.clone()));
+            *entry.chain.undo_ptr.write().unwrap() = Some(UndoPtr::new(txn.txn_id(), undo_buffer.len() - 1));
+        }
 
+        // Record the adjacency list updates in the transaction
+        self.adjacency_out
+            .entry(eid)
+            .or_insert_with(|| VersionedAjdContainer::new())
+            .inner
+            .insert(Adjacency::new(dst_id, eid));
+        self.adjacency_in
+           .entry(eid)
+           .or_insert_with(|| VersionedAjdContainer::new())
+           .inner
+           .insert(Adjacency::new(src_id, eid));
+        
         Ok(eid)
     }
 
@@ -467,7 +532,28 @@ impl MutGraph for MemGraph {
             .get(&vid)
             .ok_or(StorageError::VertexNotFound(vid.to_string()))?;
 
-        delete_entity!(self, entry, txn, Vertex, CreateVertex, VertexNotFound);
+        // Acquire the lock to modify the vertex
+        let mut current = entry.chain.current.write().unwrap();
+
+        // Conflict detection: Ensure the vertex is modified only by this transaction
+        if current.commit_ts != txn.txn_id() && current.commit_ts > txn.start_ts() {
+            return Err(StorageError::TransactionError(
+                "Concurrent modification detected".to_string(),
+            ));
+        }
+
+        // Mark the vertex as deleted
+        let tombstone = Vertex::tombstone(current.data.clone());
+        current.data = tombstone;
+
+        // Record the vertex deletion in the transaction
+        let delta = DeltaOp::CreateVertex(current.data.clone());
+        let undo_ptr = entry.chain.undo_ptr.read().unwrap().clone();
+        {
+            let mut undo_buffer = txn.undo_buffer.write().unwrap();
+            undo_buffer.push(UndoEntry::new(delta, current.commit_ts, undo_ptr.clone()));
+            *entry.chain.undo_ptr.write().unwrap() = Some(UndoPtr::new(txn.txn_id(), undo_buffer.len() - 1));
+        }
 
         Ok(())
     }
@@ -480,7 +566,26 @@ impl MutGraph for MemGraph {
             .get(&eid)
             .ok_or(StorageError::EdgeNotFound(eid.to_string()))?;
 
-        delete_entity!(self, entry, txn, Edge, CreateEdge, EdgeNotFound);
+        // Acquire the lock to modify the edge
+        let mut current = entry.chain.current.write().unwrap();
+
+        // Conflict detection: Ensure the edge is modified only by this transaction
+        if current.commit_ts != txn.txn_id() && current.commit_ts > txn.start_ts() {
+            return Err(StorageError::TransactionError(
+                "Concurrent modification detected".to_string(),
+            ));
+        }
+
+        // Mark the edge as deleted
+        let tombstone = Edge::tombstone(current.data.clone());
+        current.data = tombstone;
+
+        // Record the edge deletion in the transaction
+        let delta = DeltaOp::CreateEdge(current.data.clone());
+        let undo_ptr = entry.chain.undo_ptr.read().unwrap();
+        let mut undo_buffer = txn.undo_buffer.write().unwrap();
+        undo_buffer.push(UndoEntry::new(delta, current.commit_ts, undo_ptr.clone()));
+        *entry.chain.undo_ptr.write().unwrap() = Some(UndoPtr::new(txn.txn_id(), undo_buffer.len() - 1));
 
         Ok(())
     }
@@ -524,8 +629,6 @@ impl MutGraph for MemGraph {
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use common::datatype::value::PropertyValue;
@@ -561,7 +664,7 @@ mod tests {
 
     #[test]
     fn test_basic_commit_flow() {
-        let graph = MemGraph::new();
+        let graph = MemoryGraph::new();
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
 
         let v1 = create_vertex_alice();
@@ -576,7 +679,7 @@ mod tests {
 
     #[test]
     fn test_transaction_isolation() {
-        let graph = MemGraph::new();
+        let graph = MemoryGraph::new();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let v1 = create_vertex_alice();
@@ -591,14 +694,14 @@ mod tests {
 
     #[test]
     fn test_mvcc_version_chain() {
-        let graph = MemGraph::new();
+        let graph = MemoryGraph::new();
 
-        let mut txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let v1 = create_vertex_alice();
         let vid1 = graph.create_vertex(&txn1, v1).unwrap();
         assert!(txn1.commit().is_ok());
 
-        let mut txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
         let old_v1: Vertex = graph.get_vertex(&txn2, vid1).unwrap();
         assert_eq!(old_v1.properties()[1], PropertyValue::Int(25));
         assert!(
@@ -615,14 +718,14 @@ mod tests {
 
     #[test]
     fn test_delete_with_tombstone() {
-        let graph = MemGraph::new();
+        let graph = MemoryGraph::new();
 
-        let mut txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let v1 = create_vertex_alice();
         let vid1 = graph.create_vertex(&txn1, v1).unwrap();
         assert!(txn1.commit().is_ok());
 
-        let mut txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
         graph.delete_vertex(&txn2, vid1).unwrap();
         assert!(txn2.commit().is_ok());
 
@@ -632,7 +735,7 @@ mod tests {
 
     #[test]
     fn test_conflict_detection() {
-        let graph = MemGraph::new();
+        let graph = MemoryGraph::new();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let v1 = create_vertex_alice();
@@ -645,9 +748,9 @@ mod tests {
 
     #[test]
     fn test_adjacency_versioning() {
-        let graph = MemGraph::new();
+        let graph = MemoryGraph::new();
 
-        let mut txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let v1 = create_vertex_alice();
         let v2 = create_vertex_bob();
 
@@ -655,14 +758,14 @@ mod tests {
         let vid2 = graph.create_vertex(&txn1, v2).unwrap();
         assert!(txn1.commit().is_ok());
 
-        let mut txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
         let e1 = create_edge_alice_to_bob();
         let eid1 = graph.create_edge(&txn2, e1).unwrap();
         assert!(txn2.commit().is_ok());
 
         {
             let adj = graph.adjacency_out.get(&vid1).unwrap();
-            assert!(adj.len() == 1 && adj[0].end_ts == CommitTimestamp::max_commit_ts());
+            assert!(adj.value().inner.len() == 1);
         }
 
         let txn3 = graph.begin_transaction(IsolationLevel::Serializable);
@@ -670,19 +773,18 @@ mod tests {
         assert!(e1.src_id() == vid1 && e1.dst_id() == vid2);
         let _ = txn3.abort();
 
-        let mut txn4 = graph.begin_transaction(IsolationLevel::Serializable);
+        let txn4 = graph.begin_transaction(IsolationLevel::Serializable);
         graph.delete_edge(&txn4, eid1).unwrap();
-        let ts_del = txn4.commit().unwrap();
 
         {
             let adj = graph.adjacency_out.get(&vid1).unwrap();
-            assert!(adj.len() == 1 && adj[0].end_ts == ts_del);
+            assert!(adj.inner.len() == 1);
         }
     }
 
     #[test]
     fn test_rollback_consistency() {
-        let graph = MemGraph::new();
+        let graph = MemoryGraph::new();
 
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
         let vid1 = graph.create_vertex(&txn, create_vertex_alice()).unwrap();
@@ -694,14 +796,14 @@ mod tests {
 
     #[test]
     fn test_property_update_flow() {
-        let graph = MemGraph::new();
+        let graph = MemoryGraph::new();
 
-        let mut txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let v1 = create_vertex_alice();
         let vid1 = graph.create_vertex(&txn1, v1).unwrap();
         assert!(txn1.commit().is_ok());
 
-        let mut txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
         graph
             .set_vertex_property(&txn2, vid1, vec![0], vec![PropertyValue::Int(42)])
             .unwrap();
@@ -714,16 +816,16 @@ mod tests {
 
     #[test]
     fn test_read_after_write_conflict() {
-        let graph = MemGraph::new();
+        let graph = MemoryGraph::new();
 
-        let mut txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let vid1 = graph.create_vertex(&txn1, create_vertex_alice()).unwrap();
         assert!(txn1.commit().is_ok());
 
-        let mut txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
         let _ = graph.get_vertex(&txn2, vid1).unwrap();
 
-        let mut txn3 = graph.begin_transaction(IsolationLevel::Serializable);
+        let txn3 = graph.begin_transaction(IsolationLevel::Serializable);
         graph
             .set_vertex_property(&txn3, vid1, vec![0], vec![PropertyValue::Int(99)])
             .unwrap();
@@ -734,9 +836,9 @@ mod tests {
 
     #[test]
     fn test_vertex_iterator() {
-        let graph = MemGraph::new();
+        let graph = MemoryGraph::new();
 
-        let mut txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let v1 = create_vertex_alice();
         let v2 = create_vertex_bob();
         let _ = graph.create_vertex(&txn1, v1).unwrap();
@@ -770,9 +872,9 @@ mod tests {
 
     #[test]
     fn test_edge_iterator() {
-        let graph = MemGraph::new();
+        let graph = MemoryGraph::new();
 
-        let mut txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let v1 = create_vertex_alice();
         let v2 = create_vertex_bob();
         let _ = graph.create_vertex(&txn1, v1).unwrap();
@@ -820,9 +922,9 @@ mod tests {
 
     #[test]
     fn test_adj_interator() {
-        let graph = MemGraph::new();
+        let graph = MemoryGraph::new();
 
-        let mut txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let v1 = create_vertex_alice();
         let v2 = create_vertex_bob();
         let vid1 = graph.create_vertex(&txn1, v1).unwrap();

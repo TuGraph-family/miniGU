@@ -80,7 +80,7 @@ impl Edge {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct Adjacency {
     vertex_id: VertexId,
     edge_id: EdgeId,
@@ -97,5 +97,19 @@ impl Adjacency {
 
     pub fn edge_id(&self) -> EdgeId {
         self.edge_id
+    }
+}
+
+impl PartialOrd for Adjacency {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+// 实现 Ord
+impl Ord for Adjacency {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.vertex_id.cmp(&other.vertex_id)
+            .then(self.edge_id.cmp(&other.edge_id))
     }
 }

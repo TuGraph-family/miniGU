@@ -1,23 +1,25 @@
+use std::sync::Arc;
+
 use common::datatype::types::{EdgeId, VertexId};
+use crossbeam_skiplist::SkipSet;
 use dashmap::mapref::one::Ref;
 
 use crate::error::StorageResult;
 use crate::iterators::AdjacencyIteratorTrait;
-use crate::memory::memory_graph::VersionedAdjEntry;
 use crate::model::edge::{Adjacency, Direction};
-use crate::transaction::CommitTimestamp;
 
+use super::memory_graph::VersionedAjdContainer;
 use super::transaction::MemTransaction;
 
 /// An adjacency list iterator that supports filtering (for iterating over a single vertex's
 /// adjacency list).
 pub struct AdjacencyIterator<'a> {
-    adjacency_list: Option<Ref<'a, VertexId, Vec<VersionedAdjEntry>>>, /* The adjacency list for
-                                                                        * the vertex */
-    index: usize,            // Current index in the adjacency list
-    txn: &'a MemTransaction, // Reference to the transaction
+    adj_list: Option<Arc<SkipSet<Adjacency>>>, // The adjacency list for the vertex
+    current_entries: Vec<Adjacency>, // Store current batch of entries
+    current_index: usize,            // Current index in the batch
+    txn: &'a MemTransaction,         // Reference to the transaction
     filters: Vec<Box<dyn Fn(&Adjacency) -> bool + 'a>>, // List of filtering predicates
-    current_entry: Option<Adjacency>, // The currently iterated adjacency entry
+    current_adj: Option<Adjacency>,  // Current adjacency entry
 }
 
 impl<'a> Iterator for AdjacencyIterator<'a> {
@@ -25,48 +27,86 @@ impl<'a> Iterator for AdjacencyIterator<'a> {
 
     /// Retrieves the next visible adjacency entry that satisfies all filters.
     fn next(&mut self) -> Option<Self::Item> {
-        let entries = self.adjacency_list.as_deref()?;
+        // If current batch is processed, get a new batch
+        if self.current_index >= self.current_entries.len() {
+            self.load_next_batch()?;
+        }
 
-        while self.index < entries.len() {
-            let adj_entry = &entries[self.index];
-            self.index += 1;
+        // Process entries in current batch
+        while self.current_index < self.current_entries.len() {
+            let entry = &self.current_entries[self.current_index];
+            self.current_index += 1;
+            
+            let eid = entry.edge_id();
 
             // Perform MVCC visibility check
-            if !(adj_entry.begin_ts() <= self.txn.start_ts()
-                && self.txn.start_ts() < adj_entry.end_ts()
-                && adj_entry.end_ts() == CommitTimestamp::max_commit_ts())
-            {
-                continue;
-            }
+            let is_visible = self.txn
+                .graph()
+                .edges
+                .get(&eid)
+                .map(|edge| edge.is_visible(&self.txn))
+                .unwrap_or(false);
 
-            // Apply all filtering conditions
-            if self.filters.iter().all(|f| f(adj_entry.inner())) {
-                let adjacency = adj_entry.inner().clone(); // 获取 `Adjacency` 对象
-                self.current_entry = Some(adjacency.clone());
-                return Some(Ok(adjacency));
+            if is_visible && self.filters.iter().all(|f| f(entry)) {
+                let adj = entry.clone();
+                self.current_adj = Some(adj.clone());
+                return Some(Ok(adj));
             }
         }
 
-        self.current_entry = None; // Reset when iteration ends
-        None
+        // If current batch is processed but no match found, try loading next batch
+        self.load_next_batch()?;
+        self.next()
     }
 }
 
 impl<'a> AdjacencyIterator<'a> {
+    fn load_next_batch(&mut self) -> Option<()> {
+        if let Some(adj_list) = &self.adj_list {
+            
+            let iter = adj_list.get(self.current_entries.last()?)?;
+            // Clear current entry batch
+            self.current_entries.clear();
+            self.current_index = 0;
+
+            // Load the next batch of entries
+            for _ in 0..64 {
+                if let Some(entry) = iter.next() {
+                    self.current_entries.push(entry.value().clone());
+                } else {
+                    break;
+                }
+            }
+            
+            if !self.current_entries.is_empty() {
+                return Some(());
+            }
+        }
+        None
+    }
+
     /// Creates a new `AdjacencyIterator` for a given vertex and direction (incoming or outgoing).
     pub fn new(txn: &'a MemTransaction, vid: VertexId, direction: Direction) -> Self {
-        let adjacency_list = match direction {
-            Direction::Out => txn.graph().adjacency_out().get(&vid),
-            Direction::In => txn.graph().adjacency_in().get(&vid),
+        let adjacency_list: Option<Ref<'_, u64, VersionedAjdContainer>> = match direction {
+            Direction::Out => txn.graph().adjacency_out.get(&vid),
+            Direction::In => txn.graph().adjacency_in.get(&vid),
         };
 
-        AdjacencyIterator {
-            adjacency_list,
-            index: 0,
+        let mut result = Self {
+            adj_list: adjacency_list.map(|entry| entry.inner.clone()),
+            current_entries: Vec::new(),
+            current_index: 0,
             txn,
             filters: Vec::new(),
-            current_entry: None,
+            current_adj: None,
+        };
+        
+        // Preload the first batch of data
+        if result.adj_list.is_some() {
+            result.load_next_batch();
         }
+        
+        result
     }
 }
 
@@ -95,12 +135,12 @@ impl<'a> AdjacencyIteratorTrait<'a> for AdjacencyIterator<'a> {
 
     /// Returns a reference to the currently iterated adjacency entry.
     fn current_entry(&self) -> Option<&Adjacency> {
-        self.current_entry.as_ref()
+        self.current_adj.as_ref()
     }
 }
 
 /// Implementation for `MemTransaction`
-impl<'a> MemTransaction {
+impl MemTransaction {
     /// Returns an iterator over the adjacency list of a given vertex.
     /// Filtering conditions can be applied using the `filter` method.
     pub fn iter_adjacency(&self, vid: VertexId, direction: Direction) -> AdjacencyIterator<'_> {
