@@ -7,7 +7,7 @@ RETURN
     person.id AS personId,
     person.firstName AS firstName,
     person.lastName AS lastName
-
+UNION
 MATCH (message WHERE message.id = 3)-[e]->(person:Person)
 WHERE
     (label(message) = 'Post' AND type(e) = 'postHasCreator') OR
