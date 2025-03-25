@@ -2169,6 +2169,13 @@ valueFunction
     | durationValueFunction
     | characterOrByteStringFunction
     | listValueFunction
+    | genericValueFunction
+    ;
+
+// Support UDFs
+genericValueFunction
+    : regularIdentifier LEFT_PAREN valueExpression (COMMA valueExpression)* RIGHT_PAREN
+    | regularIdentifier LEFT_PAREN RIGHT_PAREN
     ;
 
 booleanValueExpression
