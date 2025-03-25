@@ -944,6 +944,11 @@ impl TokenKind<'_> {
     }
 
     #[inline(always)]
+    pub(crate) fn is_prefix_of_regular_identifier(&self) -> bool {
+        matches!(self, Self::RegularIdentifier(_)) || self.is_non_reserved_word()
+    }
+
+    #[inline(always)]
     pub(crate) fn is_prefix_of_general_set_function(&self) -> bool {
         matches!(
             self,
@@ -1115,6 +1120,55 @@ impl TokenKind<'_> {
     #[inline(always)]
     pub(crate) fn is_prefix_of_result_statement(&self) -> bool {
         matches!(self, Self::Return | Self::Finish)
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_numeric_value_function(&self) -> bool {
+        matches!(
+            self,
+            Self::CharLength
+                | Self::CharacterLength
+                | Self::ByteLength
+                | Self::OctetLength
+                | Self::PathLength
+                | Self::Cardinality
+                | Self::Size
+                | Self::Abs
+                | Self::Mod
+                | Self::Log
+                | Self::Log10
+                | Self::Ln
+                | Self::Exp
+                | Self::Power
+                | Self::Sqrt
+                | Self::Floor
+                | Self::Ceil
+                | Self::Ceiling
+        ) || self.is_prefix_of_trigonometric_function()
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_trigonometric_function(&self) -> bool {
+        matches!(
+            self,
+            Self::Sin
+                | Self::Cos
+                | Self::Tan
+                | Self::Cot
+                | Self::Sinh
+                | Self::Cosh
+                | Self::Tanh
+                | Self::Asin
+                | Self::Acos
+                | Self::Atan
+                | Self::Degrees
+                | Self::Radians
+        )
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_value_function(&self) -> bool {
+        self.is_prefix_of_regular_identifier() || self.is_prefix_of_numeric_value_function()
     }
 }
 

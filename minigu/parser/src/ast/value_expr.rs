@@ -29,6 +29,7 @@ pub enum Expr {
         left: BoxSpanned<Expr>,
         right: Spanned<BooleanLiteral>,
     },
+    Function(Function),
     Aggregate(AggregateFunction),
     Variable(Ident),
     Value(Value),
@@ -84,15 +85,25 @@ pub enum UnaryOp {
     Not,
 }
 
-// #[apply(base)]
-// pub enum BuiltinFunction<'a> {
-//     #[cfg_attr(feature = "serde", serde(borrow))]
-//     CharLength(Box<Expr<'a>>),
-//     ByteLength(Box<Expr<'a>>),
-//     OctetLength(Box<Expr<'a>>),
-//     Cardinality(Box<Expr<'a>>),
-//     Size(Box<Expr<'a>>),
-// }
+#[apply(base)]
+pub enum Function {
+    Generic(GenericFunction),
+    Numeric(NumericFunction),
+}
+
+#[apply(base)]
+pub struct GenericFunction {
+    pub name: Spanned<Ident>,
+    pub args: VecSpanned<Expr>,
+}
+
+#[apply(base)]
+pub enum NumericFunction {
+    CharLength(BoxSpanned<Expr>),
+    ByteLength(BoxSpanned<Expr>),
+    PathLength(BoxSpanned<Expr>),
+    Absolute(BoxSpanned<Expr>),
+}
 
 #[apply(base)]
 pub struct PathConstructor {
