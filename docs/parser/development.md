@@ -10,7 +10,7 @@ There are three basic modules in the project: AST definitions, lexer implementat
 ### AST definitions
 This module defines high-level abstract syntax trees (AST) for GQL language. For example, we have `Program` for the `<GQL-program>` syntax rule (Section 6 in the GQL standard), which is the entry rule of the parser:
 
-https://github.com/TuGraph-family/miniGU/blob/b4e3c8617cc61f226a217404ac2f7d421211dad0/minigu/parser/src/ast/program.rs#L7-L11
+https://github.com/TuGraph-family/miniGU/blob/30607d34f0829a4ea46a6d98102e4364aa4fe7ab/minigu/parser/src/ast/program.rs#L7-L11
 
 The `#[apply(base)]` attribute is an alias for common derivable traits (`Debug`, `Clone`, etc) and optionally, `Serialize` and `Deserialize` from `serde`. In principle it should be applied for all AST structs/enums. The fields `activity` and `session_close` correspond to the components `<program activity>` and `<session close command>` in the syntax rule. To provide accurate location tracking, we wrap most AST nodes in `Spanned`, a container of a value and its span. The `OptSpanned<T>` in the example is an alias of `Option<Spanned<T>>`.
 
@@ -42,7 +42,7 @@ regularIdentifier
 
 The corresponding parser in Rust is shown as follows.
 
-https://github.com/TuGraph-family/miniGU/blob/b4e3c8617cc61f226a217404ac2f7d421211dad0/minigu/parser/src/parser/impls/lexical.rs#L14-L22
+https://github.com/TuGraph-family/miniGU/blob/30607d34f0829a4ea46a6d98102e4364aa4fe7ab/minigu/parser/src/parser/impls/lexical.rs#L14-L23
 
 `any` is a parser in winnow that accepts arbitrary tokens. And we apply `verify_map` on it to check the kind of the token. If the token is a `RegularIdentifier` or a non-reserved word (see GQL standard for more details), the parser succeeds and returns the result `Ident`, which is further wrapped as `Spanned<Ident>` by `.spanned()`.
 
@@ -60,7 +60,7 @@ transactionCharacteristics
 
 The corresponding parser in Rust is shown as follows.
 
-https://github.com/TuGraph-family/miniGU/blob/b4e3c8617cc61f226a217404ac2f7d421211dad0/minigu/parser/src/parser/impls/transaction.rs#L10-L20
+https://github.com/TuGraph-family/miniGU/blob/30607d34f0829a4ea46a6d98102e4364aa4fe7ab/minigu/parser/src/parser/impls/transaction.rs#L10-L20
 
 `(TokenKind::Start, TokenKind::Transaction)` is the sequential combination of two parsers that accept `START` and `TRANSACTION`. `preceded` executes two parsers and discards the result from the first one. `separated(0.., transaction_access_mode, TokenKind::Comma)` recognizes exactly the same input as ANTLR rule `transactionCharacteristics`.
 
@@ -85,7 +85,7 @@ edgeTypePatternPointingLeft
 
 The corresponding parser in Rust is shown as follows.
 
-https://github.com/TuGraph-family/miniGU/blob/b4e3c8617cc61f226a217404ac2f7d421211dad0/minigu/parser/src/parser/impls/type_element.rs#L351-L375
+https://github.com/TuGraph-family/miniGU/blob/30607d34f0829a4ea46a6d98102e4364aa4fe7ab/minigu/parser/src/parser/impls/type_element.rs#L351-L375
 
 This rule has two alternatives: `edgeTypePatternPointingRight` (e.g., `(a)-[:KNOWS]->(b)`) and `edgeTypePatternPointingLeft` (e.g., `(a)<-[:KNOWS]-(b)`). How do we make a choice between them? We can first parse the node type reference (`(a)`) and then peek one token ahead to determine the next step. By using `peek(any)`, we get the lookahead token without forwarding the input stream. And we use `dispatch!` (a helper macro that wraps the pattern matching statement) on the token to choose the next parser. If the token is `MinusLeftBracket` (`-[`), we invoke the parser `arc_type_pointing_right`. And if the token is `LeftArrowBracket` (`<-[`), we invoke the parser `arc_type_pointing_left`. Finally we invoke `node_type_reference` to parse the node type reference in the tail.
 
@@ -112,7 +112,7 @@ Unit testing verifies on the functionality of a single parser. You should write 
 
 You don't need to fill in the expected test output yourself. For example, the code below shows a unit test for parser `boolean_literal`.
 
-https://github.com/TuGraph-family/miniGU/blob/b4e3c8617cc61f226a217404ac2f7d421211dad0/minigu/parser/src/parser/impls/lexical.rs#L237-L241
+https://github.com/TuGraph-family/miniGU/blob/30607d34f0829a4ea46a6d98102e4364aa4fe7ab/minigu/parser/src/parser/impls/lexical.rs#L239-L243
 
 Execute the following command (assume your workspace directory is the project root) to run all tests in gql-parser:
 ```bash
