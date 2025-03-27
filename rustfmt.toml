@@ -1,13 +1,13 @@
-style_edition = "2024"
 comment_width = 120
 format_code_in_doc_comments = true
 format_macro_bodies = true
 format_macro_matchers = true
+group_imports = "StdExternalCrate"
+imports_granularity = "Module"
 normalize_comments = true
 normalize_doc_attributes = true
-imports_granularity = "Module"
-group_imports = "StdExternalCrate"
 reorder_impl_items = true
 reorder_imports = true
+style_edition = "2024"
 tab_spaces = 4
 wrap_comments = true
