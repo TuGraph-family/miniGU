@@ -4,25 +4,26 @@ use common::datatype::types::{EdgeId, VertexId};
 use crossbeam_skiplist::SkipSet;
 use dashmap::mapref::one::Ref;
 
+use super::memory_graph::VersionedAjdContainer;
+use super::transaction::MemTransaction;
 use crate::error::StorageResult;
 use crate::iterators::AdjacencyIteratorTrait;
 use crate::model::edge::{Adjacency, Direction};
 
-use super::memory_graph::VersionedAjdContainer;
-use super::transaction::MemTransaction;
+type AdjFilter<'a> = Box<dyn Fn(&Adjacency) -> bool + 'a>;
 
 /// An adjacency list iterator that supports filtering (for iterating over a single vertex's
 /// adjacency list).
 pub struct AdjacencyIterator<'a> {
     adj_list: Option<Arc<SkipSet<Adjacency>>>, // The adjacency list for the vertex
-    current_entries: Vec<Adjacency>, // Store current batch of entries
-    current_index: usize,            // Current index in the batch
-    txn: &'a MemTransaction,         // Reference to the transaction
-    filters: Vec<Box<dyn Fn(&Adjacency) -> bool + 'a>>, // List of filtering predicates
-    current_adj: Option<Adjacency>,  // Current adjacency entry
+    current_entries: Vec<Adjacency>,           // Store current batch of entries
+    current_index: usize,                      // Current index in the batch
+    txn: &'a MemTransaction,                   // Reference to the transaction
+    filters: Vec<AdjFilter<'a>>,               // List of filtering predicates
+    current_adj: Option<Adjacency>,            // Current adjacency entry
 }
 
-impl<'a> Iterator for AdjacencyIterator<'a> {
+impl Iterator for AdjacencyIterator<'_> {
     type Item = StorageResult<Adjacency>;
 
     /// Retrieves the next visible adjacency entry that satisfies all filters.
@@ -36,15 +37,16 @@ impl<'a> Iterator for AdjacencyIterator<'a> {
         while self.current_index < self.current_entries.len() {
             let entry = &self.current_entries[self.current_index];
             self.current_index += 1;
-            
+
             let eid = entry.edge_id();
 
             // Perform MVCC visibility check
-            let is_visible = self.txn
+            let is_visible = self
+                .txn
                 .graph()
                 .edges
                 .get(&eid)
-                .map(|edge| edge.is_visible(&self.txn))
+                .map(|edge| edge.is_visible(self.txn))
                 .unwrap_or(false);
 
             if is_visible && self.filters.iter().all(|f| f(entry)) {
@@ -63,13 +65,17 @@ impl<'a> Iterator for AdjacencyIterator<'a> {
 impl<'a> AdjacencyIterator<'a> {
     fn load_next_batch(&mut self) -> Option<()> {
         if let Some(adj_list) = &self.adj_list {
-            
-            let iter = adj_list.get(self.current_entries.last()?)?;
+            let iter = if let Some(e) = self.current_entries.last() {
+                adj_list.get(e)?.next()?
+            } else {
+                adj_list.front()?
+            };
             // Clear current entry batch
             self.current_entries.clear();
             self.current_index = 0;
 
             // Load the next batch of entries
+            self.current_entries.push(iter.value().clone());
             for _ in 0..64 {
                 if let Some(entry) = iter.next() {
                     self.current_entries.push(entry.value().clone());
@@ -77,7 +83,7 @@ impl<'a> AdjacencyIterator<'a> {
                     break;
                 }
             }
-            
+
             if !self.current_entries.is_empty() {
                 return Some(());
             }
@@ -100,12 +106,12 @@ impl<'a> AdjacencyIterator<'a> {
             filters: Vec::new(),
             current_adj: None,
         };
-        
+
         // Preload the first batch of data
         if result.adj_list.is_some() {
             result.load_next_batch();
         }
-        
+
         result
     }
 }
@@ -123,7 +129,7 @@ impl<'a> AdjacencyIteratorTrait<'a> for AdjacencyIterator<'a> {
     /// Advances the iterator to the edge with the specified ID or the next greater edge.
     /// Returns `Ok(true)` if the exact edge is found, `Ok(false)` otherwise.
     fn advance(&mut self, id: EdgeId) -> StorageResult<bool> {
-        while let Some(result) = self.next() {
+        for result in self.by_ref() {
             match result {
                 Ok(entry) if entry.edge_id() == id => return Ok(true),
                 Ok(entry) if entry.edge_id() > id => return Ok(false),

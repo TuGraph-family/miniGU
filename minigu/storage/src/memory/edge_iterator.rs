@@ -3,36 +3,36 @@ use std::sync::Arc;
 use common::datatype::types::EdgeId;
 use dashmap::iter::Iter;
 
+use super::transaction::MemTransaction;
 use crate::error::StorageResult;
 use crate::iterators::{ChunkData, EdgeIteratorTrait};
 use crate::memory::memory_graph::VersionedEdge;
 use crate::model::edge::Edge;
 
-use super::transaction::MemTransaction;
+type EdgeFilter<'a> = Box<dyn Fn(&Edge) -> bool + 'a>;
 
 /// An edge iterator that supports filtering.
 pub struct EdgeIterator<'a> {
     inner: Iter<'a, EdgeId, VersionedEdge>, // Native DashMap iterator
     txn: &'a MemTransaction,                // Reference to the transaction
-    filters: Vec<Box<dyn Fn(&Edge) -> bool + 'a>>, // List of filtering predicates
+    filters: Vec<EdgeFilter<'a>>,           // List of filtering predicates
     current_edge: Option<Edge>,             // Currently iterated edge
 }
 
-impl<'a> Iterator for EdgeIterator<'a> {
+impl Iterator for EdgeIterator<'_> {
     type Item = StorageResult<Edge>;
 
     /// Retrieves the next visible edge that satisfies all filters.
     fn next(&mut self) -> Option<Self::Item> {
-        while let Some(entry) = self.inner.next() {
+        for entry in self.inner.by_ref() {
             let eid = *entry.key();
             let versioned_edge = entry.value();
 
             // Perform MVCC visibility check
-            let visible_edge =
-                match versioned_edge.get_visible(&self.txn) {
-                    Ok(e) if !e.is_tombstone() => e, // Skip logically deleted edges
-                    _ => continue,
-                };
+            let visible_edge = match versioned_edge.get_visible(self.txn) {
+                Ok(e) if !e.is_tombstone() => e, // Skip logically deleted edges
+                _ => continue,
+            };
 
             // Apply all filtering conditions
             if self.filters.iter().all(|f| f(&visible_edge)) {
@@ -61,7 +61,7 @@ impl<'a> EdgeIteratorTrait<'a> for EdgeIterator<'a> {
     /// Advances the iterator to the edge with the specified ID or the next greater edge.
     /// Returns `Ok(true)` if the exact edge is found, `Ok(false)` otherwise.
     fn advance(&mut self, id: EdgeId) -> StorageResult<bool> {
-        while let Some(result) = self.next() {
+        for result in self.by_ref() {
             match result {
                 Ok(edge) if edge.eid() == id => return Ok(true),
                 Ok(edge) if edge.eid() > id => return Ok(false),
@@ -87,7 +87,7 @@ impl<'a> EdgeIteratorTrait<'a> for EdgeIterator<'a> {
 }
 
 /// Implementation for `MemTransaction`
-impl<'a> MemTransaction {
+impl MemTransaction {
     /// Returns an iterator over all edges in the graph.
     /// Filtering conditions can be applied using the `filter` method.
     pub fn iter_edges(&self) -> EdgeIterator<'_> {

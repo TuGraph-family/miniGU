@@ -1,8 +1,10 @@
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use common::datatype::{types::{EdgeId, LabelId, VertexId}, value::PropertyValue};
+use common::datatype::types::{EdgeId, LabelId, VertexId};
+use common::datatype::value::PropertyValue;
 
-use crate::model::{edge::Edge, vertex::Vertex};
+use crate::model::edge::Edge;
+use crate::model::vertex::Vertex;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 /// Represents a commit timestamp used for multi-version concurrency control (MVCC).
@@ -10,13 +12,12 @@ pub struct Timestamp(pub u64);
 
 impl Timestamp {
     pub(super) const TXN_ID_START: u64 = 1 << 63;
-    pub(super) const COMMIT_START_TS: Self = Self(0);
     pub(super) const TXN_START_TS: Self = Self(Self::TXN_ID_START);
 
     /// Generates a new transaction ID, ensuring atomicity using an atomic counter.
     pub fn new_txn_id() -> Self {
-        // Static counter initialized once, persists between calls. 
-        static COUNTER: AtomicU64 = AtomicU64::new(Timestamp::TXN_ID_START);
+        // Static counter initialized once, persists between calls.
+        static COUNTER: AtomicU64 = AtomicU64::new(Timestamp::TXN_ID_START + 1);
         // Transaction ID only needs to be atomically incremented
         // and does not require strict memory order.
         Self(COUNTER.fetch_add(1, Ordering::Relaxed))
@@ -24,7 +25,7 @@ impl Timestamp {
 
     /// Generates a new commit timestamp using an atomic counter.
     pub fn new_commit_ts() -> Self {
-        // Static counter initialized once, persists between calls. 
+        // Static counter initialized once, persists between calls.
         static COUNTER: AtomicU64 = AtomicU64::new(0);
         // Only one transaction can commit at a time.
         Self(COUNTER.fetch_add(1, Ordering::Relaxed))
@@ -35,7 +36,6 @@ impl Timestamp {
         Self(u64::MAX & !Self::TXN_ID_START)
     }
 }
-
 
 #[derive(Debug, Clone, Copy)]
 pub struct UndoPtr {
@@ -51,6 +51,7 @@ impl UndoPtr {
             entry_offset,
         }
     }
+
     /// Get the transaction id of the undo ptr.
     pub fn txn_id(&self) -> Timestamp {
         self.txn_id
@@ -72,11 +73,7 @@ pub struct UndoEntry {
 
 impl UndoEntry {
     /// Create a UndoEntry
-    pub(super) fn new(
-        delta: DeltaOp,
-        timestamp: Timestamp,
-        next: Option<UndoPtr>,
-    ) -> Self {
+    pub(super) fn new(delta: DeltaOp, timestamp: Timestamp, next: Option<UndoPtr>) -> Self {
         Self {
             delta,
             timestamp,

@@ -1,3 +1,3 @@
 pub mod entry;
 pub mod error;
-pub mod wal;
+pub mod storage_wal;

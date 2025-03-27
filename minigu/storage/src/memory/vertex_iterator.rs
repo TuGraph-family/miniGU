@@ -3,6 +3,7 @@ use std::sync::Arc;
 use common::datatype::types::VertexId;
 use dashmap::iter::Iter;
 
+use super::transaction::MemTransaction;
 use crate::error::StorageResult;
 use crate::iterators::{ChunkData, VertexIteratorTrait};
 use crate::memory::adjacency_iterator::AdjacencyIterator;
@@ -10,31 +11,30 @@ use crate::memory::memory_graph::VersionedVertex;
 use crate::model::edge::Direction;
 use crate::model::vertex::Vertex;
 
-use super::transaction::MemTransaction;
+type VertexFilter<'a> = Box<dyn Fn(&Vertex) -> bool + 'a>;
 
 /// A vertex iterator that supports filtering.
 pub struct VertexIterator<'a> {
     inner: Iter<'a, VertexId, VersionedVertex>, // Native DashMap iterator
     txn: &'a MemTransaction,                    // Reference to the transaction
-    filters: Vec<Box<dyn Fn(&Vertex) -> bool + 'a>>, // List of filtering predicates
+    filters: Vec<VertexFilter<'a>>,             // List of filtering predicates
     current_vertex: Option<Vertex>,             // Currently iterated vertex
 }
 
-impl<'a> Iterator for VertexIterator<'a> {
+impl Iterator for VertexIterator<'_> {
     type Item = StorageResult<Vertex>;
 
     /// Retrieves the next visible vertex that satisfies all filters.
     fn next(&mut self) -> Option<Self::Item> {
-        while let Some(entry) = self.inner.next() {
+        for entry in self.inner.by_ref() {
             let vid = *entry.key();
             let versioned_vertex = entry.value();
 
             // Perform MVCC visibility check
-            let visible_vertex =
-                match versioned_vertex.get_visible(&self.txn) {
-                    Ok(v) if !v.is_tombstone() => v, // Skip logically deleted vertices
-                    _ => continue,
-                };
+            let visible_vertex = match versioned_vertex.get_visible(self.txn) {
+                Ok(v) if !v.is_tombstone() => v, // Skip logically deleted vertices
+                _ => continue,
+            };
 
             // Apply all filtering conditions
             if self.filters.iter().all(|f| f(&visible_vertex)) {
@@ -65,7 +65,7 @@ impl<'a> VertexIteratorTrait<'a> for VertexIterator<'a> {
     /// Advances the iterator to the vertex with the specified ID or the next greater vertex.
     /// Returns `Ok(true)` if the exact vertex is found, `Ok(false)` otherwise.
     fn advance(&mut self, id: VertexId) -> StorageResult<bool> {
-        while let Some(result) = self.next() {
+        for result in self.by_ref() {
             match result {
                 Ok(vertex) if vertex.vid() == id => return Ok(true),
                 Ok(vertex) if vertex.vid() > id => return Ok(false),
@@ -103,7 +103,7 @@ impl<'a> VertexIteratorTrait<'a> for VertexIterator<'a> {
 }
 
 /// Implementation for `MemTransaction`
-impl<'a> MemTransaction {
+impl MemTransaction {
     /// Returns an iterator over all vertices in the graph.
     /// Filtering conditions can be applied using the `filter` method.
     pub fn iter_vertices(&self) -> VertexIterator<'_> {

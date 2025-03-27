@@ -1,17 +1,18 @@
-use std::sync::{atomic::{AtomicU64, Ordering}, Arc, Mutex, OnceLock, RwLock};
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, Mutex, OnceLock, RwLock};
 
 use common::datatype::types::{EdgeId, VertexId};
-use crossbeam_epoch::{pin, Atomic, Collector, Owned};
-use crossbeam_skiplist::{SkipList, SkipMap, SkipSet};
-use dashmap::{DashMap, DashSet};
-
-use crate::{error::{StorageError, StorageResult}, storage::StorageTransaction, transaction::{Timestamp, DeltaOp, IsolationLevel, SetPropsOp, UndoEntry, UndoPtr}};
+use crossbeam_skiplist::SkipMap;
+use dashmap::DashSet;
 
 use super::memory_graph::MemoryGraph;
+use crate::error::{StorageError, StorageResult};
+use crate::storage::StorageTransaction;
+use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
 
 pub struct MemTxnManager {
     /// Active transactions' start timestamps.
-    pub(super) active_txns: SkipMap<Timestamp, Arc<MemTransaction>>, 
+    pub(super) active_txns: SkipMap<Timestamp, Arc<MemTransaction>>,
     /// All transactions, running or committed.
     pub(super) commited_txns: SkipMap<Timestamp, Arc<MemTransaction>>,
     /// Commit lock to enforce serial commit order
@@ -41,20 +42,29 @@ impl MemTxnManager {
     pub fn finsih_transaction(&self, start_ts: Timestamp) -> StorageResult<()> {
         let txn = self.active_txns.remove(&start_ts);
         if let Some(txn) = txn {
-            let commit_ts = txn.value().commit_ts.get().expect("Transaction not committed");
+            let commit_ts = txn
+                .value()
+                .commit_ts
+                .get()
+                .expect("Transaction not committed");
             self.commited_txns.insert(*commit_ts, txn.value().clone());
             self.update_watermark();
         } else {
-            return Err(StorageError::TransactionError(format!("Transaction {:?} not found", start_ts)));
+            return Err(StorageError::TransactionError(format!(
+                "Transaction {:?} not found",
+                start_ts
+            )));
         }
         Ok(())
     }
 
     /// Start a garbage collection of expired transactions.
+    #[allow(dead_code)]
     pub fn garbage_collect(&self) -> StorageResult<()> {
         // Step1: Obtain the min read timestamp of the active transactions
         let min_read_ts = self.watermark.load(Ordering::Acquire);
-        // Step2: Iterate over all transactions, and remove those whose commit timestamp is less than the min read timestamp
+        // Step2: Iterate over all transactions, and remove those whose commit timestamp is less
+        // than the min read timestamp
         let mut expired_txns = Vec::new();
         for entry in self.commited_txns.iter() {
             // 如何遍历到的事务commit timestamp大于min read ts，说明链表后续的事务都不需要再遍历
@@ -67,18 +77,18 @@ impl MemTxnManager {
         }
         // Step3: Remove the expired transactions from the commited_txns map
         for txn in expired_txns {
-            self.commited_txns.remove(&txn.commit_ts.get().unwrap());
+            self.commited_txns.remove(txn.commit_ts.get().unwrap());
         }
 
         Ok(())
     }
 
-    /// Calculate the 
+    /// Calculate the
     pub fn update_watermark(&self) {
         let min_ts = self
             .active_txns
             .front()
-            .map(|v| v.key().clone())
+            .map(|v| *v.key())
             .unwrap_or(Timestamp::TXN_START_TS);
         self.watermark.store(min_ts.0, Ordering::SeqCst);
     }
@@ -92,9 +102,9 @@ pub struct MemTransaction {
 
     // ---- Timestamp management ----
     /// Start timestamp assigned when the transaction begins
-    start_ts: Timestamp, 
+    start_ts: Timestamp,
     commit_ts: OnceLock<Timestamp>, // Commit timestamp assigned upon committing
-    txn_id: Timestamp,      // Unique transaction identifier
+    txn_id: Timestamp,              // Unique transaction identifier
 
     // ---- Read sets ----
     pub(super) vertex_reads: DashSet<VertexId>, // Set of vertices read by this transaction
@@ -111,7 +121,7 @@ impl MemTransaction {
         graph: Arc<MemoryGraph>,
         txn_id: Timestamp,
         start_ts: Timestamp,
-        isolation_level: IsolationLevel
+        isolation_level: IsolationLevel,
     ) -> Self {
         Self {
             graph,
@@ -154,7 +164,7 @@ impl MemTransaction {
 
             let current = entry.chain.current.read().unwrap();
             // Check if the edge was modified after the transaction started.
-            if current.commit_ts!= self.txn_id && current.commit_ts > self.start_ts {
+            if current.commit_ts != self.txn_id && current.commit_ts > self.start_ts {
                 return Err(StorageError::ReadConflict(eid.to_string()));
             }
         }
@@ -193,15 +203,20 @@ impl MemTransaction {
     }
 
     /// Reconstructs a specific version of a Vertex based on the undo chain and a target timestamp
-    pub(super) fn apply_deltas_for_read<T: FnMut(&UndoEntry)>(&self, undo_ptr: UndoPtr, mut callback: T, target_ts: Timestamp) -> StorageResult<()> {
+    pub(super) fn apply_deltas_for_read<T: FnMut(&UndoEntry)>(
+        &self,
+        undo_ptr: UndoPtr,
+        mut callback: T,
+        target_ts: Timestamp,
+    ) -> StorageResult<()> {
         let mut current = undo_ptr;
-        
+
         while let Some(entry) = self.graph.txn_manager.commited_txns.get(&current.txn_id()) {
             let undo_buffer = entry.value().undo_buffer.read().unwrap();
             let undo_entry = &undo_buffer[current.entry_offset()];
 
             callback(undo_entry);
-            
+
             // Continue traversing the undo chain
             if undo_entry.timestamp() < target_ts {
                 // If the timestamp in the undo chain is less than the target timestamp,
@@ -211,10 +226,12 @@ impl MemTransaction {
             if let Some(next) = undo_entry.next() {
                 current = next;
             } else {
-                return Err(StorageError::VersionNotFound("Can't find a suitable version".to_string()))
+                return Err(StorageError::VersionNotFound(
+                    "Can't find a suitable version".to_string(),
+                ));
             }
         }
-        
+
         Ok(())
     }
 }
@@ -240,7 +257,10 @@ impl StorageTransaction for MemTransaction {
         let commit_ts = Timestamp::new_commit_ts();
         if let Err(e) = self.commit_ts.set(commit_ts) {
             self.abort()?;
-            return Err(StorageError::TransactionError(format!("Transaction {:?} already committed", e)));
+            return Err(StorageError::TransactionError(format!(
+                "Transaction {:?} already committed",
+                e
+            )));
         }
 
         // Step 3: Process write in undo buffer.
@@ -248,7 +268,15 @@ impl StorageTransaction for MemTransaction {
             // 定义宏来简化更新提交时间戳的操作
             macro_rules! update_commit_ts {
                 ($self:expr, $entity_type:ident, $id:expr) => {
-                    $self.graph().$entity_type().get($id).unwrap().current().write().unwrap().commit_ts = commit_ts
+                    $self
+                        .graph()
+                        .$entity_type()
+                        .get($id)
+                        .unwrap()
+                        .current()
+                        .write()
+                        .unwrap()
+                        .commit_ts = commit_ts
                 };
             }
 
@@ -257,7 +285,9 @@ impl StorageTransaction for MemTransaction {
                 match undo_entry.delta() {
                     DeltaOp::DelVertex(vid) => update_commit_ts!(self, vertices, vid),
                     DeltaOp::DelEdge(eid) => update_commit_ts!(self, edges, eid),
-                    DeltaOp::CreateVertex(vertex) => update_commit_ts!(self, vertices, &vertex.vid()),
+                    DeltaOp::CreateVertex(vertex) => {
+                        update_commit_ts!(self, vertices, &vertex.vid())
+                    }
                     DeltaOp::CreateEdge(edge) => update_commit_ts!(self, edges, &edge.eid()),
                     DeltaOp::SetVertexProps(vid, _) => update_commit_ts!(self, vertices, vid),
                     DeltaOp::SetEdgeProps(eid, _) => update_commit_ts!(self, edges, eid),
@@ -268,7 +298,7 @@ impl StorageTransaction for MemTransaction {
         }
 
         // Step 5: Clean up transaction state.
-        self.graph.txn_manager.finsih_transaction(self.txn_id())?;
+        self.graph.txn_manager.finsih_transaction(self.start_ts())?;
         Ok(commit_ts)
     }
 
@@ -276,7 +306,7 @@ impl StorageTransaction for MemTransaction {
     fn abort(&self) -> StorageResult<()> {
         // Acquire write lock and drain the undo buffer
         let undo_entries: Vec<_> = self.undo_buffer.write().unwrap().drain(..).collect();
-        
+
         // Process all undo entries
         for undo_entry in undo_entries.into_iter() {
             let commit_ts = undo_entry.timestamp();
@@ -291,7 +321,7 @@ impl StorageTransaction for MemTransaction {
                             // If created by current transaction, restore original state
                             current.data = vertex.clone();
                             current.data.is_tombstone = false;
-                            current.commit_ts = commit_ts; 
+                            current.commit_ts = commit_ts;
                             *entry.chain.undo_ptr.write().unwrap() = next;
                         }
                     }
@@ -309,11 +339,11 @@ impl StorageTransaction for MemTransaction {
                             *entry.chain.undo_ptr.write().unwrap() = next;
                         }
                     }
-                },
+                }
                 DeltaOp::SetVertexProps(vid, SetPropsOp { indices, props }) => {
-                    // For property modifications, determine if it's a vertex or edge based on entity_id
-                    // Restore vertex properties
-                    if let Some(entry) = self.graph.vertices.get(&vid) {
+                    // For property modifications, determine if it's a vertex or edge based on
+                    // entity_id Restore vertex properties
+                    if let Some(entry) = self.graph.vertices.get(vid) {
                         let mut current = entry.chain.current.write().unwrap();
                         if current.commit_ts == self.txn_id() {
                             // Restore properties
@@ -322,10 +352,10 @@ impl StorageTransaction for MemTransaction {
                             *entry.chain.undo_ptr.write().unwrap() = next;
                         }
                     }
-                },
+                }
                 DeltaOp::SetEdgeProps(eid, SetPropsOp { indices, props }) => {
                     // Restore edge properties
-                    if let Some(entry) = self.graph.edges.get(&eid) {
+                    if let Some(entry) = self.graph.edges.get(eid) {
                         let mut current = entry.chain.current.write().unwrap();
                         if current.commit_ts == self.txn_id() {
                             // Restore properties
@@ -337,7 +367,7 @@ impl StorageTransaction for MemTransaction {
                 }
                 DeltaOp::DelVertex(vid) => {
                     // Restore vertex
-                    if let Some(entry) = self.graph.vertices.get(&vid) {
+                    if let Some(entry) = self.graph.vertices.get(vid) {
                         let mut current = entry.chain.current.write().unwrap();
                         if current.commit_ts == self.txn_id() {
                             // Restore deletion flag
@@ -346,10 +376,10 @@ impl StorageTransaction for MemTransaction {
                             *entry.chain.undo_ptr.write().unwrap() = next;
                         }
                     }
-                },
+                }
                 DeltaOp::DelEdge(eid) => {
                     // Restore edge
-                    if let Some(entry) = self.graph.edges.get(&eid) {
+                    if let Some(entry) = self.graph.edges.get(eid) {
                         let mut current = entry.chain.current.write().unwrap();
                         if current.commit_ts == self.txn_id() {
                             // Restore deletion flag
@@ -363,7 +393,7 @@ impl StorageTransaction for MemTransaction {
                 DeltaOp::RemoveLabel(_) => todo!(),
             }
         }
-        
+
         // Remove transaction from transaction manager
         self.graph.txn_manager.finsih_transaction(self.txn_id())?;
         Ok(())

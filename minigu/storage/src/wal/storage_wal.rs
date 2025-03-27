@@ -103,7 +103,7 @@ impl WalTrait for StorageWal {
 
         while (cursor.position() as usize) < buffer.len() {
             let mut len_bytes = [0u8; LEN_PREFIX_SIZE];
-            if let Err(_) = cursor.read_exact(&mut len_bytes) {
+            if cursor.read_exact(&mut len_bytes).is_err() {
                 break;
             }
             let len = u32::from_le_bytes(len_bytes) as usize;

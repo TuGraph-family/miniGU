@@ -109,7 +109,8 @@ impl PartialOrd for Adjacency {
 // 实现 Ord
 impl Ord for Adjacency {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.vertex_id.cmp(&other.vertex_id)
+        self.vertex_id
+            .cmp(&other.vertex_id)
             .then(self.edge_id.cmp(&other.edge_id))
     }
 }
