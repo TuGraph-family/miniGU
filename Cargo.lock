@@ -434,6 +434,12 @@ dependencies = [
 [[package]]
 name = "minigu-catalog"
 version = "0.1.0"
+dependencies = [
+ "minigu-common",
+ "smallvec",
+ "smol_str",
+ "thiserror 2.0.12",
+]
 
 [[package]]
 name = "minigu-common"
@@ -629,9 +635,9 @@ checksum = "bbbb5d9659141646ae647b42fe094daf6c6192d1620870b449d9557f748b2daa"
 
 [[package]]
 name = "smallvec"
-version = "1.13.2"
+version = "1.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
+checksum = "7fcf8323ef1faaee30a44a340193b1ac6814fd9b7b4e88e9d4519a3e4abe1cfd"
 
 [[package]]
 name = "smol_str"
