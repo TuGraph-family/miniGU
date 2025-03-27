@@ -1,46 +1,86 @@
-use std::sync::{Arc, Mutex, OnceLock, RwLock};
+use std::sync::{atomic::{AtomicU64, Ordering}, Arc, Mutex, OnceLock, RwLock};
 
 use common::datatype::types::{EdgeId, VertexId};
+use crossbeam_epoch::{pin, Atomic, Collector, Owned};
+use crossbeam_skiplist::{SkipList, SkipMap, SkipSet};
 use dashmap::{DashMap, DashSet};
 
-use crate::{error::{StorageError, StorageResult}, model::vertex::Vertex, storage::StorageTransaction, transaction::{Timestamp, DeltaOp, IsolationLevel, SetPropsOp, UndoEntry, UndoPtr}};
+use crate::{error::{StorageError, StorageResult}, storage::StorageTransaction, transaction::{Timestamp, DeltaOp, IsolationLevel, SetPropsOp, UndoEntry, UndoPtr}};
 
 use super::memory_graph::MemoryGraph;
 
 pub struct MemTxnManager {
     /// Active transactions' start timestamps.
-    pub(super) active_txns: DashSet<Timestamp>, 
+    pub(super) active_txns: SkipMap<Timestamp, Arc<MemTransaction>>, 
     /// All transactions, running or committed.
-    pub(super) txn_map: DashMap<Timestamp, Arc<MemTransaction>>,
+    pub(super) commited_txns: SkipMap<Timestamp, Arc<MemTransaction>>,
     /// Commit lock to enforce serial commit order
     pub(super) commit_lock: Mutex<()>,
+    pub(super) watermark: AtomicU64,
 }
 
 impl MemTxnManager {
     /// Create a new MemTxnManager
     pub fn new() -> Self {
         Self {
-            active_txns: DashSet::new(),
-            txn_map: DashMap::new(),
+            active_txns: SkipMap::new(),
+            commited_txns: SkipMap::new(),
             commit_lock: Mutex::new(()),
+            watermark: AtomicU64::new(Timestamp::TXN_ID_START),
         }
     }
 
     /// Register a new transaction.
-    pub fn register(&self, txn: Arc<MemTransaction>) {
-        self.active_txns.insert(txn.txn_id());
-        self.txn_map.insert(txn.txn_id, txn.clone());
+    pub fn start_transaction(&self, txn: Arc<MemTransaction>) {
+        self.active_txns.insert(txn.start_ts(), txn.clone());
+        // Update the watermark
+        self.update_watermark();
     }
 
     /// Unregister a transaction.
-    pub fn remove(&self, txn_id: Timestamp) -> StorageResult<()> {
-        self.txn_map.remove(&txn_id);
+    pub fn finsih_transaction(&self, start_ts: Timestamp) -> StorageResult<()> {
+        let txn = self.active_txns.remove(&start_ts);
+        if let Some(txn) = txn {
+            let commit_ts = txn.value().commit_ts.get().expect("Transaction not committed");
+            self.commited_txns.insert(*commit_ts, txn.value().clone());
+            self.update_watermark();
+        } else {
+            return Err(StorageError::TransactionError(format!("Transaction {:?} not found", start_ts)));
+        }
         Ok(())
     }
 
     /// Start a garbage collection of expired transactions.
     pub fn garbage_collect(&self) -> StorageResult<()> {
-        todo!()
+        // Step1: Obtain the min read timestamp of the active transactions
+        let min_read_ts = self.watermark.load(Ordering::Acquire);
+        // Step2: Iterate over all transactions, and remove those whose commit timestamp is less than the min read timestamp
+        let mut expired_txns = Vec::new();
+        for entry in self.commited_txns.iter() {
+            // 如何遍历到的事务commit timestamp大于min read ts，说明链表后续的事务都不需要再遍历
+            if entry.key().0 > min_read_ts {
+                break;
+            }
+
+            // Txn has been committed, iterate over its undo buffer
+            expired_txns.push(entry.value().clone());
+        }
+        // Step3: Remove the expired transactions from the commited_txns map
+        for txn in expired_txns {
+            self.commited_txns.remove(&txn.commit_ts.get().unwrap());
+        }
+
+        Ok(())
+    }
+
+    /// Calculate the 
+    pub fn update_watermark(&self) {
+        let min_ts = self
+            .active_txns
+            .front()
+            .map(|v| v.key().clone())
+            .unwrap_or(Timestamp::TXN_START_TS);
+        self.watermark.store(min_ts.0, Ordering::SeqCst);
     }
 }
 
@@ -152,13 +192,12 @@ impl MemTransaction {
         &self.isolation_level
     }
 
-    /// Reconstructs a specific version of an Edge based on the undo chain and a target timestamp
     /// Reconstructs a specific version of a Vertex based on the undo chain and a target timestamp
     pub(super) fn apply_deltas_for_read<T: FnMut(&UndoEntry)>(&self, undo_ptr: UndoPtr, mut callback: T, target_ts: Timestamp) -> StorageResult<()> {
         let mut current = undo_ptr;
         
-        while let Some(entry) = self.graph.txn_manager.txn_map.get(&current.txn_id()) {
-            let undo_buffer = entry.undo_buffer.read().unwrap();
+        while let Some(entry) = self.graph.txn_manager.commited_txns.get(&current.txn_id()) {
+            let undo_buffer = entry.value().undo_buffer.read().unwrap();
             let undo_entry = &undo_buffer[current.entry_offset()];
 
             callback(undo_entry);
@@ -229,7 +268,7 @@ impl StorageTransaction for MemTransaction {
         }
 
         // Step 5: Clean up transaction state.
-        self.graph.txn_manager.remove(self.txn_id())?;
+        self.graph.txn_manager.finsih_transaction(self.txn_id())?;
         Ok(commit_ts)
     }
 
@@ -326,7 +365,7 @@ impl StorageTransaction for MemTransaction {
         }
         
         // Remove transaction from transaction manager
-        self.graph.txn_manager.remove(self.txn_id())?;
+        self.graph.txn_manager.finsih_transaction(self.txn_id())?;
         Ok(())
     }
 }

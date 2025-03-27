@@ -2,14 +2,16 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use common::datatype::{types::{EdgeId, LabelId, VertexId}, value::PropertyValue};
 
-use crate::model::{edge::{Adjacency, Edge}, vertex::Vertex};
+use crate::model::{edge::Edge, vertex::Vertex};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 /// Represents a commit timestamp used for multi-version concurrency control (MVCC).
 pub struct Timestamp(pub u64);
 
 impl Timestamp {
-    pub(crate) const TXN_ID_START: u64 = 1 << 63;
+    pub(super) const TXN_ID_START: u64 = 1 << 63;
+    pub(super) const COMMIT_START_TS: Self = Self(0);
+    pub(super) const TXN_START_TS: Self = Self(Self::TXN_ID_START);
 
     /// Generates a new transaction ID, ensuring atomicity using an atomic counter.
     pub fn new_txn_id() -> Self {

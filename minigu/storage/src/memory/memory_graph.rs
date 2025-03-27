@@ -305,7 +305,7 @@ impl MemoryGraph {
         let txn = Arc::new(
             MemTransaction::with_memgraph(self.clone(), txn_id, start_ts, isolation_level) 
         );
-        self.txn_manager.register(txn.clone());
+        self.txn_manager.start_transaction(txn.clone());
         txn
     }
 
@@ -468,9 +468,9 @@ impl MutGraph for MemoryGraph {
 
         // Record the vertex creation in the transaction
         let delta = DeltaOp::DelVertex(vid);
-        let delta_ts = entry.chain.undo_ptr.read().unwrap();
+        let next_ptr = entry.chain.undo_ptr.read().unwrap();
         let mut undo_buffer = txn.undo_buffer.write().unwrap();
-        undo_buffer.push(UndoEntry::new(delta, current.commit_ts, delta_ts.clone()));
+        undo_buffer.push(UndoEntry::new(delta, current.commit_ts, next_ptr.clone()));
         *entry.chain.undo_ptr.write().unwrap() = Some(UndoPtr::new(txn.txn_id(), undo_buffer.len() - 1));
         Ok(vid)
     }
