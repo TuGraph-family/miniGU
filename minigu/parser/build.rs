@@ -1,5 +1,5 @@
 fn main() {
-    #[cfg(feature = "bench_antlr4")]
+    #[cfg(feature = "bench-antlr4")]
     {
         if cfg!(target_os = "macos") {
             println!("cargo:rustc-link-lib=dylib=c++");

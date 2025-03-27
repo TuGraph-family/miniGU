@@ -30,7 +30,7 @@ paste = { workspace = true }
 cmake = { version = "0.1.54", optional = true }
 
 [features]
-bench_antlr4 = ["std", "dep:cmake"]
+bench-antlr4 = ["std", "dep:cmake"]
 default = ["std"]
 miette = ["std", "dep:miette"]
 serde = ["dep:serde", "smol_str/serde"]
