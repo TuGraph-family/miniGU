@@ -3,6 +3,9 @@ members = [
     # Public API
     "minigu/main",
 
+    # The all-in-one CLI client
+    "minigu-cli",
+
     # System-level tests
     "minigu-test",
 
