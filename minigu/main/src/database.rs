@@ -12,10 +12,10 @@ impl Database {
     }
 
     pub fn open_in_memory() -> Result<Self> {
-        todo!()
+        Ok(Self {})
     }
 
     pub fn session(&self) -> Result<Session> {
-        todo!()
+        Ok(Session {})
     }
 }

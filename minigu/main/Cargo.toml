@@ -4,6 +4,8 @@ name = "minigu"
 version = "0.1.0"
 
 [dependencies]
+gql-parser = { workspace = true }
+miette = { workspace = true }
 thiserror = { workspace = true, features = ["std"] }
 
 [lints]
