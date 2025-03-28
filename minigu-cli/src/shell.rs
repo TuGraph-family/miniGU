@@ -5,7 +5,7 @@ use rustyline::DefaultEditor;
 use rustyline::error::ReadlineError;
 
 /// Start the local interactive shell.
-#[derive(Debug, Parser)]
+#[derive(Debug, Parser, Clone)]
 pub struct Shell {}
 
 impl Shell {
@@ -19,6 +19,18 @@ impl Shell {
             should_quit: false,
         }
         .enter_loop()
+    }
+
+    pub fn execute_file(&self, file: String) -> Result<()> {
+        let db = Database::open_in_memory()?;
+        let session = db.session()?;
+        let editor = DefaultEditor::new().into_diagnostic()?;
+        ShellContext {
+            session,
+            editor,
+            should_quit: false,
+        }
+        .execute_file(file)
     }
 }
 
@@ -78,6 +90,32 @@ impl ShellContext {
             }
             "help" => self.print_help(),
             _ => bail!("unknown command: {command}"),
+        }
+        Ok(())
+    }
+
+    fn execute_file(mut self, file: String) -> Result<()> {
+        use std::fs;
+        let content = match fs::read_to_string(&file) {
+            Ok(content) => content,
+            Err(e) => {
+                println!("Error reading file {}: {:?}", file, e);
+                return Err(e).into_diagnostic();
+            }
+        };
+        for line in content.lines() {
+            let result = match line {
+                line if line.is_empty() => continue,
+                line if line.starts_with(":") => self.execute_command(line.to_string()),
+                line => self.execute_query(line.to_string()),
+            };
+            // Handle recoverable errors.
+            if let Err(e) = result {
+                println!("{e:?}");
+            }
+            if self.should_quit {
+                return Ok(());
+            }
         }
         Ok(())
     }
