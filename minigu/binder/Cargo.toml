@@ -5,6 +5,8 @@ version = "0.1.0"
 
 [dependencies]
 gql-parser = { workspace = true }
+serde = { workspace = true, features = ["std"] }
+thiserror = { workspace = true, features = ["std"] }
 
 [lints]
 workspace = true
