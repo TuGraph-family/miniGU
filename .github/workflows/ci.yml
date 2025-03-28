@@ -14,7 +14,7 @@ env:
   RUSTFLAGS: -Dwarnings
   RUST_BACKTRACE: 1
   CI: true
-  DEFAULT_FEATURES: std,serde,miette
+  DEFAULT_FEATURES: "std,serde,miette"
 
 defaults:
   run:
