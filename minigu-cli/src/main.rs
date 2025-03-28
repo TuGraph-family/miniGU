@@ -1,3 +1,5 @@
+use minigu_cli::run_cli;
+
 fn main() {
-    println!("Hello, world!");
+    run_cli();
 }
