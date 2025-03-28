@@ -12,11 +12,7 @@ logos = { version = "0.15.0", default-features = false, features = [
 ] }
 macro_rules_attribute = "0.2.0"
 miette = { workspace = true, optional = true }
-serde = { workspace = true, features = [
-    "alloc",
-    "derive",
-    "rc",
-], optional = true }
+serde = { workspace = true, optional = true }
 smol_str = { workspace = true }
 thiserror = { workspace = true }
 winnow = { version = "0.7.4", default-features = false, features = ["alloc"] }
