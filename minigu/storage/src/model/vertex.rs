@@ -9,6 +9,7 @@ pub struct Vertex {
     pub vid: VertexId,
     pub label_id: LabelId,
     pub properties: PropertyStore,
+    // TODO: remove this field, add tombstone flag into the versioned vertex in memory_graph.rs
     pub is_tombstone: bool,
 }
 

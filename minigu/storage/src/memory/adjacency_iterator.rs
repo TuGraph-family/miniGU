@@ -4,7 +4,7 @@ use common::datatype::types::{EdgeId, VertexId};
 use crossbeam_skiplist::SkipSet;
 use dashmap::mapref::one::Ref;
 
-use super::memory_graph::VersionedAjdContainer;
+use super::memory_graph::VersionedAdjContainer;
 use super::transaction::MemTransaction;
 use crate::error::StorageResult;
 use crate::iterators::AdjacencyIteratorTrait;
@@ -93,7 +93,7 @@ impl<'a> AdjacencyIterator<'a> {
 
     /// Creates a new `AdjacencyIterator` for a given vertex and direction (incoming or outgoing).
     pub fn new(txn: &'a MemTransaction, vid: VertexId, direction: Direction) -> Self {
-        let adjacency_list: Option<Ref<'_, u64, VersionedAjdContainer>> = match direction {
+        let adjacency_list: Option<Ref<'_, u64, VersionedAdjContainer>> = match direction {
             Direction::Out => txn.graph().adjacency_out.get(&vid),
             Direction::In => txn.graph().adjacency_in.get(&vid),
         };

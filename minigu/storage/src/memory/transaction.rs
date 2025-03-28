@@ -202,25 +202,28 @@ impl MemTransaction {
         &self.isolation_level
     }
 
-    /// Reconstructs a specific version of a Vertex based on the undo chain and a target timestamp
+    /// Reconstructs a specific version of a Vertex or Edge
+    /// based on the undo chain and a target timestamp
     pub(super) fn apply_deltas_for_read<T: FnMut(&UndoEntry)>(
         &self,
         undo_ptr: UndoPtr,
         mut callback: T,
-        target_ts: Timestamp,
+        txn_start_ts: Timestamp,
     ) -> StorageResult<()> {
         let mut current = undo_ptr;
 
+        // Get the undo buffer of the transaction that modified the vertex/edge
         while let Some(entry) = self.graph.txn_manager.commited_txns.get(&current.txn_id()) {
             let undo_buffer = entry.value().undo_buffer.read().unwrap();
             let undo_entry = &undo_buffer[current.entry_offset()];
 
+            // Apply the delta to the vertex/edge
             callback(undo_entry);
 
-            // Continue traversing the undo chain
-            if undo_entry.timestamp() < target_ts {
-                // If the timestamp in the undo chain is less than the target timestamp,
-                // this version's data has been overwritten, no need to continue traversing
+            // If the timestamp of the entry is less than the txn_start_ts,
+            // it means current version is the latest visible version,
+            // no need to continue traversing the undo chain
+            if undo_entry.timestamp() < txn_start_ts {
                 break;
             }
             if let Some(next) = undo_entry.next() {
@@ -265,7 +268,7 @@ impl StorageTransaction for MemTransaction {
 
         // Step 3: Process write in undo buffer.
         {
-            // 定义宏来简化更新提交时间戳的操作
+            // Define a macro to simplify the update of the commit timestamp.
             macro_rules! update_commit_ts {
                 ($self:expr, $entity_type:ident, $id:expr) => {
                     $self

@@ -35,11 +35,24 @@ impl Timestamp {
     pub fn max_commit_ts() -> Self {
         Self(u64::MAX & !Self::TXN_ID_START)
     }
+
+    /// Returns true if the timestamp is a transaction ID.
+    pub fn is_txn_id(&self) -> bool {
+        self.0 & Self::TXN_ID_START != 0
+    }
+
+    /// Returns true if the timestamp is a commit timestamp.
+    pub fn is_commit_ts(&self) -> bool {
+        self.0 & Self::TXN_ID_START == 0
+    }
 }
 
+/// Represents a pointer to an undo entry in the undo buffer.
 #[derive(Debug, Clone, Copy)]
 pub struct UndoPtr {
+    /// The transaction id of the undo ptr.
     txn_id: Timestamp,
+    /// The entry offset of the undo ptr, points to the undo entry in the undo buffer.
     entry_offset: usize,
 }
 
@@ -66,8 +79,11 @@ impl UndoPtr {
 #[derive(Debug, Clone)]
 /// Represents an undo log entry for multi-version concurrency control.
 pub struct UndoEntry {
+    /// The delta operation of the undo entry.
     delta: DeltaOp,
-    timestamp: Timestamp, // Timestamp when this version is committed
+    /// The timestamp when this version is committed.
+    timestamp: Timestamp,
+    /// The next undo entry in the undo buffer.
     next: Option<UndoPtr>,
 }
 

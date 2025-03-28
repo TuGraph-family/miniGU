@@ -20,13 +20,7 @@ macro_rules! update_properties {
     ($self:expr, $id:expr, $entry:expr, $txn:expr, $indices:expr, $props:expr, $op:ident) => {{
         // Acquire the lock to modify the properties of the vertex/edge
         let mut current = $entry.chain.current.write().unwrap();
-
-        // Conflict detection: Ensure the vertex is modified only by this transaction
-        if current.commit_ts != $txn.txn_id() && current.commit_ts > $txn.start_ts() {
-            return Err(StorageError::TransactionError(
-                "Concurrent modification detected".to_string(),
-            ));
-        }
+        check_commit_timestamp(current.commit_ts, $txn, $id)?;
 
         // Create a new version with updated properties.
         current.data.set_props(&$indices, $props);
@@ -52,8 +46,7 @@ macro_rules! update_properties {
 #[derive(Debug)]
 /// Stores the current version of an entity, along with transaction metadata.
 pub(super) struct CurrentVersion<D> {
-    pub(super) data: D, // The actual data version
-    // pub(super) modified_by: Option<CommitTimestamp>, // Transaction ID marking the modification
+    pub(super) data: D,              // The actual data version
     pub(super) commit_ts: Timestamp, // Commit timestamp indicating when it was committed
 }
 
@@ -61,8 +54,11 @@ pub(super) struct CurrentVersion<D> {
 #[derive(Debug)]
 /// Maintains the version history of an entity, supporting multi-version concurrency control.
 pub(super) struct VersionChain<D: Clone> {
-    pub(super) current: RwLock<CurrentVersion<D>>, // The latest version in memory
-    pub(super) undo_ptr: RwLock<Option<UndoPtr>>,  // The version history (undo log)
+    /// The latest version in memory
+    pub(super) current: RwLock<CurrentVersion<D>>,
+    /// The version history (undo log), points to the first undo entry in the undo buffer
+    /// Always records the latest commited version
+    pub(super) undo_ptr: RwLock<Option<UndoPtr>>,
 }
 
 #[derive(Debug)]
@@ -105,19 +101,23 @@ impl VersionedVertex {
 
     pub fn get_visible(&self, txn: &MemTransaction) -> StorageResult<Vertex> {
         let current = self.chain.current.read().unwrap();
-        let mut current_vertex = current.data.clone();
-        if current.commit_ts == txn.txn_id() || current.commit_ts > txn.start_ts() {
-            Ok(current_vertex)
+        let mut visible_vertex = current.data.clone();
+        // If the vertex is modified by the same transaction, or the transaction is before the
+        // vertex was modified, return the vertex
+        if current.commit_ts == txn.txn_id() || current.commit_ts < txn.start_ts() {
+            Ok(visible_vertex)
         } else {
+            // Otherwise, apply the deltas to the vertex
             let undo_ptr = *self.chain.undo_ptr.read().unwrap();
             if let Some(undo_ptr) = undo_ptr.as_ref() {
+                // Closure to apply the deltas to the vertex
                 let apply_deltas = |undo_entry: &UndoEntry| match undo_entry.delta() {
-                    DeltaOp::CreateVertex(original) => current_vertex = original.clone(),
+                    DeltaOp::CreateVertex(original) => visible_vertex = original.clone(),
                     DeltaOp::SetVertexProps(_, SetPropsOp { indices, props }) => {
-                        current_vertex.set_props(indices, props.clone());
+                        visible_vertex.set_props(indices, props.clone());
                     }
                     DeltaOp::DelVertex(_) => {
-                        current_vertex.is_tombstone = true;
+                        visible_vertex.is_tombstone = true;
                     }
                     _ => unreachable!("Unreachable delta op for a vertex"),
                 };
@@ -128,14 +128,14 @@ impl VersionedVertex {
                     current.commit_ts
                 )));
             }
-            Ok(current_vertex)
+            Ok(visible_vertex)
         }
     }
 
     pub(super) fn is_visible(&self, txn: &MemTransaction) -> bool {
         // Check if the vertex is visible based on the transaction's start timestamp
         let current = self.chain.current.read().unwrap();
-        if current.commit_ts == txn.txn_id() || current.commit_ts > txn.start_ts() {
+        if current.commit_ts == txn.txn_id() || current.commit_ts < txn.start_ts() {
             true
         } else {
             let undo_ptr = self.chain.undo_ptr.read().unwrap();
@@ -196,7 +196,7 @@ impl VersionedEdge {
     pub fn get_visible(&self, txn: &MemTransaction) -> StorageResult<Edge> {
         let current = self.chain.current.read().unwrap();
         let mut current_edge = current.data.clone();
-        if current.commit_ts == txn.txn_id() || current.commit_ts > txn.start_ts() {
+        if current.commit_ts == txn.txn_id() || current.commit_ts < txn.start_ts() {
             Ok(current_edge)
         } else {
             let undo_ptr = *self.chain.undo_ptr.read().unwrap();
@@ -245,7 +245,7 @@ impl VersionedEdge {
         {
             // Check if the vertex is visible based on the transaction's start timestamp
             let current = self.chain.current.read().unwrap();
-            if current.commit_ts == txn.txn_id() || current.commit_ts > txn.start_ts() {
+            if current.commit_ts == txn.txn_id() || current.commit_ts < txn.start_ts() {
                 true
             } else {
                 let undo_ptr = *self.chain.undo_ptr.read().unwrap();
@@ -269,11 +269,11 @@ impl VersionedEdge {
 }
 
 #[derive(Debug)]
-pub(super) struct VersionedAjdContainer {
+pub(super) struct VersionedAdjContainer {
     pub(super) inner: Arc<SkipSet<Adjacency>>,
 }
 
-impl VersionedAjdContainer {
+impl VersionedAdjContainer {
     pub fn new() -> Self {
         Self {
             inner: Arc::new(SkipSet::new()),
@@ -287,8 +287,8 @@ pub struct MemoryGraph {
     pub(super) edges: DashMap<EdgeId, VersionedEdge>,        // Stores versioned edges
 
     // ---- Adjacency lists (with versioning) ----
-    pub(super) adjacency_out: DashMap<VertexId, VersionedAjdContainer>, // Outgoing adjacency list
-    pub(super) adjacency_in: DashMap<VertexId, VersionedAjdContainer>,  // Incoming adjacency list
+    pub(super) adjacency_out: DashMap<VertexId, VersionedAdjContainer>, // Outgoing adjacency list
+    pub(super) adjacency_in: DashMap<VertexId, VersionedAdjContainer>,  // Incoming adjacency list
 
     // ---- Transaction management ----
     pub(super) txn_manager: MemTxnManager,
@@ -482,9 +482,7 @@ impl MutGraph for MemoryGraph {
 
         // Conflict detection: Ensure the vertex does not exist
         let current = entry.chain.current.read().unwrap();
-        if current.commit_ts != txn.txn_id() && current.commit_ts > txn.start_ts() {
-            return Err(StorageError::VertexAlreadyExists(vid.to_string()));
-        }
+        check_commit_timestamp(current.commit_ts, txn, vid)?;
 
         // Record the vertex creation in the transaction
         let delta = DeltaOp::DelVertex(vid);
@@ -517,9 +515,7 @@ impl MutGraph for MemoryGraph {
 
         // Conflict detection: Ensure the edge does not exist
         let current = entry.chain.current.read().unwrap();
-        if current.commit_ts != txn.txn_id() && current.commit_ts > txn.start_ts() {
-            return Err(StorageError::EdgeAlreadyExists(eid.to_string()));
-        }
+        check_commit_timestamp(current.commit_ts, txn, eid)?;
 
         // Record the edge creation in the transaction
         let delta_edge = DeltaOp::DelEdge(eid);
@@ -535,12 +531,12 @@ impl MutGraph for MemoryGraph {
         // Record the adjacency list updates in the transaction
         self.adjacency_out
             .entry(src_id)
-            .or_insert_with(VersionedAjdContainer::new)
+            .or_insert_with(VersionedAdjContainer::new)
             .inner
             .insert(Adjacency::new(dst_id, eid));
         self.adjacency_in
             .entry(dst_id)
-            .or_insert_with(VersionedAjdContainer::new)
+            .or_insert_with(VersionedAdjContainer::new)
             .inner
             .insert(Adjacency::new(src_id, eid));
 
@@ -555,15 +551,8 @@ impl MutGraph for MemoryGraph {
             .get(&vid)
             .ok_or(StorageError::VertexNotFound(vid.to_string()))?;
 
-        // Acquire the lock to modify the vertex
         let mut current = entry.chain.current.write().unwrap();
-
-        // Conflict detection: Ensure the vertex is modified only by this transaction
-        if current.commit_ts != txn.txn_id() && current.commit_ts > txn.start_ts() {
-            return Err(StorageError::TransactionError(
-                "Concurrent modification detected".to_string(),
-            ));
-        }
+        check_commit_timestamp(current.commit_ts, txn, vid)?;
 
         // Mark the vertex as deleted
         let tombstone = Vertex::tombstone(current.data.clone());
@@ -590,15 +579,8 @@ impl MutGraph for MemoryGraph {
             .get(&eid)
             .ok_or(StorageError::EdgeNotFound(eid.to_string()))?;
 
-        // Acquire the lock to modify the edge
         let mut current = entry.chain.current.write().unwrap();
-
-        // Conflict detection: Ensure the edge is modified only by this transaction
-        if current.commit_ts != txn.txn_id() && current.commit_ts > txn.start_ts() {
-            return Err(StorageError::TransactionError(
-                "Concurrent modification detected".to_string(),
-            ));
-        }
+        check_commit_timestamp(current.commit_ts, txn, eid)?;
 
         // Mark the edge as deleted
         let tombstone = Edge::tombstone(current.data.clone());
@@ -651,6 +633,28 @@ impl MutGraph for MemoryGraph {
         update_properties!(self, eid, entry, txn, indices, props, SetEdgeProps);
 
         Ok(())
+    }
+}
+
+/// Checks if the vertex is modified by other transactions or has a greater commit timestamp than
+/// the current transaction.
+#[inline]
+fn check_commit_timestamp<T: std::fmt::Display>(
+    commit_ts: Timestamp,
+    txn: &MemTransaction,
+    id: T,
+) -> StorageResult<()> {
+    match commit_ts {
+        // If the vertex is modified by other transactions, return write conflict
+        ts if ts.is_txn_id() && ts != txn.txn_id() => {
+            Err(StorageError::WriteConflict(id.to_string()))
+        }
+        // If the vertex is committed by other transactions and its commit timestamp is greater
+        // than the start timestamp of the current transaction, return version not found
+        ts if ts.is_commit_ts() && ts > txn.start_ts() => {
+            Err(StorageError::VersionNotFound(id.to_string()))
+        }
+        _ => Ok(()),
     }
 }
 
