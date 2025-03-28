@@ -38,7 +38,11 @@ divan = "0.1.17"
 insta = { version = "1.42.2", features = ["yaml"] }
 miette = { version = "7.5.0", features = ["fancy"] }
 paste = "1.0.15"
-serde = { version = "1.0.219", default-features = false }
+serde = { version = "1.0.219", default-features = false, features = [
+    "alloc",
+    "derive",
+    "rc",
+] }
 smol_str = { version = "0.3.2", default-features = false }
 thiserror = { version = "2.0.12", default-features = false }
 

@@ -500,12 +500,16 @@ dependencies = [
 [[package]]
 name = "minigu"
 version = "0.1.0"
+dependencies = [
+ "thiserror 2.0.12",
+]
 
 [[package]]
 name = "minigu-binder"
 version = "0.1.0"
 dependencies = [
  "gql-parser",
+ "serde",
  "thiserror 2.0.12",
 ]
 
