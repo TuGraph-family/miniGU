@@ -10,7 +10,6 @@ pub trait Graph {
     type Vertex;
     type Edge;
     type Adjacency;
-    type Direction;
 
     type VertexIter<'a>: Iterator<Item = StorageResult<Self::Vertex>>
     where
@@ -47,7 +46,6 @@ pub trait Graph {
         &'a self,
         txn: &'a Self::Transaction,
         vid: Self::VertexID,
-        direction: Self::Direction,
     ) -> StorageResult<Self::AdjacencyIter<'a>>;
 }
 

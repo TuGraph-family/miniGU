@@ -250,7 +250,7 @@ mod tests {
         // create edge and verify each property by schema
         let alice_knows_bob = create_edge_alice_knows_bob();
         let edge_schema = schema_manager
-            .get_edge_schema_by_id(alice_knows_bob.label_id)
+            .get_edge_schema_by_id(alice_knows_bob.label_id())
             .unwrap();
         assert_eq!(
             edge_schema.schema.first().unwrap().data_type,

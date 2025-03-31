@@ -20,10 +20,4 @@ pub trait VertexIteratorTrait<'a>: Iterator<Item = StorageResult<Vertex>> {
 
     /// Retrieves the properties of the currently iterated vertex.
     fn properties(&self) -> ChunkData;
-
-    /// Returns an iterator for the outgoing edges of the current vertex.
-    fn get_out_edge_iterator(&self) -> StorageResult<Self::AdjacencyIterator>;
-
-    /// Returns an iterator for the incoming edges of the current vertex.
-    fn get_in_edge_iterator(&self) -> StorageResult<Self::AdjacencyIterator>;
 }

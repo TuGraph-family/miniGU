@@ -10,7 +10,7 @@ use crate::error::{StorageError, StorageResult};
 use crate::memory::adjacency_iterator::AdjacencyIterator;
 use crate::memory::edge_iterator::EdgeIterator;
 use crate::memory::vertex_iterator::VertexIterator;
-use crate::model::edge::{Adjacency, Direction, Edge};
+use crate::model::edge::{Direction, Edge, EdgeUid};
 use crate::model::vertex::Vertex;
 use crate::storage::{Graph, MutGraph};
 use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
@@ -227,8 +227,8 @@ impl VersionedEdge {
         let (src, dst);
         {
             let read_guard = self.chain.current.read().unwrap();
-            src = read_guard.data.dst_id;
-            dst = read_guard.data.src_id;
+            src = read_guard.data.dst_id();
+            dst = read_guard.data.src_id();
         }
         if txn
             .graph()
@@ -269,11 +269,11 @@ impl VersionedEdge {
 }
 
 #[derive(Debug)]
-pub(super) struct VersionedAdjContainer {
-    pub(super) inner: Arc<SkipSet<Adjacency>>,
+pub(super) struct AdjacencyContainer {
+    pub(super) inner: Arc<SkipSet<EdgeUid>>,
 }
 
-impl VersionedAdjContainer {
+impl AdjacencyContainer {
     pub fn new() -> Self {
         Self {
             inner: Arc::new(SkipSet::new()),
@@ -286,24 +286,22 @@ pub struct MemoryGraph {
     pub(super) vertices: DashMap<VertexId, VersionedVertex>, // Stores versioned vertices
     pub(super) edges: DashMap<EdgeId, VersionedEdge>,        // Stores versioned edges
 
-    // ---- Adjacency lists (with versioning) ----
-    pub(super) adjacency_out: DashMap<VertexId, VersionedAdjContainer>, // Outgoing adjacency list
-    pub(super) adjacency_in: DashMap<VertexId, VersionedAdjContainer>,  // Incoming adjacency list
+    // ---- Adjacency list ----
+    pub(super) adjacency_list: DashMap<VertexId, AdjacencyContainer>,
 
     // ---- Transaction management ----
     pub(super) txn_manager: MemTxnManager,
 }
 
 #[allow(dead_code)]
-// Basic methods for MemGraph
+// Basic methods for MemoryGraph
 impl MemoryGraph {
-    /// Creates a new instance of `MemGraph`.
+    /// Creates a new instance of `MemoryGraph`.
     pub fn new() -> Arc<Self> {
         Arc::new(Self {
             vertices: DashMap::new(),
             edges: DashMap::new(),
-            adjacency_out: DashMap::new(),
-            adjacency_in: DashMap::new(),
+            adjacency_list: DashMap::new(),
             txn_manager: MemTxnManager::new(),
         })
     }
@@ -341,9 +339,8 @@ impl MemoryGraph {
 
 // Immutable graph methods
 impl Graph for MemoryGraph {
-    type Adjacency = Adjacency;
+    type Adjacency = EdgeUid;
     type AdjacencyIter<'a> = AdjacencyIterator<'a>;
-    type Direction = Direction;
     type Edge = Edge;
     type EdgeID = EdgeId;
     type EdgeIter<'a> = EdgeIterator<'a>;
@@ -464,9 +461,8 @@ impl Graph for MemoryGraph {
         &'a self,
         txn: &'a Self::Transaction,
         vid: Self::VertexID,
-        direction: Direction,
     ) -> StorageResult<Self::AdjacencyIter<'a>> {
-        Ok(txn.iter_adjacency(vid, direction))
+        Ok(txn.iter_adjacency(vid))
     }
 }
 
@@ -499,6 +495,7 @@ impl MutGraph for MemoryGraph {
         let eid = edge.eid();
         let src_id = edge.src_id();
         let dst_id = edge.dst_id();
+        let label_id = edge.label_id();
 
         // Check if source and destination vertices exist.
         if self.get_vertex(txn, edge.src_id()).is_err() {
@@ -529,16 +526,16 @@ impl MutGraph for MemoryGraph {
         }
 
         // Record the adjacency list updates in the transaction
-        self.adjacency_out
+        self.adjacency_list
             .entry(src_id)
-            .or_insert_with(VersionedAdjContainer::new)
+            .or_insert_with(AdjacencyContainer::new)
             .inner
-            .insert(Adjacency::new(dst_id, eid));
-        self.adjacency_in
+            .insert(EdgeUid::new(label_id, src_id, Direction::Out, dst_id, eid));
+        self.adjacency_list
             .entry(dst_id)
-            .or_insert_with(VersionedAdjContainer::new)
+            .or_insert_with(AdjacencyContainer::new)
             .inner
-            .insert(Adjacency::new(src_id, eid));
+            .insert(EdgeUid::new(label_id, dst_id, Direction::In, src_id, eid));
 
         Ok(eid)
     }
@@ -794,7 +791,7 @@ mod tests {
         assert!(txn2.commit().is_ok());
 
         {
-            let adj = graph.adjacency_out.get(&vid1).unwrap();
+            let adj = graph.adjacency_list.get(&vid1).unwrap();
             assert!(adj.value().inner.len() == 1);
         }
 
@@ -807,7 +804,7 @@ mod tests {
         graph.delete_edge(&txn4, eid1).unwrap();
 
         {
-            let adj = graph.adjacency_out.get(&vid1).unwrap();
+            let adj = graph.adjacency_list.get(&vid1).unwrap();
             assert!(adj.inner.len() == 1);
         }
     }
@@ -965,7 +962,7 @@ mod tests {
 
         let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
         {
-            let iter1 = txn2.iter_adjacency(vid1, crate::model::edge::Direction::Out);
+            let iter1 = txn2.iter_adjacency(vid1);
             let mut count = 0;
             for _ in iter1 {
                 count += 1;

@@ -4,19 +4,79 @@ use serde::{Deserialize, Serialize};
 
 use super::properties::PropertyStore;
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Copy, Ord, PartialOrd)]
 pub enum Direction {
     Out, // Outgoing edge
     In,  // Incoming edge
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Copy)]
+pub struct EdgeUid {
+    label_id: LabelId,
+    src_id: VertexId,
+    direction: Direction,
+    dst_id: VertexId,
+    eid: EdgeId,
+}
+
+impl EdgeUid {
+    pub fn new(
+        label_id: LabelId,
+        src_id: VertexId,
+        direction: Direction,
+        dst_id: VertexId,
+        eid: EdgeId,
+    ) -> Self {
+        EdgeUid {
+            label_id,
+            src_id,
+            direction,
+            dst_id,
+            eid,
+        }
+    }
+
+    pub fn label_id(&self) -> LabelId {
+        self.label_id
+    }
+
+    pub fn src_id(&self) -> VertexId {
+        self.src_id
+    }
+
+    pub fn dst_id(&self) -> VertexId {
+        self.dst_id
+    }
+
+    pub fn eid(&self) -> EdgeId {
+        self.eid
+    }
+
+    pub fn direction(&self) -> Direction {
+        self.direction
+    }
+}
+
+impl Ord for EdgeUid {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.label_id
+            .cmp(&other.label_id)
+            .then_with(|| self.src_id.cmp(&other.src_id))
+            .then_with(|| self.direction.cmp(&other.direction))
+            .then_with(|| self.dst_id.cmp(&other.dst_id))
+            .then_with(|| self.eid.cmp(&other.eid))
+    }
+}
+
+impl PartialOrd for EdgeUid {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Edge {
-    pub eid: EdgeId,               // ID of the edge
-    pub src_id: VertexId,          // ID of the source vertex
-    pub dst_id: VertexId,          // ID of the target vertex
-    pub label_id: LabelId,         // Label of the edge
-    pub direction: Direction,      // Direction of the edge
+    pub euid: EdgeUid,
     pub properties: PropertyStore, // Properties of the edge
     pub is_tombstone: bool,
 }
@@ -31,11 +91,7 @@ impl Edge {
         properties: PropertyStore,
     ) -> Self {
         Edge {
-            eid,
-            src_id,
-            dst_id,
-            label_id,
-            direction,
+            euid: EdgeUid::new(label_id, src_id, direction, dst_id, eid),
             properties,
             is_tombstone: false,
         }
@@ -43,26 +99,26 @@ impl Edge {
 
     pub fn tombstone(edge: Edge) -> Self {
         Edge {
-            eid: edge.eid,
-            src_id: edge.src_id,
-            dst_id: edge.dst_id,
-            label_id: edge.label_id,
-            direction: edge.direction.clone(),
+            euid: edge.euid,
             properties: edge.properties.clone(),
             is_tombstone: true,
         }
     }
 
     pub fn eid(&self) -> EdgeId {
-        self.eid
+        self.euid.eid
     }
 
     pub fn src_id(&self) -> VertexId {
-        self.src_id
+        self.euid.src_id
     }
 
     pub fn dst_id(&self) -> VertexId {
-        self.dst_id
+        self.euid.dst_id
+    }
+
+    pub fn label_id(&self) -> LabelId {
+        self.euid.label_id
     }
 
     pub fn is_tombstone(&self) -> bool {
@@ -78,39 +134,8 @@ impl Edge {
     pub fn properties(&self) -> &Vec<PropertyValue> {
         self.properties.props()
     }
-}
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
-pub struct Adjacency {
-    vertex_id: VertexId,
-    edge_id: EdgeId,
-}
-
-impl Adjacency {
-    pub fn new(vertex_id: VertexId, edge_id: EdgeId) -> Self {
-        Adjacency { vertex_id, edge_id }
-    }
-
-    pub fn vertex_id(&self) -> VertexId {
-        self.vertex_id
-    }
-
-    pub fn edge_id(&self) -> EdgeId {
-        self.edge_id
-    }
-}
-
-impl PartialOrd for Adjacency {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-// 实现 Ord
-impl Ord for Adjacency {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.vertex_id
-            .cmp(&other.vertex_id)
-            .then(self.edge_id.cmp(&other.edge_id))
+    pub fn euid(&self) -> EdgeUid {
+        self.euid
     }
 }

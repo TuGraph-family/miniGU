@@ -8,7 +8,6 @@ use crate::error::StorageResult;
 use crate::iterators::{ChunkData, VertexIteratorTrait};
 use crate::memory::adjacency_iterator::AdjacencyIterator;
 use crate::memory::memory_graph::VersionedVertex;
-use crate::model::edge::Direction;
 use crate::model::vertex::Vertex;
 
 type VertexFilter<'a> = Box<dyn Fn(&Vertex) -> bool + 'a>;
@@ -87,18 +86,6 @@ impl<'a> VertexIteratorTrait<'a> for VertexIterator<'a> {
         } else {
             ChunkData::new()
         }
-    }
-
-    /// Returns an iterator for the outgoing edges of the current vertex.
-    fn get_out_edge_iterator(&self) -> StorageResult<AdjacencyIterator<'a>> {
-        let vid = self.current_vertex.as_ref().map(|v| v.vid()).unwrap();
-        Ok(AdjacencyIterator::new(self.txn, vid, Direction::Out))
-    }
-
-    /// Returns an iterator for the incoming edges of the current vertex.
-    fn get_in_edge_iterator(&self) -> StorageResult<AdjacencyIterator<'a>> {
-        let vid = self.current_vertex.as_ref().map(|v| v.vid()).unwrap();
-        Ok(AdjacencyIterator::new(self.txn, vid, Direction::In))
     }
 }
 
