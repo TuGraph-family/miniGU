@@ -48,8 +48,8 @@ impl Iterator for AdjacencyIterator<'_> {
                 .unwrap_or(false);
 
             if is_visible && self.filters.iter().all(|f| f(entry)) {
-                let adj = entry.clone();
-                self.current_adj = Some(adj.clone());
+                let adj = *entry;
+                self.current_adj = Some(adj);
                 return Some(Ok(adj));
             }
         }
@@ -73,10 +73,10 @@ impl<'a> AdjacencyIterator<'a> {
             self.current_index = 0;
 
             // Load the next batch of entries
-            self.current_entries.push(iter.value().clone());
+            self.current_entries.push(*iter.value());
             for _ in 0..64 {
                 if let Some(entry) = iter.next() {
-                    self.current_entries.push(entry.value().clone());
+                    self.current_entries.push(*entry.value());
                 } else {
                     break;
                 }

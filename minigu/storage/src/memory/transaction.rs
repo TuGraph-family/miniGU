@@ -57,10 +57,10 @@ impl MemTxnManager {
             self.update_watermark();
             return Ok(());
         }
-        return Err(StorageError::TransactionError(format!(
+        Err(StorageError::TransactionError(format!(
             "Transaction {:?} not found",
             txn.txn_id(),
-        )));
+        )))
     }
 
     /// Start a garbage collection of expired transactions.
@@ -311,7 +311,7 @@ impl StorageTransaction for MemTransaction {
             .txn_manager
             .latest_commit_ts
             .store(commit_ts.0, Ordering::SeqCst);
-        self.graph.txn_manager.finsih_transaction(&self)?;
+        self.graph.txn_manager.finsih_transaction(self)?;
         Ok(commit_ts)
     }
 
@@ -408,7 +408,7 @@ impl StorageTransaction for MemTransaction {
         }
 
         // Remove transaction from transaction manager
-        self.graph.txn_manager.finsih_transaction(&self)?;
+        self.graph.txn_manager.finsih_transaction(self)?;
         Ok(())
     }
 }
