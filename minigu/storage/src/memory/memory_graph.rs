@@ -1,3 +1,4 @@
+use std::sync::atomic::Ordering;
 use std::sync::{Arc, RwLock};
 
 use common::datatype::types::{EdgeId, VertexId};
@@ -313,7 +314,7 @@ impl MemoryGraph {
     ) -> Arc<MemTransaction> {
         // Allocate a new transaction ID and read timestamp.
         let txn_id = Timestamp::new_txn_id();
-        let start_ts = Timestamp::new_commit_ts();
+        let start_ts = Timestamp::with_commit_ts(self.txn_manager.latest_commit_ts.load(Ordering::SeqCst));
 
         // Register the transaction as active (used for garbage collection and visibility checks).
         let txn = Arc::new(MemTransaction::with_memgraph(
@@ -948,7 +949,7 @@ mod tests {
     }
 
     #[test]
-    fn test_adj_interator() {
+    fn test_adj_iterator() {
         let graph = MemoryGraph::new();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);

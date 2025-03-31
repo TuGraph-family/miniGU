@@ -11,12 +11,13 @@ use crate::storage::StorageTransaction;
 use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
 
 pub struct MemTxnManager {
-    /// Active transactions' start timestamps.
+    /// Active transactions' txn.
     pub(super) active_txns: SkipMap<Timestamp, Arc<MemTransaction>>,
     /// All transactions, running or committed.
-    pub(super) commited_txns: SkipMap<Timestamp, Arc<MemTransaction>>,
+    pub(super) committed_txns: SkipMap<Timestamp, Arc<MemTransaction>>,
     /// Commit lock to enforce serial commit order
     pub(super) commit_lock: Mutex<()>,
+    pub(super) latest_commit_ts: AtomicU64,
     pub(super) watermark: AtomicU64,
 }
 
@@ -25,37 +26,38 @@ impl MemTxnManager {
     pub fn new() -> Self {
         Self {
             active_txns: SkipMap::new(),
-            commited_txns: SkipMap::new(),
+            committed_txns: SkipMap::new(),
             commit_lock: Mutex::new(()),
-            watermark: AtomicU64::new(Timestamp::TXN_ID_START),
+            latest_commit_ts: AtomicU64::new(0),
+            watermark: AtomicU64::new(0),
         }
     }
 
     /// Register a new transaction.
     pub fn start_transaction(&self, txn: Arc<MemTransaction>) {
-        self.active_txns.insert(txn.start_ts(), txn.clone());
+        self.active_txns.insert(txn.txn_id(), txn.clone());
         // Update the watermark
         self.update_watermark();
     }
 
     /// Unregister a transaction.
-    pub fn finsih_transaction(&self, start_ts: Timestamp) -> StorageResult<()> {
-        let txn = self.active_txns.remove(&start_ts);
-        if let Some(txn) = txn {
+    pub fn finsih_transaction(&self, txn: &MemTransaction) -> StorageResult<()> {
+        let txn_entry = self.active_txns.remove(&txn.txn_id());
+        if let Some(txn) = txn_entry {
             let commit_ts = txn
                 .value()
                 .commit_ts
-                .get()
-                .expect("Transaction not committed");
-            self.commited_txns.insert(*commit_ts, txn.value().clone());
+                .get();
+            if let Some(commit_ts) = commit_ts {
+                self.committed_txns.insert(*commit_ts, txn.value().clone());
+            }
             self.update_watermark();
-        } else {
-            return Err(StorageError::TransactionError(format!(
-                "Transaction {:?} not found",
-                start_ts
-            )));
+            return Ok(());
         }
-        Ok(())
+        return Err(StorageError::TransactionError(format!(
+            "Transaction {:?} not found",
+            txn.txn_id(),
+        )));
     }
 
     /// Start a garbage collection of expired transactions.
@@ -66,7 +68,7 @@ impl MemTxnManager {
         // Step2: Iterate over all transactions, and remove those whose commit timestamp is less
         // than the min read timestamp
         let mut expired_txns = Vec::new();
-        for entry in self.commited_txns.iter() {
+        for entry in self.committed_txns.iter() {
             // 如何遍历到的事务commit timestamp大于min read ts，说明链表后续的事务都不需要再遍历
             if entry.key().0 > min_read_ts {
                 break;
@@ -77,7 +79,7 @@ impl MemTxnManager {
         }
         // Step3: Remove the expired transactions from the commited_txns map
         for txn in expired_txns {
-            self.commited_txns.remove(txn.commit_ts.get().unwrap());
+            self.committed_txns.remove(txn.commit_ts.get().unwrap());
         }
 
         Ok(())
@@ -88,9 +90,10 @@ impl MemTxnManager {
         let min_ts = self
             .active_txns
             .front()
-            .map(|v| *v.key())
-            .unwrap_or(Timestamp::TXN_START_TS);
-        self.watermark.store(min_ts.0, Ordering::SeqCst);
+            .map(|v| v.value().start_ts().0)
+            .unwrap_or(self.latest_commit_ts.load(Ordering::Acquire))
+            .max(self.watermark.load(Ordering::Acquire));
+        self.watermark.store(min_ts, Ordering::SeqCst);
     }
 }
 
@@ -213,7 +216,7 @@ impl MemTransaction {
         let mut current = undo_ptr;
 
         // Get the undo buffer of the transaction that modified the vertex/edge
-        while let Some(entry) = self.graph.txn_manager.commited_txns.get(&current.txn_id()) {
+        while let Some(entry) = self.graph.txn_manager.committed_txns.get(&current.txn_id()) {
             let undo_buffer = entry.value().undo_buffer.read().unwrap();
             let undo_entry = &undo_buffer[current.entry_offset()];
 
@@ -300,8 +303,12 @@ impl StorageTransaction for MemTransaction {
             }
         }
 
-        // Step 5: Clean up transaction state.
-        self.graph.txn_manager.finsih_transaction(self.start_ts())?;
+        // Step 5: Clean up transaction state and update the `latest_commit_ts`.
+        self.graph
+           .txn_manager
+           .latest_commit_ts
+           .store(commit_ts.0, Ordering::SeqCst);
+        self.graph.txn_manager.finsih_transaction(&self)?;
         Ok(commit_ts)
     }
 
@@ -398,7 +405,143 @@ impl StorageTransaction for MemTransaction {
         }
 
         // Remove transaction from transaction manager
-        self.graph.txn_manager.finsih_transaction(self.txn_id())?;
+        self.graph.txn_manager.finsih_transaction(&self)?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::transaction::IsolationLevel;
+
+    #[test]
+    fn test_watermark_tracking() {
+        let graph = MemoryGraph::new();
+        let txn_start_ts = 0;
+        
+        // Start txn0
+        let txn0 = graph.begin_transaction(IsolationLevel::Serializable);
+        assert_eq!(txn0.start_ts().0, txn_start_ts);
+        assert_eq!(graph.txn_manager.watermark.load(Ordering::Acquire), txn_start_ts);
+        
+        {
+            let txn_store_1 = graph.begin_transaction(IsolationLevel::Serializable);
+            assert_eq!(txn_store_1.start_ts().0, txn_start_ts);
+            let commit_ts = txn_store_1.commit().unwrap();
+            assert_eq!(commit_ts.0, txn_start_ts + 1);
+        }
+        
+        // Watermark should remain unchanged since txn0 is still active
+        assert_eq!(graph.txn_manager.watermark.load(Ordering::Acquire), txn_start_ts);
+        
+        // Start txn1
+        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+        assert_eq!(txn1.start_ts().0, 1);
+        
+        // Watermark should remain unchanged
+        assert_eq!(graph.txn_manager.watermark.load(Ordering::Acquire), txn_start_ts);
+        
+        // Create and commit txn_store_2
+        {
+            let txn_store_2 = graph.begin_transaction(IsolationLevel::Serializable);
+            assert_eq!(txn_store_2.start_ts().0, txn_start_ts + 1);
+            let commit_ts = txn_store_2.commit().unwrap();
+            assert_eq!(commit_ts.0, txn_start_ts + 2);
+        }
+        
+        // Watermark should remain unchanged
+        assert_eq!(graph.txn_manager.watermark.load(Ordering::Acquire), txn_start_ts);
+        
+        // Start txn2
+        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+        assert_eq!(txn2.start_ts().0, txn_start_ts + 2);
+        
+        // Watermark should remain unchanged
+        assert_eq!(graph.txn_manager.watermark.load(Ordering::Acquire), txn_start_ts);
+        
+        // Abort txn0
+        txn0.abort().unwrap();
+        // Watermark should update to txn_start_ts + 1
+        assert_eq!(graph.txn_manager.watermark.load(Ordering::Acquire), txn_start_ts + 1);
+        
+        // Create and commit txn_store_3
+        {
+            let txn_store_3 = graph.begin_transaction(IsolationLevel::Serializable);
+            assert_eq!(txn_store_3.start_ts().0, txn_start_ts + 2);
+            let commit_ts = txn_store_3.commit().unwrap();
+            assert_eq!(commit_ts.0, txn_start_ts + 3);
+        }
+        
+        // Watermark should remain unchanged
+        assert_eq!(graph.txn_manager.watermark.load(Ordering::Acquire), txn_start_ts + 1);
+        
+        // Start txn3
+        let txn3 = graph.begin_transaction(IsolationLevel::Serializable);
+        assert_eq!(txn3.start_ts().0, txn_start_ts + 3);
+        
+        // Watermark should remain unchanged
+        assert_eq!(graph.txn_manager.watermark.load(Ordering::Acquire), txn_start_ts + 1);
+        
+        // Abort txn1
+        txn1.abort().unwrap();
+        // Watermark should be updated to txn2's start timestamp
+        assert_eq!(graph.txn_manager.watermark.load(Ordering::Acquire), txn_start_ts + 2);
+        
+        // Abort txn2
+        txn2.abort().unwrap();
+        // Watermark should be updated to txn3's start timestamp
+        assert_eq!(graph.txn_manager.watermark.load(Ordering::Acquire), txn_start_ts + 3);
+        
+        // Create and commit txn_store_4
+        {
+            let txn_store_4 = graph.begin_transaction(IsolationLevel::Serializable);
+            assert_eq!(txn_store_4.start_ts().0, txn_start_ts + 3);
+            let commit_ts = txn_store_4.commit().unwrap();
+            assert_eq!(commit_ts.0, txn_start_ts + 4);
+        }
+        
+        // Watermark should remain unchanged
+        assert_eq!(graph.txn_manager.watermark.load(Ordering::Acquire), txn_start_ts + 3);
+        
+        // Start txn4
+        let txn4 = graph.begin_transaction(IsolationLevel::Serializable);
+        assert_eq!(txn4.start_ts().0, txn_start_ts + 4);
+        
+        // Watermark should remain unchanged
+        assert_eq!(graph.txn_manager.watermark.load(Ordering::Acquire), txn_start_ts + 3);
+        
+        // Abort txn3
+        txn3.abort().unwrap();
+        // Watermark should be updated to txn4's start timestamp
+        assert_eq!(graph.txn_manager.watermark.load(Ordering::Acquire), txn_start_ts + 4);
+        
+        // Abort txn4
+        txn4.abort().unwrap();
+        // Watermark should remain unchanged
+        assert_eq!(graph.txn_manager.watermark.load(Ordering::Acquire), txn_start_ts + 4);
+        
+        // Create and commit txn_store_5
+        {
+            let txn_store_5 = graph.begin_transaction(IsolationLevel::Serializable);
+            assert_eq!(txn_store_5.start_ts().0, txn_start_ts + 4);
+            let commit_ts = txn_store_5.commit().unwrap();
+            assert_eq!(commit_ts.0, txn_start_ts + 5);
+        }
+        
+        // The watermark should be updated because there are no active transactions
+        assert_eq!(graph.txn_manager.watermark.load(Ordering::Acquire), txn_start_ts + 5);
+        
+        // Start txn5
+        let txn5 = graph.begin_transaction(IsolationLevel::Serializable);
+        assert_eq!(txn5.start_ts().0, txn_start_ts + 5);
+        
+        // Watermark should remain unchanged
+        assert_eq!(graph.txn_manager.watermark.load(Ordering::Acquire), txn_start_ts + 5);
+        
+        // Abort txn5
+        txn5.abort().unwrap();
+        // Watermark should remain unchanged since there are no active transactions
+        assert_eq!(graph.txn_manager.watermark.load(Ordering::Acquire), txn_start_ts + 5);
     }
 }
