@@ -26,7 +26,7 @@ impl Timestamp {
     /// Generates a new commit timestamp using an atomic counter.
     pub fn new_commit_ts() -> Self {
         // Static counter initialized once, persists between calls.
-        static COUNTER: AtomicU64 = AtomicU64::new(1);
+        static COUNTER: AtomicU64 = AtomicU64::new(0);
         // Only one transaction can commit at a time.
         Self(COUNTER.fetch_add(1, Ordering::Relaxed))
     }

@@ -3,6 +3,9 @@ name = "storage"
 version = "0.1.0"
 edition.workspace = true
 
+[dev-dependencies]
+serial_test = "3.2.0"
+
 [dependencies]
 crossbeam-skiplist = "0.1"
 thiserror = "2.0.0"
