@@ -557,6 +557,15 @@ impl MutGraph for MemoryGraph {
         let mut current = entry.chain.current.write().unwrap();
         check_commit_timestamp(current.commit_ts, txn, vid)?;
 
+        // Delete all edges associated with the vertex
+        if let Some(adjacency_container) = self.adjacency_list.get(&vid) {
+            for adj in adjacency_container.inner.iter() {
+                if self.edges.get(&adj.value().eid()).is_some() {
+                    self.delete_edge(txn, adj.value().eid())?;
+                }
+            }
+        }
+
         // Mark the vertex as deleted
         let tombstone = Vertex::tombstone(current.data.clone());
         current.data = tombstone;
@@ -1134,5 +1143,74 @@ mod tests {
             // GC will remove the edge
             assert!(graph.edges.get(&eid).is_none());
         }
+    }
+
+    #[test]
+    fn test_delete_vertex_with_edges() {
+        let graph = mock_graph();
+
+        let vid: u64 = 1;
+
+        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+        {
+            // Check visible and invisible edges
+            let adj = graph.adjacency_list.get(&vid).unwrap();
+            let mut count = 0;
+            for euid in adj.inner.iter() {
+                let edge = graph.edges.get(&euid.value().eid()).unwrap();
+                assert!(!edge.value().chain.current.read().unwrap().data.is_tombstone);
+                count += 1;
+            }
+            assert!(count == 3);
+            // Check visible edges
+            let iter = txn1.iter_adjacency(vid);
+            let mut count = 0;
+            for _ in iter {
+                count += 1;
+            }
+            assert!(count == 3);
+        }
+        graph.delete_vertex(&txn1, vid).unwrap();
+        assert!(txn1.commit().is_ok());
+
+        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+        {
+            // Check visible and invisible edges
+            let adj = graph.adjacency_list.get(&vid).unwrap();
+            let mut count = 0;
+            for euid in adj.inner.iter() {
+                let edge = graph.edges.get(&euid.value().eid()).unwrap();
+                assert!(edge.value().chain.current.read().unwrap().data.is_tombstone);
+                count += 1;
+            }
+            assert!(count == 3);
+            // Check visble edges
+            let iter = txn2.iter_adjacency(vid);
+            let mut count = 0;
+            for _ in iter {
+                count += 1;
+            }
+            assert!(count == 0);
+        }
+        let _ = txn2.abort();
+    }
+
+    #[test]
+    fn test_delete_edge_with_vertex_conflict() {
+        let graph = mock_graph();
+
+        let vid: VertexId = 1;
+        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+
+        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+        let _ = create_vertex_eve();
+        let _ = graph.create_vertex(&txn2, create_vertex_eve()).unwrap();
+        let _ = graph
+            .create_edge(&txn2, create_edge_alice_to_eve())
+            .unwrap();
+        assert!(txn2.commit().is_ok());
+
+        assert!(graph.delete_vertex(&txn1, vid).is_err());
+        let _ = txn1.abort();
     }
 }
