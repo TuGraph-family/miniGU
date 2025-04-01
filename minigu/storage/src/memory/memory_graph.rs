@@ -136,7 +136,9 @@ impl VersionedVertex {
     pub(super) fn is_visible(&self, txn: &MemTransaction) -> bool {
         // Check if the vertex is visible based on the transaction's start timestamp
         let current = self.chain.current.read().unwrap();
-        if current.commit_ts == txn.txn_id() || current.commit_ts < txn.start_ts() {
+        if current.data.is_tombstone() {
+            false
+        } else if current.commit_ts == txn.txn_id() || current.commit_ts < txn.start_ts() {
             true
         } else {
             let undo_ptr = self.chain.undo_ptr.read().unwrap();
@@ -246,7 +248,9 @@ impl VersionedEdge {
         {
             // Check if the vertex is visible based on the transaction's start timestamp
             let current = self.chain.current.read().unwrap();
-            if current.commit_ts == txn.txn_id() || current.commit_ts < txn.start_ts() {
+            if current.data.is_tombstone() {
+                false
+            } else if current.commit_ts == txn.txn_id() || current.commit_ts < txn.start_ts() {
                 true
             } else {
                 let undo_ptr = *self.chain.undo_ptr.read().unwrap();
@@ -659,6 +663,7 @@ fn check_commit_timestamp<T: std::fmt::Display>(
 
 #[cfg(test)]
 mod tests {
+    use common::datatype::types::LabelId;
     use common::datatype::value::PropertyValue;
     use {Edge, Vertex};
 
@@ -666,37 +671,116 @@ mod tests {
     use crate::model::properties::PropertyStore;
     use crate::storage::StorageTransaction;
 
-    fn create_vertex_alice() -> Vertex {
-        let properties = vec![
-            PropertyValue::String("Alice".into()),
-            PropertyValue::Int(25),
-        ];
-        Vertex::new(100, 1, PropertyStore::new(properties))
+    const PERSON: LabelId = 1;
+    const FRIEND: LabelId = 1;
+    const FOLLOW: LabelId = 2;
+
+    fn create_vertex(id: VertexId, label_id: LabelId, properties: Vec<PropertyValue>) -> Vertex {
+        Vertex::new(id, label_id, PropertyStore::new(properties))
     }
 
-    fn create_vertex_bob() -> Vertex {
-        let properties = vec![PropertyValue::String("Bob".into()), PropertyValue::Int(30)];
-        Vertex::new(101, 1, PropertyStore::new(properties))
-    }
-
-    fn create_edge_alice_to_bob() -> Edge {
-        let properties = vec![PropertyValue::String("friend".into())];
+    fn create_edge(
+        id: EdgeId,
+        src_id: VertexId,
+        dst_id: VertexId,
+        label_id: LabelId,
+        direction: Direction,
+        properties: Vec<PropertyValue>,
+    ) -> Edge {
         Edge::new(
-            200,
-            100,
-            101,
-            2,
-            crate::model::edge::Direction::Out,
+            id,
+            src_id,
+            dst_id,
+            label_id,
+            direction,
             PropertyStore::new(properties),
         )
     }
 
+    fn mock_graph() -> Arc<MemoryGraph> {
+        let graph = MemoryGraph::new();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        let alice = create_vertex(1, PERSON, vec![
+            PropertyValue::String("Alice".into()),
+            PropertyValue::Int(25),
+        ]);
+
+        let bob = create_vertex(2, PERSON, vec![
+            PropertyValue::String("Bob".into()),
+            PropertyValue::Int(28),
+        ]);
+
+        let carol = create_vertex(3, PERSON, vec![
+            PropertyValue::String("Carol".into()),
+            PropertyValue::Int(24),
+        ]);
+
+        let david = create_vertex(4, PERSON, vec![
+            PropertyValue::String("David".into()),
+            PropertyValue::Int(27),
+        ]);
+
+        // 添加顶点到图中
+        graph.create_vertex(&txn, alice).unwrap();
+        graph.create_vertex(&txn, bob).unwrap();
+        graph.create_vertex(&txn, carol).unwrap();
+        graph.create_vertex(&txn, david).unwrap();
+
+        // Create friend edges
+        let friend1 = create_edge(1, 1, 2, FRIEND, Direction::Out, vec![
+            PropertyValue::String("2020-01-01".into()),
+        ]);
+
+        let friend2 = create_edge(2, 2, 3, FRIEND, Direction::Out, vec![
+            PropertyValue::String("2021-03-15".into()),
+        ]);
+
+        // Create follow edges
+        let follow1 = create_edge(3, 1, 3, FOLLOW, Direction::Out, vec![
+            PropertyValue::String("2022-06-01".into()),
+        ]);
+
+        let follow2 = create_edge(4, 4, 1, FOLLOW, Direction::Out, vec![
+            PropertyValue::String("2022-07-15".into()),
+        ]);
+
+        // Add edges to the graph
+        graph.create_edge(&txn, friend1).unwrap();
+        graph.create_edge(&txn, friend2).unwrap();
+        graph.create_edge(&txn, follow1).unwrap();
+        graph.create_edge(&txn, follow2).unwrap();
+
+        txn.commit().unwrap();
+        graph
+    }
+
+    fn create_vertex_eve() -> Vertex {
+        create_vertex(5, PERSON, vec![
+            PropertyValue::String("Eve".into()),
+            PropertyValue::Int(24),
+        ])
+    }
+
+    fn create_vertex_frank() -> Vertex {
+        create_vertex(6, PERSON, vec![
+            PropertyValue::String("Frank".into()),
+            PropertyValue::Int(25),
+        ])
+    }
+
+    fn create_edge_alice_to_eve() -> Edge {
+        create_edge(5, 1, 5, FRIEND, Direction::Out, vec![
+            PropertyValue::String("2025-03-31".into()),
+        ])
+    }
+
     #[test]
     fn test_basic_commit_flow() {
-        let graph = MemoryGraph::new();
+        let graph = mock_graph();
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
 
-        let v1 = create_vertex_alice();
+        let v1 = create_vertex_eve();
         let vid1 = graph.create_vertex(&txn1, v1.clone()).unwrap();
         let _ = txn1.commit().unwrap();
 
@@ -708,10 +792,10 @@ mod tests {
 
     #[test]
     fn test_transaction_isolation() {
-        let graph = MemoryGraph::new();
+        let graph = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-        let v1 = create_vertex_alice();
+        let v1 = create_vertex_eve();
         let vid1 = graph.create_vertex(&txn1, v1.clone()).unwrap();
 
         let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
@@ -723,34 +807,34 @@ mod tests {
 
     #[test]
     fn test_mvcc_version_chain() {
-        let graph = MemoryGraph::new();
+        let graph = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-        let v1 = create_vertex_alice();
+        let v1 = create_vertex_eve();
         let vid1 = graph.create_vertex(&txn1, v1).unwrap();
         assert!(txn1.commit().is_ok());
-        println!("commit");
+
         let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
         let old_v1: Vertex = graph.get_vertex(&txn2, vid1).unwrap();
-        assert_eq!(old_v1.properties()[1], PropertyValue::Int(25));
+        assert_eq!(old_v1.properties()[1], PropertyValue::Int(24));
         assert!(
             graph
-                .set_vertex_property(&txn2, vid1, vec![1], vec![PropertyValue::Int(26)])
+                .set_vertex_property(&txn2, vid1, vec![1], vec![PropertyValue::Int(25)])
                 .is_ok()
         );
         assert!(txn2.commit().is_ok());
 
         let txn3 = graph.begin_transaction(IsolationLevel::Serializable);
         let new_v1: Vertex = graph.get_vertex(&txn3, vid1).unwrap();
-        assert_eq!(new_v1.properties()[1], PropertyValue::Int(26));
+        assert_eq!(new_v1.properties()[1], PropertyValue::Int(25));
     }
 
     #[test]
     fn test_delete_with_tombstone() {
-        let graph = MemoryGraph::new();
+        let graph = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-        let v1 = create_vertex_alice();
+        let v1 = create_vertex_eve();
         let vid1 = graph.create_vertex(&txn1, v1).unwrap();
         assert!(txn1.commit().is_ok());
 
@@ -764,59 +848,76 @@ mod tests {
 
     #[test]
     fn test_conflict_detection() {
-        let graph = MemoryGraph::new();
+        let graph = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-        let v1 = create_vertex_alice();
+        let v1 = create_vertex_eve();
         graph.create_vertex(&txn1, v1).unwrap();
 
         let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
-        assert!(graph.create_vertex(&txn2, create_vertex_alice()).is_err());
-        assert!(graph.create_vertex(&txn2, create_vertex_bob()).is_ok());
+        assert!(graph.create_vertex(&txn2, create_vertex_eve()).is_err());
+        assert!(graph.create_vertex(&txn2, create_vertex_frank()).is_ok());
     }
 
     #[test]
     fn test_adjacency_versioning() {
-        let graph = MemoryGraph::new();
+        let graph = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-        let v1 = create_vertex_alice();
-        let v2 = create_vertex_bob();
+        let v1 = create_vertex_eve();
 
         let vid1 = graph.create_vertex(&txn1, v1).unwrap();
-        let vid2 = graph.create_vertex(&txn1, v2).unwrap();
         assert!(txn1.commit().is_ok());
 
+        // Create an edge from alice to eve
         let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
-        let e1 = create_edge_alice_to_bob();
+        let e1 = create_edge_alice_to_eve();
         let eid1 = graph.create_edge(&txn2, e1).unwrap();
+        let v_alice = graph.get_vertex(&txn2, 1).unwrap();
+        let vid_alice = v_alice.vid();
         assert!(txn2.commit().is_ok());
 
-        {
-            let adj = graph.adjacency_list.get(&vid1).unwrap();
-            assert!(adj.value().inner.len() == 1);
-        }
-
+        // Check the edge from alice to eve
         let txn3 = graph.begin_transaction(IsolationLevel::Serializable);
         let e1 = graph.get_edge(&txn3, eid1).unwrap();
-        assert!(e1.src_id() == vid1 && e1.dst_id() == vid2);
+        assert!(e1.src_id() == vid_alice && e1.dst_id() == vid1);
+
+        // Check the adjacency list of alice
+        {
+            let iter = txn3.iter_adjacency(vid_alice);
+            let mut count = 0;
+            for _ in iter {
+                count += 1;
+            }
+            assert!(count == 4);
+        }
+
         let _ = txn3.abort();
 
+        // Delete the edge from alice to eve
         let txn4 = graph.begin_transaction(IsolationLevel::Serializable);
         graph.delete_edge(&txn4, eid1).unwrap();
+        assert!(txn4.commit().is_ok());
 
+        let txn5 = graph.begin_transaction(IsolationLevel::Serializable);
         {
-            let adj = graph.adjacency_list.get(&vid1).unwrap();
-            assert!(adj.inner.len() == 1);
+            // Check the adjacency list of alice
+            let iter = txn5.iter_adjacency(vid_alice);
+            let mut count = 0;
+            for _ in iter {
+                count += 1;
+            }
+            assert!(count == 3);
         }
+        let _ = txn5.abort();
     }
 
     #[test]
     fn test_rollback_consistency() {
-        let graph = MemoryGraph::new();
+        let graph = mock_graph();
 
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
-        let vid1 = graph.create_vertex(&txn, create_vertex_alice()).unwrap();
+        let vid1 = graph.create_vertex(&txn, create_vertex_eve()).unwrap();
         let _ = txn.abort();
 
         let txn_check = graph.begin_transaction(IsolationLevel::Serializable);
@@ -825,30 +926,30 @@ mod tests {
 
     #[test]
     fn test_property_update_flow() {
-        let graph = MemoryGraph::new();
+        let graph = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-        let v1 = create_vertex_alice();
+        let v1 = create_vertex_eve();
         let vid1 = graph.create_vertex(&txn1, v1).unwrap();
         assert!(txn1.commit().is_ok());
 
         let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
         graph
-            .set_vertex_property(&txn2, vid1, vec![0], vec![PropertyValue::Int(42)])
+            .set_vertex_property(&txn2, vid1, vec![0], vec![PropertyValue::Int(25)])
             .unwrap();
         assert!(txn2.commit().is_ok());
 
         let txn3 = graph.begin_transaction(IsolationLevel::Serializable);
         let v = graph.get_vertex(&txn3, vid1).unwrap();
-        assert_eq!(v.properties()[0], PropertyValue::Int(42));
+        assert_eq!(v.properties()[0], PropertyValue::Int(25));
     }
 
     #[test]
     fn test_read_after_write_conflict() {
-        let graph = MemoryGraph::new();
+        let graph = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-        let vid1 = graph.create_vertex(&txn1, create_vertex_alice()).unwrap();
+        let vid1 = graph.create_vertex(&txn1, create_vertex_eve()).unwrap();
         assert!(txn1.commit().is_ok());
 
         let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
@@ -865,11 +966,11 @@ mod tests {
 
     #[test]
     fn test_vertex_iterator() {
-        let graph = MemoryGraph::new();
+        let graph = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-        let v1 = create_vertex_alice();
-        let v2 = create_vertex_bob();
+        let v1 = create_vertex_eve();
+        let v2 = create_vertex_frank();
         let _ = graph.create_vertex(&txn1, v1).unwrap();
         let _ = graph.create_vertex(&txn1, v2).unwrap();
         assert!(txn1.commit().is_ok());
@@ -879,7 +980,7 @@ mod tests {
             let iter1 = txn2
                 .iter_vertices()
                 .filter_map(|v| v.ok())
-                .filter(|v| v.properties()[0].as_string().unwrap() == "Alice");
+                .filter(|v| v.properties()[0].as_string().unwrap() == "Eve");
             let mut count = 0;
             for _ in iter1 {
                 count += 1;
@@ -888,27 +989,28 @@ mod tests {
         }
         {
             let iter2 = txn2.iter_vertices().filter_map(|v| v.ok()).filter(|v| {
-                v.properties()[1].as_int().unwrap() > 20 && v.properties()[1].as_int().unwrap() < 35
+                v.properties()[1].as_int().unwrap() >= 20
+                    && v.properties()[1].as_int().unwrap() <= 25
             });
             let mut count = 0;
             for _ in iter2 {
                 count += 1;
             }
-            assert_eq!(count, 2);
+            assert_eq!(count, 4);
         }
         let _ = txn2.abort();
     }
 
     #[test]
     fn test_edge_iterator() {
-        let graph = MemoryGraph::new();
+        let graph = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-        let v1 = create_vertex_alice();
-        let v2 = create_vertex_bob();
+        let v1 = create_vertex_eve();
+        let v2 = create_vertex_frank();
         let _ = graph.create_vertex(&txn1, v1).unwrap();
         let _ = graph.create_vertex(&txn1, v2).unwrap();
-        let e1 = create_edge_alice_to_bob();
+        let e1 = create_edge_alice_to_eve();
         let _ = graph.create_edge(&txn1, e1).unwrap();
         assert!(txn1.commit().is_ok());
 
@@ -917,18 +1019,18 @@ mod tests {
             let iter1 = txn2
                 .iter_edges()
                 .filter_map(|e| e.ok())
-                .filter(|e| e.src_id() == 100);
+                .filter(|e| e.src_id() == 1);
             let mut count = 0;
             for _ in iter1 {
                 count += 1;
             }
-            assert_eq!(count, 1);
+            assert_eq!(count, 3);
         }
         {
             let iter2 = txn2
                 .iter_edges()
                 .filter_map(|e| e.ok())
-                .filter(|e| e.dst_id() == 101);
+                .filter(|e| e.dst_id() == 5);
             let mut count = 0;
             for _ in iter2 {
                 count += 1;
@@ -939,26 +1041,26 @@ mod tests {
             let iter3 = txn2
                 .iter_edges()
                 .filter_map(|e| e.ok())
-                .filter(|e| e.dst_id() == 200);
+                .filter(|e| e.label_id() == FRIEND);
             let mut count = 0;
             for _ in iter3 {
                 count += 1;
             }
-            assert_eq!(count, 0);
+            assert_eq!(count, 3);
         }
         let _ = txn2.abort();
     }
 
     #[test]
     fn test_adj_iterator() {
-        let graph = MemoryGraph::new();
+        let graph = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-        let v1 = create_vertex_alice();
-        let v2 = create_vertex_bob();
+        let v1 = create_vertex_eve();
+        let v2 = create_vertex_frank();
         let vid1 = graph.create_vertex(&txn1, v1).unwrap();
         let _ = graph.create_vertex(&txn1, v2).unwrap();
-        let e1 = create_edge_alice_to_bob();
+        let e1 = create_edge_alice_to_eve();
         let _ = graph.create_edge(&txn1, e1).unwrap();
         assert!(txn1.commit().is_ok());
 

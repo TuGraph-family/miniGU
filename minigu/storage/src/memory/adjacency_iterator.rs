@@ -10,6 +10,8 @@ use crate::model::edge::EdgeUid;
 
 type AdjFilter<'a> = Box<dyn Fn(&EdgeUid) -> bool + 'a>;
 
+const BATCH_SIZE: usize = 64;
+
 /// An adjacency list iterator that supports filtering (for iterating over a single vertex's
 /// adjacency list).
 pub struct AdjacencyIterator<'a> {
@@ -63,9 +65,11 @@ impl Iterator for AdjacencyIterator<'_> {
 impl<'a> AdjacencyIterator<'a> {
     fn load_next_batch(&mut self) -> Option<()> {
         if let Some(adj_list) = &self.adj_list {
-            let iter = if let Some(e) = self.current_entries.last() {
+            let mut current = if let Some(e) = self.current_entries.last() {
+                // If there is a last entry, get the next entry from the adjacency list
                 adj_list.get(e)?.next()?
             } else {
+                // If there is no last entry, get the first entry from the adjacency list
                 adj_list.front()?
             };
             // Clear current entry batch
@@ -73,10 +77,11 @@ impl<'a> AdjacencyIterator<'a> {
             self.current_index = 0;
 
             // Load the next batch of entries
-            self.current_entries.push(*iter.value());
-            for _ in 0..64 {
-                if let Some(entry) = iter.next() {
+            self.current_entries.push(*current.value());
+            for _ in 0..BATCH_SIZE {
+                if let Some(entry) = current.next() {
                     self.current_entries.push(*entry.value());
+                    current = entry;
                 } else {
                     break;
                 }
