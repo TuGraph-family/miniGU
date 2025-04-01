@@ -1075,4 +1075,64 @@ mod tests {
         }
         let _ = txn2.abort();
     }
+
+    #[test]
+    fn test_garbage_collection() {
+        let graph = mock_graph();
+
+        let vid1: VertexId = 1;
+        let vid2: VertexId = 2;
+        let eid: EdgeId = 1;
+
+        // Check before GC
+        {
+            let adj = graph.adjacency_list.get(&vid1).unwrap();
+            assert!(adj.inner.len() == 3);
+            let edge = graph.edges.get(&eid).unwrap();
+            assert!(!edge.value().chain.current.read().unwrap().data.is_tombstone);
+            assert!(edge.value().chain.undo_ptr.read().unwrap().is_some());
+        }
+
+        // Delete the edge
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+        graph.delete_edge(&txn, eid).unwrap();
+        assert!(txn.commit().is_ok());
+
+        // Commit an empty transaction to update the watermark
+        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+        assert!(txn2.commit().is_ok());
+
+        // Check before GC
+        {
+            let adj = graph.adjacency_list.get(&vid1).unwrap();
+            // adjacency_list will not be updated until GC
+            assert!(adj.inner.len() == 3);
+            // reverse edge
+            let adj2 = graph.adjacency_list.get(&vid2).unwrap();
+            assert!(adj2.inner.len() == 2);
+            // edge is marked as tombstone
+            let edge = graph.edges.get(&eid).unwrap();
+            assert!(edge.value().chain.current.read().unwrap().data.is_tombstone);
+            assert!(edge.value().chain.undo_ptr.read().unwrap().is_some());
+            // However, iter will check the visibility of the adjacency
+            let iter = txn2.iter_adjacency(vid1);
+            let mut count = 0;
+            for _ in iter {
+                count += 1;
+            }
+            assert!(count == 2);
+        }
+
+        let _ = graph.txn_manager.garbage_collect(&graph);
+        // Check after GC
+        {
+            let adj = graph.adjacency_list.get(&vid1).unwrap();
+            assert!(adj.inner.len() == 2);
+            // reverse edge
+            let adj2 = graph.adjacency_list.get(&vid2).unwrap();
+            assert!(adj2.inner.len() == 1);
+            // GC will remove the edge
+            assert!(graph.edges.get(&eid).is_none());
+        }
+    }
 }

@@ -116,6 +116,11 @@ impl UndoEntry {
     pub(super) fn next(&self) -> Option<UndoPtr> {
         self.next
     }
+
+    /// Set the next undo ptr of the undo entry.
+    pub(super) fn set_next(&mut self, next: Option<UndoPtr>) {
+        self.next = next;
+    }
 }
 
 #[derive(Debug, Clone)]

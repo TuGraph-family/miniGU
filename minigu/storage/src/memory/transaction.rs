@@ -7,6 +7,7 @@ use dashmap::DashSet;
 
 use super::memory_graph::MemoryGraph;
 use crate::error::{StorageError, StorageResult};
+use crate::model::edge::EdgeUid;
 use crate::storage::StorageTransaction;
 use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
 
@@ -18,6 +19,7 @@ pub struct MemTxnManager {
     /// Commit lock to enforce serial commit order
     pub(super) commit_lock: Mutex<()>,
     pub(super) latest_commit_ts: AtomicU64,
+    /// The watermark is the minimum commit timestamp of the active transactions.
     pub(super) watermark: AtomicU64,
 }
 
@@ -36,7 +38,13 @@ impl Default for MemTxnManager {
 impl MemTxnManager {
     /// Create a new MemTxnManager
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            active_txns: SkipMap::new(),
+            committed_txns: SkipMap::new(),
+            commit_lock: Mutex::new(()),
+            latest_commit_ts: AtomicU64::new(Timestamp::new_commit_ts().0),
+            watermark: AtomicU64::new(0),
+        }
     }
 
     /// Register a new transaction.
@@ -47,7 +55,7 @@ impl MemTxnManager {
     }
 
     /// Unregister a transaction.
-    pub fn finsih_transaction(&self, txn: &MemTransaction) -> StorageResult<()> {
+    pub fn finish_transaction(&self, txn: &MemTransaction) -> StorageResult<()> {
         let txn_entry = self.active_txns.remove(&txn.txn_id());
         if let Some(txn) = txn_entry {
             let commit_ts = txn.value().commit_ts.get();
@@ -63,16 +71,127 @@ impl MemTxnManager {
         )))
     }
 
-    /// Start a garbage collection of expired transactions.
+    /// GC (Garbage Collection) is triggered after transaction commit.
+    /// The following items will be cleaned up:
+    ///
+    /// 1. Transactions
+    ///    - Removes expired transactions (commit_ts < watermark)
+    ///
+    /// 2. Vertices
+    ///    - Removes vertices marked as deleted (tombstone = true)
+    ///    - Cleans up old vertex versions (commit_ts < watermark)
+    ///
+    /// 3. Edges
+    ///    - Removes edges marked as deleted (tombstone = true)
+    ///    - Cleans up old edge versions (commit_ts < watermark)
+    ///
+    /// 4. Adjacency Lists
+    ///    - Updates adjacency lists for deleted vertices and edges
     #[allow(dead_code)]
-    pub fn garbage_collect(&self) -> StorageResult<()> {
-        // Step1: Obtain the min read timestamp of the active transactions
+    pub fn garbage_collect(&self, graph: &Arc<MemoryGraph>) -> StorageResult<()> {
+        // Obtain the min read timestamp of the active transactions
         let min_read_ts = self.watermark.load(Ordering::Acquire);
-        // Step2: Iterate over all transactions, and remove those whose commit timestamp is less
-        // than the min read timestamp
+
+        // Clean up vertices and edges
+        let mut vertices_to_remove: Vec<VertexId> = Vec::new();
+        let mut edges_to_remove: Vec<EdgeUid> = Vec::new();
+
+        // Macro to clean up entities (vertices and edges)
+        macro_rules! cleanup_entity {
+            ($self:expr, $graph:expr, $entity_type:ident, $to_remove:ident, $id_method:ident) => {
+                for e in $graph.$entity_type.iter() {
+                    let current = e.value().chain.current.read().unwrap();
+                    if current.data.is_tombstone && current.commit_ts.0 < min_read_ts {
+                        $to_remove.push(current.data.$id_method());
+                    } else if let Some(undo_ptr) = *e.value().chain.undo_ptr.read().unwrap() {
+                        if let Some(last_valid_ptr) =
+                            $self.cleanup_undo_entry(undo_ptr, min_read_ts)
+                        {
+                            let txn_id = last_valid_ptr.txn_id();
+                            let entry_offset = last_valid_ptr.entry_offset();
+                            if let Some(txn) = $self.committed_txns.get(&txn_id) {
+                                let mut undo_buffer = txn.value().undo_buffer.write().unwrap();
+                                undo_buffer.get_mut(entry_offset).unwrap().set_next(None);
+                            }
+                        }
+                    }
+                }
+            };
+        }
+        {
+            cleanup_entity!(self, graph, vertices, vertices_to_remove, vid);
+            cleanup_entity!(self, graph, edges, edges_to_remove, euid);
+
+            // adjacency list
+            let mut adjacency_to_remove: Vec<(VertexId, Option<EdgeUid>)> = Vec::new();
+            for vid in vertices_to_remove.iter() {
+                // adjacency container with vid as key should be removed
+                adjacency_to_remove.push((*vid, None));
+                if let Some(adjacency_container) = graph.adjacency_list.get(vid) {
+                    adjacency_container.inner.iter().for_each(|adj| {
+                        // reverse edge should be removed
+                        if adj.value().dst_id() == *vid {
+                            adjacency_to_remove.push((
+                                adj.value().src_id(),
+                                Some(EdgeUid::new(
+                                    adj.value().label_id(),
+                                    adj.value().dst_id(),
+                                    adj.value().direction().reverse(),
+                                    adj.value().src_id(),
+                                    adj.value().eid(),
+                                )),
+                            ));
+                        }
+                    });
+                }
+            }
+            for euid in edges_to_remove.iter() {
+                adjacency_to_remove.push((
+                    euid.src_id(),
+                    Some(EdgeUid::new(
+                        euid.label_id(),
+                        euid.src_id(),
+                        euid.direction(),
+                        euid.dst_id(),
+                        euid.eid(),
+                    )),
+                ));
+                adjacency_to_remove.push((
+                    euid.dst_id(),
+                    Some(EdgeUid::new(
+                        euid.label_id(),
+                        euid.dst_id(),
+                        euid.direction().reverse(),
+                        euid.src_id(),
+                        euid.eid(),
+                    )),
+                ));
+            }
+            // remove adjacency
+            for (vid, euid) in adjacency_to_remove.iter() {
+                if let Some(adjacency_container) = graph.adjacency_list.get_mut(vid) {
+                    if let Some(euid) = euid {
+                        adjacency_container.inner.remove(euid);
+                    } else {
+                        adjacency_container.inner.clear();
+                    }
+                }
+            }
+            // remove vertices and edges
+            for vid in vertices_to_remove.iter() {
+                graph.vertices.remove(vid);
+            }
+            for euid in edges_to_remove.iter() {
+                graph.edges.remove(&euid.eid());
+            }
+        }
+
+        // Clean up expired transactions
         let mut expired_txns = Vec::new();
         for entry in self.committed_txns.iter() {
-            // 如何遍历到的事务commit timestamp大于min read ts，说明链表后续的事务都不需要再遍历
+            // If the commit timestamp of the transaction is greater than the min read timestamp,
+            // it means the transaction is still active, and the subsequent transactions are also
+            // active.
             if entry.key().0 > min_read_ts {
                 break;
             }
@@ -80,7 +199,6 @@ impl MemTxnManager {
             // Txn has been committed, iterate over its undo buffer
             expired_txns.push(entry.value().clone());
         }
-        // Step3: Remove the expired transactions from the commited_txns map
         for txn in expired_txns {
             self.committed_txns.remove(txn.commit_ts.get().unwrap());
         }
@@ -88,7 +206,7 @@ impl MemTxnManager {
         Ok(())
     }
 
-    /// Calculate the
+    /// Calculate the watermark based on the active transactions.
     pub fn update_watermark(&self) {
         let min_ts = self
             .active_txns
@@ -97,6 +215,32 @@ impl MemTxnManager {
             .unwrap_or(self.latest_commit_ts.load(Ordering::Acquire))
             .max(self.watermark.load(Ordering::Acquire));
         self.watermark.store(min_ts, Ordering::SeqCst);
+    }
+
+    // 通过 undo_ptr 删除 undo_buffer 中的 undo_entry
+    fn cleanup_undo_entry(&self, undo_ptr: UndoPtr, watermark: u64) -> Option<UndoPtr> {
+        let mut tail: Option<UndoPtr> = None;
+        let txn_id = undo_ptr.txn_id();
+        let entry_offset = undo_ptr.entry_offset();
+        if let Some(txn) = self.committed_txns.get(&txn_id) {
+            let mut undo_buffer = txn.value().undo_buffer.write().unwrap();
+            let undo_entry = &undo_buffer[entry_offset];
+            if undo_entry.timestamp().0 < watermark {
+                let next = undo_entry.next();
+                undo_buffer.remove(entry_offset);
+                drop(undo_buffer);
+                if let Some(next) = next {
+                    let _ = self.cleanup_undo_entry(next, watermark);
+                }
+            } else {
+                tail = Some(undo_ptr);
+                let next = undo_entry.next();
+                if let Some(next) = next {
+                    tail = self.cleanup_undo_entry(next, watermark);
+                }
+            }
+        }
+        tail
     }
 }
 
@@ -311,7 +455,7 @@ impl StorageTransaction for MemTransaction {
             .txn_manager
             .latest_commit_ts
             .store(commit_ts.0, Ordering::SeqCst);
-        self.graph.txn_manager.finsih_transaction(self)?;
+        self.graph.txn_manager.finish_transaction(self)?;
         Ok(commit_ts)
     }
 
@@ -408,7 +552,7 @@ impl StorageTransaction for MemTransaction {
         }
 
         // Remove transaction from transaction manager
-        self.graph.txn_manager.finsih_transaction(self)?;
+        self.graph.txn_manager.finish_transaction(self)?;
         Ok(())
     }
 }

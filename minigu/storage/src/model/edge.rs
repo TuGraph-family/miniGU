@@ -10,6 +10,14 @@ pub enum Direction {
     In,  // Incoming edge
 }
 
+impl Direction {
+    pub fn reverse(&self) -> Self {
+        match self {
+            Direction::Out => Direction::In,
+            Direction::In => Direction::Out,
+        }
+    }
+}
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Copy)]
 pub struct EdgeUid {
     label_id: LabelId,
