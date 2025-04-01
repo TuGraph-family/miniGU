@@ -11,6 +11,9 @@ use crate::model::edge::EdgeUid;
 use crate::storage::StorageTransaction;
 use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
 
+const PERIODIC_GC_THRESHOLD: u64 = 50;
+
+/// A manager for managing transactions.
 pub struct MemTxnManager {
     /// Active transactions' txn.
     pub(super) active_txns: SkipMap<Timestamp, Arc<MemTransaction>>,
@@ -21,6 +24,7 @@ pub struct MemTxnManager {
     pub(super) latest_commit_ts: AtomicU64,
     /// The watermark is the minimum commit timestamp of the active transactions.
     pub(super) watermark: AtomicU64,
+    last_gc_ts: Mutex<u64>,
 }
 
 impl Default for MemTxnManager {
@@ -31,6 +35,7 @@ impl Default for MemTxnManager {
             commit_lock: Mutex::new(()),
             latest_commit_ts: AtomicU64::new(Timestamp::new_commit_ts().0),
             watermark: AtomicU64::new(0),
+            last_gc_ts: Mutex::new(0),
         }
     }
 }
@@ -44,6 +49,7 @@ impl MemTxnManager {
             commit_lock: Mutex::new(()),
             latest_commit_ts: AtomicU64::new(Timestamp::new_commit_ts().0),
             watermark: AtomicU64::new(0),
+            last_gc_ts: Mutex::new(0),
         }
     }
 
@@ -65,10 +71,25 @@ impl MemTxnManager {
             self.update_watermark();
             return Ok(());
         }
+
+        self.periodic_garbage_collect(&txn.graph)?;
+
         Err(StorageError::TransactionError(format!(
             "Transaction {:?} not found",
             txn.txn_id(),
         )))
+    }
+
+    /// Periodlically garbage collect expired transactions.
+    fn periodic_garbage_collect(&self, graph: &Arc<MemoryGraph>) -> StorageResult<()> {
+        // Through acquiring the lock, the garbage collection is single-threaded execution.
+        let mut last_gc_ts = self.last_gc_ts.lock().unwrap();
+        if self.watermark.load(Ordering::Relaxed) - *last_gc_ts > PERIODIC_GC_THRESHOLD {
+            self.garbage_collect(graph)?;
+            *last_gc_ts = self.watermark.load(Ordering::Relaxed);
+        }
+
+        Ok(())
     }
 
     /// GC (Garbage Collection) is triggered after transaction commit.
@@ -87,9 +108,8 @@ impl MemTxnManager {
     ///
     /// 4. Adjacency Lists
     ///    - Updates adjacency lists for deleted vertices and edges
-    #[allow(dead_code)]
     pub fn garbage_collect(&self, graph: &Arc<MemoryGraph>) -> StorageResult<()> {
-        // Obtain the min read timestamp of the active transactions
+        // Step1: Obtain the min read timestamp of the active transactions
         let min_read_ts = self.watermark.load(Ordering::Acquire);
 
         // Clean up vertices and edges
@@ -261,8 +281,6 @@ pub struct MemTransaction {
     pub(super) edge_reads: DashSet<EdgeId>,     // Set of edges read by this transaction
 
     // ---- Undo logs ----
-    // pub(super) vertex_undos: DashMap<VertexId, Vec<UndoEntry<Vertex>>>, // Vertex undo logs
-    // pub(super) edge_undos: DashMap<EdgeId, Vec<UndoEntry<Edge>>>,       // Edge undo logs
     pub(super) undo_buffer: RwLock<Vec<UndoEntry>>,
 }
 
