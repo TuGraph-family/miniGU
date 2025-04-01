@@ -10,6 +10,9 @@ use crate::error::{StorageError, StorageResult};
 use crate::storage::StorageTransaction;
 use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
 
+const PERIODIC_GC_THRESHOLD: u64 = 50;
+
+/// A manager for managing transactions.
 pub struct MemTxnManager {
     /// Active transactions' txn.
     pub(super) active_txns: SkipMap<Timestamp, Arc<MemTransaction>>,
@@ -19,6 +22,7 @@ pub struct MemTxnManager {
     pub(super) commit_lock: Mutex<()>,
     pub(super) latest_commit_ts: AtomicU64,
     pub(super) watermark: AtomicU64,
+    last_gc_ts: Mutex<u64>,
 }
 
 impl Default for MemTxnManager {
@@ -29,6 +33,7 @@ impl Default for MemTxnManager {
             commit_lock: Mutex::new(()),
             latest_commit_ts: AtomicU64::new(Timestamp::new_commit_ts().0),
             watermark: AtomicU64::new(0),
+            last_gc_ts: Mutex::new(0),
         }
     }
 }
@@ -57,15 +62,29 @@ impl MemTxnManager {
             self.update_watermark();
             return Ok(());
         }
+
+        self.periodic_garbage_collect()?;
+
         Err(StorageError::TransactionError(format!(
             "Transaction {:?} not found",
             txn.txn_id(),
         )))
     }
 
+    /// Periodlically garbage collect expired transactions.
+    fn periodic_garbage_collect(&self) -> StorageResult<()> {
+        // Through acquiring the lock, the garbage collection is single-threaded execution.
+        let mut last_gc_ts = self.last_gc_ts.lock().unwrap();
+        if self.watermark.load(Ordering::Relaxed) - *last_gc_ts > PERIODIC_GC_THRESHOLD {
+            self.garbage_collect()?;
+            *last_gc_ts = self.watermark.load(Ordering::Relaxed);
+        }
+
+        Ok(())
+    }
+
     /// Start a garbage collection of expired transactions.
-    #[allow(dead_code)]
-    pub fn garbage_collect(&self) -> StorageResult<()> {
+    fn garbage_collect(&self) -> StorageResult<()> {
         // Step1: Obtain the min read timestamp of the active transactions
         let min_read_ts = self.watermark.load(Ordering::Acquire);
         // Step2: Iterate over all transactions, and remove those whose commit timestamp is less
@@ -117,8 +136,6 @@ pub struct MemTransaction {
     pub(super) edge_reads: DashSet<EdgeId>,     // Set of edges read by this transaction
 
     // ---- Undo logs ----
-    // pub(super) vertex_undos: DashMap<VertexId, Vec<UndoEntry<Vertex>>>, // Vertex undo logs
-    // pub(super) edge_undos: DashMap<EdgeId, Vec<UndoEntry<Edge>>>,       // Edge undo logs
     pub(super) undo_buffer: RwLock<Vec<UndoEntry>>,
 }
 
