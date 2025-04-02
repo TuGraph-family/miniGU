@@ -1,7 +1,8 @@
 use clap::Parser;
 use miette::{IntoDiagnostic, Result, bail};
 use minigu::{Database, Session};
-use rustyline::DefaultEditor;
+use rustyline::{DefaultEditor, Config, CompletionType};
+use rustyline::config::Configurer;
 use rustyline::error::ReadlineError;
 
 /// Start the local interactive shell.
@@ -12,7 +13,9 @@ impl Shell {
     pub fn run(&self) -> Result<()> {
         let db = Database::open_in_memory()?;
         let session = db.session()?;
-        let editor = DefaultEditor::new().into_diagnostic()?;
+        let config = Config::builder().auto_add_history(true).build();
+        let mut editor = DefaultEditor::with_config(config).into_diagnostic()?;
+        
         ShellContext {
             session,
             editor,
@@ -69,8 +72,9 @@ impl ShellContext {
     fn print_help(&self) {
         println!(
             r"Usage hints:
-:help   Show usage hints.
-:quit   Exit the shell.
+:help       Show usage hints.
+:history    Print the command history.
+:quit       Exit the shell.
 "
         );
     }
@@ -89,6 +93,11 @@ impl ShellContext {
                 self.should_quit = true;
             }
             "help" => self.print_help(),
+            "history" => {
+                for line in self.editor.history().iter() {
+                    println!("{}", line);
+                }
+            }
             _ => bail!("unknown command: {command}"),
         }
         Ok(())
