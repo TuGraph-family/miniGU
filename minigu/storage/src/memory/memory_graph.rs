@@ -122,7 +122,7 @@ impl VersionedVertex {
                 }
                 _ => unreachable!("Unreachable delta op for a vertex"),
             };
-            txn.apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
+            MemTransaction::apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
             Ok(visible_vertex)
         }
     }
@@ -140,7 +140,7 @@ impl VersionedVertex {
                     is_visible = false;
                 }
             };
-            txn.apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
+            MemTransaction::apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
             is_visible
         }
     }
@@ -201,7 +201,7 @@ impl VersionedEdge {
                 }
                 _ => unreachable!("Unreachable delta op for an edge"),
             };
-            txn.apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
+            MemTransaction::apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
             Ok(current_edge)
         }
     }
@@ -234,18 +234,16 @@ impl VersionedEdge {
             } else {
                 let undo_ptr = self.chain.undo_ptr.read().unwrap().clone();
                 let mut is_visible = !current.data.is_tombstone();
-                let apply_deltas = |undo_entry: &UndoEntry| {
-                    match undo_entry.delta() {
-                        DeltaOp::CreateEdge(_) => {
-                            is_visible = true;
-                        }
-                        DeltaOp::DelEdge(_) => {
-                            is_visible = false;
-                        }
-                        _ => {},
+                let apply_deltas = |undo_entry: &UndoEntry| match undo_entry.delta() {
+                    DeltaOp::CreateEdge(_) => {
+                        is_visible = true;
                     }
+                    DeltaOp::DelEdge(_) => {
+                        is_visible = false;
+                    }
+                    _ => {}
                 };
-                txn.apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
+                MemTransaction::apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
                 is_visible
             }
         } else {
@@ -366,7 +364,7 @@ impl Graph for MemoryGraph {
                 }
                 _ => unreachable!("Unreachable delta op for a vertex"),
             };
-            txn.apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
+            MemTransaction::apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
         }
 
         // Step 3: Record the vertex read set for conflict detection.
@@ -406,8 +404,7 @@ impl Graph for MemoryGraph {
                 }
                 _ => unreachable!("Unreachable delta op for an edge"),
             };
-            txn.apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
-
+            MemTransaction::apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
         }
 
         // Step 3: Record the edge read set for conflict detection.
@@ -518,7 +515,7 @@ impl MutGraph for MemoryGraph {
             .entry(dst_id)
             .or_insert_with(AdjacencyContainer::new)
             .inner
-            .insert(EdgeUid::new(label_id, dst_id, Direction::In, src_id, eid));
+            .insert(EdgeUid::new(label_id, src_id, Direction::In, dst_id, eid));
 
         Ok(eid)
     }
@@ -1074,7 +1071,15 @@ mod tests {
             assert!(adj.inner.len() == 3);
             let edge = graph.edges.get(&eid).unwrap();
             assert!(!edge.value().chain.current.read().unwrap().data.is_tombstone);
-            assert!(edge.value().chain.undo_ptr.read().unwrap().upgrade().is_some());
+            assert!(
+                edge.value()
+                    .chain
+                    .undo_ptr
+                    .read()
+                    .unwrap()
+                    .upgrade()
+                    .is_some()
+            );
         }
 
         // Delete the edge
@@ -1097,7 +1102,15 @@ mod tests {
             // edge is marked as tombstone
             let edge = graph.edges.get(&eid).unwrap();
             assert!(edge.value().chain.current.read().unwrap().data.is_tombstone);
-            assert!(edge.value().chain.undo_ptr.read().unwrap().upgrade().is_some());
+            assert!(
+                edge.value()
+                    .chain
+                    .undo_ptr
+                    .read()
+                    .unwrap()
+                    .upgrade()
+                    .is_some()
+            );
             // However, iter will check the visibility of the adjacency
             let iter = txn2.iter_adjacency(vid1);
             let mut count = 0;
@@ -1107,7 +1120,7 @@ mod tests {
             assert!(count == 2);
         }
 
-        graph.txn_manager.garbage_collect().unwrap();
+        graph.txn_manager.garbage_collect(&txn2.graph()).unwrap();
         // Check after GC
         {
             let adj = graph.adjacency_list.get(&vid1).unwrap();

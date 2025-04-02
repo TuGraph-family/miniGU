@@ -1,5 +1,5 @@
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Weak;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use common::datatype::types::{EdgeId, LabelId, VertexId};
 use common::datatype::value::PropertyValue;
@@ -118,11 +118,6 @@ impl UndoEntry {
     /// Get the next undo ptr of the undo entry.
     pub(super) fn next(&self) -> UndoPtr {
         self.next.clone()
-    }
-
-    /// Set the next undo ptr of the undo entry.
-    pub(super) fn set_next(&mut self, next: UndoPtr) {
-        self.next = next;
     }
 }
 

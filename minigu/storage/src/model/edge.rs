@@ -63,6 +63,10 @@ impl EdgeUid {
     pub fn direction(&self) -> Direction {
         self.direction
     }
+
+    pub fn reverse(&mut self) {
+        self.direction = self.direction.reverse();
+    }
 }
 
 impl Ord for EdgeUid {

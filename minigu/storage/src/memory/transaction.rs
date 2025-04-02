@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock, RwLock};
 
@@ -7,7 +8,6 @@ use dashmap::DashSet;
 
 use super::memory_graph::MemoryGraph;
 use crate::error::{StorageError, StorageResult};
-use crate::model::edge::EdgeUid;
 use crate::storage::StorageTransaction;
 use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
 
@@ -72,7 +72,7 @@ impl MemTxnManager {
             return Ok(());
         }
 
-        self.periodic_garbage_collect()?;
+        self.periodic_garbage_collect(txn.graph())?;
 
         Err(StorageError::TransactionError(format!(
             "Transaction {:?} not found",
@@ -81,11 +81,11 @@ impl MemTxnManager {
     }
 
     /// Periodlically garbage collect expired transactions.
-    fn periodic_garbage_collect(&self) -> StorageResult<()> {
+    fn periodic_garbage_collect(&self, graph: &MemoryGraph) -> StorageResult<()> {
         // Through acquiring the lock, the garbage collection is single-threaded execution.
         let mut last_gc_ts = self.last_gc_ts.lock().unwrap();
         if self.watermark.load(Ordering::Relaxed) - *last_gc_ts > PERIODIC_GC_THRESHOLD {
-            self.garbage_collect()?;
+            self.garbage_collect(graph)?;
             *last_gc_ts = self.watermark.load(Ordering::Relaxed);
         }
 
@@ -108,14 +108,13 @@ impl MemTxnManager {
     ///
     /// 4. Adjacency Lists
     ///    - Updates adjacency lists for deleted vertices and edges
-    pub fn garbage_collect(&self) -> StorageResult<()> {
+    pub fn garbage_collect(&self, graph: &MemoryGraph) -> StorageResult<()> {
         // Step1: Obtain the min read timestamp of the active transactions
         let min_read_ts = self.watermark.load(Ordering::Acquire);
 
         // Clean up expired transactions
         let mut expired_txns = Vec::new();
-        let mut expired_vertices = Vec::new();
-        let mut expired_edges = Vec::new();
+        let mut expired_edges = HashMap::new();
         for entry in self.committed_txns.iter() {
             // If the commit timestamp of the transaction is greater than the min read timestamp,
             // it means the transaction is still active, and the subsequent transactions are also
@@ -124,14 +123,13 @@ impl MemTxnManager {
                 break;
             }
 
-            // Reclaim the deleted entities
-            for undo_entry in entry.value().undo_buffer.read().unwrap().iter() {
-                match undo_entry.delta() {
+            for entry in entry.value().undo_buffer.read().unwrap().iter() {
+                match entry.delta() {
                     DeltaOp::CreateEdge(edge) => {
-                        expired_edges.push(edge.eid());
+                        expired_edges.insert(edge.eid(), edge.euid());
                     }
-                    DeltaOp::CreateVertex(vertex) => {
-                        expired_vertices.push(vertex.vid());
+                    DeltaOp::DelEdge(eid) => {
+                        expired_edges.remove(eid);
                     }
                     _ => {}
                 }
@@ -142,6 +140,42 @@ impl MemTxnManager {
         }
         for txn in expired_txns {
             self.committed_txns.remove(txn.commit_ts.get().unwrap());
+        }
+
+        for (_, euid) in expired_edges {
+            if let Some(entry) = graph.vertices().get(&euid.src_id()) {
+                let current: std::sync::RwLockReadGuard<
+                    '_,
+                    super::memory_graph::CurrentVersion<crate::model::vertex::Vertex>,
+                > = entry.chain.current.read().unwrap();
+                let undo_ptr = entry.chain.undo_ptr.read().unwrap().clone();
+                let mut is_visible = current.data.is_tombstone();
+                let apply_deltas = |undo_entry: &UndoEntry| {
+                    if let DeltaOp::DelVertex(_) = undo_entry.delta() {
+                        is_visible = false;
+                    }
+                };
+                MemTransaction::apply_deltas_for_read(
+                    undo_ptr,
+                    apply_deltas,
+                    Timestamp(min_read_ts),
+                );
+                if is_visible {
+                    continue;
+                }
+            }
+            graph.adjacency_list.entry(euid.src_id()).and_modify(|l| {
+                println!("{:?}", euid);
+                l.inner.remove(&euid);
+            });
+            let mut r_euid = euid.clone();
+            r_euid.reverse();
+            graph.adjacency_list.entry(r_euid.dst_id()).and_modify(|l| {
+                println!("{:?}", euid);
+                println!("{:?}", r_euid);
+                l.inner.remove(&r_euid);
+            });
+            graph.edges().remove(&r_euid.eid());
         }
 
         Ok(())
@@ -268,16 +302,14 @@ impl MemTransaction {
     /// Reconstructs a specific version of a Vertex or Edge
     /// based on the undo chain and a target timestamp
     pub(super) fn apply_deltas_for_read<T: FnMut(&UndoEntry)>(
-        &self,
         undo_ptr: UndoPtr,
         mut callback: T,
         txn_start_ts: Timestamp,
     ) {
-        let mut undo_ptr = undo_ptr; 
+        let mut undo_ptr = undo_ptr;
 
         // Get the undo buffer of the transaction that modified the vertex/edge
         while let Some(undo_entry) = undo_ptr.upgrade() {
-
             // Apply the delta to the vertex/edge
             callback(&undo_entry);
 
