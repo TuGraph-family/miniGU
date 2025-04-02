@@ -1,5 +1,5 @@
 use std::sync::atomic::Ordering;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, RwLock, Weak};
 
 use common::datatype::types::{EdgeId, VertexId};
 use common::datatype::value::PropertyValue;
@@ -37,9 +37,9 @@ macro_rules! update_properties {
 
         let undo_ptr = $entry.chain.undo_ptr.read().unwrap().clone();
         let mut undo_buffer = $txn.undo_buffer.write().unwrap();
-        undo_buffer.push(UndoEntry::new(delta, current.commit_ts, undo_ptr));
-        *$entry.chain.undo_ptr.write().unwrap() =
-            Some(UndoPtr::new($txn.txn_id(), undo_buffer.len() - 1));
+        let undo_entry = Arc::new(UndoEntry::new(delta, current.commit_ts, undo_ptr));
+        undo_buffer.push(undo_entry.clone());
+        *$entry.chain.undo_ptr.write().unwrap() = Arc::downgrade(&undo_entry);
     }};
 }
 
@@ -59,7 +59,7 @@ pub(super) struct VersionChain<D: Clone> {
     pub(super) current: RwLock<CurrentVersion<D>>,
     /// The version history (undo log), points to the first undo entry in the undo buffer
     /// Always records the latest commited version
-    pub(super) undo_ptr: RwLock<Option<UndoPtr>>,
+    pub(super) undo_ptr: RwLock<UndoPtr>,
 }
 
 #[derive(Debug)]
@@ -78,7 +78,7 @@ impl VersionedVertex {
                     data: initial,
                     commit_ts: Timestamp(0), // Initial commit timestamp set to 0
                 }),
-                undo_ptr: RwLock::new(None),
+                undo_ptr: RwLock::new(Weak::new()),
             }),
         }
     }
@@ -95,7 +95,7 @@ impl VersionedVertex {
                     data: initial,
                     commit_ts: txn_id, // Initial commit timestamp set to 0
                 }),
-                undo_ptr: RwLock::new(None),
+                undo_ptr: RwLock::new(Weak::new()),
             }),
         }
     }
@@ -105,30 +105,24 @@ impl VersionedVertex {
         let mut visible_vertex = current.data.clone();
         // If the vertex is modified by the same transaction, or the transaction is before the
         // vertex was modified, return the vertex
-        if current.commit_ts == txn.txn_id() || current.commit_ts < txn.start_ts() {
+        let commit_ts = current.commit_ts;
+        if commit_ts == txn.txn_id() || commit_ts <= txn.start_ts() {
             Ok(visible_vertex)
         } else {
             // Otherwise, apply the deltas to the vertex
-            let undo_ptr = *self.chain.undo_ptr.read().unwrap();
-            if let Some(undo_ptr) = undo_ptr.as_ref() {
-                // Closure to apply the deltas to the vertex
-                let apply_deltas = |undo_entry: &UndoEntry| match undo_entry.delta() {
-                    DeltaOp::CreateVertex(original) => visible_vertex = original.clone(),
-                    DeltaOp::SetVertexProps(_, SetPropsOp { indices, props }) => {
-                        visible_vertex.set_props(indices, props.clone());
-                    }
-                    DeltaOp::DelVertex(_) => {
-                        visible_vertex.is_tombstone = true;
-                    }
-                    _ => unreachable!("Unreachable delta op for a vertex"),
-                };
-                txn.apply_deltas_for_read(*undo_ptr, apply_deltas, txn.start_ts())?
-            } else {
-                return Err(StorageError::VersionNotFound(format!(
-                    "{:?}",
-                    current.commit_ts
-                )));
-            }
+            let undo_ptr = self.chain.undo_ptr.read().unwrap().clone();
+            // Closure to apply the deltas to the vertex
+            let apply_deltas = |undo_entry: &UndoEntry| match undo_entry.delta() {
+                DeltaOp::CreateVertex(original) => visible_vertex = original.clone(),
+                DeltaOp::SetVertexProps(_, SetPropsOp { indices, props }) => {
+                    visible_vertex.set_props(indices, props.clone());
+                }
+                DeltaOp::DelVertex(_) => {
+                    visible_vertex.is_tombstone = true;
+                }
+                _ => unreachable!("Unreachable delta op for a vertex"),
+            };
+            txn.apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
             Ok(visible_vertex)
         }
     }
@@ -136,24 +130,18 @@ impl VersionedVertex {
     pub(super) fn is_visible(&self, txn: &MemTransaction) -> bool {
         // Check if the vertex is visible based on the transaction's start timestamp
         let current = self.chain.current.read().unwrap();
-        if current.data.is_tombstone() {
-            false
-        } else if current.commit_ts == txn.txn_id() || current.commit_ts < txn.start_ts() {
-            true
+        if current.commit_ts == txn.txn_id() || current.commit_ts <= txn.start_ts() {
+            !current.data.is_tombstone()
         } else {
-            let undo_ptr = self.chain.undo_ptr.read().unwrap();
-            if let Some(undo_ptr) = undo_ptr.as_ref() {
-                let mut is_visible = true;
-                let apply_deltas = |undo_entry: &UndoEntry| {
-                    if let DeltaOp::DelVertex(_) = undo_entry.delta() {
-                        is_visible = false;
-                    }
-                };
-                let _ = txn.apply_deltas_for_read(*undo_ptr, apply_deltas, txn.start_ts());
-                is_visible
-            } else {
-                false
-            }
+            let undo_ptr = self.chain.undo_ptr.read().unwrap().clone();
+            let mut is_visible = !current.data.is_tombstone();
+            let apply_deltas = |undo_entry: &UndoEntry| {
+                if let DeltaOp::DelVertex(_) = undo_entry.delta() {
+                    is_visible = false;
+                }
+            };
+            txn.apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
+            is_visible
         }
     }
 }
@@ -174,7 +162,7 @@ impl VersionedEdge {
                     data: initial,
                     commit_ts: Timestamp(0), // Initial commit timestamp set to 0
                 }),
-                undo_ptr: RwLock::new(None),
+                undo_ptr: RwLock::new(Weak::new()),
             }),
         }
     }
@@ -191,7 +179,7 @@ impl VersionedEdge {
                     data: initial,
                     commit_ts: txn_id,
                 }),
-                undo_ptr: RwLock::new(None),
+                undo_ptr: RwLock::new(Weak::new()),
             }),
         }
     }
@@ -199,28 +187,21 @@ impl VersionedEdge {
     pub fn get_visible(&self, txn: &MemTransaction) -> StorageResult<Edge> {
         let current = self.chain.current.read().unwrap();
         let mut current_edge = current.data.clone();
-        if current.commit_ts == txn.txn_id() || current.commit_ts < txn.start_ts() {
+        if current.commit_ts == txn.txn_id() || current.commit_ts <= txn.start_ts() {
             Ok(current_edge)
         } else {
-            let undo_ptr = *self.chain.undo_ptr.read().unwrap();
-            if let Some(undo_ptr) = undo_ptr {
-                let apply_deltas = |undo_entry: &UndoEntry| match undo_entry.delta() {
-                    DeltaOp::CreateEdge(original) => current_edge = original.clone(),
-                    DeltaOp::SetEdgeProps(_, SetPropsOp { indices, props }) => {
-                        current_edge.set_props(indices, props.clone());
-                    }
-                    DeltaOp::DelEdge(_) => {
-                        current_edge.is_tombstone = true;
-                    }
-                    _ => unreachable!("Unreachable delta op for an edge"),
-                };
-                txn.apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts())?;
-            } else {
-                return Err(StorageError::VersionNotFound(format!(
-                    "{:?}",
-                    current.commit_ts
-                )));
-            }
+            let undo_ptr = self.chain.undo_ptr.read().unwrap().clone();
+            let apply_deltas = |undo_entry: &UndoEntry| match undo_entry.delta() {
+                DeltaOp::CreateEdge(original) => current_edge = original.clone(),
+                DeltaOp::SetEdgeProps(_, SetPropsOp { indices, props }) => {
+                    current_edge.set_props(indices, props.clone());
+                }
+                DeltaOp::DelEdge(_) => {
+                    current_edge.is_tombstone = true;
+                }
+                _ => unreachable!("Unreachable delta op for an edge"),
+            };
+            txn.apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
             Ok(current_edge)
         }
     }
@@ -248,24 +229,24 @@ impl VersionedEdge {
         {
             // Check if the vertex is visible based on the transaction's start timestamp
             let current = self.chain.current.read().unwrap();
-            if current.data.is_tombstone() {
-                false
-            } else if current.commit_ts == txn.txn_id() || current.commit_ts < txn.start_ts() {
-                true
+            if current.commit_ts == txn.txn_id() || current.commit_ts <= txn.start_ts() {
+                !current.data.is_tombstone()
             } else {
-                let undo_ptr = *self.chain.undo_ptr.read().unwrap();
-                if let Some(undo_ptr) = undo_ptr {
-                    let mut is_visible = true;
-                    let apply_deltas = |undo_entry: &UndoEntry| {
-                        if let DeltaOp::DelEdge(_) = undo_entry.delta() {
+                let undo_ptr = self.chain.undo_ptr.read().unwrap().clone();
+                let mut is_visible = !current.data.is_tombstone();
+                let apply_deltas = |undo_entry: &UndoEntry| {
+                    match undo_entry.delta() {
+                        DeltaOp::CreateEdge(_) => {
+                            is_visible = true;
+                        }
+                        DeltaOp::DelEdge(_) => {
                             is_visible = false;
                         }
-                    };
-                    let _ = txn.apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
-                    is_visible
-                } else {
-                    false
-                }
+                        _ => {},
+                    }
+                };
+                txn.apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
+                is_visible
             }
         } else {
             false
@@ -373,7 +354,8 @@ impl Graph for MemoryGraph {
             )));
         }
         let mut visible_vertex = current_version.data.clone();
-        if let Some(undo_ptr) = *versioned_vertex.chain.undo_ptr.read().unwrap() {
+        if commit_ts != txn.txn_id() && commit_ts > txn.start_ts() {
+            let undo_ptr = versioned_vertex.chain.undo_ptr.read().unwrap().clone();
             let apply_deltas = |undo_entry: &UndoEntry| match undo_entry.delta() {
                 DeltaOp::CreateVertex(original) => visible_vertex = original.clone(),
                 DeltaOp::SetVertexProps(_, SetPropsOp { indices, props }) => {
@@ -384,12 +366,7 @@ impl Graph for MemoryGraph {
                 }
                 _ => unreachable!("Unreachable delta op for a vertex"),
             };
-            txn.apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts())?;
-        } else if commit_ts > txn.start_ts() {
-            return Err(StorageError::VersionNotFound(format!(
-                "Can't find a suitable version for this vertex with version {:?}",
-                commit_ts
-            )));
+            txn.apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
         }
 
         // Step 3: Record the vertex read set for conflict detection.
@@ -417,7 +394,8 @@ impl Graph for MemoryGraph {
         let current_version = versioned_edge.chain.current.read().unwrap();
         let commit_ts = current_version.commit_ts;
         let mut visible_edge = current_version.data.clone();
-        if let Some(undo_ptr) = *versioned_edge.chain.undo_ptr.read().unwrap() {
+        if commit_ts != txn.txn_id() && txn.start_ts() < commit_ts {
+            let undo_ptr = versioned_edge.chain.undo_ptr.read().unwrap().clone();
             let apply_deltas = |undo_entry: &UndoEntry| match undo_entry.delta() {
                 DeltaOp::CreateEdge(original) => visible_edge = original.clone(),
                 DeltaOp::SetEdgeProps(_, SetPropsOp { indices, props }) => {
@@ -428,12 +406,8 @@ impl Graph for MemoryGraph {
                 }
                 _ => unreachable!("Unreachable delta op for an edge"),
             };
-            txn.apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts())?;
-        } else if commit_ts > txn.start_ts() {
-            return Err(StorageError::VersionNotFound(format!(
-                "Can't find a suitable version for this edge with version {:?}",
-                commit_ts
-            )));
+            txn.apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
+
         }
 
         // Step 3: Record the edge read set for conflict detection.
@@ -488,11 +462,16 @@ impl MutGraph for MemoryGraph {
 
         // Record the vertex creation in the transaction
         let delta = DeltaOp::DelVertex(vid);
-        let next_ptr = *entry.chain.undo_ptr.read().unwrap();
+        let next_ptr = entry.chain.undo_ptr.read().unwrap().clone();
         let mut undo_buffer = txn.undo_buffer.write().unwrap();
-        undo_buffer.push(UndoEntry::new(delta, current.commit_ts, next_ptr));
-        *entry.chain.undo_ptr.write().unwrap() =
-            Some(UndoPtr::new(txn.txn_id(), undo_buffer.len() - 1));
+        let undo_entry = if current.commit_ts == txn.txn_id() {
+            Arc::new(UndoEntry::new(delta, Timestamp(0), next_ptr))
+        } else {
+            Arc::new(UndoEntry::new(delta, current.commit_ts, next_ptr))
+        };
+        undo_buffer.push(undo_entry.clone());
+        *entry.chain.undo_ptr.write().unwrap() = Arc::downgrade(&undo_entry);
+
         Ok(vid)
     }
 
@@ -522,14 +501,12 @@ impl MutGraph for MemoryGraph {
 
         // Record the edge creation in the transaction
         let delta_edge = DeltaOp::DelEdge(eid);
-        let undo_ptr = *entry.chain.undo_ptr.read().unwrap();
-        {
-            // Update the undo_entry logical pointer
-            let mut undo_buffer = txn.undo_buffer.write().unwrap();
-            undo_buffer.push(UndoEntry::new(delta_edge, current.commit_ts, undo_ptr));
-            *entry.chain.undo_ptr.write().unwrap() =
-                Some(UndoPtr::new(txn.txn_id(), undo_buffer.len() - 1));
-        }
+        let undo_ptr = entry.chain.undo_ptr.read().unwrap().clone();
+        // Update the undo_entry logical pointer
+        let mut undo_buffer = txn.undo_buffer.write().unwrap();
+        let undo_entry = Arc::new(UndoEntry::new(delta_edge, current.commit_ts, undo_ptr));
+        undo_buffer.push(undo_entry.clone());
+        *entry.chain.undo_ptr.write().unwrap() = Arc::downgrade(&undo_entry);
 
         // Record the adjacency list updates in the transaction
         self.adjacency_list
@@ -572,13 +549,11 @@ impl MutGraph for MemoryGraph {
 
         // Record the vertex deletion in the transaction
         let delta = DeltaOp::CreateVertex(current.data.clone());
-        let undo_ptr = *entry.chain.undo_ptr.read().unwrap();
-        {
-            let mut undo_buffer = txn.undo_buffer.write().unwrap();
-            undo_buffer.push(UndoEntry::new(delta, current.commit_ts, undo_ptr));
-            *entry.chain.undo_ptr.write().unwrap() =
-                Some(UndoPtr::new(txn.txn_id(), undo_buffer.len() - 1));
-        }
+        let undo_ptr = entry.chain.undo_ptr.read().unwrap().clone();
+        let mut undo_buffer = txn.undo_buffer.write().unwrap();
+        let undo_entry = Arc::new(UndoEntry::new(delta, current.commit_ts, undo_ptr));
+        undo_buffer.push(undo_entry.clone());
+        *entry.chain.undo_ptr.write().unwrap() = Arc::downgrade(&undo_entry);
 
         Ok(())
     }
@@ -600,11 +575,11 @@ impl MutGraph for MemoryGraph {
 
         // Record the edge deletion in the transaction
         let delta = DeltaOp::CreateEdge(current.data.clone());
-        let undo_ptr = *entry.chain.undo_ptr.read().unwrap();
+        let undo_ptr = entry.chain.undo_ptr.read().unwrap().clone();
         let mut undo_buffer = txn.undo_buffer.write().unwrap();
-        undo_buffer.push(UndoEntry::new(delta, current.commit_ts, undo_ptr));
-        *entry.chain.undo_ptr.write().unwrap() =
-            Some(UndoPtr::new(txn.txn_id(), undo_buffer.len() - 1));
+        let undo_entry = Arc::new(UndoEntry::new(delta, current.commit_ts, undo_ptr));
+        undo_buffer.push(undo_entry.clone());
+        *entry.chain.undo_ptr.write().unwrap() = Arc::downgrade(&undo_entry);
 
         Ok(())
     }
@@ -898,7 +873,7 @@ mod tests {
             for _ in iter {
                 count += 1;
             }
-            assert!(count == 4);
+            assert_eq!(count, 4);
         }
 
         let _ = txn3.abort();
@@ -1099,7 +1074,7 @@ mod tests {
             assert!(adj.inner.len() == 3);
             let edge = graph.edges.get(&eid).unwrap();
             assert!(!edge.value().chain.current.read().unwrap().data.is_tombstone);
-            assert!(edge.value().chain.undo_ptr.read().unwrap().is_some());
+            assert!(edge.value().chain.undo_ptr.read().unwrap().upgrade().is_some());
         }
 
         // Delete the edge
@@ -1122,7 +1097,7 @@ mod tests {
             // edge is marked as tombstone
             let edge = graph.edges.get(&eid).unwrap();
             assert!(edge.value().chain.current.read().unwrap().data.is_tombstone);
-            assert!(edge.value().chain.undo_ptr.read().unwrap().is_some());
+            assert!(edge.value().chain.undo_ptr.read().unwrap().upgrade().is_some());
             // However, iter will check the visibility of the adjacency
             let iter = txn2.iter_adjacency(vid1);
             let mut count = 0;
@@ -1132,14 +1107,14 @@ mod tests {
             assert!(count == 2);
         }
 
-        let _ = graph.txn_manager.garbage_collect(&graph);
+        graph.txn_manager.garbage_collect().unwrap();
         // Check after GC
         {
             let adj = graph.adjacency_list.get(&vid1).unwrap();
-            assert!(adj.inner.len() == 2);
+            assert_eq!(adj.inner.len(), 2);
             // reverse edge
             let adj2 = graph.adjacency_list.get(&vid2).unwrap();
-            assert!(adj2.inner.len() == 1);
+            assert_eq!(adj2.inner.len(), 1);
             // GC will remove the edge
             assert!(graph.edges.get(&eid).is_none());
         }

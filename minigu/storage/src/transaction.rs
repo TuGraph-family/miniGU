@@ -1,4 +1,5 @@
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Weak;
 
 use common::datatype::types::{EdgeId, LabelId, VertexId};
 use common::datatype::value::PropertyValue;
@@ -52,34 +53,36 @@ impl Timestamp {
     }
 }
 
-/// Represents a pointer to an undo entry in the undo buffer.
-#[derive(Debug, Clone, Copy)]
-pub struct UndoPtr {
-    /// The transaction id of the undo ptr.
-    txn_id: Timestamp,
-    /// The entry offset of the undo ptr, points to the undo entry in the undo buffer.
-    entry_offset: usize,
-}
+pub type UndoPtr = Weak<UndoEntry>;
 
-impl UndoPtr {
-    /// Create a UndoPtr
-    pub fn new(txn_id: Timestamp, entry_offset: usize) -> Self {
-        Self {
-            txn_id,
-            entry_offset,
-        }
-    }
+// /// Represents a pointer to an undo entry in the undo buffer.
+// #[derive(Debug, Clone, Copy)]
+// pub struct UndoPtr {
+//     /// The transaction id of the undo ptr.
+//     txn_id: Timestamp,
+//     /// The entry offset of the undo ptr, points to the undo entry in the undo buffer.
+//     entry_offset: usize,
+// }
 
-    /// Get the transaction id of the undo ptr.
-    pub fn txn_id(&self) -> Timestamp {
-        self.txn_id
-    }
+// impl UndoPtr {
+//     /// Create a UndoPtr
+//     pub fn new(txn_id: Timestamp, entry_offset: usize) -> Self {
+//         Self {
+//             txn_id,
+//             entry_offset,
+//         }
+//     }
 
-    /// Get the entry offset of the undo ptr.
-    pub fn entry_offset(&self) -> usize {
-        self.entry_offset
-    }
-}
+//     /// Get the transaction id of the undo ptr.
+//     pub fn txn_id(&self) -> Timestamp {
+//         self.txn_id
+//     }
+
+//     /// Get the entry offset of the undo ptr.
+//     pub fn entry_offset(&self) -> usize {
+//         self.entry_offset
+//     }
+// }
 
 #[derive(Debug, Clone)]
 /// Represents an undo log entry for multi-version concurrency control.
@@ -89,12 +92,12 @@ pub struct UndoEntry {
     /// The timestamp when this version is committed.
     timestamp: Timestamp,
     /// The next undo entry in the undo buffer.
-    next: Option<UndoPtr>,
+    next: UndoPtr,
 }
 
 impl UndoEntry {
     /// Create a UndoEntry
-    pub(super) fn new(delta: DeltaOp, timestamp: Timestamp, next: Option<UndoPtr>) -> Self {
+    pub(super) fn new(delta: DeltaOp, timestamp: Timestamp, next: UndoPtr) -> Self {
         Self {
             delta,
             timestamp,
@@ -113,12 +116,12 @@ impl UndoEntry {
     }
 
     /// Get the next undo ptr of the undo entry.
-    pub(super) fn next(&self) -> Option<UndoPtr> {
-        self.next
+    pub(super) fn next(&self) -> UndoPtr {
+        self.next.clone()
     }
 
     /// Set the next undo ptr of the undo entry.
-    pub(super) fn set_next(&mut self, next: Option<UndoPtr>) {
+    pub(super) fn set_next(&mut self, next: UndoPtr) {
         self.next = next;
     }
 }
@@ -137,13 +140,8 @@ pub enum DeltaOp {
     CreateEdge(Edge),
     SetVertexProps(VertexId, SetPropsOp),
     SetEdgeProps(EdgeId, SetPropsOp),
-    /// Used only for Vertex
     AddLabel(LabelId),
     RemoveLabel(LabelId),
-    // AddInEdge(Edge),
-    // AddOutEdge(Edge),
-    // RemoveInEdge(Adjacency),
-    // RemoveOutEdge(Adjacency),
 }
 
 pub enum IsolationLevel {
