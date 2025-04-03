@@ -1120,7 +1120,7 @@ mod tests {
             assert!(count == 2);
         }
 
-        graph.txn_manager.garbage_collect(&txn2.graph()).unwrap();
+        graph.txn_manager.garbage_collect(txn2.graph()).unwrap();
         // Check after GC
         {
             let adj = graph.adjacency_list.get(&vid1).unwrap();
