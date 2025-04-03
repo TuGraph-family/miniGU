@@ -58,7 +58,7 @@ pub(super) struct VersionChain<D: Clone> {
     /// The latest version in memory
     pub(super) current: RwLock<CurrentVersion<D>>,
     /// The version history (undo log), points to the first undo entry in the undo buffer
-    /// Always records the latest commited version
+    /// Always records the latest committed version
     pub(super) undo_ptr: RwLock<UndoPtr>,
 }
 
@@ -1172,7 +1172,7 @@ mod tests {
                 count += 1;
             }
             assert!(count == 3);
-            // Check visble edges
+            // Check visible edges
             let iter = txn2.iter_adjacency(vid);
             let mut count = 0;
             for _ in iter {
