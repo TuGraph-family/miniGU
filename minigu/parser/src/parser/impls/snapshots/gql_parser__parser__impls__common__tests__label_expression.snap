@@ -1,0 +1,28 @@
+---
+source: minigu/parser/src/parser/impls/common.rs
+expression: parsed
+---
+- Disjunction:
+    - - Negation:
+          - Label: a
+          - start: 1
+            end: 2
+      - start: 0
+        end: 2
+    - - Conjunction:
+          - - Label: b
+            - start: 5
+              end: 6
+          - - Disjunction:
+                - - Label: c
+                  - start: 10
+                    end: 11
+                - - Wildcard
+                  - start: 14
+                    end: 15
+            - start: 9
+              end: 16
+      - start: 5
+        end: 16
+- start: 0
+  end: 16

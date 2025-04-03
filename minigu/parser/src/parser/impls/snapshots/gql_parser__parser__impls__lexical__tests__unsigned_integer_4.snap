@@ -1,0 +1,8 @@
+---
+source: minigu/parser/src/parser/impls/lexical.rs
+expression: parsed
+---
+- kind: Binary
+  integer: 0b101
+- start: 0
+  end: 5

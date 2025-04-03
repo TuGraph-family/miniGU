@@ -1,0 +1,6 @@
+-- simple read 1
+MATCH (n:Account{id:12})
+RETURN
+    n.createTime as createTime,
+    n.isBlocked as isBlocked,
+    n.type as type

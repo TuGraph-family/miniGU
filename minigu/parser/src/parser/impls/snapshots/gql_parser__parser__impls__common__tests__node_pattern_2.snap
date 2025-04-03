@@ -1,0 +1,10 @@
+---
+source: minigu/parser/src/parser/impls/common.rs
+expression: parsed
+---
+- Node:
+    variable: ~
+    label: ~
+    predicate: ~
+- start: 0
+  end: 2

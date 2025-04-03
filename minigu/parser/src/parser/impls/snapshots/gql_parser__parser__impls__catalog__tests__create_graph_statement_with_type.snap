@@ -1,0 +1,110 @@
+---
+source: minigu/parser/src/parser/impls/catalog.rs
+expression: parsed
+---
+- path:
+    - schema: ~
+      objects:
+        - - myGraph
+          - start: 27
+            end: 34
+    - start: 27
+      end: 34
+  kind:
+    - CreateIfNotExists
+    - start: 0
+      end: 26
+  graph_type:
+    - Nested:
+        - - Node:
+              name: ~
+              alias:
+                - a
+                - start: 55
+                  end: 56
+              filler:
+                - key: ~
+                  label_set:
+                    - - - Person
+                        - start: 57
+                          end: 63
+                    - start: 57
+                      end: 63
+                  property_types:
+                    - - name:
+                          - id
+                          - start: 65
+                            end: 67
+                        value_type:
+                          - SignedNumeric:
+                              kind:
+                                - Int: ~
+                                - start: 68
+                                  end: 71
+                              not_null: false
+                          - start: 68
+                            end: 71
+                      - start: 65
+                        end: 71
+                    - - name:
+                          - name
+                          - start: 73
+                            end: 77
+                        value_type:
+                          - String:
+                              min_length: ~
+                              max_length: ~
+                              not_null: false
+                          - start: 78
+                            end: 84
+                      - start: 73
+                        end: 84
+                - start: 56
+                  end: 85
+          - start: 54
+            end: 86
+        - - Edge:
+              Pattern:
+                name: ~
+                direction: Undirected
+                left:
+                  - Alias: a
+                  - start: 104
+                    end: 107
+                filler:
+                  - key: ~
+                    label_set:
+                      - - - knows
+                          - start: 111
+                            end: 116
+                      - start: 111
+                        end: 116
+                    property_types:
+                      - - name:
+                            - since
+                            - start: 118
+                              end: 123
+                          value_type:
+                            - SignedNumeric:
+                                kind:
+                                  - Int: ~
+                                  - start: 124
+                                    end: 127
+                                not_null: false
+                            - start: 124
+                              end: 127
+                        - start: 118
+                          end: 127
+                  - start: 108
+                    end: 130
+                right:
+                  - Alias: a
+                  - start: 131
+                    end: 134
+          - start: 104
+            end: 134
+    - start: 35
+      end: 148
+  source: ~
+- start: 0
+  end: 148

@@ -1,0 +1,13 @@
+---
+source: minigu/parser/src/parser/impls/object_ref.rs
+expression: parsed
+---
+- Absolute:
+    - - Name: d
+      - start: 1
+        end: 2
+    - - Name: s
+      - start: 3
+        end: 4
+- start: 0
+  end: 4

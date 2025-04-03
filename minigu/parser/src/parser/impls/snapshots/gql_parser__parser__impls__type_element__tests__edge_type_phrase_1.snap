@@ -1,0 +1,45 @@
+---
+source: minigu/parser/src/parser/impls/type_element.rs
+expression: parsed
+---
+- name:
+    - et
+    - start: 19
+      end: 21
+  direction: LeftToRight
+  left:
+    - a
+    - start: 57
+      end: 58
+  filler:
+    - key: ~
+      label_set:
+        - - - transfer
+            - start: 23
+              end: 31
+        - start: 23
+          end: 31
+      property_types:
+        - - name:
+              - amount
+              - start: 33
+                end: 39
+            value_type:
+              - SignedNumeric:
+                  kind:
+                    - Int: ~
+                    - start: 40
+                      end: 43
+                  not_null: false
+              - start: 40
+                end: 43
+          - start: 33
+            end: 43
+    - start: 22
+      end: 44
+  right:
+    - b
+    - start: 60
+      end: 61
+- start: 0
+  end: 62

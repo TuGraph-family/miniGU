@@ -1,0 +1,38 @@
+---
+source: minigu/parser/src/parser/impls/common.rs
+expression: parsed
+---
+- Edge:
+    kind: Right
+    filler:
+      variable:
+        - e
+        - start: 2
+          end: 3
+      label:
+        - Label: Knows
+        - start: 5
+          end: 10
+      predicate:
+        - Property:
+            - - name:
+                  - since
+                  - start: 12
+                    end: 17
+                value:
+                  - Value:
+                      Literal:
+                        Numeric:
+                          Integer:
+                            - kind: Decimal
+                              integer: "2025"
+                            - start: 19
+                              end: 23
+                  - start: 19
+                    end: 23
+              - start: 12
+                end: 23
+        - start: 11
+          end: 24
+- start: 0
+  end: 27

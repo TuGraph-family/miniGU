@@ -1,0 +1,7 @@
+---
+source: minigu/parser/src/parser/impls/type_element.rs
+expression: parsed
+---
+- "Null"
+- start: 0
+  end: 4

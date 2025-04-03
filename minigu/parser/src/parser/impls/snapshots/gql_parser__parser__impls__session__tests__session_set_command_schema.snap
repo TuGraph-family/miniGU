@@ -1,0 +1,10 @@
+---
+source: minigu/parser/src/parser/impls/session.rs
+expression: parsed
+---
+- Schema:
+    - Absolute: []
+    - start: 19
+      end: 20
+- start: 0
+  end: 20

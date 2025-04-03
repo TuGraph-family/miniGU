@@ -1,8 +1,8 @@
 use std::hint::black_box;
 
 use divan::{AllocProfiler, Bencher, black_box_drop};
-use gql_parser::ast::{BinaryOp, Expr, ExprKind, Ident};
-use gql_parser::span::Span;
+use gql_parser::ast::{BinaryOp, Expr};
+use gql_parser::span::Spanned;
 
 #[global_allocator]
 static ALLOC: AllocProfiler = AllocProfiler::system();
@@ -13,29 +13,14 @@ fn main() {
 
 fn build_expr(depth: usize) -> Expr {
     if depth == 0 {
-        return Expr {
-            kind: ExprKind::Variable(Ident {
-                name: "a".into(),
-                span: Span::default(),
-            }),
-            span: Span::default(),
-        };
+        return Expr::Variable("a".into());
     }
     let left = build_expr(depth - 1);
-    let right = Expr {
-        kind: ExprKind::Variable(Ident {
-            name: "a".into(),
-            span: Span::default(),
-        }),
-        span: Span::default(),
-    };
-    Expr {
-        kind: ExprKind::Binary {
-            op: BinaryOp::Add,
-            left: Box::new(left),
-            right: Box::new(right),
-        },
-        span: Span::default(),
+    let right = Expr::Variable("a".into());
+    Expr::Binary {
+        op: Spanned(BinaryOp::Add, 0..0),
+        left: Box::new(Spanned(left, 0..0)),
+        right: Box::new(Spanned(right, 0..0)),
     }
 }
 

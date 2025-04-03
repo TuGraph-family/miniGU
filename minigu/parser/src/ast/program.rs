@@ -1,12 +1,12 @@
 //! AST definitions for *GQL-program*.
 
 use super::{EndTransaction, Procedure, SessionReset, SessionSet, StartTransaction};
-use crate::imports::Vec;
 use crate::macros::base;
+use crate::span::{OptSpanned, VecSpanned};
 
 #[apply(base)]
 pub struct Program {
-    pub activity: Option<ProgramActivity>,
+    pub activity: OptSpanned<ProgramActivity>,
     pub session_close: bool,
 }
 
@@ -18,13 +18,13 @@ pub enum ProgramActivity {
 
 #[apply(base)]
 pub struct SessionActivity {
-    pub set: Vec<SessionSet>,
-    pub reset: Vec<SessionReset>,
+    pub set: VecSpanned<SessionSet>,
+    pub reset: VecSpanned<SessionReset>,
 }
 
 #[apply(base)]
 pub struct TransactionActivity {
-    pub start: Option<StartTransaction>,
-    pub procedure: Option<Procedure>,
-    pub end: Option<EndTransaction>,
+    pub start: OptSpanned<StartTransaction>,
+    pub procedure: OptSpanned<Procedure>,
+    pub end: OptSpanned<EndTransaction>,
 }

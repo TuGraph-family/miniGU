@@ -10,7 +10,7 @@ pub(crate) enum LexerError {
     IncompleteComment,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Logos)]
+#[derive(Debug, Clone, PartialEq, Eq, Logos)]
 #[logos(error = LexerError)]
 // Whitespaces should be skipped.
 #[logos(skip r"[\p{White_Space}]+")]
@@ -622,8 +622,6 @@ pub(crate) enum TokenKind<'a> {
     Source,
     #[token("table", ignore(case))]
     Table,
-    #[token("temp", ignore(case))]
-    Temp,
     #[token("to", ignore(case))]
     To,
     #[token("trail", ignore(case))]
@@ -704,6 +702,8 @@ pub(crate) enum TokenKind<'a> {
     TildeSlash,
 
     // The followings are *GQL special characters*.
+    #[token("|+|")]
+    Alternation,
     #[token("&")]
     Ampersand,
     #[token("*")]
@@ -853,8 +853,8 @@ fn handle_quoted<'a, T>(lex: &mut LogosLexer<'a, T>) -> Result<Quoted<'a>, Lexer
 where
     T: Logos<'a, Source = str>,
 {
-    // SAFETY: `input` should be valid.
     let span = lex.span();
+    // SAFETY: `input` should be valid.
     let input = unsafe { lex.source().get_unchecked(span.start..) };
     let mut quoted_lex = Quoted::lexer(input);
     // SAFETY: `input` should have at least `span.len()` character.
@@ -873,7 +873,8 @@ fn handle_parameter<'a>(
 }
 
 impl TokenKind<'_> {
-    pub(crate) fn is_numeric(&self) -> bool {
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_unsigned_integer(&self) -> bool {
         matches!(
             self,
             Self::UnsignedDecimalInteger(_)
@@ -881,6 +882,293 @@ impl TokenKind<'_> {
                 | Self::UnsignedHexInteger(_)
                 | Self::UnsignedBinaryInteger(_)
         )
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_numeric_literal(&self) -> bool {
+        self.is_prefix_of_unsigned_integer()
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_non_reserved_word(&self) -> bool {
+        matches!(
+            self,
+            Self::Acyclic
+                | Self::Binding
+                | Self::Bindings
+                | Self::Connecting
+                | Self::Destination
+                | Self::Different
+                | Self::Directed
+                | Self::Edge
+                | Self::Edges
+                | Self::Element
+                | Self::Elements
+                | Self::First
+                | Self::Graph
+                | Self::Groups
+                | Self::Keep
+                | Self::Label
+                | Self::Labeled
+                | Self::Labels
+                | Self::Last
+                | Self::Nfc
+                | Self::Nfd
+                | Self::Nfkc
+                | Self::Nfkd
+                | Self::No
+                | Self::Node
+                | Self::Normalized
+                | Self::Only
+                | Self::Ordinality
+                | Self::Property
+                | Self::Read
+                | Self::Relationship
+                | Self::Relationships
+                | Self::Repeatable
+                | Self::Shortest
+                | Self::Simple
+                | Self::Source
+                | Self::Table
+                | Self::To
+                | Self::Trail
+                | Self::Transaction
+                | Self::Type
+                | Self::Undirected
+                | Self::Vertex
+                | Self::Walk
+                | Self::Without
+                | Self::Write
+                | Self::Zone
+        )
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_regular_identifier(&self) -> bool {
+        matches!(self, Self::RegularIdentifier(_)) || self.is_non_reserved_word()
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_general_set_function(&self) -> bool {
+        matches!(
+            self,
+            Self::Avg
+                | Self::Count
+                | Self::Max
+                | Self::Min
+                | Self::Sum
+                | Self::CollectList
+                | Self::StddevSamp
+                | Self::StddevPop
+        )
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_binary_set_function(&self) -> bool {
+        matches!(self, Self::PercentileCont | Self::PercentileDisc)
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_aggregate_function(&self) -> bool {
+        self.is_prefix_of_general_set_function() || self.is_prefix_of_binary_set_function()
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_predefined_type(&self) -> bool {
+        matches!(
+            self,
+            Self::Bool
+                | Self::Boolean
+                | Self::String
+                | Self::Char
+                | Self::Varchar
+                | Self::Bytes
+                | Self::Binary
+                | Self::Varbinary
+                | Self::Decimal
+                | Self::Dec
+                | Self::Null
+                | Self::Nothing
+        ) || self.is_prefix_of_signed_exact_numeric_type()
+            || self.is_prefix_of_unsigned_exact_numeric_type()
+            || self.is_prefix_of_temporal_type()
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_signed_exact_numeric_type(&self) -> bool {
+        matches!(
+            self,
+            Self::Int8
+                | Self::Int16
+                | Self::Int32
+                | Self::Int64
+                | Self::Int128
+                | Self::Int256
+                | Self::Smallint
+                | Self::Int
+                | Self::Bigint
+                | Self::Signed
+        ) || self.is_prefix_of_verbose_exact_numeric_type()
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_unsigned_exact_numeric_type(&self) -> bool {
+        matches!(
+            self,
+            Self::Uint8
+                | Self::Uint16
+                | Self::Uint32
+                | Self::Uint64
+                | Self::Uint128
+                | Self::Uint256
+                | Self::Usmallint
+                | Self::Uint
+                | Self::Ubigint
+                | Self::Unsigned
+        )
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_verbose_exact_numeric_type(&self) -> bool {
+        matches!(
+            self,
+            Self::Integer8
+                | Self::Integer16
+                | Self::Integer32
+                | Self::Integer64
+                | Self::Integer128
+                | Self::Integer256
+                | Self::Small
+                | Self::Integer
+                | Self::Big
+        )
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_temporal_type(&self) -> bool {
+        matches!(
+            self,
+            Self::Duration | Self::Zoned | Self::Timestamp | Self::Local | Self::Date | Self::Time
+        )
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_ambient_linear_query_statement(&self) -> bool {
+        matches!(
+            self,
+            Self::Return
+                | Self::Finish
+                | Self::LeftBrace
+                | Self::Optional
+                | Self::Call
+                | Self::Match
+                | Self::Let
+                | Self::For
+                | Self::Filter
+                | Self::Order
+                | Self::Limit
+                | Self::Offset
+                | Self::Skip
+        )
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_abbreviated_edge_pattern(&self) -> bool {
+        matches!(
+            self,
+            Self::LeftArrow
+                | Self::Tilde
+                | Self::RightArrow
+                | Self::LeftArrowTilde
+                | Self::TildeRightArrow
+                | Self::LeftMinusRight
+                | Self::Minus
+        )
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_full_edge_pattern(&self) -> bool {
+        matches!(
+            self,
+            Self::LeftArrowBracket
+                | Self::TildeLeftBracket
+                | Self::MinusLeftBracket
+                | Self::LeftArrowTildeBracket
+        )
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_edge_pattern(&self) -> bool {
+        self.is_prefix_of_abbreviated_edge_pattern() || self.is_prefix_of_full_edge_pattern()
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_simple_query_statement(&self) -> bool {
+        matches!(
+            self,
+            Self::Match
+                | Self::Optional
+                | Self::Let
+                | Self::For
+                | Self::Filter
+                | Self::Order
+                | Self::Limit
+                | Self::Offset
+        )
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_result_statement(&self) -> bool {
+        matches!(self, Self::Return | Self::Finish)
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_numeric_value_function(&self) -> bool {
+        matches!(
+            self,
+            Self::CharLength
+                | Self::CharacterLength
+                | Self::ByteLength
+                | Self::OctetLength
+                | Self::PathLength
+                | Self::Cardinality
+                | Self::Size
+                | Self::Abs
+                | Self::Mod
+                | Self::Log
+                | Self::Log10
+                | Self::Ln
+                | Self::Exp
+                | Self::Power
+                | Self::Sqrt
+                | Self::Floor
+                | Self::Ceil
+                | Self::Ceiling
+        ) || self.is_prefix_of_trigonometric_function()
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_trigonometric_function(&self) -> bool {
+        matches!(
+            self,
+            Self::Sin
+                | Self::Cos
+                | Self::Tan
+                | Self::Cot
+                | Self::Sinh
+                | Self::Cosh
+                | Self::Tanh
+                | Self::Asin
+                | Self::Acos
+                | Self::Atan
+                | Self::Degrees
+                | Self::Radians
+        )
+    }
+
+    #[inline(always)]
+    pub(crate) fn is_prefix_of_value_function(&self) -> bool {
+        self.is_prefix_of_regular_identifier() || self.is_prefix_of_numeric_value_function()
     }
 }
 

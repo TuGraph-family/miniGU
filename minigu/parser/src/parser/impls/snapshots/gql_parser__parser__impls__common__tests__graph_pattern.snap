@@ -1,0 +1,67 @@
+---
+source: minigu/parser/src/parser/impls/common.rs
+expression: parsed
+---
+- match_mode: ~
+  patterns:
+    - - variable: ~
+        prefix: ~
+        expr:
+          - Concat:
+              - - Pattern:
+                    Node:
+                      variable:
+                        - a
+                        - start: 1
+                          end: 2
+                      label:
+                        - Label: Person
+                        - start: 4
+                          end: 10
+                      predicate: ~
+                - start: 0
+                  end: 11
+              - - Quantified:
+                    path:
+                      - Pattern:
+                          Edge:
+                            kind: Right
+                            filler:
+                              variable:
+                                - e
+                                - start: 14
+                                  end: 15
+                              label:
+                                - Label: Knows
+                                - start: 16
+                                  end: 21
+                              predicate: ~
+                      - start: 12
+                        end: 24
+                    quantifier:
+                      - Plus
+                      - start: 24
+                        end: 25
+                - start: 12
+                  end: 25
+              - - Pattern:
+                    Node:
+                      variable:
+                        - b
+                        - start: 27
+                          end: 28
+                      label:
+                        - Label: Person
+                        - start: 30
+                          end: 36
+                      predicate: ~
+                - start: 26
+                  end: 37
+          - start: 0
+            end: 37
+      - start: 0
+        end: 37
+  keep: ~
+  where_clause: ~
+- start: 0
+  end: 37

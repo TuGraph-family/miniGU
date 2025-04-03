@@ -1,0 +1,11 @@
+---
+source: minigu/parser/src/parser/impls/object_expr.rs
+expression: parsed
+---
+- Object:
+    Variable:
+      - Variable: a
+      - start: 9
+        end: 10
+- start: 0
+  end: 10

@@ -1,0 +1,12 @@
+---
+source: minigu/parser/tests/parser_test.rs
+---
+Err:
+  Unexpected:
+    input: "MATCH (a { firstname: 'Robert' }), (b { lastname: 'Kowalski' })\nINSERT (a)-[:GRADUATED]->(b)\n"
+    span:
+      start: 0
+      end: 5
+    position:
+      - 1
+      - 1

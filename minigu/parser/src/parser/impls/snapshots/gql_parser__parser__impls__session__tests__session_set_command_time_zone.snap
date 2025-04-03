@@ -1,0 +1,11 @@
+---
+source: minigu/parser/src/parser/impls/session.rs
+expression: parsed
+---
+- TimeZone:
+    - kind: Char
+      literal: UTC
+    - start: 22
+      end: 27
+- start: 0
+  end: 27

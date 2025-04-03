@@ -1,0 +1,223 @@
+---
+source: minigu/parser/tests/parser_test.rs
+---
+Ok:
+  - activity:
+      - Transaction:
+          start: ~
+          procedure:
+            - at: ~
+              binding_variable_defs: []
+              statement:
+                - Query:
+                    Primary:
+                      Ambient:
+                        Parts:
+                          parts:
+                            - - Match:
+                                  Simple:
+                                    - pattern:
+                                        - match_mode: ~
+                                          patterns:
+                                            - - variable: ~
+                                                prefix: ~
+                                                expr:
+                                                  - Concat:
+                                                      - - Pattern:
+                                                            Node:
+                                                              variable:
+                                                                - person
+                                                                - start: 24
+                                                                  end: 30
+                                                              label:
+                                                                - Label: Person
+                                                                - start: 31
+                                                                  end: 37
+                                                              predicate:
+                                                                - Property:
+                                                                    - - name:
+                                                                          - id
+                                                                          - start: 39
+                                                                            end: 41
+                                                                        value:
+                                                                          - Value:
+                                                                              Literal:
+                                                                                Numeric:
+                                                                                  Integer:
+                                                                                    - kind: Decimal
+                                                                                      integer: "21990232561712"
+                                                                                    - start: 43
+                                                                                      end: 57
+                                                                          - start: 43
+                                                                            end: 57
+                                                                      - start: 39
+                                                                        end: 57
+                                                                - start: 38
+                                                                  end: 58
+                                                        - start: 23
+                                                          end: 59
+                                                      - - Pattern:
+                                                            Edge:
+                                                              kind: Any
+                                                              filler:
+                                                                variable:
+                                                                  - knows
+                                                                  - start: 61
+                                                                    end: 66
+                                                                label:
+                                                                  - Label: knows
+                                                                  - start: 67
+                                                                    end: 72
+                                                                predicate: ~
+                                                        - start: 59
+                                                          end: 74
+                                                      - - Pattern:
+                                                            Node:
+                                                              variable:
+                                                                - friend
+                                                                - start: 75
+                                                                  end: 81
+                                                              label:
+                                                                - Label: Person
+                                                                - start: 82
+                                                                  end: 88
+                                                              predicate: ~
+                                                        - start: 74
+                                                          end: 89
+                                                  - start: 23
+                                                    end: 89
+                                              - start: 23
+                                                end: 89
+                                          keep: ~
+                                          where_clause: ~
+                                        - start: 23
+                                          end: 89
+                                      yield_clause: []
+                                    - start: 23
+                                      end: 89
+                              - start: 17
+                                end: 89
+                          result:
+                            - Return:
+                                statement:
+                                  - quantifier: ~
+                                    items:
+                                      - Items:
+                                          - - value:
+                                                - Property:
+                                                    source:
+                                                      - Variable: friend
+                                                      - start: 101
+                                                        end: 107
+                                                    trailing_names:
+                                                      - - id
+                                                        - start: 108
+                                                          end: 110
+                                                - start: 101
+                                                  end: 110
+                                              alias:
+                                                - friendId
+                                                - start: 114
+                                                  end: 122
+                                            - start: 101
+                                              end: 122
+                                          - - value:
+                                                - Property:
+                                                    source:
+                                                      - Variable: friend
+                                                      - start: 128
+                                                        end: 134
+                                                    trailing_names:
+                                                      - - firstName
+                                                        - start: 135
+                                                          end: 144
+                                                - start: 128
+                                                  end: 144
+                                              alias:
+                                                - friendFirstName
+                                                - start: 148
+                                                  end: 163
+                                            - start: 128
+                                              end: 163
+                                          - - value:
+                                                - Property:
+                                                    source:
+                                                      - Variable: friend
+                                                      - start: 169
+                                                        end: 175
+                                                    trailing_names:
+                                                      - - lastName
+                                                        - start: 176
+                                                          end: 184
+                                                - start: 169
+                                                  end: 184
+                                              alias:
+                                                - friendLastName
+                                                - start: 188
+                                                  end: 202
+                                            - start: 169
+                                              end: 202
+                                          - - value:
+                                                - Property:
+                                                    source:
+                                                      - Variable: knows
+                                                      - start: 208
+                                                        end: 213
+                                                    trailing_names:
+                                                      - - creationDate
+                                                        - start: 214
+                                                          end: 226
+                                                - start: 208
+                                                  end: 226
+                                              alias:
+                                                - creationDate
+                                                - start: 230
+                                                  end: 242
+                                            - start: 208
+                                              end: 242
+                                      - start: 101
+                                        end: 242
+                                    group_by: ~
+                                  - start: 90
+                                    end: 242
+                                order_by:
+                                  - order_by:
+                                      - - key:
+                                            - Variable: creationDate
+                                            - start: 256
+                                              end: 268
+                                          ordering:
+                                            - Desc
+                                            - start: 269
+                                              end: 273
+                                          null_ordering: ~
+                                        - start: 256
+                                          end: 273
+                                      - - key:
+                                            - Variable: friendLastName
+                                            - start: 279
+                                              end: 293
+                                          ordering:
+                                            - Asc
+                                            - start: 294
+                                              end: 297
+                                          null_ordering: ~
+                                        - start: 279
+                                          end: 297
+                                    offset: ~
+                                    limit: ~
+                                  - start: 243
+                                    end: 297
+                            - start: 90
+                              end: 297
+                - start: 17
+                  end: 297
+              next_statements: []
+            - start: 17
+              end: 297
+          end: ~
+      - start: 17
+        end: 297
+    session_close: false
+  - start: 17
+    end: 297

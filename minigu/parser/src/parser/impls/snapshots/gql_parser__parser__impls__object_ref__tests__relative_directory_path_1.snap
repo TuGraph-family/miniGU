@@ -1,0 +1,10 @@
+---
+source: minigu/parser/src/parser/impls/object_ref.rs
+expression: parsed
+---
+- - Parent
+  - start: 0
+    end: 2
+- - Name: dir
+  - start: 3
+    end: 6

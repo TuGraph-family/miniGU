@@ -1,5 +1,9 @@
 [workspace]
 members = [
+  # System-level tests
+  "minigu-test",
+
+  # Internal
   "minigu/binder",
   "minigu/catalog",
   "minigu/common",
@@ -17,6 +21,11 @@ suspicious = "warn"
 complexity = "warn"
 perf = "warn"
 style = "warn"
+
+[workspace.dependencies]
+insta = { version = "1.42.2", features = ["yaml"] }
+divan = "0.1.17"
+paste = "1.0.15"
 
 [profile.dev.package]
 insta.opt-level = 3

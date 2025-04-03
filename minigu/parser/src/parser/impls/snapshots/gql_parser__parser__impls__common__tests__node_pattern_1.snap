@@ -1,0 +1,56 @@
+---
+source: minigu/parser/src/parser/impls/common.rs
+expression: parsed
+---
+- Node:
+    variable:
+      - a
+      - start: 1
+        end: 2
+    label:
+      - Conjunction:
+          - - Label: Person1
+            - start: 4
+              end: 11
+          - - Label: Person2
+            - start: 14
+              end: 21
+      - start: 4
+        end: 21
+    predicate:
+      - Property:
+          - - name:
+                - id
+                - start: 23
+                  end: 25
+              value:
+                - Value:
+                    Literal:
+                      Numeric:
+                        Integer:
+                          - kind: Decimal
+                            integer: "123"
+                          - start: 27
+                            end: 30
+                - start: 27
+                  end: 30
+            - start: 23
+              end: 30
+          - - name:
+                - name
+                - start: 32
+                  end: 36
+              value:
+                - Value:
+                    Literal:
+                      String:
+                        kind: Char
+                        literal: Alice
+                - start: 38
+                  end: 45
+            - start: 32
+              end: 45
+      - start: 22
+        end: 46
+- start: 0
+  end: 47

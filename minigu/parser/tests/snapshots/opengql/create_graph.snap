@@ -1,0 +1,426 @@
+---
+source: minigu/parser/tests/parser_test.rs
+---
+Ok:
+  - activity:
+      - Transaction:
+          start: ~
+          procedure:
+            - at: ~
+              binding_variable_defs: []
+              statement:
+                - Catalog:
+                    - - CreateGraph:
+                          path:
+                            - schema: ~
+                              objects:
+                                - - mygraph
+                                  - start: 13
+                                    end: 20
+                            - start: 13
+                              end: 20
+                          kind:
+                            - Create
+                            - start: 0
+                              end: 12
+                          graph_type:
+                            - Any
+                            - start: 21
+                              end: 24
+                          source: ~
+                      - start: 0
+                        end: 24
+                    - - CreateGraph:
+                          path:
+                            - schema: ~
+                              objects:
+                                - - mygraph
+                                  - start: 39
+                                    end: 46
+                            - start: 39
+                              end: 46
+                          kind:
+                            - Create
+                            - start: 26
+                              end: 38
+                          graph_type:
+                            - Nested:
+                                - - Node:
+                                      name: ~
+                                      alias:
+                                        - Person
+                                        - start: 52
+                                          end: 58
+                                      filler:
+                                        - key: ~
+                                          label_set:
+                                            - - - Person
+                                                - start: 60
+                                                  end: 66
+                                            - start: 60
+                                              end: 66
+                                          property_types:
+                                            - - name:
+                                                  - lastname
+                                                  - start: 68
+                                                    end: 76
+                                                value_type:
+                                                  - String:
+                                                      min_length: ~
+                                                      max_length: ~
+                                                      not_null: false
+                                                  - start: 77
+                                                    end: 83
+                                              - start: 68
+                                                end: 83
+                                            - - name:
+                                                  - firstname
+                                                  - start: 85
+                                                    end: 94
+                                                value_type:
+                                                  - String:
+                                                      min_length: ~
+                                                      max_length: ~
+                                                      not_null: false
+                                                  - start: 95
+                                                    end: 101
+                                              - start: 85
+                                                end: 101
+                                            - - name:
+                                                  - joined
+                                                  - start: 102
+                                                    end: 108
+                                                value_type:
+                                                  - Temporal:
+                                                      kind:
+                                                        - Date
+                                                        - start: 109
+                                                          end: 113
+                                                      not_null: false
+                                                  - start: 109
+                                                    end: 113
+                                              - start: 102
+                                                end: 113
+                                        - start: 59
+                                          end: 114
+                                  - start: 51
+                                    end: 115
+                            - start: 47
+                              end: 117
+                          source: ~
+                      - start: 26
+                        end: 117
+                    - - CreateGraph:
+                          path:
+                            - schema: ~
+                              objects:
+                                - - mygraph
+                                  - start: 132
+                                    end: 139
+                            - start: 132
+                              end: 139
+                          kind:
+                            - Create
+                            - start: 119
+                              end: 131
+                          graph_type:
+                            - Ref:
+                                - Ref:
+                                    schema: ~
+                                    objects:
+                                      - - mygraphtype
+                                        - start: 140
+                                          end: 151
+                                - start: 140
+                                  end: 151
+                            - start: 140
+                              end: 151
+                          source: ~
+                      - start: 119
+                        end: 151
+                    - - CreateGraph:
+                          path:
+                            - schema:
+                                - Absolute: []
+                                - start: 166
+                                  end: 167
+                              objects:
+                                - - mygraph
+                                  - start: 167
+                                    end: 174
+                            - start: 166
+                              end: 174
+                          kind:
+                            - Create
+                            - start: 153
+                              end: 165
+                          graph_type:
+                            - Like:
+                                - Ref:
+                                    Ref:
+                                      schema:
+                                        - Absolute: []
+                                        - start: 180
+                                          end: 181
+                                      objects:
+                                        - - mysrcgraph
+                                          - start: 181
+                                            end: 191
+                                - start: 180
+                                  end: 191
+                            - start: 175
+                              end: 191
+                          source: ~
+                      - start: 153
+                        end: 191
+                    - - CreateGraph:
+                          path:
+                            - schema: ~
+                              objects:
+                                - - mygraph
+                                  - start: 206
+                                    end: 213
+                            - start: 206
+                              end: 213
+                          kind:
+                            - Create
+                            - start: 193
+                              end: 205
+                          graph_type:
+                            - Any
+                            - start: 214
+                              end: 217
+                          source:
+                            - Name: mysrcgraph
+                            - start: 229
+                              end: 239
+                      - start: 193
+                        end: 239
+                    - - CreateGraph:
+                          path:
+                            - schema: ~
+                              objects:
+                                - - mygraph
+                                  - start: 254
+                                    end: 261
+                            - start: 254
+                              end: 261
+                          kind:
+                            - Create
+                            - start: 241
+                              end: 253
+                          graph_type:
+                            - Nested:
+                                - - Node:
+                                      name: ~
+                                      alias:
+                                        - Person
+                                        - start: 267
+                                          end: 273
+                                      filler:
+                                        - key: ~
+                                          label_set:
+                                            - - - Person
+                                                - start: 275
+                                                  end: 281
+                                            - start: 275
+                                              end: 281
+                                          property_types:
+                                            - - name:
+                                                  - lastname
+                                                  - start: 283
+                                                    end: 291
+                                                value_type:
+                                                  - String:
+                                                      min_length: ~
+                                                      max_length: ~
+                                                      not_null: false
+                                                  - start: 292
+                                                    end: 298
+                                              - start: 283
+                                                end: 298
+                                            - - name:
+                                                  - firstname
+                                                  - start: 300
+                                                    end: 309
+                                                value_type:
+                                                  - String:
+                                                      min_length: ~
+                                                      max_length: ~
+                                                      not_null: false
+                                                  - start: 310
+                                                    end: 316
+                                              - start: 300
+                                                end: 316
+                                            - - name:
+                                                  - joined
+                                                  - start: 317
+                                                    end: 323
+                                                value_type:
+                                                  - Temporal:
+                                                      kind:
+                                                        - Date
+                                                        - start: 324
+                                                          end: 328
+                                                      not_null: false
+                                                  - start: 324
+                                                    end: 328
+                                              - start: 317
+                                                end: 328
+                                        - start: 274
+                                          end: 329
+                                  - start: 266
+                                    end: 330
+                            - start: 262
+                              end: 332
+                          source:
+                            - Name: mysrcgraph
+                            - start: 344
+                              end: 354
+                      - start: 241
+                        end: 354
+                    - - CreateGraph:
+                          path:
+                            - schema: ~
+                              objects:
+                                - - mySocialNetwork
+                                  - start: 369
+                                    end: 384
+                            - start: 369
+                              end: 384
+                          kind:
+                            - Create
+                            - start: 356
+                              end: 368
+                          graph_type:
+                            - Ref:
+                                - Ref:
+                                    schema: ~
+                                    objects:
+                                      - - socialNetworkGraphType
+                                        - start: 387
+                                          end: 409
+                                - start: 387
+                                  end: 409
+                            - start: 385
+                              end: 409
+                          source: ~
+                      - start: 356
+                        end: 409
+                    - - CreateGraph:
+                          path:
+                            - schema: ~
+                              objects:
+                                - - mySocialNetwork
+                                  - start: 424
+                                    end: 439
+                            - start: 424
+                              end: 439
+                          kind:
+                            - Create
+                            - start: 411
+                              end: 423
+                          graph_type:
+                            - Ref:
+                                - Ref:
+                                    schema: ~
+                                    objects:
+                                      - - socialNetworkGraphType
+                                        - start: 446
+                                          end: 468
+                                - start: 446
+                                  end: 468
+                            - start: 440
+                              end: 468
+                          source: ~
+                      - start: 411
+                        end: 468
+                    - - CreateGraph:
+                          path:
+                            - schema: ~
+                              objects:
+                                - - mySocialNetwork
+                                  - start: 483
+                                    end: 498
+                            - start: 483
+                              end: 498
+                          kind:
+                            - Create
+                            - start: 470
+                              end: 482
+                          graph_type:
+                            - Nested:
+                                - - Node:
+                                      name: ~
+                                      alias:
+                                        - City
+                                        - start: 503
+                                          end: 507
+                                      filler:
+                                        - key: ~
+                                          label_set:
+                                            - - - City
+                                                - start: 509
+                                                  end: 513
+                                            - start: 509
+                                              end: 513
+                                          property_types:
+                                            - - name:
+                                                  - name
+                                                  - start: 515
+                                                    end: 519
+                                                value_type:
+                                                  - String:
+                                                      min_length: ~
+                                                      max_length: ~
+                                                      not_null: false
+                                                  - start: 520
+                                                    end: 526
+                                              - start: 515
+                                                end: 526
+                                            - - name:
+                                                  - state
+                                                  - start: 528
+                                                    end: 533
+                                                value_type:
+                                                  - String:
+                                                      min_length: ~
+                                                      max_length: ~
+                                                      not_null: false
+                                                  - start: 534
+                                                    end: 540
+                                              - start: 528
+                                                end: 540
+                                            - - name:
+                                                  - country
+                                                  - start: 542
+                                                    end: 549
+                                                value_type:
+                                                  - String:
+                                                      min_length: ~
+                                                      max_length: ~
+                                                      not_null: false
+                                                  - start: 550
+                                                    end: 556
+                                              - start: 542
+                                                end: 556
+                                        - start: 508
+                                          end: 557
+                                  - start: 502
+                                    end: 558
+                            - start: 499
+                              end: 559
+                          source: ~
+                      - start: 470
+                        end: 559
+                - start: 0
+                  end: 559
+              next_statements: []
+            - start: 0
+              end: 559
+          end: ~
+      - start: 0
+        end: 559
+    session_close: false
+  - start: 0
+    end: 559

@@ -1,0 +1,19 @@
+---
+source: minigu/parser/src/parser/impls/object_expr.rs
+expression: parsed
+---
+- Ref:
+    Ref:
+      schema:
+        - Absolute:
+            - - Name: a
+              - start: 1
+                end: 2
+        - start: 0
+          end: 2
+      objects:
+        - - b
+          - start: 3
+            end: 4
+- start: 0
+  end: 4

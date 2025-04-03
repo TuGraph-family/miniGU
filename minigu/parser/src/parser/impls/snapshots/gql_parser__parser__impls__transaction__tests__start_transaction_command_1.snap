@@ -1,0 +1,7 @@
+---
+source: minigu/parser/src/parser/impls/transaction.rs
+expression: parsed
+---
+- []
+- start: 0
+  end: 17

@@ -1,0 +1,32 @@
+// Copyright 2024 Alastair Green. alastair.green@ {ldbcouncil.org | graphres.org} 
+// April 2024. A Linked Data Benchmark Council documentary contribution. License granted: CC-BY 4.0.
+
+AT /"com.bank"/control
+CREATE GRAPH TYPE fraud_GT { // DDL
+     (customer :Customer => {id::STRING, name::STRING}),
+     (account :Account => {no::STRING, type::STRING }),
+     (customer)-[:HOLDS]->(account),
+     (account)-[:TRANSFER {amount::INTEGER}]->(account)
+}
+CREATE GRAPH fraud TYPED fraud_GT // TYPED synonym for ::
+
+USE /* graph */ /"com.bank"/control/fraud
+INSERT // DML
+     (c1 :Customer {id: 'AB23', name: 'Doe'}),
+     (c2 :Customer {id: 'CH45', name: 'Reiss'}),
+     (a1 :Account {no: '25673890', type: 'C'}),
+     (a2 :Account {no: '05663981', type: 'C'}),
+     (c1)-[:HOLDS]->(a1), (c2)-[:HOLDS]->(a2),
+     (a1)-[:TRANSFER {amount: 5000}]->(a2)
+
+AT CURRENT_SCHEMA USE fraud // session schema already set
+MATCH // GPML – “Graph Pattern Matching Language” (DQL)
+     (c1 :Customer)-[:HOLDS]->(a1 :Account)
+         -[t :TRANSFER]->
+     (a2 : Account)<-[:HOLDS]-(c2 :Customer)
+RETURN
+    c1.name, a1.no, t.amount, c2.name, a2.no
+/*
+    'Doe', '25673890', 5000, 'Reiss', '05663981'
+    1 row returned
+*/

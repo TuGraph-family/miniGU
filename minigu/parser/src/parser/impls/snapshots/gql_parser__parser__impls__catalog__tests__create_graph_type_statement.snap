@@ -1,0 +1,31 @@
+---
+source: minigu/parser/src/parser/impls/catalog.rs
+expression: parsed
+---
+- path:
+    - schema:
+        - Absolute:
+            - - Name: a
+              - start: 40
+                end: 41
+        - start: 39
+          end: 41
+      objects:
+        - - b
+          - start: 42
+            end: 43
+    - start: 39
+      end: 43
+  kind:
+    - CreateOrReplace
+    - start: 0
+      end: 37
+  source:
+    - Like:
+        - Ref: Home
+        - start: 49
+          end: 59
+    - start: 44
+      end: 59
+- start: 0
+  end: 59

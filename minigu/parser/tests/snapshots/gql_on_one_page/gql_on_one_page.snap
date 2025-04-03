@@ -1,0 +1,12 @@
+---
+source: minigu/parser/tests/parser_test.rs
+---
+Err:
+  Unexpected:
+    input: "// Copyright 2024 Alastair Green. alastair.green@ {ldbcouncil.org | graphres.org} \n// April 2024. A Linked Data Benchmark Council documentary contribution. License granted: CC-BY 4.0.\n\nAT /\"com.bank\"/control\nCREATE GRAPH TYPE fraud_GT { // DDL\n     (customer :Customer => {id::STRING, name::STRING}),\n     (account :Account => {no::STRING, type::STRING }),\n     (customer)-[:HOLDS]->(account),\n     (account)-[:TRANSFER {amount::INTEGER}]->(account)\n}\nCREATE GRAPH fraud TYPED fraud_GT // TYPED synonym for ::\n\nUSE /* graph */ /\"com.bank\"/control/fraud\nINSERT // DML\n     (c1 :Customer {id: 'AB23', name: 'Doe'}),\n     (c2 :Customer {id: 'CH45', name: 'Reiss'}),\n     (a1 :Account {no: '25673890', type: 'C'}),\n     (a2 :Account {no: '05663981', type: 'C'}),\n     (c1)-[:HOLDS]->(a1), (c2)-[:HOLDS]->(a2),\n     (a1)-[:TRANSFER {amount: 5000}]->(a2)\n\nAT CURRENT_SCHEMA USE fraud // session schema already set\nMATCH // GPML – “Graph Pattern Matching Language” (DQL)\n     (c1 :Customer)-[:HOLDS]->(a1 :Account)\n         -[t :TRANSFER]->\n     (a2 : Account)<-[:HOLDS]-(c2 :Customer)\nRETURN\n    c1.name, a1.no, t.amount, c2.name, a2.no\n/*\n    'Doe', '25673890', 5000, 'Reiss', '05663981'\n    1 row returned\n*/"
+    span:
+      start: 511
+      end: 514
+    position:
+      - 13
+      - 1

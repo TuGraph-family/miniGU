@@ -1,0 +1,18 @@
+-- short reads 2
+MATCH (person:Person WHERE person.id = 4194)
+    <-[e1]-(message)
+    -[e2:replyOf]->{1,}(post:Post)
+    -[e3:postHasCreator]->(originalPoster:Person)
+WHERE
+    type(e1) = 'postHasCreator' OR type(e1) = 'commentHasCreator'
+RETURN
+    message.id AS messageId,
+    message.content AS messageContent,
+    message.imageFile AS messageImageFile,
+    message.creationDate AS messageCreationDate,
+    post.id AS postId,
+    originalPoster.id AS originalPosterId,
+    originalPoster.firstName AS originalPosterFirstName,
+    originalPoster.lastName AS originalPosterLastName
+ORDER BY messageCreationDate DESC, messageId DESC
+LIMIT 10

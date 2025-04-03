@@ -1,0 +1,73 @@
+---
+source: minigu/parser/tests/parser_test.rs
+---
+Ok:
+  - activity:
+      - Transaction:
+          start: ~
+          procedure:
+            - at: ~
+              binding_variable_defs: []
+              statement:
+                - Catalog:
+                    - - CreateSchema:
+                          path:
+                            - - - Name: myschema
+                                - start: 15
+                                  end: 23
+                            - start: 14
+                              end: 23
+                          if_not_exists: false
+                      - start: 0
+                        end: 23
+                    - - CreateSchema:
+                          path:
+                            - - - Name: foo
+                                - start: 40
+                                  end: 43
+                              - - Name: myschema
+                                - start: 44
+                                  end: 52
+                            - start: 39
+                              end: 52
+                          if_not_exists: false
+                      - start: 25
+                        end: 52
+                    - - CreateSchema:
+                          path:
+                            - - - Name: foo
+                                - start: 69
+                                  end: 72
+                            - start: 68
+                              end: 72
+                          if_not_exists: false
+                      - start: 54
+                        end: 72
+                - start: 0
+                  end: 72
+              next_statements:
+                - - yield_clause: ~
+                    statement:
+                      - Catalog:
+                          - - CreateSchema:
+                                path:
+                                  - - - Name: fee
+                                      - start: 93
+                                        end: 96
+                                  - start: 92
+                                    end: 96
+                                if_not_exists: false
+                            - start: 78
+                              end: 96
+                      - start: 78
+                        end: 96
+                  - start: 73
+                    end: 96
+            - start: 0
+              end: 96
+          end: ~
+      - start: 0
+        end: 96
+    session_close: false
+  - start: 0
+    end: 96

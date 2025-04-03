@@ -1,0 +1,38 @@
+---
+source: minigu/parser/src/parser/impls/catalog.rs
+expression: parsed
+---
+- path:
+    - schema: ~
+      objects:
+        - - myGraph
+          - start: 27
+            end: 34
+    - start: 27
+      end: 34
+  kind:
+    - CreateIfNotExists
+    - start: 0
+      end: 26
+  graph_type:
+    - Any
+    - start: 35
+      end: 40
+  source:
+    - Ref:
+        Ref:
+          schema:
+            - Absolute:
+                - - Name: a
+                  - start: 53
+                    end: 54
+            - start: 52
+              end: 54
+          objects:
+            - - b
+              - start: 55
+                end: 56
+    - start: 52
+      end: 56
+- start: 0
+  end: 56

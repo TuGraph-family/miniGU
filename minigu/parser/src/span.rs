@@ -1,52 +1,46 @@
-//! This module contains the definition of [`Span`].
+//! Contains the definition of [`Spanned`], an AST wrapper providing span information.
 
-use core::num::TryFromIntError;
 use core::ops::Range;
 
-/// Span within a GQL string.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Span {
-    pub start: u32,
-    pub end: u32,
-}
+use crate::imports::{Box, Vec};
+use crate::macros::base;
 
-impl Span {
-    pub const fn new(start: u32, end: u32) -> Self {
-        Self { start, end }
+/// A wrapper around a value that contains its span information.
+///
+/// This is typically used to construct accurate and user-friendly diagnostics during semantic
+/// analysis.
+#[apply(base)]
+pub struct Spanned<T>(pub T, pub Range<usize>);
+
+impl<T> Spanned<T> {
+    /// Returns the span of the value.
+    #[inline(always)]
+    pub fn span(&self) -> Range<usize> {
+        self.1.clone()
     }
 
-    pub fn join(self, other: Self) -> Self {
-        let Self { start, end } = self;
-        let Self {
-            start: other_start,
-            end: other_end,
-        } = other;
-        Self {
-            start: start.min(other_start),
-            end: end.max(other_end),
-        }
+    /// Returns the inner value.
+    #[inline(always)]
+    pub fn value(&self) -> &T {
+        &self.0
     }
-}
 
-impl From<Range<u32>> for Span {
-    fn from(Range { start, end }: Range<u32>) -> Self {
-        Self { start, end }
-    }
-}
-
-impl TryFrom<Range<usize>> for Span {
-    type Error = TryFromIntError;
-
-    fn try_from(value: Range<usize>) -> Result<Self, Self::Error> {
-        let start = value.start.try_into()?;
-        let end = value.end.try_into()?;
-        Ok(Self { start, end })
+    /// Takes a closure and applies it to the inner value while preserving the span.
+    #[inline(always)]
+    pub fn map<F, O>(self, f: F) -> Spanned<O>
+    where
+        F: FnOnce(T) -> O,
+    {
+        let Spanned(value, span) = self;
+        Spanned(f(value), span)
     }
 }
 
-impl From<Span> for Range<u32> {
-    fn from(Span { start, end }: Span) -> Self {
-        Self { start, end }
-    }
-}
+/// Type alias for vectors of spanned values.
+pub type VecSpanned<T> = Vec<Spanned<T>>;
+
+/// Type alias for boxed spanned values.
+pub type BoxSpanned<T> = Box<Spanned<T>>;
+
+/// Type alias for optional spanned values.
+pub type OptSpanned<T> = Option<Spanned<T>>;

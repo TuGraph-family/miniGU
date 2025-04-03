@@ -20,5 +20,11 @@ target/
 .vscode/
 
 # macOS
-**/.DS_Store
-**/.DS_Store/
+.DS_Store
+
+# insta pending snapshots
+*.pending-snap
+*.snap.new
+
+# antlr
+.antlr/

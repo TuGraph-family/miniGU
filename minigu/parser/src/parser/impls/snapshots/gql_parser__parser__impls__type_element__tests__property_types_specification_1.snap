@@ -1,0 +1,32 @@
+---
+source: minigu/parser/src/parser/impls/type_element.rs
+expression: parsed
+---
+- - name:
+      - id
+      - start: 2
+        end: 4
+    value_type:
+      - SignedNumeric:
+          kind:
+            - Int: ~
+            - start: 6
+              end: 9
+          not_null: false
+      - start: 6
+        end: 9
+  - start: 2
+    end: 9
+- - name:
+      - name
+      - start: 11
+        end: 15
+    value_type:
+      - String:
+          min_length: ~
+          max_length: ~
+          not_null: false
+      - start: 16
+        end: 22
+  - start: 11
+    end: 22

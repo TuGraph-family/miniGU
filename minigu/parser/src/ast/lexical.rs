@@ -3,24 +3,13 @@
 use smol_str::SmolStr;
 
 use super::{ListConstructor, RecordConstructor};
-use crate::macros::{base, ext};
-use crate::span::Span;
+use crate::macros::base;
+use crate::span::Spanned;
 
-/// An identifier or parameter in the query string.
-#[apply(base)]
-pub struct Ident {
-    pub name: SmolStr,
-    pub span: Span,
-}
+pub type Ident = SmolStr;
 
 #[apply(base)]
-pub struct Literal {
-    pub kind: LiteralKind,
-    pub span: Span,
-}
-
-#[apply(base)]
-pub enum LiteralKind {
+pub enum Literal {
     Numeric(UnsignedNumericLiteral),
     Boolean(BooleanLiteral),
     String(StringLiteral),
@@ -35,16 +24,15 @@ pub enum LiteralKind {
 pub struct StringLiteral {
     pub kind: StringLiteralKind,
     pub literal: SmolStr,
-    pub span: Span,
 }
 
-#[apply(ext)]
+#[apply(base)]
 pub enum StringLiteralKind {
     Char,
     Byte,
 }
 
-#[apply(ext)]
+#[apply(base)]
 pub enum BooleanLiteral {
     True,
     False,
@@ -54,11 +42,10 @@ pub enum BooleanLiteral {
 #[apply(base)]
 pub struct TemporalLiteral {
     pub kind: TemporalLiteralKind,
-    pub literal: SmolStr,
-    pub span: Span,
+    pub literal: Spanned<SmolStr>,
 }
 
-#[apply(ext)]
+#[apply(base)]
 pub enum TemporalLiteralKind {
     Date,
     Time,
@@ -70,11 +57,10 @@ pub enum TemporalLiteralKind {
 #[apply(base)]
 pub struct DurationLiteral {
     pub kind: DurationLiteralKind,
-    pub literal: SmolStr,
-    pub span: Span,
+    pub literal: Spanned<SmolStr>,
 }
 
-#[apply(ext)]
+#[apply(base)]
 pub enum DurationLiteralKind {
     Duration,
     SqlInterval,
@@ -82,10 +68,10 @@ pub enum DurationLiteralKind {
 
 #[apply(base)]
 pub enum UnsignedNumericLiteral {
-    Integer(UnsignedInteger),
+    Integer(Spanned<UnsignedInteger>),
 }
 
-#[apply(ext)]
+#[apply(base)]
 pub enum UnsignedIntegerKind {
     Binary,
     Octal,
@@ -97,5 +83,4 @@ pub enum UnsignedIntegerKind {
 pub struct UnsignedInteger {
     pub kind: UnsignedIntegerKind,
     pub integer: SmolStr,
-    pub span: Span,
 }

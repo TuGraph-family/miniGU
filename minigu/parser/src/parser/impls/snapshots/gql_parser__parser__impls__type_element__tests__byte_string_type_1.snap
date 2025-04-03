@@ -1,0 +1,18 @@
+---
+source: minigu/parser/src/parser/impls/type_element.rs
+expression: parsed
+---
+- Bytes:
+    min_length:
+      - kind: Decimal
+        integer: "1"
+      - start: 7
+        end: 8
+    max_length:
+      - kind: Decimal
+        integer: "10"
+      - start: 10
+        end: 12
+    not_null: true
+- start: 0
+  end: 22

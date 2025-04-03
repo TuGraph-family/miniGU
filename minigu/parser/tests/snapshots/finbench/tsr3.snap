@@ -1,0 +1,12 @@
+---
+source: minigu/parser/tests/parser_test.rs
+---
+Err:
+  Unexpected:
+    input: "-- simple read 3\nOPTIONAL MATCH (n:Account{id:12})<-[e:transfer]-(m:Account)\nWHERE\n    e.amount > 30.0\n    AND e.ts > 10\n    AND e.ts < 70\n    AND m.isBlocked=true\nRETURN count(m) * 1.0 as numM\nNEXT\nOPTIONAL MATCH (n:Account{id:12})<-[e:transfer]-(m:Account)\nRETURN count(m) as numIn, numM\nNEXT\nRETURN CASE WHEN numIn = 0 THEN -1 ELSE round(numM / numIn * 1000) / 1000 END as blockRatio"
+    span:
+      start: 17
+      end: 25
+    position:
+      - 2
+      - 1
