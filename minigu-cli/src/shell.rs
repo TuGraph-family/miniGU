@@ -1,9 +1,83 @@
+use std::collections::HashMap;
+
 use clap::Parser;
+use lazy_static::lazy_static;
 use miette::{IntoDiagnostic, Result, bail};
 use minigu::{Database, Session};
-use rustyline::{DefaultEditor, Config, CompletionType};
-use rustyline::config::Configurer;
+use rustyline::completion::{Completer, FilenameCompleter, Pair};
 use rustyline::error::ReadlineError;
+use rustyline::highlight::MatchingBracketHighlighter;
+use rustyline::hint::HistoryHinter;
+use rustyline::history::DefaultHistory;
+use rustyline::validate::MatchingBracketValidator;
+use rustyline::{
+    Completer, CompletionType, Config, Context, Editor, Helper, Highlighter, Hinter, Validator,
+};
+
+// Supported commands
+lazy_static! {
+    static ref COMMANDS: HashMap<&'static str, &'static str> = {
+        let mut map = HashMap::new();
+        map.insert(":help", "Show usage hints");
+        map.insert(":history", "Print the command history");
+        map.insert(":quit", "Exit the shell");
+        map
+    };
+}
+
+/// Custom helper for the CLI. Only completer customized
+struct CliCompleter {
+    filename_completer: FilenameCompleter,
+    commands: Vec<String>,
+}
+
+impl CliCompleter {
+    pub fn new() -> Self {
+        Self {
+            filename_completer: FilenameCompleter::new(),
+            commands: COMMANDS.keys().map(|s| s.to_string()).collect(),
+        }
+    }
+}
+
+impl Completer for CliCompleter {
+    type Candidate = Pair;
+
+    // Command completion first, otherwise fallback to filename completion
+    fn complete(
+        &self,
+        line: &str,
+        pos: usize,
+        ctx: &Context,
+    ) -> Result<(usize, Vec<Self::Candidate>), ReadlineError> {
+        if line.starts_with(":") {
+            let candidates = self
+                .commands
+                .iter()
+                .filter(|cmd| cmd.starts_with(&line))
+                .map(|cmd| Pair {
+                    display: cmd.clone(),
+                    replacement: cmd.clone(),
+                })
+                .collect();
+            Ok((0, candidates))
+        } else {
+            self.filename_completer.complete(line, pos, ctx)
+        }
+    }
+}
+
+#[derive(Helper, Completer, Highlighter, Hinter, Validator)]
+struct CliHelper {
+    #[rustyline(Completer)]
+    completer: CliCompleter,
+    #[rustyline(Highlighter)]
+    highlighter: MatchingBracketHighlighter,
+    #[rustyline(Hinter)]
+    hinter: HistoryHinter,
+    #[rustyline(Validator)]
+    validator: MatchingBracketValidator,
+}
 
 /// Start the local interactive shell.
 #[derive(Debug, Parser, Clone)]
@@ -13,9 +87,20 @@ impl Shell {
     pub fn run(&self) -> Result<()> {
         let db = Database::open_in_memory()?;
         let session = db.session()?;
-        let config = Config::builder().auto_add_history(true).build();
-        let mut editor = DefaultEditor::with_config(config).into_diagnostic()?;
-        
+        let config = Config::builder()
+            .history_ignore_space(true)
+            .auto_add_history(true)
+            .completion_type(CompletionType::List)
+            .build();
+        let mut editor = Editor::with_config(config).into_diagnostic()?;
+        let h = CliHelper {
+            completer: CliCompleter::new(),
+            highlighter: MatchingBracketHighlighter::new(),
+            hinter: HistoryHinter::new(),
+            validator: MatchingBracketValidator::new(),
+        };
+        editor.set_helper(Some(h));
+
         ShellContext {
             session,
             editor,
@@ -27,7 +112,14 @@ impl Shell {
     pub fn execute_file(&self, file: String) -> Result<()> {
         let db = Database::open_in_memory()?;
         let session = db.session()?;
-        let editor = DefaultEditor::new().into_diagnostic()?;
+        let mut editor = Editor::new().into_diagnostic()?;
+        let h = CliHelper {
+            completer: CliCompleter::new(),
+            highlighter: MatchingBracketHighlighter::new(),
+            hinter: HistoryHinter::new(),
+            validator: MatchingBracketValidator::new(),
+        };
+        editor.set_helper(Some(h));
         ShellContext {
             session,
             editor,
@@ -39,7 +131,7 @@ impl Shell {
 
 struct ShellContext {
     session: Session,
-    editor: DefaultEditor,
+    editor: Editor<CliHelper, DefaultHistory>,
     should_quit: bool,
 }
 
@@ -70,13 +162,11 @@ impl ShellContext {
     }
 
     fn print_help(&self) {
-        println!(
-            r"Usage hints:
-:help       Show usage hints.
-:history    Print the command history.
-:quit       Exit the shell.
-"
-        );
+        println!(r"Usage hints:");
+        let max_cmd_len = COMMANDS.keys().map(|cmd| cmd.len()).max().unwrap_or(0);
+        for (cmd, desc) in &*COMMANDS {
+            println!("{:<width$} {}", cmd, desc, width = max_cmd_len + 2);
+        }
     }
 
     fn execute_query(&self, input: String) -> Result<()> {
@@ -89,13 +179,11 @@ impl ShellContext {
             .expect("`input` should be prefixed with `:`")
             .trim();
         match command {
-            "quit" => {
-                self.should_quit = true;
-            }
+            "quit" => self.should_quit = true,
             "help" => self.print_help(),
             "history" => {
-                for line in self.editor.history().iter() {
-                    println!("{}", line);
+                for (index, line) in self.editor.history().iter().enumerate() {
+                    println!("{}\t{}", index + 1, line);
                 }
             }
             _ => bail!("unknown command: {command}"),
@@ -104,14 +192,7 @@ impl ShellContext {
     }
 
     fn execute_file(mut self, file: String) -> Result<()> {
-        use std::fs;
-        let content = match fs::read_to_string(&file) {
-            Ok(content) => content,
-            Err(e) => {
-                println!("Error reading file {}: {:?}", file, e);
-                return Err(e).into_diagnostic();
-            }
-        };
+        let content = std::fs::read_to_string(&file).into_diagnostic()?;
         for line in content.lines() {
             let result = match line {
                 line if line.is_empty() => continue,

@@ -577,6 +577,7 @@ name = "minigu-cli"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "lazy_static",
  "miette",
  "minigu",
  "rustyline",
