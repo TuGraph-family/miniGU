@@ -55,35 +55,6 @@ impl Timestamp {
 
 pub type UndoPtr = Weak<UndoEntry>;
 
-// /// Represents a pointer to an undo entry in the undo buffer.
-// #[derive(Debug, Clone, Copy)]
-// pub struct UndoPtr {
-//     /// The transaction id of the undo ptr.
-//     txn_id: Timestamp,
-//     /// The entry offset of the undo ptr, points to the undo entry in the undo buffer.
-//     entry_offset: usize,
-// }
-
-// impl UndoPtr {
-//     /// Create a UndoPtr
-//     pub fn new(txn_id: Timestamp, entry_offset: usize) -> Self {
-//         Self {
-//             txn_id,
-//             entry_offset,
-//         }
-//     }
-
-//     /// Get the transaction id of the undo ptr.
-//     pub fn txn_id(&self) -> Timestamp {
-//         self.txn_id
-//     }
-
-//     /// Get the entry offset of the undo ptr.
-//     pub fn entry_offset(&self) -> usize {
-//         self.entry_offset
-//     }
-// }
-
 #[derive(Debug, Clone)]
 /// Represents an undo log entry for multi-version concurrency control.
 pub struct UndoEntry {

@@ -171,8 +171,6 @@ impl MemTxnManager {
             let mut r_euid = euid;
             r_euid.reverse();
             graph.adjacency_list.entry(r_euid.dst_id()).and_modify(|l| {
-                println!("{:?}", euid);
-                println!("{:?}", r_euid);
                 l.inner.remove(&r_euid);
             });
             graph.edges().remove(&r_euid.eid());
