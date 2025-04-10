@@ -515,7 +515,7 @@ impl MutGraph for MemoryGraph {
             .entry(dst_id)
             .or_insert_with(AdjacencyContainer::new)
             .inner
-            .insert(EdgeUid::new(label_id, src_id, Direction::In, dst_id, eid));
+            .insert(EdgeUid::new(label_id, dst_id, Direction::In, src_id, eid));
 
         Ok(eid)
     }
@@ -1058,7 +1058,7 @@ mod tests {
     }
 
     #[test]
-    fn test_garbage_collection() {
+    fn test_garbage_collection_after_delete_edge() {
         let graph = mock_graph();
 
         let vid1: VertexId = 1;
@@ -1131,6 +1131,103 @@ mod tests {
             // GC will remove the edge
             assert!(graph.edges.get(&eid).is_none());
         }
+    }
+
+    #[test]
+    fn test_garbage_collection_after_delete_vertex() {
+        let graph = mock_graph();
+
+        let vid1 = 1;
+        let euid1 = EdgeUid::new(FRIEND, 2, Direction::In, 1, 1);
+
+        // Check before GC
+        {
+            // assert vertex exists
+            assert!(
+                !graph
+                    .vertices
+                    .get(&vid1)
+                    .unwrap()
+                    .chain
+                    .current
+                    .read()
+                    .unwrap()
+                    .data
+                    .is_tombstone
+            );
+            // assert edge exists
+            assert!(
+                !graph
+                    .edges
+                    .get(&euid1.eid())
+                    .unwrap()
+                    .chain
+                    .current
+                    .read()
+                    .unwrap()
+                    .data
+                    .is_tombstone
+            );
+            // assert adjacency list
+            assert!(graph.adjacency_list.get(&vid1).unwrap().inner.len() == 3);
+        }
+
+        // Delete the vertex
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+        graph.delete_vertex(&txn, vid1).unwrap();
+        assert!(txn.commit().is_ok());
+
+        // Start a new transaction to update the watermark
+        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+        assert!(txn2.commit().is_ok());
+
+        // Check before GC
+        {
+            // assert vertex is tombstone
+            assert!(
+                graph
+                    .vertices
+                    .get(&vid1)
+                    .unwrap()
+                    .chain
+                    .current
+                    .read()
+                    .unwrap()
+                    .data
+                    .is_tombstone
+            );
+            // assert edge is tombstone
+            assert!(
+                graph
+                    .edges
+                    .get(&euid1.eid())
+                    .unwrap()
+                    .chain
+                    .current
+                    .read()
+                    .unwrap()
+                    .data
+                    .is_tombstone
+            );
+            // assert adjacency list
+            assert!(graph.adjacency_list.get(&vid1).unwrap().inner.len() == 3);
+            let iter = txn2.iter_adjacency(vid1);
+            let mut count = 0;
+            for _ in iter {
+                count += 1;
+            }
+            assert!(count == 0);
+        }
+
+        let txn3 = graph.begin_transaction(IsolationLevel::Serializable);
+        graph.txn_manager.garbage_collect(txn3.graph()).unwrap();
+        // Check after GC
+        {
+            assert!(graph.vertices.get(&vid1).is_none());
+            assert!(graph.edges.get(&euid1.eid()).is_none());
+            assert!(graph.adjacency_list.get(&vid1).is_none());
+        }
+        let _ = txn3.abort();
     }
 
     #[test]

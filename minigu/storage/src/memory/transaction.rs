@@ -114,6 +114,8 @@ impl MemTxnManager {
 
         // Clean up expired transactions
         let mut expired_txns = Vec::new();
+        // Since both `DeleteVertex` and `DeleteEdge` trigger `DeleteEdge`,
+        // we only need to collect and analyze expired edges
         let mut expired_edges = HashMap::new();
         for entry in self.committed_txns.iter() {
             // If the commit timestamp of the transaction is greater than the min read timestamp,
@@ -125,6 +127,7 @@ impl MemTxnManager {
 
             for entry in entry.value().undo_buffer.read().unwrap().iter() {
                 match entry.delta() {
+                    // DeltaOp::CreateEdge means that the edge is deleted in this transaction
                     DeltaOp::CreateEdge(edge) => {
                         expired_edges.insert(edge.eid(), edge.euid());
                     }
@@ -138,42 +141,77 @@ impl MemTxnManager {
             // Txn has been committed, iterate over its undo buffer
             expired_txns.push(entry.value().clone());
         }
+
+        // Remove expired transactions containing undo buffer
         for txn in expired_txns {
             self.committed_txns.remove(txn.commit_ts.get().unwrap());
         }
 
         for (_, euid) in expired_edges {
-            if let Some(entry) = graph.vertices().get(&euid.src_id()) {
-                let current: std::sync::RwLockReadGuard<
-                    '_,
-                    super::memory_graph::CurrentVersion<crate::model::vertex::Vertex>,
-                > = entry.chain.current.read().unwrap();
-                let undo_ptr = entry.chain.undo_ptr.read().unwrap().clone();
-                let mut is_visible = current.data.is_tombstone();
-                let apply_deltas = |undo_entry: &UndoEntry| {
-                    if let DeltaOp::DelVertex(_) = undo_entry.delta() {
-                        is_visible = false;
-                    }
+            // Define a macro to check if an entity is marked as a tombstone
+            macro_rules! check_tombstone {
+                ($graph:expr, $collection:ident, $id_method:expr) => {
+                    $graph
+                        .$collection
+                        .get($id_method)
+                        .map(|v| Some(v.value().chain.current.read().unwrap().data.is_tombstone))
+                        .unwrap_or(None)
                 };
-                MemTransaction::apply_deltas_for_read(
-                    undo_ptr,
-                    apply_deltas,
-                    Timestamp(min_read_ts),
-                );
-                if is_visible {
-                    continue;
-                }
             }
-            graph.adjacency_list.entry(euid.src_id()).and_modify(|l| {
-                println!("{:?}", euid);
-                l.inner.remove(&euid);
-            });
-            let mut r_euid = euid;
-            r_euid.reverse();
-            graph.adjacency_list.entry(r_euid.dst_id()).and_modify(|l| {
-                l.inner.remove(&r_euid);
-            });
-            graph.edges().remove(&r_euid.eid());
+            let src_tombstone = check_tombstone!(graph, vertices, &euid.src_id());
+            let dst_tombstone = check_tombstone!(graph, vertices, &euid.dst_id());
+            let edge_tombstone = check_tombstone!(graph, edges, &euid.eid());
+
+            // Remove the vertex and the corresponding adjacencies
+            fn remove_vertex_and_adjacencies(graph: &MemoryGraph, vid: VertexId) {
+                graph.vertices.remove(&vid);
+                let mut adj_to_remove = Vec::new();
+
+                if let Some(adj_container) = graph.adjacency_list.get(&vid) {
+                    for adj in adj_container.inner.iter() {
+                        if adj.src_id() == vid {
+                            adj_to_remove.push((adj.dst_id(), adj.reverse()));
+                        }
+                        if adj.dst_id() == vid {
+                            adj_to_remove.push((adj.src_id(), adj.reverse()));
+                        }
+                    }
+                }
+
+                // Remove adjacencies of reversed edges
+                for (other_vid, euid) in adj_to_remove {
+                    graph.adjacency_list.entry(other_vid).and_modify(|l| {
+                        l.inner.remove(&euid);
+                    });
+                }
+
+                // Remove adjancy list of the vertex
+                graph.adjacency_list.remove(&vid);
+            }
+
+            if let Some(true) = src_tombstone {
+                remove_vertex_and_adjacencies(graph, euid.src_id());
+            }
+
+            if let Some(true) = dst_tombstone {
+                remove_vertex_and_adjacencies(graph, euid.dst_id());
+            }
+
+            if let Some(true) = edge_tombstone {
+                graph.edges.remove(&euid.eid());
+                graph
+                    .adjacency_list
+                    .entry(euid.src_id())
+                    .and_modify(|adj_container| {
+                        adj_container.inner.remove(&euid);
+                    });
+                graph
+                    .adjacency_list
+                    .entry(euid.dst_id())
+                    .and_modify(|adj_container| {
+                        adj_container.inner.remove(&euid.reverse());
+                    });
+            }
         }
 
         Ok(())

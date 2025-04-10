@@ -64,8 +64,15 @@ impl EdgeUid {
         self.direction
     }
 
-    pub fn reverse(&mut self) {
-        self.direction = self.direction.reverse();
+    /// Get the reversed edge uid
+    pub fn reverse(&self) -> EdgeUid {
+        EdgeUid {
+            label_id: self.label_id,
+            src_id: self.dst_id,
+            direction: self.direction.reverse(),
+            dst_id: self.src_id,
+            eid: self.eid,
+        }
     }
 }
 
