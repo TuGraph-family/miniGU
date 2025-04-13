@@ -1,7 +1,7 @@
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
 use clap::Parser;
-use lazy_static::lazy_static;
 use miette::{IntoDiagnostic, Result, bail};
 use minigu::{Database, Session};
 use rustyline::completion::{Completer, FilenameCompleter, Pair};
@@ -15,15 +15,13 @@ use rustyline::{
 };
 
 // Supported commands
-lazy_static! {
-    static ref COMMANDS: HashMap<&'static str, &'static str> = {
-        let mut map = HashMap::new();
-        map.insert(":help", "Show usage hints");
-        map.insert(":history", "Print the command history");
-        map.insert(":quit", "Exit the shell");
-        map
-    };
-}
+static COMMANDS: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(|| {
+    let mut map = HashMap::new();
+    map.insert(":help", "Show usage hints");
+    map.insert(":history", "Print the command history");
+    map.insert(":quit", "Exit the shell");
+    map
+});
 
 /// Custom helper for the CLI. Only completer customized
 struct CliCompleter {
@@ -108,25 +106,6 @@ impl Shell {
         }
         .enter_loop()
     }
-
-    pub fn execute_file(&self, file: String) -> Result<()> {
-        let db = Database::open_in_memory()?;
-        let session = db.session()?;
-        let mut editor = Editor::new().into_diagnostic()?;
-        let h = CliHelper {
-            completer: CliCompleter::new(),
-            highlighter: MatchingBracketHighlighter::new(),
-            hinter: HistoryHinter::new(),
-            validator: MatchingBracketValidator::new(),
-        };
-        editor.set_helper(Some(h));
-        ShellContext {
-            session,
-            editor,
-            should_quit: false,
-        }
-        .execute_file(file)
-    }
 }
 
 struct ShellContext {
@@ -187,25 +166,6 @@ impl ShellContext {
                 }
             }
             _ => bail!("unknown command: {command}"),
-        }
-        Ok(())
-    }
-
-    fn execute_file(mut self, file: String) -> Result<()> {
-        let content = std::fs::read_to_string(&file).into_diagnostic()?;
-        for line in content.lines() {
-            let result = match line {
-                line if line.is_empty() => continue,
-                line if line.starts_with(":") => self.execute_command(line.to_string()),
-                line => self.execute_query(line.to_string()),
-            };
-            // Handle recoverable errors.
-            if let Err(e) = result {
-                println!("{e:?}");
-            }
-            if self.should_quit {
-                return Ok(());
-            }
         }
         Ok(())
     }

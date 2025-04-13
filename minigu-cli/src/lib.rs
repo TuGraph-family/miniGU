@@ -2,6 +2,7 @@ use clap::Parser;
 use cli::Cli;
 
 mod cli;
+mod script_executor;
 mod shell;
 
 pub fn run_cli() {
@@ -9,9 +10,9 @@ pub fn run_cli() {
     let result = match cli {
         Cli::Shell(shell) => shell.run(),
         Cli::Execute { file } => {
-            let shell = shell::Shell {};
-            shell.execute_file(file)
-        },
+            let executor = script_executor::ScriptExecutor {};
+            executor.execute_file(file)
+        }
     };
     // Handle unrecoverable errors.
     if let Err(e) = result {
