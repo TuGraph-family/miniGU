@@ -3,7 +3,7 @@ mod edge_iter;
 mod vertex_iter;
 use std::sync::Arc;
 
-pub use adjacency_iter::AdjacencyIteratorTrait;
+pub use adjacency_iter::{AdjacencyIteratorTrait, Direction};
 use common::datatype::value::PropertyValue;
 pub use edge_iter::EdgeIteratorTrait;
 pub use vertex_iter::VertexIteratorTrait;

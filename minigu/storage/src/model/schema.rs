@@ -145,7 +145,7 @@ impl SchemaManager {
 mod tests {
     use common::datatype::value::{DataType, PropertyMeta, PropertyValue};
 
-    use super::super::edge::{Direction, Edge};
+    use super::super::edge::Edge;
     use super::super::properties::PropertyStore;
     use super::super::vertex::Vertex;
     use super::*;
@@ -190,14 +190,7 @@ mod tests {
     }
 
     fn create_edge_alice_knows_bob() -> Edge {
-        Edge::new(
-            0,
-            0,
-            1,
-            0,
-            Direction::Out,
-            PropertyStore::new(vec![PropertyValue::Int(5)]),
-        )
+        Edge::new(0, 0, 1, 0, PropertyStore::new(vec![PropertyValue::Int(5)]))
     }
 
     #[test]

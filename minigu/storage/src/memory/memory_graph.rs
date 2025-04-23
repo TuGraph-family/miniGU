@@ -11,7 +11,7 @@ use crate::error::{StorageError, StorageResult};
 use crate::memory::adjacency_iterator::AdjacencyIterator;
 use crate::memory::edge_iterator::EdgeIterator;
 use crate::memory::vertex_iterator::VertexIterator;
-use crate::model::edge::{Direction, Edge, EdgeUid};
+use crate::model::edge::{Edge, Neighbor};
 use crate::model::vertex::Vertex;
 use crate::storage::{Graph, MutGraph};
 use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
@@ -254,14 +254,24 @@ impl VersionedEdge {
 
 #[derive(Debug)]
 pub(super) struct AdjacencyContainer {
-    pub(super) inner: Arc<SkipSet<EdgeUid>>,
+    pub(super) incoming: Arc<SkipSet<Neighbor>>,
+    pub(super) outgoing: Arc<SkipSet<Neighbor>>,
 }
 
 impl AdjacencyContainer {
     pub fn new() -> Self {
         Self {
-            inner: Arc::new(SkipSet::new()),
+            incoming: Arc::new(SkipSet::new()),
+            outgoing: Arc::new(SkipSet::new()),
         }
+    }
+
+    pub fn incoming(&self) -> &Arc<SkipSet<Neighbor>> {
+        &self.incoming
+    }
+
+    pub fn outgoing(&self) -> &Arc<SkipSet<Neighbor>> {
+        &self.outgoing
     }
 }
 
@@ -324,7 +334,7 @@ impl MemoryGraph {
 
 // Immutable graph methods
 impl Graph for MemoryGraph {
-    type Adjacency = EdgeUid;
+    type Adjacency = Neighbor;
     type AdjacencyIter<'a> = AdjacencyIterator<'a>;
     type Edge = Edge;
     type EdgeID = EdgeId;
@@ -509,13 +519,13 @@ impl MutGraph for MemoryGraph {
         self.adjacency_list
             .entry(src_id)
             .or_insert_with(AdjacencyContainer::new)
-            .inner
-            .insert(EdgeUid::new(label_id, src_id, Direction::Out, dst_id, eid));
+            .outgoing()
+            .insert(Neighbor::new(label_id, dst_id, eid));
         self.adjacency_list
             .entry(dst_id)
             .or_insert_with(AdjacencyContainer::new)
-            .inner
-            .insert(EdgeUid::new(label_id, dst_id, Direction::In, src_id, eid));
+            .incoming()
+            .insert(Neighbor::new(label_id, src_id, eid));
 
         Ok(eid)
     }
@@ -533,7 +543,12 @@ impl MutGraph for MemoryGraph {
 
         // Delete all edges associated with the vertex
         if let Some(adjacency_container) = self.adjacency_list.get(&vid) {
-            for adj in adjacency_container.inner.iter() {
+            for adj in adjacency_container.incoming().iter() {
+                if self.edges.get(&adj.value().eid()).is_some() {
+                    self.delete_edge(txn, adj.value().eid())?;
+                }
+            }
+            for adj in adjacency_container.outgoing().iter() {
                 if self.edges.get(&adj.value().eid()).is_some() {
                     self.delete_edge(txn, adj.value().eid())?;
                 }
@@ -665,17 +680,9 @@ mod tests {
         src_id: VertexId,
         dst_id: VertexId,
         label_id: LabelId,
-        direction: Direction,
         properties: Vec<PropertyValue>,
     ) -> Edge {
-        Edge::new(
-            id,
-            src_id,
-            dst_id,
-            label_id,
-            direction,
-            PropertyStore::new(properties),
-        )
+        Edge::new(id, src_id, dst_id, label_id, PropertyStore::new(properties))
     }
 
     fn mock_graph() -> Arc<MemoryGraph> {
@@ -702,29 +709,29 @@ mod tests {
             PropertyValue::Int(27),
         ]);
 
-        // 添加顶点到图中
+        // Add vertices to the graph
         graph.create_vertex(&txn, alice).unwrap();
         graph.create_vertex(&txn, bob).unwrap();
         graph.create_vertex(&txn, carol).unwrap();
         graph.create_vertex(&txn, david).unwrap();
 
         // Create friend edges
-        let friend1 = create_edge(1, 1, 2, FRIEND, Direction::Out, vec![
-            PropertyValue::String("2020-01-01".into()),
-        ]);
+        let friend1 = create_edge(1, 1, 2, FRIEND, vec![PropertyValue::String(
+            "2020-01-01".into(),
+        )]);
 
-        let friend2 = create_edge(2, 2, 3, FRIEND, Direction::Out, vec![
-            PropertyValue::String("2021-03-15".into()),
-        ]);
+        let friend2 = create_edge(2, 2, 3, FRIEND, vec![PropertyValue::String(
+            "2021-03-15".into(),
+        )]);
 
         // Create follow edges
-        let follow1 = create_edge(3, 1, 3, FOLLOW, Direction::Out, vec![
-            PropertyValue::String("2022-06-01".into()),
-        ]);
+        let follow1 = create_edge(3, 1, 3, FOLLOW, vec![PropertyValue::String(
+            "2022-06-01".into(),
+        )]);
 
-        let follow2 = create_edge(4, 4, 1, FOLLOW, Direction::Out, vec![
-            PropertyValue::String("2022-07-15".into()),
-        ]);
+        let follow2 = create_edge(4, 4, 1, FOLLOW, vec![PropertyValue::String(
+            "2022-07-15".into(),
+        )]);
 
         // Add edges to the graph
         graph.create_edge(&txn, friend1).unwrap();
@@ -751,9 +758,9 @@ mod tests {
     }
 
     fn create_edge_alice_to_eve() -> Edge {
-        create_edge(5, 1, 5, FRIEND, Direction::Out, vec![
-            PropertyValue::String("2025-03-31".into()),
-        ])
+        create_edge(5, 1, 5, FRIEND, vec![PropertyValue::String(
+            "2025-03-31".into(),
+        )])
     }
 
     #[test]
@@ -871,6 +878,26 @@ mod tests {
                 count += 1;
             }
             assert_eq!(count, 4);
+        }
+
+        // Check the outgoing adjacency list of alice
+        {
+            let iter = txn3.iter_adjacency_outgoing(vid_alice);
+            let mut count = 0;
+            for _ in iter {
+                count += 1;
+            }
+            assert_eq!(count, 3);
+        }
+
+        // Check the incoming adjacency list of eve
+        {
+            let iter = txn3.iter_adjacency_incoming(vid1);
+            let mut count = 0;
+            for _ in iter {
+                count += 1;
+            }
+            assert_eq!(count, 1);
         }
 
         let _ = txn3.abort();
@@ -1068,7 +1095,8 @@ mod tests {
         // Check before GC
         {
             let adj = graph.adjacency_list.get(&vid1).unwrap();
-            assert!(adj.inner.len() == 3);
+            assert!(adj.outgoing().len() == 2);
+            assert!(adj.incoming().len() == 1);
             let edge = graph.edges.get(&eid).unwrap();
             assert!(!edge.value().chain.current.read().unwrap().data.is_tombstone);
             assert!(
@@ -1095,10 +1123,12 @@ mod tests {
         {
             let adj = graph.adjacency_list.get(&vid1).unwrap();
             // adjacency_list will not be updated until GC
-            assert!(adj.inner.len() == 3);
+            assert!(adj.outgoing().len() == 2);
+            assert!(adj.incoming().len() == 1);
             // reverse edge
             let adj2 = graph.adjacency_list.get(&vid2).unwrap();
-            assert!(adj2.inner.len() == 2);
+            assert!(adj2.outgoing().len() == 1);
+            assert!(adj2.incoming().len() == 1);
             // edge is marked as tombstone
             let edge = graph.edges.get(&eid).unwrap();
             assert!(edge.value().chain.current.read().unwrap().data.is_tombstone);
@@ -1124,10 +1154,12 @@ mod tests {
         // Check after GC
         {
             let adj = graph.adjacency_list.get(&vid1).unwrap();
-            assert_eq!(adj.inner.len(), 2);
+            assert!(adj.outgoing().len() == 1);
+            assert!(adj.incoming().len() == 1);
             // reverse edge
             let adj2 = graph.adjacency_list.get(&vid2).unwrap();
-            assert_eq!(adj2.inner.len(), 1);
+            assert!(adj2.outgoing().len() == 1);
+            assert!(adj2.incoming().len() == 0);
             // GC will remove the edge
             assert!(graph.edges.get(&eid).is_none());
         }
@@ -1138,7 +1170,7 @@ mod tests {
         let graph = mock_graph();
 
         let vid1 = 1;
-        let euid1 = EdgeUid::new(FRIEND, 2, Direction::In, 1, 1);
+        let euid1 = Neighbor::new(FRIEND, 1, 1);
 
         // Check before GC
         {
@@ -1169,7 +1201,8 @@ mod tests {
                     .is_tombstone
             );
             // assert adjacency list
-            assert!(graph.adjacency_list.get(&vid1).unwrap().inner.len() == 3);
+            assert!(graph.adjacency_list.get(&vid1).unwrap().outgoing().len() == 2);
+            assert!(graph.adjacency_list.get(&vid1).unwrap().incoming().len() == 1);
         }
 
         // Delete the vertex
@@ -1210,7 +1243,8 @@ mod tests {
                     .is_tombstone
             );
             // assert adjacency list
-            assert!(graph.adjacency_list.get(&vid1).unwrap().inner.len() == 3);
+            assert!(graph.adjacency_list.get(&vid1).unwrap().outgoing().len() == 2);
+            assert!(graph.adjacency_list.get(&vid1).unwrap().incoming().len() == 1);
             let iter = txn2.iter_adjacency(vid1);
             let mut count = 0;
             for _ in iter {
@@ -1241,7 +1275,12 @@ mod tests {
             // Check visible and invisible edges
             let adj = graph.adjacency_list.get(&vid).unwrap();
             let mut count = 0;
-            for euid in adj.inner.iter() {
+            for euid in adj.incoming().iter() {
+                let edge = graph.edges.get(&euid.value().eid()).unwrap();
+                assert!(!edge.value().chain.current.read().unwrap().data.is_tombstone);
+                count += 1;
+            }
+            for euid in adj.outgoing().iter() {
                 let edge = graph.edges.get(&euid.value().eid()).unwrap();
                 assert!(!edge.value().chain.current.read().unwrap().data.is_tombstone);
                 count += 1;
@@ -1263,7 +1302,12 @@ mod tests {
             // Check visible and invisible edges
             let adj = graph.adjacency_list.get(&vid).unwrap();
             let mut count = 0;
-            for euid in adj.inner.iter() {
+            for euid in adj.incoming().iter() {
+                let edge = graph.edges.get(&euid.value().eid()).unwrap();
+                assert!(edge.value().chain.current.read().unwrap().data.is_tombstone);
+                count += 1;
+            }
+            for euid in adj.outgoing().iter() {
                 let edge = graph.edges.get(&euid.value().eid()).unwrap();
                 assert!(edge.value().chain.current.read().unwrap().data.is_tombstone);
                 count += 1;

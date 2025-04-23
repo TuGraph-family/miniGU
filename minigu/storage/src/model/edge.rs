@@ -4,48 +4,91 @@ use serde::{Deserialize, Serialize};
 
 use super::properties::PropertyStore;
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Copy, Ord, PartialOrd)]
-pub enum Direction {
-    Out, // Outgoing edge
-    In,  // Incoming edge
-}
-
-impl Direction {
-    pub fn reverse(&self) -> Self {
-        match self {
-            Direction::Out => Direction::In,
-            Direction::In => Direction::Out,
-        }
-    }
-}
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Copy)]
-pub struct EdgeUid {
+pub struct Neighbor {
     label_id: LabelId,
-    src_id: VertexId,
-    direction: Direction,
-    dst_id: VertexId,
+    neighbor_id: VertexId,
     eid: EdgeId,
 }
 
-impl EdgeUid {
-    pub fn new(
-        label_id: LabelId,
-        src_id: VertexId,
-        direction: Direction,
-        dst_id: VertexId,
-        eid: EdgeId,
-    ) -> Self {
-        EdgeUid {
+impl Neighbor {
+    pub fn new(label_id: LabelId, neighbor_id: VertexId, eid: EdgeId) -> Self {
+        Neighbor {
             label_id,
-            src_id,
-            direction,
-            dst_id,
+            neighbor_id,
             eid,
         }
     }
 
     pub fn label_id(&self) -> LabelId {
         self.label_id
+    }
+
+    pub fn eid(&self) -> EdgeId {
+        self.eid
+    }
+
+    pub fn neighbor_id(&self) -> VertexId {
+        self.neighbor_id
+    }
+}
+
+impl Ord for Neighbor {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.label_id
+            .cmp(&other.label_id)
+            .then_with(|| self.neighbor_id.cmp(&other.neighbor_id))
+            .then_with(|| self.eid.cmp(&other.eid))
+    }
+}
+
+impl PartialOrd for Neighbor {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct Edge {
+    pub label_id: LabelId,
+    pub src_id: VertexId,
+    pub dst_id: VertexId,
+    pub eid: EdgeId,
+    pub properties: PropertyStore,
+    pub is_tombstone: bool,
+}
+
+impl Edge {
+    pub fn new(
+        eid: EdgeId,
+        src_id: VertexId,
+        dst_id: VertexId,
+        label_id: LabelId,
+        properties: PropertyStore,
+    ) -> Self {
+        Edge {
+            label_id,
+            src_id,
+            dst_id,
+            eid,
+            properties,
+            is_tombstone: false,
+        }
+    }
+
+    pub fn tombstone(edge: Edge) -> Self {
+        Edge {
+            label_id: edge.label_id,
+            src_id: edge.src_id,
+            dst_id: edge.dst_id,
+            eid: edge.eid,
+            properties: edge.properties.clone(),
+            is_tombstone: true,
+        }
+    }
+
+    pub fn eid(&self) -> EdgeId {
+        self.eid
     }
 
     pub fn src_id(&self) -> VertexId {
@@ -56,88 +99,8 @@ impl EdgeUid {
         self.dst_id
     }
 
-    pub fn eid(&self) -> EdgeId {
-        self.eid
-    }
-
-    pub fn direction(&self) -> Direction {
-        self.direction
-    }
-
-    /// Get the reversed edge uid
-    pub fn reverse(&self) -> EdgeUid {
-        EdgeUid {
-            label_id: self.label_id,
-            src_id: self.dst_id,
-            direction: self.direction.reverse(),
-            dst_id: self.src_id,
-            eid: self.eid,
-        }
-    }
-}
-
-impl Ord for EdgeUid {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.label_id
-            .cmp(&other.label_id)
-            .then_with(|| self.src_id.cmp(&other.src_id))
-            .then_with(|| self.direction.cmp(&other.direction))
-            .then_with(|| self.dst_id.cmp(&other.dst_id))
-            .then_with(|| self.eid.cmp(&other.eid))
-    }
-}
-
-impl PartialOrd for EdgeUid {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-pub struct Edge {
-    pub euid: EdgeUid,
-    pub properties: PropertyStore, // Properties of the edge
-    pub is_tombstone: bool,
-}
-
-impl Edge {
-    pub fn new(
-        eid: EdgeId,
-        src_id: VertexId,
-        dst_id: VertexId,
-        label_id: LabelId,
-        direction: Direction,
-        properties: PropertyStore,
-    ) -> Self {
-        Edge {
-            euid: EdgeUid::new(label_id, src_id, direction, dst_id, eid),
-            properties,
-            is_tombstone: false,
-        }
-    }
-
-    pub fn tombstone(edge: Edge) -> Self {
-        Edge {
-            euid: edge.euid,
-            properties: edge.properties.clone(),
-            is_tombstone: true,
-        }
-    }
-
-    pub fn eid(&self) -> EdgeId {
-        self.euid.eid
-    }
-
-    pub fn src_id(&self) -> VertexId {
-        self.euid.src_id
-    }
-
-    pub fn dst_id(&self) -> VertexId {
-        self.euid.dst_id
-    }
-
     pub fn label_id(&self) -> LabelId {
-        self.euid.label_id
+        self.label_id
     }
 
     pub fn is_tombstone(&self) -> bool {
@@ -154,7 +117,14 @@ impl Edge {
         self.properties.props()
     }
 
-    pub fn euid(&self) -> EdgeUid {
-        self.euid
+    pub fn without_properties(&self) -> Self {
+        Edge {
+            label_id: self.label_id,
+            src_id: self.src_id,
+            dst_id: self.dst_id,
+            eid: self.eid,
+            properties: PropertyStore::new(vec![]),
+            is_tombstone: self.is_tombstone,
+        }
     }
 }

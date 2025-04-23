@@ -8,6 +8,7 @@ use dashmap::DashSet;
 
 use super::memory_graph::MemoryGraph;
 use crate::error::{StorageError, StorageResult};
+use crate::model::edge::{Edge, Neighbor};
 use crate::storage::StorageTransaction;
 use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
 
@@ -116,7 +117,7 @@ impl MemTxnManager {
         let mut expired_txns = Vec::new();
         // Since both `DeleteVertex` and `DeleteEdge` trigger `DeleteEdge`,
         // we only need to collect and analyze expired edges
-        let mut expired_edges = HashMap::new();
+        let mut expired_edges: HashMap<EdgeId, Edge> = HashMap::new();
         for entry in self.committed_txns.iter() {
             // If the commit timestamp of the transaction is greater than the min read timestamp,
             // it means the transaction is still active, and the subsequent transactions are also
@@ -129,7 +130,7 @@ impl MemTxnManager {
                 match entry.delta() {
                     // DeltaOp::CreateEdge means that the edge is deleted in this transaction
                     DeltaOp::CreateEdge(edge) => {
-                        expired_edges.insert(edge.eid(), edge.euid());
+                        expired_edges.insert(edge.eid(), edge.without_properties());
                     }
                     DeltaOp::DelEdge(eid) => {
                         expired_edges.remove(eid);
@@ -147,7 +148,7 @@ impl MemTxnManager {
             self.committed_txns.remove(txn.commit_ts.get().unwrap());
         }
 
-        for (_, euid) in expired_edges {
+        for (_, edge) in expired_edges {
             // Define a macro to check if an entity is marked as a tombstone
             macro_rules! check_tombstone {
                 ($graph:expr, $collection:ident, $id_method:expr) => {
@@ -158,30 +159,40 @@ impl MemTxnManager {
                         .unwrap_or(None)
                 };
             }
-            let src_tombstone = check_tombstone!(graph, vertices, &euid.src_id());
-            let dst_tombstone = check_tombstone!(graph, vertices, &euid.dst_id());
-            let edge_tombstone = check_tombstone!(graph, edges, &euid.eid());
+            let src_tombstone = check_tombstone!(graph, vertices, &edge.src_id());
+            let dst_tombstone = check_tombstone!(graph, vertices, &edge.dst_id());
+            let edge_tombstone = check_tombstone!(graph, edges, &edge.eid());
 
             // Remove the vertex and the corresponding adjacencies
             fn remove_vertex_and_adjacencies(graph: &MemoryGraph, vid: VertexId) {
                 graph.vertices.remove(&vid);
-                let mut adj_to_remove = Vec::new();
+                let mut incoming_to_remove = Vec::new();
+                let mut outgoing_to_remove = Vec::new();
 
                 if let Some(adj_container) = graph.adjacency_list.get(&vid) {
-                    for adj in adj_container.inner.iter() {
-                        if adj.src_id() == vid {
-                            adj_to_remove.push((adj.dst_id(), adj.reverse()));
-                        }
-                        if adj.dst_id() == vid {
-                            adj_to_remove.push((adj.src_id(), adj.reverse()));
-                        }
+                    for adj in adj_container.incoming().iter() {
+                        outgoing_to_remove.push((
+                            adj.neighbor_id(),
+                            Neighbor::new(adj.label_id(), vid, adj.eid()),
+                        ));
+                    }
+                    for adj in adj_container.outgoing().iter() {
+                        incoming_to_remove.push((
+                            adj.neighbor_id(),
+                            Neighbor::new(adj.label_id(), vid, adj.eid()),
+                        ));
                     }
                 }
 
-                // Remove adjacencies of reversed edges
-                for (other_vid, euid) in adj_to_remove {
+                for (other_vid, euid) in incoming_to_remove {
                     graph.adjacency_list.entry(other_vid).and_modify(|l| {
-                        l.inner.remove(&euid);
+                        l.incoming().remove(&euid);
+                    });
+                }
+
+                for (other_vid, euid) in outgoing_to_remove {
+                    graph.adjacency_list.entry(other_vid).and_modify(|l| {
+                        l.outgoing().remove(&euid);
                     });
                 }
 
@@ -190,26 +201,34 @@ impl MemTxnManager {
             }
 
             if let Some(true) = src_tombstone {
-                remove_vertex_and_adjacencies(graph, euid.src_id());
+                remove_vertex_and_adjacencies(graph, edge.src_id());
             }
 
             if let Some(true) = dst_tombstone {
-                remove_vertex_and_adjacencies(graph, euid.dst_id());
+                remove_vertex_and_adjacencies(graph, edge.dst_id());
             }
 
             if let Some(true) = edge_tombstone {
-                graph.edges.remove(&euid.eid());
+                graph.edges.remove(&edge.eid());
                 graph
                     .adjacency_list
-                    .entry(euid.src_id())
+                    .entry(edge.src_id())
                     .and_modify(|adj_container| {
-                        adj_container.inner.remove(&euid);
+                        adj_container.outgoing().remove(&Neighbor::new(
+                            edge.label_id(),
+                            edge.dst_id(),
+                            edge.eid(),
+                        ));
                     });
                 graph
                     .adjacency_list
-                    .entry(euid.dst_id())
+                    .entry(edge.dst_id())
                     .and_modify(|adj_container| {
-                        adj_container.inner.remove(&euid.reverse());
+                        adj_container.incoming().remove(&Neighbor::new(
+                            edge.label_id(),
+                            edge.src_id(),
+                            edge.eid(),
+                        ));
                     });
             }
         }
