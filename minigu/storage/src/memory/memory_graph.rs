@@ -93,7 +93,8 @@ impl VersionedVertex {
             chain: Arc::new(VersionChain {
                 current: RwLock::new(CurrentVersion {
                     data: initial,
-                    commit_ts: txn_id, // Initial commit timestamp set to 0
+                    commit_ts: txn_id, /* Initial commit timestamp set to txn_id for uncommitted
+                                        * changes */
                 }),
                 undo_ptr: RwLock::new(Weak::new()),
             }),
@@ -130,6 +131,11 @@ impl VersionedVertex {
     pub(super) fn is_visible(&self, txn: &MemTransaction) -> bool {
         // Check if the vertex is visible based on the transaction's start timestamp
         let current = self.chain.current.read().unwrap();
+        // If the commit timestamp of current is equal to the transaction id of txn, it means
+        // the vertex is modified by the same transaction.
+        // If the commit timestamp of current is less than the start timestamp of txn, it means
+        // the vertex was modified before the transaction started, and the corresponding transaction
+        // has been commited.
         if current.commit_ts == txn.txn_id() || current.commit_ts <= txn.start_ts() {
             !current.data.is_tombstone()
         } else {

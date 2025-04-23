@@ -9,9 +9,13 @@ use crate::model::vertex::Vertex;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 /// Represents a commit timestamp used for multi-version concurrency control (MVCC).
+/// It can either represent a transaction ID which starts from 1 << 63,
+/// or a commit timestamp which starts from 0. So, we can determine a timestamp is
+/// a transaction ID if the highest bit is set to 1, or a commit timestamp if the highest bit is 0.
 pub struct Timestamp(pub u64);
 
 impl Timestamp {
+    // The start of the transaction ID range.
     pub(super) const TXN_ID_START: u64 = 1 << 63;
     pub(super) const TXN_START_TS: Self = Self(Self::TXN_ID_START);
 
