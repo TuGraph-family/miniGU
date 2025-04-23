@@ -13,7 +13,8 @@ pub enum DataType {
     Double,  // f64
     String,  // String
     Boolean, // bool
-    Object,  // reserved for complex data type
+    Map,     // reserved for complex data type
+    List,    // reserved for complex data type
 }
 
 /// Property metadata
@@ -53,7 +54,8 @@ pub enum PropertyValue {
     Double(f64),
     String(String),
     Boolean(bool),
-    Object(HashMap<String, PropertyValue>),
+    Map(HashMap<String, PropertyValue>),
+    List(Vec<PropertyValue>),
 }
 
 impl PropertyValue {
@@ -65,7 +67,8 @@ impl PropertyValue {
             PropertyValue::Double(_) => DataType::Double,
             PropertyValue::String(_) => DataType::String,
             PropertyValue::Boolean(_) => DataType::Boolean,
-            PropertyValue::Object(_) => DataType::Object,
+            PropertyValue::Map(_) => DataType::Map,
+            PropertyValue::List(_) => DataType::List,
         }
     }
 
@@ -129,11 +132,21 @@ impl PropertyValue {
         }
     }
 
-    pub fn as_object(&self) -> Result<&HashMap<String, PropertyValue>, ConversionError> {
+    pub fn as_map(&self) -> Result<&HashMap<String, PropertyValue>, ConversionError> {
         match self {
-            PropertyValue::Object(v) => Ok(v),
+            PropertyValue::Map(v) => Ok(v),
             _ => Err(ConversionError::TypeMismatch {
-                expected: DataType::Object,
+                expected: DataType::Map,
+                actual: self.data_type(),
+            }),
+        }
+    }
+
+    pub fn as_list(&self) -> Result<&Vec<PropertyValue>, ConversionError> {
+        match self {
+            PropertyValue::List(v) => Ok(v),
+            _ => Err(ConversionError::TypeMismatch {
+                expected: DataType::List,
                 actual: self.data_type(),
             }),
         }
@@ -188,7 +201,7 @@ mod tests {
         let mut map = HashMap::new();
         map.insert("name".to_string(), PropertyValue::String("John".into()));
         map.insert("age".to_string(), PropertyValue::Int(42));
-        assert_eq!(PropertyValue::Object(map).data_type(), DataType::Object);
+        assert_eq!(PropertyValue::Map(map).data_type(), DataType::Map);
     }
 
     // Test conversion to specific types (as_* methods)
@@ -292,18 +305,33 @@ mod tests {
     }
 
     #[test]
-    fn test_as_object() {
+    fn test_as_map() {
         let mut map = HashMap::new();
         map.insert("name".to_string(), PropertyValue::String("John".into()));
         map.insert("age".to_string(), PropertyValue::Int(42));
-        let value = PropertyValue::Object(map.clone());
-        assert_eq!(value.as_object(), Ok(&map));
+        let value = PropertyValue::Map(map.clone());
+        assert_eq!(value.as_map(), Ok(&map));
 
         let value = PropertyValue::String("hello".into());
         assert_eq!(
-            value.as_object(),
+            value.as_map(),
             Err(ConversionError::TypeMismatch {
-                expected: DataType::Object,
+                expected: DataType::Map,
+                actual: DataType::String,
+            })
+        );
+    }
+
+    #[test]
+    fn test_as_list() {
+        let value = PropertyValue::List(vec![PropertyValue::Int(42)]);
+        assert_eq!(value.as_list(), Ok(&vec![PropertyValue::Int(42)]));
+
+        let value = PropertyValue::String("hello".into());
+        assert_eq!(
+            value.as_list(),
+            Err(ConversionError::TypeMismatch {
+                expected: DataType::List,
                 actual: DataType::String,
             })
         );
