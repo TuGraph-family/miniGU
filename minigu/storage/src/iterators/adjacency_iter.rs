@@ -17,9 +17,9 @@ pub trait AdjacencyIteratorTrait<'a>: Iterator<Item = StorageResult<Neighbor>> {
         F: Fn(&Neighbor) -> bool + 'a,
         Self: Sized;
 
-    /// Advances the iterator to the edge with the specified ID or the next greater edge.
+    /// Seeks the iterator to the edge with the specified ID or the next greater edge.
     /// Returns `Ok(true)` if the exact edge is found, `Ok(false)` otherwise.
-    fn advance(&mut self, id: EdgeId) -> StorageResult<bool>;
+    fn seek(&mut self, id: EdgeId) -> StorageResult<bool>;
 
     /// Returns a reference to the currently iterated adjacency entry.
     fn current_entry(&self) -> Option<&Neighbor>;
