@@ -2,7 +2,7 @@ use common::datatype::types::{EdgeId, LabelId, VertexId};
 use common::datatype::value::PropertyValue;
 use serde::{Deserialize, Serialize};
 
-use super::properties::PropertyStore;
+use super::properties::PropertyRecord;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Copy)]
 pub struct Neighbor {
@@ -54,7 +54,7 @@ pub struct Edge {
     pub src_id: VertexId,
     pub dst_id: VertexId,
     pub eid: EdgeId,
-    pub properties: PropertyStore,
+    pub properties: PropertyRecord,
     pub is_tombstone: bool,
 }
 
@@ -64,7 +64,7 @@ impl Edge {
         src_id: VertexId,
         dst_id: VertexId,
         label_id: LabelId,
-        properties: PropertyStore,
+        properties: PropertyRecord,
     ) -> Self {
         Edge {
             label_id,
@@ -123,7 +123,7 @@ impl Edge {
             src_id: self.src_id,
             dst_id: self.dst_id,
             eid: self.eid,
-            properties: PropertyStore::new(vec![]),
+            properties: PropertyRecord::new(vec![]),
             is_tombstone: self.is_tombstone,
         }
     }

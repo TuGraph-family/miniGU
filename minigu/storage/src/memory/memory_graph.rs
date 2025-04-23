@@ -670,7 +670,7 @@ mod tests {
     use {Edge, Vertex};
 
     use super::*;
-    use crate::model::properties::PropertyStore;
+    use crate::model::properties::PropertyRecord;
     use crate::storage::StorageTransaction;
 
     const PERSON: LabelId = 1;
@@ -678,7 +678,7 @@ mod tests {
     const FOLLOW: LabelId = 2;
 
     fn create_vertex(id: VertexId, label_id: LabelId, properties: Vec<PropertyValue>) -> Vertex {
-        Vertex::new(id, label_id, PropertyStore::new(properties))
+        Vertex::new(id, label_id, PropertyRecord::new(properties))
     }
 
     fn create_edge(
@@ -688,7 +688,13 @@ mod tests {
         label_id: LabelId,
         properties: Vec<PropertyValue>,
     ) -> Edge {
-        Edge::new(id, src_id, dst_id, label_id, PropertyStore::new(properties))
+        Edge::new(
+            id,
+            src_id,
+            dst_id,
+            label_id,
+            PropertyRecord::new(properties),
+        )
     }
 
     fn mock_graph() -> Arc<MemoryGraph> {

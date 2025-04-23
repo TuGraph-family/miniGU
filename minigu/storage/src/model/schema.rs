@@ -146,7 +146,7 @@ mod tests {
     use common::datatype::value::{DataType, PropertyMeta, PropertyValue};
 
     use super::super::edge::Edge;
-    use super::super::properties::PropertyStore;
+    use super::super::properties::PropertyRecord;
     use super::super::vertex::Vertex;
     use super::*;
 
@@ -161,7 +161,7 @@ mod tests {
         Vertex::new(
             0,
             0,
-            PropertyStore::new(vec![
+            PropertyRecord::new(vec![
                 PropertyValue::String("Alice".to_string()),
                 PropertyValue::Int(30),
             ]),
@@ -172,7 +172,7 @@ mod tests {
         Vertex::new(
             1,
             0,
-            PropertyStore::new(vec![
+            PropertyRecord::new(vec![
                 PropertyValue::String("Bob".to_string()),
                 PropertyValue::Int(40),
             ]),
@@ -190,7 +190,7 @@ mod tests {
     }
 
     fn create_edge_alice_knows_bob() -> Edge {
-        Edge::new(0, 0, 1, 0, PropertyStore::new(vec![PropertyValue::Int(5)]))
+        Edge::new(0, 0, 1, 0, PropertyRecord::new(vec![PropertyValue::Int(5)]))
     }
 
     #[test]

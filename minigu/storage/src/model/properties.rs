@@ -2,24 +2,22 @@ use common::datatype::value::PropertyValue;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Default)]
-pub struct PropertyStore {
-    properties: Vec<PropertyValue>,
-}
+pub struct PropertyRecord(Vec<PropertyValue>);
 
-impl PropertyStore {
+impl PropertyRecord {
     pub fn new(properties: Vec<PropertyValue>) -> Self {
-        PropertyStore { properties }
+        PropertyRecord(properties)
     }
 
     pub fn get(&self, index: usize) -> Option<&PropertyValue> {
-        self.properties.get(index)
+        self.0.get(index)
     }
 
     pub fn set_prop(&mut self, index: usize, prop: PropertyValue) {
-        self.properties[index] = prop;
+        self.0[index] = prop;
     }
 
     pub fn props(&self) -> &Vec<PropertyValue> {
-        &self.properties
+        &self.0
     }
 }
