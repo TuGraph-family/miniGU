@@ -135,7 +135,7 @@ impl VersionedVertex {
         // the vertex is modified by the same transaction.
         // If the commit timestamp of current is less than the start timestamp of txn, it means
         // the vertex was modified before the transaction started, and the corresponding transaction
-        // has been commited.
+        // has been committed.
         if current.commit_ts == txn.txn_id() || current.commit_ts <= txn.start_ts() {
             !current.data.is_tombstone()
         } else {
@@ -1171,7 +1171,7 @@ mod tests {
             // reverse edge
             let adj2 = graph.adjacency_list.get(&vid2).unwrap();
             assert!(adj2.outgoing().len() == 1);
-            assert!(adj2.incoming().len() == 0);
+            assert!(adj2.incoming().is_empty());
             // GC will remove the edge
             assert!(graph.edges.get(&eid).is_none());
         }
