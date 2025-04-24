@@ -1,0 +1,91 @@
+CREATE GRAPH test_graph {
+  (Entity: EntityLabel {
+    id STRING,
+    entity_type STRING,
+    deleted INT64,
+    gen_time INT64,
+    name STRING,
+    guid STRING,
+    status INT64,
+    props STRING,
+    test1 INT64,
+    test2 INT64,
+    test3 STRING,
+    PRIMARY KEY (id)
+  }),
+  (Entity)-[Rel: RelLabel {
+    timestamp	INT64,
+    deleted	INT64,
+    rel_scene	STRING,
+    rel_type	STRING,
+    gen_time	INT64,
+    rel_chain	STRING,
+    dst_guid	STRING,
+    src_guid	STRING,
+    status	INT64,
+    props	STRING,
+    PRIMARY KEY (SOURCE_PRIMARY_KEY, timestamp, DESTINATION_PRIMARY_KEY)
+  }]->(Entity),
+};
+
+USE GRAPH test_graph;
+
+
+INSERT (n:Entity {id:'table1001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table1001',status:1,props:'table1001',test1:1001,test2:1,test3:'table1001'});
+INSERT (n:Entity {id:'table10001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table1001',status:1,props:'table1001',test1:1001,test2:1,test3:'table1001'});
+MATCH (n:Entity{id:'table10001'}), (m:Entity{id:'table1001'})
+INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'table2table',gen_time:0,rel_chain:'0',dst_guid:'table1001',src_guid:'table10001',status:0,props:'table10001_table2table_table1001'}]->(m);
+
+
+MATCH (n:Entity  {id: 'table1001'}) RETURN n.id, n.name, n.entity_type;
+MATCH (n:Entity{id:'table10001'})-[b:Rel]->(m:Entity{id:'table1001'}) RETURN n.id, b.timestamp, b.dst_guid, b.src_guid,m.id;
+
+drop edge Rel;
+drop node Entity;
+
+
+create node (Entity : EntityLabel {
+  id STRING,
+  entity_type STRING,
+  deleted INT64,
+  gen_time INT64,
+  name STRING,
+  guid STRING,
+  status INT64,
+  props STRING,
+  test1 INT64,
+  test2 INT64,
+  test3 STRING,
+  test4 STRING,
+  PRIMARY KEY (id)
+});
+
+create edge (Entity)-[Rel: RelLabel {
+    timestamp	INT64,
+    deleted	INT64,
+    rel_scene	STRING,
+    rel_type	STRING,
+    gen_time	INT64,
+    rel_chain	STRING,
+    dst_guid	STRING,
+    src_guid	STRING,
+    status	INT64,
+    props	STRING,
+    props1  STRING,
+    PRIMARY KEY (SOURCE_PRIMARY_KEY, timestamp, DESTINATION_PRIMARY_KEY)
+}]->(Entity);
+
+
+
+INSERT (n:Entity {id:'table2001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table2001',status:1,props:'table2001',test1:2001,test2:1,test3:'table2001',test4:'table2001'});
+INSERT (n:Entity {id:'table20001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table2001',status:1,props:'table2001',test1:2001,test2:1,test3:'table2001',test4:'table2001'});
+MATCH (n:Entity{id:'table20001'}), (m:Entity{id:'table2001'})
+INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'table2table',gen_time:0,rel_chain:'0',dst_guid:'table2001',src_guid:'table20001',status:0,props:'table20001_table2table_table2001', props1:'props1'}]->(m);
+MATCH (n:Entity{id:'table2001'}) RETURN n.id, n.name, n.entity_type;
+MATCH (n:Entity{id:'table20001'})-[b:Rel]->(m:Entity{id:'table2001'}) RETURN n.id, b.timestamp, b.dst_guid, b.src_guid,m.id;
+
+drop graph test_graph;
+
+
+# create empty graph
+CREATE GRAPH test_graph;
