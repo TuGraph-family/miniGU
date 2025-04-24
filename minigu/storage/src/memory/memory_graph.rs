@@ -7,7 +7,9 @@ use crossbeam_skiplist::SkipSet;
 use dashmap::DashMap;
 
 use super::transaction::{MemTransaction, MemTxnManager};
-use crate::error::{StorageError, StorageResult};
+use crate::error::{
+    EdgeNotFoundError, StorageError, StorageResult, TransactionError, VertexNotFoundError,
+};
 use crate::memory::adjacency_iterator::AdjacencyIterator;
 use crate::memory::edge_iterator::EdgeIterator;
 use crate::memory::vertex_iterator::VertexIterator;
@@ -21,7 +23,7 @@ macro_rules! update_properties {
     ($self:expr, $id:expr, $entry:expr, $txn:expr, $indices:expr, $props:expr, $op:ident) => {{
         // Acquire the lock to modify the properties of the vertex/edge
         let mut current = $entry.chain.current.write().unwrap();
-        check_commit_timestamp(current.commit_ts, $txn, $id)?;
+        check_commit_timestamp(current.commit_ts, $txn)?;
 
         // Create a new version with updated properties.
         current.data.set_props(&$indices, $props);
@@ -353,19 +355,21 @@ impl Graph for MemoryGraph {
     /// Retrieves a vertex by its ID within the context of a transaction.
     fn get_vertex(&self, txn: &MemTransaction, vid: VertexId) -> StorageResult<Vertex> {
         // Step 1: Atomically retrieve the versioned vertex (check existence).
-        let versioned_vertex = self
-            .vertices
-            .get(&vid)
-            .ok_or(StorageError::VertexNotFound(vid.to_string()))?;
+        let versioned_vertex = self.vertices.get(&vid).ok_or(StorageError::VertexNotFound(
+            VertexNotFoundError::VertexNotFound(vid.to_string()),
+        ))?;
 
         // Step 2: Perform MVCC visibility check.
         let current_version = versioned_vertex.chain.current.read().unwrap();
         let commit_ts = current_version.commit_ts;
-        if commit_ts > Timestamp::TXN_START_TS && commit_ts != txn.txn_id() {
-            return Err(StorageError::TransactionError(format!(
-                "Write-write conflict with txn {:?}",
-                commit_ts
-            )));
+        // Check if the vertex is modified by other transactions
+        if commit_ts.is_txn_id() && commit_ts != txn.txn_id() {
+            return Err(StorageError::Transaction(
+                TransactionError::WriteReadConflict(format!(
+                    "Vertex is being modified by transaction {:?}",
+                    commit_ts
+                )),
+            ));
         }
         let mut visible_vertex = current_version.data.clone();
         if commit_ts != txn.txn_id() && commit_ts > txn.start_ts() {
@@ -390,7 +394,9 @@ impl Graph for MemoryGraph {
 
         // Step 4: Check for logical deletion.
         if visible_vertex.is_tombstone() {
-            return Err(StorageError::VertexNotFound(vid.to_string()));
+            return Err(StorageError::VertexNotFound(
+                VertexNotFoundError::VertexTombstone(vid.to_string()),
+            ));
         }
 
         Ok(visible_vertex)
@@ -399,10 +405,9 @@ impl Graph for MemoryGraph {
     /// Retrieves an edge by its ID within the context of a transaction.
     fn get_edge(&self, txn: &MemTransaction, eid: EdgeId) -> StorageResult<Edge> {
         // Step 1: Atomically retrieve the versioned edge (check existence).
-        let versioned_edge = self
-            .edges
-            .get(&eid)
-            .ok_or(StorageError::EdgeNotFound(eid.to_string()))?;
+        let versioned_edge = self.edges.get(&eid).ok_or(StorageError::EdgeNotFound(
+            EdgeNotFoundError::EdgeNotFound(eid.to_string()),
+        ))?;
 
         // Step 2: Perform MVCC visibility check.
         let current_version = versioned_edge.chain.current.read().unwrap();
@@ -430,7 +435,9 @@ impl Graph for MemoryGraph {
 
         // Step 4: Check for logical deletion (tombstone).
         if visible_edge.is_tombstone() {
-            return Err(StorageError::EdgeNotFound(eid.to_string()));
+            return Err(StorageError::EdgeNotFound(
+                EdgeNotFoundError::EdgeTombstone(eid.to_string()),
+            ));
         }
 
         Ok(visible_edge)
@@ -471,7 +478,7 @@ impl MutGraph for MemoryGraph {
 
         // Conflict detection: Ensure the vertex does not exist
         let current = entry.chain.current.read().unwrap();
-        check_commit_timestamp(current.commit_ts, txn, vid)?;
+        check_commit_timestamp(current.commit_ts, txn)?;
 
         // Record the vertex creation in the transaction
         let delta = DeltaOp::DelVertex(vid);
@@ -496,12 +503,9 @@ impl MutGraph for MemoryGraph {
         let label_id = edge.label_id();
 
         // Check if source and destination vertices exist.
-        if self.get_vertex(txn, edge.src_id()).is_err() {
-            return Err(StorageError::VertexNotFound(edge.src_id().to_string()));
-        }
-        if self.get_vertex(txn, edge.dst_id()).is_err() {
-            return Err(StorageError::VertexNotFound(edge.dst_id().to_string()));
-        }
+        self.get_vertex(txn, edge.src_id())?;
+
+        self.get_vertex(txn, edge.dst_id())?;
 
         let entry = self
             .edges
@@ -510,7 +514,7 @@ impl MutGraph for MemoryGraph {
 
         // Conflict detection: Ensure the edge does not exist
         let current = entry.chain.current.read().unwrap();
-        check_commit_timestamp(current.commit_ts, txn, eid)?;
+        check_commit_timestamp(current.commit_ts, txn)?;
 
         // Record the edge creation in the transaction
         let delta_edge = DeltaOp::DelEdge(eid);
@@ -539,13 +543,12 @@ impl MutGraph for MemoryGraph {
     /// Deletes a vertex from the graph within a transaction.
     fn delete_vertex(&self, txn: &MemTransaction, vid: VertexId) -> StorageResult<()> {
         // Atomically retrieve the versioned vertex (check existence).
-        let entry = self
-            .vertices
-            .get(&vid)
-            .ok_or(StorageError::VertexNotFound(vid.to_string()))?;
+        let entry = self.vertices.get(&vid).ok_or(StorageError::VertexNotFound(
+            VertexNotFoundError::VertexNotFound(vid.to_string()),
+        ))?;
 
         let mut current = entry.chain.current.write().unwrap();
-        check_commit_timestamp(current.commit_ts, txn, vid)?;
+        check_commit_timestamp(current.commit_ts, txn)?;
 
         // Delete all edges associated with the vertex
         if let Some(adjacency_container) = self.adjacency_list.get(&vid) {
@@ -579,13 +582,12 @@ impl MutGraph for MemoryGraph {
     /// Deletes an edge from the graph within a transaction.
     fn delete_edge(&self, txn: &MemTransaction, eid: EdgeId) -> StorageResult<()> {
         // Atomically retrieve the versioned edge (check existence).
-        let entry = self
-            .edges
-            .get(&eid)
-            .ok_or(StorageError::EdgeNotFound(eid.to_string()))?;
+        let entry = self.edges.get(&eid).ok_or(StorageError::EdgeNotFound(
+            EdgeNotFoundError::EdgeNotFound(eid.to_string()),
+        ))?;
 
         let mut current = entry.chain.current.write().unwrap();
-        check_commit_timestamp(current.commit_ts, txn, eid)?;
+        check_commit_timestamp(current.commit_ts, txn)?;
 
         // Mark the edge as deleted
         let tombstone = Edge::tombstone(current.data.clone());
@@ -611,10 +613,9 @@ impl MutGraph for MemoryGraph {
         props: Vec<PropertyValue>,
     ) -> StorageResult<()> {
         // Atomically retrieve the versioned vertex (check existence).
-        let entry = self
-            .vertices
-            .get(&vid)
-            .ok_or(StorageError::VertexNotFound(vid.to_string()))?;
+        let entry = self.vertices.get(&vid).ok_or(StorageError::VertexNotFound(
+            VertexNotFoundError::VertexNotFound(vid.to_string()),
+        ))?;
 
         update_properties!(self, vid, entry, txn, indices, props, SetVertexProps);
 
@@ -630,10 +631,9 @@ impl MutGraph for MemoryGraph {
         props: Vec<PropertyValue>,
     ) -> StorageResult<()> {
         // Atomically retrieve the versioned edge (check existence).
-        let entry = self
-            .edges
-            .get(&eid)
-            .ok_or(StorageError::EdgeNotFound(eid.to_string()))?;
+        let entry = self.edges.get(&eid).ok_or(StorageError::EdgeNotFound(
+            EdgeNotFoundError::EdgeNotFound(eid.to_string()),
+        ))?;
 
         update_properties!(self, eid, entry, txn, indices, props, SetEdgeProps);
 
@@ -644,21 +644,23 @@ impl MutGraph for MemoryGraph {
 /// Checks if the vertex is modified by other transactions or has a greater commit timestamp than
 /// the current transaction.
 #[inline]
-fn check_commit_timestamp<T: std::fmt::Display>(
-    commit_ts: Timestamp,
-    txn: &MemTransaction,
-    id: T,
-) -> StorageResult<()> {
+fn check_commit_timestamp(commit_ts: Timestamp, txn: &MemTransaction) -> StorageResult<()> {
     match commit_ts {
-        // If the vertex is modified by other transactions, return write conflict
-        ts if ts.is_txn_id() && ts != txn.txn_id() => {
-            Err(StorageError::WriteConflict(id.to_string()))
-        }
+        // If the vertex is modified by other transactions, return write-read conflict
+        ts if ts.is_txn_id() && ts != txn.txn_id() => Err(StorageError::Transaction(
+            TransactionError::WriteReadConflict(format!(
+                "Data is being modified by transaction {:?}",
+                ts
+            )),
+        )),
         // If the vertex is committed by other transactions and its commit timestamp is greater
         // than the start timestamp of the current transaction, return version not found
-        ts if ts.is_commit_ts() && ts > txn.start_ts() => {
-            Err(StorageError::VersionNotFound(id.to_string()))
-        }
+        ts if ts.is_commit_ts() && ts > txn.start_ts() => Err(StorageError::Transaction(
+            TransactionError::VersionNotVisible(format!(
+                "Data version not visible for {:?}",
+                txn.txn_id()
+            )),
+        )),
         _ => Ok(()),
     }
 }

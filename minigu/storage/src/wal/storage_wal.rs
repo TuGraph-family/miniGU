@@ -5,8 +5,8 @@ use std::path::Path;
 use bytes::BytesMut;
 use postcard;
 
+use crate::error::WalError;
 use crate::wal::entry::WalEntry;
-use crate::wal::error::WalError;
 
 const LEN_PREFIX_SIZE: usize = 4;
 const BUF_WRITER_CAPACITY: usize = 1024 * 1024;

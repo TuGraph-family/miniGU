@@ -2,7 +2,8 @@ use std::collections::HashMap;
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
+
+use crate::error::{ConversionError, DataError};
 
 /// Supported primitive data types
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -72,97 +73,85 @@ impl PropertyValue {
         }
     }
 
-    pub fn as_int(&self) -> Result<i32, ConversionError> {
+    pub fn as_int(&self) -> Result<i32, DataError> {
         match self {
             PropertyValue::Int(v) => Ok(*v),
-            _ => Err(ConversionError::TypeMismatch {
+            _ => Err(DataError::ConversionError(ConversionError::TypeMismatch {
                 expected: DataType::Int,
                 actual: self.data_type(),
-            }),
+            })),
         }
     }
 
-    pub fn as_long(&self) -> Result<i64, ConversionError> {
+    pub fn as_long(&self) -> Result<i64, DataError> {
         match self {
             PropertyValue::Long(v) => Ok(*v),
-            _ => Err(ConversionError::TypeMismatch {
+            _ => Err(DataError::ConversionError(ConversionError::TypeMismatch {
                 expected: DataType::Long,
                 actual: self.data_type(),
-            }),
+            })),
         }
     }
 
-    pub fn as_float(&self) -> Result<f32, ConversionError> {
+    pub fn as_float(&self) -> Result<f32, DataError> {
         match self {
             PropertyValue::Float(v) => Ok(*v),
-            _ => Err(ConversionError::TypeMismatch {
+            _ => Err(DataError::ConversionError(ConversionError::TypeMismatch {
                 expected: DataType::Float,
                 actual: self.data_type(),
-            }),
+            })),
         }
     }
 
-    pub fn as_double(&self) -> Result<f64, ConversionError> {
+    pub fn as_double(&self) -> Result<f64, DataError> {
         match self {
             PropertyValue::Double(v) => Ok(*v),
-            _ => Err(ConversionError::TypeMismatch {
+            _ => Err(DataError::ConversionError(ConversionError::TypeMismatch {
                 expected: DataType::Double,
                 actual: self.data_type(),
-            }),
+            })),
         }
     }
 
-    pub fn as_string(&self) -> Result<String, ConversionError> {
+    pub fn as_string(&self) -> Result<String, DataError> {
         match self {
             PropertyValue::String(v) => Ok(v.clone()),
-            _ => Err(ConversionError::TypeMismatch {
+            _ => Err(DataError::ConversionError(ConversionError::TypeMismatch {
                 expected: DataType::String,
                 actual: self.data_type(),
-            }),
+            })),
         }
     }
 
-    pub fn as_boolean(&self) -> Result<bool, ConversionError> {
+    pub fn as_boolean(&self) -> Result<bool, DataError> {
         match self {
             PropertyValue::Boolean(v) => Ok(*v),
-            _ => Err(ConversionError::TypeMismatch {
+            _ => Err(DataError::ConversionError(ConversionError::TypeMismatch {
                 expected: DataType::Boolean,
                 actual: self.data_type(),
-            }),
+            })),
         }
     }
 
-    pub fn as_map(&self) -> Result<&HashMap<String, PropertyValue>, ConversionError> {
+    pub fn as_map(&self) -> Result<&HashMap<String, PropertyValue>, DataError> {
         match self {
             PropertyValue::Map(v) => Ok(v),
-            _ => Err(ConversionError::TypeMismatch {
+            _ => Err(DataError::ConversionError(ConversionError::TypeMismatch {
                 expected: DataType::Map,
                 actual: self.data_type(),
-            }),
+            })),
         }
     }
 
-    pub fn as_list(&self) -> Result<&Vec<PropertyValue>, ConversionError> {
+    pub fn as_list(&self) -> Result<&Vec<PropertyValue>, DataError> {
         match self {
             PropertyValue::List(v) => Ok(v),
-            _ => Err(ConversionError::TypeMismatch {
+            _ => Err(DataError::ConversionError(ConversionError::TypeMismatch {
                 expected: DataType::List,
                 actual: self.data_type(),
-            }),
+            })),
         }
     }
-}
-
-/// Type conversion errors
-#[derive(Debug, Error, PartialEq)]
-pub enum ConversionError {
-    #[error("Type mismatch: expected {expected:?}, got {actual:?}")]
-    TypeMismatch {
-        expected: DataType,
-        actual: DataType,
-    },
-    #[error("Null value not allowed")]
-    NullValue,
 }
 
 /// Primary key type constraints, supports long and string types currently
@@ -213,19 +202,19 @@ mod tests {
         let value = PropertyValue::Long(42);
         assert_eq!(
             value.as_int(),
-            Err(ConversionError::TypeMismatch {
+            Err(DataError::ConversionError(ConversionError::TypeMismatch {
                 expected: DataType::Int,
                 actual: DataType::Long,
-            })
+            }))
         );
 
         let value = PropertyValue::Float(42.0);
         assert_eq!(
             value.as_int(),
-            Err(ConversionError::TypeMismatch {
+            Err(DataError::ConversionError(ConversionError::TypeMismatch {
                 expected: DataType::Int,
                 actual: DataType::Float,
-            })
+            }))
         );
     }
 
@@ -237,10 +226,10 @@ mod tests {
         let value = PropertyValue::Int(42);
         assert_eq!(
             value.as_long(),
-            Err(ConversionError::TypeMismatch {
+            Err(DataError::ConversionError(ConversionError::TypeMismatch {
                 expected: DataType::Long,
                 actual: DataType::Int,
-            })
+            }))
         );
     }
 
@@ -252,10 +241,10 @@ mod tests {
         let value = PropertyValue::Int(42);
         assert_eq!(
             value.as_float(),
-            Err(ConversionError::TypeMismatch {
+            Err(DataError::ConversionError(ConversionError::TypeMismatch {
                 expected: DataType::Float,
                 actual: DataType::Int,
-            })
+            }))
         );
     }
 
@@ -267,10 +256,10 @@ mod tests {
         let value = PropertyValue::Float(42.0);
         assert_eq!(
             value.as_double(),
-            Err(ConversionError::TypeMismatch {
+            Err(DataError::ConversionError(ConversionError::TypeMismatch {
                 expected: DataType::Double,
                 actual: DataType::Float,
-            })
+            }))
         );
     }
 
@@ -282,10 +271,10 @@ mod tests {
         let value = PropertyValue::Int(42);
         assert_eq!(
             value.as_string(),
-            Err(ConversionError::TypeMismatch {
+            Err(DataError::ConversionError(ConversionError::TypeMismatch {
                 expected: DataType::String,
                 actual: DataType::Int,
-            })
+            }))
         );
     }
 
@@ -297,10 +286,10 @@ mod tests {
         let value = PropertyValue::String("hello".into());
         assert_eq!(
             value.as_boolean(),
-            Err(ConversionError::TypeMismatch {
+            Err(DataError::ConversionError(ConversionError::TypeMismatch {
                 expected: DataType::Boolean,
                 actual: DataType::String,
-            })
+            }))
         );
     }
 
@@ -315,10 +304,10 @@ mod tests {
         let value = PropertyValue::String("hello".into());
         assert_eq!(
             value.as_map(),
-            Err(ConversionError::TypeMismatch {
+            Err(DataError::ConversionError(ConversionError::TypeMismatch {
                 expected: DataType::Map,
                 actual: DataType::String,
-            })
+            }))
         );
     }
 
@@ -330,10 +319,10 @@ mod tests {
         let value = PropertyValue::String("hello".into());
         assert_eq!(
             value.as_list(),
-            Err(ConversionError::TypeMismatch {
+            Err(DataError::ConversionError(ConversionError::TypeMismatch {
                 expected: DataType::List,
                 actual: DataType::String,
-            })
+            }))
         );
     }
 

@@ -17,7 +17,6 @@ pub struct Timestamp(pub u64);
 impl Timestamp {
     // The start of the transaction ID range.
     pub(super) const TXN_ID_START: u64 = 1 << 63;
-    pub(super) const TXN_START_TS: Self = Self(Self::TXN_ID_START);
 
     /// Generates a new transaction ID, ensuring atomicity using an atomic counter.
     pub fn new_txn_id() -> Self {

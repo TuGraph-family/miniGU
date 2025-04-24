@@ -7,7 +7,9 @@ use crossbeam_skiplist::SkipMap;
 use dashmap::DashSet;
 
 use super::memory_graph::MemoryGraph;
-use crate::error::{StorageError, StorageResult};
+use crate::error::{
+    EdgeNotFoundError, StorageError, StorageResult, TransactionError, VertexNotFoundError,
+};
 use crate::model::edge::{Edge, Neighbor};
 use crate::storage::StorageTransaction;
 use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
@@ -75,10 +77,9 @@ impl MemTxnManager {
 
         self.periodic_garbage_collect(txn.graph())?;
 
-        Err(StorageError::TransactionError(format!(
-            "Transaction {:?} not found",
-            txn.txn_id(),
-        )))
+        Err(StorageError::Transaction(
+            TransactionError::TransactionNotFound(format!("{:?}", txn.txn_id())),
+        ))
     }
 
     /// Periodlically garbage collect expired transactions.
@@ -297,12 +298,19 @@ impl MemTransaction {
                 .graph
                 .vertices
                 .get(&vid)
-                .ok_or(StorageError::VertexNotFound(vid.to_string()))?;
+                .ok_or(StorageError::VertexNotFound(
+                    VertexNotFoundError::VertexNotFound(vid.to_string()),
+                ))?;
 
             let current = entry.chain.current.read().unwrap();
             // Check if the vertex was modified after the transaction started.
             if current.commit_ts != self.txn_id && current.commit_ts > self.start_ts {
-                return Err(StorageError::ReadConflict(vid.to_string()));
+                return Err(StorageError::Transaction(
+                    TransactionError::ReadWriteConflict(format!(
+                        "Vertex is being modified by transaction {:?}",
+                        current.commit_ts
+                    )),
+                ));
             }
         }
 
@@ -312,12 +320,19 @@ impl MemTransaction {
                 .graph
                 .edges
                 .get(&eid)
-                .ok_or(StorageError::EdgeNotFound(eid.to_string()))?;
+                .ok_or(StorageError::EdgeNotFound(EdgeNotFoundError::EdgeNotFound(
+                    eid.to_string(),
+                )))?;
 
             let current = entry.chain.current.read().unwrap();
             // Check if the edge was modified after the transaction started.
             if current.commit_ts != self.txn_id && current.commit_ts > self.start_ts {
-                return Err(StorageError::ReadConflict(eid.to_string()));
+                return Err(StorageError::Transaction(
+                    TransactionError::ReadWriteConflict(format!(
+                        "Edge is being modified by transaction {:?}",
+                        current.commit_ts
+                    )),
+                ));
             }
         }
 
@@ -400,10 +415,9 @@ impl StorageTransaction for MemTransaction {
         let commit_ts = Timestamp::new_commit_ts();
         if let Err(e) = self.commit_ts.set(commit_ts) {
             self.abort()?;
-            return Err(StorageError::TransactionError(format!(
-                "Transaction {:?} already committed",
-                e
-            )));
+            return Err(StorageError::Transaction(
+                TransactionError::TransactionAlreadyCommitted(format!("{:?}", e)),
+            ));
         }
 
         // Step 3: Process write in undo buffer.
