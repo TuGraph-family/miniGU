@@ -232,3 +232,5 @@ INSERT (n:Entity {id: 39, name: 'Bob39', deleted:0, gen_time:100});
 MATCH (n:Entity{id: 38}), (m:Entity{id: 39}) INSERT (n)-[r:Rel{timestamp: 7,deleted:0}]->(m);
 MATCH (n:Entity{id: 39}), (m:Entity{id: 30}) INSERT (n)-[r:Rel{timestamp: 8,deleted:0}]->(m);
 MATCH p=(n0:Entity where n0.id = 30) <- [r1:Rel] - {1, 2} (n1:Entity) return p INTERSECT  MATCH p=(n0:Entity where n0.id = 30) <- [r1:Rel] - {1, 2} (n1:Entity) - [r2:Rel] -> (n2:Entity where n2.id=381) RETURN SUBPATH(p, 0, -2) as p;
+
+DROP GRAPH test_graph;
