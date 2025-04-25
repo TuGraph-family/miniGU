@@ -11,7 +11,7 @@ use crate::wal::entry::WalEntry;
 const LEN_PREFIX_SIZE: usize = 4;
 const BUF_WRITER_CAPACITY: usize = 1024 * 1024;
 
-pub trait WalTrait {
+pub trait Wal {
     type Error;
     type Entry;
     type Iter: WalEntryIteratorTrait<Error = Self::Error, Entry = Self::Entry>;
@@ -36,7 +36,7 @@ pub trait WalTrait {
     fn new_reader(&self) -> Result<Self::Iter, Self::Error>;
 }
 
-pub trait WalEntryIteratorTrait {
+pub trait WalEntryIterator {
     type Error;
     type Entry;
 
@@ -50,7 +50,7 @@ pub struct StorageWal {
     reader: BufReader<File>,
 }
 
-impl WalTrait for StorageWal {
+impl Wal for StorageWal {
     type Entry = WalEntry;
     type Error = WalError;
     type Iter = StorageWalEntryIterator;
@@ -132,7 +132,7 @@ pub struct StorageWalEntryIterator {
     reader: BufReader<File>,
 }
 
-impl WalEntryIteratorTrait for StorageWalEntryIterator {
+impl WalEntryIterator for StorageWalEntryIterator {
     type Entry = WalEntry;
     type Error = WalError;
 
