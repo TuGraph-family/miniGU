@@ -25,6 +25,9 @@ pub struct MemTxnManager {
     /// Commit lock to enforce serial commit order
     pub(super) commit_lock: Mutex<()>,
     pub(super) latest_commit_ts: AtomicU64,
+    /// The commit timestamp and transaction id
+    commit_ts_counter: AtomicU64,
+    txn_id_counter: AtomicU64,
     /// The watermark is the minimum commit timestamp of the active transactions.
     pub(super) watermark: AtomicU64,
     last_gc_ts: Mutex<u64>,
@@ -36,7 +39,9 @@ impl Default for MemTxnManager {
             active_txns: SkipMap::new(),
             committed_txns: SkipMap::new(),
             commit_lock: Mutex::new(()),
-            latest_commit_ts: AtomicU64::new(Timestamp::new_commit_ts().0),
+            commit_ts_counter: AtomicU64::new(1),
+            txn_id_counter: AtomicU64::new(Timestamp::TXN_ID_START + 1),
+            latest_commit_ts: AtomicU64::new(0),
             watermark: AtomicU64::new(0),
             last_gc_ts: Mutex::new(0),
         }
@@ -46,14 +51,7 @@ impl Default for MemTxnManager {
 impl MemTxnManager {
     /// Create a new MemTxnManager
     pub fn new() -> Self {
-        Self {
-            active_txns: SkipMap::new(),
-            committed_txns: SkipMap::new(),
-            commit_lock: Mutex::new(()),
-            latest_commit_ts: AtomicU64::new(Timestamp::new_commit_ts().0),
-            watermark: AtomicU64::new(0),
-            last_gc_ts: Mutex::new(0),
-        }
+        Self::default()
     }
 
     /// Register a new transaction.
@@ -80,6 +78,16 @@ impl MemTxnManager {
         Err(StorageError::Transaction(
             TransactionError::TransactionNotFound(format!("{:?}", txn.txn_id())),
         ))
+    }
+
+    /// Generate a new commit timestamp.
+    pub fn new_commit_ts(&self) -> Timestamp {
+        Timestamp::with_ts(self.commit_ts_counter.fetch_add(1, Ordering::Relaxed))
+    }
+
+    /// Generate a new transaction id.
+    pub fn new_txn_id(&self) -> Timestamp {
+        Timestamp::with_ts(self.txn_id_counter.fetch_add(1, Ordering::Relaxed))
     }
 
     /// Periodlically garbage collect expired transactions.
@@ -412,7 +420,7 @@ impl StorageTransaction for MemTransaction {
         }
 
         // Step 2: Assign a commit timestamp (atomic operation).
-        let commit_ts = Timestamp::new_commit_ts();
+        let commit_ts = self.graph().txn_manager.new_commit_ts();
         if let Err(e) = self.commit_ts.set(commit_ts) {
             self.abort()?;
             return Err(StorageError::Transaction(
@@ -563,13 +571,10 @@ impl StorageTransaction for MemTransaction {
 
 #[cfg(test)]
 mod tests {
-    use serial_test::serial;
-
     use super::*;
     use crate::transaction::IsolationLevel;
 
     #[test]
-    #[serial]
     fn test_watermark_tracking() {
         let graph = MemoryGraph::new();
         let txn_start_ts = graph.txn_manager.latest_commit_ts.load(Ordering::Acquire);

@@ -314,9 +314,8 @@ impl MemoryGraph {
         isolation_level: IsolationLevel,
     ) -> Arc<MemTransaction> {
         // Allocate a new transaction ID and read timestamp.
-        let txn_id = Timestamp::new_txn_id();
-        let start_ts =
-            Timestamp::with_commit_ts(self.txn_manager.latest_commit_ts.load(Ordering::SeqCst));
+        let txn_id = self.txn_manager.new_txn_id();
+        let start_ts = Timestamp::with_ts(self.txn_manager.latest_commit_ts.load(Ordering::SeqCst));
 
         // Register the transaction as active (used for garbage collection and visibility checks).
         let txn = Arc::new(MemTransaction::with_memgraph(

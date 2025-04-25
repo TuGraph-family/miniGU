@@ -14,7 +14,7 @@ const BUF_WRITER_CAPACITY: usize = 1024 * 1024;
 pub trait Wal {
     type Error;
     type Entry;
-    type Iter: WalEntryIteratorTrait<Error = Self::Error, Entry = Self::Entry>;
+    type Iter: WalEntryIterator<Error = Self::Error, Entry = Self::Entry>;
 
     /// Opens a file (supports both read and write)
     fn open(path: impl AsRef<Path>) -> Result<Self, Self::Error>
@@ -165,7 +165,7 @@ mod tests {
     use std::path::PathBuf;
 
     use super::super::entry::{Operation, WalEntry};
-    use super::{StorageWal, WalEntryIteratorTrait, WalTrait};
+    use super::{StorageWal, Wal, WalEntryIterator};
 
     /// Test the basic write and read operations.
     #[test]
