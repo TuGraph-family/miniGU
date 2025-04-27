@@ -1043,8 +1043,8 @@ mod tests {
         }
         {
             let iter2 = txn2.iter_vertices().filter_map(|v| v.ok()).filter(|v| {
-                v.properties()[1].as_int().unwrap() >= 20
-                    && v.properties()[1].as_int().unwrap() <= 25
+                v.properties()[1].as_int().unwrap() >= &20
+                    && v.properties()[1].as_int().unwrap() <= &25
             });
             let mut count = 0;
             for _ in iter2 {
