@@ -103,13 +103,30 @@ impl VersionedVertex {
         }
     }
 
+    /// Returns the visible version of the vertex.
     pub fn get_visible(&self, txn: &MemTransaction) -> StorageResult<Vertex> {
         let current = self.chain.current.read().unwrap();
         let mut visible_vertex = current.data.clone();
         // If the vertex is modified by the same transaction, or the transaction is before the
         // vertex was modified, return the vertex
         let commit_ts = current.commit_ts;
-        if commit_ts == txn.txn_id() || commit_ts <= txn.start_ts() {
+        // If the commit timestamp of current is equal to the transaction id of txn, it means
+        // the vertex is modified by the same transaction.
+        // If the commit timestamp of current is less than the start timestamp of txn, it means
+        // the vertex was modified before the transaction started, and the corresponding transaction
+        // has been committed.
+        if (commit_ts.is_txn_id() && commit_ts == txn.txn_id())
+            || (commit_ts.is_commit_ts() && commit_ts <= txn.start_ts())
+        {
+            // Check if the vertex is tombstone
+            if visible_vertex.is_tombstone() {
+                return Err(StorageError::Transaction(
+                    TransactionError::VersionNotVisible(format!(
+                        "Vertex is tombstone for {:?}",
+                        txn.txn_id()
+                    )),
+                ));
+            }
             Ok(visible_vertex)
         } else {
             // Otherwise, apply the deltas to the vertex
@@ -130,15 +147,13 @@ impl VersionedVertex {
         }
     }
 
+    /// Returns whether the vertex is visible.
     pub(super) fn is_visible(&self, txn: &MemTransaction) -> bool {
         // Check if the vertex is visible based on the transaction's start timestamp
         let current = self.chain.current.read().unwrap();
-        // If the commit timestamp of current is equal to the transaction id of txn, it means
-        // the vertex is modified by the same transaction.
-        // If the commit timestamp of current is less than the start timestamp of txn, it means
-        // the vertex was modified before the transaction started, and the corresponding transaction
-        // has been committed.
-        if current.commit_ts == txn.txn_id() || current.commit_ts <= txn.start_ts() {
+        if (current.commit_ts.is_txn_id() && current.commit_ts == txn.txn_id())
+            || (current.commit_ts.is_commit_ts() && current.commit_ts <= txn.start_ts())
+        {
             !current.data.is_tombstone()
         } else {
             let undo_ptr = self.chain.undo_ptr.read().unwrap().clone();
@@ -146,6 +161,9 @@ impl VersionedVertex {
             let apply_deltas = |undo_entry: &UndoEntry| {
                 if let DeltaOp::DelVertex(_) = undo_entry.delta() {
                     is_visible = false;
+                }
+                if let DeltaOp::CreateVertex(_) = undo_entry.delta() {
+                    is_visible = true;
                 }
             };
             MemTransaction::apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
@@ -192,10 +210,22 @@ impl VersionedEdge {
         }
     }
 
+    /// Returns the visible version of the edge.
     pub fn get_visible(&self, txn: &MemTransaction) -> StorageResult<Edge> {
         let current = self.chain.current.read().unwrap();
         let mut current_edge = current.data.clone();
-        if current.commit_ts == txn.txn_id() || current.commit_ts <= txn.start_ts() {
+        if (current.commit_ts.is_txn_id() && current.commit_ts == txn.txn_id())
+            || (current.commit_ts.is_commit_ts() && current.commit_ts <= txn.start_ts())
+        {
+            // Check if the edge is tombstone
+            if current_edge.is_tombstone() {
+                return Err(StorageError::Transaction(
+                    TransactionError::VersionNotVisible(format!(
+                        "Edge is tombstone for {:?}",
+                        txn.txn_id()
+                    )),
+                ));
+            }
             Ok(current_edge)
         } else {
             let undo_ptr = self.chain.undo_ptr.read().unwrap().clone();
@@ -214,13 +244,14 @@ impl VersionedEdge {
         }
     }
 
+    /// Returns whether the edge is visible.
     pub fn is_visible(&self, txn: &MemTransaction) -> bool {
         // Check if the src and dst vertices of edge are visible
         let (src, dst);
         {
-            let read_guard = self.chain.current.read().unwrap();
-            src = read_guard.data.dst_id();
-            dst = read_guard.data.src_id();
+            let current = self.chain.current.read().unwrap();
+            src = current.data.dst_id();
+            dst = current.data.src_id();
         }
         if txn
             .graph()
@@ -237,7 +268,9 @@ impl VersionedEdge {
         {
             // Check if the vertex is visible based on the transaction's start timestamp
             let current = self.chain.current.read().unwrap();
-            if current.commit_ts == txn.txn_id() || current.commit_ts <= txn.start_ts() {
+            if (current.commit_ts.is_txn_id() && current.commit_ts == txn.txn_id())
+                || (current.commit_ts.is_commit_ts() && current.commit_ts <= txn.start_ts())
+            {
                 !current.data.is_tombstone()
             } else {
                 let undo_ptr = self.chain.undo_ptr.read().unwrap().clone();
