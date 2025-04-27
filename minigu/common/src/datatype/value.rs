@@ -569,7 +569,7 @@ mod tests {
     #[test]
     fn test_into_boolean() {
         let value = PropertyValue::Boolean(true);
-        assert_eq!(value.into_boolean(), true);
+        assert!(value.into_boolean());
     }
 
     #[test]
