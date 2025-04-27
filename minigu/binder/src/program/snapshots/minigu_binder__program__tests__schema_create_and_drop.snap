@@ -1,0 +1,18 @@
+---
+source: minigu/binder/src/program/mod.rs
+assertion_line: 244
+expression: stmt
+---
+Ok:
+  at: ~
+  binding_variable_def: []
+  statement:
+    Catalog:
+      - CreateSchema:
+          path:
+            segments:
+              - a
+              - b
+              - c
+          if_not_exists: true
+  next_statement: []

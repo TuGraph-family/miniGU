@@ -60,3 +60,4 @@ pub struct CatalogObjectRef {
     pub schema: OptSpanned<SchemaRef>,
     pub objects: VecSpanned<Ident>,
 }
+

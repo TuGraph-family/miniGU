@@ -406,6 +406,7 @@ dependencies = [
  "iana-time-zone",
  "js-sys",
  "num-traits",
+ "serde",
  "wasm-bindgen",
  "windows-link",
 ]
@@ -1156,6 +1157,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b8dd856d451cc0da70e2ef2ce95a18e39a93b7558bedf10201ad28503f918568"
 
 [[package]]
+name = "matches"
+version = "0.1.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2532096657941c2fea9c289d370a250971c689d4f143798ff67113ec042024a5"
+
+[[package]]
 name = "memchr"
 version = "2.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1207,8 +1214,15 @@ dependencies = [
 name = "minigu-binder"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "gql-parser",
+ "insta",
+ "macro_rules_attribute",
+ "matches",
+ "miette",
+ "minigu-catalog",
  "serde",
+ "smol_str",
  "thiserror",
 ]
 
@@ -1216,7 +1230,9 @@ dependencies = [
 name = "minigu-catalog"
 version = "0.1.0"
 dependencies = [
+ "gql-parser",
  "minigu-common",
+ "serde",
  "smallvec",
  "smol_str",
  "thiserror",

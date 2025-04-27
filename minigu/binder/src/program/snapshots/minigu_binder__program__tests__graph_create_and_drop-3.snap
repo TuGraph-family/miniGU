@@ -1,0 +1,19 @@
+---
+source: minigu/binder/src/program/mod.rs
+assertion_line: 314
+expression: stmt
+---
+Ok:
+  at: ~
+  binding_variable_def: []
+  statement:
+    Catalog:
+      - DropGraph:
+          path:
+            schema:
+              segments:
+                - default
+            object:
+              - 1
+          if_exists: false
+  next_statement: []
