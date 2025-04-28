@@ -23,7 +23,7 @@ macro_rules! update_properties {
     ($self:expr, $id:expr, $entry:expr, $txn:expr, $indices:expr, $props:expr, $op:ident) => {{
         // Acquire the lock to modify the properties of the vertex/edge
         let mut current = $entry.chain.current.write().unwrap();
-        check_commit_timestamp(current.commit_ts, $txn)?;
+        check_write_conflict(current.commit_ts, $txn)?;
 
         // Create a new version with updated properties.
         current.data.set_props(&$indices, $props);
@@ -394,17 +394,28 @@ impl Graph for MemoryGraph {
         // Step 2: Perform MVCC visibility check.
         let current_version = versioned_vertex.chain.current.read().unwrap();
         let commit_ts = current_version.commit_ts;
-        // Check if the vertex is modified by other transactions
-        if commit_ts.is_txn_id() && commit_ts != txn.txn_id() {
-            return Err(StorageError::Transaction(
-                TransactionError::WriteReadConflict(format!(
-                    "Vertex is being modified by transaction {:?}",
-                    commit_ts
-                )),
-            ));
+        match txn.isolation_level() {
+            IsolationLevel::Serializable => {
+                // Check if the vertex is modified by other transactions
+                if commit_ts.is_txn_id() && commit_ts != txn.txn_id() {
+                    return Err(StorageError::Transaction(
+                        TransactionError::WriteReadConflict(format!(
+                            "Vertex is being modified by transaction {:?}",
+                            commit_ts
+                        )),
+                    ));
+                }
+                txn.vertex_reads.insert(vid);
+            }
+            IsolationLevel::Snapshot => {
+                // Optimistic read allowed, no read set recording
+            }
         }
+        // The vertex is visible, which means it is either modified by txn or nobody
         let mut visible_vertex = current_version.data.clone();
-        if commit_ts != txn.txn_id() && commit_ts > txn.start_ts() {
+        // Only when the vertex is modified by nobody and txn started before the vertex was
+        // modified, we need to apply the deltas to the vertex
+        if commit_ts.is_commit_ts() && commit_ts > txn.start_ts() {
             let undo_ptr = versioned_vertex.chain.undo_ptr.read().unwrap().clone();
             let apply_deltas = |undo_entry: &UndoEntry| match undo_entry.delta() {
                 DeltaOp::CreateVertex(original) => visible_vertex = original.clone(),
@@ -419,12 +430,7 @@ impl Graph for MemoryGraph {
             MemTransaction::apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
         }
 
-        // Step 3: Record the vertex read set for conflict detection.
-        if let IsolationLevel::Serializable = txn.isolation_level() {
-            txn.vertex_reads.insert(visible_vertex.vid());
-        }
-
-        // Step 4: Check for logical deletion.
+        // Step 3: Check for logical deletion.
         if visible_vertex.is_tombstone() {
             return Err(StorageError::VertexNotFound(
                 VertexNotFoundError::VertexTombstone(vid.to_string()),
@@ -444,8 +450,28 @@ impl Graph for MemoryGraph {
         // Step 2: Perform MVCC visibility check.
         let current_version = versioned_edge.chain.current.read().unwrap();
         let commit_ts = current_version.commit_ts;
+        match txn.isolation_level() {
+            IsolationLevel::Serializable => {
+                // Check if the edge is modified by other transactions
+                if commit_ts.is_txn_id() && commit_ts != txn.txn_id() {
+                    return Err(StorageError::Transaction(
+                        TransactionError::WriteReadConflict(format!(
+                            "Edge is being modified by transaction {:?}",
+                            commit_ts
+                        )),
+                    ));
+                }
+                txn.edge_reads.insert(eid);
+            }
+            IsolationLevel::Snapshot => {
+                // Optimistic read allowed, no read set recording
+            }
+        }
+        // The edge is visible, which means it is either modified by txn or nobody
         let mut visible_edge = current_version.data.clone();
-        if commit_ts != txn.txn_id() && txn.start_ts() < commit_ts {
+        // Only when the edge is modified by nobody and txn started before the edge was
+        // modified, we need to apply the deltas to the edge
+        if commit_ts.is_commit_ts() && commit_ts > txn.start_ts() {
             let undo_ptr = versioned_edge.chain.undo_ptr.read().unwrap().clone();
             let apply_deltas = |undo_entry: &UndoEntry| match undo_entry.delta() {
                 DeltaOp::CreateEdge(original) => visible_edge = original.clone(),
@@ -460,12 +486,7 @@ impl Graph for MemoryGraph {
             MemTransaction::apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
         }
 
-        // Step 3: Record the edge read set for conflict detection.
-        if let IsolationLevel::Serializable = txn.isolation_level() {
-            txn.edge_reads.insert(eid);
-        }
-
-        // Step 4: Check for logical deletion (tombstone).
+        // Step 3: Check for logical deletion (tombstone).
         if visible_edge.is_tombstone() {
             return Err(StorageError::EdgeNotFound(
                 EdgeNotFoundError::EdgeTombstone(eid.to_string()),
@@ -508,9 +529,9 @@ impl MutGraph for MemoryGraph {
             .entry(vid)
             .or_insert_with(|| VersionedVertex::with_txn_id(vertex, txn.txn_id()));
 
-        // Conflict detection: Ensure the vertex does not exist
         let current = entry.chain.current.read().unwrap();
-        check_commit_timestamp(current.commit_ts, txn)?;
+        // Conflict detection: ensure the vertex is visible or not modified by other transactions
+        check_write_conflict(current.commit_ts, txn)?;
 
         // Record the vertex creation in the transaction
         let delta = DeltaOp::DelVertex(vid);
@@ -544,9 +565,9 @@ impl MutGraph for MemoryGraph {
             .entry(eid)
             .or_insert_with(|| VersionedEdge::with_modified_ts(edge, txn.txn_id()));
 
-        // Conflict detection: Ensure the edge does not exist
         let current = entry.chain.current.read().unwrap();
-        check_commit_timestamp(current.commit_ts, txn)?;
+        // Conflict detection: ensure the edge is visible or not modified by other transactions
+        check_write_conflict(current.commit_ts, txn)?;
 
         // Record the edge creation in the transaction
         let delta_edge = DeltaOp::DelEdge(eid);
@@ -580,7 +601,7 @@ impl MutGraph for MemoryGraph {
         ))?;
 
         let mut current = entry.chain.current.write().unwrap();
-        check_commit_timestamp(current.commit_ts, txn)?;
+        check_write_conflict(current.commit_ts, txn)?;
 
         // Delete all edges associated with the vertex
         if let Some(adjacency_container) = self.adjacency_list.get(&vid) {
@@ -619,7 +640,7 @@ impl MutGraph for MemoryGraph {
         ))?;
 
         let mut current = entry.chain.current.write().unwrap();
-        check_commit_timestamp(current.commit_ts, txn)?;
+        check_write_conflict(current.commit_ts, txn)?;
 
         // Mark the edge as deleted
         let tombstone = Edge::tombstone(current.data.clone());
@@ -675,18 +696,19 @@ impl MutGraph for MemoryGraph {
 
 /// Checks if the vertex is modified by other transactions or has a greater commit timestamp than
 /// the current transaction.
+/// Current check applies to both Snapshot Isolation and Serializable isolation levels.
 #[inline]
-fn check_commit_timestamp(commit_ts: Timestamp, txn: &MemTransaction) -> StorageResult<()> {
+fn check_write_conflict(commit_ts: Timestamp, txn: &MemTransaction) -> StorageResult<()> {
     match commit_ts {
-        // If the vertex is modified by other transactions, return write-read conflict
+        // If the vertex is modified by other transactions, return write-write conflict
         ts if ts.is_txn_id() && ts != txn.txn_id() => Err(StorageError::Transaction(
-            TransactionError::WriteReadConflict(format!(
+            TransactionError::WriteWriteConflict(format!(
                 "Data is being modified by transaction {:?}",
                 ts
             )),
         )),
         // If the vertex is committed by other transactions and its commit timestamp is greater
-        // than the start timestamp of the current transaction, return version not found
+        // than the start timestamp of the current transaction, return version not visible
         ts if ts.is_commit_ts() && ts > txn.start_ts() => Err(StorageError::Transaction(
             TransactionError::VersionNotVisible(format!(
                 "Data version not visible for {:?}",

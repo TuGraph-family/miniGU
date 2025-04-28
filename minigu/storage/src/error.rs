@@ -19,6 +19,8 @@ pub enum TransactionError {
     WriteReadConflict(String),
     #[error("Read-Write conflict: {0}")]
     ReadWriteConflict(String),
+    #[error("Write-Write conflict: {0}")]
+    WriteWriteConflict(String),
     #[error("Version not visible: {0}")]
     VersionNotVisible(String),
     #[error("Transaction not found: {0}")]
