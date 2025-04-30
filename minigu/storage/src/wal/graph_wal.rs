@@ -70,7 +70,7 @@ pub struct GraphWal {
 }
 
 impl StorageWal for GraphWal {
-    type LogIterator = GraphWalIter<RedoEntry>;
+    type LogIterator = impl Iterator<Item = StorageResult<Self::Record>>;
     type Record = RedoEntry;
 
     /// Open existing log or create a new one at `path`.
@@ -99,25 +99,38 @@ impl StorageWal for GraphWal {
         let mut hasher = Hasher::new();
         hasher.update(&payload);
         let checksum = hasher.finalize();
-
         let len = payload.len() as u32;
-        self.file
-            .write_all(&len.to_le_bytes())
+
+        // Get current position before writing to restore on error
+        let original_pos = self.file.seek(SeekFrom::Current(0))
             .map_err(|e| StorageError::Wal(WalError::Io(e)))?;
-        self.file
-            .write_all(&checksum.to_le_bytes())
-            .map_err(|e| StorageError::Wal(WalError::Io(e)))?;
-        self.file
-            .write_all(&payload)
-            .map_err(|e| StorageError::Wal(WalError::Io(e)))?;
-        Ok(())
+
+        // Write all data in one operation for atomicity
+        let mut data = Vec::with_capacity(HEADER_SIZE + payload.len());
+        data.extend_from_slice(&len.to_le_bytes());
+        data.extend_from_slice(&checksum.to_le_bytes());
+        data.extend_from_slice(&payload);
+
+        match self.file.write_all(&data) {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                // On error, truncate back to original position
+                self.file.seek(SeekFrom::Start(original_pos))
+                    .map_err(|e| StorageError::Wal(WalError::Io(e)))?;
+                self.file.get_ref().set_len(original_pos)
+                    .map_err(|e| StorageError::Wal(WalError::Io(e)))?;
+                Err(StorageError::Wal(WalError::Io(e)))
+            }
+        }
     }
 
     /// Flush internal buffer and fsync to guarantee durability.
     fn flush(&mut self) -> StorageResult<()> {
+        // Flush to buffer pool of OS but don't guarantee durability
         self.file
             .flush()
             .map_err(|e| StorageError::Wal(WalError::Io(e)))?;
+        // So, we should then flush wal to disk
         self.file
             .get_ref()
             .sync_data()
@@ -125,17 +138,55 @@ impl StorageWal for GraphWal {
     }
 
     fn iter(&self) -> StorageResult<Self::LogIterator> {
-        let mut file = self
+        let mut reader = self
             .file
             .get_ref()
             .try_clone()
             .map_err(|e| StorageError::Wal(WalError::Io(e)))?;
         // Seek to the beginning of the file
-        file.seek(std::io::SeekFrom::Start(0))
+        reader.seek(std::io::SeekFrom::Start(0))
             .map_err(|e| StorageError::Wal(WalError::Io(e)))?;
-        Ok(GraphWalIter {
-            reader: BufReader::new(file),
-            _phantom: PhantomData,
+
+        Ok(gen move {
+            const LEN_OFFSET: usize = 0;
+            const LEN_SIZE: usize = 4;
+            const CHECKSUM_OFFSET: usize = 4;
+            const CHECKSUM_SIZE: usize = 4;
+            loop {
+                let mut header = [0u8; HEADER_SIZE];
+                if let Err(e) = reader.read_exact(&mut header) {
+                    // Normal EOF – stop iteration
+                    if e.kind() == io::ErrorKind::UnexpectedEof {
+                        println!("enter the bd");
+                        return;
+                    }
+                    yield Err(StorageError::Wal(WalError::Io(e)));
+                }
+    
+                let len = u32::from_le_bytes(
+                    header[LEN_OFFSET..LEN_OFFSET + LEN_SIZE]
+                        .try_into()
+                        .unwrap(),
+                ) as usize;
+                let checksum = u32::from_le_bytes(
+                    header[CHECKSUM_OFFSET..CHECKSUM_OFFSET + CHECKSUM_SIZE]
+                        .try_into()
+                        .unwrap(),
+                );
+    
+                let mut payload = vec![0u8; len];
+                if let Err(e) = reader.read_exact(&mut payload) {
+                    yield Err(StorageError::Wal(WalError::Io(e)));
+                }
+    
+                let mut hasher = Hasher::new();
+                hasher.update(&payload);
+                if hasher.finalize() != checksum {
+                    yield Err(StorageError::Wal(WalError::ChecksumMismatch));
+                }
+    
+                yield LogRecord::from_bytes(payload);
+            }
         })
     }
 
@@ -181,59 +232,6 @@ impl GraphWal {
         self.file = new_wal.file;
 
         Ok(())
-    }
-}
-
-/// Streaming iterator over log records.
-pub struct GraphWalIter<R: LogRecord> {
-    reader: BufReader<File>,
-    _phantom: PhantomData<R>,
-}
-
-impl<R: LogRecord> Iterator for GraphWalIter<R> {
-    type Item = StorageResult<R>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        const LEN_OFFSET: usize = 0;
-        const LEN_SIZE: usize = 4;
-        const CHECKSUM_OFFSET: usize = 4;
-        const CHECKSUM_SIZE: usize = 4;
-
-        let mut header = [0u8; HEADER_SIZE];
-        if let Err(e) = self.reader.read_exact(&mut header) {
-            // Normal EOF – stop iteration
-            if e.kind() == io::ErrorKind::UnexpectedEof {
-                return None;
-            }
-            return Some(Err(StorageError::Wal(WalError::Io(e))));
-        }
-
-        let len = u32::from_le_bytes(
-            header[LEN_OFFSET..LEN_OFFSET + LEN_SIZE]
-                .try_into()
-                .unwrap(),
-        ) as usize;
-        let checksum = u32::from_le_bytes(
-            header[CHECKSUM_OFFSET..CHECKSUM_OFFSET + CHECKSUM_SIZE]
-                .try_into()
-                .unwrap(),
-        );
-
-        let mut payload = vec![0u8; len];
-        if let Err(e) = self.reader.read_exact(&mut payload) {
-            return Some(Err(StorageError::Wal(WalError::Io(e))));
-        }
-
-        let mut hasher = Hasher::new();
-        hasher.update(&payload);
-        if hasher.finalize() != checksum {
-            return Some(Err(StorageError::Wal(WalError::ChecksumMismatch)));
-        }
-
-        match R::from_bytes(payload) {
-            Ok(record) => Some(Ok(record)),
-            Err(e) => Some(Err(e)),
-        }
     }
 }
 
@@ -515,6 +513,10 @@ mod tests {
             let wal = GraphWal::open(&path).unwrap();
             let mut entries = wal.iter().unwrap();
 
+            // for e in entries {
+            //     println!("{:?}", e);
+            // }
+            // unimplemented!();
             // First entry should be valid
             let first = entries.next().unwrap().unwrap();
             match &first.op {
