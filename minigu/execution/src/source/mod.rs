@@ -41,7 +41,7 @@ pub trait VertexPropertySource {
 pub trait ExpandSource {
     type ExpandIter: Iterator<Item = ExecutionResult<Vec<ArrayRef>>>;
 
-    /// Returns an iterator over the neighbors and (possibily) properties of the given vertex, if
+    /// Returns an iterator over the neighbors and (possibly) properties of the given vertex, if
     /// the vertex exists. Otherwise, return `None`.
     ///
     /// # Notes

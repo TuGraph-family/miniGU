@@ -32,6 +32,7 @@ pub enum ScalarValue {
 }
 
 impl ScalarValue {
+    #[allow(unused)]
     pub fn to_scalar_array(&self) -> ArrayRef {
         match self {
             ScalarValue::Null => Arc::new(NullArray::new(1)),
@@ -53,6 +54,7 @@ impl ScalarValue {
     }
 }
 
+#[allow(unused)]
 pub struct PropertyValue {
     name: String,
     value: ScalarValue,

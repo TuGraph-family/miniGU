@@ -16,9 +16,6 @@ members = [
     "minigu/parser",
     "minigu/storage",
     "minigu/execution",
-    "minigu/runtime",
-    "minigu/context",
-    "minigu/txn",
 ]
 resolver = "3"
 
