@@ -1,0 +1,14 @@
+[package]
+edition.workspace = true
+name = "minigu-execution"
+version = "0.1.0"
+
+[dependencies]
+arrow = { workspace = true }
+auto_impl = { workspace = true }
+itertools = { workspace = true, features = ["use_std"] }
+minigu-common = { workspace = true }
+thiserror = { workspace = true, features = ["std"] }
+
+[lints]
+workspace = true
