@@ -34,9 +34,6 @@ gql-parser = { path = "minigu/parser", features = ["std", "serde", "miette"] }
 minigu-binder = { path = "minigu/binder" }
 minigu-catalog = { path = "minigu/catalog" }
 minigu-common = { path = "minigu/common" }
-minigu-context = { path = "minigu/context" }
-minigu-runtime = { path = "minigu/runtime" }
-minigu-txn = { path = "minigu/txn" }
 
 arrow = { version = "55.0.0", default-features = false, features = [
     "prettyprint",
