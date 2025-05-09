@@ -17,6 +17,8 @@ use crate::model::edge::{Edge, Neighbor};
 use crate::model::vertex::Vertex;
 use crate::storage::{Graph, MutGraph};
 use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
+use crate::wal::StorageWal;
+use crate::wal::graph_wal::{Operation, RedoEntry};
 
 // Perform the update properties operation
 macro_rules! update_properties {
@@ -527,7 +529,7 @@ impl MutGraph for MemoryGraph {
         let entry = self
             .vertices
             .entry(vid)
-            .or_insert_with(|| VersionedVertex::with_txn_id(vertex, txn.txn_id()));
+            .or_insert_with(|| VersionedVertex::with_txn_id(vertex.clone(), txn.txn_id()));
 
         let current = entry.chain.current.read().unwrap();
         // Conflict detection: ensure the vertex is visible or not modified by other transactions
@@ -544,6 +546,15 @@ impl MutGraph for MemoryGraph {
         };
         undo_buffer.push(undo_entry.clone());
         *entry.chain.undo_ptr.write().unwrap() = Arc::downgrade(&undo_entry);
+
+        // Record redo entry
+        let lsn = txn.next_lsn();
+        let wal_entry = RedoEntry {
+            lsn,
+            txn_id: txn.txn_id(),
+            op: Operation::Delta(DeltaOp::CreateVertex(vertex)),
+        };
+        txn.redo_buffer.write().unwrap().push(wal_entry);
 
         Ok(vid)
     }
@@ -563,7 +574,7 @@ impl MutGraph for MemoryGraph {
         let entry = self
             .edges
             .entry(eid)
-            .or_insert_with(|| VersionedEdge::with_modified_ts(edge, txn.txn_id()));
+            .or_insert_with(|| VersionedEdge::with_modified_ts(edge.clone(), txn.txn_id()));
 
         let current = entry.chain.current.read().unwrap();
         // Conflict detection: ensure the edge is visible or not modified by other transactions
@@ -589,6 +600,15 @@ impl MutGraph for MemoryGraph {
             .or_insert_with(AdjacencyContainer::new)
             .incoming()
             .insert(Neighbor::new(label_id, src_id, eid));
+
+        // Write to WAL
+        let lsn = txn.next_lsn();
+        let wal_entry = RedoEntry {
+            lsn,
+            txn_id: txn.txn_id(),
+            op: Operation::Delta(DeltaOp::CreateEdge(edge)),
+        };
+        txn.redo_buffer.write().unwrap().push(wal_entry);
 
         Ok(eid)
     }
@@ -629,6 +649,15 @@ impl MutGraph for MemoryGraph {
         undo_buffer.push(undo_entry.clone());
         *entry.chain.undo_ptr.write().unwrap() = Arc::downgrade(&undo_entry);
 
+        // Write to WAL
+        let lsn = txn.next_lsn();
+        let wal_entry = RedoEntry {
+            lsn,
+            txn_id: txn.txn_id(),
+            op: Operation::Delta(DeltaOp::DelVertex(vid)),
+        };
+        txn.redo_buffer.write().unwrap().push(wal_entry);
+
         Ok(())
     }
 
@@ -654,6 +683,15 @@ impl MutGraph for MemoryGraph {
         undo_buffer.push(undo_entry.clone());
         *entry.chain.undo_ptr.write().unwrap() = Arc::downgrade(&undo_entry);
 
+        // Write to WAL
+        let lsn = txn.next_lsn();
+        let wal_entry = RedoEntry {
+            lsn,
+            txn_id: txn.txn_id(),
+            op: Operation::Delta(DeltaOp::DelEdge(eid)),
+        };
+        txn.redo_buffer.write().unwrap().push(wal_entry);
+
         Ok(())
     }
 
@@ -670,7 +708,24 @@ impl MutGraph for MemoryGraph {
             VertexNotFoundError::VertexNotFound(vid.to_string()),
         ))?;
 
-        update_properties!(self, vid, entry, txn, indices, props, SetVertexProps);
+        update_properties!(
+            self,
+            vid,
+            entry,
+            txn,
+            indices.clone(),
+            props.clone(),
+            SetVertexProps
+        );
+
+        // Write to WAL
+        let lsn = txn.next_lsn();
+        let wal_entry = RedoEntry {
+            lsn,
+            txn_id: txn.txn_id(),
+            op: Operation::Delta(DeltaOp::SetVertexProps(vid, SetPropsOp { indices, props })),
+        };
+        txn.redo_buffer.write().unwrap().push(wal_entry);
 
         Ok(())
     }
@@ -688,7 +743,24 @@ impl MutGraph for MemoryGraph {
             EdgeNotFoundError::EdgeNotFound(eid.to_string()),
         ))?;
 
-        update_properties!(self, eid, entry, txn, indices, props, SetEdgeProps);
+        update_properties!(
+            self,
+            eid,
+            entry,
+            txn,
+            indices.clone(),
+            props.clone(),
+            SetEdgeProps
+        );
+
+        // Write to WAL
+        let lsn = txn.next_lsn();
+        let wal_entry = RedoEntry {
+            lsn,
+            txn_id: txn.txn_id(),
+            op: Operation::Delta(DeltaOp::SetEdgeProps(eid, SetPropsOp { indices, props })),
+        };
+        txn.redo_buffer.write().unwrap().push(wal_entry);
 
         Ok(())
     }

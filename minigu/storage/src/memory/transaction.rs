@@ -13,6 +13,8 @@ use crate::error::{
 use crate::model::edge::{Edge, Neighbor};
 use crate::storage::StorageTransaction;
 use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
+use crate::wal::StorageWal;
+use crate::wal::graph_wal::{GraphWal, Operation, RedoEntry};
 
 const PERIODIC_GC_THRESHOLD: u64 = 50;
 
@@ -275,6 +277,11 @@ pub struct MemTransaction {
 
     // ---- Undo logs ----
     pub(super) undo_buffer: RwLock<Vec<Arc<UndoEntry>>>,
+
+    // ---- Write-ahead-log for crash recovery ----
+    pub(super) redo_buffer: RwLock<Vec<RedoEntry>>,
+    wal: Arc<RwLock<GraphWal>>,
+    next_lsn: AtomicU64,
 }
 
 impl MemTransaction {
@@ -293,6 +300,9 @@ impl MemTransaction {
             vertex_reads: DashSet::new(),
             edge_reads: DashSet::new(),
             undo_buffer: RwLock::new(Vec::new()),
+            redo_buffer: RwLock::new(Vec::new()),
+            wal: Arc::new(RwLock::new(GraphWal::open("/tmp/wal.log").unwrap())),
+            next_lsn: AtomicU64::new(0),
         }
     }
 
@@ -377,6 +387,16 @@ impl MemTransaction {
         &self.isolation_level
     }
 
+    /// Returns the WAL
+    pub fn wal(&self) -> &Arc<RwLock<GraphWal>> {
+        &self.wal
+    }
+
+    /// Returns the next LSN for the WAL
+    pub fn next_lsn(&self) -> u64 {
+        self.next_lsn.fetch_add(1, Ordering::SeqCst)
+    }
+
     /// Reconstructs a specific version of a Vertex or Edge
     /// based on the undo chain and a target timestamp
     pub(super) fn apply_deltas_for_read<T: FnMut(&UndoEntry)>(
@@ -408,6 +428,15 @@ impl StorageTransaction for MemTransaction {
     /// Commits the transaction, applying all changes atomically.
     /// Ensures serializability, updates version chains, and manages adjacency lists.
     fn commit(&self) -> StorageResult<Timestamp> {
+        // Write begin transaction to WAL
+        let lsn = self.next_lsn();
+        let wal_entry = RedoEntry {
+            lsn,
+            txn_id: self.txn_id(),
+            op: Operation::BeginTransaction(self.start_ts()),
+        };
+        self.wal().write().unwrap().append(&wal_entry)?;
+
         // Acquire the global commit lock to enforce serial execution of commits.
         let _guard = self.graph.txn_manager.commit_lock.lock().unwrap();
 
@@ -461,6 +490,25 @@ impl StorageTransaction for MemTransaction {
                 }
             }
         }
+
+        // Step 4: Write redo entry and commit to WAL
+        let redo_entries = self
+            .redo_buffer
+            .write()
+            .unwrap()
+            .drain(..)
+            .collect::<Vec<_>>();
+        for entry in redo_entries {
+            self.wal().write().unwrap().append(&entry)?;
+        }
+        let lsn = self.next_lsn();
+        let wal_entry = RedoEntry {
+            lsn,
+            txn_id: self.txn_id(),
+            op: Operation::CommitTransaction(commit_ts),
+        };
+        self.wal().write().unwrap().append(&wal_entry)?;
+        self.wal().write().unwrap().flush()?;
 
         // Step 5: Clean up transaction state and update the `latest_commit_ts`.
         self.graph
@@ -562,6 +610,16 @@ impl StorageTransaction for MemTransaction {
                 DeltaOp::RemoveLabel(_) => todo!(),
             }
         }
+
+        // Write abort to WAL
+        let lsn = self.next_lsn();
+        let wal_entry = RedoEntry {
+            lsn,
+            txn_id: self.txn_id(),
+            op: Operation::AbortTransaction,
+        };
+        self.wal().write().unwrap().append(&wal_entry)?;
+        self.wal().write().unwrap().flush()?;
 
         // Remove transaction from transaction manager
         self.graph.txn_manager.finish_transaction(self)?;
