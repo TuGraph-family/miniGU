@@ -1,4 +1,4 @@
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, RwLock, Weak};
 
 use common::datatype::types::{EdgeId, VertexId};
@@ -18,7 +18,7 @@ use crate::model::vertex::Vertex;
 use crate::storage::{Graph, MutGraph};
 use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
 use crate::wal::StorageWal;
-use crate::wal::graph_wal::{Operation, RedoEntry};
+use crate::wal::graph_wal::{GraphWal, Operation, RedoEntry};
 
 // Perform the update properties operation
 macro_rules! update_properties {
@@ -328,6 +328,31 @@ pub struct MemoryGraph {
 
     // ---- Transaction management ----
     pub(super) txn_manager: MemTxnManager,
+
+    // ---- Write-ahead-log for crash recovery ----
+    pub(super) wal_manager: WalManager,
+}
+
+pub struct WalManager {
+    pub(super) wal: Arc<RwLock<GraphWal>>,
+    pub(super) next_lsn: AtomicU64,
+}
+
+impl WalManager {
+    pub fn new() -> Self {
+        Self {
+            wal: Arc::new(RwLock::new(GraphWal::open("/tmp/wal.log").unwrap())),
+            next_lsn: AtomicU64::new(0),
+        }
+    }
+
+    pub fn next_lsn(&self) -> u64 {
+        self.next_lsn.fetch_add(1, Ordering::SeqCst)
+    }
+
+    pub fn wal(&self) -> &Arc<RwLock<GraphWal>> {
+        &self.wal
+    }
 }
 
 #[allow(dead_code)]
@@ -340,6 +365,7 @@ impl MemoryGraph {
             edges: DashMap::new(),
             adjacency_list: DashMap::new(),
             txn_manager: MemTxnManager::new(),
+            wal_manager: WalManager::new(),
         })
     }
 
@@ -548,7 +574,7 @@ impl MutGraph for MemoryGraph {
         *entry.chain.undo_ptr.write().unwrap() = Arc::downgrade(&undo_entry);
 
         // Record redo entry
-        let lsn = txn.next_lsn();
+        let lsn = self.wal_manager.next_lsn();
         let wal_entry = RedoEntry {
             lsn,
             txn_id: txn.txn_id(),
@@ -602,7 +628,7 @@ impl MutGraph for MemoryGraph {
             .insert(Neighbor::new(label_id, src_id, eid));
 
         // Write to WAL
-        let lsn = txn.next_lsn();
+        let lsn = self.wal_manager.next_lsn();
         let wal_entry = RedoEntry {
             lsn,
             txn_id: txn.txn_id(),
@@ -650,7 +676,7 @@ impl MutGraph for MemoryGraph {
         *entry.chain.undo_ptr.write().unwrap() = Arc::downgrade(&undo_entry);
 
         // Write to WAL
-        let lsn = txn.next_lsn();
+        let lsn = self.wal_manager.next_lsn();
         let wal_entry = RedoEntry {
             lsn,
             txn_id: txn.txn_id(),
@@ -684,7 +710,7 @@ impl MutGraph for MemoryGraph {
         *entry.chain.undo_ptr.write().unwrap() = Arc::downgrade(&undo_entry);
 
         // Write to WAL
-        let lsn = txn.next_lsn();
+        let lsn = self.wal_manager.next_lsn();
         let wal_entry = RedoEntry {
             lsn,
             txn_id: txn.txn_id(),
@@ -719,7 +745,7 @@ impl MutGraph for MemoryGraph {
         );
 
         // Write to WAL
-        let lsn = txn.next_lsn();
+        let lsn = self.wal_manager.next_lsn();
         let wal_entry = RedoEntry {
             lsn,
             txn_id: txn.txn_id(),
@@ -754,7 +780,7 @@ impl MutGraph for MemoryGraph {
         );
 
         // Write to WAL
-        let lsn = txn.next_lsn();
+        let lsn = self.wal_manager.next_lsn();
         let wal_entry = RedoEntry {
             lsn,
             txn_id: txn.txn_id(),

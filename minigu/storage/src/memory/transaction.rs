@@ -6,7 +6,7 @@ use common::datatype::types::{EdgeId, VertexId};
 use crossbeam_skiplist::SkipMap;
 use dashmap::DashSet;
 
-use super::memory_graph::MemoryGraph;
+use super::memory_graph::{MemoryGraph, WalManager};
 use crate::error::{
     EdgeNotFoundError, StorageError, StorageResult, TransactionError, VertexNotFoundError,
 };
@@ -280,8 +280,6 @@ pub struct MemTransaction {
 
     // ---- Write-ahead-log for crash recovery ----
     pub(super) redo_buffer: RwLock<Vec<RedoEntry>>,
-    wal: Arc<RwLock<GraphWal>>,
-    next_lsn: AtomicU64,
 }
 
 impl MemTransaction {
@@ -301,8 +299,6 @@ impl MemTransaction {
             edge_reads: DashSet::new(),
             undo_buffer: RwLock::new(Vec::new()),
             redo_buffer: RwLock::new(Vec::new()),
-            wal: Arc::new(RwLock::new(GraphWal::open("/tmp/wal.log").unwrap())),
-            next_lsn: AtomicU64::new(0),
         }
     }
 
@@ -387,16 +383,6 @@ impl MemTransaction {
         &self.isolation_level
     }
 
-    /// Returns the WAL
-    pub fn wal(&self) -> &Arc<RwLock<GraphWal>> {
-        &self.wal
-    }
-
-    /// Returns the next LSN for the WAL
-    pub fn next_lsn(&self) -> u64 {
-        self.next_lsn.fetch_add(1, Ordering::SeqCst)
-    }
-
     /// Reconstructs a specific version of a Vertex or Edge
     /// based on the undo chain and a target timestamp
     pub(super) fn apply_deltas_for_read<T: FnMut(&UndoEntry)>(
@@ -429,13 +415,16 @@ impl StorageTransaction for MemTransaction {
     /// Ensures serializability, updates version chains, and manages adjacency lists.
     fn commit(&self) -> StorageResult<Timestamp> {
         // Write begin transaction to WAL
-        let lsn = self.next_lsn();
-        let wal_entry = RedoEntry {
-            lsn,
-            txn_id: self.txn_id(),
-            op: Operation::BeginTransaction(self.start_ts()),
-        };
-        self.wal().write().unwrap().append(&wal_entry)?;
+        self.graph
+            .wal_manager
+            .wal()
+            .write()
+            .unwrap()
+            .append(&RedoEntry {
+                lsn: self.graph.wal_manager.next_lsn(),
+                txn_id: self.txn_id(),
+                op: Operation::BeginTransaction(self.start_ts()),
+            })?;
 
         // Acquire the global commit lock to enforce serial execution of commits.
         let _guard = self.graph.txn_manager.commit_lock.lock().unwrap();
@@ -499,16 +488,21 @@ impl StorageTransaction for MemTransaction {
             .drain(..)
             .collect::<Vec<_>>();
         for entry in redo_entries {
-            self.wal().write().unwrap().append(&entry)?;
+            self.graph.wal_manager.wal.write().unwrap().append(&entry)?;
         }
-        let lsn = self.next_lsn();
+        let lsn = self.graph.wal_manager.next_lsn();
         let wal_entry = RedoEntry {
             lsn,
             txn_id: self.txn_id(),
             op: Operation::CommitTransaction(commit_ts),
         };
-        self.wal().write().unwrap().append(&wal_entry)?;
-        self.wal().write().unwrap().flush()?;
+        self.graph
+            .wal_manager
+            .wal()
+            .write()
+            .unwrap()
+            .append(&wal_entry)?;
+        self.graph.wal_manager.wal().write().unwrap().flush()?;
 
         // Step 5: Clean up transaction state and update the `latest_commit_ts`.
         self.graph
@@ -612,14 +606,19 @@ impl StorageTransaction for MemTransaction {
         }
 
         // Write abort to WAL
-        let lsn = self.next_lsn();
+        let lsn = self.graph.wal_manager.next_lsn();
         let wal_entry = RedoEntry {
             lsn,
             txn_id: self.txn_id(),
             op: Operation::AbortTransaction,
         };
-        self.wal().write().unwrap().append(&wal_entry)?;
-        self.wal().write().unwrap().flush()?;
+        self.graph
+            .wal_manager
+            .wal()
+            .write()
+            .unwrap()
+            .append(&wal_entry)?;
+        self.graph.wal_manager.wal().write().unwrap().flush()?;
 
         // Remove transaction from transaction manager
         self.graph.txn_manager.finish_transaction(self)?;
