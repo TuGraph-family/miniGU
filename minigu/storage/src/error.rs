@@ -1,3 +1,5 @@
+use std::io;
+
 use thiserror::Error;
 pub type StorageResult<T> = Result<T, StorageError>;
 
@@ -11,6 +13,22 @@ pub enum StorageError {
     EdgeNotFound(#[from] EdgeNotFoundError),
     #[error("Schema error: {0}")]
     Schema(#[from] SchemaError),
+    #[error("WAL error: {0}")]
+    Wal(#[from] WalError),
+}
+
+#[derive(Error, Debug)]
+pub enum WalError {
+    #[error("IO error: {0}")]
+    Io(#[from] io::Error),
+    #[error("Data corruption: checksum mismatch")]
+    ChecksumMismatch,
+    #[error("Invalid record format: {0}")]
+    InvalidFormat(String),
+    #[error("Record deserialization failed: {0}")]
+    DeserializationFailed(String),
+    #[error("Record serialization failed: {0}")]
+    SerializationFailed(String),
 }
 
 #[derive(Error, Debug)]
