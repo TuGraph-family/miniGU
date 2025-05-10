@@ -18,10 +18,10 @@
 //       ... // apply to in‑memory state
 //   }
 //
-use std::fs::{File, OpenOptions};
-use std::io::{self, BufReader, BufWriter, Read, Write};
+use std::fs::{self, File, OpenOptions};
+use std::io::{self, BufReader, BufWriter, Read, Seek, SeekFrom, Write};
 use std::marker::PhantomData;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crc32fast::Hasher;
 use serde::{Deserialize, Serialize};
@@ -63,6 +63,7 @@ impl LogRecord for RedoEntry {
 /// Write‑ahead log in append‑only mode, tailored for an in‑memory graph store.
 pub struct GraphWal {
     file: BufWriter<File>,
+    path: PathBuf,
 }
 
 impl StorageWal for GraphWal {
@@ -71,14 +72,20 @@ impl StorageWal for GraphWal {
 
     /// Open existing log or create a new one at `path`.
     fn open<P: AsRef<Path>>(path: P) -> StorageResult<Self> {
-        let file = OpenOptions::new()
+        let mut file = OpenOptions::new()
             .create(true)
-            .append(true)
+            .write(true)
             .read(true)
-            .open(path)
+            .open(&path)
             .map_err(|e| StorageError::Wal(WalError::Io(e)))?;
+
+        // Seek to the end of the file
+        file.seek(SeekFrom::End(0))
+            .map_err(|e| StorageError::Wal(WalError::Io(e)))?;
+
         Ok(Self {
             file: BufWriter::new(file),
+            path: path.as_ref().to_path_buf(),
         })
     }
 
@@ -114,10 +121,13 @@ impl StorageWal for GraphWal {
     }
 
     fn iter(&self) -> StorageResult<Self::LogIterator> {
-        let file = self
+        let mut file = self
             .file
             .get_ref()
             .try_clone()
+            .map_err(|e| StorageError::Wal(WalError::Io(e)))?;
+        // Seek to the beginning of the file
+        file.seek(std::io::SeekFrom::Start(0))
             .map_err(|e| StorageError::Wal(WalError::Io(e)))?;
         Ok(GraphWalIter {
             reader: BufReader::new(file),
@@ -133,6 +143,39 @@ impl StorageWal for GraphWal {
         }
         records.sort_by_key(|entry| entry.lsn);
         Ok(records)
+    }
+}
+
+impl GraphWal {
+    pub fn truncate_until(&mut self, min_lsn: u64) -> StorageResult<()> {
+        // Read all current records
+        let entries = self.read_all()?;
+
+        // Filter and keep only records with LSN >= min_lsn
+        let retained: Vec<_> = entries.into_iter().filter(|e| e.lsn >= min_lsn).collect();
+
+        // Close old file writer (drop old writer to ensure exclusive access)
+        self.flush()?; // Ensure old writer flushes all data
+        let file_path = self.path.clone();
+
+        // Rewrite file: first delete original file
+        fs::remove_file(&file_path).map_err(|e| StorageError::Wal(WalError::Io(e)))?;
+
+        // Create a new WAL file
+        let mut new_wal = GraphWal::open(&file_path)?;
+
+        // Write retained records back to file using existing append method
+        for record in retained {
+            new_wal.append(&record)?;
+        }
+
+        // Ensure all data is flushed to disk
+        new_wal.flush()?;
+
+        // Update self.file to the new file handle
+        self.file = new_wal.file;
+
+        Ok(())
     }
 }
 
@@ -493,6 +536,70 @@ mod tests {
                 Operation::Delta(DeltaOp::DelEdge(eid)) => assert_eq!(*eid, 24),
                 _ => panic!("Expected Delta(DelEdge) operation"),
             }
+        }
+
+        cleanup(&path);
+    }
+
+    #[test]
+    #[serial]
+    fn test_truncate_until() {
+        let path = temp_wal_path();
+        cleanup(&path);
+
+        // Create and write entries with different LSNs
+        {
+            let mut wal = GraphWal::open(&path).unwrap();
+
+            // Entry with LSN 1
+            let entry1 = RedoEntry {
+                lsn: 1,
+                txn_id: Timestamp(100),
+                iso_level: IsolationLevel::Serializable,
+                op: Operation::Delta(DeltaOp::DelVertex(10)),
+            };
+            wal.append(&entry1).unwrap();
+
+            // Entry with LSN 2
+            let entry2 = RedoEntry {
+                lsn: 2,
+                txn_id: Timestamp(101),
+                iso_level: IsolationLevel::Serializable,
+                op: Operation::Delta(DeltaOp::DelVertex(20)),
+            };
+            wal.append(&entry2).unwrap();
+
+            // Entry with LSN 3
+            let entry3 = RedoEntry {
+                lsn: 3,
+                txn_id: Timestamp(102),
+                iso_level: IsolationLevel::Serializable,
+                op: Operation::Delta(DeltaOp::DelVertex(30)),
+            };
+            wal.append(&entry3).unwrap();
+
+            wal.flush().unwrap();
+
+            let entries = wal.read_all().unwrap();
+            assert_eq!(entries.len(), 3);
+
+            // Truncate entries with LSN < 2
+            wal.truncate_until(2).unwrap();
+
+            // Verify only entries with LSN >= 2 remain
+            let entries = wal.read_all().unwrap();
+            assert_eq!(entries.len(), 2);
+            assert_eq!(entries[0].lsn, 2);
+            assert_eq!(entries[1].lsn, 3);
+        }
+
+        // Reopen the WAL and verify truncation persisted
+        {
+            let wal = GraphWal::open(&path).unwrap();
+            let entries = wal.read_all().unwrap();
+            assert_eq!(entries.len(), 2);
+            assert_eq!(entries[0].lsn, 2);
+            assert_eq!(entries[1].lsn, 3);
         }
 
         cleanup(&path);

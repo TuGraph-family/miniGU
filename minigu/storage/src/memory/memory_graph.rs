@@ -353,6 +353,10 @@ impl WalManager {
         self.next_lsn.fetch_add(1, Ordering::SeqCst)
     }
 
+    pub fn set_lsn(&self, lsn: u64) {
+        self.next_lsn.store(lsn, Ordering::SeqCst);
+    }
+
     pub fn wal(&self) -> &Arc<RwLock<GraphWal>> {
         &self.wal
     }
@@ -375,7 +379,7 @@ impl MemoryGraph {
     pub fn recover_from_wal(self: &Arc<Self>) -> StorageResult<()> {
         let entries = self.wal_manager.wal.read().unwrap().read_all()?;
         for entry in entries {
-            println!("Replaying: {:?}", entry);
+            self.wal_manager.set_lsn(entry.lsn);
             match entry.op {
                 Operation::BeginTransaction(start_ts) => {
                     // Create a new transaction
