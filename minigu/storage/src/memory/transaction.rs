@@ -6,7 +6,7 @@ use common::datatype::types::{EdgeId, VertexId};
 use crossbeam_skiplist::SkipMap;
 use dashmap::DashSet;
 
-use super::memory_graph::{MemoryGraph, WalManager};
+use super::memory_graph::MemoryGraph;
 use crate::error::{
     EdgeNotFoundError, StorageError, StorageResult, TransactionError, VertexNotFoundError,
 };
@@ -14,7 +14,7 @@ use crate::model::edge::{Edge, Neighbor};
 use crate::storage::StorageTransaction;
 use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
 use crate::wal::StorageWal;
-use crate::wal::graph_wal::{GraphWal, Operation, RedoEntry};
+use crate::wal::graph_wal::{Operation, RedoEntry};
 
 const PERIODIC_GC_THRESHOLD: u64 = 50;
 
@@ -414,18 +414,11 @@ impl StorageTransaction for MemTransaction {
     /// Commits the transaction, applying all changes atomically.
     /// Ensures serializability, updates version chains, and manages adjacency lists.
     fn commit(&self) -> StorageResult<Timestamp> {
-        // Write begin transaction to WAL
-        self.graph
-            .wal_manager
-            .wal()
-            .write()
-            .unwrap()
-            .append(&RedoEntry {
-                lsn: self.graph.wal_manager.next_lsn(),
-                txn_id: self.txn_id(),
-                op: Operation::BeginTransaction(self.start_ts()),
-            })?;
+        self.commit_at(self.graph().txn_manager.new_commit_ts())
+    }
 
+    /// Commits the transaction at a specific commit timestamp.
+    fn commit_at(&self, commit_ts: Timestamp) -> StorageResult<Timestamp> {
         // Acquire the global commit lock to enforce serial execution of commits.
         let _guard = self.graph.txn_manager.commit_lock.lock().unwrap();
 
@@ -438,7 +431,6 @@ impl StorageTransaction for MemTransaction {
         }
 
         // Step 2: Assign a commit timestamp (atomic operation).
-        let commit_ts = self.graph().txn_manager.new_commit_ts();
         if let Err(e) = self.commit_ts.set(commit_ts) {
             self.abort()?;
             return Err(StorageError::Transaction(
@@ -494,6 +486,7 @@ impl StorageTransaction for MemTransaction {
         let wal_entry = RedoEntry {
             lsn,
             txn_id: self.txn_id(),
+            iso_level: self.isolation_level,
             op: Operation::CommitTransaction(commit_ts),
         };
         self.graph
@@ -610,6 +603,7 @@ impl StorageTransaction for MemTransaction {
         let wal_entry = RedoEntry {
             lsn,
             txn_id: self.txn_id(),
+            iso_level: self.isolation_level,
             op: Operation::AbortTransaction,
         };
         self.graph

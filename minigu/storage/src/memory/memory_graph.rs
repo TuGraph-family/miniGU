@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, RwLock, Weak};
 
@@ -15,10 +16,12 @@ use crate::memory::edge_iterator::EdgeIterator;
 use crate::memory::vertex_iterator::VertexIterator;
 use crate::model::edge::{Edge, Neighbor};
 use crate::model::vertex::Vertex;
-use crate::storage::{Graph, MutGraph};
+use crate::storage::{Graph, MutGraph, StorageTransaction};
 use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
 use crate::wal::StorageWal;
 use crate::wal::graph_wal::{GraphWal, Operation, RedoEntry};
+
+const WAL_PATH: &str = "/tmp/wal.log";
 
 // Perform the update properties operation
 macro_rules! update_properties {
@@ -339,9 +342,9 @@ pub struct WalManager {
 }
 
 impl WalManager {
-    pub fn new() -> Self {
+    pub fn new(path: &Path) -> Self {
         Self {
-            wal: Arc::new(RwLock::new(GraphWal::open("/tmp/wal.log").unwrap())),
+            wal: Arc::new(RwLock::new(GraphWal::open(path).unwrap())),
             next_lsn: AtomicU64::new(0),
         }
     }
@@ -365,8 +368,59 @@ impl MemoryGraph {
             edges: DashMap::new(),
             adjacency_list: DashMap::new(),
             txn_manager: MemTxnManager::new(),
-            wal_manager: WalManager::new(),
+            wal_manager: WalManager::new(Path::new(WAL_PATH)),
         })
+    }
+
+    pub fn recover_from_wal(self: &Arc<Self>) -> StorageResult<()> {
+        let entries = self.wal_manager.wal.read().unwrap().read_all()?;
+        for entry in entries {
+            println!("Replaying: {:?}", entry);
+            match entry.op {
+                Operation::BeginTransaction(start_ts) => {
+                    // Create a new transaction
+                    let txn = self.begin_transaction_at(entry.txn_id, start_ts, entry.iso_level);
+                    assert_eq!(txn.start_ts(), start_ts);
+                }
+                Operation::CommitTransaction(commit_ts) => {
+                    // Commit the transaction
+                    let txn = self.txn_manager.active_txns.get(&entry.txn_id).unwrap();
+                    txn.value().commit_at(commit_ts)?;
+                }
+                Operation::AbortTransaction => {
+                    // Abort the transaction
+                    let txn = self.txn_manager.active_txns.get(&entry.txn_id).unwrap();
+                    txn.value().abort()?;
+                }
+                Operation::Delta(delta) => {
+                    // Apply the delta
+                    let txn = self.txn_manager.active_txns.get(&entry.txn_id).unwrap();
+                    match delta {
+                        DeltaOp::CreateVertex(vertex) => {
+                            self.create_vertex(txn.value(), vertex)?;
+                        }
+                        DeltaOp::CreateEdge(edge) => {
+                            self.create_edge(txn.value(), edge)?;
+                        }
+                        DeltaOp::DelVertex(vid) => {
+                            self.delete_vertex(txn.value(), vid)?;
+                        }
+                        DeltaOp::DelEdge(eid) => {
+                            self.delete_edge(txn.value(), eid)?;
+                        }
+                        DeltaOp::SetVertexProps(vid, SetPropsOp { indices, props }) => {
+                            self.set_vertex_property(txn.value(), vid, indices, props)?;
+                        }
+                        DeltaOp::SetEdgeProps(eid, SetPropsOp { indices, props }) => {
+                            self.set_edge_property(txn.value(), eid, indices, props)?;
+                        }
+                        DeltaOp::AddLabel(_) => todo!(),
+                        DeltaOp::RemoveLabel(_) => todo!(),
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 
     /// Begins a new transaction and returns a `MemTransaction` instance.
@@ -378,6 +432,15 @@ impl MemoryGraph {
         let txn_id = self.txn_manager.new_txn_id();
         let start_ts = Timestamp::with_ts(self.txn_manager.latest_commit_ts.load(Ordering::SeqCst));
 
+        self.begin_transaction_at(txn_id, start_ts, isolation_level)
+    }
+
+    pub fn begin_transaction_at(
+        self: &Arc<Self>,
+        txn_id: Timestamp,
+        start_ts: Timestamp,
+        isolation_level: IsolationLevel,
+    ) -> Arc<MemTransaction> {
         // Register the transaction as active (used for garbage collection and visibility checks).
         let txn = Arc::new(MemTransaction::with_memgraph(
             self.clone(),
@@ -386,6 +449,20 @@ impl MemoryGraph {
             isolation_level,
         ));
         self.txn_manager.start_transaction(txn.clone());
+
+        // Write begin transaction to WAL
+        let wal_entry = RedoEntry {
+            lsn: self.wal_manager.next_lsn(),
+            txn_id: txn.txn_id(),
+            iso_level: *txn.isolation_level(),
+            op: Operation::BeginTransaction(txn.start_ts()),
+        };
+        self.wal_manager
+            .wal
+            .write()
+            .unwrap()
+            .append(&wal_entry)
+            .unwrap();
         txn
     }
 
@@ -578,6 +655,7 @@ impl MutGraph for MemoryGraph {
         let wal_entry = RedoEntry {
             lsn,
             txn_id: txn.txn_id(),
+            iso_level: *txn.isolation_level(),
             op: Operation::Delta(DeltaOp::CreateVertex(vertex)),
         };
         txn.redo_buffer.write().unwrap().push(wal_entry);
@@ -632,6 +710,7 @@ impl MutGraph for MemoryGraph {
         let wal_entry = RedoEntry {
             lsn,
             txn_id: txn.txn_id(),
+            iso_level: *txn.isolation_level(),
             op: Operation::Delta(DeltaOp::CreateEdge(edge)),
         };
         txn.redo_buffer.write().unwrap().push(wal_entry);
@@ -680,6 +759,7 @@ impl MutGraph for MemoryGraph {
         let wal_entry = RedoEntry {
             lsn,
             txn_id: txn.txn_id(),
+            iso_level: *txn.isolation_level(),
             op: Operation::Delta(DeltaOp::DelVertex(vid)),
         };
         txn.redo_buffer.write().unwrap().push(wal_entry);
@@ -714,6 +794,7 @@ impl MutGraph for MemoryGraph {
         let wal_entry = RedoEntry {
             lsn,
             txn_id: txn.txn_id(),
+            iso_level: *txn.isolation_level(),
             op: Operation::Delta(DeltaOp::DelEdge(eid)),
         };
         txn.redo_buffer.write().unwrap().push(wal_entry);
@@ -749,6 +830,7 @@ impl MutGraph for MemoryGraph {
         let wal_entry = RedoEntry {
             lsn,
             txn_id: txn.txn_id(),
+            iso_level: *txn.isolation_level(),
             op: Operation::Delta(DeltaOp::SetVertexProps(vid, SetPropsOp { indices, props })),
         };
         txn.redo_buffer.write().unwrap().push(wal_entry);
@@ -784,6 +866,7 @@ impl MutGraph for MemoryGraph {
         let wal_entry = RedoEntry {
             lsn,
             txn_id: txn.txn_id(),
+            iso_level: *txn.isolation_level(),
             op: Operation::Delta(DeltaOp::SetEdgeProps(eid, SetPropsOp { indices, props })),
         };
         txn.redo_buffer.write().unwrap().push(wal_entry);
@@ -819,6 +902,9 @@ fn check_write_conflict(commit_ts: Timestamp, txn: &MemTransaction) -> StorageRe
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
+    use std::path::PathBuf;
+
     use common::datatype::types::LabelId;
     use common::datatype::value::PropertyValue;
     use {Edge, Vertex};
@@ -1507,5 +1593,62 @@ mod tests {
 
         assert!(graph.delete_vertex(&txn1, vid).is_err());
         let _ = txn1.abort();
+    }
+
+    #[test]
+    fn test_wal_replay() {
+        // Clear the WAL file before starting the test
+        let wal_path = PathBuf::from(WAL_PATH);
+        let _ = fs::remove_file(&wal_path);
+
+        // Create a graph with custom WAL path
+        let graph = MemoryGraph::new();
+
+        // Create and commit a transaction with a vertex
+        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+        let v1 = create_vertex_eve();
+        let vid1 = graph.create_vertex(&txn1, v1.clone()).unwrap();
+        assert!(txn1.commit().is_ok());
+
+        // Create and commit a transaction with another vertex
+        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+        let v2 = create_vertex_frank();
+        let vid2 = graph.create_vertex(&txn2, v2.clone()).unwrap();
+
+        // Create an edge between the vertices
+        let e1 = Edge::new(
+            100,    // edge id
+            vid1,   // from Eve
+            vid2,   // to Frank
+            FRIEND, // label
+            PropertyRecord::new(vec![PropertyValue::String("2023-01-01".into())]),
+        );
+        let eid1 = graph.create_edge(&txn2, e1.clone()).unwrap();
+        assert!(txn2.commit().is_ok());
+
+        // Verify the graph state before recovery
+        let txn_verify = graph.begin_transaction(IsolationLevel::Serializable);
+        assert_eq!(graph.get_vertex(&txn_verify, vid1).unwrap(), v1);
+        assert_eq!(graph.get_vertex(&txn_verify, vid2).unwrap(), v2);
+        assert_eq!(graph.get_edge(&txn_verify, eid1).unwrap().src_id(), vid1);
+        assert_eq!(graph.get_edge(&txn_verify, eid1).unwrap().dst_id(), vid2);
+        txn_verify.abort().unwrap();
+
+        // Create a new graph instance with the same WAL path
+        let new_graph = MemoryGraph::new();
+
+        // Recover the graph from WAL
+        assert!(new_graph.recover_from_wal().is_ok());
+
+        // Verify the graph state after recovery
+        let txn_after = new_graph.begin_transaction(IsolationLevel::Serializable);
+        assert_eq!(new_graph.get_vertex(&txn_after, vid1).unwrap(), v1);
+        assert_eq!(new_graph.get_vertex(&txn_after, vid2).unwrap(), v2);
+        assert_eq!(new_graph.get_edge(&txn_after, eid1).unwrap().src_id(), vid1);
+        assert_eq!(new_graph.get_edge(&txn_after, eid1).unwrap().dst_id(), vid2);
+        txn_after.abort().unwrap();
+
+        // Clear the WAL file after the test
+        let _ = fs::remove_file(&wal_path);
     }
 }

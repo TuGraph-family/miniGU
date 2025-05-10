@@ -98,6 +98,7 @@ pub enum DeltaOp {
     RemoveLabel(LabelId),
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum IsolationLevel {
     Snapshot,
     Serializable,

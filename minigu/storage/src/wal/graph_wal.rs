@@ -28,15 +28,16 @@ use serde::{Deserialize, Serialize};
 
 use super::{LogRecord, StorageWal};
 use crate::error::{StorageError, StorageResult, WalError};
-use crate::transaction::{DeltaOp, Timestamp};
+use crate::transaction::{DeltaOp, IsolationLevel, Timestamp};
 
 const HEADER_SIZE: usize = 8; // 4 bytes length + 4 bytes crc32
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RedoEntry {
-    pub lsn: u64,          // Log sequence number
-    pub txn_id: Timestamp, // Transaction ID
-    pub op: Operation,     // Operation
+    pub lsn: u64,                  // Log sequence number
+    pub txn_id: Timestamp,         // Transaction ID
+    pub iso_level: IsolationLevel, // Isolation level
+    pub op: Operation,             // Operation
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -112,13 +113,26 @@ impl StorageWal for GraphWal {
             .map_err(|e| StorageError::Wal(WalError::Io(e)))
     }
 
-    /// Return an iterator that replays the entire log from start.
-    fn iter<P: AsRef<Path>>(path: P) -> StorageResult<Self::LogIterator> {
-        let file = File::open(path).map_err(|e| StorageError::Wal(WalError::Io(e)))?;
+    fn iter(&self) -> StorageResult<Self::LogIterator> {
+        let file = self
+            .file
+            .get_ref()
+            .try_clone()
+            .map_err(|e| StorageError::Wal(WalError::Io(e)))?;
         Ok(GraphWalIter {
             reader: BufReader::new(file),
             _phantom: PhantomData,
         })
+    }
+
+    fn read_all(&self) -> StorageResult<Vec<Self::Record>> {
+        let mut iter = self.iter()?;
+        let mut records = Vec::new();
+        while let Some(entry) = iter.next() {
+            records.push(entry?);
+        }
+        records.sort_by_key(|entry| entry.lsn);
+        Ok(records)
     }
 }
 
@@ -211,6 +225,7 @@ mod tests {
         let entry = RedoEntry {
             lsn: 0,
             txn_id,
+            iso_level: IsolationLevel::Serializable,
             op: Operation::Delta(delta),
         };
 
@@ -248,6 +263,7 @@ mod tests {
             let entry1 = RedoEntry {
                 lsn: 1,
                 txn_id: Timestamp(100),
+                iso_level: IsolationLevel::Serializable,
                 op: Operation::Delta(DeltaOp::DelVertex(42)),
             };
             wal.append(&entry1).unwrap();
@@ -256,6 +272,7 @@ mod tests {
             let entry2 = RedoEntry {
                 lsn: 2,
                 txn_id: Timestamp(101),
+                iso_level: IsolationLevel::Serializable,
                 op: Operation::Delta(DeltaOp::DelEdge(24)),
             };
             wal.append(&entry2).unwrap();
@@ -265,10 +282,9 @@ mod tests {
 
         // Read and verify WalEntry records
         {
-            let entries: Vec<RedoEntry> = GraphWal::iter(&path)
-                .unwrap()
-                .collect::<Result<Vec<_>, _>>()
-                .unwrap();
+            let wal = GraphWal::open(&path).unwrap();
+            let entries: Vec<RedoEntry> =
+                wal.iter().unwrap().collect::<Result<Vec<_>, _>>().unwrap();
 
             assert_eq!(entries.len(), 2);
 
@@ -306,6 +322,7 @@ mod tests {
             let entry1 = RedoEntry {
                 lsn: 1,
                 txn_id: Timestamp(100),
+                iso_level: IsolationLevel::Serializable,
                 op: Operation::Delta(DeltaOp::DelVertex(10)),
             };
             wal.append(&entry1).unwrap();
@@ -314,6 +331,7 @@ mod tests {
             let entry2 = RedoEntry {
                 lsn: 2,
                 txn_id: Timestamp(101),
+                iso_level: IsolationLevel::Serializable,
                 op: Operation::Delta(DeltaOp::DelEdge(20)),
             };
             wal.append(&entry2).unwrap();
@@ -322,6 +340,7 @@ mod tests {
             let entry3 = RedoEntry {
                 lsn: 3,
                 txn_id: Timestamp(102),
+                iso_level: IsolationLevel::Serializable,
                 op: Operation::Delta(DeltaOp::DelVertex(30)),
             };
             wal.append(&entry3).unwrap();
@@ -331,7 +350,8 @@ mod tests {
 
         // Read and verify the recovery sequence
         {
-            let mut entries = GraphWal::iter(&path).unwrap();
+            let wal = GraphWal::open(&path).unwrap();
+            let mut entries = wal.iter().unwrap();
 
             // Process entries in sequence
             let mut deleted_vertices = Vec::new();
@@ -366,6 +386,7 @@ mod tests {
             let entry = RedoEntry {
                 lsn: 1,
                 txn_id: Timestamp(100),
+                iso_level: IsolationLevel::Serializable,
                 op: Operation::Delta(DeltaOp::DelVertex(42)),
             };
             wal.append(&entry).unwrap();
@@ -393,7 +414,8 @@ mod tests {
 
         // Read records - should get one valid record and one error
         {
-            let mut entries = GraphWal::iter(&path).unwrap();
+            let wal = GraphWal::open(&path).unwrap();
+            let mut entries = wal.iter().unwrap();
 
             // First entry should be valid
             let first = entries.next().unwrap().unwrap();
@@ -412,6 +434,65 @@ mod tests {
 
             // No more entries
             assert!(entries.next().is_none());
+        }
+
+        cleanup(&path);
+    }
+
+    #[test]
+    #[serial]
+    fn test_read_all() {
+        let path = temp_wal_path();
+        cleanup(&path);
+
+        // Create and write two entries
+        {
+            let mut wal = GraphWal::open(&path).unwrap();
+
+            // Entry 1: Delete vertex 42
+            let entry1 = RedoEntry {
+                lsn: 1,
+                txn_id: Timestamp(100),
+                iso_level: IsolationLevel::Serializable,
+                op: Operation::Delta(DeltaOp::DelVertex(42)),
+            };
+            wal.append(&entry1).unwrap();
+
+            // Entry 2: Delete edge 24
+            let entry2 = RedoEntry {
+                lsn: 2,
+                txn_id: Timestamp(101),
+                iso_level: IsolationLevel::Serializable,
+                op: Operation::Delta(DeltaOp::DelEdge(24)),
+            };
+            wal.append(&entry2).unwrap();
+
+            wal.flush().unwrap();
+        }
+
+        // Read all entries at once using read_all
+        {
+            let wal = GraphWal::open(&path).unwrap();
+            let entries = wal.read_all().unwrap();
+
+            // Verify we got both entries in correct order
+            assert_eq!(entries.len(), 2);
+
+            // Verify first entry
+            assert_eq!(entries[0].lsn, 1);
+            assert_eq!(entries[0].txn_id.0, 100);
+            match &entries[0].op {
+                Operation::Delta(DeltaOp::DelVertex(vid)) => assert_eq!(*vid, 42),
+                _ => panic!("Expected Delta(DelVertex) operation"),
+            }
+
+            // Verify second entry
+            assert_eq!(entries[1].lsn, 2);
+            assert_eq!(entries[1].txn_id.0, 101);
+            match &entries[1].op {
+                Operation::Delta(DeltaOp::DelEdge(eid)) => assert_eq!(*eid, 24),
+                _ => panic!("Expected Delta(DelEdge) operation"),
+            }
         }
 
         cleanup(&path);

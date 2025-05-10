@@ -36,8 +36,9 @@ pub trait StorageWal {
     /// Flush internal buffer and fsync to guarantee durability.
     fn flush(&mut self) -> StorageResult<()>;
 
-    /// Return an iterator that replays the entire log from start.
-    fn iter<P: AsRef<Path>>(path: P) -> StorageResult<Self::LogIterator>
-    where
-        Self: Sized;
+    /// Return an iterator that replays the log from the current instance.
+    fn iter(&self) -> StorageResult<Self::LogIterator>;
+
+    /// Read all records from the log
+    fn read_all(&self) -> StorageResult<Vec<Self::Record>>;
 }
