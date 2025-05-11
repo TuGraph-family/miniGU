@@ -62,8 +62,8 @@ impl LogRecord for RedoEntry {
 
 /// Write‑ahead log in append‑only mode, tailored for an in‑memory graph store.
 pub struct GraphWal {
-    file: BufWriter<File>,
-    path: PathBuf,
+    pub file: BufWriter<File>,
+    pub path: PathBuf,
 }
 
 impl StorageWal for GraphWal {
@@ -75,6 +75,7 @@ impl StorageWal for GraphWal {
         let mut file = OpenOptions::new()
             .create(true)
             .write(true)
+            .truncate(false)
             .read(true)
             .open(&path)
             .map_err(|e| StorageError::Wal(WalError::Io(e)))?;
@@ -136,9 +137,9 @@ impl StorageWal for GraphWal {
     }
 
     fn read_all(&self) -> StorageResult<Vec<Self::Record>> {
-        let mut iter = self.iter()?;
+        let iter = self.iter()?;
         let mut records = Vec::new();
-        while let Some(entry) = iter.next() {
+        for entry in iter {
             records.push(entry?);
         }
         records.sort_by_key(|entry| entry.lsn);
@@ -147,12 +148,13 @@ impl StorageWal for GraphWal {
 }
 
 impl GraphWal {
+    /// Truncate the WAL to retain only entries with LSN > `min_lsn`.
     pub fn truncate_until(&mut self, min_lsn: u64) -> StorageResult<()> {
         // Read all current records
         let entries = self.read_all()?;
 
-        // Filter and keep only records with LSN >= min_lsn
-        let retained: Vec<_> = entries.into_iter().filter(|e| e.lsn >= min_lsn).collect();
+        // Filter and keep only records with LSN > min_lsn
+        let retained: Vec<_> = entries.into_iter().filter(|e| e.lsn > min_lsn).collect();
 
         // Close old file writer (drop old writer to ensure exclusive access)
         self.flush()?; // Ensure old writer flushes all data
@@ -583,23 +585,21 @@ mod tests {
             let entries = wal.read_all().unwrap();
             assert_eq!(entries.len(), 3);
 
-            // Truncate entries with LSN < 2
+            // Truncate entries with LSN <= 2
             wal.truncate_until(2).unwrap();
 
-            // Verify only entries with LSN >= 2 remain
+            // Verify only entries with LSN > 2 remain
             let entries = wal.read_all().unwrap();
-            assert_eq!(entries.len(), 2);
-            assert_eq!(entries[0].lsn, 2);
-            assert_eq!(entries[1].lsn, 3);
+            assert_eq!(entries.len(), 1);
+            assert_eq!(entries[0].lsn, 3);
         }
 
         // Reopen the WAL and verify truncation persisted
         {
             let wal = GraphWal::open(&path).unwrap();
             let entries = wal.read_all().unwrap();
-            assert_eq!(entries.len(), 2);
-            assert_eq!(entries[0].lsn, 2);
-            assert_eq!(entries[1].lsn, 3);
+            assert_eq!(entries.len(), 1);
+            assert_eq!(entries[0].lsn, 3);
         }
 
         cleanup(&path);

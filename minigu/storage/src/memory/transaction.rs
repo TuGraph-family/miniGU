@@ -482,6 +482,7 @@ impl StorageTransaction for MemTransaction {
         for entry in redo_entries {
             self.graph.wal_manager.wal.write().unwrap().append(&entry)?;
         }
+        // Write commit transaction to WAL
         let lsn = self.graph.wal_manager.next_lsn();
         let wal_entry = RedoEntry {
             lsn,

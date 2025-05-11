@@ -353,7 +353,7 @@ impl WalManager {
         self.next_lsn.fetch_add(1, Ordering::SeqCst)
     }
 
-    pub fn set_lsn(&self, lsn: u64) {
+    pub fn set_next_lsn(&self, lsn: u64) {
         self.next_lsn.store(lsn, Ordering::SeqCst);
     }
 
@@ -379,7 +379,7 @@ impl MemoryGraph {
     pub fn recover_from_wal(self: &Arc<Self>) -> StorageResult<()> {
         let entries = self.wal_manager.wal.read().unwrap().read_all()?;
         for entry in entries {
-            self.wal_manager.set_lsn(entry.lsn);
+            self.wal_manager.set_next_lsn(entry.lsn + 1);
             match entry.op {
                 Operation::BeginTransaction(start_ts) => {
                     // Create a new transaction
@@ -906,8 +906,7 @@ fn check_write_conflict(commit_ts: Timestamp, txn: &MemTransaction) -> StorageRe
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
-    use std::path::PathBuf;
+    use std::{env, fs, process};
 
     use common::datatype::types::LabelId;
     use common::datatype::value::PropertyValue;
@@ -941,8 +940,35 @@ mod tests {
         )
     }
 
-    fn mock_graph() -> Arc<MemoryGraph> {
+    fn mock_wal() -> GraphWal {
+        let file_name = format!("test_wal_{}_{}.log", process::id(), chrono::Utc::now());
+        let path = env::temp_dir().join(file_name);
+        GraphWal::open(&path).unwrap()
+    }
+
+    struct Cleaner {
+        path: std::path::PathBuf,
+    }
+
+    impl Drop for Cleaner {
+        fn drop(&mut self) {
+            let _ = fs::remove_file(&self.path);
+        }
+    }
+
+    fn mock_graph() -> (Arc<MemoryGraph>, Cleaner) {
         let graph = MemoryGraph::new();
+
+        {
+            let graph_ref = Arc::clone(&graph);
+            let wal_manager = &graph_ref.wal_manager;
+            let mut wal = wal_manager.wal.write().unwrap();
+            *wal = mock_wal();
+        }
+        let cleaner = Cleaner {
+            path: graph.wal_manager.wal.read().unwrap().path.clone(),
+        };
+
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
         let alice = create_vertex(1, PERSON, vec![
@@ -996,7 +1022,7 @@ mod tests {
         graph.create_edge(&txn, follow2).unwrap();
 
         txn.commit().unwrap();
-        graph
+        (graph, cleaner)
     }
 
     fn create_vertex_eve() -> Vertex {
@@ -1021,7 +1047,7 @@ mod tests {
 
     #[test]
     fn test_basic_commit_flow() {
-        let graph = mock_graph();
+        let (graph, _cleaner) = mock_graph();
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
 
         let v1 = create_vertex_eve();
@@ -1036,7 +1062,7 @@ mod tests {
 
     #[test]
     fn test_transaction_isolation() {
-        let graph = mock_graph();
+        let (graph, _cleaner) = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let v1 = create_vertex_eve();
@@ -1051,7 +1077,7 @@ mod tests {
 
     #[test]
     fn test_mvcc_version_chain() {
-        let graph = mock_graph();
+        let (graph, _cleaner) = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let v1 = create_vertex_eve();
@@ -1075,7 +1101,7 @@ mod tests {
 
     #[test]
     fn test_delete_with_tombstone() {
-        let graph = mock_graph();
+        let (graph, _cleaner) = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let v1 = create_vertex_eve();
@@ -1092,7 +1118,7 @@ mod tests {
 
     #[test]
     fn test_conflict_detection() {
-        let graph = mock_graph();
+        let (graph, _cleaner) = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let v1 = create_vertex_eve();
@@ -1105,7 +1131,7 @@ mod tests {
 
     #[test]
     fn test_adjacency_versioning() {
-        let graph = mock_graph();
+        let (graph, _cleaner) = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let v1 = create_vertex_eve();
@@ -1178,7 +1204,7 @@ mod tests {
 
     #[test]
     fn test_rollback_consistency() {
-        let graph = mock_graph();
+        let (graph, _cleaner) = mock_graph();
 
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
         let vid1 = graph.create_vertex(&txn, create_vertex_eve()).unwrap();
@@ -1190,7 +1216,7 @@ mod tests {
 
     #[test]
     fn test_property_update_flow() {
-        let graph = mock_graph();
+        let (graph, _cleaner) = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let v1 = create_vertex_eve();
@@ -1210,7 +1236,7 @@ mod tests {
 
     #[test]
     fn test_read_after_write_conflict() {
-        let graph = mock_graph();
+        let (graph, _cleaner) = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let vid1 = graph.create_vertex(&txn1, create_vertex_eve()).unwrap();
@@ -1230,7 +1256,7 @@ mod tests {
 
     #[test]
     fn test_vertex_iterator() {
-        let graph = mock_graph();
+        let (graph, _cleaner) = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let v1 = create_vertex_eve();
@@ -1267,7 +1293,7 @@ mod tests {
 
     #[test]
     fn test_edge_iterator() {
-        let graph = mock_graph();
+        let (graph, _cleaner) = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let v1 = create_vertex_eve();
@@ -1317,7 +1343,7 @@ mod tests {
 
     #[test]
     fn test_adj_iterator() {
-        let graph = mock_graph();
+        let (graph, _cleaner) = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let v1 = create_vertex_eve();
@@ -1342,7 +1368,7 @@ mod tests {
 
     #[test]
     fn test_garbage_collection_after_delete_edge() {
-        let graph = mock_graph();
+        let (graph, _cleaner) = mock_graph();
 
         let vid1: VertexId = 1;
         let vid2: VertexId = 2;
@@ -1423,7 +1449,7 @@ mod tests {
 
     #[test]
     fn test_garbage_collection_after_delete_vertex() {
-        let graph = mock_graph();
+        let (graph, _cleaner) = mock_graph();
 
         let vid1 = 1;
         let euid1 = Neighbor::new(FRIEND, 1, 1);
@@ -1522,7 +1548,7 @@ mod tests {
 
     #[test]
     fn test_delete_vertex_with_edges() {
-        let graph = mock_graph();
+        let (graph, _cleaner) = mock_graph();
 
         let vid: u64 = 1;
 
@@ -1582,7 +1608,7 @@ mod tests {
 
     #[test]
     fn test_delete_edge_with_vertex_conflict() {
-        let graph = mock_graph();
+        let (graph, _cleaner) = mock_graph();
 
         let vid: VertexId = 1;
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
@@ -1601,12 +1627,9 @@ mod tests {
 
     #[test]
     fn test_wal_replay() {
-        // Clear the WAL file before starting the test
-        let wal_path = PathBuf::from(WAL_PATH);
-        let _ = fs::remove_file(&wal_path);
-
         // Create a graph with custom WAL path
-        let graph = MemoryGraph::new();
+        let (graph, _cleaner) = mock_graph();
+        let wal_path = graph.wal_manager.wal.read().unwrap().path.clone();
 
         // Create and commit a transaction with a vertex
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
@@ -1640,6 +1663,13 @@ mod tests {
 
         // Create a new graph instance with the same WAL path
         let new_graph = MemoryGraph::new();
+        {
+            // Set the WAL path to the temporary WAL path
+            let graph_ref = Arc::clone(&new_graph);
+            let wal_manager = &graph_ref.wal_manager;
+            let mut wal = wal_manager.wal.write().unwrap();
+            *wal = GraphWal::open(&wal_path).unwrap();
+        }
 
         // Recover the graph from WAL
         assert!(new_graph.recover_from_wal().is_ok());
@@ -1651,8 +1681,5 @@ mod tests {
         assert_eq!(new_graph.get_edge(&txn_after, eid1).unwrap().src_id(), vid1);
         assert_eq!(new_graph.get_edge(&txn_after, eid1).unwrap().dst_id(), vid2);
         txn_after.abort().unwrap();
-
-        // Clear the WAL file after the test
-        let _ = fs::remove_file(&wal_path);
     }
 }
