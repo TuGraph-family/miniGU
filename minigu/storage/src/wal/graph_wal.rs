@@ -22,6 +22,8 @@ use std::fs::{self, File, OpenOptions};
 use std::io::{self, BufReader, BufWriter, Read, Seek, SeekFrom, Write};
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, RwLock};
 
 use crc32fast::Hasher;
 use serde::{Deserialize, Serialize};
@@ -31,6 +33,7 @@ use crate::error::{StorageError, StorageResult, WalError};
 use crate::transaction::{DeltaOp, IsolationLevel, Timestamp};
 
 const HEADER_SIZE: usize = 8; // 4 bytes length + 4 bytes crc32
+const WAL_PATH: &str = "/tmp/wal.log";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RedoEntry {
@@ -148,13 +151,13 @@ impl StorageWal for GraphWal {
 }
 
 impl GraphWal {
-    /// Truncate the WAL to retain only entries with LSN > `min_lsn`.
+    /// Truncate the WAL to retain only entries with LSN >= `min_lsn`.
     pub fn truncate_until(&mut self, min_lsn: u64) -> StorageResult<()> {
         // Read all current records
         let entries = self.read_all()?;
 
-        // Filter and keep only records with LSN > min_lsn
-        let retained: Vec<_> = entries.into_iter().filter(|e| e.lsn > min_lsn).collect();
+        // Filter and keep only records with LSN >= min_lsn
+        let retained: Vec<_> = entries.into_iter().filter(|e| e.lsn >= min_lsn).collect();
 
         // Close old file writer (drop old writer to ensure exclusive access)
         self.flush()?; // Ensure old writer flushes all data
@@ -231,6 +234,56 @@ impl<R: LogRecord> Iterator for GraphWalIter<R> {
             Ok(record) => Some(Ok(record)),
             Err(e) => Some(Err(e)),
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct WalManagerConfig {
+    pub wal_path: PathBuf,
+}
+
+impl Default for WalManagerConfig {
+    fn default() -> Self {
+        Self {
+            wal_path: PathBuf::from(WAL_PATH),
+        }
+    }
+}
+
+pub struct WalManager {
+    pub(super) wal: Arc<RwLock<GraphWal>>,
+    pub(super) next_lsn: AtomicU64,
+    pub(super) wal_path: PathBuf,
+}
+
+impl WalManager {
+    pub fn new(config: WalManagerConfig) -> Self {
+        let path = config.wal_path;
+        Self {
+            wal: Arc::new(RwLock::new(GraphWal::open(&path).unwrap())),
+            next_lsn: AtomicU64::new(0),
+            wal_path: path.to_path_buf(),
+        }
+    }
+
+    pub fn next_lsn(&self) -> u64 {
+        self.next_lsn.fetch_add(1, Ordering::SeqCst)
+    }
+
+    pub fn set_next_lsn(&self, lsn: u64) {
+        self.next_lsn.store(lsn, Ordering::SeqCst);
+    }
+
+    pub fn wal(&self) -> &Arc<RwLock<GraphWal>> {
+        &self.wal
+    }
+
+    pub fn truncate_until(&self, lsn: u64) -> StorageResult<()> {
+        self.wal.write().unwrap().truncate_until(lsn)
+    }
+
+    pub fn path(&self) -> &Path {
+        &self.wal_path
     }
 }
 
@@ -588,18 +641,20 @@ mod tests {
             // Truncate entries with LSN <= 2
             wal.truncate_until(2).unwrap();
 
-            // Verify only entries with LSN > 2 remain
+            // Verify only entries with LSN >= 2 remain
             let entries = wal.read_all().unwrap();
-            assert_eq!(entries.len(), 1);
-            assert_eq!(entries[0].lsn, 3);
+            assert_eq!(entries.len(), 2);
+            assert_eq!(entries[0].lsn, 2);
+            assert_eq!(entries[1].lsn, 3);
         }
 
         // Reopen the WAL and verify truncation persisted
         {
             let wal = GraphWal::open(&path).unwrap();
             let entries = wal.read_all().unwrap();
-            assert_eq!(entries.len(), 1);
-            assert_eq!(entries[0].lsn, 3);
+            assert_eq!(entries.len(), 2);
+            assert_eq!(entries[0].lsn, 2);
+            assert_eq!(entries[1].lsn, 3);
         }
 
         cleanup(&path);

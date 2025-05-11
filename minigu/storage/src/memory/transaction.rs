@@ -480,7 +480,12 @@ impl StorageTransaction for MemTransaction {
             .drain(..)
             .collect::<Vec<_>>();
         for entry in redo_entries {
-            self.graph.wal_manager.wal.write().unwrap().append(&entry)?;
+            self.graph
+                .wal_manager
+                .wal()
+                .write()
+                .unwrap()
+                .append(&entry)?;
         }
         // Write commit transaction to WAL
         let lsn = self.graph.wal_manager.next_lsn();

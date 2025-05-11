@@ -1,5 +1,4 @@
-use std::path::Path;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::Ordering;
 use std::sync::{Arc, RwLock, Weak};
 
 use common::datatype::types::{EdgeId, VertexId};
@@ -7,6 +6,7 @@ use common::datatype::value::PropertyValue;
 use crossbeam_skiplist::SkipSet;
 use dashmap::DashMap;
 
+use super::checkpoint::{CheckpointManager, CheckpointManagerConfig};
 use super::transaction::{MemTransaction, MemTxnManager};
 use crate::error::{
     EdgeNotFoundError, StorageError, StorageResult, TransactionError, VertexNotFoundError,
@@ -19,9 +19,7 @@ use crate::model::vertex::Vertex;
 use crate::storage::{Graph, MutGraph, StorageTransaction};
 use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
 use crate::wal::StorageWal;
-use crate::wal::graph_wal::{GraphWal, Operation, RedoEntry};
-
-const WAL_PATH: &str = "/tmp/wal.log";
+use crate::wal::graph_wal::{Operation, RedoEntry, WalManager, WalManagerConfig};
 
 // Perform the update properties operation
 macro_rules! update_properties {
@@ -334,50 +332,55 @@ pub struct MemoryGraph {
 
     // ---- Write-ahead-log for crash recovery ----
     pub(super) wal_manager: WalManager,
-}
 
-pub struct WalManager {
-    pub(super) wal: Arc<RwLock<GraphWal>>,
-    pub(super) next_lsn: AtomicU64,
-}
-
-impl WalManager {
-    pub fn new(path: &Path) -> Self {
-        Self {
-            wal: Arc::new(RwLock::new(GraphWal::open(path).unwrap())),
-            next_lsn: AtomicU64::new(0),
-        }
-    }
-
-    pub fn next_lsn(&self) -> u64 {
-        self.next_lsn.fetch_add(1, Ordering::SeqCst)
-    }
-
-    pub fn set_next_lsn(&self, lsn: u64) {
-        self.next_lsn.store(lsn, Ordering::SeqCst);
-    }
-
-    pub fn wal(&self) -> &Arc<RwLock<GraphWal>> {
-        &self.wal
-    }
+    // ---- Checkpoint management ----
+    pub(super) checkpoint_manager: Option<CheckpointManager>,
 }
 
 #[allow(dead_code)]
 // Basic methods for MemoryGraph
 impl MemoryGraph {
-    /// Creates a new instance of `MemoryGraph`.
+    /// Creates a new instance of `MemoryGraph` with default configuration.
     pub fn new() -> Arc<Self> {
-        Arc::new(Self {
+        Self::with_config(Default::default(), Default::default())
+    }
+
+    /// Creates a new instance of `MemoryGraph` with a specific checkpoint configuration.
+    pub fn with_config(
+        checkpoint_config: CheckpointManagerConfig,
+        wal_config: WalManagerConfig,
+    ) -> Arc<Self> {
+        // First create the graph without the checkpoint manager
+        let graph = Arc::new(Self {
             vertices: DashMap::new(),
             edges: DashMap::new(),
             adjacency_list: DashMap::new(),
             txn_manager: MemTxnManager::new(),
-            wal_manager: WalManager::new(Path::new(WAL_PATH)),
-        })
+            wal_manager: WalManager::new(wal_config),
+            checkpoint_manager: None, // Will be initialized later
+        });
+
+        // Now initialize the checkpoint manager with the Arc<MemoryGraph>
+        let checkpoint_manager = CheckpointManager::new(graph.clone(), checkpoint_config).unwrap();
+
+        // Update the checkpoint_manager field
+        // This is safe because we're the only ones with a reference to the graph at this point
+        unsafe {
+            let graph_ptr = Arc::as_ptr(&graph) as *mut MemoryGraph;
+            (*graph_ptr).checkpoint_manager = Some(checkpoint_manager);
+        }
+
+        graph
     }
 
+    /// Recovers the graph from WAL entries
     pub fn recover_from_wal(self: &Arc<Self>) -> StorageResult<()> {
-        let entries = self.wal_manager.wal.read().unwrap().read_all()?;
+        let entries = self.wal_manager.wal().read().unwrap().read_all()?;
+        self.apply_wal_entries(entries)
+    }
+
+    /// Applies a list of WAL entries to the graph
+    pub fn apply_wal_entries(self: &Arc<Self>, entries: Vec<RedoEntry>) -> StorageResult<()> {
         for entry in entries {
             self.wal_manager.set_next_lsn(entry.lsn + 1);
             match entry.op {
@@ -462,7 +465,7 @@ impl MemoryGraph {
             op: Operation::BeginTransaction(txn.start_ts()),
         };
         self.wal_manager
-            .wal
+            .wal()
             .write()
             .unwrap()
             .append(&wal_entry)
@@ -471,12 +474,12 @@ impl MemoryGraph {
     }
 
     /// Returns a reference to the vertices storage.
-    pub fn vertices(&self) -> &DashMap<VertexId, VersionedVertex> {
+    pub(super) fn vertices(&self) -> &DashMap<VertexId, VersionedVertex> {
         &self.vertices
     }
 
     /// Returns a reference to the edges storage.
-    pub fn edges(&self) -> &DashMap<EdgeId, VersionedEdge> {
+    pub(super) fn edges(&self) -> &DashMap<EdgeId, VersionedEdge> {
         &self.edges
     }
 }
@@ -905,8 +908,8 @@ fn check_write_conflict(commit_ts: Timestamp, txn: &MemTransaction) -> StorageRe
 }
 
 #[cfg(test)]
-mod tests {
-    use std::{env, fs, process};
+pub mod tests {
+    use std::{env, fs};
 
     use common::datatype::types::LabelId;
     use common::datatype::value::PropertyValue;
@@ -915,6 +918,7 @@ mod tests {
     use super::*;
     use crate::model::properties::PropertyRecord;
     use crate::storage::StorageTransaction;
+    use crate::wal::graph_wal::GraphWal;
 
     const PERSON: LabelId = 1;
     const FRIEND: LabelId = 1;
@@ -940,34 +944,68 @@ mod tests {
         )
     }
 
-    fn mock_wal() -> GraphWal {
-        let file_name = format!("test_wal_{}_{}.log", process::id(), chrono::Utc::now());
-        let path = env::temp_dir().join(file_name);
-        GraphWal::open(&path).unwrap()
+    pub fn mock_checkpoint_config() -> CheckpointManagerConfig {
+        let dir = env::temp_dir().join(format!(
+            "test_checkpoint_{}_{}",
+            chrono::Utc::now(),
+            rand::random::<u32>()
+        ));
+        fs::create_dir_all(&dir).unwrap();
+        CheckpointManagerConfig {
+            checkpoint_dir: dir,
+            max_checkpoints: 3,
+            auto_checkpoint_interval_secs: 0, // Disable auto checkpoints for testing
+            checkpoint_prefix: "test_checkpoint".to_string(),
+        }
     }
 
-    struct Cleaner {
-        path: std::path::PathBuf,
+    pub fn mock_wal_config() -> WalManagerConfig {
+        let file_name = format!(
+            "test_wal_{}_{}.log",
+            chrono::Utc::now(),
+            rand::random::<u32>()
+        );
+        let path = env::temp_dir().join(file_name);
+        WalManagerConfig { wal_path: path }
+    }
+
+    pub struct Cleaner {
+        wal_path: std::path::PathBuf,
+        checkpoint_dir: std::path::PathBuf,
+    }
+
+    impl Cleaner {
+        pub fn new(
+            checkpoint_config: &CheckpointManagerConfig,
+            wal_config: &WalManagerConfig,
+        ) -> Self {
+            Self {
+                wal_path: wal_config.wal_path.clone(),
+                checkpoint_dir: checkpoint_config.checkpoint_dir.clone(),
+            }
+        }
     }
 
     impl Drop for Cleaner {
         fn drop(&mut self) {
-            let _ = fs::remove_file(&self.path);
+            let _ = fs::remove_file(&self.wal_path);
+            let _ = fs::remove_dir_all(&self.checkpoint_dir);
         }
     }
 
-    fn mock_graph() -> (Arc<MemoryGraph>, Cleaner) {
-        let graph = MemoryGraph::new();
+    pub fn mock_graph() -> (Arc<MemoryGraph>, Cleaner) {
+        let checkpoint_config = mock_checkpoint_config();
+        let wal_config = mock_wal_config();
+        mock_graph_with_config(checkpoint_config, wal_config)
+    }
 
-        {
-            let graph_ref = Arc::clone(&graph);
-            let wal_manager = &graph_ref.wal_manager;
-            let mut wal = wal_manager.wal.write().unwrap();
-            *wal = mock_wal();
-        }
-        let cleaner = Cleaner {
-            path: graph.wal_manager.wal.read().unwrap().path.clone(),
-        };
+    // Create a graph with 4 vertices and 4 edges
+    pub fn mock_graph_with_config(
+        checkpoint_config: CheckpointManagerConfig,
+        wal_config: WalManagerConfig,
+    ) -> (Arc<MemoryGraph>, Cleaner) {
+        let cleaner = Cleaner::new(&checkpoint_config, &wal_config);
+        let graph = MemoryGraph::with_config(mock_checkpoint_config(), mock_wal_config());
 
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
@@ -1629,7 +1667,7 @@ mod tests {
     fn test_wal_replay() {
         // Create a graph with custom WAL path
         let (graph, _cleaner) = mock_graph();
-        let wal_path = graph.wal_manager.wal.read().unwrap().path.clone();
+        let wal_path = graph.wal_manager.wal().read().unwrap().path.clone();
 
         // Create and commit a transaction with a vertex
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
@@ -1667,7 +1705,7 @@ mod tests {
             // Set the WAL path to the temporary WAL path
             let graph_ref = Arc::clone(&new_graph);
             let wal_manager = &graph_ref.wal_manager;
-            let mut wal = wal_manager.wal.write().unwrap();
+            let mut wal = wal_manager.wal().write().unwrap();
             *wal = GraphWal::open(&wal_path).unwrap();
         }
 
@@ -1681,5 +1719,62 @@ mod tests {
         assert_eq!(new_graph.get_edge(&txn_after, eid1).unwrap().src_id(), vid1);
         assert_eq!(new_graph.get_edge(&txn_after, eid1).unwrap().dst_id(), vid2);
         txn_after.abort().unwrap();
+    }
+
+    #[test]
+    fn test_checkpoint_and_wal_recovery() {
+        let checkpoint_config = mock_checkpoint_config();
+        let wal_config = mock_wal_config();
+        let _cleaner = Cleaner::new(&checkpoint_config, &wal_config);
+
+        // Create a graph with the checkpoint manager
+        let graph = MemoryGraph::with_config(checkpoint_config.clone(), wal_config.clone());
+
+        // Create initial data (before checkpoint)
+        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+        let vertex1 = Vertex::new(
+            1,
+            1,
+            PropertyRecord::new(vec![PropertyValue::String("Before Checkpoint".into())]),
+        );
+
+        graph.create_vertex(&txn1, vertex1.clone()).unwrap();
+        txn1.commit().unwrap();
+
+        // Create a checkpoint
+        let _checkpoint_id = graph
+            .create_managed_checkpoint(Some("Test checkpoint".to_string()))
+            .unwrap();
+
+        // Create more data (after checkpoint)
+        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+        let vertex2 = Vertex::new(
+            2,
+            1,
+            PropertyRecord::new(vec![PropertyValue::String("After Checkpoint".into())]),
+        );
+        graph.create_vertex(&txn2, vertex2.clone()).unwrap();
+        txn2.commit().unwrap();
+
+        // Now recover a new graph from checkpoint and WAL
+        let recovered_graph =
+            MemoryGraph::recover_from_checkpoint_and_wal(checkpoint_config, wal_config).unwrap();
+
+        // Verify the recovered graph has both vertices
+        let txn = recovered_graph.begin_transaction(IsolationLevel::Serializable);
+        let recovered_vertex1 = recovered_graph.get_vertex(&txn, 1).unwrap();
+        let recovered_vertex2 = recovered_graph.get_vertex(&txn, 2).unwrap();
+
+        assert_eq!(recovered_vertex1.vid(), vertex1.vid());
+        assert_eq!(
+            recovered_vertex1.properties()[0],
+            PropertyValue::String("Before Checkpoint".into())
+        );
+
+        assert_eq!(recovered_vertex2.vid(), vertex2.vid());
+        assert_eq!(
+            recovered_vertex2.properties()[0],
+            PropertyValue::String("After Checkpoint".into())
+        );
     }
 }
