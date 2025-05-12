@@ -91,8 +91,8 @@ pub enum CheckpointError {
     InvalidFormat(String),
     #[error("Checkpoint not found: {0}")]
     CheckpointNotFound(String),
-    #[error("Invalid checkpoint ID: {0}")]
-    InvalidCheckpointId(String),
     #[error("Checkpoint directory error: {0}")]
     DirectoryError(String),
+    #[error("Timeout waiting for active transactions to complete")]
+    Timeout,
 }

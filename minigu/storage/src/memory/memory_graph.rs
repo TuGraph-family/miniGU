@@ -16,7 +16,7 @@ use crate::memory::edge_iterator::EdgeIterator;
 use crate::memory::vertex_iterator::VertexIterator;
 use crate::model::edge::{Edge, Neighbor};
 use crate::model::vertex::Vertex;
-use crate::storage::{Graph, MutGraph, StorageTransaction};
+use crate::storage::{Graph, MutGraph};
 use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
 use crate::wal::StorageWal;
 use crate::wal::graph_wal::{Operation, RedoEntry, WalManager, WalManagerConfig};
@@ -340,31 +340,36 @@ pub struct MemoryGraph {
 #[allow(dead_code)]
 // Basic methods for MemoryGraph
 impl MemoryGraph {
-    /// Creates a new instance of `MemoryGraph` with default configuration.
+    /// Creates a new instance of `MemoryGraph`, with recovery in default configuration.
     pub fn new() -> Arc<Self> {
-        Self::with_config(Default::default(), Default::default())
+        Self::with_config_recovered(Default::default(), Default::default())
     }
 
-    /// Creates a new instance of `MemoryGraph` with a specific checkpoint configuration.
-    pub fn with_config(
+    /// Recover a graph from checkpoint and WAL
+    pub fn with_config_recovered(
         checkpoint_config: CheckpointManagerConfig,
         wal_config: WalManagerConfig,
     ) -> Arc<Self> {
-        // First create the graph without the checkpoint manager
+        // Recover from checkpoint and WAL
+        Self::recover_from_checkpoint_and_wal(checkpoint_config, wal_config).unwrap()
+    }
+
+    /// Creates a new instance of `MemoryGraph`, without recovering from checkpoint and WAL
+    pub fn with_config_fresh(
+        checkpoint_config: CheckpointManagerConfig,
+        wal_config: WalManagerConfig,
+    ) -> Arc<Self> {
         let graph = Arc::new(Self {
             vertices: DashMap::new(),
             edges: DashMap::new(),
             adjacency_list: DashMap::new(),
             txn_manager: MemTxnManager::new(),
             wal_manager: WalManager::new(wal_config),
-            checkpoint_manager: None, // Will be initialized later
+            checkpoint_manager: None,
         });
 
-        // Now initialize the checkpoint manager with the Arc<MemoryGraph>
+        // Initialize the checkpoint manager
         let checkpoint_manager = CheckpointManager::new(graph.clone(), checkpoint_config).unwrap();
-
-        // Update the checkpoint_manager field
-        // This is safe because we're the only ones with a reference to the graph at this point
         unsafe {
             let graph_ptr = Arc::as_ptr(&graph) as *mut MemoryGraph;
             (*graph_ptr).checkpoint_manager = Some(checkpoint_manager);
@@ -386,18 +391,19 @@ impl MemoryGraph {
             match entry.op {
                 Operation::BeginTransaction(start_ts) => {
                     // Create a new transaction
-                    let txn = self.begin_transaction_at(entry.txn_id, start_ts, entry.iso_level);
+                    let txn =
+                        self.begin_transaction_at(entry.txn_id, start_ts, entry.iso_level, true);
                     assert_eq!(txn.start_ts(), start_ts);
                 }
                 Operation::CommitTransaction(commit_ts) => {
                     // Commit the transaction
                     let txn = self.txn_manager.active_txns.get(&entry.txn_id).unwrap();
-                    txn.value().commit_at(commit_ts)?;
+                    txn.value().commit_at(commit_ts, true)?;
                 }
                 Operation::AbortTransaction => {
                     // Abort the transaction
                     let txn = self.txn_manager.active_txns.get(&entry.txn_id).unwrap();
-                    txn.value().abort()?;
+                    txn.value().abort_at(true)?;
                 }
                 Operation::Delta(delta) => {
                     // Apply the delta
@@ -439,7 +445,7 @@ impl MemoryGraph {
         let txn_id = self.txn_manager.new_txn_id();
         let start_ts = Timestamp::with_ts(self.txn_manager.latest_commit_ts.load(Ordering::SeqCst));
 
-        self.begin_transaction_at(txn_id, start_ts, isolation_level)
+        self.begin_transaction_at(txn_id, start_ts, isolation_level, false)
     }
 
     pub fn begin_transaction_at(
@@ -447,7 +453,18 @@ impl MemoryGraph {
         txn_id: Timestamp,
         start_ts: Timestamp,
         isolation_level: IsolationLevel,
+        skip_wal: bool,
     ) -> Arc<MemTransaction> {
+        // Acquire the checkpoint lock to prevent new transactions from being created
+        // while we are creating a checkpoint
+        let _checkpoint_lock = self
+            .checkpoint_manager
+            .as_ref()
+            .unwrap()
+            .checkpoint_lock
+            .read()
+            .unwrap();
+
         // Register the transaction as active (used for garbage collection and visibility checks).
         let txn = Arc::new(MemTransaction::with_memgraph(
             self.clone(),
@@ -458,18 +475,21 @@ impl MemoryGraph {
         self.txn_manager.start_transaction(txn.clone());
 
         // Write begin transaction to WAL
-        let wal_entry = RedoEntry {
-            lsn: self.wal_manager.next_lsn(),
-            txn_id: txn.txn_id(),
-            iso_level: *txn.isolation_level(),
-            op: Operation::BeginTransaction(txn.start_ts()),
-        };
-        self.wal_manager
-            .wal()
-            .write()
-            .unwrap()
-            .append(&wal_entry)
-            .unwrap();
+        if !skip_wal {
+            let wal_entry = RedoEntry {
+                lsn: self.wal_manager.next_lsn(),
+                txn_id: txn.txn_id(),
+                iso_level: *txn.isolation_level(),
+                op: Operation::BeginTransaction(txn.start_ts()),
+            };
+            self.wal_manager
+                .wal()
+                .write()
+                .unwrap()
+                .append(&wal_entry)
+                .unwrap();
+        }
+
         txn
     }
 
@@ -658,9 +678,8 @@ impl MutGraph for MemoryGraph {
         *entry.chain.undo_ptr.write().unwrap() = Arc::downgrade(&undo_entry);
 
         // Record redo entry
-        let lsn = self.wal_manager.next_lsn();
         let wal_entry = RedoEntry {
-            lsn,
+            lsn: 0, // Temporary set to 0, will be updated when commit
             txn_id: txn.txn_id(),
             iso_level: *txn.isolation_level(),
             op: Operation::Delta(DeltaOp::CreateVertex(vertex)),
@@ -713,9 +732,8 @@ impl MutGraph for MemoryGraph {
             .insert(Neighbor::new(label_id, src_id, eid));
 
         // Write to WAL
-        let lsn = self.wal_manager.next_lsn();
         let wal_entry = RedoEntry {
-            lsn,
+            lsn: 0, // Temporary set to 0, will be updated when commit
             txn_id: txn.txn_id(),
             iso_level: *txn.isolation_level(),
             op: Operation::Delta(DeltaOp::CreateEdge(edge)),
@@ -762,9 +780,8 @@ impl MutGraph for MemoryGraph {
         *entry.chain.undo_ptr.write().unwrap() = Arc::downgrade(&undo_entry);
 
         // Write to WAL
-        let lsn = self.wal_manager.next_lsn();
         let wal_entry = RedoEntry {
-            lsn,
+            lsn: 0, // Temporary set to 0, will be updated when commit
             txn_id: txn.txn_id(),
             iso_level: *txn.isolation_level(),
             op: Operation::Delta(DeltaOp::DelVertex(vid)),
@@ -797,9 +814,8 @@ impl MutGraph for MemoryGraph {
         *entry.chain.undo_ptr.write().unwrap() = Arc::downgrade(&undo_entry);
 
         // Write to WAL
-        let lsn = self.wal_manager.next_lsn();
         let wal_entry = RedoEntry {
-            lsn,
+            lsn: 0, // Temporary set to 0, will be updated when commit
             txn_id: txn.txn_id(),
             iso_level: *txn.isolation_level(),
             op: Operation::Delta(DeltaOp::DelEdge(eid)),
@@ -833,9 +849,8 @@ impl MutGraph for MemoryGraph {
         );
 
         // Write to WAL
-        let lsn = self.wal_manager.next_lsn();
         let wal_entry = RedoEntry {
-            lsn,
+            lsn: 0, // Temporary set to 0, will be updated when commit
             txn_id: txn.txn_id(),
             iso_level: *txn.isolation_level(),
             op: Operation::Delta(DeltaOp::SetVertexProps(vid, SetPropsOp { indices, props })),
@@ -869,9 +884,8 @@ impl MutGraph for MemoryGraph {
         );
 
         // Write to WAL
-        let lsn = self.wal_manager.next_lsn();
         let wal_entry = RedoEntry {
-            lsn,
+            lsn: 0, // Temporary set to 0, will be updated when commit
             txn_id: txn.txn_id(),
             iso_level: *txn.isolation_level(),
             op: Operation::Delta(DeltaOp::SetEdgeProps(eid, SetPropsOp { indices, props })),
@@ -918,7 +932,6 @@ pub mod tests {
     use super::*;
     use crate::model::properties::PropertyRecord;
     use crate::storage::StorageTransaction;
-    use crate::wal::graph_wal::GraphWal;
 
     const PERSON: LabelId = 1;
     const FRIEND: LabelId = 1;
@@ -956,6 +969,7 @@ pub mod tests {
             max_checkpoints: 3,
             auto_checkpoint_interval_secs: 0, // Disable auto checkpoints for testing
             checkpoint_prefix: "test_checkpoint".to_string(),
+            transaction_timeout_secs: 10,
         }
     }
 
@@ -999,13 +1013,21 @@ pub mod tests {
         mock_graph_with_config(checkpoint_config, wal_config)
     }
 
+    pub fn mock_empty_graph() -> (Arc<MemoryGraph>, Cleaner) {
+        let checkpoint_config = mock_checkpoint_config();
+        let wal_config = mock_wal_config();
+        let cleaner = Cleaner::new(&checkpoint_config, &wal_config);
+        let graph = MemoryGraph::with_config_fresh(checkpoint_config, wal_config);
+        (graph, cleaner)
+    }
+
     // Create a graph with 4 vertices and 4 edges
     pub fn mock_graph_with_config(
         checkpoint_config: CheckpointManagerConfig,
         wal_config: WalManagerConfig,
     ) -> (Arc<MemoryGraph>, Cleaner) {
         let cleaner = Cleaner::new(&checkpoint_config, &wal_config);
-        let graph = MemoryGraph::with_config(mock_checkpoint_config(), mock_wal_config());
+        let graph = MemoryGraph::with_config_recovered(mock_checkpoint_config(), mock_wal_config());
 
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
@@ -1665,9 +1687,11 @@ pub mod tests {
 
     #[test]
     fn test_wal_replay() {
-        // Create a graph with custom WAL path
-        let (graph, _cleaner) = mock_graph();
-        let wal_path = graph.wal_manager.wal().read().unwrap().path.clone();
+        // Creates a new graph
+        let checkpoint_config = mock_checkpoint_config();
+        let wal_config = mock_wal_config();
+        let _cleaner = Cleaner::new(&checkpoint_config, &wal_config);
+        let graph = MemoryGraph::with_config_fresh(checkpoint_config.clone(), wal_config.clone());
 
         // Create and commit a transaction with a vertex
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
@@ -1699,15 +1723,9 @@ pub mod tests {
         assert_eq!(graph.get_edge(&txn_verify, eid1).unwrap().dst_id(), vid2);
         txn_verify.abort().unwrap();
 
-        // Create a new graph instance with the same WAL path
-        let new_graph = MemoryGraph::new();
-        {
-            // Set the WAL path to the temporary WAL path
-            let graph_ref = Arc::clone(&new_graph);
-            let wal_manager = &graph_ref.wal_manager;
-            let mut wal = wal_manager.wal().write().unwrap();
-            *wal = GraphWal::open(&wal_path).unwrap();
-        }
+        // Create a new graph instance without recovery
+        let new_graph =
+            MemoryGraph::with_config_fresh(checkpoint_config.clone(), wal_config.clone());
 
         // Recover the graph from WAL
         assert!(new_graph.recover_from_wal().is_ok());
@@ -1723,12 +1741,11 @@ pub mod tests {
 
     #[test]
     fn test_checkpoint_and_wal_recovery() {
+        // Creates a new graph
         let checkpoint_config = mock_checkpoint_config();
         let wal_config = mock_wal_config();
         let _cleaner = Cleaner::new(&checkpoint_config, &wal_config);
-
-        // Create a graph with the checkpoint manager
-        let graph = MemoryGraph::with_config(checkpoint_config.clone(), wal_config.clone());
+        let graph = MemoryGraph::with_config_fresh(checkpoint_config.clone(), wal_config.clone());
 
         // Create initial data (before checkpoint)
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
@@ -1741,10 +1758,18 @@ pub mod tests {
         graph.create_vertex(&txn1, vertex1.clone()).unwrap();
         txn1.commit().unwrap();
 
+        // Check the size of wal entries before checkpoint
+        let entries = graph.wal_manager.wal().read().unwrap().read_all().unwrap();
+        assert_eq!(entries.len(), 3); // txn1 begin, create vertex, commit
+
         // Create a checkpoint
         let _checkpoint_id = graph
             .create_managed_checkpoint(Some("Test checkpoint".to_string()))
             .unwrap();
+
+        // Check the size of wal entries after checkpoint
+        let entries = graph.wal_manager.wal().read().unwrap().read_all().unwrap();
+        assert_eq!(entries.len(), 0); // Should be empty as we truncate the WAL
 
         // Create more data (after checkpoint)
         let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
@@ -1756,9 +1781,23 @@ pub mod tests {
         graph.create_vertex(&txn2, vertex2.clone()).unwrap();
         txn2.commit().unwrap();
 
+        // Check the size of wal entries before recovery
+        let entries = graph.wal_manager.wal().read().unwrap().read_all().unwrap();
+        assert_eq!(entries.len(), 3); // txn2 begin, create vertex, commit
+
         // Now recover a new graph from checkpoint and WAL
-        let recovered_graph =
-            MemoryGraph::recover_from_checkpoint_and_wal(checkpoint_config, wal_config).unwrap();
+        let recovered_graph = MemoryGraph::with_config_recovered(checkpoint_config, wal_config);
+
+        // Check the size of wal entries after recovery
+        let entries = recovered_graph
+            .wal_manager
+            .wal()
+            .read()
+            .unwrap()
+            .read_all()
+            .unwrap();
+
+        assert_eq!(entries.len(), 3); // Should be still 3, since we didn't truncate the WAL
 
         // Verify the recovered graph has both vertices
         let txn = recovered_graph.begin_transaction(IsolationLevel::Serializable);

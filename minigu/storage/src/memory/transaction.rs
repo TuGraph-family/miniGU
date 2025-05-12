@@ -414,11 +414,18 @@ impl StorageTransaction for MemTransaction {
     /// Commits the transaction, applying all changes atomically.
     /// Ensures serializability, updates version chains, and manages adjacency lists.
     fn commit(&self) -> StorageResult<Timestamp> {
-        self.commit_at(self.graph().txn_manager.new_commit_ts())
+        self.commit_at(self.graph().txn_manager.new_commit_ts(), false)
     }
 
+    /// Aborts the transaction, rolling back all changes.
+    fn abort(&self) -> StorageResult<()> {
+        self.abort_at(false)
+    }
+}
+
+impl MemTransaction {
     /// Commits the transaction at a specific commit timestamp.
-    fn commit_at(&self, commit_ts: Timestamp) -> StorageResult<Timestamp> {
+    pub fn commit_at(&self, commit_ts: Timestamp, skip_wal: bool) -> StorageResult<Timestamp> {
         // Acquire the global commit lock to enforce serial execution of commits.
         let _guard = self.graph.txn_manager.commit_lock.lock().unwrap();
 
@@ -473,35 +480,42 @@ impl StorageTransaction for MemTransaction {
         }
 
         // Step 4: Write redo entry and commit to WAL
-        let redo_entries = self
-            .redo_buffer
-            .write()
-            .unwrap()
-            .drain(..)
-            .collect::<Vec<_>>();
-        for entry in redo_entries {
+        if !skip_wal {
+            let redo_entries = self
+                .redo_buffer
+                .write()
+                .unwrap()
+                .drain(..)
+                .map(|mut entry| {
+                    // Update LSN
+                    entry.lsn = self.graph.wal_manager.next_lsn();
+                    entry
+                })
+                .collect::<Vec<_>>();
+            for entry in redo_entries {
+                self.graph
+                    .wal_manager
+                    .wal()
+                    .write()
+                    .unwrap()
+                    .append(&entry)?;
+            }
+
+            // Write commit transaction to WAL
+            let wal_entry = RedoEntry {
+                lsn: self.graph.wal_manager.next_lsn(),
+                txn_id: self.txn_id(),
+                iso_level: self.isolation_level,
+                op: Operation::CommitTransaction(commit_ts),
+            };
             self.graph
                 .wal_manager
                 .wal()
                 .write()
                 .unwrap()
-                .append(&entry)?;
+                .append(&wal_entry)?;
+            self.graph.wal_manager.wal().write().unwrap().flush()?;
         }
-        // Write commit transaction to WAL
-        let lsn = self.graph.wal_manager.next_lsn();
-        let wal_entry = RedoEntry {
-            lsn,
-            txn_id: self.txn_id(),
-            iso_level: self.isolation_level,
-            op: Operation::CommitTransaction(commit_ts),
-        };
-        self.graph
-            .wal_manager
-            .wal()
-            .write()
-            .unwrap()
-            .append(&wal_entry)?;
-        self.graph.wal_manager.wal().write().unwrap().flush()?;
 
         // Step 5: Clean up transaction state and update the `latest_commit_ts`.
         self.graph
@@ -509,11 +523,13 @@ impl StorageTransaction for MemTransaction {
             .latest_commit_ts
             .store(commit_ts.0, Ordering::SeqCst);
         self.graph.txn_manager.finish_transaction(self)?;
+
+        // Step 6: Check if an auto checkpoint should be created
+        self.graph.check_auto_checkpoint()?;
         Ok(commit_ts)
     }
 
-    /// Aborts the transaction, rolling back all changes.
-    fn abort(&self) -> StorageResult<()> {
+    pub fn abort_at(&self, skip_wal: bool) -> StorageResult<()> {
         // Acquire write lock and drain the undo buffer
         let undo_entries: Vec<_> = self.undo_buffer.write().unwrap().drain(..).collect();
 
@@ -605,20 +621,22 @@ impl StorageTransaction for MemTransaction {
         }
 
         // Write abort to WAL
-        let lsn = self.graph.wal_manager.next_lsn();
-        let wal_entry = RedoEntry {
-            lsn,
-            txn_id: self.txn_id(),
-            iso_level: self.isolation_level,
-            op: Operation::AbortTransaction,
-        };
-        self.graph
-            .wal_manager
-            .wal()
-            .write()
-            .unwrap()
-            .append(&wal_entry)?;
-        self.graph.wal_manager.wal().write().unwrap().flush()?;
+        if !skip_wal {
+            let lsn = self.graph.wal_manager.next_lsn();
+            let wal_entry = RedoEntry {
+                lsn,
+                txn_id: self.txn_id(),
+                iso_level: self.isolation_level,
+                op: Operation::AbortTransaction,
+            };
+            self.graph
+                .wal_manager
+                .wal()
+                .write()
+                .unwrap()
+                .append(&wal_entry)?;
+            self.graph.wal_manager.wal().write().unwrap().flush()?;
+        }
 
         // Remove transaction from transaction manager
         self.graph.txn_manager.finish_transaction(self)?;
@@ -629,11 +647,12 @@ impl StorageTransaction for MemTransaction {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::memory::memory_graph;
     use crate::transaction::IsolationLevel;
 
     #[test]
     fn test_watermark_tracking() {
-        let graph = MemoryGraph::new();
+        let (graph, _cleaner) = memory_graph::tests::mock_empty_graph();
         let txn_start_ts = graph.txn_manager.latest_commit_ts.load(Ordering::Acquire);
 
         // Start txn0

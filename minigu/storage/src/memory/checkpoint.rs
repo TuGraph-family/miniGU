@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use common::datatype::types::{EdgeId, VertexId};
@@ -31,7 +31,8 @@ use crate::wal::graph_wal::{WalManager, WalManagerConfig};
 const DEFAULT_CHECKPOINT_DIR: &str = "checkpoints";
 const DEFAULT_CHECKPOINT_PREFIX: &str = "checkpoint";
 const MAX_CHECKPOINTS: usize = 5;
-const AUTO_CHECKPOINT_INTERVAL_SECS: u64 = 300; // 5 minutes
+const AUTO_CHECKPOINT_INTERVAL_SECS: u64 = 30;
+const DEFAULT_CHECKPOINT_TIMEOUT_SECS: u64 = 30;
 
 /// Represents a checkpoint of a MemoryGraph at a specific point in time.
 ///
@@ -250,7 +251,11 @@ impl GraphCheckpoint {
     }
 
     /// Restores a MemoryGraph from this checkpoint
-    pub fn restore(&self, wal_config: WalManagerConfig) -> StorageResult<Arc<MemoryGraph>> {
+    pub fn restore(
+        &self,
+        checkpoint_config: CheckpointManagerConfig,
+        wal_config: WalManagerConfig,
+    ) -> StorageResult<Arc<MemoryGraph>> {
         // Create a new empty graph with the same WAL path
         let graph = Arc::new(MemoryGraph {
             vertices: DashMap::new(),
@@ -258,8 +263,15 @@ impl GraphCheckpoint {
             adjacency_list: DashMap::new(),
             txn_manager: super::transaction::MemTxnManager::new(),
             wal_manager: WalManager::new(wal_config),
-            checkpoint_manager: None, // Will be initialized later if needed
+            checkpoint_manager: None,
         });
+
+        // Initialize the checkpoint manager
+        let checkpoint_manager = CheckpointManager::new(graph.clone(), checkpoint_config)?;
+        unsafe {
+            let graph_ptr = Arc::as_ptr(&graph) as *mut MemoryGraph;
+            (*graph_ptr).checkpoint_manager = Some(checkpoint_manager);
+        }
 
         // Set the LSN to the checkpoint's LSN
         graph.wal_manager.set_next_lsn(self.metadata.lsn);
@@ -354,6 +366,9 @@ pub struct CheckpointManagerConfig {
 
     /// Prefix for checkpoint filenames
     pub checkpoint_prefix: String,
+
+    /// Timeout for waiting for active transactions to complete (in seconds)
+    pub transaction_timeout_secs: u64,
 }
 
 impl Default for CheckpointManagerConfig {
@@ -363,6 +378,7 @@ impl Default for CheckpointManagerConfig {
             max_checkpoints: MAX_CHECKPOINTS,
             auto_checkpoint_interval_secs: AUTO_CHECKPOINT_INTERVAL_SECS,
             checkpoint_prefix: DEFAULT_CHECKPOINT_PREFIX.to_string(),
+            transaction_timeout_secs: DEFAULT_CHECKPOINT_TIMEOUT_SECS,
         }
     }
 }
@@ -387,6 +403,10 @@ pub struct CheckpointManager {
 
     /// Last automatic checkpoint time
     last_auto_checkpoint: Option<SystemTime>,
+
+    // Lock to ensure no transaction is trying to
+    // update the graph while we are creating a checkpoint
+    pub(super) checkpoint_lock: RwLock<()>,
 }
 
 impl CheckpointManager {
@@ -401,6 +421,7 @@ impl CheckpointManager {
             graph,
             checkpoints: HashMap::new(),
             last_auto_checkpoint: None,
+            checkpoint_lock: RwLock::new(()),
         };
 
         // Load existing checkpoints
@@ -474,13 +495,22 @@ impl CheckpointManager {
 
     /// Creates a new checkpoint
     pub fn create_checkpoint(&mut self, description: Option<String>) -> StorageResult<String> {
-        // Create a new checkpoint
-        let checkpoint = GraphCheckpoint::new(&self.graph);
+        let checkpoint;
+        {
+            // Acquire the checkpoint lock
+            let _lock = self.checkpoint_lock.write().unwrap();
 
-        // Truncate the WAL, keeping only entries after the checkpoint's LSN
-        self.graph
-            .wal_manager
-            .truncate_until(checkpoint.metadata.lsn)?;
+            // Wait for active transactions to complete
+            self.wait_for_transaction_quiescence()?;
+
+            // Create a new checkpoint
+            checkpoint = GraphCheckpoint::new(&self.graph);
+
+            // Truncate the WAL, keeping only entries after the checkpoint's LSN
+            self.graph
+                .wal_manager
+                .truncate_until(checkpoint.metadata.lsn)?;
+        }
 
         // Generate a unique ID for the checkpoint
         let id = Uuid::new_v4().to_string();
@@ -515,6 +545,19 @@ impl CheckpointManager {
         Ok(id)
     }
 
+    fn wait_for_transaction_quiescence(&self) -> StorageResult<()> {
+        // Wait for active transactions to complete
+        let start_time = std::time::Instant::now();
+        let timeout = std::time::Duration::from_secs(self.config.transaction_timeout_secs);
+        while !self.graph.txn_manager.active_txns.is_empty() {
+            if start_time.elapsed() > timeout {
+                return Err(StorageError::Checkpoint(CheckpointError::Timeout));
+            }
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+        Ok(())
+    }
+
     /// Lists all available checkpoints
     pub fn list_checkpoints(&self) -> Vec<&CheckpointEntry> {
         // Sort by creation time (newest first)
@@ -540,12 +583,13 @@ impl CheckpointManager {
     pub fn restore_from_checkpoint(
         &self,
         id: &str,
+        checkpoint_config: CheckpointManagerConfig,
         wal_config: WalManagerConfig,
     ) -> StorageResult<Arc<MemoryGraph>> {
         let checkpoint = self.load_checkpoint(id)?;
 
         // Restore the graph
-        checkpoint.restore(wal_config)
+        checkpoint.restore(checkpoint_config, wal_config)
     }
 
     /// Deletes a checkpoint by ID
@@ -612,18 +656,9 @@ impl CheckpointManager {
 }
 
 impl MemoryGraph {
-    /// Creates a checkpoint of the current graph state
-    pub fn create_checkpoint(self: &Arc<Self>) -> GraphCheckpoint {
-        GraphCheckpoint::new(self)
-    }
-
-    /// Creates a checkpoint and saves it to a file
-    pub fn save_checkpoint<P: AsRef<Path>>(self: &Arc<Self>, path: P) -> StorageResult<()> {
-        let checkpoint = self.create_checkpoint();
-        checkpoint.save_to_file(path)
-    }
-
     /// Recovers a graph from the most recent checkpoint and WAL
+    /// case1. If no checkpoint found, recover from WAL only
+    /// case2. If checkpoint found, recover from checkpoint and then apply WAL entries
     pub fn recover_from_checkpoint_and_wal(
         checkpoint_config: CheckpointManagerConfig,
         wal_config: WalManagerConfig,
@@ -637,7 +672,7 @@ impl MemoryGraph {
 
         // If no checkpoint found, create a new empty graph
         if checkpoint_path.is_none() {
-            let graph = Self::with_config(checkpoint_config, wal_config.clone());
+            let graph = Self::with_config_fresh(checkpoint_config.clone(), wal_config.clone());
             graph.recover_from_wal()?;
             return Ok(graph);
         }
@@ -645,14 +680,7 @@ impl MemoryGraph {
         // Restore from checkpoint
         let checkpoint = GraphCheckpoint::load_from_file(checkpoint_path.unwrap())?;
         let checkpoint_lsn = checkpoint.metadata.lsn;
-        let graph = checkpoint.restore(wal_config)?;
-
-        // Initialize checkpoint manager
-        let checkpoint_manager = CheckpointManager::new(graph.clone(), checkpoint_config)?;
-        unsafe {
-            let graph_ptr = Arc::as_ptr(&graph) as *mut MemoryGraph;
-            (*graph_ptr).checkpoint_manager = Some(checkpoint_manager);
-        }
+        let graph = checkpoint.restore(checkpoint_config, wal_config)?;
 
         // Read WAL entries with LSN >= checkpoint_lsn
         let all_entries = graph.wal_manager.wal().read().unwrap().read_all()?;
@@ -732,39 +760,6 @@ impl MemoryGraph {
                 // This is safe because we're only modifying the manager's internal state
                 let manager_ptr = manager as *const CheckpointManager as *mut CheckpointManager;
                 unsafe { (*manager_ptr).create_checkpoint(description) }
-            }
-            None => Err(StorageError::Checkpoint(
-                crate::error::CheckpointError::DirectoryError(
-                    "No checkpoint manager configured".to_string(),
-                ),
-            )),
-        }
-    }
-
-    /// Restores from a checkpoint using the checkpoint manager
-    pub fn restore_from_managed_checkpoint(
-        &self,
-        id: &str,
-        wal_config: WalManagerConfig,
-    ) -> StorageResult<Arc<Self>> {
-        match &self.checkpoint_manager {
-            Some(manager) => manager.restore_from_checkpoint(id, wal_config),
-            None => Err(StorageError::Checkpoint(
-                crate::error::CheckpointError::DirectoryError(
-                    "No checkpoint manager configured".to_string(),
-                ),
-            )),
-        }
-    }
-
-    /// Deletes a checkpoint using the checkpoint manager
-    pub fn delete_checkpoint(&self, id: &str) -> StorageResult<()> {
-        match &self.checkpoint_manager {
-            Some(manager) => {
-                // Need to get a mutable reference to the manager
-                // This is safe because we're only modifying the manager's internal state
-                let manager_ptr = manager as *const CheckpointManager as *mut CheckpointManager;
-                unsafe { (*manager_ptr).delete_checkpoint(id) }
             }
             None => Err(StorageError::Checkpoint(
                 crate::error::CheckpointError::DirectoryError(
@@ -862,14 +857,16 @@ mod tests {
         // Create a graph with mock data
         let checkpoint_config = memory_graph::tests::mock_checkpoint_config();
         let wal_config = memory_graph::tests::mock_wal_config();
-        let (original_graph, _cleaner) =
-            memory_graph::tests::mock_graph_with_config(checkpoint_config, wal_config.clone());
+        let (original_graph, _cleaner) = memory_graph::tests::mock_graph_with_config(
+            checkpoint_config.clone(),
+            wal_config.clone(),
+        );
 
         // Create checkpoint
         let checkpoint = GraphCheckpoint::new(&original_graph);
 
         // Restore graph from checkpoint
-        let restored_graph = checkpoint.restore(wal_config).unwrap();
+        let restored_graph = checkpoint.restore(checkpoint_config, wal_config).unwrap();
 
         let origin_txn = original_graph.begin_transaction(IsolationLevel::Serializable);
         let restore_txn = restored_graph.begin_transaction(IsolationLevel::Serializable);
@@ -961,7 +958,7 @@ mod tests {
         );
 
         // Create a checkpoint manager
-        let mut manager = CheckpointManager::new(graph.clone(), checkpoint_config).unwrap();
+        let mut manager = CheckpointManager::new(graph.clone(), checkpoint_config.clone()).unwrap();
 
         // Create 5 checkpoints
         let mut checkpoint_ids = Vec::new();
@@ -992,7 +989,7 @@ mod tests {
 
         // Restore from a checkpoint
         let restored_graph = manager
-            .restore_from_checkpoint(&checkpoint_ids[4], wal_config.clone())
+            .restore_from_checkpoint(&checkpoint_ids[4], checkpoint_config, wal_config)
             .unwrap();
 
         // Verify the restored graph has the same data
