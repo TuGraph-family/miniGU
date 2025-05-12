@@ -31,7 +31,7 @@ impl Iterator for VertexIterator<'_> {
 
             // Perform MVCC visibility check
             let visible_vertex = match versioned_vertex.get_visible(self.txn) {
-                Ok(v) if !v.is_tombstone() => v, // Skip logically deleted vertices
+                Ok(v) => v,
                 _ => continue,
             };
 
@@ -63,7 +63,7 @@ impl<'a> VertexIteratorTrait<'a> for VertexIterator<'a> {
 
     /// Advances the iterator to the vertex with the specified ID or the next greater vertex.
     /// Returns `Ok(true)` if the exact vertex is found, `Ok(false)` otherwise.
-    fn advance(&mut self, id: VertexId) -> StorageResult<bool> {
+    fn seek(&mut self, id: VertexId) -> StorageResult<bool> {
         for result in self.by_ref() {
             match result {
                 Ok(vertex) if vertex.vid() == id => return Ok(true),

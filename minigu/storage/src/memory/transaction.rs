@@ -7,7 +7,10 @@ use crossbeam_skiplist::SkipMap;
 use dashmap::DashSet;
 
 use super::memory_graph::MemoryGraph;
-use crate::error::{StorageError, StorageResult};
+use crate::error::{
+    EdgeNotFoundError, StorageError, StorageResult, TransactionError, VertexNotFoundError,
+};
+use crate::model::edge::{Edge, Neighbor};
 use crate::storage::StorageTransaction;
 use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
 
@@ -22,6 +25,9 @@ pub struct MemTxnManager {
     /// Commit lock to enforce serial commit order
     pub(super) commit_lock: Mutex<()>,
     pub(super) latest_commit_ts: AtomicU64,
+    /// The commit timestamp and transaction id
+    commit_ts_counter: AtomicU64,
+    txn_id_counter: AtomicU64,
     /// The watermark is the minimum commit timestamp of the active transactions.
     pub(super) watermark: AtomicU64,
     last_gc_ts: Mutex<u64>,
@@ -33,7 +39,9 @@ impl Default for MemTxnManager {
             active_txns: SkipMap::new(),
             committed_txns: SkipMap::new(),
             commit_lock: Mutex::new(()),
-            latest_commit_ts: AtomicU64::new(Timestamp::new_commit_ts().0),
+            commit_ts_counter: AtomicU64::new(1),
+            txn_id_counter: AtomicU64::new(Timestamp::TXN_ID_START + 1),
+            latest_commit_ts: AtomicU64::new(0),
             watermark: AtomicU64::new(0),
             last_gc_ts: Mutex::new(0),
         }
@@ -43,14 +51,7 @@ impl Default for MemTxnManager {
 impl MemTxnManager {
     /// Create a new MemTxnManager
     pub fn new() -> Self {
-        Self {
-            active_txns: SkipMap::new(),
-            committed_txns: SkipMap::new(),
-            commit_lock: Mutex::new(()),
-            latest_commit_ts: AtomicU64::new(Timestamp::new_commit_ts().0),
-            watermark: AtomicU64::new(0),
-            last_gc_ts: Mutex::new(0),
-        }
+        Self::default()
     }
 
     /// Register a new transaction.
@@ -74,10 +75,19 @@ impl MemTxnManager {
 
         self.periodic_garbage_collect(txn.graph())?;
 
-        Err(StorageError::TransactionError(format!(
-            "Transaction {:?} not found",
-            txn.txn_id(),
-        )))
+        Err(StorageError::Transaction(
+            TransactionError::TransactionNotFound(format!("{:?}", txn.txn_id())),
+        ))
+    }
+
+    /// Generate a new commit timestamp.
+    pub fn new_commit_ts(&self) -> Timestamp {
+        Timestamp::with_ts(self.commit_ts_counter.fetch_add(1, Ordering::Relaxed))
+    }
+
+    /// Generate a new transaction id.
+    pub fn new_txn_id(&self) -> Timestamp {
+        Timestamp::with_ts(self.txn_id_counter.fetch_add(1, Ordering::Relaxed))
     }
 
     /// Periodlically garbage collect expired transactions.
@@ -116,7 +126,7 @@ impl MemTxnManager {
         let mut expired_txns = Vec::new();
         // Since both `DeleteVertex` and `DeleteEdge` trigger `DeleteEdge`,
         // we only need to collect and analyze expired edges
-        let mut expired_edges = HashMap::new();
+        let mut expired_edges: HashMap<EdgeId, Edge> = HashMap::new();
         for entry in self.committed_txns.iter() {
             // If the commit timestamp of the transaction is greater than the min read timestamp,
             // it means the transaction is still active, and the subsequent transactions are also
@@ -129,7 +139,7 @@ impl MemTxnManager {
                 match entry.delta() {
                     // DeltaOp::CreateEdge means that the edge is deleted in this transaction
                     DeltaOp::CreateEdge(edge) => {
-                        expired_edges.insert(edge.eid(), edge.euid());
+                        expired_edges.insert(edge.eid(), edge.without_properties());
                     }
                     DeltaOp::DelEdge(eid) => {
                         expired_edges.remove(eid);
@@ -147,7 +157,7 @@ impl MemTxnManager {
             self.committed_txns.remove(txn.commit_ts.get().unwrap());
         }
 
-        for (_, euid) in expired_edges {
+        for (_, edge) in expired_edges {
             // Define a macro to check if an entity is marked as a tombstone
             macro_rules! check_tombstone {
                 ($graph:expr, $collection:ident, $id_method:expr) => {
@@ -158,30 +168,40 @@ impl MemTxnManager {
                         .unwrap_or(None)
                 };
             }
-            let src_tombstone = check_tombstone!(graph, vertices, &euid.src_id());
-            let dst_tombstone = check_tombstone!(graph, vertices, &euid.dst_id());
-            let edge_tombstone = check_tombstone!(graph, edges, &euid.eid());
+            let src_tombstone = check_tombstone!(graph, vertices, &edge.src_id());
+            let dst_tombstone = check_tombstone!(graph, vertices, &edge.dst_id());
+            let edge_tombstone = check_tombstone!(graph, edges, &edge.eid());
 
             // Remove the vertex and the corresponding adjacencies
             fn remove_vertex_and_adjacencies(graph: &MemoryGraph, vid: VertexId) {
                 graph.vertices.remove(&vid);
-                let mut adj_to_remove = Vec::new();
+                let mut incoming_to_remove = Vec::new();
+                let mut outgoing_to_remove = Vec::new();
 
                 if let Some(adj_container) = graph.adjacency_list.get(&vid) {
-                    for adj in adj_container.inner.iter() {
-                        if adj.src_id() == vid {
-                            adj_to_remove.push((adj.dst_id(), adj.reverse()));
-                        }
-                        if adj.dst_id() == vid {
-                            adj_to_remove.push((adj.src_id(), adj.reverse()));
-                        }
+                    for adj in adj_container.incoming().iter() {
+                        outgoing_to_remove.push((
+                            adj.neighbor_id(),
+                            Neighbor::new(adj.label_id(), vid, adj.eid()),
+                        ));
+                    }
+                    for adj in adj_container.outgoing().iter() {
+                        incoming_to_remove.push((
+                            adj.neighbor_id(),
+                            Neighbor::new(adj.label_id(), vid, adj.eid()),
+                        ));
                     }
                 }
 
-                // Remove adjacencies of reversed edges
-                for (other_vid, euid) in adj_to_remove {
+                for (other_vid, euid) in incoming_to_remove {
                     graph.adjacency_list.entry(other_vid).and_modify(|l| {
-                        l.inner.remove(&euid);
+                        l.incoming().remove(&euid);
+                    });
+                }
+
+                for (other_vid, euid) in outgoing_to_remove {
+                    graph.adjacency_list.entry(other_vid).and_modify(|l| {
+                        l.outgoing().remove(&euid);
                     });
                 }
 
@@ -190,26 +210,34 @@ impl MemTxnManager {
             }
 
             if let Some(true) = src_tombstone {
-                remove_vertex_and_adjacencies(graph, euid.src_id());
+                remove_vertex_and_adjacencies(graph, edge.src_id());
             }
 
             if let Some(true) = dst_tombstone {
-                remove_vertex_and_adjacencies(graph, euid.dst_id());
+                remove_vertex_and_adjacencies(graph, edge.dst_id());
             }
 
             if let Some(true) = edge_tombstone {
-                graph.edges.remove(&euid.eid());
+                graph.edges.remove(&edge.eid());
                 graph
                     .adjacency_list
-                    .entry(euid.src_id())
+                    .entry(edge.src_id())
                     .and_modify(|adj_container| {
-                        adj_container.inner.remove(&euid);
+                        adj_container.outgoing().remove(&Neighbor::new(
+                            edge.label_id(),
+                            edge.dst_id(),
+                            edge.eid(),
+                        ));
                     });
                 graph
                     .adjacency_list
-                    .entry(euid.dst_id())
+                    .entry(edge.dst_id())
                     .and_modify(|adj_container| {
-                        adj_container.inner.remove(&euid.reverse());
+                        adj_container.incoming().remove(&Neighbor::new(
+                            edge.label_id(),
+                            edge.src_id(),
+                            edge.eid(),
+                        ));
                     });
             }
         }
@@ -278,12 +306,19 @@ impl MemTransaction {
                 .graph
                 .vertices
                 .get(&vid)
-                .ok_or(StorageError::VertexNotFound(vid.to_string()))?;
+                .ok_or(StorageError::VertexNotFound(
+                    VertexNotFoundError::VertexNotFound(vid.to_string()),
+                ))?;
 
             let current = entry.chain.current.read().unwrap();
             // Check if the vertex was modified after the transaction started.
             if current.commit_ts != self.txn_id && current.commit_ts > self.start_ts {
-                return Err(StorageError::ReadConflict(vid.to_string()));
+                return Err(StorageError::Transaction(
+                    TransactionError::ReadWriteConflict(format!(
+                        "Vertex is being modified by transaction {:?}",
+                        current.commit_ts
+                    )),
+                ));
             }
         }
 
@@ -293,12 +328,19 @@ impl MemTransaction {
                 .graph
                 .edges
                 .get(&eid)
-                .ok_or(StorageError::EdgeNotFound(eid.to_string()))?;
+                .ok_or(StorageError::EdgeNotFound(EdgeNotFoundError::EdgeNotFound(
+                    eid.to_string(),
+                )))?;
 
             let current = entry.chain.current.read().unwrap();
             // Check if the edge was modified after the transaction started.
             if current.commit_ts != self.txn_id && current.commit_ts > self.start_ts {
-                return Err(StorageError::ReadConflict(eid.to_string()));
+                return Err(StorageError::Transaction(
+                    TransactionError::ReadWriteConflict(format!(
+                        "Edge is being modified by transaction {:?}",
+                        current.commit_ts
+                    )),
+                ));
             }
         }
 
@@ -378,13 +420,12 @@ impl StorageTransaction for MemTransaction {
         }
 
         // Step 2: Assign a commit timestamp (atomic operation).
-        let commit_ts = Timestamp::new_commit_ts();
+        let commit_ts = self.graph().txn_manager.new_commit_ts();
         if let Err(e) = self.commit_ts.set(commit_ts) {
             self.abort()?;
-            return Err(StorageError::TransactionError(format!(
-                "Transaction {:?} already committed",
-                e
-            )));
+            return Err(StorageError::Transaction(
+                TransactionError::TransactionAlreadyCommitted(format!("{:?}", e)),
+            ));
         }
 
         // Step 3: Process write in undo buffer.
@@ -530,13 +571,10 @@ impl StorageTransaction for MemTransaction {
 
 #[cfg(test)]
 mod tests {
-    use serial_test::serial;
-
     use super::*;
     use crate::transaction::IsolationLevel;
 
     #[test]
-    #[serial]
     fn test_watermark_tracking() {
         let graph = MemoryGraph::new();
         let txn_start_ts = graph.txn_manager.latest_commit_ts.load(Ordering::Acquire);

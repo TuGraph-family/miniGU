@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::fmt;
 
+use enum_as_inner::EnumAsInner;
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 
 /// Supported primitive data types
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -13,7 +13,8 @@ pub enum DataType {
     Double,  // f64
     String,  // String
     Boolean, // bool
-    Object,  // reserved for complex data type
+    Map,     // reserved for complex data type
+    List,    // reserved for complex data type
 }
 
 /// Property metadata
@@ -45,7 +46,7 @@ impl PropertyMeta {
 }
 
 /// Property value container
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, EnumAsInner)]
 pub enum PropertyValue {
     Int(i32),
     Long(i64),
@@ -53,7 +54,8 @@ pub enum PropertyValue {
     Double(f64),
     String(String),
     Boolean(bool),
-    Object(HashMap<String, PropertyValue>),
+    Map(HashMap<String, PropertyValue>),
+    List(Vec<PropertyValue>),
 }
 
 impl PropertyValue {
@@ -65,91 +67,10 @@ impl PropertyValue {
             PropertyValue::Double(_) => DataType::Double,
             PropertyValue::String(_) => DataType::String,
             PropertyValue::Boolean(_) => DataType::Boolean,
-            PropertyValue::Object(_) => DataType::Object,
+            PropertyValue::Map(_) => DataType::Map,
+            PropertyValue::List(_) => DataType::List,
         }
     }
-
-    pub fn as_int(&self) -> Result<i32, ConversionError> {
-        match self {
-            PropertyValue::Int(v) => Ok(*v),
-            _ => Err(ConversionError::TypeMismatch {
-                expected: DataType::Int,
-                actual: self.data_type(),
-            }),
-        }
-    }
-
-    pub fn as_long(&self) -> Result<i64, ConversionError> {
-        match self {
-            PropertyValue::Long(v) => Ok(*v),
-            _ => Err(ConversionError::TypeMismatch {
-                expected: DataType::Long,
-                actual: self.data_type(),
-            }),
-        }
-    }
-
-    pub fn as_float(&self) -> Result<f32, ConversionError> {
-        match self {
-            PropertyValue::Float(v) => Ok(*v),
-            _ => Err(ConversionError::TypeMismatch {
-                expected: DataType::Float,
-                actual: self.data_type(),
-            }),
-        }
-    }
-
-    pub fn as_double(&self) -> Result<f64, ConversionError> {
-        match self {
-            PropertyValue::Double(v) => Ok(*v),
-            _ => Err(ConversionError::TypeMismatch {
-                expected: DataType::Double,
-                actual: self.data_type(),
-            }),
-        }
-    }
-
-    pub fn as_string(&self) -> Result<String, ConversionError> {
-        match self {
-            PropertyValue::String(v) => Ok(v.clone()),
-            _ => Err(ConversionError::TypeMismatch {
-                expected: DataType::String,
-                actual: self.data_type(),
-            }),
-        }
-    }
-
-    pub fn as_boolean(&self) -> Result<bool, ConversionError> {
-        match self {
-            PropertyValue::Boolean(v) => Ok(*v),
-            _ => Err(ConversionError::TypeMismatch {
-                expected: DataType::Boolean,
-                actual: self.data_type(),
-            }),
-        }
-    }
-
-    pub fn as_object(&self) -> Result<&HashMap<String, PropertyValue>, ConversionError> {
-        match self {
-            PropertyValue::Object(v) => Ok(v),
-            _ => Err(ConversionError::TypeMismatch {
-                expected: DataType::Object,
-                actual: self.data_type(),
-            }),
-        }
-    }
-}
-
-/// Type conversion errors
-#[derive(Debug, Error, PartialEq)]
-pub enum ConversionError {
-    #[error("Type mismatch: expected {expected:?}, got {actual:?}")]
-    TypeMismatch {
-        expected: DataType,
-        actual: DataType,
-    },
-    #[error("Null value not allowed")]
-    NullValue,
 }
 
 /// Primary key type constraints, supports long and string types currently
@@ -188,125 +109,140 @@ mod tests {
         let mut map = HashMap::new();
         map.insert("name".to_string(), PropertyValue::String("John".into()));
         map.insert("age".to_string(), PropertyValue::Int(42));
-        assert_eq!(PropertyValue::Object(map).data_type(), DataType::Object);
+        assert_eq!(PropertyValue::Map(map).data_type(), DataType::Map);
     }
 
-    // Test conversion to specific types (as_* methods)
+    // Test as_* reference methods
     #[test]
     fn test_as_int() {
         let value = PropertyValue::Int(42);
-        assert_eq!(value.as_int(), Ok(42));
+        assert_eq!(value.as_int(), Some(&42));
 
         let value = PropertyValue::Long(42);
-        assert_eq!(
-            value.as_int(),
-            Err(ConversionError::TypeMismatch {
-                expected: DataType::Int,
-                actual: DataType::Long,
-            })
-        );
+        assert_eq!(value.as_int(), None);
 
         let value = PropertyValue::Float(42.0);
-        assert_eq!(
-            value.as_int(),
-            Err(ConversionError::TypeMismatch {
-                expected: DataType::Int,
-                actual: DataType::Float,
-            })
-        );
+        assert_eq!(value.as_int(), None);
     }
 
     #[test]
     fn test_as_long() {
         let value = PropertyValue::Long(42);
-        assert_eq!(value.as_long(), Ok(42));
+        assert_eq!(value.as_long(), Some(&42));
 
         let value = PropertyValue::Int(42);
-        assert_eq!(
-            value.as_long(),
-            Err(ConversionError::TypeMismatch {
-                expected: DataType::Long,
-                actual: DataType::Int,
-            })
-        );
+        assert_eq!(value.as_long(), None);
     }
 
     #[test]
     fn test_as_float() {
         let value = PropertyValue::Float(42.0);
-        assert_eq!(value.as_float(), Ok(42.0));
+        assert_eq!(value.as_float(), Some(&42.0));
 
         let value = PropertyValue::Int(42);
-        assert_eq!(
-            value.as_float(),
-            Err(ConversionError::TypeMismatch {
-                expected: DataType::Float,
-                actual: DataType::Int,
-            })
-        );
+        assert_eq!(value.as_float(), None);
     }
 
     #[test]
     fn test_as_double() {
         let value = PropertyValue::Double(42.0);
-        assert_eq!(value.as_double(), Ok(42.0));
+        assert_eq!(value.as_double(), Some(&42.0));
 
         let value = PropertyValue::Float(42.0);
-        assert_eq!(
-            value.as_double(),
-            Err(ConversionError::TypeMismatch {
-                expected: DataType::Double,
-                actual: DataType::Float,
-            })
-        );
+        assert_eq!(value.as_double(), None);
     }
 
     #[test]
     fn test_as_string() {
         let value = PropertyValue::String("hello".into());
-        assert_eq!(value.as_string(), Ok("hello".into()));
+        assert_eq!(value.as_string(), Some(&"hello".to_string()));
 
         let value = PropertyValue::Int(42);
-        assert_eq!(
-            value.as_string(),
-            Err(ConversionError::TypeMismatch {
-                expected: DataType::String,
-                actual: DataType::Int,
-            })
-        );
+        assert_eq!(value.as_string(), None);
     }
 
     #[test]
     fn test_as_boolean() {
         let value = PropertyValue::Boolean(true);
-        assert_eq!(value.as_boolean(), Ok(true));
+        assert_eq!(value.as_boolean(), Some(&true));
 
         let value = PropertyValue::String("hello".into());
-        assert_eq!(
-            value.as_boolean(),
-            Err(ConversionError::TypeMismatch {
-                expected: DataType::Boolean,
-                actual: DataType::String,
-            })
-        );
+        assert_eq!(value.as_boolean(), None);
     }
 
     #[test]
-    fn test_as_object() {
+    fn test_as_map() {
         let mut map = HashMap::new();
         map.insert("name".to_string(), PropertyValue::String("John".into()));
         map.insert("age".to_string(), PropertyValue::Int(42));
-        let value = PropertyValue::Object(map.clone());
-        assert_eq!(value.as_object(), Ok(&map));
+        let value = PropertyValue::Map(map.clone());
+        assert_eq!(value.as_map(), Some(&map));
 
         let value = PropertyValue::String("hello".into());
-        assert_eq!(
-            value.as_object(),
-            Err(ConversionError::TypeMismatch {
-                expected: DataType::Object,
-                actual: DataType::String,
-            })
-        );
+        assert_eq!(value.as_map(), None);
+    }
+
+    #[test]
+    fn test_as_list() {
+        let list = vec![PropertyValue::Int(42)];
+        let value = PropertyValue::List(list.clone());
+        assert_eq!(value.as_list(), Some(&list));
+
+        let value = PropertyValue::String("hello".into());
+        assert_eq!(value.as_list(), None);
+    }
+
+    // Test into_* conversion methods
+    #[test]
+    fn test_into_int() {
+        let value = PropertyValue::Int(42);
+        assert_eq!(value.into_int(), Ok(42));
+    }
+
+    #[test]
+    fn test_into_long() {
+        let value = PropertyValue::Long(42);
+        assert_eq!(value.into_long(), Ok(42));
+    }
+
+    #[test]
+    fn test_into_float() {
+        let value = PropertyValue::Float(42.0);
+        assert_eq!(value.into_float(), Ok(42.0));
+    }
+
+    #[test]
+    fn test_into_double() {
+        let value = PropertyValue::Double(42.0);
+        assert_eq!(value.into_double(), Ok(42.0));
+    }
+
+    #[test]
+    fn test_into_string() {
+        let value = PropertyValue::String("hello".into());
+        assert_eq!(value.into_string(), Ok("hello".to_string()));
+    }
+
+    #[test]
+    fn test_into_boolean() {
+        let value = PropertyValue::Boolean(true);
+        assert_eq!(value.into_boolean(), Ok(true));
+    }
+
+    #[test]
+    fn test_into_map() {
+        let mut map = HashMap::new();
+        map.insert("name".to_string(), PropertyValue::String("John".into()));
+        map.insert("age".to_string(), PropertyValue::Int(42));
+        let value = PropertyValue::Map(map.clone());
+        assert_eq!(value.into_map(), Ok(map));
+    }
+
+    #[test]
+    fn test_into_list() {
+        let list = vec![PropertyValue::Int(42)];
+        let value = PropertyValue::List(list.clone());
+        assert_eq!(value.into_list(), Ok(list));
     }
 
     // Test PrimaryKey display

@@ -5,6 +5,8 @@ use common::datatype::types::LabelId;
 use common::datatype::value::PropertyMeta;
 use serde::{Deserialize, Serialize};
 
+use crate::error::{SchemaError, StorageError, StorageResult};
+
 pub type Identifier = String;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -50,14 +52,6 @@ pub struct SchemaManager {
     pub edge_label_id: LabelId,
 }
 
-#[derive(Debug)]
-pub enum SchemaError {
-    VertexSchemaAlreadyExists,
-    EdgeSchemaAlreadyExists,
-    VertexSchemaNotFound,
-    EdgeSchemaNotFound,
-}
-
 impl SchemaManager {
     pub fn new() -> Self {
         SchemaManager {
@@ -75,9 +69,9 @@ impl SchemaManager {
         &mut self,
         vertex_label: String,
         schema: Arc<VertexSchema>,
-    ) -> Result<(), SchemaError> {
+    ) -> StorageResult<()> {
         if self.vertex_schemas.contains_key(&vertex_label) {
-            return Err(SchemaError::VertexSchemaAlreadyExists);
+            return Err(StorageError::Schema(SchemaError::VertexSchemaAlreadyExists));
         }
         self.vertex_schemas.insert(vertex_label.clone(), schema);
         self.id_to_vertex_schema_map
@@ -86,21 +80,21 @@ impl SchemaManager {
         Ok(())
     }
 
-    pub fn get_vertex_schema_by_name(&self, name: &str) -> Result<Arc<VertexSchema>, SchemaError> {
+    pub fn get_vertex_schema_by_name(&self, name: &str) -> StorageResult<Arc<VertexSchema>> {
         self.vertex_schemas
             .get(name)
-            .ok_or(SchemaError::VertexSchemaNotFound)
+            .ok_or(StorageError::Schema(SchemaError::VertexSchemaNotFound))
             .cloned()
     }
 
-    pub fn get_vertex_schema_by_id(&self, id: LabelId) -> Result<Arc<VertexSchema>, SchemaError> {
+    pub fn get_vertex_schema_by_id(&self, id: LabelId) -> StorageResult<Arc<VertexSchema>> {
         let name = self
             .id_to_vertex_schema_map
             .get(&id)
-            .ok_or(SchemaError::VertexSchemaNotFound)?;
+            .ok_or(StorageError::Schema(SchemaError::VertexSchemaNotFound))?;
         self.vertex_schemas
             .get(name)
-            .ok_or(SchemaError::VertexSchemaNotFound)
+            .ok_or(StorageError::Schema(SchemaError::VertexSchemaNotFound))
             .cloned()
     }
 
@@ -109,9 +103,9 @@ impl SchemaManager {
         &mut self,
         edge_label: String,
         schema: Arc<EdgeSchema>,
-    ) -> Result<(), SchemaError> {
+    ) -> StorageResult<()> {
         if self.edge_schemas.contains_key(&edge_label) {
-            return Err(SchemaError::EdgeSchemaAlreadyExists);
+            return Err(StorageError::Schema(SchemaError::EdgeSchemaAlreadyExists));
         }
         self.edge_schemas.insert(edge_label.clone(), schema);
         self.id_to_edge_schema_map
@@ -121,22 +115,22 @@ impl SchemaManager {
     }
 
     // Get the schema for an edge by label
-    pub fn get_edge_schema_by_name(&self, name: &str) -> Result<Arc<EdgeSchema>, SchemaError> {
+    pub fn get_edge_schema_by_name(&self, name: &str) -> StorageResult<Arc<EdgeSchema>> {
         self.edge_schemas
             .get(name)
-            .ok_or(SchemaError::EdgeSchemaNotFound)
+            .ok_or(StorageError::Schema(SchemaError::EdgeSchemaNotFound))
             .cloned()
     }
 
     // Get the schema for an edge by ID
-    pub fn get_edge_schema_by_id(&self, id: LabelId) -> Result<Arc<EdgeSchema>, SchemaError> {
+    pub fn get_edge_schema_by_id(&self, id: LabelId) -> StorageResult<Arc<EdgeSchema>> {
         let name = self
             .id_to_edge_schema_map
             .get(&id)
-            .ok_or(SchemaError::EdgeSchemaNotFound)?;
+            .ok_or(StorageError::Schema(SchemaError::EdgeSchemaNotFound))?;
         self.edge_schemas
             .get(name)
-            .ok_or(SchemaError::EdgeSchemaNotFound)
+            .ok_or(StorageError::Schema(SchemaError::EdgeSchemaNotFound))
             .cloned()
     }
 }
@@ -145,8 +139,8 @@ impl SchemaManager {
 mod tests {
     use common::datatype::value::{DataType, PropertyMeta, PropertyValue};
 
-    use super::super::edge::{Direction, Edge};
-    use super::super::properties::PropertyStore;
+    use super::super::edge::Edge;
+    use super::super::properties::PropertyRecord;
     use super::super::vertex::Vertex;
     use super::*;
 
@@ -161,7 +155,7 @@ mod tests {
         Vertex::new(
             0,
             0,
-            PropertyStore::new(vec![
+            PropertyRecord::new(vec![
                 PropertyValue::String("Alice".to_string()),
                 PropertyValue::Int(30),
             ]),
@@ -172,7 +166,7 @@ mod tests {
         Vertex::new(
             1,
             0,
-            PropertyStore::new(vec![
+            PropertyRecord::new(vec![
                 PropertyValue::String("Bob".to_string()),
                 PropertyValue::Int(40),
             ]),
@@ -190,14 +184,7 @@ mod tests {
     }
 
     fn create_edge_alice_knows_bob() -> Edge {
-        Edge::new(
-            0,
-            0,
-            1,
-            0,
-            Direction::Out,
-            PropertyStore::new(vec![PropertyValue::Int(5)]),
-        )
+        Edge::new(0, 0, 1, 0, PropertyRecord::new(vec![PropertyValue::Int(5)]))
     }
 
     #[test]

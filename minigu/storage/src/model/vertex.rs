@@ -2,20 +2,20 @@ use common::datatype::types::{LabelId, VertexId};
 use common::datatype::value::PropertyValue;
 use serde::{Deserialize, Serialize};
 
-use super::properties::PropertyStore;
+use super::properties::PropertyRecord;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Vertex {
     pub vid: VertexId,
     pub label_id: LabelId,
-    pub properties: PropertyStore,
+    pub properties: PropertyRecord,
     // TODO: remove this field, add tombstone flag into the versioned vertex in memory_graph.rs
     pub is_tombstone: bool,
 }
 
 impl Vertex {
     /// create a new vertex
-    pub fn new(vid: VertexId, label_id: LabelId, properties: PropertyStore) -> Self {
+    pub fn new(vid: VertexId, label_id: LabelId, properties: PropertyRecord) -> Self {
         Vertex {
             vid,
             label_id,

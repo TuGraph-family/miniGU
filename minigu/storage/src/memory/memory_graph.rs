@@ -7,11 +7,13 @@ use crossbeam_skiplist::SkipSet;
 use dashmap::DashMap;
 
 use super::transaction::{MemTransaction, MemTxnManager};
-use crate::error::{StorageError, StorageResult};
+use crate::error::{
+    EdgeNotFoundError, StorageError, StorageResult, TransactionError, VertexNotFoundError,
+};
 use crate::memory::adjacency_iterator::AdjacencyIterator;
 use crate::memory::edge_iterator::EdgeIterator;
 use crate::memory::vertex_iterator::VertexIterator;
-use crate::model::edge::{Direction, Edge, EdgeUid};
+use crate::model::edge::{Edge, Neighbor};
 use crate::model::vertex::Vertex;
 use crate::storage::{Graph, MutGraph};
 use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
@@ -21,7 +23,7 @@ macro_rules! update_properties {
     ($self:expr, $id:expr, $entry:expr, $txn:expr, $indices:expr, $props:expr, $op:ident) => {{
         // Acquire the lock to modify the properties of the vertex/edge
         let mut current = $entry.chain.current.write().unwrap();
-        check_commit_timestamp(current.commit_ts, $txn, $id)?;
+        check_write_conflict(current.commit_ts, $txn)?;
 
         // Create a new version with updated properties.
         current.data.set_props(&$indices, $props);
@@ -93,20 +95,38 @@ impl VersionedVertex {
             chain: Arc::new(VersionChain {
                 current: RwLock::new(CurrentVersion {
                     data: initial,
-                    commit_ts: txn_id, // Initial commit timestamp set to 0
+                    commit_ts: txn_id, /* Initial commit timestamp set to txn_id for uncommitted
+                                        * changes */
                 }),
                 undo_ptr: RwLock::new(Weak::new()),
             }),
         }
     }
 
+    /// Returns the visible version of the vertex.
     pub fn get_visible(&self, txn: &MemTransaction) -> StorageResult<Vertex> {
         let current = self.chain.current.read().unwrap();
         let mut visible_vertex = current.data.clone();
         // If the vertex is modified by the same transaction, or the transaction is before the
         // vertex was modified, return the vertex
         let commit_ts = current.commit_ts;
-        if commit_ts == txn.txn_id() || commit_ts <= txn.start_ts() {
+        // If the commit timestamp of current is equal to the transaction id of txn, it means
+        // the vertex is modified by the same transaction.
+        // If the commit timestamp of current is less than the start timestamp of txn, it means
+        // the vertex was modified before the transaction started, and the corresponding transaction
+        // has been committed.
+        if (commit_ts.is_txn_id() && commit_ts == txn.txn_id())
+            || (commit_ts.is_commit_ts() && commit_ts <= txn.start_ts())
+        {
+            // Check if the vertex is tombstone
+            if visible_vertex.is_tombstone() {
+                return Err(StorageError::Transaction(
+                    TransactionError::VersionNotVisible(format!(
+                        "Vertex is tombstone for {:?}",
+                        txn.txn_id()
+                    )),
+                ));
+            }
             Ok(visible_vertex)
         } else {
             // Otherwise, apply the deltas to the vertex
@@ -127,10 +147,13 @@ impl VersionedVertex {
         }
     }
 
+    /// Returns whether the vertex is visible.
     pub(super) fn is_visible(&self, txn: &MemTransaction) -> bool {
         // Check if the vertex is visible based on the transaction's start timestamp
         let current = self.chain.current.read().unwrap();
-        if current.commit_ts == txn.txn_id() || current.commit_ts <= txn.start_ts() {
+        if (current.commit_ts.is_txn_id() && current.commit_ts == txn.txn_id())
+            || (current.commit_ts.is_commit_ts() && current.commit_ts <= txn.start_ts())
+        {
             !current.data.is_tombstone()
         } else {
             let undo_ptr = self.chain.undo_ptr.read().unwrap().clone();
@@ -138,6 +161,9 @@ impl VersionedVertex {
             let apply_deltas = |undo_entry: &UndoEntry| {
                 if let DeltaOp::DelVertex(_) = undo_entry.delta() {
                     is_visible = false;
+                }
+                if let DeltaOp::CreateVertex(_) = undo_entry.delta() {
+                    is_visible = true;
                 }
             };
             MemTransaction::apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
@@ -184,10 +210,22 @@ impl VersionedEdge {
         }
     }
 
+    /// Returns the visible version of the edge.
     pub fn get_visible(&self, txn: &MemTransaction) -> StorageResult<Edge> {
         let current = self.chain.current.read().unwrap();
         let mut current_edge = current.data.clone();
-        if current.commit_ts == txn.txn_id() || current.commit_ts <= txn.start_ts() {
+        if (current.commit_ts.is_txn_id() && current.commit_ts == txn.txn_id())
+            || (current.commit_ts.is_commit_ts() && current.commit_ts <= txn.start_ts())
+        {
+            // Check if the edge is tombstone
+            if current_edge.is_tombstone() {
+                return Err(StorageError::Transaction(
+                    TransactionError::VersionNotVisible(format!(
+                        "Edge is tombstone for {:?}",
+                        txn.txn_id()
+                    )),
+                ));
+            }
             Ok(current_edge)
         } else {
             let undo_ptr = self.chain.undo_ptr.read().unwrap().clone();
@@ -206,13 +244,14 @@ impl VersionedEdge {
         }
     }
 
+    /// Returns whether the edge is visible.
     pub fn is_visible(&self, txn: &MemTransaction) -> bool {
         // Check if the src and dst vertices of edge are visible
         let (src, dst);
         {
-            let read_guard = self.chain.current.read().unwrap();
-            src = read_guard.data.dst_id();
-            dst = read_guard.data.src_id();
+            let current = self.chain.current.read().unwrap();
+            src = current.data.dst_id();
+            dst = current.data.src_id();
         }
         if txn
             .graph()
@@ -229,7 +268,9 @@ impl VersionedEdge {
         {
             // Check if the vertex is visible based on the transaction's start timestamp
             let current = self.chain.current.read().unwrap();
-            if current.commit_ts == txn.txn_id() || current.commit_ts <= txn.start_ts() {
+            if (current.commit_ts.is_txn_id() && current.commit_ts == txn.txn_id())
+                || (current.commit_ts.is_commit_ts() && current.commit_ts <= txn.start_ts())
+            {
                 !current.data.is_tombstone()
             } else {
                 let undo_ptr = self.chain.undo_ptr.read().unwrap().clone();
@@ -254,14 +295,24 @@ impl VersionedEdge {
 
 #[derive(Debug)]
 pub(super) struct AdjacencyContainer {
-    pub(super) inner: Arc<SkipSet<EdgeUid>>,
+    pub(super) incoming: Arc<SkipSet<Neighbor>>,
+    pub(super) outgoing: Arc<SkipSet<Neighbor>>,
 }
 
 impl AdjacencyContainer {
     pub fn new() -> Self {
         Self {
-            inner: Arc::new(SkipSet::new()),
+            incoming: Arc::new(SkipSet::new()),
+            outgoing: Arc::new(SkipSet::new()),
         }
+    }
+
+    pub fn incoming(&self) -> &Arc<SkipSet<Neighbor>> {
+        &self.incoming
+    }
+
+    pub fn outgoing(&self) -> &Arc<SkipSet<Neighbor>> {
+        &self.outgoing
     }
 }
 
@@ -296,9 +347,8 @@ impl MemoryGraph {
         isolation_level: IsolationLevel,
     ) -> Arc<MemTransaction> {
         // Allocate a new transaction ID and read timestamp.
-        let txn_id = Timestamp::new_txn_id();
-        let start_ts =
-            Timestamp::with_commit_ts(self.txn_manager.latest_commit_ts.load(Ordering::SeqCst));
+        let txn_id = self.txn_manager.new_txn_id();
+        let start_ts = Timestamp::with_ts(self.txn_manager.latest_commit_ts.load(Ordering::SeqCst));
 
         // Register the transaction as active (used for garbage collection and visibility checks).
         let txn = Arc::new(MemTransaction::with_memgraph(
@@ -324,7 +374,7 @@ impl MemoryGraph {
 
 // Immutable graph methods
 impl Graph for MemoryGraph {
-    type Adjacency = EdgeUid;
+    type Adjacency = Neighbor;
     type AdjacencyIter<'a> = AdjacencyIterator<'a>;
     type Edge = Edge;
     type EdgeID = EdgeId;
@@ -337,22 +387,35 @@ impl Graph for MemoryGraph {
     /// Retrieves a vertex by its ID within the context of a transaction.
     fn get_vertex(&self, txn: &MemTransaction, vid: VertexId) -> StorageResult<Vertex> {
         // Step 1: Atomically retrieve the versioned vertex (check existence).
-        let versioned_vertex = self
-            .vertices
-            .get(&vid)
-            .ok_or(StorageError::VertexNotFound(vid.to_string()))?;
+        let versioned_vertex = self.vertices.get(&vid).ok_or(StorageError::VertexNotFound(
+            VertexNotFoundError::VertexNotFound(vid.to_string()),
+        ))?;
 
         // Step 2: Perform MVCC visibility check.
         let current_version = versioned_vertex.chain.current.read().unwrap();
         let commit_ts = current_version.commit_ts;
-        if commit_ts > Timestamp::TXN_START_TS && commit_ts != txn.txn_id() {
-            return Err(StorageError::TransactionError(format!(
-                "Write-write conflict with txn {:?}",
-                commit_ts
-            )));
+        match txn.isolation_level() {
+            IsolationLevel::Serializable => {
+                // Check if the vertex is modified by other transactions
+                if commit_ts.is_txn_id() && commit_ts != txn.txn_id() {
+                    return Err(StorageError::Transaction(
+                        TransactionError::WriteReadConflict(format!(
+                            "Vertex is being modified by transaction {:?}",
+                            commit_ts
+                        )),
+                    ));
+                }
+                txn.vertex_reads.insert(vid);
+            }
+            IsolationLevel::Snapshot => {
+                // Optimistic read allowed, no read set recording
+            }
         }
+        // The vertex is visible, which means it is either modified by txn or nobody
         let mut visible_vertex = current_version.data.clone();
-        if commit_ts != txn.txn_id() && commit_ts > txn.start_ts() {
+        // Only when the vertex is modified by nobody and txn started before the vertex was
+        // modified, we need to apply the deltas to the vertex
+        if commit_ts.is_commit_ts() && commit_ts > txn.start_ts() {
             let undo_ptr = versioned_vertex.chain.undo_ptr.read().unwrap().clone();
             let apply_deltas = |undo_entry: &UndoEntry| match undo_entry.delta() {
                 DeltaOp::CreateVertex(original) => visible_vertex = original.clone(),
@@ -367,14 +430,11 @@ impl Graph for MemoryGraph {
             MemTransaction::apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
         }
 
-        // Step 3: Record the vertex read set for conflict detection.
-        if let IsolationLevel::Serializable = txn.isolation_level() {
-            txn.vertex_reads.insert(visible_vertex.vid());
-        }
-
-        // Step 4: Check for logical deletion.
+        // Step 3: Check for logical deletion.
         if visible_vertex.is_tombstone() {
-            return Err(StorageError::VertexNotFound(vid.to_string()));
+            return Err(StorageError::VertexNotFound(
+                VertexNotFoundError::VertexTombstone(vid.to_string()),
+            ));
         }
 
         Ok(visible_vertex)
@@ -383,16 +443,35 @@ impl Graph for MemoryGraph {
     /// Retrieves an edge by its ID within the context of a transaction.
     fn get_edge(&self, txn: &MemTransaction, eid: EdgeId) -> StorageResult<Edge> {
         // Step 1: Atomically retrieve the versioned edge (check existence).
-        let versioned_edge = self
-            .edges
-            .get(&eid)
-            .ok_or(StorageError::EdgeNotFound(eid.to_string()))?;
+        let versioned_edge = self.edges.get(&eid).ok_or(StorageError::EdgeNotFound(
+            EdgeNotFoundError::EdgeNotFound(eid.to_string()),
+        ))?;
 
         // Step 2: Perform MVCC visibility check.
         let current_version = versioned_edge.chain.current.read().unwrap();
         let commit_ts = current_version.commit_ts;
+        match txn.isolation_level() {
+            IsolationLevel::Serializable => {
+                // Check if the edge is modified by other transactions
+                if commit_ts.is_txn_id() && commit_ts != txn.txn_id() {
+                    return Err(StorageError::Transaction(
+                        TransactionError::WriteReadConflict(format!(
+                            "Edge is being modified by transaction {:?}",
+                            commit_ts
+                        )),
+                    ));
+                }
+                txn.edge_reads.insert(eid);
+            }
+            IsolationLevel::Snapshot => {
+                // Optimistic read allowed, no read set recording
+            }
+        }
+        // The edge is visible, which means it is either modified by txn or nobody
         let mut visible_edge = current_version.data.clone();
-        if commit_ts != txn.txn_id() && txn.start_ts() < commit_ts {
+        // Only when the edge is modified by nobody and txn started before the edge was
+        // modified, we need to apply the deltas to the edge
+        if commit_ts.is_commit_ts() && commit_ts > txn.start_ts() {
             let undo_ptr = versioned_edge.chain.undo_ptr.read().unwrap().clone();
             let apply_deltas = |undo_entry: &UndoEntry| match undo_entry.delta() {
                 DeltaOp::CreateEdge(original) => visible_edge = original.clone(),
@@ -407,14 +486,11 @@ impl Graph for MemoryGraph {
             MemTransaction::apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
         }
 
-        // Step 3: Record the edge read set for conflict detection.
-        if let IsolationLevel::Serializable = txn.isolation_level() {
-            txn.edge_reads.insert(eid);
-        }
-
-        // Step 4: Check for logical deletion (tombstone).
+        // Step 3: Check for logical deletion (tombstone).
         if visible_edge.is_tombstone() {
-            return Err(StorageError::EdgeNotFound(eid.to_string()));
+            return Err(StorageError::EdgeNotFound(
+                EdgeNotFoundError::EdgeTombstone(eid.to_string()),
+            ));
         }
 
         Ok(visible_edge)
@@ -453,9 +529,9 @@ impl MutGraph for MemoryGraph {
             .entry(vid)
             .or_insert_with(|| VersionedVertex::with_txn_id(vertex, txn.txn_id()));
 
-        // Conflict detection: Ensure the vertex does not exist
         let current = entry.chain.current.read().unwrap();
-        check_commit_timestamp(current.commit_ts, txn, vid)?;
+        // Conflict detection: ensure the vertex is visible or not modified by other transactions
+        check_write_conflict(current.commit_ts, txn)?;
 
         // Record the vertex creation in the transaction
         let delta = DeltaOp::DelVertex(vid);
@@ -480,21 +556,18 @@ impl MutGraph for MemoryGraph {
         let label_id = edge.label_id();
 
         // Check if source and destination vertices exist.
-        if self.get_vertex(txn, edge.src_id()).is_err() {
-            return Err(StorageError::VertexNotFound(edge.src_id().to_string()));
-        }
-        if self.get_vertex(txn, edge.dst_id()).is_err() {
-            return Err(StorageError::VertexNotFound(edge.dst_id().to_string()));
-        }
+        self.get_vertex(txn, edge.src_id())?;
+
+        self.get_vertex(txn, edge.dst_id())?;
 
         let entry = self
             .edges
             .entry(eid)
             .or_insert_with(|| VersionedEdge::with_modified_ts(edge, txn.txn_id()));
 
-        // Conflict detection: Ensure the edge does not exist
         let current = entry.chain.current.read().unwrap();
-        check_commit_timestamp(current.commit_ts, txn, eid)?;
+        // Conflict detection: ensure the edge is visible or not modified by other transactions
+        check_write_conflict(current.commit_ts, txn)?;
 
         // Record the edge creation in the transaction
         let delta_edge = DeltaOp::DelEdge(eid);
@@ -509,13 +582,13 @@ impl MutGraph for MemoryGraph {
         self.adjacency_list
             .entry(src_id)
             .or_insert_with(AdjacencyContainer::new)
-            .inner
-            .insert(EdgeUid::new(label_id, src_id, Direction::Out, dst_id, eid));
+            .outgoing()
+            .insert(Neighbor::new(label_id, dst_id, eid));
         self.adjacency_list
             .entry(dst_id)
             .or_insert_with(AdjacencyContainer::new)
-            .inner
-            .insert(EdgeUid::new(label_id, dst_id, Direction::In, src_id, eid));
+            .incoming()
+            .insert(Neighbor::new(label_id, src_id, eid));
 
         Ok(eid)
     }
@@ -523,17 +596,21 @@ impl MutGraph for MemoryGraph {
     /// Deletes a vertex from the graph within a transaction.
     fn delete_vertex(&self, txn: &MemTransaction, vid: VertexId) -> StorageResult<()> {
         // Atomically retrieve the versioned vertex (check existence).
-        let entry = self
-            .vertices
-            .get(&vid)
-            .ok_or(StorageError::VertexNotFound(vid.to_string()))?;
+        let entry = self.vertices.get(&vid).ok_or(StorageError::VertexNotFound(
+            VertexNotFoundError::VertexNotFound(vid.to_string()),
+        ))?;
 
         let mut current = entry.chain.current.write().unwrap();
-        check_commit_timestamp(current.commit_ts, txn, vid)?;
+        check_write_conflict(current.commit_ts, txn)?;
 
         // Delete all edges associated with the vertex
         if let Some(adjacency_container) = self.adjacency_list.get(&vid) {
-            for adj in adjacency_container.inner.iter() {
+            for adj in adjacency_container.incoming().iter() {
+                if self.edges.get(&adj.value().eid()).is_some() {
+                    self.delete_edge(txn, adj.value().eid())?;
+                }
+            }
+            for adj in adjacency_container.outgoing().iter() {
                 if self.edges.get(&adj.value().eid()).is_some() {
                     self.delete_edge(txn, adj.value().eid())?;
                 }
@@ -558,13 +635,12 @@ impl MutGraph for MemoryGraph {
     /// Deletes an edge from the graph within a transaction.
     fn delete_edge(&self, txn: &MemTransaction, eid: EdgeId) -> StorageResult<()> {
         // Atomically retrieve the versioned edge (check existence).
-        let entry = self
-            .edges
-            .get(&eid)
-            .ok_or(StorageError::EdgeNotFound(eid.to_string()))?;
+        let entry = self.edges.get(&eid).ok_or(StorageError::EdgeNotFound(
+            EdgeNotFoundError::EdgeNotFound(eid.to_string()),
+        ))?;
 
         let mut current = entry.chain.current.write().unwrap();
-        check_commit_timestamp(current.commit_ts, txn, eid)?;
+        check_write_conflict(current.commit_ts, txn)?;
 
         // Mark the edge as deleted
         let tombstone = Edge::tombstone(current.data.clone());
@@ -590,10 +666,9 @@ impl MutGraph for MemoryGraph {
         props: Vec<PropertyValue>,
     ) -> StorageResult<()> {
         // Atomically retrieve the versioned vertex (check existence).
-        let entry = self
-            .vertices
-            .get(&vid)
-            .ok_or(StorageError::VertexNotFound(vid.to_string()))?;
+        let entry = self.vertices.get(&vid).ok_or(StorageError::VertexNotFound(
+            VertexNotFoundError::VertexNotFound(vid.to_string()),
+        ))?;
 
         update_properties!(self, vid, entry, txn, indices, props, SetVertexProps);
 
@@ -609,10 +684,9 @@ impl MutGraph for MemoryGraph {
         props: Vec<PropertyValue>,
     ) -> StorageResult<()> {
         // Atomically retrieve the versioned edge (check existence).
-        let entry = self
-            .edges
-            .get(&eid)
-            .ok_or(StorageError::EdgeNotFound(eid.to_string()))?;
+        let entry = self.edges.get(&eid).ok_or(StorageError::EdgeNotFound(
+            EdgeNotFoundError::EdgeNotFound(eid.to_string()),
+        ))?;
 
         update_properties!(self, eid, entry, txn, indices, props, SetEdgeProps);
 
@@ -622,22 +696,25 @@ impl MutGraph for MemoryGraph {
 
 /// Checks if the vertex is modified by other transactions or has a greater commit timestamp than
 /// the current transaction.
+/// Current check applies to both Snapshot Isolation and Serializable isolation levels.
 #[inline]
-fn check_commit_timestamp<T: std::fmt::Display>(
-    commit_ts: Timestamp,
-    txn: &MemTransaction,
-    id: T,
-) -> StorageResult<()> {
+fn check_write_conflict(commit_ts: Timestamp, txn: &MemTransaction) -> StorageResult<()> {
     match commit_ts {
-        // If the vertex is modified by other transactions, return write conflict
-        ts if ts.is_txn_id() && ts != txn.txn_id() => {
-            Err(StorageError::WriteConflict(id.to_string()))
-        }
+        // If the vertex is modified by other transactions, return write-write conflict
+        ts if ts.is_txn_id() && ts != txn.txn_id() => Err(StorageError::Transaction(
+            TransactionError::WriteWriteConflict(format!(
+                "Data is being modified by transaction {:?}",
+                ts
+            )),
+        )),
         // If the vertex is committed by other transactions and its commit timestamp is greater
-        // than the start timestamp of the current transaction, return version not found
-        ts if ts.is_commit_ts() && ts > txn.start_ts() => {
-            Err(StorageError::VersionNotFound(id.to_string()))
-        }
+        // than the start timestamp of the current transaction, return version not visible
+        ts if ts.is_commit_ts() && ts > txn.start_ts() => Err(StorageError::Transaction(
+            TransactionError::VersionNotVisible(format!(
+                "Data version not visible for {:?}",
+                txn.txn_id()
+            )),
+        )),
         _ => Ok(()),
     }
 }
@@ -649,7 +726,7 @@ mod tests {
     use {Edge, Vertex};
 
     use super::*;
-    use crate::model::properties::PropertyStore;
+    use crate::model::properties::PropertyRecord;
     use crate::storage::StorageTransaction;
 
     const PERSON: LabelId = 1;
@@ -657,7 +734,7 @@ mod tests {
     const FOLLOW: LabelId = 2;
 
     fn create_vertex(id: VertexId, label_id: LabelId, properties: Vec<PropertyValue>) -> Vertex {
-        Vertex::new(id, label_id, PropertyStore::new(properties))
+        Vertex::new(id, label_id, PropertyRecord::new(properties))
     }
 
     fn create_edge(
@@ -665,7 +742,6 @@ mod tests {
         src_id: VertexId,
         dst_id: VertexId,
         label_id: LabelId,
-        direction: Direction,
         properties: Vec<PropertyValue>,
     ) -> Edge {
         Edge::new(
@@ -673,8 +749,7 @@ mod tests {
             src_id,
             dst_id,
             label_id,
-            direction,
-            PropertyStore::new(properties),
+            PropertyRecord::new(properties),
         )
     }
 
@@ -702,29 +777,29 @@ mod tests {
             PropertyValue::Int(27),
         ]);
 
-        // 添加顶点到图中
+        // Add vertices to the graph
         graph.create_vertex(&txn, alice).unwrap();
         graph.create_vertex(&txn, bob).unwrap();
         graph.create_vertex(&txn, carol).unwrap();
         graph.create_vertex(&txn, david).unwrap();
 
         // Create friend edges
-        let friend1 = create_edge(1, 1, 2, FRIEND, Direction::Out, vec![
-            PropertyValue::String("2020-01-01".into()),
-        ]);
+        let friend1 = create_edge(1, 1, 2, FRIEND, vec![PropertyValue::String(
+            "2020-01-01".into(),
+        )]);
 
-        let friend2 = create_edge(2, 2, 3, FRIEND, Direction::Out, vec![
-            PropertyValue::String("2021-03-15".into()),
-        ]);
+        let friend2 = create_edge(2, 2, 3, FRIEND, vec![PropertyValue::String(
+            "2021-03-15".into(),
+        )]);
 
         // Create follow edges
-        let follow1 = create_edge(3, 1, 3, FOLLOW, Direction::Out, vec![
-            PropertyValue::String("2022-06-01".into()),
-        ]);
+        let follow1 = create_edge(3, 1, 3, FOLLOW, vec![PropertyValue::String(
+            "2022-06-01".into(),
+        )]);
 
-        let follow2 = create_edge(4, 4, 1, FOLLOW, Direction::Out, vec![
-            PropertyValue::String("2022-07-15".into()),
-        ]);
+        let follow2 = create_edge(4, 4, 1, FOLLOW, vec![PropertyValue::String(
+            "2022-07-15".into(),
+        )]);
 
         // Add edges to the graph
         graph.create_edge(&txn, friend1).unwrap();
@@ -751,9 +826,9 @@ mod tests {
     }
 
     fn create_edge_alice_to_eve() -> Edge {
-        create_edge(5, 1, 5, FRIEND, Direction::Out, vec![
-            PropertyValue::String("2025-03-31".into()),
-        ])
+        create_edge(5, 1, 5, FRIEND, vec![PropertyValue::String(
+            "2025-03-31".into(),
+        )])
     }
 
     #[test]
@@ -873,6 +948,26 @@ mod tests {
             assert_eq!(count, 4);
         }
 
+        // Check the outgoing adjacency list of alice
+        {
+            let iter = txn3.iter_adjacency_outgoing(vid_alice);
+            let mut count = 0;
+            for _ in iter {
+                count += 1;
+            }
+            assert_eq!(count, 3);
+        }
+
+        // Check the incoming adjacency list of eve
+        {
+            let iter = txn3.iter_adjacency_incoming(vid1);
+            let mut count = 0;
+            for _ in iter {
+                count += 1;
+            }
+            assert_eq!(count, 1);
+        }
+
         let _ = txn3.abort();
 
         // Delete the edge from alice to eve
@@ -970,8 +1065,8 @@ mod tests {
         }
         {
             let iter2 = txn2.iter_vertices().filter_map(|v| v.ok()).filter(|v| {
-                v.properties()[1].as_int().unwrap() >= 20
-                    && v.properties()[1].as_int().unwrap() <= 25
+                v.properties()[1].as_int().unwrap() >= &20
+                    && v.properties()[1].as_int().unwrap() <= &25
             });
             let mut count = 0;
             for _ in iter2 {
@@ -1068,7 +1163,8 @@ mod tests {
         // Check before GC
         {
             let adj = graph.adjacency_list.get(&vid1).unwrap();
-            assert!(adj.inner.len() == 3);
+            assert!(adj.outgoing().len() == 2);
+            assert!(adj.incoming().len() == 1);
             let edge = graph.edges.get(&eid).unwrap();
             assert!(!edge.value().chain.current.read().unwrap().data.is_tombstone);
             assert!(
@@ -1095,10 +1191,12 @@ mod tests {
         {
             let adj = graph.adjacency_list.get(&vid1).unwrap();
             // adjacency_list will not be updated until GC
-            assert!(adj.inner.len() == 3);
+            assert!(adj.outgoing().len() == 2);
+            assert!(adj.incoming().len() == 1);
             // reverse edge
             let adj2 = graph.adjacency_list.get(&vid2).unwrap();
-            assert!(adj2.inner.len() == 2);
+            assert!(adj2.outgoing().len() == 1);
+            assert!(adj2.incoming().len() == 1);
             // edge is marked as tombstone
             let edge = graph.edges.get(&eid).unwrap();
             assert!(edge.value().chain.current.read().unwrap().data.is_tombstone);
@@ -1124,10 +1222,12 @@ mod tests {
         // Check after GC
         {
             let adj = graph.adjacency_list.get(&vid1).unwrap();
-            assert_eq!(adj.inner.len(), 2);
+            assert!(adj.outgoing().len() == 1);
+            assert!(adj.incoming().len() == 1);
             // reverse edge
             let adj2 = graph.adjacency_list.get(&vid2).unwrap();
-            assert_eq!(adj2.inner.len(), 1);
+            assert!(adj2.outgoing().len() == 1);
+            assert!(adj2.incoming().is_empty());
             // GC will remove the edge
             assert!(graph.edges.get(&eid).is_none());
         }
@@ -1138,7 +1238,7 @@ mod tests {
         let graph = mock_graph();
 
         let vid1 = 1;
-        let euid1 = EdgeUid::new(FRIEND, 2, Direction::In, 1, 1);
+        let euid1 = Neighbor::new(FRIEND, 1, 1);
 
         // Check before GC
         {
@@ -1169,7 +1269,8 @@ mod tests {
                     .is_tombstone
             );
             // assert adjacency list
-            assert!(graph.adjacency_list.get(&vid1).unwrap().inner.len() == 3);
+            assert!(graph.adjacency_list.get(&vid1).unwrap().outgoing().len() == 2);
+            assert!(graph.adjacency_list.get(&vid1).unwrap().incoming().len() == 1);
         }
 
         // Delete the vertex
@@ -1210,7 +1311,8 @@ mod tests {
                     .is_tombstone
             );
             // assert adjacency list
-            assert!(graph.adjacency_list.get(&vid1).unwrap().inner.len() == 3);
+            assert!(graph.adjacency_list.get(&vid1).unwrap().outgoing().len() == 2);
+            assert!(graph.adjacency_list.get(&vid1).unwrap().incoming().len() == 1);
             let iter = txn2.iter_adjacency(vid1);
             let mut count = 0;
             for _ in iter {
@@ -1241,7 +1343,12 @@ mod tests {
             // Check visible and invisible edges
             let adj = graph.adjacency_list.get(&vid).unwrap();
             let mut count = 0;
-            for euid in adj.inner.iter() {
+            for euid in adj.incoming().iter() {
+                let edge = graph.edges.get(&euid.value().eid()).unwrap();
+                assert!(!edge.value().chain.current.read().unwrap().data.is_tombstone);
+                count += 1;
+            }
+            for euid in adj.outgoing().iter() {
                 let edge = graph.edges.get(&euid.value().eid()).unwrap();
                 assert!(!edge.value().chain.current.read().unwrap().data.is_tombstone);
                 count += 1;
@@ -1263,7 +1370,12 @@ mod tests {
             // Check visible and invisible edges
             let adj = graph.adjacency_list.get(&vid).unwrap();
             let mut count = 0;
-            for euid in adj.inner.iter() {
+            for euid in adj.incoming().iter() {
+                let edge = graph.edges.get(&euid.value().eid()).unwrap();
+                assert!(edge.value().chain.current.read().unwrap().data.is_tombstone);
+                count += 1;
+            }
+            for euid in adj.outgoing().iter() {
                 let edge = graph.edges.get(&euid.value().eid()).unwrap();
                 assert!(edge.value().chain.current.read().unwrap().data.is_tombstone);
                 count += 1;

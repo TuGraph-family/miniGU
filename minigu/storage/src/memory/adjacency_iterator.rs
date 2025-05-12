@@ -5,26 +5,26 @@ use crossbeam_skiplist::SkipSet;
 
 use super::transaction::MemTransaction;
 use crate::error::StorageResult;
-use crate::iterators::AdjacencyIteratorTrait;
-use crate::model::edge::EdgeUid;
+use crate::iterators::{AdjacencyIteratorTrait, Direction};
+use crate::model::edge::Neighbor;
 
-type AdjFilter<'a> = Box<dyn Fn(&EdgeUid) -> bool + 'a>;
+type AdjFilter<'a> = Box<dyn Fn(&Neighbor) -> bool + 'a>;
 
 const BATCH_SIZE: usize = 64;
 
 /// An adjacency list iterator that supports filtering (for iterating over a single vertex's
 /// adjacency list).
 pub struct AdjacencyIterator<'a> {
-    adj_list: Option<Arc<SkipSet<EdgeUid>>>, // The adjacency list for the vertex
-    current_entries: Vec<EdgeUid>,           // Store current batch of entries
-    current_index: usize,                    // Current index in the batch
-    txn: &'a MemTransaction,                 // Reference to the transaction
-    filters: Vec<AdjFilter<'a>>,             // List of filtering predicates
-    current_adj: Option<EdgeUid>,            // Current adjacency entry
+    adj_list: Option<Arc<SkipSet<Neighbor>>>, // The adjacency list for the vertex
+    current_entries: Vec<Neighbor>,           // Store current batch of entries
+    current_index: usize,                     // Current index in the batch
+    txn: &'a MemTransaction,                  // Reference to the transaction
+    filters: Vec<AdjFilter<'a>>,              // List of filtering predicates
+    current_adj: Option<Neighbor>,            // Current adjacency entry
 }
 
 impl Iterator for AdjacencyIterator<'_> {
-    type Item = StorageResult<EdgeUid>;
+    type Item = StorageResult<Neighbor>;
 
     /// Retrieves the next visible adjacency entry that satisfies all filters.
     fn next(&mut self) -> Option<Self::Item> {
@@ -95,11 +95,24 @@ impl<'a> AdjacencyIterator<'a> {
     }
 
     /// Creates a new `AdjacencyIterator` for a given vertex and direction (incoming or outgoing).
-    pub fn new(txn: &'a MemTransaction, vid: VertexId) -> Self {
+    pub fn new(txn: &'a MemTransaction, vid: VertexId, direction: Direction) -> Self {
         let adjacency_list = txn.graph().adjacency_list.get(&vid);
 
         let mut result = Self {
-            adj_list: adjacency_list.map(|entry| entry.inner.clone()),
+            adj_list: adjacency_list.map(|entry| match direction {
+                Direction::Incoming => entry.incoming().clone(),
+                Direction::Outgoing => entry.outgoing().clone(),
+                Direction::Both => {
+                    let combined = SkipSet::new();
+                    for neighbor in entry.incoming().iter() {
+                        combined.insert(*neighbor);
+                    }
+                    for neighbor in entry.outgoing().iter() {
+                        combined.insert(*neighbor);
+                    }
+                    Arc::new(combined)
+                }
+            }),
             current_entries: Vec::new(),
             current_index: 0,
             txn,
@@ -120,7 +133,7 @@ impl<'a> AdjacencyIteratorTrait<'a> for AdjacencyIterator<'a> {
     /// Adds a filtering predicate to the iterator (supports method chaining).
     fn filter<F>(mut self, predicate: F) -> Self
     where
-        F: Fn(&EdgeUid) -> bool + 'a,
+        F: Fn(&Neighbor) -> bool + 'a,
     {
         self.filters.push(Box::new(predicate));
         self
@@ -128,7 +141,7 @@ impl<'a> AdjacencyIteratorTrait<'a> for AdjacencyIterator<'a> {
 
     /// Advances the iterator to the edge with the specified ID or the next greater edge.
     /// Returns `Ok(true)` if the exact edge is found, `Ok(false)` otherwise.
-    fn advance(&mut self, id: EdgeId) -> StorageResult<bool> {
+    fn seek(&mut self, id: EdgeId) -> StorageResult<bool> {
         for result in self.by_ref() {
             match result {
                 Ok(entry) if entry.eid() == id => return Ok(true),
@@ -140,7 +153,7 @@ impl<'a> AdjacencyIteratorTrait<'a> for AdjacencyIterator<'a> {
     }
 
     /// Returns a reference to the currently iterated adjacency entry.
-    fn current_entry(&self) -> Option<&EdgeUid> {
+    fn current_entry(&self) -> Option<&Neighbor> {
         self.current_adj.as_ref()
     }
 }
@@ -150,6 +163,16 @@ impl MemTransaction {
     /// Returns an iterator over the adjacency list of a given vertex.
     /// Filtering conditions can be applied using the `filter` method.
     pub fn iter_adjacency(&self, vid: VertexId) -> AdjacencyIterator<'_> {
-        AdjacencyIterator::new(self, vid)
+        AdjacencyIterator::new(self, vid, Direction::Both)
+    }
+
+    #[allow(dead_code)]
+    pub fn iter_adjacency_outgoing(&self, vid: VertexId) -> AdjacencyIterator<'_> {
+        AdjacencyIterator::new(self, vid, Direction::Outgoing)
+    }
+
+    #[allow(dead_code)]
+    pub fn iter_adjacency_incoming(&self, vid: VertexId) -> AdjacencyIterator<'_> {
+        AdjacencyIterator::new(self, vid, Direction::Incoming)
     }
 }

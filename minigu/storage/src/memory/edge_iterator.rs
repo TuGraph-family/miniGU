@@ -30,7 +30,7 @@ impl Iterator for EdgeIterator<'_> {
 
             // Perform MVCC visibility check
             let visible_edge = match versioned_edge.get_visible(self.txn) {
-                Ok(e) if !e.is_tombstone() => e, // Skip logically deleted edges
+                Ok(e) => e, // Skip logically deleted edges
                 _ => continue,
             };
 
@@ -60,7 +60,7 @@ impl<'a> EdgeIteratorTrait<'a> for EdgeIterator<'a> {
 
     /// Advances the iterator to the edge with the specified ID or the next greater edge.
     /// Returns `Ok(true)` if the exact edge is found, `Ok(false)` otherwise.
-    fn advance(&mut self, id: EdgeId) -> StorageResult<bool> {
+    fn seek(&mut self, id: EdgeId) -> StorageResult<bool> {
         for result in self.by_ref() {
             match result {
                 Ok(edge) if edge.eid() == id => return Ok(true),
