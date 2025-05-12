@@ -14,7 +14,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use common::datatype::types::{EdgeId, VertexId};
 use crc32fast::Hasher;
-use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -26,7 +25,7 @@ use crate::model::edge::{Edge, Neighbor};
 use crate::model::vertex::Vertex;
 use crate::transaction::Timestamp;
 use crate::wal::StorageWal;
-use crate::wal::graph_wal::{WalManager, WalManagerConfig};
+use crate::wal::graph_wal::WalManagerConfig;
 
 const DEFAULT_CHECKPOINT_DIR: &str = "checkpoints";
 const DEFAULT_CHECKPOINT_PREFIX: &str = "checkpoint";
@@ -256,22 +255,7 @@ impl GraphCheckpoint {
         checkpoint_config: CheckpointManagerConfig,
         wal_config: WalManagerConfig,
     ) -> StorageResult<Arc<MemoryGraph>> {
-        // Create a new empty graph with the same WAL path
-        let graph = Arc::new(MemoryGraph {
-            vertices: DashMap::new(),
-            edges: DashMap::new(),
-            adjacency_list: DashMap::new(),
-            txn_manager: super::transaction::MemTxnManager::new(),
-            wal_manager: WalManager::new(wal_config),
-            checkpoint_manager: None,
-        });
-
-        // Initialize the checkpoint manager
-        let checkpoint_manager = CheckpointManager::new(graph.clone(), checkpoint_config)?;
-        unsafe {
-            let graph_ptr = Arc::as_ptr(&graph) as *mut MemoryGraph;
-            (*graph_ptr).checkpoint_manager = Some(checkpoint_manager);
-        }
+        let graph = MemoryGraph::with_config_fresh(checkpoint_config, wal_config);
 
         // Set the LSN to the checkpoint's LSN
         graph.wal_manager.set_next_lsn(self.metadata.lsn);
