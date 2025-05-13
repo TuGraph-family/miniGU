@@ -52,7 +52,7 @@ impl Completer for CliCompleter {
             let candidates = self
                 .commands
                 .iter()
-                .filter(|cmd| cmd.starts_with(&line))
+                .filter(|cmd| cmd.starts_with(line))
                 .map(|cmd| Pair {
                     display: cmd.clone(),
                     replacement: cmd.clone(),

@@ -13,9 +13,9 @@ impl ScriptExecutor {
         for line in content.lines() {
             let line = line.trim();
             match line {
-                line if line.is_empty() => continue,
+                "" => continue,
                 ":quit" => break,
-                line => session.query(&line)?,
+                line => session.query(line)?,
             };
         }
         Ok(())

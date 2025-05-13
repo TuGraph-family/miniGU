@@ -4,9 +4,7 @@ name = "gql-parser"
 version = "0.1.0"
 
 [dependencies]
-itertools = { version = "0.14.0", default-features = false, features = [
-    "use_alloc",
-] }
+itertools = { workspace = true }
 logos = { version = "0.15.0", default-features = false, features = [
     "export_derive",
 ] }
