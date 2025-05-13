@@ -48,22 +48,23 @@ impl ScalarValue {
             ScalarValue::Float32(value) => Arc::new(Float32Array::from_iter([*value])),
             ScalarValue::Float64(value) => Arc::new(Float64Array::from_iter([*value])),
             ScalarValue::String(value) => Arc::new(StringArray::from_iter([value])),
-            ScalarValue::Vertex(value) => todo!(),
+            ScalarValue::Vertex(_value) => todo!(),
             ScalarValue::Edge(_value) => todo!(),
         }
     }
 }
 
-#[allow(unused)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PropertyValue {
     name: String,
     value: ScalarValue,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct VertexValue {
     id: VertexId,
     label: LabelId,
+    properties: Vec<PropertyValue>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -72,7 +73,7 @@ pub struct EdgeValue {
     src: VertexId,
     dst: VertexId,
     label: LabelId,
-    properties: Vec<ScalarValue>,
+    properties: Vec<PropertyValue>,
 }
 
 macro_rules! for_each_non_null_variant {
