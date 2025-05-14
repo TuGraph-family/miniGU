@@ -152,15 +152,15 @@ impl StorageWal for GraphWal {
             const LEN_SIZE: usize = 4;
             const CHECKSUM_OFFSET: usize = 4;
             const CHECKSUM_SIZE: usize = 4;
+            let mut header = [0u8; HEADER_SIZE];
             loop {
-                let mut header = [0u8; HEADER_SIZE];
                 if let Err(e) = reader.read_exact(&mut header) {
                     // Normal EOF – stop iteration
                     if e.kind() == io::ErrorKind::UnexpectedEof {
-                        println!("enter the bd");
                         return;
                     }
                     yield Err(StorageError::Wal(WalError::Io(e)));
+                    continue;
                 }
     
                 let len = u32::from_le_bytes(
@@ -177,12 +177,14 @@ impl StorageWal for GraphWal {
                 let mut payload = vec![0u8; len];
                 if let Err(e) = reader.read_exact(&mut payload) {
                     yield Err(StorageError::Wal(WalError::Io(e)));
+                    continue;
                 }
     
                 let mut hasher = Hasher::new();
                 hasher.update(&payload);
                 if hasher.finalize() != checksum {
                     yield Err(StorageError::Wal(WalError::ChecksumMismatch));
+                    continue;
                 }
     
                 yield LogRecord::from_bytes(payload);
@@ -512,11 +514,6 @@ mod tests {
         {
             let wal = GraphWal::open(&path).unwrap();
             let mut entries = wal.iter().unwrap();
-
-            // for e in entries {
-            //     println!("{:?}", e);
-            // }
-            // unimplemented!();
             // First entry should be valid
             let first = entries.next().unwrap().unwrap();
             match &first.op {
