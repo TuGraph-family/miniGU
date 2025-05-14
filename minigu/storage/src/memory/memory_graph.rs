@@ -1,10 +1,10 @@
 use std::sync::atomic::Ordering;
 use std::sync::{Arc, RwLock, Weak};
 
-use minigu_common::datatype::types::{EdgeId, VertexId};
-use minigu_common::datatype::value::PropertyValue;
 use crossbeam_skiplist::SkipSet;
 use dashmap::DashMap;
+use minigu_common::datatype::types::{EdgeId, VertexId};
+use minigu_common::datatype::value::PropertyValue;
 
 use super::transaction::{MemTransaction, MemTxnManager};
 use crate::error::{
