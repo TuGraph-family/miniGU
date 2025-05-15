@@ -27,6 +27,8 @@ use crate::transaction::Timestamp;
 use crate::wal::StorageWal;
 use crate::wal::graph_wal::WalManagerConfig;
 
+// @TODO: Consider making this configurable via
+// CheckpointManagerConfig instead of a hardcoded constant.
 const DEFAULT_CHECKPOINT_DIR: &str = "checkpoints";
 const DEFAULT_CHECKPOINT_PREFIX: &str = "checkpoint";
 const MAX_CHECKPOINTS: usize = 5;

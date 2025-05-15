@@ -19,8 +19,7 @@
 //   }
 //
 use std::fs::{self, File, OpenOptions};
-use std::io::{self, BufReader, BufWriter, Read, Seek, SeekFrom, Write};
-use std::marker::PhantomData;
+use std::io::{self, BufWriter, Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, RwLock};
@@ -70,8 +69,9 @@ pub struct GraphWal {
 }
 
 impl StorageWal for GraphWal {
-    type LogIterator = impl Iterator<Item = StorageResult<Self::Record>>;
     type Record = RedoEntry;
+
+    type LogIterator = impl Iterator<Item = StorageResult<Self::Record>>;
 
     /// Open existing log or create a new one at `path`.
     fn open<P: AsRef<Path>>(path: P) -> StorageResult<Self> {
@@ -102,7 +102,9 @@ impl StorageWal for GraphWal {
         let len = payload.len() as u32;
 
         // Get current position before writing to restore on error
-        let original_pos = self.file.seek(SeekFrom::Current(0))
+        let original_pos = self
+            .file
+            .stream_position()
             .map_err(|e| StorageError::Wal(WalError::Io(e)))?;
 
         // Write all data in one operation for atomicity
@@ -115,9 +117,12 @@ impl StorageWal for GraphWal {
             Ok(_) => Ok(()),
             Err(e) => {
                 // On error, truncate back to original position
-                self.file.seek(SeekFrom::Start(original_pos))
+                self.file
+                    .seek(SeekFrom::Start(original_pos))
                     .map_err(|e| StorageError::Wal(WalError::Io(e)))?;
-                self.file.get_ref().set_len(original_pos)
+                self.file
+                    .get_ref()
+                    .set_len(original_pos)
                     .map_err(|e| StorageError::Wal(WalError::Io(e)))?;
                 Err(StorageError::Wal(WalError::Io(e)))
             }
@@ -144,7 +149,8 @@ impl StorageWal for GraphWal {
             .try_clone()
             .map_err(|e| StorageError::Wal(WalError::Io(e)))?;
         // Seek to the beginning of the file
-        reader.seek(std::io::SeekFrom::Start(0))
+        reader
+            .seek(std::io::SeekFrom::Start(0))
             .map_err(|e| StorageError::Wal(WalError::Io(e)))?;
 
         Ok(gen move {
@@ -162,7 +168,7 @@ impl StorageWal for GraphWal {
                     yield Err(StorageError::Wal(WalError::Io(e)));
                     continue;
                 }
-    
+
                 let len = u32::from_le_bytes(
                     header[LEN_OFFSET..LEN_OFFSET + LEN_SIZE]
                         .try_into()
@@ -173,20 +179,20 @@ impl StorageWal for GraphWal {
                         .try_into()
                         .unwrap(),
                 );
-    
+
                 let mut payload = vec![0u8; len];
                 if let Err(e) = reader.read_exact(&mut payload) {
                     yield Err(StorageError::Wal(WalError::Io(e)));
                     continue;
                 }
-    
+
                 let mut hasher = Hasher::new();
                 hasher.update(&payload);
                 if hasher.finalize() != checksum {
                     yield Err(StorageError::Wal(WalError::ChecksumMismatch));
                     continue;
                 }
-    
+
                 yield LogRecord::from_bytes(payload);
             }
         })
@@ -449,13 +455,13 @@ mod tests {
         // Read and verify the recovery sequence
         {
             let wal = GraphWal::open(&path).unwrap();
-            let mut entries = wal.iter().unwrap();
+            let entries = wal.iter().unwrap();
 
             // Process entries in sequence
             let mut deleted_vertices = Vec::new();
             let mut deleted_edges = Vec::new();
 
-            while let Some(entry_result) = entries.next() {
+            for entry_result in entries {
                 let entry = entry_result.unwrap();
                 match &entry.op {
                     Operation::Delta(DeltaOp::DelVertex(vid)) => deleted_vertices.push(*vid),
@@ -493,11 +499,7 @@ mod tests {
 
         // Append invalid data directly to the file
         {
-            let mut file = OpenOptions::new()
-                .write(true)
-                .append(true)
-                .open(&path)
-                .unwrap();
+            let mut file = OpenOptions::new().append(true).open(&path).unwrap();
 
             // Write invalid header (correct length but wrong checksum)
             let payload = vec![0u8; 20]; // Empty payload with correct structure
