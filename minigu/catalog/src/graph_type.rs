@@ -1,10 +1,12 @@
 use std::collections::HashMap;
 
-use minigu_common::types::LabelId;
 use smol_str::SmolStr;
 
 use crate::label_set::LabelSet;
 use crate::types::{NodeTypeId, RelTypeId};
+
+pub type GraphTypeId = u32;
+pub type LabelId = u32;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct NodeType {}
@@ -17,7 +19,7 @@ pub struct RelType {}
 impl RelType {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct GraphType {
+pub struct GraphTypeCatalog {
     name_to_label_id: HashMap<SmolStr, LabelId>,
     key_label_set_to_node_type_id: HashMap<LabelSet, NodeTypeId>,
     node_types: Vec<NodeType>,
@@ -25,7 +27,7 @@ pub struct GraphType {
     rel_types: Vec<RelType>,
 }
 
-impl GraphType {
+impl GraphTypeCatalog {
     #[inline(always)]
     pub fn get_label_id(&self, name: &str) -> Option<LabelId> {
         self.name_to_label_id.get(name).copied()

@@ -15,6 +15,8 @@ pub enum Error {
     GraphNotExists(String),
     #[error("graph already exists {0:?}")]
     GraphAlreadyExists(String),
+    #[error("procedure {0} already exists")]
+    ProcedureAlreadyExists(String),
     #[error("procedure {0} not exists")]
     ProcedureNotExists(String),
     #[error("node type not exists {0:?}")]
