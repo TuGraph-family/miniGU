@@ -523,13 +523,13 @@ mod tests {
         // Read and verify the recovery sequence
         {
             let wal = GraphWal::open(&path).unwrap();
-            let mut entries = wal.iter().unwrap();
+            let entries = wal.iter().unwrap();
 
             // Process entries in sequence
             let mut deleted_vertices = Vec::new();
             let mut deleted_edges = Vec::new();
 
-            while let Some(entry_result) = entries.next() {
+            for entry_result in entries {
                 let entry = entry_result.unwrap();
                 match &entry.op {
                     Operation::Delta(DeltaOp::DelVertex(vid)) => deleted_vertices.push(*vid),
@@ -567,11 +567,7 @@ mod tests {
 
         // Append invalid data directly to the file
         {
-            let mut file = OpenOptions::new()
-                .write(true)
-                .append(true)
-                .open(&path)
-                .unwrap();
+            let mut file = OpenOptions::new().append(true).open(&path).unwrap();
 
             // Write invalid header (correct length but wrong checksum)
             let payload = vec![0u8; 20]; // Empty payload with correct structure

@@ -373,7 +373,7 @@ impl MemoryGraph {
     /// This method initializes an empty in-memory graph with configured WAL and
     /// checkpoint managers. It is typically used for testing or creating a clean
     /// graph instance with no prior state.
-
+    ///
     /// # Returns
     ///
     /// A new reference-counted [`MemoryGraph`] with no historical state.
