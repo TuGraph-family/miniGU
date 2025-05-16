@@ -103,7 +103,32 @@ pub struct SerializedAdjacency {
 }
 
 impl GraphCheckpoint {
-    /// Creates a new checkpoint from a MemoryGraph
+    /// Creates a new `GraphCheckpoint` from the current in-memory state of a [`MemoryGraph`].
+    ///
+    /// This method captures a consistent snapshot of the graph, including:
+    /// - The metadata (timestamp, LSN, latest commit timestamp, etc.)
+    /// - All vertices and edges (current version only)
+    /// - The full adjacency list (both outgoing and incoming edges)
+    ///
+    /// It does **not** include historical versions of vertices or edges—only the
+    /// latest committed state is serialized.
+    ///
+    /// This checkpoint can later be saved to disk using [`GraphCheckpoint::save_to_file`],
+    /// and used for recovery via [`GraphCheckpoint::restore`] or the checkpoint manager.
+    ///
+    /// # Arguments
+    ///
+    /// * `graph` - A reference-counted pointer to the in-memory [`MemoryGraph`] to be checkpointed.
+    ///
+    /// # Returns
+    ///
+    /// A fully materialized `GraphCheckpoint` containing the graph’s current state.
+    ///
+    /// # Panics
+    ///
+    /// This function may panic if:
+    /// - System time is earlier than UNIX_EPOCH (highly unlikely)
+    /// - Lock poisoning occurs on internal vertex/edge RwLocks (only if previous panic occurred)
     pub fn new(graph: &Arc<MemoryGraph>) -> Self {
         // Get current LSN
         let lsn = graph.wal_manager.next_lsn();
@@ -251,7 +276,26 @@ impl GraphCheckpoint {
         })
     }
 
-    /// Restores a MemoryGraph from this checkpoint
+    /// Restores a new [`MemoryGraph`] instance from this checkpoint snapshot.
+    ///
+    /// This method reconstructs an in-memory graph by replaying the serialized state
+    /// stored in the checkpoint, including:
+    /// - Metadata (log sequence number and latest commit timestamp)
+    /// - All current vertices and edges (no historical versions)
+    /// - The full adjacency list (outgoing/incoming connections)
+    ///
+    /// This method is typically used during system recovery, state rehydration,
+    /// or startup bootstrapping from the latest persisted checkpoint.
+    ///
+    /// # Arguments
+    ///
+    /// * `checkpoint_config` - Configuration options for the graph's checkpoint behavior.
+    /// * `wal_config` - Configuration for initializing the graph’s write-ahead log (WAL) system.
+    ///
+    /// # Returns
+    ///
+    /// A fully reconstructed [`Arc<MemoryGraph>`] containing the state at the time of checkpoint
+    /// creation.
     pub fn restore(
         &self,
         checkpoint_config: CheckpointManagerConfig,
@@ -369,14 +413,19 @@ impl Default for CheckpointManagerConfig {
     }
 }
 
-/// Manages checkpoints for a MemoryGraph
+/// Manages checkpoint creation, storage, and recovery for a [`MemoryGraph`].
 ///
-/// The CheckpointManager provides functionality to:
-/// 1. Create checkpoints at regular intervals or on demand
-/// 2. List available checkpoints
-/// 3. Load a specific checkpoint
-/// 4. Delete old checkpoints based on retention policy
-/// 5. Restore a graph from a checkpoint
+/// The `CheckpointManager` is responsible for handling persistent snapshots of the graph
+/// at specific points in time. It supports both manual and automatic checkpointing,
+/// enforces retention policies, and enables full recovery of the graph state.
+///
+/// # Features
+///
+/// - Creates checkpoints on demand or at regular intervals.
+/// - Lists and loads available checkpoints from disk.
+/// - Restores a [`MemoryGraph`] from a given checkpoint file.
+/// - Applies a retention policy to limit the number of stored checkpoints.
+/// - Integrates with WAL (Write-Ahead Log) for consistent recovery.
 pub struct CheckpointManager {
     /// Configuration for the checkpoint manager
     config: CheckpointManagerConfig,
@@ -642,9 +691,21 @@ impl CheckpointManager {
 }
 
 impl MemoryGraph {
-    /// Recovers a graph from the most recent checkpoint and WAL
-    /// case1. If no checkpoint found, recover from WAL only
-    /// case2. If checkpoint found, recover from checkpoint and then apply WAL entries
+    /// Recovers a [`MemoryGraph`] by loading the latest checkpoint and replaying WAL entries.
+    ///
+    /// This method implements a two-phase recovery process:
+    ///
+    /// 1. **Checkpoint-based Recovery**   If a valid checkpoint exists in the configured directory,
+    ///    the graph is restored from it, and all WAL entries with LSN ≥ checkpoint LSN are applied
+    ///    to reach the latest consistent state.
+    ///
+    /// 2. **WAL-only Recovery**   If no checkpoint is found, the graph is initialized empty and
+    ///    recovered solely from WAL entries.
+    ///
+    /// # Returns
+    ///
+    /// A fully recovered [`Arc<MemoryGraph>`] containing the most recent state reconstructed
+    /// from persisted checkpoints and logs.
     pub fn recover_from_checkpoint_and_wal(
         checkpoint_config: CheckpointManagerConfig,
         wal_config: WalManagerConfig,

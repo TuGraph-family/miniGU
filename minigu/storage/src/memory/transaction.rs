@@ -479,7 +479,8 @@ impl MemTransaction {
             }
         }
 
-        // Step 4: Write redo entry and commit to WAL
+        // Step 4: Write redo entry and commit to WAL,
+        // unless the function is called when recovering from WAL
         if !skip_wal {
             let redo_entries = self
                 .redo_buffer
@@ -501,7 +502,7 @@ impl MemTransaction {
                     .append(&entry)?;
             }
 
-            // Write commit transaction to WAL
+            // Write `Operation::CommitTransaction` to WAL
             let wal_entry = RedoEntry {
                 lsn: self.graph.wal_manager.next_lsn(),
                 txn_id: self.txn_id(),
@@ -620,7 +621,8 @@ impl MemTransaction {
             }
         }
 
-        // Write abort to WAL
+        // Write `Operation::AbortTransaction` to WAL,
+        // unless the function is called when recovering from WAL
         if !skip_wal {
             let lsn = self.graph.wal_manager.next_lsn();
             let wal_entry = RedoEntry {

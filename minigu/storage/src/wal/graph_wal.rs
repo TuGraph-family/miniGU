@@ -94,6 +94,23 @@ impl StorageWal for GraphWal {
     }
 
     /// Append a record and buffer it. Call `flush` to fsync.
+    ///
+    /// This method performs the following steps to ensure atomicity and data integrity:
+    ///
+    /// - Serializes the input `record` into a byte payload.
+    /// - Computes a CRC32 checksum of the payload for integrity validation.
+    /// - Captures the current file position to allow rollback in case of failure.
+    /// - Constructs the full binary record in the format: `[length (4 bytes)] [checksum (4 bytes)]
+    ///   [payload]`.
+    /// - Attempts to write the entire record in a single operation.
+    ///
+    /// If the write fails, the file is truncated back to the original position
+    /// to prevent partial or corrupted writes.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`StorageError::Wal`] variant if any I/O operation fails during
+    /// seeking, writing, or truncating.
     fn append(&mut self, record: &Self::Record) -> StorageResult<()> {
         let payload = record.to_bytes()?;
         let mut hasher = Hasher::new();
@@ -142,6 +159,28 @@ impl StorageWal for GraphWal {
             .map_err(|e| StorageError::Wal(WalError::Io(e)))
     }
 
+    /// Returns an iterator over WAL (Write-Ahead Log) records in the file.
+    ///
+    /// This method creates a new reader by cloning the underlying file and seeks
+    /// to the beginning. It then constructs a generator that lazily reads records
+    /// one by one, verifying their integrity using checksums.
+    ///
+    /// Each record is expected to follow the format:
+    /// `[length (4 bytes)] [checksum (4 bytes)] [payload (variable length)]`
+    ///
+    /// The iterator will:
+    /// - Read the fixed-size header to extract the record length and checksum.
+    /// - Read the payload of the given length.
+    /// - Verify the CRC32 checksum against the payload.
+    /// - Deserialize the payload into a `LogRecord`.
+    ///
+    /// On encountering EOF, the iteration ends gracefully. If any I/O or checksum
+    /// error occurs, the iterator yields a `StorageError`.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`StorageError::Wal`] if cloning the file or seeking fails during setup.
+    /// The iterator itself yields `Result<LogRecord, StorageError>` for each entry.
     fn iter(&self) -> StorageResult<Self::LogIterator> {
         let mut reader = self
             .file
@@ -198,6 +237,20 @@ impl StorageWal for GraphWal {
         })
     }
 
+    /// Reads and returns all WAL (Write-Ahead Log) records from the file in order.
+    ///
+    /// This method invokes [`Self::iter`] to create a streaming iterator over all
+    /// log entries. It collects all successfully parsed records into a vector,
+    /// sorts them by their `lsn` (Log Sequence Number), and returns the sorted list.
+    ///
+    /// This is typically used during recovery to load and replay the full log
+    /// content in a consistent order.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`StorageError::Wal`] if reading any log entry or initializing
+    /// the iterator fails. Any corrupt record (e.g., checksum mismatch or I/O error)
+    /// will cause early termination with an error.
     fn read_all(&self) -> StorageResult<Vec<Self::Record>> {
         let iter = self.iter()?;
         let mut records = Vec::new();
@@ -210,7 +263,22 @@ impl StorageWal for GraphWal {
 }
 
 impl GraphWal {
-    /// Truncate the WAL to retain only entries with LSN >= `min_lsn`.
+    /// Truncates the WAL (Write-Ahead Log) file to remove entries with LSN less than `min_lsn`.
+    ///
+    /// This is typically used during log compaction or checkpointing, to discard
+    /// obsolete log entries that are no longer needed for recovery.
+    ///
+    /// The truncation process involves:
+    /// - Reading all existing log records using [`Self::read_all`].
+    /// - Filtering out records with `lsn < min_lsn`.
+    /// - Flushing and deleting the original WAL file.
+    /// - Rewriting a new WAL file with the retained records via [`Self::append`].
+    /// - Replacing the current file handle with the newly opened WAL file.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`StorageError::Wal`] if any I/O operation fails during reading,
+    /// deletion, creation, writing, or flushing.
     pub fn truncate_until(&mut self, min_lsn: u64) -> StorageResult<()> {
         // Read all current records
         let entries = self.read_all()?;

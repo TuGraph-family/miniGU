@@ -340,12 +340,26 @@ pub struct MemoryGraph {
 #[allow(dead_code)]
 // Basic methods for MemoryGraph
 impl MemoryGraph {
-    /// Creates a new instance of `MemoryGraph`, with recovery in default configuration.
+    /// Creates a new [`MemoryGraph`] instance using default configurations,
+    /// and recovers its state from the latest checkpoint and WAL.
+    ///
+    /// This is a convenience method equivalent to:
+    /// `MemoryGraph::with_config_recovered(Default::default(), Default::default())`
     pub fn new() -> Arc<Self> {
         Self::with_config_recovered(Default::default(), Default::default())
     }
 
-    /// Recover a graph from checkpoint and WAL
+    /// Creates a new [`MemoryGraph`] instance with the provided configuration,
+    /// and recovers its state from persisted checkpoint and WAL.
+    ///
+    /// This function performs a full recovery process:
+    /// - If a checkpoint is available, it restores the graph from that checkpoint and applies any
+    ///   remaining WAL entries.
+    /// - If no checkpoint is found, it reconstructs the graph entirely from WAL.
+    ///
+    /// # Returns
+    ///
+    /// A reference-counted [`MemoryGraph`] containing the recovered graph state.
     pub fn with_config_recovered(
         checkpoint_config: CheckpointManagerConfig,
         wal_config: WalManagerConfig,
@@ -354,7 +368,15 @@ impl MemoryGraph {
         Self::recover_from_checkpoint_and_wal(checkpoint_config, wal_config).unwrap()
     }
 
-    /// Creates a new instance of `MemoryGraph`, without recovering from checkpoint and WAL
+    /// Creates a new [`MemoryGraph`] instance from scratch without performing recovery.
+    ///
+    /// This method initializes an empty in-memory graph with configured WAL and
+    /// checkpoint managers. It is typically used for testing or creating a clean
+    /// graph instance with no prior state.
+
+    /// # Returns
+    ///
+    /// A new reference-counted [`MemoryGraph`] with no historical state.
     pub fn with_config_fresh(
         checkpoint_config: CheckpointManagerConfig,
         wal_config: WalManagerConfig,
@@ -474,7 +496,8 @@ impl MemoryGraph {
         ));
         self.txn_manager.start_transaction(txn.clone());
 
-        // Write begin transaction to WAL
+        // Write `Operation::BeginTransaction` to WAL,
+        // unless the function is called when recovering from WAL
         if !skip_wal {
             let wal_entry = RedoEntry {
                 lsn: self.wal_manager.next_lsn(),
