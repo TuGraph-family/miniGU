@@ -1,9 +1,12 @@
 [package]
+edition.workspace = true
 name = "minigu-binder"
 version = "0.1.0"
-edition.workspace = true
 
 [dependencies]
+gql-parser = { workspace = true }
+serde = { workspace = true, features = ["std"] }
+thiserror = { workspace = true, features = ["std"] }
 
 [lints]
 workspace = true

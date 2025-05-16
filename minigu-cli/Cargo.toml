@@ -1,0 +1,17 @@
+[package]
+edition.workspace = true
+name = "minigu-cli"
+version = "0.1.0"
+
+[[bin]]
+name = "minigu"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.5.34", features = ["derive"] }
+miette = { workspace = true }
+minigu = { path = "../minigu/main" }
+rustyline = { version = "15.0.0", features = ["derive"] }
+
+[lints]
+workspace = true

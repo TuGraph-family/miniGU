@@ -1,4 +1,4 @@
-use common::datatype::value::PropertyValue;
+use minigu_common::datatype::value::PropertyValue;
 
 use crate::error::StorageResult;
 

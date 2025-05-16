@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use common::datatype::types::{EdgeId, VertexId};
 use crossbeam_skiplist::SkipSet;
+use minigu_common::datatype::types::{EdgeId, VertexId};
 
 use super::transaction::MemTransaction;
 use crate::error::StorageResult;

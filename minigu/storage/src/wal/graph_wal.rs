@@ -298,7 +298,7 @@ mod tests {
     use std::fs;
     use std::path::PathBuf;
 
-    use common::datatype::value::PropertyValue;
+    use minigu_common::datatype::value::PropertyValue;
     use serial_test::serial;
 
     use super::*;

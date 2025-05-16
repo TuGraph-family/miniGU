@@ -1,0 +1,15 @@
+CREATE GRAPH test_graph {
+  (Entity: EntityLabel {
+    id INT64,
+    embedding vector<float, 4>,
+    PRIMARY KEY (id)
+  }),
+  (Entity)-[Rel: RelLabel {
+    timestamp	INT64,
+    PRIMARY KEY (SOURCE_PRIMARY_KEY, timestamp, DESTINATION_PRIMARY_KEY)
+  }]->(Entity),
+};
+
+USE GRAPH test_graph;
+INSERT (n:Entity {id: 30001, embedding: VECTOR [1, 2, 3, 4]});
+MATCH  (n:Entity {id: 30001}) return n, n.embedding;

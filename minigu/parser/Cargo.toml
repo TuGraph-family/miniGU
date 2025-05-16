@@ -1,58 +1,52 @@
 [package]
+edition.workspace = true
 name = "gql-parser"
 version = "0.1.0"
-edition.workspace = true
 
 [dependencies]
-thiserror = { version = "2.0.11", default-features = false }
-winnow = { version = "0.7.3", default-features = false, features = ["alloc"] }
-serde = { version = "1.0.218", default-features = false, features = [
-  "alloc",
-  "derive",
-  "rc",
-], optional = true }
-smol_str = { version = "0.3.2", default-features = false }
-macro_rules_attribute = "0.2.0"
+itertools = { workspace = true }
 logos = { version = "0.15.0", default-features = false, features = [
-  "export_derive",
+    "export_derive",
 ] }
-itertools = { version = "0.14.0", default-features = false, features = [
-  "use_alloc",
-] }
-miette = { version = "7.5.0", features = ["fancy"], optional = true }
+macro_rules_attribute = "0.2.0"
+miette = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
+smol_str = { workspace = true }
+thiserror = { workspace = true }
+winnow = { version = "0.7.4", default-features = false, features = ["alloc"] }
 
 [dev-dependencies]
-insta.workspace = true
-divan.workspace = true
-paste.workspace = true
+divan = { workspace = true }
+insta = { workspace = true }
+paste = { workspace = true }
 
 [build-dependencies]
 cmake = { version = "0.1.54", optional = true }
 
 [features]
+bench-antlr4 = ["std", "dep:cmake"]
 default = ["std"]
-serde = ["dep:serde", "smol_str/serde"]
 miette = ["std", "dep:miette"]
+serde = ["dep:serde", "smol_str/serde"]
 std = [
-  "logos/std",
-  "serde?/std",
-  "itertools/use_std",
-  "winnow/std",
-  "smol_str/std",
-  "thiserror/std",
+    "logos/std",
+    "serde?/std",
+    "itertools/use_std",
+    "winnow/std",
+    "smol_str/std",
+    "thiserror/std",
 ]
-bench_antlr4 = ["std", "dep:cmake"]
 
 [lints]
 workspace = true
 
 [[bench]]
-name = "alloc"
 harness = false
+name = "alloc"
 
 [[bench]]
-name = "parse"
 harness = false
+name = "parse"
 
 [[test]]
 name = "parser_test"

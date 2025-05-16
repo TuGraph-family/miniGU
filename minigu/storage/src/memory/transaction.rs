@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock, RwLock};
 
-use common::datatype::types::{EdgeId, VertexId};
 use crossbeam_skiplist::SkipMap;
 use dashmap::DashSet;
+use minigu_common::datatype::types::{EdgeId, VertexId};
 
 use super::memory_graph::MemoryGraph;
 use crate::error::{

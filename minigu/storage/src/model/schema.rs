@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use common::datatype::types::LabelId;
-use common::datatype::value::PropertyMeta;
+use minigu_common::datatype::types::LabelId;
+use minigu_common::datatype::value::PropertyMeta;
 use serde::{Deserialize, Serialize};
 
 use crate::error::{SchemaError, StorageError, StorageResult};
@@ -137,7 +137,7 @@ impl SchemaManager {
 
 #[cfg(test)]
 mod tests {
-    use common::datatype::value::{DataType, PropertyMeta, PropertyValue};
+    use minigu_common::datatype::value::{DataType, PropertyMeta, PropertyValue};
 
     use super::super::edge::Edge;
     use super::super::properties::PropertyRecord;

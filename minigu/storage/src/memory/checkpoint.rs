@@ -12,8 +12,8 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use common::datatype::types::{EdgeId, VertexId};
 use crc32fast::Hasher;
+use minigu_common::datatype::types::{EdgeId, VertexId};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -774,7 +774,7 @@ mod tests {
     use std::io::Seek;
     use std::{env, fs};
 
-    use common::datatype::value::PropertyValue;
+    use minigu_common::datatype::value::PropertyValue;
 
     use super::*;
     use crate::error::CheckpointError;

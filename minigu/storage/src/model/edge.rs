@@ -1,5 +1,5 @@
-use common::datatype::types::{EdgeId, LabelId, VertexId};
-use common::datatype::value::PropertyValue;
+use minigu_common::datatype::types::{EdgeId, LabelId, VertexId};
+use minigu_common::datatype::value::PropertyValue;
 use serde::{Deserialize, Serialize};
 
 use super::properties::PropertyRecord;
