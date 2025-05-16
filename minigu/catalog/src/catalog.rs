@@ -1,9 +1,8 @@
 use crate::error::Error;
-use smol_str::{SmolStr, ToSmolStr};
+use crate::types::*;
 use std::collections::HashMap;
 use std::sync::{OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard};
-
-pub type Ident = SmolStr;
+use smol_str::ToSmolStr;
 
 #[derive(Debug)]
 pub struct Schema {}
@@ -20,7 +19,7 @@ pub struct SchemaTire {
     pub root: SchemaNode,
 }
 impl SchemaNode {
-    pub fn print(&self, indent: usize) {
+    pub fn print(&self) {
         let indent_str = " ".repeat(4);
         println!("{}Node: {}", indent_str, self.name);
 
@@ -30,7 +29,7 @@ impl SchemaNode {
 
         for (child_name, child_node) in &self.children {
             println!("{}  Child: {}", indent_str, child_name);
-            child_node.print(indent + 4);
+            child_node.print();
         }
     }
 }
@@ -38,7 +37,7 @@ impl SchemaNode {
 impl SchemaTire {
     pub fn print(&self) {
         println!("SchemaTire:");
-        self.root.print(2);
+        self.root.print();
     }
 }
 impl SchemaTire {

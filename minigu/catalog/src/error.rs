@@ -20,13 +20,15 @@ pub enum Error {
     #[error("procedure {0} not exists")]
     ProcedureNotExists(String),
     #[error("node type not exists {0:?}")]
-    NodeTypeNotExists(String),
+    VertexTypeNotExists(String),
     #[error("edge type not exists {0:?}")]
     EdgeTypeNotExists(String),
-    #[error("invalid field {0:?}")]
-    InvalidField(String),
-    #[error("duplicate field name {0:?}")]
-    DuplicateField(String),
+    #[error("edge type already exists {0:?}")]
+    EdgeTypeAlreadyExists(String),
+    #[error("property {0:?} not exists")]
+    PropertyNotExists(String),
+    #[error("property {0:?} already exists")]
+    PropertyAlreadyExists(String),
     #[error("not support operation {0:?}")]
     NotSupported(String),
     #[error("tmp error")]

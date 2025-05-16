@@ -1,12 +1,12 @@
 use std::collections::HashMap;
-use crate::graph::{GraphCatalog, GraphId};
-use crate::graph_type::{GraphTypeId};
-use crate::procedure::{ProcedureCatalog, ProcedureId};
+use crate::graph::{GraphCatalog};
+use crate::types::*;
+use crate::procedure::{ProcedureCatalog};
 use crate::error::Error;
-pub type  SchemaId = u32;
+use crate::graph_type::GraphTypeCatalog;
+use std::num::NonZeroU32;
 
-#[derive(Debug)]
-pub struct GraphTypeCatalog {}
+pub type  SchemaId = u32;
 pub struct Schema {
     pub id: SchemaId,
     pub name: String,
@@ -37,11 +37,12 @@ impl Schema {
     }
 
     // ===== Graph =====
-    pub fn create_graph(&mut self, name: String, graph: GraphCatalog) -> Result<GraphId, Error> {
+    pub fn create_graph(&mut self, name: String, mut graph: GraphCatalog) -> Result<GraphId, Error> {
         if self.graph_id_map.contains_key(&name) {
             return Err(Error::GraphAlreadyExists(name));
         }
-        let id = self.graph_id_map.len() as GraphId;
+        let id = NonZeroU32::new(self.graph_id_map.len() as u32 + 1)
+            .unwrap();
         self.graph_id_map.insert(name.clone(), id);
         self.graph_map.insert(id, graph);
         Ok(id)
@@ -67,7 +68,8 @@ impl Schema {
         if self.graph_type_id_map.contains_key(&name) {
             return Err(Error::GraphTypeAlreadyExists(name));
         }
-        let id = self.graph_type_id_map.len() as GraphTypeId;
+        let id = NonZeroU32::new(self.graph_type_id_map.len() as u32 + 1)
+            .unwrap();
         self.graph_type_id_map.insert(name.clone(), id);
         self.graph_type_map.insert(id, graph_type);
         Ok(id)
@@ -91,9 +93,10 @@ impl Schema {
     // ===== Procedure =====
     pub fn create_procedure(&mut self, name: String, proc: ProcedureCatalog) -> Result<ProcedureId, Error> {
         if self.procedure_id_map.contains_key(&name) {
-            return Err(Error::ProcedureAlreadyExists(name)); // Optional: split into ProcedureAlreadyExists
+            return Err(Error::ProcedureAlreadyExists(name));
         }
-        let id = self.procedure_id_map.len() as ProcedureId;
+        let id = NonZeroU32::new(self.graph_type_id_map.len() as u32 + 1)
+            .unwrap();
         self.procedure_id_map.insert(name.clone(), id);
         self.procedure_map.insert(id, proc);
         Ok(id)
@@ -117,6 +120,7 @@ impl Schema {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
     use super::*;
     use crate::graph::GraphCatalog;
     use crate::procedure::ProcedureCatalog;
@@ -124,9 +128,12 @@ mod tests {
     #[test]
     fn test_create_and_get_graph() {
         let mut schema = Schema::new(0, "test".to_string());
+        let catalog = GraphTypeCatalog::default();
 
-        let id = schema.create_graph("g1".to_string(), GraphCatalog {}).unwrap();
-        assert_eq!(id, 0);
+        let id = schema.create_graph("g1".to_string(), GraphCatalog::new(
+            "g1".to_string(),Arc::new(catalog)
+        )).unwrap();
+        assert_eq!(id.get(), 1);
 
         let id2 = schema.get_graph_id("g1").unwrap();
         assert_eq!(id, id2);
@@ -138,15 +145,17 @@ mod tests {
     #[test]
     fn test_duplicate_graph_insert() {
         let mut schema = Schema::new(0, "test".to_string());
-        let _ = schema.create_graph("g1".to_string(), GraphCatalog {}).unwrap();
-        let err = schema.create_graph("g1".to_string(), GraphCatalog {}).unwrap_err();
+        let catalog = GraphTypeCatalog::default();
+        let _ = schema.create_graph("g1".to_string(), GraphCatalog::new("g1".to_string(), Arc::new(catalog.clone()))).unwrap();
+        let err = schema.create_graph("g1".to_string(), GraphCatalog::new("g1".to_string(), Arc::new(catalog.clone()))).unwrap_err();
         assert_eq!(err, Error::GraphAlreadyExists("g1".to_string()));
     }
 
     #[test]
     fn test_delete_graph() {
         let mut schema = Schema::new(0, "test".to_string());
-        schema.create_graph("g1".to_string(), GraphCatalog {}).unwrap();
+        let catalog = GraphTypeCatalog::default();
+        schema.create_graph("g1".to_string(), GraphCatalog::new("g1".to_string(), Arc::new(catalog.clone()))).unwrap();
         schema.delete_graph("g1").unwrap();
 
         assert!(schema.get_graph_id("g1").is_err());
@@ -155,8 +164,9 @@ mod tests {
     #[test]
     fn test_create_and_get_graph_type() {
         let mut schema = Schema::new(0, "test".to_string());
-        let id = schema.create_graph_type("type1".to_string(), GraphTypeCatalog {}).unwrap();
-        assert_eq!(id, 0);
+        let catalog = GraphTypeCatalog::default();
+        let id = schema.create_graph_type("type1".to_string(), catalog).unwrap();
+        assert_eq!(id.get(), 1);
 
         let id2 = schema.get_graph_type_id("type1").unwrap();
         assert_eq!(id, id2);
@@ -165,7 +175,8 @@ mod tests {
     #[test]
     fn test_delete_graph_type() {
         let mut schema = Schema::new(0, "test".to_string());
-        schema.create_graph_type("type1".to_string(), GraphTypeCatalog {}).unwrap();
+        let catalog = GraphTypeCatalog::default();
+        schema.create_graph_type("type1".to_string(), catalog).unwrap();
         schema.delete_graph_type("type1").unwrap();
         assert!(schema.get_graph_type("type1").is_err());
     }
@@ -174,7 +185,7 @@ mod tests {
     fn test_create_and_get_procedure() {
         let mut schema = Schema::new(0, "test".to_string());
         let id = schema.create_procedure("proc1".to_string(), ProcedureCatalog {}).unwrap();
-        assert_eq!(id, 0);
+        assert_eq!(id.get(), 1);
 
         let id2 = schema.get_procedure_id("proc1").unwrap();
         assert_eq!(id, id2);
