@@ -15,7 +15,8 @@ Usage: minigu shell [OPTIONS] [PATH]
 
 Arguments:
   [PATH]
-          Path to the database directory. If it does not exist, a new database directory will be created.
+          Path to the database directory. If it does not exist, a new database directory will be
+          created.
           
           If not provided, an in-memory database will be opened.
 
