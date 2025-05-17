@@ -2,8 +2,8 @@
 
 pub mod data_chunk;
 pub mod datatype;
+pub mod error;
 pub mod logical_type;
 pub mod ordering;
 pub mod types;
 pub mod value;
-pub mod error;

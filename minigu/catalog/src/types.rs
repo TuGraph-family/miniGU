@@ -1,7 +1,8 @@
 use std::num::NonZeroU32;
 use std::result;
-use smallvec::SmallVec;
+
 use minigu_common::error::MiniGuError;
+use smallvec::SmallVec;
 use smol_str::SmolStr;
 
 pub type VertexTypeId = NonZeroU32;

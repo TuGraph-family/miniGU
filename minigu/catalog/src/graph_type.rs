@@ -88,13 +88,16 @@ impl GraphTypeCatalog {
         Ok(())
     }
 
-    pub fn create_edge_type(&mut self, name: String,mut edge: EdgeTypeCatalog) -> Result<(), Error> {
+    pub fn create_edge_type(
+        &mut self,
+        name: String,
+        mut edge: EdgeTypeCatalog,
+    ) -> Result<(), Error> {
         if self.edge_id_map.contains_key(&name) {
             return Err(Error::EdgeTypeAlreadyExists(name));
         }
         let label = self.label_id_generator.next();
-        
-        
+
         edge.id = Some(label);
         self.edge_id_map.insert(name.clone(), label);
         self.edge_map.insert(label, edge);
