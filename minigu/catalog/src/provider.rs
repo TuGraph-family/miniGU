@@ -6,9 +6,7 @@ use minigu_common::datatype::value::DataType;
 use minigu_common::error::MiniGuError::Error;
 
 use crate::procedure::ProcedureCatalog;
-use crate::types::{
-    EdgeTypeId, GraphId, Ident, LabelId, PropertyId, Result, VertexTypeId,
-};
+use crate::types::{EdgeTypeId, GraphId, Ident, LabelId, PropertyId, Result, VertexTypeId};
 
 /// The top-level catalog provider, responsible for managing multiple schemas.
 /// Each schema may contain graph types and actual graphs.
@@ -19,7 +17,7 @@ pub trait CatalogProvider: Debug + Sync + Send {
     fn as_any(&self) -> &dyn Any;
 
     /// Retrieve a schema by its path.
-    fn get_schema(&self, schema_path: &Vec<Ident>) -> Result<Arc<dyn SchemaProvider>> {
+    fn get_schema(&self, schema_path: &[Ident]) -> Result<Arc<dyn SchemaProvider>> {
         Err(Error("not implemented".to_string()))
     }
 
@@ -29,7 +27,7 @@ pub trait CatalogProvider: Debug + Sync + Send {
     }
 
     /// Drop and remove an existing schema by its path.
-    fn drop_schema(&self, schema_path: &Vec<Ident>) -> Result<Arc<dyn SchemaProvider>> {
+    fn drop_schema(&self, schema_path: &[Ident]) -> Result<Arc<dyn SchemaProvider>> {
         Err(Error("not implemented".to_string()))
     }
 }
@@ -115,7 +113,6 @@ pub trait GraphTypeProvider: Debug + Sync + Send {
 
 /// Represents a property catalog, which contains properties of a vertex or edge type.
 /// It provides methods to retrieve properties by name or ID.
-
 pub trait PropertyLookupProvider: Debug + Sync + Send {
     fn get_property_by_name(&self, name: &Ident) -> Result<Arc<dyn PropertyProvider>> {
         Err(Error("not implemented".to_string()))
@@ -129,7 +126,6 @@ pub trait PropertyLookupProvider: Debug + Sync + Send {
 }
 
 /// Represents a vertex type, which defines the structure of a vertex.
-
 pub trait VertexTypeProvider: PropertyLookupProvider {
     fn name(&self) -> Ident;
 }

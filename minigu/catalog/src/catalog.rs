@@ -60,7 +60,7 @@ impl SchemaTire {
         SchemaTire { root }
     }
 
-    pub fn create_schema(&mut self, path: &Vec<Ident>, schema: Schema) -> Result<(), Error> {
+    pub fn create_schema(&mut self, path: &[Ident], schema: Schema) -> Result<(), Error> {
         let mut current_node = &mut self.root;
         for segment in path {
             current_node = current_node
@@ -72,14 +72,14 @@ impl SchemaTire {
                     schema: None,
                 })
         }
-        if !current_node.schema.is_none() {
+        if current_node.schema.is_some() {
             return Err(Error::SchemaAlreadyExists(path.join("/")));
         }
         current_node.schema = Some(schema);
         Ok(())
     }
 
-    pub fn get_schema(&mut self, path: &Vec<Ident>) -> Result<&mut Schema, Error> {
+    pub fn get_schema(&mut self, path: &[Ident]) -> Result<&mut Schema, Error> {
         let mut current_node = &mut self.root;
         for segment in path {
             current_node = current_node
@@ -87,7 +87,7 @@ impl SchemaTire {
                 .get_mut(segment)
                 .ok_or_else(|| Error::SchemaNotExists(path.to_vec().join("/")))?;
         }
-        if !current_node.schema.is_none() {
+        if current_node.schema.is_some() {
             Ok(current_node.schema.as_mut().unwrap())
         } else {
             Err(Error::SchemaNotExists(path.join("/")))
@@ -130,7 +130,7 @@ impl SchemaTire {
         }
     }
 
-    pub fn delete_schema(&mut self, path: &Vec<Ident>) -> Result<(), Error> {
+    pub fn delete_schema(&mut self, path: &[Ident]) -> Result<(), Error> {
         Self::remove_recursive(&mut self.root, path)
             .map_err(|_| Error::SchemaNotExists(path.join("/")))
     }
@@ -170,15 +170,15 @@ impl CatalogInstance {
             .expect("Failed to acquire write lock on CatalogInstance")
     }
 
-    pub fn add_schema(&mut self, path: &Vec<Ident>, schema: Schema) -> Result<(), Error> {
+    pub fn create_schema(&mut self, path: &[Ident], schema: Schema) -> Result<(), Error> {
         self.schema.create_schema(path, schema)
     }
 
-    pub fn get_schema(&mut self, path: &Vec<Ident>) -> Result<&mut Schema, Error> {
+    pub fn get_schema(&mut self, path: &[Ident]) -> Result<&mut Schema, Error> {
         self.schema.get_schema(path)
     }
 
-    pub fn remove_schema(&mut self, path: &Vec<Ident>) -> Result<(), Error> {
+    pub fn delete_schema(&mut self, path: &[Ident]) -> Result<(), Error> {
         self.schema.delete_schema(path)
     }
 }
@@ -266,7 +266,7 @@ mod tests {
             let mut instance = CatalogInstance::write();
             let path = make_path(&["default", "test"]);
             let schema = Schema::new("test".to_smolstr());
-            assert!(instance.add_schema(&path, schema).is_ok());
+            assert!(instance.create_schema(&path, schema).is_ok());
         }
 
         {
@@ -283,8 +283,8 @@ mod tests {
             let mut instance = CatalogInstance::write();
             let path = make_path(&["default", "removable"]);
             let schema = Schema::new("removable".to_smolstr());
-            assert!(instance.add_schema(&path, schema).is_ok());
-            assert!(instance.remove_schema(&path).is_ok());
+            assert!(instance.create_schema(&path, schema).is_ok());
+            assert!(instance.delete_schema(&path).is_ok());
             assert!(instance.get_schema(&path).is_err());
         }
     }

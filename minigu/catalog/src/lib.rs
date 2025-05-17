@@ -1,11 +1,11 @@
 #![allow(unused)]
 
 mod catalog;
-mod schema;
-mod graph_type;
-mod graph;
-mod procedure;
-mod vertex_edge;
-mod types;
 mod error;
+mod graph;
+mod graph_type;
+mod procedure;
 mod provider;
+mod schema;
+mod types;
+mod vertex_edge;
