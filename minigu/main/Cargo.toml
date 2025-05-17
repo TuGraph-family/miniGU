@@ -4,9 +4,12 @@ name = "minigu"
 version = "0.1.0"
 
 [dependencies]
+arrow = { workspace = true }
 gql-parser = { workspace = true }
 miette = { workspace = true }
-thiserror = { workspace = true, features = ["std"] }
+minigu-common = { workspace = true }
+minigu-execution = { workspace = true }
+thiserror = { workspace = true }
 
 [lints]
 workspace = true

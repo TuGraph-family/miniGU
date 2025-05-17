@@ -1,0 +1,21 @@
+---
+source: minigu-cli/tests/cli_test.rs
+info:
+  program: minigu
+  args:
+    - "--help"
+---
+success: true
+exit_code: 0
+----- stdout -----
+Usage: minigu <COMMAND>
+
+Commands:
+  shell    Start local interactive shell
+  execute  
+  help     Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help  Print help
+
+----- stderr -----

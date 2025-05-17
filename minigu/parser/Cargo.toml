@@ -13,7 +13,7 @@ miette = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 smol_str = { workspace = true }
 thiserror = { workspace = true }
-winnow = { version = "0.7.4", default-features = false, features = ["alloc"] }
+winnow = { version = "0.7.10", default-features = false, features = ["alloc"] }
 
 [dev-dependencies]
 divan = { workspace = true }

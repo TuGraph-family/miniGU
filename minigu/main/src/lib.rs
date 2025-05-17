@@ -1,11 +1,11 @@
+#![feature(impl_trait_in_assoc_type)]
 #![allow(unused)]
 
-mod database;
-mod error;
-mod options;
-mod session;
+pub mod database;
+pub mod error;
+pub mod metrics;
+pub mod options;
+pub mod result;
+pub mod session;
 
-pub use database::Database;
-pub use error::{Error, Result};
-// pub use options::OpenOptions;
-pub use session::Session;
+pub use minigu_common as common;
