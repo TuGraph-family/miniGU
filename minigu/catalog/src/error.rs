@@ -1,7 +1,7 @@
+use minigu_common::error::MiniGuError;
 use thiserror::Error;
 
-#[derive(Error, Debug, PartialEq, Eq)]
-#[derive(Clone)]
+#[derive(Error, Debug, PartialEq, Eq, Clone)]
 pub enum Error {
     #[error("schema not exists {0:?}")]
     SchemaNotExists(String),
@@ -29,8 +29,14 @@ pub enum Error {
     PropertyNotExists(String),
     #[error("property {0:?} already exists")]
     PropertyAlreadyExists(String),
+    #[error("property {0:?} not allowed")]
+    NotAllowedProperty(String),
     #[error("not support operation {0:?}")]
     NotSupported(String),
-    #[error("tmp error")]
-    ErrorCur
+}
+
+impl Error {
+    pub fn to_minigu_error(&self) -> MiniGuError {
+        MiniGuError::Error(format!("{}", self))
+    }
 }

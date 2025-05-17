@@ -1,50 +1,58 @@
 use std::collections::HashMap;
+use std::fmt::Debug;
 use std::num::NonZeroU32;
 use std::sync::Arc;
-use crate::types::{Ident, LabelId, PropertyId};
+
 use minigu_common::logical_type::LogicalType;
+
 use crate::error::Error;
+use crate::types::{Ident, LabelId, PropertyId};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Property {
-    data_type: LogicalType,
-    is_optional: bool,
-    is_unique: bool,
+    pub data_type: LogicalType,
+    pub is_optional: bool,
+    pub is_unique: bool,
     // support default value?
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct EdgeTypeCatalog {
-    name: Ident,
-    property_id_map: HashMap<Ident, PropertyId>,
-    properties: HashMap<PropertyId, Property>,
-    src: Arc<VertexTypeCatalog>,
-    dist: Arc<VertexTypeCatalog>,
+    pub id: Option<LabelId>,
+    pub name: Ident,
+    pub property_id_map: HashMap<Ident, PropertyId>,
+    pub properties: HashMap<PropertyId, Property>,
+    pub src: Arc<VertexTypeCatalog>,
+    pub dist: Arc<VertexTypeCatalog>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct VertexTypeCatalog {
-    name: Ident,
-    property_id_map: HashMap<Ident, PropertyId>,
-    properties: HashMap<PropertyId, Property>
+    pub id: Option<LabelId>,
+    pub name: Ident,
+    pub property_id_map: HashMap<Ident, PropertyId>,
+    pub properties: HashMap<PropertyId, Property>,
 }
 
-pub trait PropertyCatalog {
+pub fn is_allowed_property_name(name: &str) -> bool {
+    true
+}
+
+pub trait PropertyCatalog: Debug + Sync + Send {
     fn property_id_map(&self) -> &HashMap<Ident, PropertyId>;
     fn property_id_map_mut(&mut self) -> &mut HashMap<Ident, PropertyId>;
     fn properties(&self) -> &HashMap<PropertyId, Property>;
     fn properties_mut(&mut self) -> &mut HashMap<PropertyId, Property>;
 
-    fn add_property(
-        &mut self,
-        name: Ident,
-        prop: Property,
-    ) -> Result<(), Error> {
+    fn add_property(&mut self, name: Ident, prop: Property) -> Result<(), Error> {
+        if !is_allowed_property_name(&name) {
+            return Err(Error::NotAllowedProperty(name.to_string()));
+        }
+
         if self.property_id_map().contains_key(&name) {
             return Err(Error::PropertyAlreadyExists(name.to_string()));
         }
-        let id = NonZeroU32::new(self.property_id_map().len() as u32 + 1)
-            .unwrap();
+        let id = NonZeroU32::new(self.property_id_map().len() as u32 + 1).unwrap();
         self.property_id_map_mut().insert(name.clone(), id);
         self.properties_mut().insert(id, prop);
         Ok(())
@@ -126,10 +134,10 @@ impl PropertyCatalog for EdgeTypeCatalog {
     }
 }
 
-
 impl VertexTypeCatalog {
     pub fn new(name: Ident) -> Self {
         Self {
+            id: None,
             name,
             property_id_map: HashMap::new(),
             properties: HashMap::new(),
@@ -138,12 +146,9 @@ impl VertexTypeCatalog {
 }
 
 impl EdgeTypeCatalog {
-    pub fn new(
-        name: Ident,
-        src: Arc<VertexTypeCatalog>,
-        dist: Arc<VertexTypeCatalog>,
-    ) -> Self {
+    pub fn new(name: Ident, src: Arc<VertexTypeCatalog>, dist: Arc<VertexTypeCatalog>) -> Self {
         Self {
+            id: None,
             name,
             property_id_map: HashMap::new(),
             properties: HashMap::new(),
@@ -151,6 +156,7 @@ impl EdgeTypeCatalog {
             dist,
         }
     }
+
     pub fn src_types(&self) -> &VertexTypeCatalog {
         &self.src
     }
@@ -162,9 +168,11 @@ impl EdgeTypeCatalog {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::sync::Arc;
+
     use minigu_common::logical_type::LogicalType;
+
+    use super::*;
 
     fn dummy_property(dt: LogicalType) -> Property {
         Property {
@@ -184,7 +192,7 @@ mod tests {
 
     #[test]
     fn test_vertex_property_crud() {
-        let mut vertex = dummy_vertex( "Person");
+        let mut vertex = dummy_vertex("Person");
         let pid = NonZeroU32::new(1).unwrap();
         let pname = dummy_ident("age");
         let prop = dummy_property(LogicalType::Int8);
@@ -214,7 +222,7 @@ mod tests {
 
     #[test]
     fn test_vertex_duplicate_property_error() {
-        let mut vertex = dummy_vertex( "Book");
+        let mut vertex = dummy_vertex("Book");
         let pid = 200;
         let pname = dummy_ident("title");
         let prop = dummy_property(LogicalType::String);
@@ -246,13 +254,10 @@ mod tests {
 
     #[test]
     fn test_edge_src_and_dst() {
-        let src = Arc::new(dummy_vertex( "User"));
-        let dst = Arc::new(dummy_vertex( "Product"));
-        let edge = EdgeTypeCatalog::new( dummy_ident("BUYS"), src.clone(), dst.clone());
+        let src = Arc::new(dummy_vertex("User"));
+        let dst = Arc::new(dummy_vertex("Product"));
+        let edge = EdgeTypeCatalog::new(dummy_ident("BUYS"), src.clone(), dst.clone());
 
         assert_eq!(edge.dist_type().name, dst.name);
     }
 }
-
-
-

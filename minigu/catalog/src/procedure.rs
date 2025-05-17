@@ -1,3 +1,2 @@
-
-#[derive(Debug)]
-pub struct ProcedureCatalog{}
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProcedureCatalog {}
