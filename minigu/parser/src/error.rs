@@ -5,7 +5,6 @@ use core::ops::Range;
 use logos::Lexer;
 #[cfg(feature = "miette")]
 use miette::Diagnostic;
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use winnow::combinator::todo;
 
@@ -18,13 +17,15 @@ use crate::imports::Arc;
 ///
 /// You can convert this to [`Error`] yourself by calling [`Error::from_tokenize_error`].
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TokenizeError<'a> {
     kind: TokenErrorKind,
     slice: &'a str,
     span: Range<usize>,
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TokenErrorKind {
     #[default]
     InvalidToken,
