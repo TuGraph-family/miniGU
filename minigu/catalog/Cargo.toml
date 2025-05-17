@@ -4,7 +4,7 @@ name = "minigu-catalog"
 version = "0.1.0"
 
 [dependencies]
-minigu-common = { workspace = true, path = "../common" }
+minigu-common = { workspace = true }
 smallvec = { version = "1.14.0", features = ["union"] }
 smol_str = { workspace = true, features = ["std"] }
 thiserror = { workspace = true, features = ["std"] }
