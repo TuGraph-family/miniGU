@@ -12,6 +12,8 @@ use crate::types::{
 
 /// The top-level catalog provider, responsible for managing multiple schemas.
 /// Each schema may contain graph types and actual graphs.
+///
+/// If failed in functions, it will return a MiniGuError::Error.
 pub trait CatalogProvider: Debug + Sync + Send {
     /// Enables downcasting from trait object to concrete type.
     fn as_any(&self) -> &dyn Any;
@@ -33,7 +35,6 @@ pub trait CatalogProvider: Debug + Sync + Send {
 }
 
 /// Represents a logical schema, which contains graphs and graph type definitions.
-/// If faiiled in functions, it will return a MiniGuError::Error.
 pub trait SchemaProvider: Debug + Sync + Send {
     fn as_any(&self) -> &dyn Any;
 
