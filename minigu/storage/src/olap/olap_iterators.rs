@@ -1,5 +1,3 @@
-#![allow(warnings)]
-
 use std::slice::SliceIndex;
 use common::datatype::types::VertexId;
 use crate::error::StorageError;

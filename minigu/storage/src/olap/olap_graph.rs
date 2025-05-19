@@ -1,4 +1,3 @@
-#![allow(warnings)]
 use std::cell::RefCell;
 use std::hash::{Hash, Hasher};
 use std::sync::atomic::{AtomicU64};
