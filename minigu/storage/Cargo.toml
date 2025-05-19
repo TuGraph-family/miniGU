@@ -17,6 +17,7 @@ bytes = "1.10.0"
 chrono = "0.4.40"
 crossbeam-epoch = "0.9"
 common = { path = "../common" }
+bitvec = "1.0.1"
 
 [lints]
 workspace = true
