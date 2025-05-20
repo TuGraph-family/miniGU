@@ -11,8 +11,9 @@ use crate::provider::{
     VertexTypeProvider, VertexTypeRef,
 };
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct MemoryGraphTypeCatalog {
+    next_label_id: LabelId,
     label_map: HashMap<String, LabelId>,
     vertex_type_map: HashMap<LabelSet, Arc<MemoryVertexTypeCatalog>>,
     edge_type_map: HashMap<LabelSet, Arc<MemoryEdgeTypeCatalog>>,
@@ -21,16 +22,21 @@ pub struct MemoryGraphTypeCatalog {
 impl MemoryGraphTypeCatalog {
     #[inline]
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            next_label_id: LabelId::new(1).expect("label id should be non-zero"),
+            label_map: HashMap::new(),
+            vertex_type_map: HashMap::new(),
+            edge_type_map: HashMap::new(),
+        }
     }
 
     #[inline]
     pub fn add_label(&mut self, name: String) -> Option<LabelId> {
-        let label_id = self.label_map.len() as u32 + 1;
+        let label_id = self.next_label_id;
         match self.label_map.entry(name) {
             Entry::Occupied(_) => None,
             Entry::Vacant(e) => {
-                let label_id = LabelId::new(label_id).expect("label id should be valid");
+                self.next_label_id.checked_add(1)?;
                 e.insert(label_id);
                 Some(label_id)
             }
