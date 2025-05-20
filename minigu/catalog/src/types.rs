@@ -1,29 +1,16 @@
 use std::num::NonZeroU32;
-use std::result;
 
-use minigu_common::error::MiniGuError;
-use smallvec::SmallVec;
-use smol_str::SmolStr;
-
+/// Internal identifier associated with a vertex type.
 pub type VertexTypeId = NonZeroU32;
 
+/// Internal identifier associated with an edge type.
 pub type EdgeTypeId = NonZeroU32;
 
+/// Internal identifier associated with a graph type.
 pub type GraphTypeId = NonZeroU32;
 
-pub type LabelId = NonZeroU32;
-
-pub type GraphId = NonZeroU32;
-
+/// Internal identifier associated with a directory or schema.
 pub type SchemaId = NonZeroU32;
 
-pub type ProcedureId = NonZeroU32;
-
-pub type PropertyId = NonZeroU32;
-
-pub type Ident = SmolStr;
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct LabelSet(SmallVec<[minigu_common::types::LabelId; 4]>);
-
-pub type Result<T, E = MiniGuError> = result::Result<T, E>;
+// /// Internal identifier associated with a procedure.
+// pub type ProcedureId = NonZeroU32;

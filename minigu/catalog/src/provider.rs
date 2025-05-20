@@ -1,145 +1,157 @@
-use std::any::Any;
 use std::fmt::Debug;
 use std::sync::Arc;
 
-use minigu_common::datatype::value::DataType;
-use minigu_common::error::MiniGuError::Error;
+use minigu_common::types::{GraphId, LabelId, PropertyId};
 
-use crate::procedure::ProcedureCatalog;
-use crate::types::{EdgeTypeId, GraphId, Ident, LabelId, PropertyId, Result, VertexTypeId};
+use crate::error::CatalogResult;
+use crate::label_set::LabelSet;
+use crate::property::Property;
+use crate::types::{EdgeTypeId, GraphTypeId, SchemaId, VertexTypeId};
 
-/// The top-level catalog provider, responsible for managing multiple schemas.
-/// Each schema may contain graph types and actual graphs.
-///
-/// If failed in functions, it will return a MiniGuError::Error.
-pub trait CatalogProvider: Debug + Sync + Send {
-    /// Enables downcasting from trait object to concrete type.
-    fn as_any(&self) -> &dyn Any;
+pub type CatalogRef = Arc<dyn CatalogProvider>;
+pub type DirectoryRef = Arc<dyn DirectoryProvider>;
+pub type SchemaRef = Arc<dyn SchemaProvider>;
+pub type GraphRef = Arc<dyn GraphProvider>;
+pub type GraphTypeRef = Arc<dyn GraphTypeProvider>;
+pub type VertexTypeRef = Arc<dyn VertexTypeProvider>;
+pub type EdgeTypeRef = Arc<dyn EdgeTypeProvider>;
+pub type PropertyRef = Arc<Property>;
 
-    /// Retrieve a schema by its path.
-    fn get_schema(&self, schema_path: &[Ident]) -> Result<Arc<dyn SchemaProvider>> {
-        Err(Error("not implemented".to_string()))
-    }
+/// The top-level catalog provider, responsible for managing multiple directories and schemas,
+/// resembling a UNIX filesystem.
+pub trait CatalogProvider: Debug + Send + Sync {
+    /// Retrieves the root directory or schema of the catalog.
+    fn get_root(&self) -> CatalogResult<DirectoryOrSchema>;
 
-    /// Create a new schema and register it in the catalog.
-    fn create_schema(&self, schema: Arc<dyn SchemaProvider>) -> Result<Arc<dyn SchemaProvider>> {
-        Err(Error("not implemented".to_string()))
-    }
+    /// Retrieves a directory or schema by its ID.
+    fn get_directory_or_schema_by_id(
+        &self,
+        id: SchemaId,
+    ) -> CatalogResult<Option<DirectoryOrSchema>>;
+}
 
-    /// Drop and remove an existing schema by its path.
-    fn drop_schema(&self, schema_path: &[Ident]) -> Result<Arc<dyn SchemaProvider>> {
-        Err(Error("not implemented".to_string()))
-    }
+pub trait DirectoryProvider: Debug + Send + Sync {
+    /// Returns the ID of the directory.
+    fn id(&self) -> SchemaId;
+
+    /// Returns the parent directory ID of the directory.
+    fn parent(&self) -> Option<SchemaId>;
+
+    /// Retrieves a directory or schema by its name.
+    fn get_directory_or_schema(&self, name: &str) -> CatalogResult<Option<DirectoryOrSchema>>;
 }
 
 /// Represents a logical schema, which contains graphs and graph type definitions.
-pub trait SchemaProvider: Debug + Sync + Send {
-    fn as_any(&self) -> &dyn Any;
+pub trait SchemaProvider: Debug + Send + Sync {
+    /// Returns the ID of the schema.
+    fn id(&self) -> SchemaId;
 
-    fn create_graph_type(
-        &self,
-        graph_type: Arc<dyn GraphTypeProvider>,
-    ) -> Result<Arc<dyn GraphTypeProvider>> {
-        Err(Error("not implemented".to_string()))
-    }
+    /// Returns the parent directory ID of the schema.
+    fn parent(&self) -> Option<SchemaId>;
 
-    fn get_graph_type(&self, name: &Ident) -> Result<Arc<dyn GraphTypeProvider>> {
-        Err(Error("not implemented".to_string()))
-    }
+    /// Retrieves a graph by its name.
+    fn get_graph(&self, name: &str) -> CatalogResult<Option<GraphRef>>;
 
-    fn get_graph_type_by_id(&self, id: &GraphId) -> Result<Arc<dyn GraphTypeProvider>> {
-        Err(Error("not implemented".to_string()))
-    }
+    /// Retrieves a graph by its ID.
+    fn get_graph_by_id(&self, id: GraphId) -> CatalogResult<Option<GraphRef>>;
 
-    fn get_graph_type_id(&self, name: &Ident) -> Result<GraphId> {
-        Err(Error("not implemented".to_string()))
-    }
+    /// Retrieves a graph type by its name.
+    fn get_graph_type(&self, name: &str) -> CatalogResult<Option<GraphTypeRef>>;
 
-    fn drop_graph_type(&self, name: &Ident) -> Result<Arc<dyn GraphTypeProvider>> {
-        Err(Error("not implemented".to_string()))
-    }
-
-    fn create_graph(&self, graph: Arc<dyn GraphProvider>) -> Result<Arc<dyn GraphProvider>> {
-        Err(Error("not implemented".to_string()))
-    }
-
-    fn get_graph(&self, name: &Ident) -> Result<Arc<dyn GraphProvider>> {
-        Err(Error("not implemented".to_string()))
-    }
-
-    fn get_graph_by_id(&self, id: GraphId) -> Result<Arc<dyn GraphProvider>> {
-        Err(Error("not implemented".to_string()))
-    }
-    fn get_graph_id(&self, name: &Ident) -> Result<GraphId> {
-        Err(Error("not implemented".to_string()))
-    }
-
-    fn procedure(&self, name: &Ident) -> Result<ProcedureCatalog> {
-        Err(Error("not implemented".to_string()))
-    }
+    /// Retrieves a graph type by its ID.
+    fn get_graph_type_by_id(&self, id: GraphTypeId) -> CatalogResult<Option<GraphTypeRef>>;
 }
 
 /// Represents a graph, which is an instance of a graph type.
-pub trait GraphProvider: Debug + Sync + Send {
-    fn graph_type_ref(&self) -> Arc<dyn GraphTypeProvider>;
+pub trait GraphProvider: Debug + Send + Sync {
+    /// Returns the ID of the graph.
+    fn id(&self) -> GraphId;
+
+    /// Returns the graph type of the graph.
+    fn graph_type(&self) -> GraphTypeRef;
 }
 
 /// Represents a graph type, which defines the structure of a graph.
 /// It contains vertex types and edge types.
-pub trait GraphTypeProvider: Debug + Sync + Send {
-    fn get_vertex_type(&self, name: &Ident) -> Result<Arc<dyn VertexTypeProvider>> {
-        Err(Error("not implemented".to_string()))
-    }
+pub trait GraphTypeProvider: Debug + Send + Sync {
+    /// Returns the ID of the graph type.
+    fn id(&self) -> GraphTypeId;
 
-    fn get_vertex_type_by_id(&self, id: &VertexTypeId) -> Result<Arc<dyn VertexTypeProvider>> {
-        Err(Error("not implemented".to_string()))
-    }
+    /// Retrieves the ID of a label by its name.
+    fn get_label_id(&self, name: &str) -> CatalogResult<Option<LabelId>>;
 
-    fn get_vertex_type_id(&self, name: &Ident) -> Result<LabelId> {
-        Err(Error("not implemented".to_string()))
-    }
+    /// Retrieves a vertex type by its key label set.
+    fn get_vertex_type(&self, key: &LabelSet) -> CatalogResult<Option<VertexTypeRef>>;
 
-    fn get_edge_type(&self, name: &Ident) -> Result<Arc<dyn EdgeTypeProvider>> {
-        Err(Error("not implemented".to_string()))
-    }
-    fn get_edge_type_by_id(&self, id: &EdgeTypeId) -> Result<Arc<dyn EdgeTypeProvider>> {
-        Err(Error("not implemented".to_string()))
-    }
+    /// Retrieves a vertex type by its ID.
+    fn get_vertex_type_by_id(&self, id: VertexTypeId) -> CatalogResult<Option<VertexTypeRef>>;
 
-    fn get_edge_type_id(&self, name: &Ident) -> Result<LabelId> {
-        Err(Error("not implemented".to_string()))
-    }
-}
+    /// Retrieves an edge type by its key label set.
+    fn get_edge_type(&self, key: &LabelSet) -> CatalogResult<Option<EdgeTypeRef>>;
 
-/// Represents a property catalog, which contains properties of a vertex or edge type.
-/// It provides methods to retrieve properties by name or ID.
-pub trait PropertyLookupProvider: Debug + Sync + Send {
-    fn get_property_by_name(&self, name: &Ident) -> Result<Arc<dyn PropertyProvider>> {
-        Err(Error("not implemented".to_string()))
-    }
-    fn get_property_id_by_name(&self, id: &PropertyId) -> Result<Arc<dyn PropertyProvider>> {
-        Err(Error("not implemented".to_string()))
-    }
-    fn get_property_by_id(&self, id: &PropertyId) -> Result<Arc<dyn PropertyProvider>> {
-        Err(Error("not implemented".to_string()))
-    }
+    /// Retrieves an edge type by its ID.
+    fn get_edge_type_by_id(&self, id: EdgeTypeId) -> CatalogResult<Option<EdgeTypeRef>>;
 }
 
 /// Represents a vertex type, which defines the structure of a vertex.
-pub trait VertexTypeProvider: PropertyLookupProvider {
-    fn name(&self) -> Ident;
+pub trait VertexTypeProvider: Debug + Send + Sync + PropertySetProvider {
+    /// Returns the ID of the vertex type.
+    fn id(&self) -> VertexTypeId;
+
+    /// Returns the label set of the vertex type.
+    fn label_set(&self) -> &LabelSet;
 }
 
-/// Represents an edge type, inheriting property lookup capabilities.
-pub trait EdgeTypeProvider: PropertyLookupProvider {
-    fn name(&self) -> Ident;
-    fn src(&self) -> Arc<dyn VertexTypeProvider>;
-    fn dst(&self) -> Arc<dyn VertexTypeProvider>;
+/// Represents an edge type, which defines the structure of an edge.
+pub trait EdgeTypeProvider: Debug + Send + Sync + PropertySetProvider {
+    /// Returns the ID of the edge type.
+    fn id(&self) -> EdgeTypeId;
+
+    /// Returns the label set of the edge type.
+    fn label_set(&self) -> &LabelSet;
+
+    /// Returns the source vertex type of the edge type.
+    fn src(&self) -> VertexTypeRef;
+
+    /// Returns the destination vertex type of the edge type.
+    fn dst(&self) -> VertexTypeRef;
 }
 
-/// Describes metadata about a property, including type and constraints.
-pub trait PropertyProvider: Debug + Sync + Send {
-    fn data_type(&self) -> Arc<DataType>;
-    fn is_optional(&self) -> bool;
-    fn is_unique(&self) -> bool;
+/// Represents a property set, which contains properties of a vertex or edge type.
+pub trait PropertySetProvider: Debug + Send + Sync {
+    /// Retrieves a property by its name.
+    fn get_property(&self, name: &str) -> CatalogResult<Option<PropertyRef>>;
+
+    /// Retrieves a property by its ID.
+    fn get_property_by_id(&self, id: PropertyId) -> CatalogResult<Option<PropertyRef>>;
+}
+
+#[derive(Debug, Clone)]
+pub enum DirectoryOrSchema {
+    Directory(DirectoryRef),
+    Schema(SchemaRef),
+}
+
+impl DirectoryOrSchema {
+    #[inline]
+    pub fn id(&self) -> SchemaId {
+        match self {
+            Self::Directory(dir) => dir.id(),
+            Self::Schema(schema) => schema.id(),
+        }
+    }
+}
+
+impl From<DirectoryRef> for DirectoryOrSchema {
+    #[inline]
+    fn from(value: DirectoryRef) -> Self {
+        Self::Directory(value)
+    }
+}
+
+impl From<SchemaRef> for DirectoryOrSchema {
+    #[inline]
+    fn from(value: SchemaRef) -> Self {
+        Self::Schema(value)
+    }
 }

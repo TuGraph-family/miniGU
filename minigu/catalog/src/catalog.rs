@@ -3,7 +3,7 @@ use std::sync::{OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use smol_str::ToSmolStr;
 
-use crate::error::Error;
+use crate::error::CatalogError;
 pub(crate) use crate::schema::Schema;
 use crate::types::*;
 

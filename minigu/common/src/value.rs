@@ -48,7 +48,7 @@ impl ScalarValue {
             ScalarValue::Float32(value) => Arc::new(Float32Array::from_iter([*value])),
             ScalarValue::Float64(value) => Arc::new(Float64Array::from_iter([*value])),
             ScalarValue::String(value) => Arc::new(StringArray::from_iter([value])),
-            ScalarValue::Vertex(_value) => todo!(),
+            ScalarValue::Vertex(value) => todo!(),
             ScalarValue::Edge(_value) => todo!(),
         }
     }
@@ -69,7 +69,7 @@ pub struct VertexValue {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct EdgeValue {
-    eid: EdgeId,
+    id: EdgeId,
     src: VertexId,
     dst: VertexId,
     label: LabelId,
@@ -173,11 +173,11 @@ macro_rules! impl_into_for_variant {
 
 for_each_non_null_variant!(impl_into_for_variant);
 
-pub trait IndexScalarValue {
+pub trait ScalarValueAccessor {
     fn index(&self, index: usize) -> ScalarValue;
 }
 
-impl IndexScalarValue for dyn Array + '_ {
+impl ScalarValueAccessor for dyn Array + '_ {
     fn index(&self, index: usize) -> ScalarValue {
         match self.data_type() {
             DataType::Null => {
