@@ -1,10 +1,6 @@
 use winnow::Parser;
-use winnow::combinator::{Repeat, peek};
-use winnow::error::ParserError;
-use winnow::stream::{Location, Stream, StreamIsPartial};
+use winnow::stream::{Location, Stream};
 
-use super::token::Token;
-use crate::lexer::TokenKind;
 use crate::span::Spanned;
 
 /// A helper macro for executing a parser on an input string. **This should only be used in unit

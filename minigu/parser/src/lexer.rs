@@ -1,24 +1,18 @@
 use logos::{Lexer as LogosLexer, Logos, Skip};
 use smol_str::SmolStr;
 
+use crate::error::TokenErrorKind;
 use crate::unescape::unescape;
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub(crate) enum LexerError {
-    #[default]
-    InvalidToken,
-    IncompleteComment,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Logos)]
-#[logos(error = LexerError)]
+#[logos(error = TokenErrorKind)]
 // Whitespaces should be skipped.
 #[logos(skip r"[\p{White_Space}]+")]
 // Simple comments introduced by double solidus.
 #[logos(skip r"//[^\r\n]*")]
 // Simple comments introduced by double minus.
 #[logos(skip r"--[^\r\n]*")]
-pub(crate) enum TokenKind<'a> {
+pub enum TokenKind<'a> {
     // The followings are *reserved words*.
     #[token("abs", ignore(case))]
     Abs,
@@ -779,8 +773,8 @@ pub(crate) enum TokenKind<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Logos)]
-#[logos(error = LexerError)]
-pub(crate) enum ParameterName<'a> {
+#[logos(error = TokenErrorKind)]
+pub enum ParameterName<'a> {
     #[regex(r#""|`|@"|@`"#, handle_quoted)]
     Delimited(Quoted<'a>),
     #[regex(r"[\p{XID_Continue}]+")]
@@ -788,7 +782,7 @@ pub(crate) enum ParameterName<'a> {
 }
 
 impl ParameterName<'_> {
-    pub(crate) fn unescape(&self) -> Option<SmolStr> {
+    pub fn unescape(&self) -> Option<SmolStr> {
         match self {
             Self::Delimited(quoted) => quoted.unescape(),
             Self::Extended(s) => Some(SmolStr::new(s)),
@@ -797,8 +791,8 @@ impl ParameterName<'_> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Logos)]
-#[logos(error = LexerError)]
-pub(crate) enum Quoted<'a> {
+#[logos(error = TokenErrorKind)]
+pub enum Quoted<'a> {
     #[regex(r#"'([^'\\]|(\\[\\'"`tbnrf])|(\\u[0-9a-fA-F]{4})|(\\U[0-9a-fA-F]{6})|'')*'"#, |lex| strip::<false>(lex.slice()))]
     Single(&'a str),
     #[regex(r#""([^"\\]|(\\[\\'"`tbnrf])|(\\u[0-9a-fA-F]{4})|(\\U[0-9a-fA-F]{6})|"")*""#, |lex| strip::<false>(lex.slice()))]
@@ -814,7 +808,7 @@ pub(crate) enum Quoted<'a> {
 }
 
 impl Quoted<'_> {
-    pub(crate) fn unescape(&self) -> Option<SmolStr> {
+    pub fn unescape(&self) -> Option<SmolStr> {
         match self {
             Self::Single(s) => unescape::<'\'', false>(s),
             Self::Double(s) => unescape::<'"', false>(s),
@@ -838,18 +832,18 @@ fn strip<const NO_ESCAPE: bool>(input: &str) -> &str {
     }
 }
 
-fn handle_comment<'a>(lex: &mut LogosLexer<'a, TokenKind<'a>>) -> Result<Skip, LexerError> {
+fn handle_comment<'a>(lex: &mut LogosLexer<'a, TokenKind<'a>>) -> Result<Skip, TokenErrorKind> {
     let remainder = lex.remainder();
     if let Some(len) = remainder.find("*/") {
         lex.bump(len + 2);
         Ok(Skip)
     } else {
         lex.bump(remainder.len());
-        Err(LexerError::IncompleteComment)
+        Err(TokenErrorKind::IncompleteComment)
     }
 }
 
-fn handle_quoted<'a, T>(lex: &mut LogosLexer<'a, T>) -> Result<Quoted<'a>, LexerError>
+fn handle_quoted<'a, T>(lex: &mut LogosLexer<'a, T>) -> Result<Quoted<'a>, TokenErrorKind>
 where
     T: Logos<'a, Source = str>,
 {
@@ -865,16 +859,16 @@ where
 
 fn handle_parameter<'a>(
     lex: &mut LogosLexer<'a, TokenKind<'a>>,
-) -> Result<ParameterName<'a>, LexerError> {
+) -> Result<ParameterName<'a>, TokenErrorKind> {
     let mut param_lex = ParameterName::lexer(lex.remainder());
     let token = param_lex.next();
     lex.bump(param_lex.span().len());
-    token.ok_or(LexerError::InvalidToken)?
+    token.ok_or(TokenErrorKind::InvalidToken)?
 }
 
 impl TokenKind<'_> {
-    #[inline(always)]
-    pub(crate) fn is_prefix_of_unsigned_integer(&self) -> bool {
+    #[inline]
+    pub fn is_prefix_of_unsigned_integer(&self) -> bool {
         matches!(
             self,
             Self::UnsignedDecimalInteger(_)
@@ -884,13 +878,282 @@ impl TokenKind<'_> {
         )
     }
 
-    #[inline(always)]
-    pub(crate) fn is_prefix_of_numeric_literal(&self) -> bool {
+    #[inline]
+    pub fn is_prefix_of_numeric_literal(&self) -> bool {
         self.is_prefix_of_unsigned_integer()
     }
 
-    #[inline(always)]
-    pub(crate) fn is_non_reserved_word(&self) -> bool {
+    #[inline]
+    pub fn is_reserved_word(&self) -> bool {
+        matches!(
+            self,
+            Self::Abs
+                | Self::Acos
+                | Self::All
+                | Self::AllDifferent
+                | Self::And
+                | Self::Any
+                | Self::Array
+                | Self::As
+                | Self::Asc
+                | Self::Ascending
+                | Self::Asin
+                | Self::At
+                | Self::Atan
+                | Self::Avg
+                | Self::Big
+                | Self::Bigint
+                | Self::Binary
+                | Self::Bool
+                | Self::Boolean
+                | Self::Both
+                | Self::Btrim
+                | Self::By
+                | Self::ByteLength
+                | Self::Bytes
+                | Self::Call
+                | Self::Cardinality
+                | Self::Case
+                | Self::Cast
+                | Self::Ceil
+                | Self::Ceiling
+                | Self::Char
+                | Self::CharLength
+                | Self::CharacterLength
+                | Self::Characteristics
+                | Self::Close
+                | Self::Coalesce
+                | Self::CollectList
+                | Self::Commit
+                | Self::Copy
+                | Self::Cos
+                | Self::Cosh
+                | Self::Cot
+                | Self::Count
+                | Self::Create
+                | Self::CurrentDate
+                | Self::CurrentGraph
+                | Self::CurrentPropertyGraph
+                | Self::CurrentSchema
+                | Self::CurrentTime
+                | Self::CurrentTimestamp
+                | Self::Date
+                | Self::Datetime
+                | Self::Day
+                | Self::Dec
+                | Self::Decimal
+                | Self::Degrees
+                | Self::Delete
+                | Self::Desc
+                | Self::Descending
+                | Self::Detach
+                | Self::Distinct
+                | Self::Double
+                | Self::Drop
+                | Self::Duration
+                | Self::DurationBetween
+                | Self::ElementId
+                | Self::Else
+                | Self::End
+                | Self::Except
+                | Self::Exists
+                | Self::Exp
+                | Self::False
+                | Self::Filter
+                | Self::Finish
+                | Self::Float
+                | Self::Float16
+                | Self::Float32
+                | Self::Float64
+                | Self::Float128
+                | Self::Float256
+                | Self::Floor
+                | Self::For
+                | Self::From
+                | Self::Group
+                | Self::Having
+                | Self::HomeGraph
+                | Self::HomePropertyGraph
+                | Self::HomeSchema
+                | Self::Hour
+                | Self::If
+                | Self::Implies
+                | Self::In
+                | Self::Insert
+                | Self::Int
+                | Self::Integer
+                | Self::Int8
+                | Self::Integer8
+                | Self::Int16
+                | Self::Integer16
+                | Self::Int32
+                | Self::Interval
+                | Self::Is
+                | Self::Integer32
+                | Self::Int64
+                | Self::Integer64
+                | Self::Int128
+                | Self::Integer128
+                | Self::Int256
+                | Self::Integer256
+                | Self::Intersect
+                | Self::Leading
+                | Self::Left
+                | Self::Let
+                | Self::Like
+                | Self::Limit
+                | Self::List
+                | Self::Ln
+                | Self::Local
+                | Self::LocalDatetime
+                | Self::LocalTime
+                | Self::LocalTimestamp
+                | Self::Log
+                | Self::Log10
+                | Self::Lower
+                | Self::Ltrim
+                | Self::Match
+                | Self::Max
+                | Self::Min
+                | Self::Minute
+                | Self::Mod
+                | Self::Month
+                | Self::Next
+                | Self::Nodetach
+                | Self::Normalize
+                | Self::Not
+                | Self::Nothing
+                | Self::Null
+                | Self::Nulls
+                | Self::Nullif
+                | Self::OctetLength
+                | Self::Of
+                | Self::Offset
+                | Self::Optional
+                | Self::Or
+                | Self::Order
+                | Self::Otherwise
+                | Self::Parameter
+                | Self::Parameters
+                | Self::Path
+                | Self::PathLength
+                | Self::Paths
+                | Self::PercentileCont
+                | Self::PercentileDisc
+                | Self::Power
+                | Self::Precision
+                | Self::PropertyExists
+                | Self::Radians
+                | Self::Real
+                | Self::Record
+                | Self::Remove
+                | Self::Replace
+                | Self::Reset
+                | Self::Return
+                | Self::Right
+                | Self::Rollback
+                | Self::Rtrim
+                | Self::Same
+                | Self::Schema
+                | Self::Second
+                | Self::Select
+                | Self::Session
+                | Self::SessionUser
+                | Self::Set
+                | Self::Signed
+                | Self::Sin
+                | Self::Sinh
+                | Self::Size
+                | Self::Skip
+                | Self::Small
+                | Self::Smallint
+                | Self::Sqrt
+                | Self::Start
+                | Self::StddevPop
+                | Self::StddevSamp
+                | Self::String
+                | Self::Sum
+                | Self::Tan
+                | Self::Tanh
+                | Self::Then
+                | Self::Time
+                | Self::Timestamp
+                | Self::Trailing
+                | Self::Trim
+                | Self::True
+                | Self::Typed
+                | Self::Ubigint
+                | Self::Uint
+                | Self::Uint8
+                | Self::Uint16
+                | Self::Uint32
+                | Self::Uint64
+                | Self::Uint128
+                | Self::Uint256
+                | Self::Union
+                | Self::Unknown
+                | Self::Unsigned
+                | Self::Upper
+                | Self::Use
+                | Self::Usmallint
+                | Self::Value
+                | Self::Varbinary
+                | Self::Varchar
+                | Self::Variable
+                | Self::When
+                | Self::Where
+                | Self::With
+                | Self::Xor
+                | Self::Year
+                | Self::Yield
+                | Self::Zoned
+                | Self::ZonedDatetime
+                | Self::ZonedTime
+                | Self::Abstract
+                | Self::Aggregate
+                | Self::Aggregates
+                | Self::Alter
+                | Self::Catalog
+                | Self::Clear
+                | Self::Clone
+                | Self::Constraint
+                | Self::CurrentRole
+                | Self::CurrentUser
+                | Self::Data
+                | Self::Directory
+                | Self::Dryrun
+                | Self::Exact
+                | Self::Existing
+                | Self::Function
+                | Self::Gqlstatus
+                | Self::Grant
+                | Self::Instant
+                | Self::Infinity
+                | Self::Number
+                | Self::Numeric
+                | Self::On
+                | Self::Open
+                | Self::Partition
+                | Self::Procedure
+                | Self::Product
+                | Self::Project
+                | Self::Query
+                | Self::Records
+                | Self::Reference
+                | Self::Rename
+                | Self::Revoke
+                | Self::Substring
+                | Self::SystemUser
+                | Self::Temporal
+                | Self::Unique
+                | Self::Unit
+                | Self::Values
+                | Self::Whitespace
+        )
+    }
+
+    #[inline]
+    pub fn is_non_reserved_word(&self) -> bool {
         matches!(
             self,
             Self::Acyclic
@@ -943,13 +1206,13 @@ impl TokenKind<'_> {
         )
     }
 
-    #[inline(always)]
-    pub(crate) fn is_prefix_of_regular_identifier(&self) -> bool {
+    #[inline]
+    pub fn is_prefix_of_regular_identifier(&self) -> bool {
         matches!(self, Self::RegularIdentifier(_)) || self.is_non_reserved_word()
     }
 
-    #[inline(always)]
-    pub(crate) fn is_prefix_of_general_set_function(&self) -> bool {
+    #[inline]
+    pub fn is_prefix_of_general_set_function(&self) -> bool {
         matches!(
             self,
             Self::Avg
@@ -963,18 +1226,18 @@ impl TokenKind<'_> {
         )
     }
 
-    #[inline(always)]
-    pub(crate) fn is_prefix_of_binary_set_function(&self) -> bool {
+    #[inline]
+    pub fn is_prefix_of_binary_set_function(&self) -> bool {
         matches!(self, Self::PercentileCont | Self::PercentileDisc)
     }
 
-    #[inline(always)]
-    pub(crate) fn is_prefix_of_aggregate_function(&self) -> bool {
+    #[inline]
+    pub fn is_prefix_of_aggregate_function(&self) -> bool {
         self.is_prefix_of_general_set_function() || self.is_prefix_of_binary_set_function()
     }
 
-    #[inline(always)]
-    pub(crate) fn is_prefix_of_predefined_type(&self) -> bool {
+    #[inline]
+    pub fn is_prefix_of_predefined_type(&self) -> bool {
         matches!(
             self,
             Self::Bool
@@ -994,8 +1257,8 @@ impl TokenKind<'_> {
             || self.is_prefix_of_temporal_type()
     }
 
-    #[inline(always)]
-    pub(crate) fn is_prefix_of_signed_exact_numeric_type(&self) -> bool {
+    #[inline]
+    pub fn is_prefix_of_signed_exact_numeric_type(&self) -> bool {
         matches!(
             self,
             Self::Int8
@@ -1011,8 +1274,8 @@ impl TokenKind<'_> {
         ) || self.is_prefix_of_verbose_exact_numeric_type()
     }
 
-    #[inline(always)]
-    pub(crate) fn is_prefix_of_unsigned_exact_numeric_type(&self) -> bool {
+    #[inline]
+    pub fn is_prefix_of_unsigned_exact_numeric_type(&self) -> bool {
         matches!(
             self,
             Self::Uint8
@@ -1028,8 +1291,8 @@ impl TokenKind<'_> {
         )
     }
 
-    #[inline(always)]
-    pub(crate) fn is_prefix_of_verbose_exact_numeric_type(&self) -> bool {
+    #[inline]
+    pub fn is_prefix_of_verbose_exact_numeric_type(&self) -> bool {
         matches!(
             self,
             Self::Integer8
@@ -1044,16 +1307,16 @@ impl TokenKind<'_> {
         )
     }
 
-    #[inline(always)]
-    pub(crate) fn is_prefix_of_temporal_type(&self) -> bool {
+    #[inline]
+    pub fn is_prefix_of_temporal_type(&self) -> bool {
         matches!(
             self,
             Self::Duration | Self::Zoned | Self::Timestamp | Self::Local | Self::Date | Self::Time
         )
     }
 
-    #[inline(always)]
-    pub(crate) fn is_prefix_of_ambient_linear_query_statement(&self) -> bool {
+    #[inline]
+    pub fn is_prefix_of_ambient_linear_query_statement(&self) -> bool {
         matches!(
             self,
             Self::Return
@@ -1072,8 +1335,8 @@ impl TokenKind<'_> {
         )
     }
 
-    #[inline(always)]
-    pub(crate) fn is_prefix_of_abbreviated_edge_pattern(&self) -> bool {
+    #[inline]
+    pub fn is_prefix_of_abbreviated_edge_pattern(&self) -> bool {
         matches!(
             self,
             Self::LeftArrow
@@ -1086,8 +1349,8 @@ impl TokenKind<'_> {
         )
     }
 
-    #[inline(always)]
-    pub(crate) fn is_prefix_of_full_edge_pattern(&self) -> bool {
+    #[inline]
+    pub fn is_prefix_of_full_edge_pattern(&self) -> bool {
         matches!(
             self,
             Self::LeftArrowBracket
@@ -1097,13 +1360,13 @@ impl TokenKind<'_> {
         )
     }
 
-    #[inline(always)]
-    pub(crate) fn is_prefix_of_edge_pattern(&self) -> bool {
+    #[inline]
+    pub fn is_prefix_of_edge_pattern(&self) -> bool {
         self.is_prefix_of_abbreviated_edge_pattern() || self.is_prefix_of_full_edge_pattern()
     }
 
-    #[inline(always)]
-    pub(crate) fn is_prefix_of_simple_query_statement(&self) -> bool {
+    #[inline]
+    pub fn is_prefix_of_simple_query_statement(&self) -> bool {
         matches!(
             self,
             Self::Match
@@ -1117,13 +1380,13 @@ impl TokenKind<'_> {
         )
     }
 
-    #[inline(always)]
-    pub(crate) fn is_prefix_of_result_statement(&self) -> bool {
+    #[inline]
+    pub fn is_prefix_of_result_statement(&self) -> bool {
         matches!(self, Self::Return | Self::Finish)
     }
 
-    #[inline(always)]
-    pub(crate) fn is_prefix_of_numeric_value_function(&self) -> bool {
+    #[inline]
+    pub fn is_prefix_of_numeric_value_function(&self) -> bool {
         matches!(
             self,
             Self::CharLength
@@ -1147,8 +1410,8 @@ impl TokenKind<'_> {
         ) || self.is_prefix_of_trigonometric_function()
     }
 
-    #[inline(always)]
-    pub(crate) fn is_prefix_of_trigonometric_function(&self) -> bool {
+    #[inline]
+    pub fn is_prefix_of_trigonometric_function(&self) -> bool {
         matches!(
             self,
             Self::Sin
@@ -1166,8 +1429,8 @@ impl TokenKind<'_> {
         )
     }
 
-    #[inline(always)]
-    pub(crate) fn is_prefix_of_value_function(&self) -> bool {
+    #[inline]
+    pub fn is_prefix_of_value_function(&self) -> bool {
         self.is_prefix_of_regular_identifier() || self.is_prefix_of_numeric_value_function()
     }
 }
@@ -1177,7 +1440,7 @@ mod tests {
     use logos::Logos;
 
     use super::TokenKind;
-    use crate::lexer::{LexerError, ParameterName, Quoted};
+    use crate::lexer::{ParameterName, Quoted, TokenErrorKind};
 
     #[test]
     fn test_simple_comment() {
@@ -1194,7 +1457,7 @@ mod tests {
         let mut lexer = TokenKind::lexer("/***/");
         assert_eq!(lexer.next(), None);
         let mut lexer = TokenKind::lexer("/***");
-        assert_eq!(lexer.next(), Some(Err(LexerError::IncompleteComment)));
+        assert_eq!(lexer.next(), Some(Err(TokenErrorKind::IncompleteComment)));
         assert_eq!(lexer.next(), None);
     }
 
@@ -1243,9 +1506,9 @@ mod tests {
         let tokens: Vec<_> = lexer.collect();
         // Single quoted sequence is not allowed in parameter reference.
         assert_eq!(tokens, vec![
-            Err(LexerError::InvalidToken),
+            Err(TokenErrorKind::InvalidToken),
             Ok(TokenKind::RegularIdentifier("abc")),
-            Err(LexerError::InvalidToken)
+            Err(TokenErrorKind::InvalidToken)
         ]);
     }
 }

@@ -20,7 +20,7 @@ use crate::imports::Box;
 use crate::lexer::TokenKind;
 use crate::parser::impls::value_expr::non_negative_integer_specification;
 use crate::parser::precedence::{Assoc, Precedence, precedence};
-use crate::parser::token::{Token, TokenStream, any};
+use crate::parser::token::{TokenStream, any};
 use crate::parser::utils::{SpannedParserExt, ToSpanned, def_parser_alias};
 use crate::span::{Spanned, VecSpanned};
 

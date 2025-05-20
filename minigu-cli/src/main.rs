@@ -1,5 +1,6 @@
-use minigu_cli::run_cli;
+use clap::Parser;
+use minigu_cli::Cli;
 
-fn main() {
-    run_cli();
+fn main() -> miette::Result<()> {
+    Cli::parse().run()
 }

@@ -1,12 +1,7 @@
-use winnow::combinator::{alt, delimited, fail, opt, preceded, repeat, separated, seq};
+use winnow::combinator::{alt, fail, opt, preceded};
 use winnow::{ModalResult, Parser};
 
-use super::lexical::{binding_variable, field_name};
-use crate::ast::{
-    CallProcedureStatement, CatalogModifyingStatement, Ident, InlineProcedureCall,
-    LinearCatalogModifyingStatement, NamedProcedureCall, Procedure, ProcedureCall, SchemaRef,
-    Yield, YieldItem,
-};
+use crate::ast::{CallProcedureStatement, InlineProcedureCall, NamedProcedureCall, ProcedureCall};
 use crate::lexer::TokenKind;
 use crate::parser::token::TokenStream;
 use crate::parser::utils::{SpannedParserExt, ToSpanned};
