@@ -1,9 +1,6 @@
 use winnow::combinator::{
-    alt, delimited, dispatch, empty, fail, opt, peek, preceded, repeat, separated, separated_pair,
-    seq,
+    alt, delimited, dispatch, empty, fail, opt, peek, preceded, repeat, separated, seq,
 };
-use winnow::error::ParserError;
-use winnow::stream::Stream;
 use winnow::token::one_of;
 use winnow::{ModalResult, Parser};
 

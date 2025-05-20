@@ -6,7 +6,7 @@ use winnow::stream::{ContainsToken, Location, Stream, StreamIsPartial, TokenSlic
 use winnow::{Parser, Stateful};
 
 use super::options::ParseOptionsInner;
-use crate::error::Error;
+use crate::error::{Error, TokenizeError};
 use crate::imports::Vec;
 use crate::lexer::TokenKind;
 
@@ -24,11 +24,34 @@ where
         .parse_next(input)
 }
 
+/// A token with its kind, slice, and span.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(super) struct Token<'a> {
+pub struct Token<'a> {
     pub(super) kind: TokenKind<'a>,
     pub(super) slice: &'a str,
     pub(super) span: Range<usize>,
+}
+
+impl<'a> Token<'a> {
+    #[inline]
+    pub fn new(kind: TokenKind<'a>, slice: &'a str, span: Range<usize>) -> Self {
+        Self { kind, slice, span }
+    }
+
+    #[inline]
+    pub fn kind(&self) -> &TokenKind<'a> {
+        &self.kind
+    }
+
+    #[inline]
+    pub fn slice(&self) -> &'a str {
+        self.slice
+    }
+
+    #[inline]
+    pub fn span(&self) -> Range<usize> {
+        self.span.clone()
+    }
 }
 
 impl<'a> ContainsToken<&Token<'a>> for &TokenKind<'a> {
@@ -84,7 +107,56 @@ impl State {
 
 pub(super) type TokenStream<'a, 'b> = Stateful<TokenSlice<'b, Token<'a>>, State>;
 
-pub(super) fn tokenize(input: &str) -> Result<Vec<Token<'_>>, Error> {
+/// Tokenizes the input string and returns a vector of tokens or errors.
+///
+/// This is different from [`tokenize`] in that this collects all errors to the resulting vector
+/// rather than returning early.
+///
+/// # Examples
+///
+/// ```
+/// # use gql_parser::{tokenize_full, Token, TokenKind};
+/// # use gql_parser::error::{TokenizeError, TokenErrorKind};
+/// let tokens = tokenize_full("COMMIT;");
+/// assert_eq!(tokens, vec![
+///     Ok(Token::new(TokenKind::Commit, "COMMIT", 0..6)),
+///     Err(TokenizeError::new(TokenErrorKind::InvalidToken, ";", 6..7))
+/// ]);
+/// ```
+pub fn tokenize_full(input: &str) -> Vec<Result<Token<'_>, TokenizeError<'_>>> {
+    let mut lexer = TokenKind::lexer(input).spanned();
+    let mut tokens = Vec::new();
+    while let Some((kind, span)) = lexer.next() {
+        match kind {
+            Ok(kind) => {
+                let slice = lexer.slice();
+                tokens.push(Ok(Token { kind, slice, span }));
+            }
+            Err(e) => {
+                let slice = lexer.slice();
+                tokens.push(Err(TokenizeError::new(e, slice, span)));
+            }
+        }
+    }
+    tokens
+}
+
+/// Tokenizes the input string and returns a vector of tokens.
+///
+/// This can be used as the building block of a GQL parser/analyzer/syntax highlighter, etc.
+///
+/// # Errors
+///
+/// This returns a [`TokenizeError`] if the input string cannot be tokenized successfully.
+///
+/// # Examples
+///
+/// ```
+/// # use gql_parser::{tokenize, Token, TokenKind};
+/// let tokens = tokenize("COMMIT").unwrap();
+/// assert_eq!(tokens, vec![Token::new(TokenKind::Commit, "COMMIT", 0..6)]);
+/// ```
+pub fn tokenize(input: &str) -> Result<Vec<Token<'_>>, TokenizeError<'_>> {
     let mut lexer = TokenKind::lexer(input).spanned();
     let mut tokens = Vec::new();
     while let Some((kind, span)) = lexer.next() {
@@ -94,7 +166,7 @@ pub(super) fn tokenize(input: &str) -> Result<Vec<Token<'_>>, Error> {
                 tokens.push(Token { kind, slice, span });
             }
             Err(e) => {
-                return Err(Error::from_lexer_error(e, input, span));
+                return Err(TokenizeError::new(e, input, span));
             }
         }
     }

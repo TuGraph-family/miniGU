@@ -1,4 +1,5 @@
 pub use options::ParseOptions;
+pub use token::{Token, tokenize, tokenize_full};
 
 use crate::ast::Program;
 use crate::error::Error;
@@ -15,12 +16,15 @@ mod utils;
 /// See [`ParseOptions`] for more information on how to configure the parser.
 ///
 /// # Errors
+///
 /// This function will return an error if `gql` is not a valid GQL query. The error will carry
 /// fancy diagnostics if feature `miette` is enabled.
 ///
 /// # Examples
+///
 /// ```
-/// let program = gql_parser::parse_gql("SESSION CLOSE");
+/// # use gql_parser::parse_gql;
+/// let program = parse_gql("SESSION CLOSE");
 /// assert!(program.is_ok());
 /// assert_eq!(program.unwrap().span(), 0..13);
 /// ```

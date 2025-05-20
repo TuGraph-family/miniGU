@@ -8,7 +8,7 @@ pub struct Database {}
 
 impl Database {
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
-        todo!()
+        todo!("on-disk database is not implemented yet")
     }
 
     pub fn open_in_memory() -> Result<Self> {

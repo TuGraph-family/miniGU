@@ -14,11 +14,12 @@ pub mod ast;
 pub mod error;
 mod lexer;
 mod macros;
-pub mod parser;
+mod parser;
 pub mod span;
 mod unescape;
 
-pub use parser::{ParseOptions, parse_gql};
+pub use lexer::TokenKind;
+pub use parser::{ParseOptions, Token, parse_gql, tokenize, tokenize_full};
 
 #[cfg(not(feature = "std"))]
 mod imports {

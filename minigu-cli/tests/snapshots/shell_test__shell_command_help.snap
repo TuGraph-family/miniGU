@@ -1,0 +1,23 @@
+---
+source: minigu-cli/tests/shell_test.rs
+info:
+  program: minigu
+  args:
+    - shell
+  stdin: ":help"
+---
+success: true
+exit_code: 0
+----- stdout -----
+Enter ":help" for usage hints.
+Usage hints:
+
+  :help     Show usage hints
+  :quit     Exit the shell
+  :history  Show command history
+  :mode     Set output mode
+
+Enter ":help <COMMAND>" for more information about a command.
+
+
+----- stderr -----

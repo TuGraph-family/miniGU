@@ -2,12 +2,57 @@ use core::fmt::{self, Debug, Display, Formatter};
 use core::marker::PhantomData;
 use core::ops::Range;
 
+use logos::Lexer;
 #[cfg(feature = "miette")]
 use miette::Diagnostic;
 use thiserror::Error;
+use winnow::combinator::todo;
 
 use crate::imports::Arc;
-use crate::lexer::LexerError;
+
+/// A lightweight error type for tokenizing.
+///
+/// This is used instead of [`Error`], because translating from a span to its corresponding source
+/// position is rather expansive, which should be avoided.
+///
+/// You can convert this to [`Error`] yourself by calling [`Error::from_tokenize_error`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct TokenizeError<'a> {
+    kind: TokenErrorKind,
+    slice: &'a str,
+    span: Range<usize>,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum TokenErrorKind {
+    #[default]
+    InvalidToken,
+    IncompleteComment,
+}
+
+impl<'a> TokenizeError<'a> {
+    #[inline]
+    pub fn new(kind: TokenErrorKind, slice: &'a str, span: Range<usize>) -> Self {
+        Self { kind, slice, span }
+    }
+
+    #[inline]
+    pub fn kind(&self) -> &TokenErrorKind {
+        &self.kind
+    }
+
+    #[inline]
+    pub fn slice(&self) -> &'a str {
+        self.slice
+    }
+
+    #[inline]
+    pub fn span(&self) -> &Range<usize> {
+        &self.span
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -18,11 +63,11 @@ pub enum Error {
 
     #[error(transparent)]
     #[cfg_attr(feature = "miette", diagnostic(transparent))]
-    InvalidToken(TokenError<InvalidToken>),
+    InvalidToken(TokenError),
 
     #[error(transparent)]
     #[cfg_attr(feature = "miette", diagnostic(transparent))]
-    IncompleteComment(TokenError<IncompleteComment>),
+    IncompleteComment(TokenError),
 
     #[error(transparent)]
     #[cfg_attr(feature = "miette", diagnostic(transparent))]
@@ -31,23 +76,25 @@ pub enum Error {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct TokenError<T> {
+pub struct TokenError {
     input: Arc<str>,
     span: Range<usize>,
     position: (usize, usize),
-    #[cfg_attr(feature = "serde", serde(skip))]
-    _marker: PhantomData<T>,
+    kind: TokenErrorKind,
 }
 
-impl<T> TokenError<T> {
+impl TokenError {
+    #[inline]
     pub fn input(&self) -> &Arc<str> {
         &self.input
     }
 
+    #[inline]
     pub fn span(&self) -> &Range<usize> {
         &self.span
     }
 
+    #[inline]
     pub fn position(&self) -> (usize, usize) {
         self.position
     }
@@ -58,34 +105,29 @@ pub struct InvalidToken;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IncompleteComment;
 
-impl Display for TokenError<InvalidToken> {
+impl Display for TokenError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let token = &self.input[self.span.clone()];
         let (line, column) = self.position;
-        write!(
-            f,
-            "syntax error at or near line {line}, column {column}: invalid token \"{token}\""
-        )
+        match self.kind {
+            TokenErrorKind::InvalidToken => {
+                let token = &self.input[self.span.clone()];
+                write!(
+                    f,
+                    "syntax error at or near line {line}, column {column}: invalid token \"{token}\""
+                )
+            }
+            TokenErrorKind::IncompleteComment => write!(
+                f,
+                "syntax error at or near line {line}, column {column}: incomplete comment"
+            ),
+        }
     }
 }
 
-impl Display for TokenError<IncompleteComment> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let (line, column) = self.position;
-        write!(
-            f,
-            "syntax error at or near line {line}, column {column}: incomplete comment"
-        )
-    }
-}
-
-impl<T> core::error::Error for TokenError<T> where TokenError<T>: Debug + Display {}
+impl core::error::Error for TokenError {}
 
 #[cfg(feature = "miette")]
-impl<T> Diagnostic for TokenError<T>
-where
-    TokenError<T>: core::error::Error,
-{
+impl Diagnostic for TokenError {
     fn source_code(&self) -> Option<&dyn miette::SourceCode> {
         Some(&self.input)
     }
@@ -123,7 +165,7 @@ impl Display for UnexpectedError {
 impl core::error::Error for UnexpectedError {}
 
 impl Error {
-    pub(crate) fn unexpected(input: &str, span: Range<usize>) -> Self {
+    pub fn unexpected(input: &str, span: Range<usize>) -> Self {
         let offset = span.start;
         Error::Unexpected(UnexpectedError {
             input: input.into(),
@@ -132,22 +174,22 @@ impl Error {
         })
     }
 
-    pub(crate) fn from_lexer_error(err: LexerError, input: &str, span: Range<usize>) -> Self {
-        let offset = span.start;
+    pub fn from_tokenize_error<'a>(input: &'a str, err: TokenizeError<'a>) -> Self {
+        let offset = err.span.start;
         let position = translate_offset_to_line_column(input, offset);
         let input = input.into();
-        match err {
-            LexerError::InvalidToken => Self::InvalidToken(TokenError {
+        match err.kind {
+            TokenErrorKind::InvalidToken => Self::InvalidToken(TokenError {
                 input,
-                span,
+                span: err.span,
                 position,
-                _marker: PhantomData,
+                kind: err.kind,
             }),
-            LexerError::IncompleteComment => Self::IncompleteComment(TokenError {
+            TokenErrorKind::IncompleteComment => Self::IncompleteComment(TokenError {
                 input,
-                span,
+                span: err.span,
                 position,
-                _marker: PhantomData,
+                kind: err.kind,
             }),
         }
     }
