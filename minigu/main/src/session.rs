@@ -15,6 +15,7 @@ pub struct Session {}
 
 impl Session {
     pub fn query(&self, query: &str) -> Result<QueryResult> {
+        // TODO: Remove the placeholder code.
         let programs = parse_gql(query)?;
         let col1 = create_array!(Int32, [Some(1), Some(2), None]);
         let col2 = create_array!(Utf8, ["a", "b", "c"]);
