@@ -33,3 +33,6 @@ pub type PropertyId = u32;
 
 /// Internal identifier associated with a graph.
 pub type GraphId = NonZeroU32;
+
+/// Internal identifier associated with a procedure.
+pub type ProcedureId = NonZeroU32;

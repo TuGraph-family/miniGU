@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 use std::sync::{Arc, Weak};
 
-use minigu_common::types::LabelId;
+use minigu_common::types::{LabelId, ProcedureId};
 
 use crate::error::CatalogResult;
 use crate::label_set::LabelSet;
@@ -41,6 +41,9 @@ pub trait SchemaProvider: Debug + Send + Sync {
 
     /// Retrieves a graph type by its name.
     fn get_graph_type(&self, name: &str) -> CatalogResult<Option<GraphTypeRef>>;
+
+    /// Retrieves a procedure ID by its name.
+    fn get_procedure_id(&self, name: &str) -> CatalogResult<Option<ProcedureId>>;
 }
 
 /// Represents a graph, which is an instance of a graph type.
