@@ -11,6 +11,3 @@ pub type GraphTypeId = NonZeroU32;
 
 /// Internal identifier associated with a directory or schema.
 pub type SchemaId = NonZeroU32;
-
-// /// Internal identifier associated with a procedure.
-// pub type ProcedureId = NonZeroU32;

@@ -1,9 +1,7 @@
 mod directory;
-mod edge;
 mod graph;
 mod graph_type;
 mod schema;
-mod vertex;
 
 use std::collections::HashMap;
 use std::num::NonZero;
