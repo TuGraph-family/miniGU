@@ -1,17 +1,18 @@
 use minigu_common::data_type::LogicalType;
-use minigu_common::types::PropertyId;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Property {
-    id: PropertyId,
     logical_type: LogicalType,
     nullable: bool,
 }
 
 impl Property {
     #[inline]
-    pub fn id(&self) -> PropertyId {
-        self.id
+    pub fn new(logical_type: LogicalType, nullable: bool) -> Self {
+        Self {
+            logical_type,
+            nullable,
+        }
     }
 
     #[inline]
