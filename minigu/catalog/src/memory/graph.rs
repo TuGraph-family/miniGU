@@ -1,19 +1,18 @@
-use minigu_common::types::GraphId;
-
 use crate::provider::{GraphProvider, GraphTypeRef};
 
 #[derive(Debug)]
 pub struct MemoryGraphCatalog {
-    id: GraphId,
     graph_type: GraphTypeRef,
 }
 
-impl GraphProvider for MemoryGraphCatalog {
+impl MemoryGraphCatalog {
     #[inline]
-    fn id(&self) -> GraphId {
-        self.id
+    pub fn new(graph_type: GraphTypeRef) -> Self {
+        Self { graph_type }
     }
+}
 
+impl GraphProvider for MemoryGraphCatalog {
     #[inline]
     fn graph_type(&self) -> GraphTypeRef {
         self.graph_type.clone()

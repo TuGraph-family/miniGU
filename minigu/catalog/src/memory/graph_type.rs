@@ -1,7 +1,8 @@
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 use std::sync::Arc;
 
-use minigu_common::types::{LabelId, PropertyId};
+use minigu_common::types::LabelId;
 
 use crate::error::CatalogResult;
 use crate::label_set::LabelSet;
@@ -9,24 +10,80 @@ use crate::provider::{
     EdgeTypeProvider, EdgeTypeRef, GraphTypeProvider, PropertyRef, PropertySetProvider,
     VertexTypeProvider, VertexTypeRef,
 };
-use crate::types::{EdgeTypeId, GraphTypeId, VertexTypeId};
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct MemoryGraphTypeCatalog {
-    id: GraphTypeId,
     label_map: HashMap<String, LabelId>,
-    vertex_type_id_map: HashMap<LabelSet, VertexTypeId>,
-    vertex_type_map: HashMap<VertexTypeId, Arc<MemoryVertexTypeCatalog>>,
-    edge_type_id_map: HashMap<LabelSet, EdgeTypeId>,
-    edge_type_map: HashMap<EdgeTypeId, Arc<MemoryEdgeTypeCatalog>>,
+    vertex_type_map: HashMap<LabelSet, Arc<MemoryVertexTypeCatalog>>,
+    edge_type_map: HashMap<LabelSet, Arc<MemoryEdgeTypeCatalog>>,
+}
+
+impl MemoryGraphTypeCatalog {
+    #[inline]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    #[inline]
+    pub fn add_label(&mut self, name: String) -> Option<LabelId> {
+        let label_id = self.label_map.len() as u32 + 1;
+        match self.label_map.entry(name) {
+            Entry::Occupied(_) => None,
+            Entry::Vacant(e) => {
+                let label_id = LabelId::new(label_id).expect("label id should be valid");
+                e.insert(label_id);
+                Some(label_id)
+            }
+        }
+    }
+
+    #[inline]
+    pub fn remove_label(&mut self, name: &str) -> bool {
+        self.label_map.remove(name).is_some()
+    }
+
+    #[inline]
+    pub fn add_vertex_type(
+        &mut self,
+        label_set: LabelSet,
+        vertex_type: Arc<MemoryVertexTypeCatalog>,
+    ) -> bool {
+        match self.vertex_type_map.entry(label_set) {
+            Entry::Occupied(_) => false,
+            Entry::Vacant(e) => {
+                e.insert(vertex_type);
+                true
+            }
+        }
+    }
+
+    #[inline]
+    pub fn remove_vertex_type(&mut self, label_set: &LabelSet) -> bool {
+        self.vertex_type_map.remove(label_set).is_some()
+    }
+
+    #[inline]
+    pub fn add_edge_type(
+        &mut self,
+        label_set: LabelSet,
+        edge_type: Arc<MemoryEdgeTypeCatalog>,
+    ) -> bool {
+        match self.edge_type_map.entry(label_set) {
+            Entry::Occupied(_) => false,
+            Entry::Vacant(e) => {
+                e.insert(edge_type);
+                true
+            }
+        }
+    }
+
+    #[inline]
+    pub fn remove_edge_type(&mut self, label_set: &LabelSet) -> bool {
+        self.edge_type_map.remove(label_set).is_some()
+    }
 }
 
 impl GraphTypeProvider for MemoryGraphTypeCatalog {
-    #[inline]
-    fn id(&self) -> GraphTypeId {
-        self.id
-    }
-
     #[inline]
     fn get_label_id(&self, name: &str) -> CatalogResult<Option<LabelId>> {
         Ok(self.label_map.get(name).copied())
@@ -34,66 +91,55 @@ impl GraphTypeProvider for MemoryGraphTypeCatalog {
 
     #[inline]
     fn get_vertex_type(&self, key: &LabelSet) -> CatalogResult<Option<VertexTypeRef>> {
-        Ok(self.vertex_type_id_map.get(key).map(|id| {
-            self.vertex_type_map
-                .get(id)
-                .expect("vertex type must exist")
-                .clone() as _
-        }))
-    }
-
-    #[inline]
-    fn get_vertex_type_by_id(&self, id: VertexTypeId) -> CatalogResult<Option<VertexTypeRef>> {
-        Ok(self.vertex_type_map.get(&id).map(|v| v.clone() as _))
+        Ok(self.vertex_type_map.get(key).map(|v| v.clone() as _))
     }
 
     #[inline]
     fn get_edge_type(&self, key: &LabelSet) -> CatalogResult<Option<EdgeTypeRef>> {
-        Ok(self.edge_type_id_map.get(key).map(|id| {
-            self.edge_type_map
-                .get(id)
-                .expect("edge type must exist")
-                .clone() as _
-        }))
-    }
-
-    #[inline]
-    fn get_edge_type_by_id(&self, id: EdgeTypeId) -> CatalogResult<Option<EdgeTypeRef>> {
-        Ok(self.edge_type_map.get(&id).map(|e| e.clone() as _))
+        Ok(self.edge_type_map.get(key).map(|e| e.clone() as _))
     }
 }
 
 #[derive(Debug)]
 pub struct MemoryVertexTypeCatalog {
-    id: VertexTypeId,
     label_set: LabelSet,
-    property_id_map: HashMap<String, PropertyId>,
-    property_map: HashMap<PropertyId, PropertyRef>,
+    property_map: HashMap<String, PropertyRef>,
+}
+
+impl MemoryVertexTypeCatalog {
+    #[inline]
+    pub fn new(label_set: LabelSet) -> Self {
+        Self {
+            label_set,
+            property_map: HashMap::new(),
+        }
+    }
+
+    #[inline]
+    pub fn add_property(&mut self, name: String, property: PropertyRef) -> bool {
+        match self.property_map.entry(name) {
+            Entry::Occupied(_) => false,
+            Entry::Vacant(e) => {
+                e.insert(property);
+                true
+            }
+        }
+    }
+
+    #[inline]
+    pub fn remove_property(&mut self, name: &str) -> bool {
+        self.property_map.remove(name).is_some()
+    }
 }
 
 impl PropertySetProvider for MemoryVertexTypeCatalog {
     #[inline]
     fn get_property(&self, name: &str) -> CatalogResult<Option<PropertyRef>> {
-        Ok(self.property_id_map.get(name).map(|id| {
-            self.property_map
-                .get(id)
-                .expect("property must exist")
-                .clone()
-        }))
-    }
-
-    #[inline]
-    fn get_property_by_id(&self, id: PropertyId) -> CatalogResult<Option<PropertyRef>> {
-        Ok(self.property_map.get(&id).cloned())
+        Ok(self.property_map.get(name).cloned())
     }
 }
 
 impl VertexTypeProvider for MemoryVertexTypeCatalog {
-    #[inline]
-    fn id(&self) -> VertexTypeId {
-        self.id
-    }
-
     #[inline]
     fn label_set(&self) -> &LabelSet {
         &self.label_set
@@ -102,37 +148,48 @@ impl VertexTypeProvider for MemoryVertexTypeCatalog {
 
 #[derive(Debug)]
 pub struct MemoryEdgeTypeCatalog {
-    id: EdgeTypeId,
     label_set: LabelSet,
     src: VertexTypeRef,
     dst: VertexTypeRef,
-    property_id_map: HashMap<String, PropertyId>,
-    property_map: HashMap<PropertyId, PropertyRef>,
+    property_map: HashMap<String, PropertyRef>,
+}
+
+impl MemoryEdgeTypeCatalog {
+    #[inline]
+    pub fn new(label_set: LabelSet, src: VertexTypeRef, dst: VertexTypeRef) -> Self {
+        Self {
+            label_set,
+            src,
+            dst,
+            property_map: HashMap::new(),
+        }
+    }
+
+    #[inline]
+    pub fn add_property(&mut self, name: String, property: PropertyRef) -> bool {
+        match self.property_map.entry(name) {
+            Entry::Occupied(_) => false,
+            Entry::Vacant(e) => {
+                e.insert(property);
+                true
+            }
+        }
+    }
+
+    #[inline]
+    pub fn remove_property(&mut self, name: &str) -> bool {
+        self.property_map.remove(name).is_some()
+    }
 }
 
 impl PropertySetProvider for MemoryEdgeTypeCatalog {
     #[inline]
     fn get_property(&self, name: &str) -> CatalogResult<Option<PropertyRef>> {
-        Ok(self.property_id_map.get(name).map(|id| {
-            self.property_map
-                .get(id)
-                .expect("property must exist")
-                .clone()
-        }))
-    }
-
-    #[inline]
-    fn get_property_by_id(&self, id: PropertyId) -> CatalogResult<Option<PropertyRef>> {
-        Ok(self.property_map.get(&id).cloned())
+        Ok(self.property_map.get(name).cloned())
     }
 }
 
 impl EdgeTypeProvider for MemoryEdgeTypeCatalog {
-    #[inline]
-    fn id(&self) -> EdgeTypeId {
-        self.id
-    }
-
     #[inline]
     fn label_set(&self) -> &LabelSet {
         &self.label_set

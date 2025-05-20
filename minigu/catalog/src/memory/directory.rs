@@ -1,40 +1,46 @@
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
+use std::sync::Weak;
 
 use crate::error::CatalogResult;
 use crate::provider::{DirectoryOrSchema, DirectoryProvider};
-use crate::types::SchemaId;
 
 #[derive(Debug)]
 pub struct MemoryDirectoryCatalog {
-    id: SchemaId,
-    parent: Option<SchemaId>,
+    parent: Option<Weak<dyn DirectoryProvider>>,
     children: HashMap<String, DirectoryOrSchema>,
 }
 
 impl MemoryDirectoryCatalog {
     #[inline]
-    pub fn new(id: SchemaId, parent: Option<SchemaId>) -> Self {
+    pub fn new(parent: Option<Weak<dyn DirectoryProvider>>) -> Self {
         Self {
-            id,
             parent,
             children: HashMap::new(),
         }
     }
 
-    // pub fn add_schema(&mut self, name: String, schema: SchemaOrSchema) -> CatalogResult<()> {
-    //     todo!()
-    // }
+    #[inline]
+    pub fn add_child(&mut self, name: String, child: DirectoryOrSchema) -> bool {
+        match self.children.entry(name) {
+            Entry::Occupied(_) => false,
+            Entry::Vacant(e) => {
+                e.insert(child);
+                true
+            }
+        }
+    }
+
+    #[inline]
+    pub fn remove_child(&mut self, name: &str) -> bool {
+        self.children.remove(name).is_some()
+    }
 }
 
 impl DirectoryProvider for MemoryDirectoryCatalog {
     #[inline]
-    fn id(&self) -> SchemaId {
-        self.id
-    }
-
-    #[inline]
-    fn parent(&self) -> Option<SchemaId> {
-        self.parent
+    fn parent(&self) -> Option<Weak<dyn DirectoryProvider>> {
+        self.parent.clone()
     }
 
     #[inline]
