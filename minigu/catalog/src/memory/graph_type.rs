@@ -36,7 +36,7 @@ impl MemoryGraphTypeCatalog {
         match self.label_map.entry(name) {
             Entry::Occupied(_) => None,
             Entry::Vacant(e) => {
-                self.next_label_id.checked_add(1)?;
+                self.next_label_id = self.next_label_id.checked_add(1)?;
                 e.insert(label_id);
                 Some(label_id)
             }
