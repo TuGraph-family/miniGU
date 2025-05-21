@@ -19,3 +19,7 @@ impl Database {
         Ok(Session {})
     }
 }
+
+pub struct DatabaseContext {
+    
+}

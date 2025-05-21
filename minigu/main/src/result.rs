@@ -2,21 +2,21 @@ use std::fmt::{self, Debug};
 
 use arrow::array::RecordBatch;
 use minigu_common::data_chunk::DataChunk;
-use minigu_common::data_type::{Schema, SchemaRef};
+use minigu_common::data_type::{DataSchema, DataSchemaRef};
 
 use crate::error::Result;
 use crate::metrics::QueryMetrics;
 
 #[derive(Debug)]
 pub struct QueryResult {
-    schema: Option<SchemaRef>,
+    schema: Option<DataSchemaRef>,
     metrics: QueryMetrics,
     chunks: Vec<DataChunk>,
 }
 
 impl QueryResult {
     pub(crate) fn new(
-        schema: Option<SchemaRef>,
+        schema: Option<DataSchemaRef>,
         metrics: QueryMetrics,
         chunks: Vec<DataChunk>,
     ) -> Self {
@@ -28,7 +28,7 @@ impl QueryResult {
     }
 
     #[inline]
-    pub fn schema(&self) -> Option<&SchemaRef> {
+    pub fn schema(&self) -> Option<&DataSchemaRef> {
         self.schema.as_ref()
     }
 
