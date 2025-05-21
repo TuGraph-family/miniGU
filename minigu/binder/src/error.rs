@@ -1,3 +1,4 @@
+use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 use std::marker::PhantomData;
 use std::ops::Range;
@@ -10,12 +11,10 @@ use crate::{impl_binder_already_exist_error_display, impl_binder_not_exist_error
 #[cfg(feature = "miette")]
 use miette::Diagnostic;
 use thiserror::Error;
-pub type Result<T> = result::Result<T, Error>;
+pub type BindResult<T> = result::Result<T, BindError>;
 
-#[derive(Error, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone)]
-pub enum Error {
+#[derive(Error, Debug)]
+pub enum BindError {
     #[error("schema not exists {0:?}")]
     SchemaNotExists(String),
     #[error("schema already exists {0:?}")]
@@ -41,7 +40,9 @@ pub enum Error {
     #[error("not support operation {0:?}")]
     NotSupported(String),
     #[error("tmp error")]
-    ErrorCur
+    ErrorCur,
+    #[error(transparent)]
+    External(#[from] Box<dyn Error>)
 }
 
 // #[derive(Debug, Clone, PartialEq, Eq)]

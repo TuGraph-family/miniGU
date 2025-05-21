@@ -44,24 +44,11 @@ pub struct BoundGraphRef {
 }
 
 #[apply(base)]
-pub enum BoundGraphTypeRef {
-    Ref(BoundCatalogObjectRef),
-    Parameter(Ident),
-}
-
-#[apply(base)]
 pub enum BoundOfGraphType {
     Like(BoundGraphExpr),
     Ref(BoundGraphTypeRef),
     Nested(Vec<GraphElementType>),
     Any,
-}
-
-#[apply(base)]
-pub enum BoundGraphTypeSource {
-    Copy(BoundGraphTypeRef),
-    Like(BoundGraphExpr),
-    Nested(Vec<GraphElementType>),
 }
 
 #[apply(base)]

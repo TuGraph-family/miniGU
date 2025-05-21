@@ -6,18 +6,7 @@ use crate::program::bound_statement::object_ref::{BoundCatalogObjectRef, BoundGr
 use chrono::{NaiveDate, NaiveTime, NaiveDateTime, DateTime, Utc, Duration};
 use gql_parser::span::OptSpanned;
 
-#[apply(base)]
-pub enum BoundGraphExpr {
-    Ref(BoundCatalogObjectRef),
-    // Object(BoundObjectExpr),
-    Current,
-}
 
-#[apply(base)]
-pub enum BoundObjectExpr {
-    Variable(BoundExpr),
-    Expr(BoundExpr),
-}
 #[apply(base)]
 pub enum BoundPathPatternExpr {
     Union(Vec<BoundPathPatternExpr>),

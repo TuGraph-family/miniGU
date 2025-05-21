@@ -1,11 +1,11 @@
-use gql_parser::ast::{CreateGraphOrGraphTypeStatementKind, Ident};
 use macro_rules_attribute::apply;
-use minigu_catalog::schema::SchemaId;
+use serde::Serialize;
+use gql_parser::ast::{CreateGraphOrGraphTypeStatementKind, GraphElementType, Ident};
+use crate::binder::bound_statement::catalog::{BoundCreateGraphStatement, BoundCreateGraphTypeStatement, BoundCreateSchemaStatement, BoundDropGraphStatement, BoundDropGraphTypeStatement, BoundDropSchemaStatement};
+use crate::binder::bound_statement::object_ref::{BoundCatalogObjectRef, BoundGraphTypeRef};
+use crate::bound_statement::object_ref::CanonicalSchemaPath;
+use crate::catalog_ref::{GraphTypeCatalog, SchemaCatalog};
 use crate::macros::base;
-use crate::program::bound_statement::common::{GraphId, LabelId};
-use crate::program::bound_statement::expr::BoundGraphExpr;
-use crate::program::bound_statement::object_ref::{BoundCatalogObjectRef, BoundCatalogObjectStrRef, BoundGraphTypeSource, BoundSchemaRef, CanonicalSchemaPath};
-use crate::program::bound_statement::procedure::BoundCallProcedureStatement;
 
 pub type LinearBoundCatalogModifyingStatement = Vec<BoundCatalogModifyingStatement>;
 
@@ -20,15 +20,16 @@ pub enum BoundCatalogModifyingStatement {
     DropGraphType(BoundDropGraphTypeStatement),
 }
 
+
 #[apply(base)]
 pub struct BoundCreateSchemaStatement {
-    pub path: CanonicalSchemaPath,
+    pub schema_path: CanonicalSchemaPath,
     pub if_not_exists: bool,
 }
 
 #[apply(base)]
 pub struct BoundDropSchemaStatement {
-    pub schema_id: SchemaId,
+    pub schema_path: CanonicalSchemaPath,
     pub if_exists: bool,
 }
 
@@ -56,18 +57,33 @@ pub struct BoundDropGraphStatement {
 
 #[apply(base)]
 pub enum BoundCreateGraphTypeStatementOrNot {
-    // Some statements don't need to be executed and 
+    // Some statements don't need to be executed and
     // be skipped here, therefore a SKIP marker is required.
     Process(BoundCreateGraphTypeStatement),
     Skip,
 }
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub struct BoundCreateGraphTypeStatement {
-    pub path: BoundCatalogObjectStrRef,
+    pub schema: SchemaCatalog,
+    pub name: Ident,
     pub kind: CreateGraphOrGraphTypeStatementKind,
     pub source: BoundGraphTypeSource,
 }
+
+#[derive(Debug, Serialize)]
+pub enum BoundGraphTypeSource {
+    Ref(BoundGraphTypeRef),
+    Nested(Vec<GraphElementType>),
+}
+
+
+#[derive(Debug, Serialize)]
+pub enum BoundGraphTypeRef {
+    Ref(GraphTypeCatalog),
+    Parameter(Ident),
+}
+
 
 #[apply(base)]
 pub struct BoundDropGraphTypeStatement {
@@ -76,4 +92,4 @@ pub struct BoundDropGraphTypeStatement {
     pub if_exists: bool,
 }
 
-pub type LabelIdSet = Vec<LabelId>;
+

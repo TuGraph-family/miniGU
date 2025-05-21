@@ -4,7 +4,7 @@ use gql_parser::ast::{
 };
 use gql_parser::span::OptSpanned;
 use macro_rules_attribute::apply;
-
+use minigu_catalog::provider::SchemaRef;
 use crate::macros::base;
 use crate::program::bound_statement::catalog::LinearBoundCatalogModifyingStatement;
 use crate::program::bound_statement::data::BoundLinearDataModifyingStatement;
@@ -12,26 +12,6 @@ use crate::program::bound_statement::expr::{BoundExpr, BoundPathPatternExpr};
 use crate::program::bound_statement::object_ref::BoundSchemaRef;
 use crate::program::bound_statement::query::BoundCompositeQueryStatement;
 
-#[apply(base)]
-pub struct BoundProcedure {
-    pub at: Option<BoundSchemaRef>,
-    pub binding_variable_def: BindingVariableDefBlock,
-    pub statement: BoundStatement,
-    pub next_statement: Vec<BoundNextStatement>,
-}
-
-#[apply(base)]
-pub struct BoundNextStatement {
-    pub yield_clause: OptSpanned<Yield>,
-    pub statement: BoundStatement,
-}
-
-#[apply(base)]
-pub enum BoundStatement {
-    Catalog(LinearBoundCatalogModifyingStatement),
-    Query(BoundCompositeQueryStatement),
-    Data(BoundLinearDataModifyingStatement),
-}
 
 pub type LabelId = u32;
 pub type FieldId = u32;

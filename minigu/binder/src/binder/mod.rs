@@ -1,4 +1,6 @@
 pub mod bound_statement;
+pub mod binder;
+
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
@@ -75,15 +77,6 @@ impl QuerySymbolTable {
     }
 }
 
-pub struct Binder {
-    /// By default, the `session context` carries the path or reference of the schema in use.
-    /// However in some statements, a specific schema for the statement may need to be set.
-    /// To avoid affecting the schema in use globally, a `working_schema` for the statement is
-    /// introduced. During the binding process, `working_schema` takes priority over the
-    /// schema in session_context.
-    pub session_context: Arc<SessionContext>,
-    pub working_schema: Option<Arc<Mutex<Schema>>>,
-}
 
 /// Bind a gql procedure into a bound procedure.
 /// The `Binder` is responsible for semantic analysis of parsed AST nodes.

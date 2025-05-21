@@ -1,6 +1,10 @@
 mod data;
 pub mod expr;
 pub mod query;
+mod resolver;
+mod resolve_schema;
+mod resolve_catalog;
+mod resolve_expr;
 
 use smol_str::ToSmolStr;
 use gql_parser::ast::*;
@@ -22,39 +26,6 @@ use crate::program::{Binder, SessionContext};
 
 
 
-// Since SchemaRef involves relative addressing, SessionContext is required here.
-pub fn resolve_schema_ref(
-    session_context: &SessionContext,
-    schema_ref: &SchemaRef,
-) -> Result<BoundSchemaRef> {
-    match schema_ref {
-        SchemaRef::Absolute(path) => {
-            
-        }
-        SchemaRef::Relative(path) => {
-            BoundSchemaRef::Canonical(normalize_path(path))
-        }
-        SchemaRef::Predefined(predefine) => {
-            let base = match predefine {
-                // TODO: Handle home schema.
-                PredefinedSchemaRef::Home => vec!["".to_smolstr()],
-                PredefinedSchemaRef::Current => {
-                    session_context.current_working_path.segments.clone()
-                }
-            };
-            BoundSchemaRef::Canonical(CanonicalSchemaPath { segments: base })
-        }
-
-        SchemaRef::Parameter(param) => {
-            // TODO: Handle Parameter.
-            if let Some(schema_ref) = session_context.current_param_context.get(param) {
-                resolve_schema_ref(session_context, schema_ref)
-            } else {
-                BoundSchemaRef::UnResolvedParameter(param.clone())
-            }
-        }
-    }
-}
 
 impl Binder {
     pub fn resolve_of_graph_type(&self, graph_type: &OfGraphType) -> Result<BoundOfGraphType, Error> {
