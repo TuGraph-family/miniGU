@@ -1,2 +1,1 @@
-pub struct ProcedureManager {
-}
+pub struct ProcedureManager {}
