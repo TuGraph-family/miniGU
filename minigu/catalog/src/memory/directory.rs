@@ -44,7 +44,15 @@ impl DirectoryProvider for MemoryDirectoryCatalog {
     }
 
     #[inline]
-    fn get_directory_or_schema(&self, name: &str) -> CatalogResult<Option<DirectoryOrSchema>> {
+    fn get_child(&self, name: &str) -> CatalogResult<Option<DirectoryOrSchema>> {
         Ok(self.children.get(name).cloned())
+    }
+
+    fn children(&self) -> Box<dyn Iterator<Item = (&str, DirectoryOrSchema)> + '_> {
+        Box::new(
+            self.children
+                .iter()
+                .map(|(name, child)| (name.as_str(), child.clone())),
+        )
     }
 }
