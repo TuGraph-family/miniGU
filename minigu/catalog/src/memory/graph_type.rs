@@ -19,6 +19,13 @@ pub struct MemoryGraphTypeCatalog {
     edge_type_map: HashMap<LabelSet, Arc<MemoryEdgeTypeCatalog>>,
 }
 
+impl Default for MemoryGraphTypeCatalog {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MemoryGraphTypeCatalog {
     #[inline]
     pub fn new() -> Self {
