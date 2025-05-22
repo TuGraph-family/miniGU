@@ -60,6 +60,7 @@ pub enum SimpleQueryStatement {
     // For,
     // Filter,
     Call(CallProcedureStatement),
+    OrderByAndPage(OrderByAndPageStatement),
 }
 
 #[apply(base)]

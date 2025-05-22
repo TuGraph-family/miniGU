@@ -1,0 +1,34 @@
+---
+source: minigu/parser/src/parser/impls/procedure_call.rs
+expression: parsed
+---
+- name:
+    - Ref:
+        schema: ~
+        objects:
+          - - proc
+            - start: 0
+              end: 4
+    - start: 0
+      end: 4
+  args:
+    - - Value:
+          Literal:
+            Numeric:
+              Integer:
+                - kind: Decimal
+                  integer: "1"
+                - start: 5
+                  end: 6
+      - start: 5
+        end: 6
+    - - Value:
+          Literal:
+            String:
+              kind: Char
+              literal: abc
+      - start: 8
+        end: 13
+  yield_clause: ~
+- start: 0
+  end: 14

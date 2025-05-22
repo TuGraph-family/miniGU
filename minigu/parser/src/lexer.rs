@@ -1377,6 +1377,8 @@ impl TokenKind<'_> {
                 | Self::Order
                 | Self::Limit
                 | Self::Offset
+                | Self::Skip
+                | Self::Call
         )
     }
 
