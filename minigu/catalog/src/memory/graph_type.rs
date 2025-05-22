@@ -104,8 +104,8 @@ impl GraphTypeProvider for MemoryGraphTypeCatalog {
     }
 
     #[inline]
-    fn labels(&self) -> Box<dyn Iterator<Item = (&str, LabelId)> + '_> {
-        Box::new(self.label_map.iter().map(|(name, id)| (name.as_str(), *id)))
+    fn label_names(&self) -> Vec<String> {
+        self.label_map.keys().cloned().collect()
     }
 
     #[inline]
@@ -114,12 +114,8 @@ impl GraphTypeProvider for MemoryGraphTypeCatalog {
     }
 
     #[inline]
-    fn vertex_types(&self) -> Box<dyn Iterator<Item = (&LabelSet, VertexTypeRef)> + '_> {
-        Box::new(
-            self.vertex_type_map
-                .iter()
-                .map(|(key, v)| (key, v.clone() as _)),
-        )
+    fn vertex_type_keys(&self) -> Vec<LabelSet> {
+        self.vertex_type_map.keys().cloned().collect()
     }
 
     #[inline]
@@ -128,12 +124,8 @@ impl GraphTypeProvider for MemoryGraphTypeCatalog {
     }
 
     #[inline]
-    fn edge_types(&self) -> Box<dyn Iterator<Item = (&LabelSet, EdgeTypeRef)> + '_> {
-        Box::new(
-            self.edge_type_map
-                .iter()
-                .map(|(key, e)| (key, e.clone() as _)),
-        )
+    fn edge_type_keys(&self) -> Vec<LabelSet> {
+        self.edge_type_map.keys().cloned().collect()
     }
 }
 
@@ -155,8 +147,8 @@ impl MemoryVertexTypeCatalog {
 
 impl VertexTypeProvider for MemoryVertexTypeCatalog {
     #[inline]
-    fn label_set(&self) -> &LabelSet {
-        &self.label_set
+    fn label_set(&self) -> LabelSet {
+        self.label_set.clone()
     }
 }
 
@@ -170,13 +162,13 @@ impl PropertySetProvider for MemoryVertexTypeCatalog {
             .map(|(i, p)| (i as PropertyId, p)))
     }
 
-    fn properties(&self) -> Box<dyn Iterator<Item = (PropertyId, &Property)> + '_> {
-        Box::new(
-            self.properties
-                .iter()
-                .enumerate()
-                .map(|(i, p)| (i as PropertyId, p)),
-        )
+    #[inline]
+    fn properties(&self) -> Vec<(PropertyId, Property)> {
+        self.properties
+            .iter()
+            .enumerate()
+            .map(|(i, p)| (i as PropertyId, p.clone()))
+            .collect()
     }
 }
 
@@ -207,8 +199,8 @@ impl MemoryEdgeTypeCatalog {
 
 impl EdgeTypeProvider for MemoryEdgeTypeCatalog {
     #[inline]
-    fn label_set(&self) -> &LabelSet {
-        &self.label_set
+    fn label_set(&self) -> LabelSet {
+        self.label_set.clone()
     }
 
     #[inline]
@@ -232,12 +224,12 @@ impl PropertySetProvider for MemoryEdgeTypeCatalog {
             .map(|(i, p)| (i as PropertyId, p)))
     }
 
-    fn properties(&self) -> Box<dyn Iterator<Item = (PropertyId, &Property)> + '_> {
-        Box::new(
-            self.properties
-                .iter()
-                .enumerate()
-                .map(|(i, p)| (i as PropertyId, p)),
-        )
+    #[inline]
+    fn properties(&self) -> Vec<(PropertyId, Property)> {
+        self.properties
+            .iter()
+            .enumerate()
+            .map(|(i, p)| (i as PropertyId, p.clone()))
+            .collect()
     }
 }

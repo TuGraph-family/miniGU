@@ -31,8 +31,8 @@ pub trait DirectoryProvider: Debug + Send + Sync {
     /// Retrieves a child directory or schema by its name.
     fn get_child(&self, name: &str) -> CatalogResult<Option<DirectoryOrSchema>>;
 
-    /// Returns an iterator over the children of the directory.
-    fn children(&self) -> Box<dyn Iterator<Item = (&str, DirectoryOrSchema)> + '_>;
+    /// Returns the names of the children of the directory.
+    fn children_names(&self) -> Vec<String>;
 }
 
 /// Represents a logical schema, which contains graphs and graph type definitions.
@@ -40,20 +40,20 @@ pub trait SchemaProvider: Debug + Send + Sync {
     /// Returns the parent directory ID of the schema.
     fn parent(&self) -> Option<Weak<dyn DirectoryProvider>>;
 
-    /// Returns an iterator over the graphs of the schema.
-    fn graphs(&self) -> Box<dyn Iterator<Item = (&str, GraphRef)> + '_>;
+    /// Returns the names of the graphs in the schema.
+    fn graph_names(&self) -> Vec<String>;
 
     /// Retrieves a graph by its name.
     fn get_graph(&self, name: &str) -> CatalogResult<Option<GraphRef>>;
 
-    /// Returns an iterator over the graph types of the schema.
-    fn graph_types(&self) -> Box<dyn Iterator<Item = (&str, GraphTypeRef)> + '_>;
+    /// Returns the names of the graph types in the schema.
+    fn graph_type_names(&self) -> Vec<String>;
 
     /// Retrieves a graph type by its name.
     fn get_graph_type(&self, name: &str) -> CatalogResult<Option<GraphTypeRef>>;
 
-    /// Returns an iterator over the procedures of the schema.
-    fn procedures(&self) -> Box<dyn Iterator<Item = (&str, ProcedureRef)> + '_>;
+    /// Returns the names of the procedures in the schema.
+    fn procedure_names(&self) -> Vec<String>;
 
     /// Retrieves a procedure by its name.
     fn get_procedure(&self, name: &str) -> CatalogResult<Option<ProcedureRef>>;
@@ -74,32 +74,32 @@ pub trait GraphTypeProvider: Debug + Send + Sync {
     /// Retrieves the ID of a label by its name.
     fn get_label_id(&self, name: &str) -> CatalogResult<Option<LabelId>>;
 
-    /// Returns an iterator over the labels of the graph type.
-    fn labels(&self) -> Box<dyn Iterator<Item = (&str, LabelId)> + '_>;
+    /// Returns the names of the labels in the graph type.
+    fn label_names(&self) -> Vec<String>;
 
     /// Retrieves a vertex type by its key label set.
     fn get_vertex_type(&self, key: &LabelSet) -> CatalogResult<Option<VertexTypeRef>>;
 
-    /// Returns an iterator over the vertex types of the graph type.
-    fn vertex_types(&self) -> Box<dyn Iterator<Item = (&LabelSet, VertexTypeRef)> + '_>;
+    /// Returns the keys of the vertex types in the graph type.
+    fn vertex_type_keys(&self) -> Vec<LabelSet>;
 
     /// Retrieves an edge type by its key label set.
     fn get_edge_type(&self, key: &LabelSet) -> CatalogResult<Option<EdgeTypeRef>>;
 
-    /// Returns an iterator over the edge types of the graph type.
-    fn edge_types(&self) -> Box<dyn Iterator<Item = (&LabelSet, EdgeTypeRef)> + '_>;
+    /// Returns the keys of the edge types in the graph type.
+    fn edge_type_keys(&self) -> Vec<LabelSet>;
 }
 
 /// Represents a vertex type, which defines the structure of a vertex.
 pub trait VertexTypeProvider: Debug + Send + Sync + PropertySetProvider {
     /// Returns the label set of the vertex type.
-    fn label_set(&self) -> &LabelSet;
+    fn label_set(&self) -> LabelSet;
 }
 
 /// Represents an edge type, which defines the structure of an edge.
 pub trait EdgeTypeProvider: Debug + Send + Sync + PropertySetProvider {
     /// Returns the label set of the edge type.
-    fn label_set(&self) -> &LabelSet;
+    fn label_set(&self) -> LabelSet;
 
     /// Returns the source vertex type of the edge type.
     fn src(&self) -> VertexTypeRef;
@@ -113,8 +113,8 @@ pub trait PropertySetProvider: Debug + Send + Sync {
     /// Retrieves a property by its name.
     fn get_property(&self, name: &str) -> CatalogResult<Option<(PropertyId, &Property)>>;
 
-    /// Returns an iterator over the properties.
-    fn properties(&self) -> Box<dyn Iterator<Item = (PropertyId, &Property)> + '_>;
+    /// Returns the properties of the property set.
+    fn properties(&self) -> Vec<(PropertyId, Property)>;
 }
 
 pub trait ProcedureProvider: Debug + Send + Sync {
