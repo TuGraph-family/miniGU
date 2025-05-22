@@ -5,7 +5,6 @@ use core::ops::Range;
 use logos::Lexer;
 #[cfg(feature = "miette")]
 use miette::Diagnostic;
-use thiserror::Error;
 use winnow::combinator::todo;
 
 use crate::imports::Arc;
@@ -54,7 +53,7 @@ impl<'a> TokenizeError<'a> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Error)]
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "miette", derive(Diagnostic))]
 pub enum Error {
