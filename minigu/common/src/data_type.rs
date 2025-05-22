@@ -64,9 +64,9 @@ pub enum LogicalType {
     Float64,
     Boolean,
     String,
-    Vertex(Vec<Field>),
-    Edge(Vec<Field>),
-    Record(Vec<Field>),
+    Vertex(Vec<DataField>),
+    Edge(Vec<DataField>),
+    Record(Vec<DataField>),
     Null,
 }
 
@@ -91,7 +91,7 @@ impl LogicalType {
                 let label_id = PredefinedFields::label();
                 let fields = [vid_field, label_id]
                     .into_iter()
-                    .chain(fields.iter().map(Field::to_arrow_field).map(Arc::new))
+                    .chain(fields.iter().map(DataField::to_arrow_field).map(Arc::new))
                     .collect();
                 DataType::Struct(fields)
             }
@@ -102,14 +102,14 @@ impl LogicalType {
                 let dst_field = PredefinedFields::dst();
                 let fields = [eid_field, label_field, src_field, dst_field]
                     .into_iter()
-                    .chain(fields.iter().map(Field::to_arrow_field).map(Arc::new))
+                    .chain(fields.iter().map(DataField::to_arrow_field).map(Arc::new))
                     .collect();
                 DataType::Struct(fields)
             }
             LogicalType::Record(fields) => {
                 let fields = fields
                     .iter()
-                    .map(Field::to_arrow_field)
+                    .map(DataField::to_arrow_field)
                     .map(Arc::new)
                     .collect();
                 DataType::Struct(fields)
@@ -149,37 +149,37 @@ impl fmt::Display for LogicalType {
     }
 }
 
-pub type SchemaRef = Arc<Schema>;
+pub type DataSchemaRef = Arc<DataSchema>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Schema(Vec<Field>);
+pub struct DataSchema(Vec<DataField>);
 
-impl Schema {
+impl DataSchema {
     #[inline]
-    pub fn new(fields: Vec<Field>) -> Self {
+    pub fn new(fields: Vec<DataField>) -> Self {
         Self(fields)
     }
 
     #[inline]
-    pub fn fields(&self) -> &[Field] {
+    pub fn fields(&self) -> &[DataField] {
         &self.0
     }
 
     #[inline]
     pub fn to_arrow_schema(&self) -> ArrowSchema {
-        let fields: ArrowFields = self.0.iter().map(Field::to_arrow_field).collect();
+        let fields: ArrowFields = self.0.iter().map(DataField::to_arrow_field).collect();
         ArrowSchema::new(fields)
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Field {
+pub struct DataField {
     name: String,
     ty: LogicalType,
     nullable: bool,
 }
 
-impl Field {
+impl DataField {
     #[inline]
     pub fn new(name: String, ty: LogicalType, nullable: bool) -> Self {
         Self { name, ty, nullable }
@@ -210,7 +210,7 @@ impl Field {
     }
 }
 
-impl fmt::Display for Field {
+impl fmt::Display for DataField {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}::{}", self.name, self.ty)

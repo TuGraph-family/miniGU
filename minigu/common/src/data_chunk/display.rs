@@ -6,7 +6,7 @@ use tabled::builder::Builder;
 use tabled::settings::{Style, Theme};
 
 use super::DataChunk;
-use crate::data_type::{Schema, SchemaRef};
+use crate::data_type::{DataSchema, DataSchemaRef};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub enum TableStyle {
@@ -76,7 +76,7 @@ enum TableBuilderInner {
 }
 
 impl TableBuilderInner {
-    fn append_header(&mut self, schema: &Schema, type_info: bool) {
+    fn append_header(&mut self, schema: &DataSchema, type_info: bool) {
         match self {
             TableBuilderInner::Tabled(builder) => {
                 let header = schema.fields().iter().map(|f| {
@@ -114,7 +114,7 @@ impl TableBuilderInner {
 
 impl TableBuilder {
     #[inline]
-    pub fn new(schema: Option<SchemaRef>, options: TableOptions) -> Self {
+    pub fn new(schema: Option<DataSchemaRef>, options: TableOptions) -> Self {
         let mut inner = match options.style {
             TableStyle::Sharp | TableStyle::Modern | TableStyle::Psql | TableStyle::Markdown => {
                 TableBuilderInner::Tabled(Builder::new())
@@ -187,12 +187,12 @@ mod tests {
 
     use super::*;
     use crate::data_chunk;
-    use crate::data_type::{Field, LogicalType};
+    use crate::data_type::{DataField, LogicalType};
 
-    fn build_test_schema() -> SchemaRef {
-        Arc::new(Schema::new(vec![
-            Field::new("a".into(), LogicalType::Int32, false),
-            Field::new("b".into(), LogicalType::String, false),
+    fn build_test_schema() -> DataSchemaRef {
+        Arc::new(DataSchema::new(vec![
+            DataField::new("a".into(), LogicalType::Int32, false),
+            DataField::new("b".into(), LogicalType::String, false),
         ]))
     }
 
