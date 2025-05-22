@@ -4,7 +4,7 @@ use std::time::Duration;
 use arrow::array::create_array;
 use gql_parser::parse_gql;
 use minigu_common::data_chunk::DataChunk;
-use minigu_common::data_type::{DataField, LogicalType, DataSchema};
+use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 
 use crate::database::DatabaseContext;
 use crate::error::Result;
@@ -33,5 +33,5 @@ impl Session {
 }
 
 pub struct SessionContext {
-    database: Arc<DatabaseContext>
+    database: Arc<DatabaseContext>,
 }

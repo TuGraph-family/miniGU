@@ -2,14 +2,13 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use minigu_common::types::ProcedureId;
-use minigu_execution::executor::Executor;
 
-use super::{Procedure, ProcedureRef};
+use super::Procedure;
 
 #[derive(Debug)]
 pub struct ProcedureRegistry {
     next_procedure_id: ProcedureId,
-    procedures: HashMap<ProcedureId, ProcedureRef>,
+    procedures: HashMap<ProcedureId, Arc<dyn Procedure>>,
 }
 
 impl Default for ProcedureRegistry {
@@ -26,18 +25,18 @@ impl ProcedureRegistry {
         }
     }
 
-    pub fn add(&mut self, proc: ProcedureRef) -> ProcedureId {
+    pub fn register(&mut self, proc: Arc<dyn Procedure>) -> Option<ProcedureId> {
         let id = self.next_procedure_id;
-        self.next_procedure_id;
+        self.next_procedure_id = self.next_procedure_id.checked_add(1)?;
         self.procedures.insert(id, proc);
-        id
+        Some(id)
     }
 
-    pub fn get(&self, id: ProcedureId) -> Option<ProcedureRef> {
-        todo!()
+    pub fn get(&self, id: ProcedureId) -> Option<Arc<dyn Procedure>> {
+        self.procedures.get(&id).cloned()
     }
 
-    pub fn remove(&mut self, id: ProcedureId) -> bool {
-        todo!()
+    pub fn unregister(&mut self, id: ProcedureId) -> bool {
+        self.procedures.remove(&id).is_some()
     }
 }

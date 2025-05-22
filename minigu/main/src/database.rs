@@ -1,4 +1,7 @@
 use std::path::Path;
+use std::sync::RwLock;
+
+use minigu_catalog::memory::MemoryCatalog;
 
 use crate::error::Result;
 use crate::session::Session;
@@ -21,5 +24,10 @@ impl Database {
 }
 
 pub struct DatabaseContext {
-    
+    catalog: RwLock<MemoryCatalog>,
+}
+
+impl DatabaseContext {
+    pub fn read_catalog(&self) {
+    }
 }

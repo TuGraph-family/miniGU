@@ -7,8 +7,10 @@ version = "0.1.0"
 arrow = { workspace = true }
 gql-parser = { workspace = true }
 miette = { workspace = true }
+minigu-catalog = { workspace = true }
 minigu-common = { workspace = true }
 minigu-execution = { workspace = true }
+minigu-storage = { workspace = true }
 thiserror = { workspace = true }
 
 [lints]
