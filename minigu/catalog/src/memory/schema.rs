@@ -7,14 +7,14 @@ use minigu_common::types::ProcedureId;
 use super::graph::MemoryGraphCatalog;
 use super::graph_type::MemoryGraphTypeCatalog;
 use crate::error::CatalogResult;
-use crate::provider::{DirectoryProvider, GraphRef, GraphTypeRef, SchemaProvider};
+use crate::provider::{DirectoryProvider, GraphRef, GraphTypeRef, ProcedureRef, SchemaProvider};
 
 #[derive(Debug)]
 pub struct MemorySchemaCatalog {
     parent: Option<Weak<dyn DirectoryProvider>>,
     graph_map: HashMap<String, Arc<MemoryGraphCatalog>>,
     graph_type_map: HashMap<String, Arc<MemoryGraphTypeCatalog>>,
-    procedure_map: HashMap<String, ProcedureId>,
+    procedure_map: HashMap<String, ProcedureRef>,
 }
 
 impl MemorySchemaCatalog {
@@ -65,7 +65,7 @@ impl MemorySchemaCatalog {
     }
 
     #[inline]
-    pub fn add_procedure(&mut self, name: String, procedure: ProcedureId) -> bool {
+    pub fn add_procedure(&mut self, name: String, procedure: ProcedureRef) -> bool {
         match self.procedure_map.entry(name) {
             Entry::Occupied(_) => false,
             Entry::Vacant(e) => {
@@ -88,8 +88,25 @@ impl SchemaProvider for MemorySchemaCatalog {
     }
 
     #[inline]
+    fn graphs(&self) -> Box<dyn Iterator<Item = (&str, GraphRef)> + '_> {
+        Box::new(
+            self.graph_map
+                .iter()
+                .map(|(name, graph)| (name.as_str(), graph.clone() as _)),
+        )
+    }
+
+    #[inline]
     fn get_graph(&self, name: &str) -> CatalogResult<Option<GraphRef>> {
         Ok(self.graph_map.get(name).map(|g| g.clone() as _))
+    }
+
+    fn graph_types(&self) -> Box<dyn Iterator<Item = (&str, GraphTypeRef)> + '_> {
+        Box::new(
+            self.graph_type_map
+                .iter()
+                .map(|(name, graph_type)| (name.as_str(), graph_type.clone() as _)),
+        )
     }
 
     #[inline]
@@ -98,7 +115,16 @@ impl SchemaProvider for MemorySchemaCatalog {
     }
 
     #[inline]
-    fn get_procedure_id(&self, name: &str) -> CatalogResult<Option<ProcedureId>> {
-        Ok(self.procedure_map.get(name).copied())
+    fn procedures(&self) -> Box<dyn Iterator<Item = (&str, ProcedureRef)> + '_> {
+        Box::new(
+            self.procedure_map
+                .iter()
+                .map(|(name, procedure)| (name.as_str(), procedure.clone() as _)),
+        )
+    }
+
+    #[inline]
+    fn get_procedure(&self, name: &str) -> CatalogResult<Option<ProcedureRef>> {
+        Ok(self.procedure_map.get(name).cloned())
     }
 }

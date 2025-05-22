@@ -20,7 +20,7 @@ impl Default for ProcedureRegistry {
 impl ProcedureRegistry {
     pub fn new() -> Self {
         Self {
-            next_procedure_id: ProcedureId::new(1).expect("procedure id should be non-zero"),
+            next_procedure_id: 1,
             procedures: HashMap::new(),
         }
     }

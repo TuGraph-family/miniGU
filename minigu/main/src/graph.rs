@@ -1,12 +1,15 @@
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
+use std::sync::Arc;
 
 use minigu_common::types::GraphId;
 use minigu_storage::storage::MutGraph;
 
+pub type GraphRef = Arc<()>;
+
 #[derive(Debug)]
 pub struct GraphRegistry {
     next_graph_id: GraphId,
-    graphs: HashMap<GraphId, Arc<dyn MutGraph>>,
+    graphs: HashMap<GraphId, GraphRef>,
 }
 
 impl Default for GraphRegistry {
@@ -18,7 +21,7 @@ impl Default for GraphRegistry {
 impl GraphRegistry {
     pub fn new() -> Self {
         Self {
-            next_graph_id: GraphId::new(1).expect("graph id should be non-zero"),
+            next_graph_id: 1,
             graphs: HashMap::new(),
         }
     }

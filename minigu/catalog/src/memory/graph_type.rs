@@ -2,13 +2,14 @@ use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::sync::Arc;
 
-use minigu_common::types::LabelId;
+use minigu_common::types::{LabelId, PropertyId};
 
 use crate::error::CatalogResult;
 use crate::label_set::LabelSet;
+use crate::property::Property;
 use crate::provider::{
-    EdgeTypeProvider, EdgeTypeRef, GraphTypeProvider, PropertyRef, PropertySetProvider,
-    VertexTypeProvider, VertexTypeRef,
+    EdgeTypeProvider, EdgeTypeRef, GraphTypeProvider, PropertySetProvider, VertexTypeProvider,
+    VertexTypeRef,
 };
 
 #[derive(Debug)]
@@ -17,6 +18,13 @@ pub struct MemoryGraphTypeCatalog {
     label_map: HashMap<String, LabelId>,
     vertex_type_map: HashMap<LabelSet, Arc<MemoryVertexTypeCatalog>>,
     edge_type_map: HashMap<LabelSet, Arc<MemoryEdgeTypeCatalog>>,
+}
+
+impl Default for MemoryGraphTypeCatalog {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MemoryGraphTypeCatalog {
@@ -36,7 +44,7 @@ impl MemoryGraphTypeCatalog {
         match self.label_map.entry(name) {
             Entry::Occupied(_) => None,
             Entry::Vacant(e) => {
-                self.next_label_id.checked_add(1)?;
+                self.next_label_id = self.next_label_id.checked_add(1)?;
                 e.insert(label_id);
                 Some(label_id)
             }
@@ -96,52 +104,52 @@ impl GraphTypeProvider for MemoryGraphTypeCatalog {
     }
 
     #[inline]
+    fn labels(&self) -> Box<dyn Iterator<Item = (&str, LabelId)> + '_> {
+        Box::new(self.label_map.iter().map(|(name, id)| (name.as_str(), *id)))
+    }
+
+    #[inline]
     fn get_vertex_type(&self, key: &LabelSet) -> CatalogResult<Option<VertexTypeRef>> {
         Ok(self.vertex_type_map.get(key).map(|v| v.clone() as _))
+    }
+
+    #[inline]
+    fn vertex_types(&self) -> Box<dyn Iterator<Item = (&LabelSet, VertexTypeRef)> + '_> {
+        Box::new(
+            self.vertex_type_map
+                .iter()
+                .map(|(key, v)| (key, v.clone() as _)),
+        )
     }
 
     #[inline]
     fn get_edge_type(&self, key: &LabelSet) -> CatalogResult<Option<EdgeTypeRef>> {
         Ok(self.edge_type_map.get(key).map(|e| e.clone() as _))
     }
+
+    #[inline]
+    fn edge_types(&self) -> Box<dyn Iterator<Item = (&LabelSet, EdgeTypeRef)> + '_> {
+        Box::new(
+            self.edge_type_map
+                .iter()
+                .map(|(key, e)| (key, e.clone() as _)),
+        )
+    }
 }
 
 #[derive(Debug)]
 pub struct MemoryVertexTypeCatalog {
     label_set: LabelSet,
-    property_map: HashMap<String, PropertyRef>,
+    properties: Vec<Property>,
 }
 
 impl MemoryVertexTypeCatalog {
     #[inline]
-    pub fn new(label_set: LabelSet) -> Self {
+    pub fn new(label_set: LabelSet, properties: Vec<Property>) -> Self {
         Self {
             label_set,
-            property_map: HashMap::new(),
+            properties,
         }
-    }
-
-    #[inline]
-    pub fn add_property(&mut self, name: String, property: PropertyRef) -> bool {
-        match self.property_map.entry(name) {
-            Entry::Occupied(_) => false,
-            Entry::Vacant(e) => {
-                e.insert(property);
-                true
-            }
-        }
-    }
-
-    #[inline]
-    pub fn remove_property(&mut self, name: &str) -> bool {
-        self.property_map.remove(name).is_some()
-    }
-}
-
-impl PropertySetProvider for MemoryVertexTypeCatalog {
-    #[inline]
-    fn get_property(&self, name: &str) -> CatalogResult<Option<PropertyRef>> {
-        Ok(self.property_map.get(name).cloned())
     }
 }
 
@@ -152,46 +160,48 @@ impl VertexTypeProvider for MemoryVertexTypeCatalog {
     }
 }
 
+impl PropertySetProvider for MemoryVertexTypeCatalog {
+    fn get_property(&self, name: &str) -> CatalogResult<Option<(PropertyId, &Property)>> {
+        Ok(self
+            .properties
+            .iter()
+            .enumerate()
+            .find(|(_, p)| p.name() == name)
+            .map(|(i, p)| (i as PropertyId, p)))
+    }
+
+    fn properties(&self) -> Box<dyn Iterator<Item = (PropertyId, &Property)> + '_> {
+        Box::new(
+            self.properties
+                .iter()
+                .enumerate()
+                .map(|(i, p)| (i as PropertyId, p)),
+        )
+    }
+}
+
 #[derive(Debug)]
 pub struct MemoryEdgeTypeCatalog {
     label_set: LabelSet,
     src: VertexTypeRef,
     dst: VertexTypeRef,
-    property_map: HashMap<String, PropertyRef>,
+    properties: Vec<Property>,
 }
 
 impl MemoryEdgeTypeCatalog {
     #[inline]
-    pub fn new(label_set: LabelSet, src: VertexTypeRef, dst: VertexTypeRef) -> Self {
+    pub fn new(
+        label_set: LabelSet,
+        src: VertexTypeRef,
+        dst: VertexTypeRef,
+        properties: Vec<Property>,
+    ) -> Self {
         Self {
             label_set,
             src,
             dst,
-            property_map: HashMap::new(),
+            properties,
         }
-    }
-
-    #[inline]
-    pub fn add_property(&mut self, name: String, property: PropertyRef) -> bool {
-        match self.property_map.entry(name) {
-            Entry::Occupied(_) => false,
-            Entry::Vacant(e) => {
-                e.insert(property);
-                true
-            }
-        }
-    }
-
-    #[inline]
-    pub fn remove_property(&mut self, name: &str) -> bool {
-        self.property_map.remove(name).is_some()
-    }
-}
-
-impl PropertySetProvider for MemoryEdgeTypeCatalog {
-    #[inline]
-    fn get_property(&self, name: &str) -> CatalogResult<Option<PropertyRef>> {
-        Ok(self.property_map.get(name).cloned())
     }
 }
 
@@ -209,5 +219,25 @@ impl EdgeTypeProvider for MemoryEdgeTypeCatalog {
     #[inline]
     fn dst(&self) -> VertexTypeRef {
         self.dst.clone()
+    }
+}
+
+impl PropertySetProvider for MemoryEdgeTypeCatalog {
+    fn get_property(&self, name: &str) -> CatalogResult<Option<(PropertyId, &Property)>> {
+        Ok(self
+            .properties
+            .iter()
+            .enumerate()
+            .find(|(_, p)| p.name() == name)
+            .map(|(i, p)| (i as PropertyId, p)))
+    }
+
+    fn properties(&self) -> Box<dyn Iterator<Item = (PropertyId, &Property)> + '_> {
+        Box::new(
+            self.properties
+                .iter()
+                .enumerate()
+                .map(|(i, p)| (i as PropertyId, p)),
+        )
     }
 }
