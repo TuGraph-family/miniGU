@@ -2,8 +2,6 @@ use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::sync::{Arc, Weak};
 
-use minigu_common::types::ProcedureId;
-
 use super::graph::MemoryGraphCatalog;
 use super::graph_type::MemoryGraphTypeCatalog;
 use crate::error::CatalogResult;
