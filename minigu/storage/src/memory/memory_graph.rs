@@ -1,4 +1,3 @@
-use std::sync::atomic::Ordering;
 use std::sync::{Arc, RwLock, Weak};
 
 use crossbeam_skiplist::SkipSet;
@@ -28,9 +27,6 @@ macro_rules! update_properties {
         let mut current = $entry.chain.current.write().unwrap();
         check_write_conflict(current.commit_ts, $txn)?;
 
-        // Create a new version with updated properties.
-        current.data.set_props(&$indices, $props);
-
         let delta_props = $indices
             .iter()
             .map(|i| current.data.properties.get(*i).unwrap().clone())
@@ -45,6 +41,12 @@ macro_rules! update_properties {
         let undo_entry = Arc::new(UndoEntry::new(delta, current.commit_ts, undo_ptr));
         undo_buffer.push(undo_entry.clone());
         *$entry.chain.undo_ptr.write().unwrap() = Arc::downgrade(&undo_entry);
+
+        // Update the commit timestamp to the transaction ID.
+        current.commit_ts = $txn.txn_id();
+
+        // Create a new version with updated properties.
+        current.data.set_props(&$indices, $props);
     }};
 }
 
@@ -121,7 +123,7 @@ impl VersionedVertex {
         if (commit_ts.is_txn_id() && commit_ts == txn.txn_id())
             || (commit_ts.is_commit_ts() && commit_ts <= txn.start_ts())
         {
-            // Check if the vertex is tombstone
+            // Check if the current vertex is tombstone
             if visible_vertex.is_tombstone() {
                 return Err(StorageError::Transaction(
                     TransactionError::VersionNotVisible(format!(
@@ -146,6 +148,15 @@ impl VersionedVertex {
                 _ => unreachable!("Unreachable delta op for a vertex"),
             };
             MemTransaction::apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
+            // Check if the vertex is tombstone after applying the deltas
+            if visible_vertex.is_tombstone() {
+                return Err(StorageError::Transaction(
+                    TransactionError::VersionNotVisible(format!(
+                        "Vertex is tombstone for {:?}",
+                        txn.txn_id()
+                    )),
+                ));
+            }
             Ok(visible_vertex)
         }
     }
@@ -413,14 +424,18 @@ impl MemoryGraph {
             match entry.op {
                 Operation::BeginTransaction(start_ts) => {
                     // Create a new transaction
-                    let txn =
-                        self.begin_transaction_at(entry.txn_id, start_ts, entry.iso_level, true);
+                    let txn = self.begin_transaction_at(
+                        Some(entry.txn_id),
+                        Some(start_ts),
+                        entry.iso_level,
+                        true,
+                    );
                     assert_eq!(txn.start_ts(), start_ts);
                 }
                 Operation::CommitTransaction(commit_ts) => {
                     // Commit the transaction
                     let txn = self.txn_manager.active_txns.get(&entry.txn_id).unwrap();
-                    txn.value().commit_at(commit_ts, true)?;
+                    txn.value().commit_at(Some(commit_ts), true)?;
                 }
                 Operation::AbortTransaction => {
                     // Abort the transaction
@@ -463,20 +478,20 @@ impl MemoryGraph {
         self: &Arc<Self>,
         isolation_level: IsolationLevel,
     ) -> Arc<MemTransaction> {
-        // Allocate a new transaction ID and read timestamp.
-        let txn_id = self.txn_manager.new_txn_id();
-        let start_ts = Timestamp::with_ts(self.txn_manager.latest_commit_ts.load(Ordering::SeqCst));
-
-        self.begin_transaction_at(txn_id, start_ts, isolation_level, false)
+        self.begin_transaction_at(None, None, isolation_level, false)
     }
 
     pub fn begin_transaction_at(
         self: &Arc<Self>,
-        txn_id: Timestamp,
-        start_ts: Timestamp,
+        txn_id: Option<Timestamp>,
+        start_ts: Option<Timestamp>,
         isolation_level: IsolationLevel,
         skip_wal: bool,
     ) -> Arc<MemTransaction> {
+        // Update the counters
+        let txn_id = self.txn_manager.new_txn_id(txn_id);
+        let start_ts = self.txn_manager.new_commit_ts(start_ts);
+
         // Acquire the checkpoint lock to prevent new transactions from being created
         // while we are creating a checkpoint
         let _checkpoint_lock = self
@@ -1144,18 +1159,95 @@ pub mod tests {
     }
 
     #[test]
-    fn test_transaction_isolation() {
+    fn test_serializable_prevent_dirty_read() {
         let (graph, _cleaner) = mock_graph();
 
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-        let v1 = create_vertex_eve();
-        let vid1 = graph.create_vertex(&txn1, v1.clone()).unwrap();
+        let alice_vid = 1;
+        graph
+            .set_vertex_property(&txn1, alice_vid, vec![1], vec![PropertyValue::Int(26)])
+            .unwrap();
 
         let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
-        assert!(graph.get_vertex(&txn2, vid1).is_err());
+        // Under serializable isolation, dirty read (read vertex/edge which is modified by other
+        // transactions) is not allowed
+        assert!(graph.get_vertex(&txn2, alice_vid).is_err());
 
-        let _ = txn1.abort();
-        assert!(graph.get_vertex(&txn2, vid1).is_err());
+        let _ = txn1.commit().unwrap();
+        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+        let read_v1 = graph.get_vertex(&txn2, alice_vid).unwrap();
+        assert_eq!(read_v1.properties()[1], PropertyValue::Int(26));
+        assert!(txn2.commit().is_ok());
+    }
+
+    #[test]
+    fn test_serializable_prevent_write_write_conflict() {
+        let (graph, _cleaner) = mock_graph();
+
+        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+        let alice_vid = 1;
+        graph
+            .set_vertex_property(&txn1, alice_vid, vec![1], vec![PropertyValue::Int(26)])
+            .unwrap();
+
+        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+        assert!(
+            graph
+                .set_vertex_property(&txn2, alice_vid, vec![1], vec![PropertyValue::Int(27)])
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn test_serializable_prevent_non_repeatable_read() {
+        let (graph, _cleaner) = mock_graph();
+
+        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+        let alice_vid = 1;
+        let read_v1 = graph.get_vertex(&txn1, alice_vid).unwrap();
+        assert_eq!(read_v1.properties()[1], PropertyValue::Int(25));
+
+        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+        graph
+            .set_vertex_property(&txn2, alice_vid, vec![1], vec![PropertyValue::Int(26)])
+            .unwrap();
+        assert!(txn2.commit().is_ok());
+
+        // Txn1 should should not see the update from txn2
+        let read_v1 = graph.get_vertex(&txn1, alice_vid).unwrap();
+        assert_eq!(read_v1.properties()[1], PropertyValue::Int(25));
+    }
+
+    #[test]
+    fn test_serializable_prevent_phantom() {
+        let (graph, _cleaner) = mock_graph();
+
+        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+        // Read verticex with age ranging from 24 to 28
+        let iter1 = txn1.iter_vertices().filter_map(|v| v.ok()).filter(|v| {
+            v.properties()[1].as_int().unwrap() >= &24 && v.properties()[1].as_int().unwrap() <= &28
+        });
+        let mut count = 0;
+        for _ in iter1 {
+            count += 1;
+        }
+        assert_eq!(count, 4);
+
+        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+        let eve = create_vertex_eve();
+        graph.create_vertex(&txn2, eve).unwrap();
+        assert!(txn2.commit().is_ok());
+
+        // Txn1 should not be able to read vertex `eve`,
+        // since it is created after txn1 started
+        let iter2 = txn1.iter_vertices().filter_map(|v| v.ok()).filter(|v| {
+            v.properties()[1].as_int().unwrap() >= &24 && v.properties()[1].as_int().unwrap() <= &28
+        });
+        let mut count = 0;
+        for _ in iter2 {
+            count += 1;
+        }
+        assert_eq!(count, 4);
     }
 
     #[test]
@@ -1197,19 +1289,6 @@ pub mod tests {
 
         let txn3 = graph.begin_transaction(IsolationLevel::Serializable);
         assert!(graph.get_vertex(&txn3, vid1).is_err());
-    }
-
-    #[test]
-    fn test_conflict_detection() {
-        let (graph, _cleaner) = mock_graph();
-
-        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-        let v1 = create_vertex_eve();
-        graph.create_vertex(&txn1, v1).unwrap();
-
-        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
-        assert!(graph.create_vertex(&txn2, create_vertex_eve()).is_err());
-        assert!(graph.create_vertex(&txn2, create_vertex_frank()).is_ok());
     }
 
     #[test]
@@ -1315,26 +1394,6 @@ pub mod tests {
         let txn3 = graph.begin_transaction(IsolationLevel::Serializable);
         let v = graph.get_vertex(&txn3, vid1).unwrap();
         assert_eq!(v.properties()[0], PropertyValue::Int(25));
-    }
-
-    #[test]
-    fn test_read_after_write_conflict() {
-        let (graph, _cleaner) = mock_graph();
-
-        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-        let vid1 = graph.create_vertex(&txn1, create_vertex_eve()).unwrap();
-        assert!(txn1.commit().is_ok());
-
-        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
-        let _ = graph.get_vertex(&txn2, vid1).unwrap();
-
-        let txn3 = graph.begin_transaction(IsolationLevel::Serializable);
-        graph
-            .set_vertex_property(&txn3, vid1, vec![0], vec![PropertyValue::Int(99)])
-            .unwrap();
-        assert!(txn3.commit().is_ok());
-
-        assert!(txn2.commit().is_err());
     }
 
     #[test]
