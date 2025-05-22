@@ -1,65 +1,73 @@
-use minigu_catalog::provider::{EdgeTypeRef, GraphRef, GraphTypeRef, PropertyRef, SchemaRef, VertexTypeRef};
+use minigu_catalog::provider::{EdgeTypeRef, GraphRef, GraphTypeRef, ProcedureRef, PropertyRef, SchemaRef, VertexTypeRef};
 use serde::Serialize;
 
 pub type Ident=smol_str::SmolStr;
 
 /// A catalog wrapper for a schema, containing its name and internal reference.
 #[derive(Debug, Serialize)]
-pub struct SchemaCatalog {
+pub struct SchemaCatalogRef {
     /// The identifier (name) of the schema.
     pub name: Ident,
     /// Internal reference to the actual schema object (not serialized).
     #[serde(skip_serializing)]
-    pub obj_ref: SchemaRef,
+    pub schema_ref: SchemaRef,
 }
 
 /// A catalog wrapper for a graph type, containing its name and internal reference.
 #[derive(Debug, Serialize)]
-pub struct GraphTypeCatalog {
+pub struct GraphTypeCatalogRef {
     /// The identifier (name) of the graph type.
     pub name: Ident,
     /// Internal reference to the actual graph type object (not serialized).
     #[serde(skip_serializing)]
-    pub obj_ref: GraphTypeRef,
+    pub graph_type_ref: GraphTypeRef,
 }
 
 /// A catalog wrapper for a graph instance, containing its name and internal reference.
 #[derive(Debug, Serialize)]
-pub struct GraphCatalog {
+pub struct GraphCatalogRef {
     /// The identifier (name) of the graph.
     pub name: Ident,
     /// Internal reference to the actual graph object (not serialized).
     #[serde(skip_serializing)]
-    pub obj_ref: GraphRef,
+    pub graph_ref: GraphRef,
 }
 
 /// A catalog wrapper for a vertex type, containing its name and internal reference.
 #[derive(Debug, Serialize)]
-pub struct VertexTypeCatalog {
+pub struct VertexTypeCatalogRef {
     /// The identifier (name) of the vertex type.
-    name: Ident,
+    pub name: Ident,
     /// Internal reference to the actual vertex type object (not serialized).
     #[serde(skip_serializing)]
-    obj_ref: VertexTypeRef,
+    pub vertex_type_ref: VertexTypeRef,
 }
 
 /// A catalog wrapper for an edge type, containing its name and internal reference.
 #[derive(Debug, Serialize)]
-pub struct EdgeTypeCatalog {
+pub struct EdgeTypeCatalogRef {
     /// The identifier (name) of the edge type.
-    name: Ident,
+    pub name: Ident,
     /// Internal reference to the actual edge type object (not serialized).
     #[serde(skip_serializing)]
-    obj_ref: EdgeTypeRef,
+    pub edge_type_ref: EdgeTypeRef,
 }
 
 /// A catalog wrapper for a property, containing its name and internal reference.
 #[derive(Debug, Serialize)]
-pub struct PropertyCatalog {
+pub struct PropertyCatalogRef {
     /// The identifier (name) of the property.
-    name: Ident,
+    pub name: Ident,
     /// Internal reference to the actual property object (not serialized).
     #[serde(skip_serializing)]
-    obj_ref: PropertyRef,
+    pub property_ref: PropertyRef,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CallProcedureCatalogRef {
+    pub name: Ident,
+    // TODO: Add CallProcedureCatalog
+    #[serde(skip_serializing)]
+    pub procedure_ref: ProcedureRef
 }
 

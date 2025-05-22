@@ -1221,6 +1221,7 @@ dependencies = [
  "matches",
  "miette",
  "minigu-catalog",
+ "minigu-common",
  "serde",
  "smol_str",
  "thiserror",

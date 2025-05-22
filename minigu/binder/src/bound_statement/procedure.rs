@@ -1,26 +1,26 @@
 use gql_parser::ast::Yield;
 use macro_rules_attribute::apply;
+use serde::Serialize;
+use crate::bound_statement::expr::BoundExpr;
+use crate::bound_statement::object_ref::BoundProcedureRef;
+use crate::catalog_ref::CallProcedureCatalogRef;
 
-use crate::macros::base;
-use crate::program::bound_statement::expr::BoundExpr;
-use crate::program::bound_statement::object_ref::BoundProcedureRef;
-
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub struct BoundCallProcedureStatement {
     pub optional: bool,
     pub procedure: BoundProcedureCall,
 }
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub enum BoundProcedureCall {
     Inline(BoundInlineProcedureCall),
     Named(BoundNamedProcedureCall),
 }
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub struct BoundInlineProcedureCall {}
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub struct BoundNamedProcedureCall {
     pub name: BoundProcedureRef,
     pub args: Vec<BoundExpr>,

@@ -1,19 +1,17 @@
-use gql_parser::ast::{AmbientLinearQueryStatement, CompositeQueryStatement, ElementPattern, ElementPatternFiller, ElementPatternPredicate, FocusedLinearQueryStatement, FocusedLinearQueryStatementPart, GraphPattern, Ident, LabelExpr, LinearQueryStatement, MatchStatement, PathPattern, PathPatternExpr, PathPatternPrefix, ResultStatement, Return, ReturnStatement, SimpleQueryStatement};
+use gql_parser::ast::*;
 
-use crate::error::{Error, NotSupportError};
-use crate::program::bound_statement::common::{
-    BoundElementPattern, BoundElementPatternFiller, BoundElementPatternPredicate,
-    BoundFieldOrProperty, BoundLabelExpr, BoundPathPattern, BoundPathPatternPrefix, FieldId,
-};
-use crate::program::bound_statement::expr::BoundPathPatternExpr;
-use crate::program::bound_statement::query::{BoundAmbientLinearQueryStatement, BoundCompositeQueryStatement, BoundFocusedLinearQueryStatement, BoundFocusedLinearQueryStatementPart, BoundGraphPattern, BoundGraphPatternBindingTable, BoundLinearQueryStatement, BoundMatchStatement, BoundResultStatement, BoundReturn, BoundReturnItem, BoundReturnStatement, BoundSimpleQueryStatement};
-use crate::program::Binder;
+use crate::binder::binder::Binder;
+use crate::bound_statement::common::*;
+use crate::bound_statement::expr::BoundPathPatternExpr;
+use crate::bound_statement::query::*;
+use crate::error::{BindError, Error};
+
 
 impl Binder {
     pub(crate) fn resolve_simple_query_statement(
         &self,
         statement: &SimpleQueryStatement,
-    ) -> Result<BoundSimpleQueryStatement, Error> {
+    ) -> Result<BoundSimpleQueryStatement, BindError> {
         match statement {
             SimpleQueryStatement::Match(m) => match m {
                 MatchStatement::Simple(binding_table) => {
@@ -34,7 +32,7 @@ impl Binder {
                     ))
                 }
                 _ => {
-                    return Err(Error::NotSupported("MatchStatement".to_string()));
+                    return Err(BindError::NotSupported("MatchStatement".to_string()));
                 }
             },
             SimpleQueryStatement::Call(call) => Ok(BoundSimpleQueryStatement::Call(
@@ -46,7 +44,7 @@ impl Binder {
     pub(crate) fn resolve_path_pattern(
         &self,
         pattern: &PathPattern,
-    ) -> Result<BoundPathPattern, Error> {
+    ) -> Result<BoundPathPattern, BindError> {
         let variable = pattern.variable.as_ref().map(|v| v.value().clone());
         let prefix = pattern
             .prefix
@@ -64,14 +62,14 @@ impl Binder {
     pub(crate) fn resolve_path_pattern_prefix(
         &self,
         prefix: &PathPatternPrefix,
-    ) -> Result<BoundPathPatternPrefix, Error> {
-        return Err(Error::ErrorCur);
+    ) -> Result<BoundPathPatternPrefix, BindError> {
+        return Err(BindError::ErrorCur);
     }
 
     pub(crate) fn resolve_path_pattern_expr(
         &self,
         pattern_expr: &PathPatternExpr,
-    ) -> Result<BoundPathPatternExpr, Error> {
+    ) -> Result<BoundPathPatternExpr, BindError> {
         match pattern_expr {
             PathPatternExpr::Union(list) => {
                 let resolved = list
@@ -126,7 +124,7 @@ impl Binder {
     pub(crate) fn resolve_element_pattern_filler(
         &self,
         filler: &ElementPatternFiller,
-    ) -> Result<BoundElementPatternFiller, Error> {
+    ) -> Result<BoundElementPatternFiller, BindError> {
         let variable = filler.variable.as_ref().map(|sp| sp.value().clone());
         let label = filler
             .label
@@ -146,14 +144,14 @@ impl Binder {
     }
 
     // TODO: How to get Field Id from a field name? The graph Type? The Schema?
-    pub(crate) fn resolve_field_id(&self, field: &Ident) -> Result<FieldId, Error> {
+    pub(crate) fn resolve_field_id(&self, field: &Ident) -> Result<FieldId, BindError> {
         Ok(1)
     }
 
     pub(crate) fn resolve_element_pattern_predicate(
         &self,
         predicate: &ElementPatternPredicate,
-    ) -> Result<BoundElementPatternPredicate, Error> {
+    ) -> Result<BoundElementPatternPredicate, BindError> {
         match predicate {
             ElementPatternPredicate::Where(expr) => Ok(BoundElementPatternPredicate::Where(
                 self.resolve_expr(expr.value())?,
@@ -176,7 +174,7 @@ impl Binder {
     pub(crate) fn resolve_label_expr(
         &self,
         label_expr: &LabelExpr,
-    ) -> Result<BoundLabelExpr, Error> {
+    ) -> Result<BoundLabelExpr, BindError> {
         match label_expr {
             LabelExpr::Wildcard => Ok(BoundLabelExpr::Wildcard),
             LabelExpr::Conjunction(lhs, rhs) => Ok(BoundLabelExpr::Conjunction(
@@ -200,7 +198,7 @@ impl Binder {
     pub(crate) fn resolve_graph_pattern(
         &self,
         graph_pattern: &GraphPattern,
-    ) -> Result<BoundGraphPattern, Error> {
+    ) -> Result<BoundGraphPattern, BindError> {
         let match_mode = graph_pattern.match_mode.as_ref().map(|v| v.value().clone());
 
         let patterns = graph_pattern
@@ -227,7 +225,7 @@ impl Binder {
     pub(crate) fn resolve_return_statement(
         &self,
         ret: &ReturnStatement,
-    ) -> Result<BoundReturnStatement, Error> {
+    ) -> Result<BoundReturnStatement, BindError> {
         let bound_return = match ret.items.value() {
             Return::Items(items) => {
                 let mut return_items = vec![];
@@ -252,7 +250,10 @@ impl Binder {
         })
     }
 
-    pub(crate) fn resolve_focused_linear_query_parts(&self, part: &FocusedLinearQueryStatementPart) -> Result<BoundFocusedLinearQueryStatementPart, Error> {
+    pub(crate) fn resolve_focused_linear_query_parts(
+        &self,
+        part: &FocusedLinearQueryStatementPart,
+    ) -> Result<BoundFocusedLinearQueryStatementPart, BindError> {
         let bound_graph_expr = self.resolve_graph_expr(part.use_graph.value())?;
         let mut vec_bound_stmt = vec![];
         for stmt in part.statements.iter() {
@@ -264,12 +265,18 @@ impl Binder {
         })
     }
 
-    pub(crate) fn resolve_result_statement(&self, stmt: &ResultStatement) -> Result<BoundResultStatement, Error> {
+    pub(crate) fn resolve_result_statement(
+        &self,
+        stmt: &ResultStatement,
+    ) -> Result<BoundResultStatement, BindError> {
         match stmt {
-            ResultStatement::Return {statement, order_by} => {
+            ResultStatement::Return {
+                statement,
+                order_by,
+            } => {
                 // TODO: Hande order by.
                 Ok(BoundResultStatement::Return {
-                    statement: Box::new(self.resolve_return_statement(statement.value())?)
+                    statement: Box::new(self.resolve_return_statement(statement.value())?),
                 })
             }
             ResultStatement::Finish => Ok(BoundResultStatement::Finish),
@@ -278,10 +285,10 @@ impl Binder {
 
     pub(crate) fn resolve_focused_linear_query_statement(
         &mut self,
-        query:&FocusedLinearQueryStatement
-    ) -> Result<BoundFocusedLinearQueryStatement, Error> {
+        query: &FocusedLinearQueryStatement,
+    ) -> Result<BoundFocusedLinearQueryStatement, BindError> {
         match query {
-            FocusedLinearQueryStatement::Parts {parts, result} => {
+            FocusedLinearQueryStatement::Parts { parts, result } => {
                 let mut vec_bound_stmt = vec![];
                 for part in parts {
                     vec_bound_stmt.push(self.resolve_focused_linear_query_parts(part.value())?)
@@ -291,30 +298,31 @@ impl Binder {
                     parts: vec_bound_stmt,
                     result,
                 })
-            },
-            FocusedLinearQueryStatement::Result {use_graph, result} => {
+            }
+            FocusedLinearQueryStatement::Result { use_graph, result } => {
                 let use_graph_expr = self.resolve_graph_expr(use_graph.value())?;
                 let result = self.resolve_result_statement(result.value())?;
                 Ok(BoundFocusedLinearQueryStatement::Result {
                     use_graph: use_graph_expr,
                     result,
                 })
-            },
-            FocusedLinearQueryStatement::Nested {use_graph, query} => {
+            }
+            FocusedLinearQueryStatement::Nested { use_graph, query } => {
                 let use_graph_expr = self.resolve_graph_expr(use_graph.value())?;
-                let procedure = self.bind_procedure(query.value())?;
+                let procedure = self.bind_procedure(query.value(), self.catalog.clone(), Some(self.schema.clone()))?;
                 Ok(BoundFocusedLinearQueryStatement::Nested {
                     use_graph: use_graph_expr,
                     query: Box::new(procedure),
                 })
-            },
-            FocusedLinearQueryStatement::Select{} => {
-                return Err(Error::ErrorCur)
             }
+            FocusedLinearQueryStatement::Select {} => return Err(BindError::ErrorCur),
         }
     }
-    
-    pub(crate) fn resolve_ambient_linear_query_statement(&self, stmt:&AmbientLinearQueryStatement) -> Result<BoundAmbientLinearQueryStatement, Error> {
+
+    pub(crate) fn resolve_ambient_linear_query_statement(
+        &self,
+        stmt: &AmbientLinearQueryStatement,
+    ) -> Result<BoundAmbientLinearQueryStatement, BindError> {
         match stmt {
             AmbientLinearQueryStatement::Parts { parts, result } => {
                 let mut simple_query_vec = vec![];
@@ -336,22 +344,20 @@ impl Binder {
                     ResultStatement::Finish => BoundResultStatement::Finish,
                 };
                 Ok(BoundAmbientLinearQueryStatement::Parts {
-                        parts: simple_query_vec,
-                        result: bound_return,
-                    },
-                )
+                    parts: simple_query_vec,
+                    result: bound_return,
+                })
             }
             AmbientLinearQueryStatement::Nested(nested_query) => {
-                return Err(Error::NotSupported("NestedQuery".to_string()));
+                return Err(BindError::NotSupported("NestedQuery".to_string()));
             }
         }
-        
     }
 
     pub(crate) fn resolve_linear_query_statement(
         &mut self,
         query: &LinearQueryStatement,
-    ) -> Result<BoundLinearQueryStatement, Error> {
+    ) -> Result<BoundLinearQueryStatement, BindError> {
         match query {
             LinearQueryStatement::Focused(query) => {
                 let stmt = self.resolve_focused_linear_query_statement(query)?;
@@ -360,20 +366,24 @@ impl Binder {
             LinearQueryStatement::Ambient(query) => {
                 let stmt = self.resolve_ambient_linear_query_statement(query)?;
                 Ok(BoundLinearQueryStatement::Ambient(stmt))
-            },
+            }
         }
     }
 
-    pub (crate) fn resolve_composite_query_statement(
+    pub(crate) fn resolve_composite_query_statement(
         &mut self,
         query: &CompositeQueryStatement,
-    ) -> Result<BoundCompositeQueryStatement, Error> {
+    ) -> Result<BoundCompositeQueryStatement, BindError> {
         match query {
             CompositeQueryStatement::Primary(primary_query) => {
                 let stmt = self.resolve_linear_query_statement(primary_query)?;
                 Ok(BoundCompositeQueryStatement::Primary(stmt))
             }
-            CompositeQueryStatement::Conjunction {conjunction, left, right} => {
+            CompositeQueryStatement::Conjunction {
+                conjunction,
+                left,
+                right,
+            } => {
                 let left_stmt = self.resolve_composite_query_statement(left.value())?;
                 let right_stmt = self.resolve_composite_query_statement(right.value())?;
                 Ok(BoundCompositeQueryStatement::Conjunction {

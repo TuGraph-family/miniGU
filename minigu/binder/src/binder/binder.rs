@@ -2,7 +2,7 @@ use gql_parser::ast::{Procedure, Statement};
 use minigu_catalog::provider::{CatalogRef, GraphRef, SchemaRef};
 
 use crate::bound_statement::procedure_spec::{BoundNextStatement, BoundProcedure, BoundStatement};
-use crate::catalog_ref::{GraphCatalog, SchemaCatalog};
+use crate::catalog_ref::{GraphCatalogRef, SchemaCatalogRef};
 use crate::error::BindResult;
 
 pub struct Binder {
@@ -38,7 +38,7 @@ impl Binder {
     pub fn bind_statement(&mut self, statement: &Statement) -> BindResult<BoundStatement> {
         let mut resolved_statement = self.resolve_statement(&statement)?;
         self.type_check(&resolved_statement)?;
-        self.validate(resolved_statement)?;
+        self.validate(&resolved_statement)?;
         Ok(resolved_statement)
     }
 }

@@ -5,12 +5,12 @@ use gql_parser::span::OptSpanned;
 use crate::binder::bound_statement::data::BoundLinearDataModifyingStatement;
 use crate::binder::bound_statement::query::BoundCompositeQueryStatement;
 use crate::bound_statement::catalog::LinearBoundCatalogModifyingStatement;
-use crate::catalog_ref::SchemaCatalog;
+use crate::catalog_ref::SchemaCatalogRef;
 use crate::macros::base;
 
 #[derive(Debug, Serialize)]
 pub struct BoundProcedure {
-    pub at: Option<SchemaCatalog>,
+    pub at: Option<SchemaCatalogRef>,
     pub binding_variable_def: BindingVariableDefBlock,
     pub statement: BoundStatement,
     pub next_statement: Vec<BoundNextStatement>,

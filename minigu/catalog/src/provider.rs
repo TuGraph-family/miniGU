@@ -1,6 +1,7 @@
 use std::fmt::Debug;
+use std::rc::Weak;
 use std::sync::Arc;
-
+use gql_parser::ast::Ident;
 use minigu_common::types::{GraphId, LabelId, PropertyId};
 
 use crate::error::CatalogResult;
@@ -15,6 +16,8 @@ pub type GraphRef = Arc<dyn GraphProvider>;
 pub type GraphTypeRef = Arc<dyn GraphTypeProvider>;
 pub type VertexTypeRef = Arc<dyn VertexTypeProvider>;
 pub type EdgeTypeRef = Arc<dyn EdgeTypeProvider>;
+
+pub type ProcedureRef = Arc<dyn ProcedureProvider>;
 pub type PropertyRef = Arc<Property>;
 
 /// The top-level catalog provider, responsible for managing multiple directories and schemas,
@@ -35,7 +38,7 @@ pub trait DirectoryProvider: Debug + Send + Sync {
     fn id(&self) -> SchemaId;
 
     /// Returns the parent directory ID of the directory.
-    fn parent(&self) -> Option<SchemaId>;
+    fn parent(&self) -> CatalogResult<Weak<dyn DirectoryProvider>>;
 
     /// Retrieves a directory or schema by its name.
     fn get_directory_or_schema(&self, name: &str) -> CatalogResult<Option<DirectoryOrSchema>>;
@@ -60,6 +63,8 @@ pub trait SchemaProvider: Debug + Send + Sync {
 
     /// Retrieves a graph type by its ID.
     fn get_graph_type_by_id(&self, id: GraphTypeId) -> CatalogResult<Option<GraphTypeRef>>;
+
+    fn get_procedure(&self, name: &str) -> CatalogResult<Option<ProcedureRef>>;
 }
 
 /// Represents a graph, which is an instance of a graph type.
@@ -124,6 +129,10 @@ pub trait PropertySetProvider: Debug + Send + Sync {
 
     /// Retrieves a property by its ID.
     fn get_property_by_id(&self, id: PropertyId) -> CatalogResult<Option<PropertyRef>>;
+}
+
+pub trait ProcedureProvider: Debug + Send + Sync {
+    fn name(&self) -> Ident;
 }
 
 #[derive(Debug, Clone)]

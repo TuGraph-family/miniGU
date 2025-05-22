@@ -6,18 +6,6 @@ use gql_parser::span::OptSpanned;
 use macro_rules_attribute::apply;
 use minigu_catalog::provider::SchemaRef;
 use crate::macros::base;
-use crate::program::bound_statement::catalog::LinearBoundCatalogModifyingStatement;
-use crate::program::bound_statement::data::BoundLinearDataModifyingStatement;
-use crate::program::bound_statement::expr::{BoundExpr, BoundPathPatternExpr};
-use crate::program::bound_statement::object_ref::BoundSchemaRef;
-use crate::program::bound_statement::query::BoundCompositeQueryStatement;
-
-
-pub type LabelId = u32;
-pub type FieldId = u32;
-pub type ProcedureId = u32;
-pub type GraphTypeId = u32;
-pub type GraphId = u32;
 
 #[apply(base)]
 pub struct BoundElementPatternFiller {

@@ -2,8 +2,11 @@ use gql_parser::ast::{GraphElementType, Ident, SchemaPath, SchemaPathSegment};
 use macro_rules_attribute::apply;
 use serde::Serialize;
 use minigu_catalog::types::SchemaId;
-use crate::catalog_ref::GraphTypeCatalog;
+use crate::bound_statement::catalog::BoundGraphTypeRef;
+use crate::bound_statement::expr::BoundGraphExpr;
+use crate::catalog_ref::{CallProcedureCatalogRef, GraphTypeCatalogRef};
 use crate::macros::base;
+
 
 // Standard schema path, without relative paths and variables.
 #[apply(base)]
@@ -11,41 +14,14 @@ pub struct CanonicalSchemaPath {
     pub segments: Vec<Ident>,
 }
 
-#[apply(base)]
-pub enum BoundSchemaRef {
-    // Schema Path or Ref will be bounded to schema id.
-    SchemaId(SchemaId),
-    UnResolvedParameter(Ident),
-}
 
-#[apply(base)]
-pub struct BoundCatalogObjectRef {
-    pub schema: SchemaId,
-    // Parsed ID
-    pub object: Vec<u32>,
-}
-
-#[apply(base)]
-pub struct BoundCatalogObjectStrRef {
-    pub schema: CanonicalSchemaPath,
-    // For some creation operations, where the corresponding ID cannot be
-    // obtained immediately, the corresponding character name is retained here.
-    pub object: Vec<Ident>,
-}
-
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub enum BoundProcedureRef {
-    Ref(BoundCatalogObjectRef),
+    // Catalog ref or just parameter.
+    Ref(CallProcedureCatalogRef),
     Parameter(Ident),
 }
-
-#[apply(base)]
-pub struct BoundGraphRef {
-    pub path: BoundCatalogObjectRef,
-}
-
-
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub enum BoundOfGraphType {
     Like(BoundGraphExpr),
     Ref(BoundGraphTypeRef),
@@ -53,7 +29,7 @@ pub enum BoundOfGraphType {
     Any,
 }
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub enum BoundGraphTypeSource {
     Copy(BoundGraphTypeRef),
     Like(BoundGraphExpr),
@@ -94,14 +70,4 @@ pub fn normalize_path(path: &SchemaPath) -> CanonicalSchemaPath {
         }
     }
     CanonicalSchemaPath { segments: stack }
-}
-
-impl BoundSchemaRef {
-    pub fn as_canonical(&self) -> Option<&CanonicalSchemaPath> {
-        match self {
-            BoundSchemaRef::Canonical(path) => Some(path),
-            // TODO: Handle Parameter.
-            _ => None,
-        }
-    }
 }

@@ -3,9 +3,9 @@ use minigu_common::types::PropertyId;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Property {
-    id: PropertyId,
-    logical_type: LogicalType,
-    nullable: bool,
+    pub id: PropertyId,
+    pub logical_type: LogicalType,
+    pub nullable: bool,
 }
 
 impl Property {

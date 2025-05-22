@@ -1,14 +1,14 @@
 use minigu_catalog::provider::{DirectoryOrSchema, SchemaRef};
 use crate::binder::binder::Binder;
 use crate::bound_statement::object_ref::CanonicalSchemaPath;
-use crate::catalog_ref::SchemaCatalog;
+use crate::catalog_ref::SchemaCatalogRef;
 use crate::error::{BindError, BindResult};
 
 impl Binder {
     pub(crate) fn resolve_canonical_schema_path(
         &self,
         path: &CanonicalSchemaPath,
-    ) -> BindResult<SchemaCatalog> {
+    ) -> BindResult<SchemaCatalogRef> {
         let err = || BindError::SchemaNotExists(path.to_string());
         let mut current = match self.catalog.get_root().map_err(|_| err())? {
             DirectoryOrSchema::Directory(dir) => dir,
@@ -23,9 +23,9 @@ impl Binder {
 
         let final_name = path.segments.last().ok_or_else(err)?;
         match current.get_directory_or_schema(final_name).map_err(|_| err())? {
-            Some(DirectoryOrSchema::Schema(schema)) => Ok(SchemaCatalog {
+            Some(DirectoryOrSchema::Schema(schema)) => Ok(SchemaCatalogRef {
                 name: final_name.clone(),
-                obj_ref: schema,
+                schema_ref: schema,
             }),
             _ => Err(err())
         }

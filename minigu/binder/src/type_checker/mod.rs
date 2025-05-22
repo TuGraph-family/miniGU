@@ -1,27 +1,23 @@
 use gql_parser::ast::{EdgeType, GraphElementType, Ident, NodeOrEdgeTypeFiller, NodeTypeRef};
-
-use crate::error::{Error, InvalidFieldError, InvalidKeyError, NotSupportError};
-use crate::program::bound_statement::catalog::BoundCatalogModifyingStatement;
-use crate::program::bound_statement::object_ref::{BoundGraphTypeSource, BoundOfGraphType};
-use crate::program::{Binder, QuerySymbolTable};
-use crate::program::bound_statement::common::BoundStatement;
+use crate::binder::binder::Binder;
+use crate::error::BindError;
 
 pub fn check_internal_words(word: &Ident) -> bool {
     true // TODO: Add actual checks for internal/reserved words.
 }
 
-pub fn check_node_or_edge_filler(filler: &NodeOrEdgeTypeFiller) -> Result<(), Error> {
+pub fn check_node_or_edge_filler(filler: &NodeOrEdgeTypeFiller) -> Result<(), BindError> {
     let mut field_names = vec![];
     if let Some(filler_types) = &filler.property_types {
         for field in filler_types {
             let field_name = field.value().name.value();
             // Check if it will conflict with the predefined internal fields.
             if !check_internal_words(field_name) {
-                return Err(Error::InvalidField(field_name.to_string()));
+                return Err(BindError::InvalidField(field_name.to_string()));
             }
             // Check for duplicate fields.
             if field_names.contains(field_name) {
-                return Err(Error::DuplicateField(field_name.to_string()));
+                return Err(BindError::DuplicateField(field_name.to_string()));
             }
             field_names.push(field_name.clone());
         }
