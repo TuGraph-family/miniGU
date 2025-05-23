@@ -8,7 +8,7 @@ use crate::error::CatalogResult;
 use crate::label_set::LabelSet;
 use crate::property::Property;
 use crate::provider::{
-    EdgeTypeProvider, EdgeTypeRef, GraphTypeProvider, PropertySetProvider, VertexTypeProvider,
+    EdgeTypeProvider, EdgeTypeRef, GraphTypeProvider, PropertiesProvider, VertexTypeProvider,
     VertexTypeRef,
 };
 
@@ -152,7 +152,7 @@ impl VertexTypeProvider for MemoryVertexTypeCatalog {
     }
 }
 
-impl PropertySetProvider for MemoryVertexTypeCatalog {
+impl PropertiesProvider for MemoryVertexTypeCatalog {
     fn get_property(&self, name: &str) -> CatalogResult<Option<(PropertyId, &Property)>> {
         Ok(self
             .properties
@@ -214,7 +214,7 @@ impl EdgeTypeProvider for MemoryEdgeTypeCatalog {
     }
 }
 
-impl PropertySetProvider for MemoryEdgeTypeCatalog {
+impl PropertiesProvider for MemoryEdgeTypeCatalog {
     fn get_property(&self, name: &str) -> CatalogResult<Option<(PropertyId, &Property)>> {
         Ok(self
             .properties
