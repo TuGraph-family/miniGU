@@ -44,6 +44,7 @@ minigu-binder = { path = "minigu/binder" }
 minigu-catalog = { path = "minigu/catalog" }
 minigu-common = { path = "minigu/common" }
 minigu-execution = { path = "minigu/execution" }
+minigu-storage = { path = "minigu/storage" }
 paste = "1.0.15"
 serde = { version = "1.0.219", default-features = false, features = [
     "alloc",
