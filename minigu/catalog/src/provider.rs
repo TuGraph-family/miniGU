@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use std::sync::{Arc, Weak};
+use std::sync::Arc;
 
 use minigu_common::data_type::{DataSchemaRef, LogicalType};
 use minigu_common::types::{GraphId, LabelId, ProcedureId, PropertyId};
@@ -26,7 +26,7 @@ pub trait CatalogProvider: Debug + Send + Sync {
 
 pub trait DirectoryProvider: Debug + Send + Sync {
     /// Returns the parent directory ID of the directory.
-    fn parent(&self) -> Option<Weak<dyn DirectoryProvider>>;
+    fn parent(&self) -> Option<DirectoryRef>;
 
     /// Retrieves a child directory or schema by its name.
     fn get_child(&self, name: &str) -> CatalogResult<Option<DirectoryOrSchema>>;
@@ -38,7 +38,7 @@ pub trait DirectoryProvider: Debug + Send + Sync {
 /// Represents a logical schema, which contains graphs and graph type definitions.
 pub trait SchemaProvider: Debug + Send + Sync {
     /// Returns the parent directory ID of the schema.
-    fn parent(&self) -> Option<Weak<dyn DirectoryProvider>>;
+    fn parent(&self) -> Option<DirectoryRef>;
 
     /// Returns the names of the graphs in the schema.
     fn graph_names(&self) -> Vec<String>;
