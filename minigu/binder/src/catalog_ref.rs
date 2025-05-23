@@ -1,7 +1,17 @@
-use minigu_catalog::provider::{EdgeTypeRef, GraphRef, GraphTypeRef, ProcedureRef, PropertyRef, SchemaRef, VertexTypeRef};
+use minigu_catalog::provider::{
+    EdgeTypeRef, GraphRef, GraphTypeRef, ProcedureRef, PropertyRef, SchemaRef, VertexTypeRef,
+};
 use serde::Serialize;
 
-pub type Ident=smol_str::SmolStr;
+pub type Ident = smol_str::SmolStr;
+
+/// When constructing a `BoundStatement`, all metadata access methods must be wrapped into a unified
+/// struct,
+///
+/// Throughout the binding phases, all metadata (including directories, schemas, and graph types)
+/// should be accessed exclusively via provider or reference interfaces, avoiding direct dependence
+/// on concrete structs. This ensures abstraction consistency and improves modularity and
+/// testability.
 
 /// A catalog wrapper for a schema, containing its name and internal reference.
 #[derive(Debug, Serialize)]
@@ -68,6 +78,5 @@ pub struct CallProcedureCatalogRef {
     pub name: Ident,
     // TODO: Add CallProcedureCatalog
     #[serde(skip_serializing)]
-    pub procedure_ref: ProcedureRef
+    pub procedure_ref: ProcedureRef,
 }
-

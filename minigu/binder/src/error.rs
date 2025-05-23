@@ -27,6 +27,10 @@ pub enum BindError {
     GraphNotExists(String),
     #[error("graph already exists {0:?}")]
     GraphAlreadyExists(String),
+    #[error("graph not specify")]
+    GraphNotSpecify,
+    #[error("Label not found {0:?}")]
+    LabelNotFound(String),
     #[error("procedure {0} not exists")]
     ProcedureNotExists(String),
     #[error("node type not exists {0:?}")]

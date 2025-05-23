@@ -1,14 +1,28 @@
+use std::collections::HashMap;
 use gql_parser::ast::{Procedure, Statement};
 use minigu_catalog::provider::{CatalogRef, GraphRef, SchemaRef};
-
+use minigu_common::types::LabelId;
+use crate::bound_statement::common::{BoundElementPattern, BoundElementPatternFiller};
 use crate::bound_statement::procedure_spec::{BoundNextStatement, BoundProcedure, BoundStatement};
-use crate::catalog_ref::{GraphCatalogRef, SchemaCatalogRef};
+use crate::catalog_ref::Ident;
 use crate::error::BindResult;
 
 pub struct Binder {
-    pub catalog: CatalogRef,
-    pub schema: SchemaRef,
-    pub graph: GraphRef,
+    pub catalog: Option<CatalogRef>,
+    pub schema: Option<SchemaRef>,
+    pub graph: Option<GraphRef>,
+    pub variable_context: HashMap<Ident, LabelId>
+}
+
+impl Binder {
+    pub fn new() -> Binder {
+        Self {
+            catalog: None,
+            schema: None,
+            graph: None,
+            variable_context: HashMap::new()
+        }
+    }
 }
 
 impl Binder {
@@ -18,6 +32,8 @@ impl Binder {
         catalog: CatalogRef,
         current_schema: Option<SchemaRef>,
     ) -> BindResult<BoundProcedure> {
+        self.catalog = Some(catalog);
+        self.schema = current_schema;
         Ok(BoundProcedure {
             at: None,
             binding_variable_def: procedure.binding_variable_defs.clone(),

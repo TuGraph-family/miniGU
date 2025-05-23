@@ -6,7 +6,7 @@ use minigu_common::types::GraphId;
 use super::graph::MemoryGraphCatalog;
 use super::graph_type::MemoryGraphTypeCatalog;
 use crate::error::CatalogResult;
-use crate::provider::{GraphRef, GraphTypeRef, SchemaProvider};
+use crate::provider::{GraphRef, GraphTypeRef, ProcedureRef, SchemaProvider};
 use crate::types::{GraphTypeId, SchemaId};
 
 #[derive(Debug)]
@@ -56,5 +56,10 @@ impl SchemaProvider for MemorySchemaCatalog {
     #[inline]
     fn get_graph_type_by_id(&self, id: GraphTypeId) -> CatalogResult<Option<GraphTypeRef>> {
         Ok(self.graph_type_map.get(&id).map(|g| g.clone() as _))
+    }
+
+    #[inline]
+    fn get_procedure(&self, name: &str) -> CatalogResult<Option<ProcedureRef>> {
+        Ok(None)
     }
 }

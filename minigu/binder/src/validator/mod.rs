@@ -1,13 +1,12 @@
 use gql_parser::ast::Statement;
-use crate::error::{Error, NotSupportError};
-use crate::error::Error::NotSupported;
-use crate::program::{Binder, SessionContext};
-use crate::program::bound_statement::common::BoundStatement;
+use crate::binder::binder::Binder;
+use crate::bound_statement::procedure_spec::BoundStatement;
+use crate::error::BindResult;
 
 impl Binder {
-    pub(crate) fn validate_statement(&self,statement: &BoundStatement) ->Result<BoundStatement, Error> {
+    pub(crate) fn validate_statement(&self,statement: BoundStatement) ->BindResult<BoundStatement> {
         // There is no need to validate statement currently.
-        Ok(statement.clone())
+        Ok(statement)
     }
 }
 

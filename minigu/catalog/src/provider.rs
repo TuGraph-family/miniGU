@@ -38,7 +38,7 @@ pub trait DirectoryProvider: Debug + Send + Sync {
     fn id(&self) -> SchemaId;
 
     /// Returns the parent directory ID of the directory.
-    fn parent(&self) -> CatalogResult<Weak<dyn DirectoryProvider>>;
+    fn parent(&self) -> CatalogResult<Option<Weak<dyn DirectoryProvider>>>;
 
     /// Retrieves a directory or schema by its name.
     fn get_directory_or_schema(&self, name: &str) -> CatalogResult<Option<DirectoryOrSchema>>;

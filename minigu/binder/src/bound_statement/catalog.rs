@@ -2,7 +2,7 @@ use macro_rules_attribute::apply;
 use serde::Serialize;
 use gql_parser::ast::{CreateGraphOrGraphTypeStatementKind, GraphElementType, Ident};
 use crate::bound_statement::expr::BoundGraphExpr;
-use crate::bound_statement::object_ref::{BoundOfGraphType, CanonicalSchemaPath};
+use crate::bound_statement::object_ref::{BoundGraphTypeSource, BoundOfGraphType, CanonicalSchemaPath};
 use crate::bound_statement::procedure::BoundCallProcedureStatement;
 use crate::catalog_ref::{GraphTypeCatalogRef, SchemaCatalogRef};
 use crate::macros::base;
@@ -64,13 +64,6 @@ pub struct BoundCreateGraphTypeStatement {
     pub kind: CreateGraphOrGraphTypeStatementKind,
     pub source: BoundGraphTypeSource,
 }
-
-#[derive(Debug, Serialize)]
-pub enum BoundGraphTypeSource {
-    Ref(BoundGraphTypeRef),
-    Nested(Vec<GraphElementType>),
-}
-
 
 #[derive(Debug, Serialize)]
 pub enum BoundGraphTypeRef {

@@ -65,3 +65,35 @@ impl Binder {
         }
     }
 }
+
+mod tests {
+    use gql_parser::ast::ProgramActivity;
+    use crate::binder::binder::Binder;
+    use crate::bound_statement::procedure_spec::BoundProcedure;
+    use crate::error::{BindError, BindResult};
+    use crate::mock::MockCatalog;
+
+    fn get_bound_procedure(gql: &str) -> BindResult<BoundProcedure> {
+        let parsed = gql_parser::parse_gql(gql);
+        let program_activity = parsed.unwrap().value().clone()
+            .activity.unwrap().value().clone();
+        let trans_activity = match program_activity {
+            ProgramActivity::Session(session) => {
+                return Err(BindError::NotSupported("Session".to_string()));
+            }
+            ProgramActivity::Transaction(transaction) => Some(transaction),
+        };
+        let procedure = trans_activity.unwrap().procedure.unwrap().value();
+        let catalog = MockCatalog::default();
+        let mut binder = Binder::new();
+        binder.bind_procedure(procedure, MockCatalog::default().into(), None)
+        
+    }
+    
+    
+    #[test]
+    fn test_schema_create_and_drop() {
+        let stmt = get_bound_procedure("create schema /root");
+    }
+    
+}

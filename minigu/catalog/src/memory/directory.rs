@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-
+use std::rc::Weak;
 use crate::error::CatalogResult;
 use crate::provider::{DirectoryOrSchema, DirectoryProvider};
 use crate::types::SchemaId;
@@ -33,8 +33,8 @@ impl DirectoryProvider for MemoryDirectoryCatalog {
     }
 
     #[inline]
-    fn parent(&self) -> Option<SchemaId> {
-        self.parent
+    fn parent(&self) ->  CatalogResult<Option<Weak<dyn DirectoryProvider>>> {
+        Ok(None)
     }
 
     #[inline]

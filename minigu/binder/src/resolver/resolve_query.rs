@@ -1,17 +1,20 @@
 use gql_parser::ast::*;
+use minigu_catalog::label_set::LabelSet;
+use minigu_catalog::provider::{EdgeTypeRef, VertexTypeRef};
+use minigu_common::types::LabelId;
 
 use crate::binder::binder::Binder;
 use crate::bound_statement::common::*;
-use crate::bound_statement::expr::BoundPathPatternExpr;
+use crate::bound_statement::expr::{BoundGraphExpr, BoundPathPatternExpr};
 use crate::bound_statement::query::*;
-use crate::error::{BindError, Error};
-
+use crate::catalog_ref::PropertyCatalogRef;
+use crate::error::{BindError, BindResult};
 
 impl Binder {
     pub(crate) fn resolve_simple_query_statement(
-        &self,
+        &mut self,
         statement: &SimpleQueryStatement,
-    ) -> Result<BoundSimpleQueryStatement, BindError> {
+    ) -> BindResult<BoundSimpleQueryStatement> {
         match statement {
             SimpleQueryStatement::Match(m) => match m {
                 MatchStatement::Simple(binding_table) => {
@@ -42,7 +45,7 @@ impl Binder {
     }
 
     pub(crate) fn resolve_path_pattern(
-        &self,
+        &mut self,
         pattern: &PathPattern,
     ) -> Result<BoundPathPattern, BindError> {
         let variable = pattern.variable.as_ref().map(|v| v.value().clone());
@@ -62,12 +65,12 @@ impl Binder {
     pub(crate) fn resolve_path_pattern_prefix(
         &self,
         prefix: &PathPatternPrefix,
-    ) -> Result<BoundPathPatternPrefix, BindError> {
-        return Err(BindError::ErrorCur);
+    ) -> BindResult<BoundPathPatternPrefix> {
+        Err(BindError::NotSupported("Prefix".to_string()))
     }
 
     pub(crate) fn resolve_path_pattern_expr(
-        &self,
+        &mut self,
         pattern_expr: &PathPatternExpr,
     ) -> Result<BoundPathPatternExpr, BindError> {
         match pattern_expr {
@@ -93,25 +96,19 @@ impl Binder {
                 Ok(BoundPathPatternExpr::Concat(resolved))
             }
             PathPatternExpr::Quantified { path, quantifier } => {
-                let resolved = self.resolve_path_pattern_expr(path.value())?;
-                Ok(BoundPathPatternExpr::Quantified {
-                    path: Box::new(resolved),
-                    quantifier: Box::new(quantifier.value().clone()),
-                })
+                return Err(BindError::NotSupported("Quantified".to_string()));
             }
             PathPatternExpr::Grouped(group) => {
-                let resolved = self.resolve_path_pattern_expr(group.expr.value())?;
-                // TODO: Handle group
-                Ok(BoundPathPatternExpr::Grouped(group.clone()))
+                return Err(BindError::NotSupported("Grouped".to_string()));
             }
             PathPatternExpr::Pattern(pattern) => match pattern {
                 ElementPattern::Node(node) => Ok(BoundPathPatternExpr::Pattern(
-                    BoundElementPattern::Node(self.resolve_element_pattern_filler(node)?),
+                    BoundElementPattern::Node(self.resolve_element_pattern_filler(true, node)?),
                 )),
                 ElementPattern::Edge { kind, filler } => {
                     Ok(BoundPathPatternExpr::Pattern(BoundElementPattern::Edge {
                         kind: kind.clone(),
-                        filler: self.resolve_element_pattern_filler(filler)?,
+                        filler: self.resolve_element_pattern_filler(false, filler)?,
                     }))
                 }
             },
@@ -122,34 +119,45 @@ impl Binder {
     }
 
     pub(crate) fn resolve_element_pattern_filler(
-        &self,
+        &mut self,
+        is_node: bool,
         filler: &ElementPatternFiller,
     ) -> Result<BoundElementPatternFiller, BindError> {
         let variable = filler.variable.as_ref().map(|sp| sp.value().clone());
+
         let label = filler
             .label
             .as_ref()
             .map(|sp| self.resolve_label_expr(sp.value()))
             .transpose()?;
+        // currently, we only consider simple label.
+        let label_id = match label {
+            None => return Err(BindError::NotSupported("Empty Label".to_string())),
+            Some(ref label_expr) => {
+                match label_expr {
+                    BoundLabelExpr::Label(label_id) => label_id,
+                    _ => return Err(BindError::NotSupported("Label expr".to_string())),
+                }
+            }
+        };
         let predict = filler
             .predicate
             .as_ref()
-            .map(|sp| self.resolve_element_pattern_predicate(sp.value()))
+            .map(|sp| self.resolve_element_pattern_predicate(is_node, &label_id, sp.value()))
             .transpose()?;
-        Ok(BoundElementPatternFiller {
-            variable,
-            label,
-            predicate: predict,
+        
+        if variable.as_ref().is_some() {
+            self.variable_context.insert(variable.as_ref().unwrap().clone(), label_id.clone());
+        }
+        Ok( BoundElementPatternFiller {
+            variable:variable.clone(), label, predicate: predict,
         })
-    }
-
-    // TODO: How to get Field Id from a field name? The graph Type? The Schema?
-    pub(crate) fn resolve_field_id(&self, field: &Ident) -> Result<FieldId, BindError> {
-        Ok(1)
     }
 
     pub(crate) fn resolve_element_pattern_predicate(
         &self,
+        is_node: bool,
+        label_id: &LabelId,
         predicate: &ElementPatternPredicate,
     ) -> Result<BoundElementPatternPredicate, BindError> {
         match predicate {
@@ -157,13 +165,35 @@ impl Binder {
                 self.resolve_expr(expr.value())?,
             )),
             ElementPatternPredicate::Property(field_or_property_vec) => {
+                enum GraphElementType  {
+                    Vertex(VertexTypeRef),
+                    Edge(EdgeTypeRef),
+                }
+                let graph = self.graph.as_ref().ok_or(BindError::GraphNotSpecify)?;
+                let graph_type = graph.graph_type();
+
+                let label_set = LabelSet::new([label_id.clone()]);
+                let element_type = if is_node {
+                    graph_type.get_vertex_type(&label_set).map(|opt| opt.map(GraphElementType::Vertex))
+                } else {
+                    graph_type.get_edge_type(&label_set).map(|opt| opt.map(GraphElementType::Edge))
+                }.map_err(|e| BindError::External(Box::new(e)))?
+                    .ok_or_else(||BindError::LabelNotFound(label_id.to_string()))?;
                 let mut field_vec = vec![];
                 for field in field_or_property_vec {
-                    let id = self.resolve_field_id(field.value().name.value())?;
-                    let expr = self.resolve_expr(field.value().value.value())?;
+                    let field_name = &field.value().name;
+                    let property = match &element_type {
+                        GraphElementType::Vertex(graph_type) => {graph_type.get_property(field_name.value())},
+                        GraphElementType::Edge(graph_type) => {graph_type.get_property(field_name.value())},
+                    }.map_err(|e| BindError::External(Box::new(e)))?
+                        .ok_or_else(||BindError::InvalidField(field_name.value().to_string()))?;
+                    let value = self.resolve_expr(field.value().value.value())?;
                     field_vec.push(BoundFieldOrProperty {
-                        id: id,
-                        value: expr,
+                        id: PropertyCatalogRef {
+                            name: field_name.value().clone(),
+                            property_ref: property,
+                        },
+                        value,
                     })
                 }
                 Ok(BoundElementPatternPredicate::Property(field_vec))
@@ -171,10 +201,7 @@ impl Binder {
         }
     }
 
-    pub(crate) fn resolve_label_expr(
-        &self,
-        label_expr: &LabelExpr,
-    ) -> Result<BoundLabelExpr, BindError> {
+    pub(crate) fn resolve_label_expr(&self, label_expr: &LabelExpr) -> BindResult<BoundLabelExpr> {
         match label_expr {
             LabelExpr::Wildcard => Ok(BoundLabelExpr::Wildcard),
             LabelExpr::Conjunction(lhs, rhs) => Ok(BoundLabelExpr::Conjunction(
@@ -188,19 +215,26 @@ impl Binder {
             LabelExpr::Negation(expr) => Ok(BoundLabelExpr::Negation(Box::new(
                 self.resolve_label_expr(expr.value())?,
             ))),
-            LabelExpr::Label(label) => Ok(BoundLabelExpr::Label(
-                // TODO: label to labelId
-                1,
-            )),
+            LabelExpr::Label(label) => Ok(BoundLabelExpr::Label(if self.graph.is_none() {
+                return Err(BindError::GraphNotSpecify);
+            } else {
+                let graph_type = self.graph.as_ref().unwrap().graph_type();
+                let label_id = graph_type
+                    .get_label_id(label)
+                    .map_err(|e| BindError::External(Box::new(e)))?;
+                if label_id.is_none() {
+                    return Err(BindError::LabelNotFound(label.to_string()));
+                }
+                label_id.unwrap()
+            })),
         }
     }
 
     pub(crate) fn resolve_graph_pattern(
-        &self,
+        &mut self,
         graph_pattern: &GraphPattern,
-    ) -> Result<BoundGraphPattern, BindError> {
+    ) -> BindResult<BoundGraphPattern> {
         let match_mode = graph_pattern.match_mode.as_ref().map(|v| v.value().clone());
-
         let patterns = graph_pattern
             .patterns
             .iter()
@@ -251,10 +285,17 @@ impl Binder {
     }
 
     pub(crate) fn resolve_focused_linear_query_parts(
-        &self,
+        &mut self,
         part: &FocusedLinearQueryStatementPart,
     ) -> Result<BoundFocusedLinearQueryStatementPart, BindError> {
         let bound_graph_expr = self.resolve_graph_expr(part.use_graph.value())?;
+        match &bound_graph_expr {
+            // Set current used graph ref
+            BoundGraphExpr::Ref(graph_ref) => {
+                self.graph = Option::from(graph_ref.graph_ref.clone());
+            }
+            _ => {}
+        }
         let mut vec_bound_stmt = vec![];
         for stmt in part.statements.iter() {
             vec_bound_stmt.push(self.resolve_simple_query_statement(stmt.value())?);
@@ -309,7 +350,11 @@ impl Binder {
             }
             FocusedLinearQueryStatement::Nested { use_graph, query } => {
                 let use_graph_expr = self.resolve_graph_expr(use_graph.value())?;
-                let procedure = self.bind_procedure(query.value(), self.catalog.clone(), Some(self.schema.clone()))?;
+                let procedure = self.bind_procedure(
+                    query.value(),
+                    self.catalog.clone(),
+                    Some(self.schema.clone()),
+                )?;
                 Ok(BoundFocusedLinearQueryStatement::Nested {
                     use_graph: use_graph_expr,
                     query: Box::new(procedure),
@@ -320,7 +365,7 @@ impl Binder {
     }
 
     pub(crate) fn resolve_ambient_linear_query_statement(
-        &self,
+        &mut self,
         stmt: &AmbientLinearQueryStatement,
     ) -> Result<BoundAmbientLinearQueryStatement, BindError> {
         match stmt {
@@ -357,7 +402,7 @@ impl Binder {
     pub(crate) fn resolve_linear_query_statement(
         &mut self,
         query: &LinearQueryStatement,
-    ) -> Result<BoundLinearQueryStatement, BindError> {
+    ) -> BindResult<BoundLinearQueryStatement> {
         match query {
             LinearQueryStatement::Focused(query) => {
                 let stmt = self.resolve_focused_linear_query_statement(query)?;

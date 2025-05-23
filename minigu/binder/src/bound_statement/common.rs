@@ -4,31 +4,35 @@ use gql_parser::ast::{
 };
 use gql_parser::span::OptSpanned;
 use macro_rules_attribute::apply;
-use minigu_catalog::provider::SchemaRef;
+use serde::Serialize;
+use minigu_catalog::provider::{PropertyRef, SchemaRef};
+use minigu_common::types::LabelId;
+use crate::bound_statement::expr::{BoundExpr, BoundPathPatternExpr};
+use crate::catalog_ref::PropertyCatalogRef;
 use crate::macros::base;
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub struct BoundElementPatternFiller {
     pub variable: Option<Ident>,
     pub label: Option<BoundLabelExpr>,
     pub predicate: Option<BoundElementPatternPredicate>,
 }
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub enum BoundElementPatternPredicate {
     Where(BoundExpr),
     Property(Vec<BoundFieldOrProperty>),
 }
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub struct BoundFieldOrProperty {
-    pub id: FieldId,
+    pub id: PropertyCatalogRef,
     pub value: BoundExpr,
 }
 
 
 // Currently only support Label.
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub enum BoundLabelExpr {
     /// Label conjunction, i.e., 'label1 & label2'.
     Conjunction(Box<BoundLabelExpr>, Box<BoundLabelExpr>),
@@ -41,14 +45,7 @@ pub enum BoundLabelExpr {
     /// Wildcard label, i.e., '%'.
     Wildcard,
 }
-
-#[apply(base)]
-pub enum ElementPatternPredicate {
-    Where(BoundExpr),
-    Property(Vec<BoundFieldOrProperty>),
-}
-
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub enum BoundElementPattern {
     Node(BoundElementPatternFiller),
     Edge {
@@ -57,12 +54,13 @@ pub enum BoundElementPattern {
     },
 }
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub struct BoundPathPattern {
+    // Resolver implemented : resolve_path_pattern
     pub variable: Option<Ident>,
     pub prefix: Option<BoundPathPatternPrefix>,
     pub expr: BoundPathPatternExpr,
 }
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub enum BoundPathPatternPrefix {}

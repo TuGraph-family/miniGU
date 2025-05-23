@@ -1,21 +1,20 @@
+use serde::Serialize;
 use gql_parser::ast::{
     GroupBy, Ident, MatchMode, PathPatternPrefix, Procedure,
     QueryConjunction, SetQuantifier,
 };
-use macro_rules_attribute::apply;
+use crate::bound_statement::common::BoundPathPattern;
+use crate::bound_statement::expr::{BoundExpr, BoundGraphExpr};
+use crate::bound_statement::procedure::BoundCallProcedureStatement;
+use crate::bound_statement::procedure_spec::BoundProcedure;
 
-use crate::macros::base;
-use crate::program::bound_statement::common::{BoundPathPattern, BoundProcedure};
-use crate::program::bound_statement::expr::{BoundExpr, BoundGraphExpr};
-use crate::program::bound_statement::procedure::BoundCallProcedureStatement;
-
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub enum BoundLinearQueryStatement {
     Focused(BoundFocusedLinearQueryStatement),
     Ambient(BoundAmbientLinearQueryStatement),
 }
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub enum BoundFocusedLinearQueryStatement {
     Parts {
         parts: Vec<BoundFocusedLinearQueryStatementPart>,
@@ -32,14 +31,14 @@ pub enum BoundFocusedLinearQueryStatement {
     Select {},
 }
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub struct BoundFocusedLinearQueryStatementPart {
-    // TODO: replace expr to graph id.
+    // Resolver implemented: resolve_focused_linear_query_parts;
     pub use_graph: BoundGraphExpr,
     pub statements: Vec<BoundSimpleQueryStatement>,
 }
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub enum BoundAmbientLinearQueryStatement {
     Parts {
         parts: Vec<BoundSimpleQueryStatement>,
@@ -48,53 +47,54 @@ pub enum BoundAmbientLinearQueryStatement {
     Nested(Box<Procedure>),
 }
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub enum BoundSimpleQueryStatement {
     Match(BoundMatchStatement),
     Call(BoundCallProcedureStatement),
 }
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub enum BoundMatchStatement {
     Simple(BoundGraphPatternBindingTable),
     Optional(Vec<BoundMatchStatement>),
 }
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub struct BoundGraphPatternBindingTable {
     pub pattern: BoundGraphPattern,
     // TODO: Handle yield_item.
     pub yield_item: Vec<Ident>,
 }
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub struct BoundGraphPattern {
+    // Resolver implemented: resolve_graph_pattern.
     pub match_mode: Option<MatchMode>,
     pub patterns: Vec<BoundPathPattern>,
     pub keep: Option<PathPatternPrefix>,
     pub where_clause: Option<BoundExpr>,
 }
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub struct BoundReturnStatement {
     pub quantifier: Option<SetQuantifier>,
     pub items: BoundReturn,
     pub group_by: Option<GroupBy>,
 }
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub enum BoundReturn {
     Items(Vec<BoundReturnItem>),
     All,
 }
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub struct BoundReturnItem {
     pub value: BoundExpr,
     pub alias: Option<Ident>,
 }
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub enum BoundResultStatement {
     Return {
         statement: Box<BoundReturnStatement>,
@@ -102,7 +102,7 @@ pub enum BoundResultStatement {
     Finish,
 }
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub enum BoundCompositeQueryStatement {
     Conjunction {
         conjunction: QueryConjunction,

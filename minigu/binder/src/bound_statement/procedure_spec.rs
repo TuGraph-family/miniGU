@@ -2,9 +2,9 @@ use macro_rules_attribute::apply;
 use serde::Serialize;
 use gql_parser::ast::{BindingVariableDefBlock, Yield};
 use gql_parser::span::OptSpanned;
-use crate::binder::bound_statement::data::BoundLinearDataModifyingStatement;
-use crate::binder::bound_statement::query::BoundCompositeQueryStatement;
 use crate::bound_statement::catalog::LinearBoundCatalogModifyingStatement;
+use crate::bound_statement::data::BoundLinearDataModifyingStatement;
+use crate::bound_statement::query::BoundCompositeQueryStatement;
 use crate::catalog_ref::SchemaCatalogRef;
 use crate::macros::base;
 
@@ -17,7 +17,7 @@ pub struct BoundProcedure {
 }
 
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub enum BoundStatement {
     Catalog(LinearBoundCatalogModifyingStatement),
     Query(BoundCompositeQueryStatement),
@@ -25,7 +25,7 @@ pub enum BoundStatement {
 }
 
 
-#[apply(base)]
+#[derive(Debug, Serialize)]
 pub struct BoundNextStatement {
     pub yield_clause: OptSpanned<Yield>,
     pub statement: BoundStatement,

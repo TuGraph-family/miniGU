@@ -1,5 +1,8 @@
 use gql_parser::ast::{EdgeType, GraphElementType, Ident, NodeOrEdgeTypeFiller, NodeTypeRef};
 use crate::binder::binder::Binder;
+use crate::bound_statement::catalog::BoundCatalogModifyingStatement;
+use crate::bound_statement::object_ref::BoundGraphTypeSource;
+use crate::bound_statement::procedure_spec::BoundStatement;
 use crate::error::BindError;
 
 pub fn check_internal_words(word: &Ident) -> bool {

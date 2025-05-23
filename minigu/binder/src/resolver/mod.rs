@@ -1,4 +1,3 @@
-mod data;
 mod resolve_query;
 mod resolver;
 mod resolve_catalog_operate;
