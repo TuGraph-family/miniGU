@@ -1,8 +1,13 @@
+use std::sync::Arc;
+use std::{env, fs};
+
 use minigu_common::datatype::types::{EdgeId, LabelId, VertexId};
 use minigu_common::datatype::value::PropertyValue;
+use minigu_storage::memory::checkpoint::CheckpointManagerConfig;
 use minigu_storage::model::edge::Edge;
 use minigu_storage::model::properties::PropertyRecord;
 use minigu_storage::model::vertex::Vertex;
+use minigu_storage::wal::graph_wal::WalManagerConfig;
 use minigu_storage::{
     Graph, IsolationLevel, MemoryGraph, MutGraph, StorageResult, StorageTransaction,
 };
@@ -32,10 +37,65 @@ fn create_test_edge(id: EdgeId, from: VertexId, to: VertexId, relation: LabelId)
     )
 }
 
+fn mock_checkpoint_config() -> CheckpointManagerConfig {
+    let dir = env::temp_dir().join(format!(
+        "test_checkpoint_{}_{}",
+        chrono::Utc::now(),
+        rand::random::<u32>()
+    ));
+    fs::create_dir_all(&dir).unwrap();
+    CheckpointManagerConfig {
+        checkpoint_dir: dir,
+        max_checkpoints: 3,
+        auto_checkpoint_interval_secs: 0, // Disable auto checkpoints for testing
+        checkpoint_prefix: "test_checkpoint".to_string(),
+        transaction_timeout_secs: 10,
+    }
+}
+
+fn mock_wal_config() -> WalManagerConfig {
+    let file_name = format!(
+        "test_wal_{}_{}.log",
+        chrono::Utc::now(),
+        rand::random::<u32>()
+    );
+    let path = env::temp_dir().join(file_name);
+    WalManagerConfig { wal_path: path }
+}
+
+pub struct Cleaner {
+    wal_path: std::path::PathBuf,
+    checkpoint_dir: std::path::PathBuf,
+}
+
+impl Cleaner {
+    pub fn new(checkpoint_config: &CheckpointManagerConfig, wal_config: &WalManagerConfig) -> Self {
+        Self {
+            wal_path: wal_config.wal_path.clone(),
+            checkpoint_dir: checkpoint_config.checkpoint_dir.clone(),
+        }
+    }
+}
+
+impl Drop for Cleaner {
+    fn drop(&mut self) {
+        let _ = fs::remove_file(&self.wal_path);
+        let _ = fs::remove_dir_all(&self.checkpoint_dir);
+    }
+}
+
+fn mock_empty_graph() -> (Arc<MemoryGraph>, Cleaner) {
+    let checkpoint_config = mock_checkpoint_config();
+    let wal_config = mock_wal_config();
+    let cleaner = Cleaner::new(&checkpoint_config, &wal_config);
+    let graph = MemoryGraph::with_config_fresh(checkpoint_config, wal_config);
+    (graph, cleaner)
+}
+
 #[test]
 fn test_graph_basic_operations() -> StorageResult<()> {
     // 1. Create MemGraph
-    let graph = MemoryGraph::new();
+    let (graph, _cleaner) = mock_empty_graph();
 
     // 2. Open transaction
     let txn = graph.begin_transaction(IsolationLevel::Serializable);
