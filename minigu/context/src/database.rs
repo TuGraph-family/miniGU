@@ -11,4 +11,6 @@ pub struct DatabaseContext {
     procedure_registry: Registry<ProcedureId, Arc<()>>,
 }
 
-impl DatabaseContext {}
+impl DatabaseContext {
+    
+}
