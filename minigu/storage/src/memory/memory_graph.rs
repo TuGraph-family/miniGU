@@ -362,12 +362,12 @@ impl MemoryGraph {
     }
 
     /// Returns a reference to the vertices storage.
-    pub fn vertices(&self) -> &DashMap<VertexId, VersionedVertex> {
+    pub(super) fn vertices(&self) -> &DashMap<VertexId, VersionedVertex> {
         &self.vertices
     }
 
     /// Returns a reference to the edges storage.
-    pub fn edges(&self) -> &DashMap<EdgeId, VersionedEdge> {
+    pub(super) fn edges(&self) -> &DashMap<EdgeId, VersionedEdge> {
         &self.edges
     }
 }

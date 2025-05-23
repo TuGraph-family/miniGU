@@ -15,7 +15,7 @@ members = [
     "minigu/common",
     "minigu/parser",
     "minigu/storage",
-    "minigu/execution",
+    "minigu/execution", "minigu/procedure", "minigu/context",
 ]
 resolver = "3"
 

@@ -4,6 +4,8 @@ use std::sync::RwLock;
 use minigu_catalog::memory::MemoryCatalog;
 
 use crate::error::Result;
+use crate::graph::GraphRegistry;
+use crate::procedure::registry::ProcedureRegistry;
 use crate::session::Session;
 
 #[derive(Debug)]
@@ -24,7 +26,9 @@ impl Database {
 }
 
 pub struct DatabaseContext {
-    catalog: RwLock<MemoryCatalog>,
+    catalog: MemoryCatalog,
+    procedure_registry: ProcedureRegistry,
+    graph_registry: GraphRegistry,
 }
 
 impl DatabaseContext {

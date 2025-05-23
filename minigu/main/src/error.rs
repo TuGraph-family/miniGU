@@ -8,7 +8,7 @@ pub enum Error {
     Parser(#[from] gql_parser::error::Error),
 
     #[error("failed to execute the procedure")]
-    Procedure(#[from] Box<dyn std::error::Error>),
+    Procedure(#[from] Box<dyn std::error::Error + Send + Sync>),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

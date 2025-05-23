@@ -10,7 +10,6 @@ pub mod procedure;
 pub mod result;
 pub mod session;
 
-/// Re-export all the modules in the minigu crate.
 pub use {
     minigu_catalog as catalog, minigu_common as common, minigu_execution as execution,
     minigu_storage as storage,

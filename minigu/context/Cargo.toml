@@ -1,0 +1,12 @@
+[package]
+edition.workspace = true
+name = "minigu-context"
+version = "0.1.0"
+
+[dependencies]
+minigu-catalog = { workspace = true }
+minigu-common = { workspace = true }
+minigu-storage = { workspace = true }
+
+[lints]
+workspace = true

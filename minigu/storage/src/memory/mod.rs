@@ -3,3 +3,5 @@ mod edge_iterator;
 mod memory_graph;
 mod transaction;
 mod vertex_iterator;
+
+pub use memory_graph::MemoryGraph;
