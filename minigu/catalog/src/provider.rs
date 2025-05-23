@@ -91,13 +91,13 @@ pub trait GraphTypeProvider: Debug + Send + Sync {
 }
 
 /// Represents a vertex type, which defines the structure of a vertex.
-pub trait VertexTypeProvider: Debug + Send + Sync + PropertySetProvider {
+pub trait VertexTypeProvider: Debug + Send + Sync + PropertiesProvider {
     /// Returns the label set of the vertex type.
     fn label_set(&self) -> LabelSet;
 }
 
 /// Represents an edge type, which defines the structure of an edge.
-pub trait EdgeTypeProvider: Debug + Send + Sync + PropertySetProvider {
+pub trait EdgeTypeProvider: Debug + Send + Sync + PropertiesProvider {
     /// Returns the label set of the edge type.
     fn label_set(&self) -> LabelSet;
 
@@ -109,7 +109,7 @@ pub trait EdgeTypeProvider: Debug + Send + Sync + PropertySetProvider {
 }
 
 /// Represents a property set, which contains properties of a vertex or edge type.
-pub trait PropertySetProvider: Debug + Send + Sync {
+pub trait PropertiesProvider: Debug + Send + Sync {
     /// Retrieves a property by its name.
     fn get_property(&self, name: &str) -> CatalogResult<Option<(PropertyId, &Property)>>;
 
