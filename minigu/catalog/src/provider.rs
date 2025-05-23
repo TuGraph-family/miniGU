@@ -1,8 +1,9 @@
+use std::any::Any;
 use std::fmt::Debug;
 use std::sync::Arc;
 
 use minigu_common::data_type::{DataSchemaRef, LogicalType};
-use minigu_common::types::{GraphId, LabelId, ProcedureId, PropertyId};
+use minigu_common::types::{LabelId, PropertyId};
 
 use crate::error::CatalogResult;
 use crate::label_set::LabelSet;
@@ -60,10 +61,9 @@ pub trait SchemaProvider: Debug + Send + Sync {
 }
 
 /// Represents a graph, which is an instance of a graph type.
-pub trait GraphProvider: Debug + Send + Sync {
-    /// Returns the ID of the graph.
-    fn id(&self) -> GraphId;
-
+///
+/// Use [`Arc::downcast`] to cast the trait object into the concrete type.
+pub trait GraphProvider: Debug + Send + Sync + Any {
     /// Returns the graph type of the graph.
     fn graph_type(&self) -> GraphTypeRef;
 }
@@ -117,13 +117,7 @@ pub trait PropertiesProvider: Debug + Send + Sync {
     fn properties(&self) -> Vec<(PropertyId, Property)>;
 }
 
-pub trait ProcedureProvider: Debug + Send + Sync {
-    /// Returns the ID of the procedure.
-    fn id(&self) -> ProcedureId;
-
-    /// Returns the description of the procedure.
-    fn description(&self) -> &str;
-
+pub trait ProcedureProvider: Debug + Send + Sync + Any {
     /// Returns the parameters of the procedure.
     fn parameters(&self) -> &[LogicalType];
 

@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::sync::{Arc, RwLock, Weak};
 
-use super::graph::MemoryGraphCatalog;
 use super::graph_type::MemoryGraphTypeCatalog;
 use crate::error::CatalogResult;
 use crate::provider::{
@@ -12,7 +11,7 @@ use crate::provider::{
 #[derive(Debug)]
 pub struct MemorySchemaCatalog {
     parent: Option<Weak<dyn DirectoryProvider>>,
-    graph_map: RwLock<HashMap<String, Arc<MemoryGraphCatalog>>>,
+    graph_map: RwLock<HashMap<String, GraphRef>>,
     graph_type_map: RwLock<HashMap<String, Arc<MemoryGraphTypeCatalog>>>,
     procedure_map: RwLock<HashMap<String, ProcedureRef>>,
 }
@@ -29,7 +28,7 @@ impl MemorySchemaCatalog {
     }
 
     #[inline]
-    pub fn add_graph(&self, name: String, graph: Arc<MemoryGraphCatalog>) -> bool {
+    pub fn add_graph(&self, name: String, graph: GraphRef) -> bool {
         let mut graph_map = self
             .graph_map
             .write()
