@@ -406,7 +406,6 @@ dependencies = [
  "iana-time-zone",
  "js-sys",
  "num-traits",
- "serde",
  "wasm-bindgen",
  "windows-link",
 ]
@@ -1208,12 +1207,8 @@ dependencies = [
 name = "minigu-binder"
 version = "0.1.0"
 dependencies = [
- "chrono",
  "gql-parser",
- "macro_rules_attribute",
- "miette",
  "minigu-catalog",
- "minigu-common",
  "serde",
  "smol_str",
  "thiserror",
