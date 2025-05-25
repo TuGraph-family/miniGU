@@ -2,11 +2,14 @@ use std::sync::Weak;
 
 use minigu_common::datatype::types::{EdgeId, LabelId, VertexId};
 use minigu_common::datatype::value::PropertyValue;
+use serde::{Deserialize, Serialize};
 
 use crate::model::edge::Edge;
 use crate::model::vertex::Vertex;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize,
+)]
 /// Represents a commit timestamp used for multi-version concurrency control (MVCC).
 /// It can either represent a transaction ID which starts from 1 << 63,
 /// or a commit timestamp which starts from 0. So, we can determine a timestamp is
@@ -77,13 +80,13 @@ impl UndoEntry {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetPropsOp {
     pub indices: Vec<usize>,
     pub props: Vec<PropertyValue>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DeltaOp {
     DelVertex(VertexId),
     DelEdge(EdgeId),
@@ -95,6 +98,7 @@ pub enum DeltaOp {
     RemoveLabel(LabelId),
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum IsolationLevel {
     Snapshot,
     Serializable,

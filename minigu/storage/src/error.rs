@@ -1,3 +1,5 @@
+use std::io;
+
 use thiserror::Error;
 pub type StorageResult<T> = Result<T, StorageError>;
 
@@ -11,6 +13,24 @@ pub enum StorageError {
     EdgeNotFound(#[from] EdgeNotFoundError),
     #[error("Schema error: {0}")]
     Schema(#[from] SchemaError),
+    #[error("WAL error: {0}")]
+    Wal(#[from] WalError),
+    #[error("Checkpoint error: {0}")]
+    Checkpoint(#[from] CheckpointError),
+}
+
+#[derive(Error, Debug)]
+pub enum WalError {
+    #[error("IO error: {0}")]
+    Io(#[from] io::Error),
+    #[error("Data corruption: checksum mismatch")]
+    ChecksumMismatch,
+    #[error("Invalid record format: {0}")]
+    InvalidFormat(String),
+    #[error("Record deserialization failed: {0}")]
+    DeserializationFailed(String),
+    #[error("Record serialization failed: {0}")]
+    SerializationFailed(String),
 }
 
 #[derive(Error, Debug)]
@@ -55,4 +75,24 @@ pub enum SchemaError {
     VertexSchemaNotFound,
     #[error("Edge schema not found")]
     EdgeSchemaNotFound,
+}
+
+#[derive(Error, Debug)]
+pub enum CheckpointError {
+    #[error("IO error: {0}")]
+    Io(#[from] io::Error),
+    #[error("Data corruption: checksum mismatch")]
+    ChecksumMismatch,
+    #[error("Checkpoint serialization failed: {0}")]
+    SerializationFailed(String),
+    #[error("Checkpoint deserialization failed: {0}")]
+    DeserializationFailed(String),
+    #[error("Invalid checkpoint format: {0}")]
+    InvalidFormat(String),
+    #[error("Checkpoint not found: {0}")]
+    CheckpointNotFound(String),
+    #[error("Checkpoint directory error: {0}")]
+    DirectoryError(String),
+    #[error("Timeout waiting for active transactions to complete")]
+    Timeout,
 }
