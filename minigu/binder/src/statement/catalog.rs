@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 use crate::object_ref::{GraphRef, SchemaRef};
-use crate::statement::object_ref::{BoundGraphType, CanonicalSchemaPath};
+use crate::statement::object_ref::BoundGraphType;
 use crate::statement::procedure::BoundCallProcedureStatement;
 use crate::types::Ident;
 
@@ -19,13 +19,13 @@ pub enum BoundCatalogModifyingStatement {
 
 #[derive(Debug, Serialize)]
 pub struct BoundCreateSchemaStatement {
-    pub schema_path: CanonicalSchemaPath,
+    pub schema_path: Vec<Ident>,
     pub if_not_exists: bool,
 }
 
 #[derive(Debug, Serialize)]
 pub struct BoundDropSchemaStatement {
-    pub schema_path: CanonicalSchemaPath,
+    pub schema_path: Vec<Ident>,
     pub if_exists: bool,
 }
 
@@ -35,7 +35,7 @@ pub struct BoundCreateGraphStatement {
     pub name: Ident,
     pub kind: CreateKind,
     pub type_ref: BoundGraphType,
-    pub source: GraphRef,
+    pub source: Option<GraphRef>,
 }
 
 #[derive(Debug, Serialize)]

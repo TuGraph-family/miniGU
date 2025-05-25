@@ -21,5 +21,5 @@ pub struct BoundInlineProcedureCall {}
 pub struct BoundNamedProcedureCall {
     pub procedure_ref: ProcedureRef,
     // pub args: Vec<BoundExpr>,
-    pub yield_index: Option<Vec<usize>>,
+    pub yield_index: Vec<usize>,
 }
