@@ -1,6 +1,7 @@
-use serde::Serialize;
 use gql_parser::ast::ValueType;
 use minigu_catalog::label_set::LabelSet;
+use serde::Serialize;
+
 use crate::types::Ident;
 
 #[derive(Debug, Serialize)]

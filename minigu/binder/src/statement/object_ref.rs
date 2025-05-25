@@ -1,11 +1,12 @@
 use serde::Serialize;
+
 use crate::object_ref::GraphTypeRef;
 use crate::statement::type_element::GraphElementType;
 use crate::types::Ident;
 
 #[derive(Debug, Serialize)]
 pub struct CanonicalSchemaPath {
-    pub segments:Vec<Ident>,
+    pub segments: Vec<Ident>,
 }
 
 #[derive(Debug, Serialize)]

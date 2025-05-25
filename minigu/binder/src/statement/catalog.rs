@@ -1,5 +1,5 @@
 use serde::Serialize;
-use smol_str::SmolStr;
+
 use crate::object_ref::{GraphRef, SchemaRef};
 use crate::statement::object_ref::{BoundGraphType, CanonicalSchemaPath};
 use crate::statement::procedure::BoundCallProcedureStatement;

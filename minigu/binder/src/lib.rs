@@ -1,10 +1,10 @@
 #![allow(unused)]
 
 mod error;
+mod object_ref;
 mod program;
 mod resolver;
-mod type_checker;
-mod validator;
 mod statement;
-mod object_ref;
+mod type_checker;
 mod types;
+mod validator;
