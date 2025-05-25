@@ -1,44 +1,74 @@
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
+use std::sync::{RwLock, Weak};
 
 use crate::error::CatalogResult;
-use crate::provider::{DirectoryOrSchema, DirectoryProvider};
-use crate::types::SchemaId;
+use crate::provider::{DirectoryOrSchema, DirectoryProvider, DirectoryRef};
 
 #[derive(Debug)]
 pub struct MemoryDirectoryCatalog {
-    id: SchemaId,
-    parent: Option<SchemaId>,
-    children: HashMap<String, DirectoryOrSchema>,
+    parent: Option<Weak<dyn DirectoryProvider>>,
+    children: RwLock<HashMap<String, DirectoryOrSchema>>,
 }
 
 impl MemoryDirectoryCatalog {
     #[inline]
-    pub fn new(id: SchemaId, parent: Option<SchemaId>) -> Self {
+    pub fn new(parent: Option<Weak<dyn DirectoryProvider>>) -> Self {
         Self {
-            id,
             parent,
-            children: HashMap::new(),
+            children: RwLock::new(HashMap::new()),
         }
     }
 
-    // pub fn add_schema(&mut self, name: String, schema: SchemaOrSchema) -> CatalogResult<()> {
-    //     todo!()
-    // }
+    #[inline]
+    pub fn add_child(&self, name: String, child: DirectoryOrSchema) -> bool {
+        match self
+            .children
+            .write()
+            .expect("the write lock should be acquired successfully")
+            .entry(name)
+        {
+            Entry::Occupied(_) => false,
+            Entry::Vacant(e) => {
+                e.insert(child);
+                true
+            }
+        }
+    }
+
+    #[inline]
+    pub fn remove_child(&self, name: &str) -> bool {
+        self.children
+            .write()
+            .expect("the write lock should be acquired successfully")
+            .remove(name)
+            .is_some()
+    }
 }
 
 impl DirectoryProvider for MemoryDirectoryCatalog {
     #[inline]
-    fn id(&self) -> SchemaId {
-        self.id
+    fn parent(&self) -> Option<DirectoryRef> {
+        self.parent.clone().and_then(|p| p.upgrade())
     }
 
     #[inline]
-    fn parent(&self) -> Option<SchemaId> {
-        self.parent
+    fn get_child(&self, name: &str) -> CatalogResult<Option<DirectoryOrSchema>> {
+        Ok(self
+            .children
+            .read()
+            .expect("the read lock should be acquired successfully")
+            .get(name)
+            .cloned())
     }
 
     #[inline]
-    fn get_directory_or_schema(&self, name: &str) -> CatalogResult<Option<DirectoryOrSchema>> {
-        Ok(self.children.get(name).cloned())
+    fn children_names(&self) -> Vec<String> {
+        self.children
+            .read()
+            .expect("the read lock should be acquired successfully")
+            .keys()
+            .cloned()
+            .collect()
     }
 }

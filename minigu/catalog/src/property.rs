@@ -1,17 +1,40 @@
+use std::borrow::Borrow;
+use std::hash::{Hash, Hasher};
+
 use minigu_common::data_type::LogicalType;
-use minigu_common::types::PropertyId;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Property {
-    id: PropertyId,
+    name: String,
     logical_type: LogicalType,
     nullable: bool,
 }
 
+impl Borrow<str> for Property {
+    fn borrow(&self) -> &str {
+        &self.name
+    }
+}
+
+impl Hash for Property {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+    }
+}
+
 impl Property {
     #[inline]
-    pub fn id(&self) -> PropertyId {
-        self.id
+    pub fn new(name: String, logical_type: LogicalType, nullable: bool) -> Self {
+        Self {
+            name,
+            logical_type,
+            nullable,
+        }
+    }
+
+    #[inline]
+    pub fn name(&self) -> &str {
+        &self.name
     }
 
     #[inline]

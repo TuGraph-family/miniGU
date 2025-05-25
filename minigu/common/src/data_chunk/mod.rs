@@ -8,7 +8,7 @@ use arrow::compute;
 use itertools::Itertools;
 use row::{RowIndexIter, Rows};
 
-use crate::data_type::Schema;
+use crate::data_type::DataSchema;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DataChunk {
@@ -205,7 +205,7 @@ impl DataChunk {
     ///
     /// Panics if the schema does not match the data chunk.
     #[inline]
-    pub fn to_arrow_record_batch(&self, schema: &Schema) -> RecordBatch {
+    pub fn to_arrow_record_batch(&self, schema: &DataSchema) -> RecordBatch {
         let schema = schema.to_arrow_schema();
         let mut chunk = self.clone();
         chunk.compact();
@@ -248,7 +248,7 @@ mod tests {
     use row::OwnedRow;
 
     use super::*;
-    use crate::data_type::{Field, LogicalType};
+    use crate::data_type::{DataField, LogicalType};
 
     #[test]
     fn test_rows_1() {
@@ -348,9 +348,9 @@ mod tests {
     #[test]
     fn test_to_arrow_record_batch() {
         let chunk = data_chunk!((Int32, [1, 2, 3]), (Utf8, ["abc", "def", "ghi"]));
-        let schema = Schema::new(vec![
-            Field::new("a".to_string(), LogicalType::Int32, false),
-            Field::new("b".to_string(), LogicalType::String, false),
+        let schema = DataSchema::new(vec![
+            DataField::new("a".to_string(), LogicalType::Int32, false),
+            DataField::new("b".to_string(), LogicalType::String, false),
         ]);
         let record_batch = chunk.to_arrow_record_batch(&schema);
         assert_eq!(record_batch.num_rows(), 3);

@@ -22,14 +22,17 @@ pub type VertexId = u64;
 /// An array of vertex IDs.
 pub type VertexIdArray = UInt64Array;
 
-/// Internal identifier associated with an edge.
+/// Internal identifier associated with an edge (graph-wide unique).
 pub type EdgeId = u64;
 
-/// Internal identifier associated with a transaction.
+/// Internal identifier associated with a transaction (database-wide unique).
 pub type TxnId = u64;
 
-/// Internal identifier associated with a property.
+/// Internal identifier associated with a graph (database-wide unique).
+pub type GraphId = u32;
+
+/// Internal identifier associated with a property (vertex/edge-type-wide unique).
 pub type PropertyId = u32;
 
-/// Internal identifier associated with a graph.
-pub type GraphId = NonZeroU32;
+/// Internal identifier associated with a procedure (database-wide unique).
+pub type ProcedureId = u32;
