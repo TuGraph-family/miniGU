@@ -1,7 +1,6 @@
 use serde::Serialize;
 
 use crate::object_ref::ProcedureRef;
-use crate::statement::common::Yield;
 
 #[derive(Debug, Serialize)]
 pub struct BoundCallProcedureStatement {
@@ -22,5 +21,5 @@ pub struct BoundInlineProcedureCall {}
 pub struct BoundNamedProcedureCall {
     pub procedure_ref: ProcedureRef,
     // pub args: Vec<BoundExpr>,
-    pub yield_clause: Option<Yield>,
+    pub yield_index: Option<Vec<usize>>,
 }

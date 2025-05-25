@@ -1,5 +1,4 @@
 pub mod catalog;
-mod common;
-mod object_ref;
-mod procedure;
-mod type_element;
+pub mod object_ref;
+pub mod procedure;
+pub mod type_element;
