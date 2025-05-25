@@ -3,7 +3,7 @@ use std::collections::hash_map::Entry;
 use std::sync::{RwLock, Weak};
 
 use crate::error::CatalogResult;
-use crate::provider::{DirectoryOrSchema, DirectoryProvider};
+use crate::provider::{DirectoryOrSchema, DirectoryProvider, DirectoryRef};
 
 #[derive(Debug)]
 pub struct MemoryDirectoryCatalog {
@@ -48,8 +48,8 @@ impl MemoryDirectoryCatalog {
 
 impl DirectoryProvider for MemoryDirectoryCatalog {
     #[inline]
-    fn parent(&self) -> Option<Weak<dyn DirectoryProvider>> {
-        self.parent.clone()
+    fn parent(&self) -> Option<DirectoryRef> {
+        self.parent.clone().and_then(|p| p.upgrade())
     }
 
     #[inline]

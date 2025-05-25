@@ -1,5 +1,4 @@
 pub mod directory;
-pub mod graph;
 pub mod graph_type;
 pub mod schema;
 

@@ -1,8 +1,9 @@
+use std::any::Any;
 use std::fmt::Debug;
-use std::sync::{Arc, Weak};
+use std::sync::Arc;
 
 use minigu_common::data_type::{DataSchemaRef, LogicalType};
-use minigu_common::types::{GraphId, LabelId, ProcedureId, PropertyId};
+use minigu_common::types::{LabelId, PropertyId};
 
 use crate::error::CatalogResult;
 use crate::label_set::LabelSet;
@@ -26,7 +27,7 @@ pub trait CatalogProvider: Debug + Send + Sync {
 
 pub trait DirectoryProvider: Debug + Send + Sync {
     /// Returns the parent directory ID of the directory.
-    fn parent(&self) -> Option<Weak<dyn DirectoryProvider>>;
+    fn parent(&self) -> Option<DirectoryRef>;
 
     /// Retrieves a child directory or schema by its name.
     fn get_child(&self, name: &str) -> CatalogResult<Option<DirectoryOrSchema>>;
@@ -38,7 +39,7 @@ pub trait DirectoryProvider: Debug + Send + Sync {
 /// Represents a logical schema, which contains graphs and graph type definitions.
 pub trait SchemaProvider: Debug + Send + Sync {
     /// Returns the parent directory ID of the schema.
-    fn parent(&self) -> Option<Weak<dyn DirectoryProvider>>;
+    fn parent(&self) -> Option<DirectoryRef>;
 
     /// Returns the names of the graphs in the schema.
     fn graph_names(&self) -> Vec<String>;
@@ -60,10 +61,9 @@ pub trait SchemaProvider: Debug + Send + Sync {
 }
 
 /// Represents a graph, which is an instance of a graph type.
-pub trait GraphProvider: Debug + Send + Sync {
-    /// Returns the ID of the graph.
-    fn id(&self) -> GraphId;
-
+///
+/// Use [`Arc::downcast`] to cast the trait object into the concrete type.
+pub trait GraphProvider: Debug + Send + Sync + Any {
     /// Returns the graph type of the graph.
     fn graph_type(&self) -> GraphTypeRef;
 }
@@ -117,13 +117,7 @@ pub trait PropertiesProvider: Debug + Send + Sync {
     fn properties(&self) -> Vec<(PropertyId, Property)>;
 }
 
-pub trait ProcedureProvider: Debug + Send + Sync {
-    /// Returns the ID of the procedure.
-    fn id(&self) -> ProcedureId;
-
-    /// Returns the description of the procedure.
-    fn description(&self) -> &str;
-
+pub trait ProcedureProvider: Debug + Send + Sync + Any {
     /// Returns the parameters of the procedure.
     fn parameters(&self) -> &[LogicalType];
 
