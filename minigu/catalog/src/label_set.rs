@@ -1,7 +1,8 @@
 use minigu_common::types::LabelId;
+use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LabelSet(SmallVec<[LabelId; 4]>);
 
 impl LabelSet {
