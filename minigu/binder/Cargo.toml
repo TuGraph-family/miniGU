@@ -5,8 +5,14 @@ version = "0.1.0"
 
 [dependencies]
 gql-parser = { workspace = true }
-serde = { workspace = true, features = ["std"] }
+minigu-catalog = { workspace = true }
+serde = { workspace = true, features = ["std", "derive"], optional = true }
 thiserror = { workspace = true, features = ["std"] }
+miette = { workspace = true, optional = true }
+macro_rules_attribute = "0.2.0"
+chrono = { version = "0.4", features = ["serde"] }
+smol_str = { workspace = true, features = ["std"] }
+minigu-common = {workspace = true}
 
 [lints]
 workspace = true
