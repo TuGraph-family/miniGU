@@ -1209,6 +1209,7 @@ version = "0.1.0"
 dependencies = [
  "gql-parser",
  "minigu-catalog",
+ "minigu-common",
  "serde",
  "smol_str",
  "thiserror",

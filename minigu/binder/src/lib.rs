@@ -8,3 +8,4 @@ mod statement;
 mod type_checker;
 mod types;
 mod validator;
+mod mock_catalog;
