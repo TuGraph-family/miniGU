@@ -95,33 +95,28 @@ fn weak_parent<T: DirectoryProvider + 'static>(arc: &Arc<T>) -> Option<Weak<dyn 
 }
 
 pub fn build_mock_catalog() -> Arc<MockDirectory> {
-    // Step 1: 构造 root
     let root = Arc::new(MockDirectory::new(None));
     let root_dyn: Arc<dyn DirectoryProvider> = root.clone();
-
-    // Step 2: 构造 default
+    
     let default = Arc::new(MockDirectory::new(weak_parent(&root)));
     root.children
         .write()
         .unwrap()
         .insert("default".into(), DirectoryOrSchema::Directory(default.clone()));
-
-    // Step 3: 构造 a
+    
     let a = Arc::new(MockDirectory::new(weak_parent(&default)));
     default
         .children
         .write()
         .unwrap()
         .insert("a".into(), DirectoryOrSchema::Directory(a.clone()));
-
-    // Step 4: 构造 schema b（叶子）
+    
     let b = Arc::new(MockSchema::new(weak_parent(&a)));
     a.children
         .write()
         .unwrap()
         .insert("b".into(), DirectoryOrSchema::Schema(b.clone()));
-
-    // 返回 root
+    
     root
 }
 impl MockCatalog {
