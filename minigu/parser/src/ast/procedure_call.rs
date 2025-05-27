@@ -23,5 +23,5 @@ pub struct InlineProcedureCall {}
 pub struct NamedProcedureCall {
     pub name: Spanned<ProcedureRef>,
     pub args: VecSpanned<Expr>,
-    pub yield_clause: OptSpanned<Yield>,
+    pub yield_clause: Yield,
 }

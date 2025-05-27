@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::sync::{Arc, Weak};
+use std::sync::{Arc, RwLock, Weak};
 
 use minigu_catalog::error::CatalogResult;
 use minigu_catalog::label_set::LabelSet;
@@ -37,7 +37,7 @@ use crate::types::Ident;
 #[derive(Debug)]
 pub struct MockDirectory {
     parent: Option<Weak<dyn DirectoryProvider>>,
-    children: HashMap<Ident, DirectoryOrSchema>,
+    children: RwLock<HashMap<Ident, DirectoryOrSchema>>,
 }
 
 #[derive(Debug)]
@@ -64,7 +64,7 @@ impl MockDirectory {
     pub fn new(parent: Option<std::sync::Weak<dyn DirectoryProvider>>) -> Self {
         Self {
             parent,
-            children: HashMap::new(),
+            children: HashMap::new().into(),
         }
     }
 }
@@ -75,11 +75,13 @@ impl DirectoryProvider for MockDirectory {
     }
 
     fn get_child(&self, name: &str) -> CatalogResult<Option<DirectoryOrSchema>> {
-        Ok(self.children.get(name).cloned())
+        Ok(self.children.read().unwrap().get(name).cloned())
     }
 
     fn children_names(&self) -> Vec<String> {
         self.children
+            .read()
+            .unwrap()
             .keys()
             .cloned()
             .map(|k| k.to_string())
@@ -87,37 +89,48 @@ impl DirectoryProvider for MockDirectory {
     }
 }
 
+
+fn weak_parent<T: DirectoryProvider + 'static>(arc: &Arc<T>) -> Option<Weak<dyn DirectoryProvider>> {
+    Some(Arc::downgrade(&(arc.clone() as Arc<dyn DirectoryProvider>)))
+}
+
+pub fn build_mock_catalog() -> Arc<MockDirectory> {
+    // Step 1: 构造 root
+    let root = Arc::new(MockDirectory::new(None));
+    let root_dyn: Arc<dyn DirectoryProvider> = root.clone();
+
+    // Step 2: 构造 default
+    let default = Arc::new(MockDirectory::new(weak_parent(&root)));
+    root.children
+        .write()
+        .unwrap()
+        .insert("default".into(), DirectoryOrSchema::Directory(default.clone()));
+
+    // Step 3: 构造 a
+    let a = Arc::new(MockDirectory::new(weak_parent(&default)));
+    default
+        .children
+        .write()
+        .unwrap()
+        .insert("a".into(), DirectoryOrSchema::Directory(a.clone()));
+
+    // Step 4: 构造 schema b（叶子）
+    let b = Arc::new(MockSchema::new(weak_parent(&a)));
+    a.children
+        .write()
+        .unwrap()
+        .insert("b".into(), DirectoryOrSchema::Schema(b.clone()));
+
+    // 返回 root
+    root
+}
 impl MockCatalog {
     pub fn default() -> Self {
-        fn to_weak<T: DirectoryProvider + 'static>(arc: &Arc<T>) -> Weak<dyn DirectoryProvider> {
-            Arc::downgrade(arc) as Weak<dyn DirectoryProvider>
-        }
-
-        let root = Arc::new(MockDirectory::new(None));
-
-        let default = Arc::new(MockDirectory::new(Some(to_weak(&root))));
-
-        let dir_a = Arc::new(MockDirectory::new(Some(to_weak(&default))));
-
-        let schema_b = Arc::new(MockSchema::new(Some(to_weak(&dir_a))));
-
-        Arc::get_mut(&mut Arc::clone(&dir_a))
-            .unwrap()
-            .children
-            .insert("b".into(), DirectoryOrSchema::Schema(schema_b));
-
-        Arc::get_mut(&mut Arc::clone(&default))
-            .unwrap()
-            .children
-            .insert("a".into(), DirectoryOrSchema::Directory(dir_a));
-
-        Arc::get_mut(&mut Arc::clone(&root))
-            .unwrap()
-            .children
-            .insert("default".into(), DirectoryOrSchema::Directory(default));
-
-        Self { root }
+        let root = build_mock_catalog();
+        MockCatalog { root }
     }
+    
+    
 }
 
 impl CatalogProvider for MockCatalog {
@@ -127,8 +140,8 @@ impl CatalogProvider for MockCatalog {
 }
 
 impl SchemaProvider for MockSchema {
-    fn parent(&self) -> Option<DirectoryRef> {
-        None
+    fn parent(&self) -> Option<DirectoryRef> { 
+        self.parent.clone().and_then(|p| p.upgrade())
     }
 
     fn graph_names(&self) -> Vec<String> {
