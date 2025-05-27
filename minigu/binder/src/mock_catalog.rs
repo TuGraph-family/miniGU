@@ -22,16 +22,17 @@ use crate::types::Ident;
 /// /default/a/b
 /// In the schema b, there has :
 /// {
-///   Graph { id: 3, graph_type_ref: graph_type_test }
+///   Graph { graph_type_ref: graph_type_test }
 ///   GraphType {
-///      id: 2,
 ///      name: graph_type_test,
 ///      labelId: label1:2, label2: 3.
-///      vertex_type { id: 1, LabelSet: 2, {1 pro_f32, float32, false; 2 pro_i32, int32,
-/// true}}
-///      edge_type { id: 1, LabelSet:3, src:1, dst:1, {1 pro_f32, float32, false; 2
-/// pro_i32, int32, true}}
-/// }
+///      vertex_type { LabelSet: 2}
+///      edge_type { LabelSet:3, src:2, dst:2,}
+/// },
+///  Procedure {
+///     name: procedure_test
+///     parameters {float32, float64}
+///     schema { (time, int32, false), (value, float32, false)}
 /// }
 
 #[derive(Debug)]

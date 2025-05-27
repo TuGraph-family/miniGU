@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use smol_str::ToSmolStr;
 use gql_parser::ast::{CallProcedureStatement, NamedProcedureCall, ProcedureCall, ProcedureRef};
-
+use minigu_catalog::provider::ProcedureProvider;
 use crate::error::{BindError, BindResult};
 use crate::program::Binder;
 use crate::statement::procedure::{BoundCallProcedureStatement, BoundNamedProcedureCall, BoundProcedureCall};
@@ -39,22 +39,7 @@ impl Binder {
                     .map_err(|e| BindError::External(Box::new(e)))?
                     .ok_or_else(|| BindError::ProcedureNotFound(procedure_name.clone()))?;
 
-                let mut bound_yield_index = Vec::new();
-
-                if let (Some(schema), Some(yield_clause)) = (
-                    procedure_obj.schema(),
-                    named_procedure_call.clone().yield_clause
-                    ) {
-                    for yield_item in yield_clause.value() {
-                        let target_name = yield_item.value().name.value();
-                        if let Some(index) = schema.fields().iter().position(
-                            |field| field.name() == target_name
-                        ) {
-                            bound_yield_index.push(index);
-                        }
-                    }
-                }
-
+                let bound_yield_index = self.resolve_yield_in_call_procedure(&procedure_obj, named_procedure_call)?;
                 Ok(BoundCallProcedureStatement {
                     optional: call_procedure_statement.optional,
                     procedure: BoundProcedureCall::Named(
@@ -73,14 +58,11 @@ impl Binder {
 
     pub(crate) fn resolve_yield_in_call_procedure(
         &mut self,
-        procedure_obj: &ObjProcedureRef,
+        procedure_obj: &Arc<dyn ProcedureProvider>,
         call: &NamedProcedureCall,
     ) -> BindResult<Vec<usize>> {
         let yield_clause = call.yield_clause.clone();
         let schema_opt = procedure_obj.schema();
-        if yield_clause.is_empty() && schema_opt.is_some() {
-            return Err(BindError::NotSupported("procedure has no schema, but yield clause is provided".to_string()))
-        };
         let mut bound_yield_index = Vec::new();
         if let (Some(schema),yield_clause) = (schema_opt, yield_clause) {
             for yield_item in yield_clause {
