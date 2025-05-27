@@ -33,7 +33,6 @@ impl Binder {
         procedure: &Procedure,
     ) -> BindResult<BoundProcedure> {
         Ok(BoundProcedure {
-            at: None,
             statement: self.bind_statement(procedure.statement.value())?,
             next_statement: procedure
                 .next_statements

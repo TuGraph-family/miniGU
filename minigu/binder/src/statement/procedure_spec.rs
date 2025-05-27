@@ -5,7 +5,6 @@ use crate::statement::catalog::LinearBoundCatalogModifyingStatement;
 
 #[derive(Debug, Serialize)]
 pub struct BoundProcedure {
-    pub at: Option<SchemaRef>,
     // pub binding_variable_def: BindingVariableDefBlock,
     pub statement: BoundStatement,
     pub next_statement: Vec<BoundNextStatement>,
