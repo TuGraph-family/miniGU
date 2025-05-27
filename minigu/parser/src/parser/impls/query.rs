@@ -8,15 +8,13 @@ use super::common::{
     graph_pattern_binding_table, limit_clause, offset_clause, order_by_clause, use_graph_clause,
 };
 use super::lexical::identifier;
-use super::object_expr::graph_expression;
 use super::procedure_call::call_procedure_statement;
 use super::procedure_spec::nested_query_specification;
-use super::session::{session_close_command, session_reset_command, session_set_command};
 use super::value_expr::{aggregating_value_expression, binding_variable_reference, set_quantifier};
 use crate::ast::*;
-use crate::imports::{Box, Vec};
+use crate::imports::Box;
 use crate::lexer::TokenKind;
-use crate::parser::token::{Token, TokenStream, any};
+use crate::parser::token::{TokenStream, any};
 use crate::parser::utils::{SpannedParserExt, ToSpanned, def_parser_alias};
 use crate::span::{Spanned, VecSpanned};
 
@@ -164,7 +162,7 @@ pub fn order_by_and_page_statement(
                     limit,
                 })
         },
-        TokenKind::Offset => {
+        TokenKind::Offset | TokenKind::Skip => {
             (offset_clause, opt(limit_clause))
                 .map(|(offset, limit)| OrderByAndPageStatement {
                     order_by: VecSpanned::new(),
@@ -261,10 +259,20 @@ def_parser_alias!(grouping_element, binding_variable_reference, Spanned<Ident>);
 pub fn simple_query_statement(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<SimpleQueryStatement>> {
-    dispatch! {peek(any);
-        TokenKind::Match => match_statement.map_inner(SimpleQueryStatement::Match),
-        // TODO: Add optional call.
-        TokenKind::Call => call_query_statement.map_inner(SimpleQueryStatement::Call),
+    dispatch! {peek((any, any));
+        (TokenKind::Match, _)
+        | (TokenKind::Optional, TokenKind::Match)
+        | (TokenKind::Optional, TokenKind::LeftBrace)
+        | (TokenKind::Optional, TokenKind::LeftParen) => match_statement.map_inner(SimpleQueryStatement::Match),
+        (TokenKind::Let, _) => fail,
+        (TokenKind::For, _) => fail,
+        (TokenKind::Filter, _) => fail,
+        (TokenKind::Order, TokenKind::By)
+        | (TokenKind::Offset, _)
+        | (TokenKind::Limit, _)
+        | (TokenKind::Skip, _) => order_by_and_page_statement.map_inner(SimpleQueryStatement::OrderByAndPage),
+        (TokenKind::Call, _)
+        | (TokenKind::Optional, TokenKind::Call) => call_query_statement.map_inner(SimpleQueryStatement::Call),
         _ => fail
     }
     .parse_next(input)
@@ -327,13 +335,28 @@ mod tests {
     use crate::parser::utils::parse;
 
     #[test]
-    fn test_ambient_linear_query_statement() {
+    fn test_ambient_linear_query_statement_1() {
         let query = parse!(
             ambient_linear_query_statement,
             r"
             MATCH (a)-[:KNOWS]->(b)
             MATCH (b)-[:KNOWS]->(c)
             RETURN a.id, count(c)
+            ORDER BY a.id DESC NULLS LAST
+            OFFSET 10
+            LIMIT 10"
+        );
+        assert_yaml_snapshot!(query);
+    }
+
+    #[test]
+    fn test_ambient_linear_query_statement_2() {
+        let query = parse!(
+            ambient_linear_query_statement,
+            r"
+            OPTIONAL CALL PROC(1, 2, 3)
+            YIELD a, b
+            RETURN a.id, count(b)
             ORDER BY a.id DESC NULLS LAST
             OFFSET 10
             LIMIT 10"

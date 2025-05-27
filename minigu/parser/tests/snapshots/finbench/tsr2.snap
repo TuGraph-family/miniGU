@@ -5,8 +5,8 @@ Err:
   Unexpected:
     input: "-- simple read 2\nMATCH (n:Account{id:12}) RETURN n NEXT\nOPTIONAL MATCH (n)-[e:transfer]->(m:Account)\nWHERE\n    e.ts > 45\n    AND e.ts < 50\nRETURN\n    n,\n    sum(e.amount) as sumEdge1Amount,\n    max(e.amount) as maxEdge1Amount,\n    count(e) as numEdge1\nNEXT\nOPTIONAL MATCH (n)<-[e:transfer]-(m:Account)\nWHERE\n    e.ts > 0\n    AND e.ts < 100\nRETURN\n    sumEdge1Amount,\n    maxEdge1Amount,\n    numEdge1,\n    sum(e.amount) as sumEdge2Amount,\n    max(e.amount) as maxEdge2Amount,\n    count(e) as numEdge2\nNEXT\nRETURN\n    round(sumEdge1Amount * 1000) / 1000 as sumEdge1Amount,\n    CASE WHEN maxEdge1Amount < 0 THEN -1 ELSE round(maxEdge1Amount * 1000) / 1000 END as maxEdge1Amount,\n    numEdge1,\n    round(sumEdge2Amount * 1000) / 1000 as sumEdge2Amount,\n    CASE WHEN maxEdge2Amount < 0 THEN -1 ELSE round(maxEdge2Amount * 1000) / 1000 END as maxEdge2Amount,\n    numEdge2"
     span:
-      start: 51
-      end: 55
+      start: 569
+      end: 570
     position:
-      - 2
-      - 35
+      - 26
+      - 58

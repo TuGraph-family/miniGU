@@ -1,0 +1,156 @@
+---
+source: minigu/parser/src/parser/impls/query.rs
+expression: query
+---
+- Parts:
+    parts:
+      - - Call:
+            optional: true
+            procedure:
+              - Named:
+                  name:
+                    - Ref:
+                        schema: ~
+                        objects:
+                          - - PROC
+                            - start: 27
+                              end: 31
+                    - start: 27
+                      end: 31
+                  args:
+                    - - Value:
+                          Literal:
+                            Numeric:
+                              Integer:
+                                - kind: Decimal
+                                  integer: "1"
+                                - start: 32
+                                  end: 33
+                      - start: 32
+                        end: 33
+                    - - Value:
+                          Literal:
+                            Numeric:
+                              Integer:
+                                - kind: Decimal
+                                  integer: "2"
+                                - start: 35
+                                  end: 36
+                      - start: 35
+                        end: 36
+                    - - Value:
+                          Literal:
+                            Numeric:
+                              Integer:
+                                - kind: Decimal
+                                  integer: "3"
+                                - start: 38
+                                  end: 39
+                      - start: 38
+                        end: 39
+                  yield_clause:
+                    - - - name:
+                            - a
+                            - start: 59
+                              end: 60
+                          alias: ~
+                        - start: 59
+                          end: 60
+                      - - name:
+                            - b
+                            - start: 62
+                              end: 63
+                          alias: ~
+                        - start: 62
+                          end: 63
+                    - start: 53
+                      end: 63
+              - start: 27
+                end: 63
+        - start: 13
+          end: 63
+    result:
+      - Return:
+          statement:
+            - quantifier: ~
+              items:
+                - Items:
+                    - - value:
+                          - Property:
+                              source:
+                                - Variable: a
+                                - start: 83
+                                  end: 84
+                              trailing_names:
+                                - - id
+                                  - start: 85
+                                    end: 87
+                          - start: 83
+                            end: 87
+                        alias: ~
+                      - start: 83
+                        end: 87
+                    - - value:
+                          - Aggregate:
+                              General:
+                                kind:
+                                  - Count
+                                  - start: 89
+                                    end: 94
+                                quantifier: ~
+                                expr:
+                                  - Variable: b
+                                  - start: 95
+                                    end: 96
+                          - start: 89
+                            end: 97
+                        alias: ~
+                      - start: 89
+                        end: 97
+                - start: 83
+                  end: 97
+              group_by: ~
+            - start: 76
+              end: 97
+          order_by:
+            - order_by:
+                - - key:
+                      - Property:
+                          source:
+                            - Variable: a
+                            - start: 119
+                              end: 120
+                          trailing_names:
+                            - - id
+                              - start: 121
+                                end: 123
+                      - start: 119
+                        end: 123
+                    ordering:
+                      - Desc
+                      - start: 124
+                        end: 128
+                    null_ordering:
+                      - Last
+                      - start: 129
+                        end: 139
+                  - start: 119
+                    end: 139
+              offset:
+                - Integer:
+                    kind: Decimal
+                    integer: "10"
+                - start: 159
+                  end: 161
+              limit:
+                - Integer:
+                    kind: Decimal
+                    integer: "10"
+                - start: 180
+                  end: 182
+            - start: 110
+              end: 182
+      - start: 76
+        end: 182
+- start: 13
+  end: 182
