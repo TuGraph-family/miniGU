@@ -63,7 +63,7 @@ impl Binder {
                     let dir = match current {
                         DirectoryOrSchema::Directory(dir) => dir,
                         DirectoryOrSchema::Schema(_) => {
-                            return Err(BindError::NotSupported("schema".to_string()));
+                            return Err(BindError::SchemaNotFound(path_str.clone()));
                         }
                     };
                     let child = dir.get_child(name.as_str()).map_err(|e| BindError::External(Box::new(e)))?
