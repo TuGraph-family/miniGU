@@ -95,7 +95,7 @@ mod tests {
     use smol_str::SmolStr;
     use minigu_catalog::provider::CatalogRef;
     use crate::mock_catalog::{MockCatalog, MockGraph};
-    use crate::program::{bind, Binder};
+    use crate::program::Binder;
     use gql_parser::ast::{SchemaPathSegment, SchemaRef as AstSchemaRef};
     use gql_parser::span::{Spanned, VecSpanned};
     use crate::error::BindError;

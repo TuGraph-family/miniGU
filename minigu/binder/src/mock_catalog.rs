@@ -228,7 +228,7 @@ pub struct MockVertexType;
 
 impl VertexTypeProvider for MockVertexType {
     fn label_set(&self) -> LabelSet {
-        LabelSet::new([LabelId::new(2).unwrap()])
+        LabelSet::from_iter([LabelId::new(2).unwrap()])
     }
 }
 
@@ -237,7 +237,7 @@ pub struct MockEdgeType;
 
 impl EdgeTypeProvider for MockEdgeType {
     fn label_set(&self) -> LabelSet {
-        LabelSet::new([LabelId::new(2).unwrap()])
+        LabelSet::from_iter([LabelId::new(2).unwrap()])
     }
 
     fn src(&self) -> VertexTypeRef {
@@ -276,8 +276,8 @@ impl ProcedureProvider for MockProcedure {
 
     fn schema(&self) -> Option<DataSchemaRef> {
         Some(Arc::new(DataSchema::new(vec![
-            DataField::new("time".to_string(), LogicalType::Int32, false),
-            DataField::new("value".to_string(), LogicalType::Float32, false),
+            DataField::new("t1".to_string(), LogicalType::Int32, false),
+            DataField::new("t2".to_string(), LogicalType::Float32, false),
         ])))
     }
 }

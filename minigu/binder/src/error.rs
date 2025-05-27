@@ -1,5 +1,6 @@
 use std::error::Error;
 use std::result;
+use serde::Serialize;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -13,6 +14,7 @@ pub enum BindError {
     #[error("not support operation {0:?}")]
     NotSupported(String),
     #[error(transparent)]
+
     External(#[from] Box<dyn Error>)
 }
 

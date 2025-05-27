@@ -44,10 +44,9 @@ impl Binder {
                     optional: call_procedure_statement.optional,
                     procedure: BoundProcedureCall::Named(
                         BoundNamedProcedureCall {
-                            procedure_ref: ObjProcedureRef {
-                                name: procedure_name.to_smolstr(),
-                                object: procedure_obj,
-                            },
+                            procedure_ref: ObjProcedureRef::new(
+                                procedure_name.to_smolstr(),
+                                procedure_obj),
                             yield_index: bound_yield_index,
                         }
                     )
@@ -82,5 +81,47 @@ impl Binder {
             }
         }
         Ok(bound_yield_index)
+    }
+}
+
+
+mod tests {
+    use std::sync::Arc;
+    use gql_parser::ast::ProgramActivity;
+    use minigu_catalog::provider::CatalogRef;
+    use crate::error::{BindError, BindResult};
+    use crate::mock_catalog::MockCatalog;
+    use crate::program::Binder;
+    use crate::statement::procedure_spec::BoundProcedure;
+    use insta::assert_yaml_snapshot;
+
+    fn get_bound_procedure(gql: &str) -> BindResult<BoundProcedure> {
+        let parsed = gql_parser::parse_gql(gql);
+        let program_activity = parsed.unwrap().value().clone()
+            .activity.unwrap().value().clone();
+        let trans_activity = match program_activity {
+            ProgramActivity::Session(session) => {
+                return Err(BindError::NotSupported("Session".to_string()));
+            }
+            ProgramActivity::Transaction(transaction) => Some(transaction),
+        };
+        let procedure = trans_activity.unwrap().procedure.unwrap().value().clone();
+        let catalog: CatalogRef = Arc::new(MockCatalog::default());
+        let mut binder = Binder::new(catalog.clone(), None);
+        binder.bind_procedure(&procedure)
+    }
+    
+    #[test]
+    fn test_resolve_procedure() {
+        let stmt = get_bound_procedure("optional call /a/b.proc(1, 2, 3) yield a as a1, b as b1");
+        assert!(matches!(stmt, Err(BindError::SchemaNotFound(_))));
+        let stmt = get_bound_procedure("optional call /default/a/b/proc(1, 2, 3) yield a as a1, b as b1");
+        assert!(matches!(stmt, Err(BindError::ProcedureNotFound(_))));
+        let stmt = get_bound_procedure("optional call /default/a/b/procedure_test(1, 2, 3) yield a as a1, b as b1");
+        let err_message = "field `a` not found in procedure fields".to_string();
+        assert!(matches!(stmt, Err(BindError::NotSupported(err_message))));
+        let stmt = get_bound_procedure("optional call /default/a/b/procedure_test(1, 2, 3) yield t1 as a1, t2 as b1");
+        assert!(stmt.is_ok());
+        assert_yaml_snapshot!(stmt.unwrap());
     }
 }
