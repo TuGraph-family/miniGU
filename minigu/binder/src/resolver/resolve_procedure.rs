@@ -64,8 +64,8 @@ impl Binder {
         let yield_clause = call.yield_clause.clone();
         let schema_opt = procedure_obj.schema();
         let mut bound_yield_index = Vec::new();
-        if let (Some(schema),yield_clause) = (schema_opt, yield_clause) {
-            for yield_item in yield_clause {
+        if let (Some(schema),Some(yield_clause)) = (schema_opt, yield_clause) {
+            for yield_item in yield_clause.value() {
                 let target_name = yield_item.value().name.value();
                 let index_opt = schema.fields().iter().position(
                     |field| field.name() == target_name

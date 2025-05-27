@@ -3,16 +3,6 @@ use minigu_catalog::provider::{CatalogRef, SchemaRef};
 
 use crate::error::BindResult;
 use crate::statement::procedure_spec::{BoundNextStatement, BoundProcedure, BoundStatement};
-
-pub fn bind(
-    procedure: &Procedure,
-    catalog: CatalogRef,
-    current_schema: Option<SchemaRef>,
-) -> BindResult<BoundProcedure> {
-    let mut binder = Binder::new(catalog, current_schema);
-    binder.bind_procedure(procedure)
-}
-
 pub struct Binder {
     pub catalog: CatalogRef,
     pub schema: Option<SchemaRef>,

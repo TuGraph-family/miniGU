@@ -18,9 +18,9 @@ pub type ProcedureRef = ObjectRef<dyn ProcedureProvider>;
 
 #[derive(Debug, Serialize)]
 pub struct ObjectRef<T: ?Sized> {
-    pub name: SmolStr,
+    name: SmolStr,
     #[serde(skip)]
-    pub object: Arc<T>,
+    object: Arc<T>,
 }
 
 impl<T: ?Sized> ObjectRef<T> {
