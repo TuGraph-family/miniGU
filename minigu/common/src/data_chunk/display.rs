@@ -71,8 +71,14 @@ pub struct TableBuilder {
 #[derive(Debug)]
 enum TableBuilderInner {
     Tabled(Builder),
-    Csv { rows: Vec<Vec<String>>, delimiter: u8 },
-    Json { rows: Vec<serde_json::Value>, col_schema: Vec<Vec<String>>},
+    Csv {
+        rows: Vec<Vec<String>>,
+        delimiter: u8,
+    },
+    Json {
+        rows: Vec<serde_json::Value>,
+        col_schema: Vec<Vec<String>>,
+    },
 }
 
 impl TableBuilderInner {
@@ -89,15 +95,24 @@ impl TableBuilderInner {
                 builder.push_record(header);
             }
             TableBuilderInner::Csv { rows, .. } => {
-                let header: Vec<String> = schema.fields().iter().map(|f| f.name().to_string()).collect();
-                let types: Vec<String> = schema.fields().iter().map(|f| f.ty().to_string()).collect();
+                let header: Vec<String> = schema
+                    .fields()
+                    .iter()
+                    .map(|f| f.name().to_string())
+                    .collect();
+                let types: Vec<String> =
+                    schema.fields().iter().map(|f| f.ty().to_string()).collect();
                 rows.push(header);
                 if type_info {
                     rows.push(types);
                 }
             }
-            TableBuilderInner::Json { col_schema, ..} => {
-                let header = schema.fields().iter().map(|f| f.name().to_string()).collect();
+            TableBuilderInner::Json { col_schema, .. } => {
+                let header = schema
+                    .fields()
+                    .iter()
+                    .map(|f| f.name().to_string())
+                    .collect();
                 col_schema.push(header);
             }
         }
@@ -119,29 +134,37 @@ impl TableBuilderInner {
                     let index = row.row_index();
                     builder.push_record(formatters.iter().map(|f| f.value(index).to_string()));
                 }
-            },
+            }
             TableBuilderInner::Csv { rows, .. } => {
                 let options = FormatOptions::new().with_null(null_str);
-                let formatters:Vec<ArrayFormatter> = chunk
+                let formatters: Vec<ArrayFormatter> = chunk
                     .columns()
                     .iter()
                     .map(|c| {
-                        ArrayFormatter::try_new(c,&options)
-                            .expect("column should be able to be formatted")})
+                        ArrayFormatter::try_new(c, &options)
+                            .expect("column should be able to be formatted")
+                    })
                     .collect();
-                for row in chunk.rows(){
+                for row in chunk.rows() {
                     let index = row.row_index();
-                    let record = formatters.iter().map(|f| f.value(index).to_string()).collect();
+                    let record = formatters
+                        .iter()
+                        .map(|f| f.value(index).to_string())
+                        .collect();
                     rows.push(record);
-                }   
-            },
-            TableBuilderInner::Json { rows,col_schema} => {
+                }
+            }
+            TableBuilderInner::Json { rows, col_schema } => {
                 let options = FormatOptions::new().with_null(null_str);
-                let formatters = chunk.columns().iter()
-                    .map(|c| {ArrayFormatter::try_new(c,&options)
-                        .expect("column should be able to be formatted")})
+                let formatters = chunk
+                    .columns()
+                    .iter()
+                    .map(|c| {
+                        ArrayFormatter::try_new(c, &options)
+                            .expect("column should be able to be formatted")
+                    })
                     .collect_vec();
-                
+
                 let field_names = col_schema[0].clone();
 
                 for row in chunk.rows() {
@@ -174,9 +197,9 @@ impl TableBuilder {
                 rows: vec![],
                 delimiter: delimiter,
             },
-            TableStyle::Json => TableBuilderInner::Json { 
+            TableStyle::Json => TableBuilderInner::Json {
                 rows: vec![],
-                col_schema:vec![] 
+                col_schema: vec![],
             },
             // _ => todo!(),
         };
@@ -231,15 +254,14 @@ impl TableBuilder {
                     let mut writer = csv::WriterBuilder::new()
                         .delimiter(delimiter)
                         .from_writer(&mut wrt);
-
-                    for row in rows{
+                    for row in rows {
                         writer.write_record(row).unwrap();
                     }
                     writer.flush().unwrap();
                 }
                 Table::Csv(String::from_utf8(wrt).unwrap())
             }
-            TableBuilderInner::Json { rows,.. } => {
+            TableBuilderInner::Json { rows, .. } => {
                 Table::Json(serde_json::to_string_pretty(&rows).unwrap())
             }
         }
@@ -263,7 +285,6 @@ impl std::fmt::Display for Table {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -464,7 +485,10 @@ mod tests {
     #[test]
     fn test_table_csv() {
         let schema = build_test_schema();
-        let options = TableOptions::new().with_style(TableStyle::Csv(b',')).with_type_info(false);
+        let options = TableOptions::new()
+            .with_style(TableStyle::Csv(b','))
+            .with_type_info(false);
+
         let table = TableBuilder::new(Some(schema), options)
             .append_chunk(&build_test_data_chunk())
             .build();
@@ -478,11 +502,13 @@ mod tests {
     #[test]
     fn test_table_json() {
         let schema = build_test_schema();
-        let options = TableOptions::new().with_style(TableStyle::Json).with_type_info(false);
+        let options = TableOptions::new()
+            .with_style(TableStyle::Json)
+            .with_type_info(false);
+
         let table = TableBuilder::new(Some(schema), options)
             .append_chunk(&build_test_data_chunk())
             .build();
         println!("{}", table);
     }
-
 }
