@@ -1,5 +1,6 @@
 ---
 source: minigu/parser/src/parser/impls/procedure_call.rs
+assertion_line: 65
 expression: parsed
 ---
 - optional: true
@@ -12,12 +13,12 @@ expression: parsed
                     - - Name: a
                       - start: 15
                         end: 16
+                    - - Name: b
+                      - start: 17
+                        end: 18
                 - start: 14
-                  end: 16
+                  end: 18
               objects:
-                - - b
-                  - start: 17
-                    end: 18
                 - - proc
                   - start: 19
                     end: 23

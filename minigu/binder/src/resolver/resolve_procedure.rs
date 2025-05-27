@@ -123,5 +123,9 @@ mod tests {
         let stmt = get_bound_procedure("optional call /default/a/b/procedure_test(1, 2, 3) yield t1 as a1, t2 as b1");
         assert!(stmt.is_ok());
         assert_yaml_snapshot!(stmt.unwrap());
+        let stmt = get_bound_procedure("at /default/a/b optional call procedure_test(1, 2, 3) yield t1 as a1");
+        assert!(stmt.is_ok());
+        assert_yaml_snapshot!(stmt.unwrap());
+        
     }
 }

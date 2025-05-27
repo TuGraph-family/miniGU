@@ -60,7 +60,7 @@ mod tests {
     fn test_call_procedure_statement() {
         let parsed = parse!(
             call_procedure_statement,
-            "optional call /a/b.proc(1, 2, 3) yield a as a1, b as b1"
+            "optional call /a/b/proc(1, 2, 3) yield a as a1, b as b1"
         );
         assert_yaml_snapshot!(parsed);
     }
