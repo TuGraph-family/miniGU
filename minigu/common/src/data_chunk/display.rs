@@ -469,10 +469,10 @@ mod tests {
             .append_chunk(&build_test_data_chunk())
             .build();
         assert_snapshot!(table, @r"
-    a,b
-    2,def
-    3,ghi
-    ");
+        a,b
+        2,def
+        3,ghi
+        ");
     }
 
     #[test]
