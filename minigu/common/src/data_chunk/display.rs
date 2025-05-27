@@ -195,7 +195,7 @@ impl TableBuilder {
             }
             TableStyle::Csv(delimiter) => TableBuilderInner::Csv {
                 rows: vec![],
-                delimiter: delimiter,
+                delimiter,
             },
             TableStyle::Json => TableBuilderInner::Json {
                 rows: vec![],
@@ -246,7 +246,7 @@ impl TableBuilder {
                     _ => (),
                 }
                 table.with(theme);
-                Table::Tabled(table)
+                Table::Tabled(Box::new(table))
             }
             TableBuilderInner::Csv { rows, delimiter } => {
                 let mut wrt = Vec::new();
@@ -269,10 +269,8 @@ impl TableBuilder {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-// pub struct Table(tabled::Table);
-
 pub enum Table {
-    Tabled(tabled::Table),
+    Tabled(Box<tabled::Table>),
     Csv(String),
     Json(String),
 }
