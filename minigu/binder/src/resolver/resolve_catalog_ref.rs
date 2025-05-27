@@ -1,10 +1,11 @@
 use std::sync::Arc;
+
+use gql_parser::ast::{SchemaPath, SchemaPathSegment, SchemaRef as AstSchemaRef};
+use minigu_catalog::provider::{DirectoryOrSchema, DirectoryProvider, SchemaRef};
 use smol_str::ToSmolStr;
+
 use crate::error::{BindError, BindResult};
 use crate::program::Binder;
-use gql_parser::ast::{SchemaPath, SchemaPathSegment};
-use gql_parser::ast::SchemaRef as AstSchemaRef;
-use minigu_catalog::provider::{DirectoryOrSchema, DirectoryProvider, DirectoryRef, SchemaRef};
 
 pub fn schema_path_to_string(path: &SchemaPath) -> String {
     path.iter()
@@ -16,27 +17,31 @@ pub fn schema_path_to_string(path: &SchemaPath) -> String {
         .join("/")
 }
 
-
 impl Binder {
     pub(crate) fn resolve_schema_ref(&self, schema_ref: &AstSchemaRef) -> BindResult<SchemaRef> {
         match schema_ref {
-            AstSchemaRef::Absolute(path) => {
-                self.resolve_schema_path(self.catalog.get_root().map_err(|e| BindError::External(Box::new(e)))?, path)
-            }
+            AstSchemaRef::Absolute(path) => self.resolve_schema_path(
+                self.catalog
+                    .get_root()
+                    .map_err(|e| BindError::External(Box::new(e)))?,
+                path,
+            ),
             AstSchemaRef::Relative(path) => {
-                let schema = self.schema.as_ref()
+                let schema = self
+                    .schema
+                    .as_ref()
                     .ok_or_else(|| BindError::SchemaNotSpecified)?;
 
                 let current = DirectoryOrSchema::Schema(Arc::clone(schema));
                 self.resolve_schema_path(current, path)
             }
 
-            AstSchemaRef::Parameter(param) => {
-                Err(BindError::NotSupported("type of parameters is not supported".to_string()))
-            }
-            AstSchemaRef::Predefined(predefined) => {
-                Err(BindError::NotSupported("predefined type is not supported".to_string()))
-            }
+            AstSchemaRef::Parameter(param) => Err(BindError::NotSupported(
+                "type of parameters is not supported".to_string(),
+            )),
+            AstSchemaRef::Predefined(predefined) => Err(BindError::NotSupported(
+                "predefined type is not supported".to_string(),
+            )),
         }
     }
 
@@ -44,7 +49,7 @@ impl Binder {
         &self,
         mut current: DirectoryOrSchema,
         path: &SchemaPath,
-    ) -> BindResult<SchemaRef>  {
+    ) -> BindResult<SchemaRef> {
         let path_str = schema_path_to_string(path);
         for (i, segment) in path.iter().enumerate() {
             match segment.value() {
@@ -52,10 +57,10 @@ impl Binder {
                     current = match &current {
                         DirectoryOrSchema::Directory(dir) => {
                             DirectoryOrSchema::Directory(dir.parent().expect("parent should exist"))
-                        },
-                        DirectoryOrSchema::Schema(schema)=> {
-                            DirectoryOrSchema::Directory(schema.parent().expect("parent should exist"))
                         }
+                        DirectoryOrSchema::Schema(schema) => DirectoryOrSchema::Directory(
+                            schema.parent().expect("parent should exist"),
+                        ),
                     };
                 }
 
@@ -66,8 +71,10 @@ impl Binder {
                             return Err(BindError::SchemaNotFound(path_str.clone()));
                         }
                     };
-                    let child = dir.get_child(name.as_str()).map_err(|e| BindError::External(Box::new(e)))?
-                        .ok_or_else(||BindError::SchemaNotFound(path_str.clone()))?;
+                    let child = dir
+                        .get_child(name.as_str())
+                        .map_err(|e| BindError::External(Box::new(e)))?
+                        .ok_or_else(|| BindError::SchemaNotFound(path_str.clone()))?;
                     match &child {
                         DirectoryOrSchema::Schema(_) => {
                             if i != path.len() - 1 {
@@ -92,15 +99,20 @@ impl Binder {
 #[cfg(test)]
 mod tests {
     use std::sync::Arc;
-    use smol_str::SmolStr;
-    use minigu_catalog::provider::CatalogRef;
-    use crate::mock_catalog::{MockCatalog, MockGraph};
-    use crate::program::Binder;
-    use gql_parser::ast::{SchemaPathSegment, SchemaRef as AstSchemaRef};
-    use gql_parser::span::{Spanned, VecSpanned};
-    use crate::error::BindError;
 
-    fn get_schema_ref(segments: impl IntoIterator<Item = impl AsRef<str>>, is_absolute: bool) -> AstSchemaRef {
+    use gql_parser::ast::{SchemaPathSegment, SchemaRef as AstSchemaRef};
+    use gql_parser::span::Spanned;
+    use minigu_catalog::provider::CatalogRef;
+    use smol_str::SmolStr;
+
+    use crate::error::BindError;
+    use crate::mock_catalog::MockCatalog;
+    use crate::program::Binder;
+
+    fn get_schema_ref(
+        segments: impl IntoIterator<Item = impl AsRef<str>>,
+        is_absolute: bool,
+    ) -> AstSchemaRef {
         let mut offset = 0;
         let mut path = Vec::new();
 
@@ -123,7 +135,6 @@ mod tests {
         } else {
             AstSchemaRef::Absolute(path)
         }
-        
     }
 
     #[test]
@@ -136,14 +147,13 @@ mod tests {
         let absolute_path = get_schema_ref(["default", "a", "b"], true);
         let schema_ref = binder.resolve_schema_ref(&absolute_path);
         assert!(schema_ref.is_ok());
-        
+
         let binder = Binder::new(catalog.clone(), Some(schema_ref.unwrap()));
-        let relative_path = get_schema_ref(["..","..","a","b"], false);
+        let relative_path = get_schema_ref(["..", "..", "a", "b"], false);
         let schema_ref = binder.resolve_schema_ref(&relative_path);
         assert!(schema_ref.is_ok());
-        let relative_path = get_schema_ref(["..","a","b"], false);
+        let relative_path = get_schema_ref(["..", "a", "b"], false);
         let schema_ref = binder.resolve_schema_ref(&relative_path);
         assert!(schema_ref.is_err());
-        
     }
 }

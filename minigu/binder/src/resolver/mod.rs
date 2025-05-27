@@ -1,7 +1,8 @@
-mod resolve_procedure;
 mod resolve_catalog_ref;
+mod resolve_procedure;
 
 use gql_parser::ast::{CatalogModifyingStatement, Statement};
+
 use crate::error::{BindError, BindResult};
 use crate::program::Binder;
 use crate::statement::catalog::BoundCatalogModifyingStatement;
@@ -24,8 +25,8 @@ impl Binder {
                     }
                 }
                 Ok(BoundStatement::Catalog(resolved_stmts))
-            },
-            _ => Err(BindError::NotSupported("Catalog operation".to_string()))
+            }
+            _ => Err(BindError::NotSupported("Catalog operation".to_string())),
         }
     }
 }

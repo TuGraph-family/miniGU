@@ -18,16 +18,12 @@ impl Binder {
 }
 
 impl Binder {
-    pub fn bind_procedure(
-        &mut self,
-        procedure: &Procedure,
-    ) -> BindResult<BoundProcedure> {
-        
+    pub fn bind_procedure(&mut self, procedure: &Procedure) -> BindResult<BoundProcedure> {
         if let Some(at_schema) = &procedure.at {
             let schema_ref = self.resolve_schema_ref(at_schema.value())?;
             self.schema = Some(schema_ref);
         }
-        
+
         Ok(BoundProcedure {
             statement: self.bind_statement(procedure.statement.value())?,
             next_statement: procedure
@@ -44,7 +40,7 @@ impl Binder {
     }
 
     pub fn bind_statement(&mut self, statement: &Statement) -> BindResult<BoundStatement> {
-        let mut resolved_statement = self.resolve_statement(&statement)?;
+        let mut resolved_statement = self.resolve_statement(statement)?;
         // self.type_check(&resolved_statement)?;
         // self.validate(&resolved_statement)?;
         Ok(resolved_statement)

@@ -17,7 +17,6 @@ use crate::types::Ident;
 
 /// This file defines a mock Catalog metadata structure designed for testing the Binder. The Catalog
 /// primarily includes the following components.
-
 /// Schema Directory:
 /// /default/a/b
 /// In the schema b, there has :
@@ -90,34 +89,35 @@ impl DirectoryProvider for MockDirectory {
     }
 }
 
-
-fn weak_parent<T: DirectoryProvider + 'static>(arc: &Arc<T>) -> Option<Weak<dyn DirectoryProvider>> {
+fn weak_parent<T: DirectoryProvider + 'static>(
+    arc: &Arc<T>,
+) -> Option<Weak<dyn DirectoryProvider>> {
     Some(Arc::downgrade(&(arc.clone() as Arc<dyn DirectoryProvider>)))
 }
 
 pub fn build_mock_catalog() -> Arc<MockDirectory> {
     let root = Arc::new(MockDirectory::new(None));
     let root_dyn: Arc<dyn DirectoryProvider> = root.clone();
-    
+
     let default = Arc::new(MockDirectory::new(weak_parent(&root)));
-    root.children
-        .write()
-        .unwrap()
-        .insert("default".into(), DirectoryOrSchema::Directory(default.clone()));
-    
+    root.children.write().unwrap().insert(
+        "default".into(),
+        DirectoryOrSchema::Directory(default.clone()),
+    );
+
     let a = Arc::new(MockDirectory::new(weak_parent(&default)));
     default
         .children
         .write()
         .unwrap()
         .insert("a".into(), DirectoryOrSchema::Directory(a.clone()));
-    
+
     let b = Arc::new(MockSchema::new(weak_parent(&a)));
     a.children
         .write()
         .unwrap()
         .insert("b".into(), DirectoryOrSchema::Schema(b.clone()));
-    
+
     root
 }
 impl MockCatalog {
@@ -125,8 +125,6 @@ impl MockCatalog {
         let root = build_mock_catalog();
         MockCatalog { root }
     }
-    
-    
 }
 
 impl CatalogProvider for MockCatalog {
@@ -136,7 +134,7 @@ impl CatalogProvider for MockCatalog {
 }
 
 impl SchemaProvider for MockSchema {
-    fn parent(&self) -> Option<DirectoryRef> { 
+    fn parent(&self) -> Option<DirectoryRef> {
         self.parent.clone().and_then(|p| p.upgrade())
     }
 
@@ -146,7 +144,7 @@ impl SchemaProvider for MockSchema {
 
     fn get_graph(&self, name: &str) -> CatalogResult<Option<GraphRef>> {
         if name.eq("graph_test") {
-            let graph: GraphRef = Arc::new(MockGraph::default());
+            let graph: GraphRef = Arc::new(MockGraph {});
             Ok(Some(graph))
         } else {
             Ok(None)
@@ -159,7 +157,7 @@ impl SchemaProvider for MockSchema {
 
     fn get_graph_type(&self, name: &str) -> CatalogResult<Option<GraphTypeRef>> {
         if name.eq("graph_type_test") {
-            let graph_type: GraphTypeRef = Arc::new(MockGraphType::default());
+            let graph_type: GraphTypeRef = Arc::new(MockGraphType {});
             Ok(Some(graph_type))
         } else {
             Ok(None)
@@ -198,7 +196,7 @@ impl GraphTypeProvider for MockGraphType {
     }
 
     fn get_vertex_type(&self, key: &LabelSet) -> CatalogResult<Option<VertexTypeRef>> {
-        Ok(Some(Arc::new(MockVertexType::default())))
+        Ok(Some(Arc::new(MockVertexType {})))
     }
 
     fn vertex_type_keys(&self) -> Vec<LabelSet> {
@@ -206,7 +204,7 @@ impl GraphTypeProvider for MockGraphType {
     }
 
     fn get_edge_type(&self, key: &LabelSet) -> CatalogResult<Option<EdgeTypeRef>> {
-        Ok(Some(Arc::new(MockEdgeType::default())))
+        Ok(Some(Arc::new(MockEdgeType {})))
     }
 
     fn edge_type_keys(&self) -> Vec<LabelSet> {
@@ -219,7 +217,7 @@ pub struct MockGraph;
 
 impl GraphProvider for MockGraph {
     fn graph_type(&self) -> GraphTypeRef {
-        Arc::new(MockGraphType::default())
+        Arc::new(MockGraphType {})
     }
 }
 
@@ -241,11 +239,11 @@ impl EdgeTypeProvider for MockEdgeType {
     }
 
     fn src(&self) -> VertexTypeRef {
-        Arc::new(MockVertexType::default())
+        Arc::new(MockVertexType {})
     }
 
     fn dst(&self) -> VertexTypeRef {
-        Arc::new(MockVertexType::default())
+        Arc::new(MockVertexType {})
     }
 }
 
