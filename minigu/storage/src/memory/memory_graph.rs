@@ -10,9 +10,6 @@ use super::transaction::{MemTransaction, MemTxnManager};
 use crate::error::{
     EdgeNotFoundError, StorageError, StorageResult, TransactionError, VertexNotFoundError,
 };
-use crate::memory::adjacency_iterator::AdjacencyIterator;
-use crate::memory::edge_iterator::EdgeIterator;
-use crate::memory::vertex_iterator::VertexIterator;
 use crate::model::edge::{Edge, Neighbor};
 use crate::model::vertex::Vertex;
 use crate::storage::{Graph, MutGraph};
@@ -545,14 +542,11 @@ impl MemoryGraph {
 // Immutable graph methods
 impl Graph for MemoryGraph {
     type Adjacency = Neighbor;
-    type AdjacencyIter<'a> = AdjacencyIterator<'a>;
     type Edge = Edge;
     type EdgeID = EdgeId;
-    type EdgeIter<'a> = EdgeIterator<'a>;
     type Transaction = MemTransaction;
     type Vertex = Vertex;
     type VertexID = VertexId;
-    type VertexIter<'a> = VertexIterator<'a>;
 
     /// Retrieves a vertex by its ID within the context of a transaction.
     fn get_vertex(&self, txn: &MemTransaction, vid: VertexId) -> StorageResult<Vertex> {
@@ -670,13 +664,16 @@ impl Graph for MemoryGraph {
     fn iter_vertices<'a>(
         &'a self,
         txn: &'a Self::Transaction,
-    ) -> StorageResult<Self::VertexIter<'a>> {
-        Ok(txn.iter_vertices())
+    ) -> StorageResult<Box<dyn Iterator<Item = StorageResult<Self::Vertex>> + 'a>> {
+        Ok(Box::new(txn.iter_vertices()))
     }
 
     /// Returns an iterator over all edges within a transaction.
-    fn iter_edges<'a>(&'a self, txn: &'a Self::Transaction) -> StorageResult<Self::EdgeIter<'a>> {
-        Ok(txn.iter_edges())
+    fn iter_edges<'a>(
+        &'a self,
+        txn: &'a Self::Transaction,
+    ) -> StorageResult<Box<dyn Iterator<Item = StorageResult<Self::Edge>> + 'a>> {
+        Ok(Box::new(txn.iter_edges()))
     }
 
     /// Returns an iterator over the adjacency list of a vertex in a given direction.
@@ -684,8 +681,8 @@ impl Graph for MemoryGraph {
         &'a self,
         txn: &'a Self::Transaction,
         vid: Self::VertexID,
-    ) -> StorageResult<Self::AdjacencyIter<'a>> {
-        Ok(txn.iter_adjacency(vid))
+    ) -> StorageResult<Box<dyn Iterator<Item = StorageResult<Self::Adjacency>> + 'a>> {
+        Ok(Box::new(txn.iter_adjacency(vid)))
     }
 }
 

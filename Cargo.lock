@@ -1271,6 +1271,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "minigu-storage"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "chrono",
+ "crc32fast",
+ "crossbeam-epoch",
+ "crossbeam-skiplist",
+ "dashmap",
+ "minigu-common",
+ "postcard",
+ "rand 0.9.1",
+ "serde",
+ "serial_test",
+ "thiserror",
+ "uuid",
+]
+
+[[package]]
 name = "minigu-test"
 version = "0.1.0"
 dependencies = [
@@ -1838,25 +1857,6 @@ name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
-
-[[package]]
-name = "storage"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "chrono",
- "crc32fast",
- "crossbeam-epoch",
- "crossbeam-skiplist",
- "dashmap",
- "minigu-common",
- "postcard",
- "rand 0.9.1",
- "serde",
- "serial_test",
- "thiserror",
- "uuid",
-]
 
 [[package]]
 name = "strsim"

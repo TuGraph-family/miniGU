@@ -1,6 +1,42 @@
+use std::fmt::Debug;
+
+use minigu_common::datatype::types::{EdgeId, VertexId};
 use minigu_common::datatype::value::PropertyValue;
 
+use crate::MemTransaction;
 use crate::error::StorageResult;
+use crate::model::edge::{Edge, Neighbor};
+use crate::model::vertex::Vertex;
+
+pub trait DynGraph:
+    Graph<
+        Transaction = MemTransaction,
+        VertexID = VertexId,
+        EdgeID = EdgeId,
+        Vertex = Vertex,
+        Edge = Edge,
+        Adjacency = Neighbor,
+    > + Debug
+    + Send
+    + Sync
+{
+}
+
+impl<T> DynGraph for T where
+    T: Graph<
+            Transaction = MemTransaction,
+            VertexID = u64,
+            EdgeID = u64,
+            Vertex = Vertex,
+            Edge = Edge,
+            Adjacency = Neighbor,
+        > + Debug
+        + Send
+        + Sync
+{
+}
+
+pub type BoxedGraph = Box<dyn DynGraph>;
 
 /// Trait defining a read-only graph interface
 pub trait Graph {
@@ -10,16 +46,6 @@ pub trait Graph {
     type Vertex;
     type Edge;
     type Adjacency;
-
-    type VertexIter<'a>: Iterator<Item = StorageResult<Self::Vertex>>
-    where
-        Self: 'a;
-    type EdgeIter<'a>: Iterator<Item = StorageResult<Self::Edge>>
-    where
-        Self: 'a;
-    type AdjacencyIter<'a>: Iterator<Item = StorageResult<Self::Adjacency>>
-    where
-        Self: 'a;
 
     /// Retrieve a vertex by its ID within a transaction.
     fn get_vertex(
@@ -35,10 +61,13 @@ pub trait Graph {
     fn iter_vertices<'a>(
         &'a self,
         txn: &'a Self::Transaction,
-    ) -> StorageResult<Self::VertexIter<'a>>;
+    ) -> StorageResult<Box<dyn Iterator<Item = StorageResult<Self::Vertex>> + 'a>>;
 
     /// Get an iterator over all edges in the graph within a transaction.
-    fn iter_edges<'a>(&'a self, txn: &'a Self::Transaction) -> StorageResult<Self::EdgeIter<'a>>;
+    fn iter_edges<'a>(
+        &'a self,
+        txn: &'a Self::Transaction,
+    ) -> StorageResult<Box<dyn Iterator<Item = StorageResult<Self::Edge>> + 'a>>;
 
     /// Get an iterator over adjacency entries (edges connected to a vertex)
     /// in a given direction (incoming or outgoing) within a transaction.
@@ -46,7 +75,7 @@ pub trait Graph {
         &'a self,
         txn: &'a Self::Transaction,
         vid: Self::VertexID,
-    ) -> StorageResult<Self::AdjacencyIter<'a>>;
+    ) -> StorageResult<Box<dyn Iterator<Item = StorageResult<Self::Adjacency>> + 'a>>;
 }
 
 /// Trait defining a mutable graph interface (extending `Graph`).
