@@ -101,12 +101,12 @@ impl TableBuilderInner {
                     .map(|f| f.name().to_string())
                     .collect();
                 rows.push(header);
-                
+
                 // #CSV No need to display type
 
                 // let types: Vec<String> =
-                    // schema.fields().iter().map(|f| f.ty().to_string()).collect();
-                
+                //     schema.fields().iter().map(|f| f.ty().to_string()).collect();
+
                 // if type_info {
                 //     rows.push(types);
                 // }
