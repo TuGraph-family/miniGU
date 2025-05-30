@@ -101,15 +101,6 @@ impl TableBuilderInner {
                     .map(|f| f.name().to_string())
                     .collect();
                 rows.push(header);
-
-                // #CSV No need to display type
-
-                // let types: Vec<String> =
-                //     schema.fields().iter().map(|f| f.ty().to_string()).collect();
-
-                // if type_info {
-                //     rows.push(types);
-                // }
             }
             TableBuilderInner::Json { col_schema, .. } => {
                 let header = schema
@@ -131,7 +122,7 @@ impl TableBuilderInner {
                     .iter()
                     .map(|c| {
                         ArrayFormatter::try_new(c, &options)
-                            .expect("column should be able to be formatted")
+                            .expect("Column should be able to be formatted")
                     })
                     .collect_vec();
                 for row in chunk.rows() {
@@ -146,9 +137,10 @@ impl TableBuilderInner {
                     .iter()
                     .map(|c| {
                         ArrayFormatter::try_new(c, &options)
-                            .expect("column should be able to be formatted")
+                            .expect("Column should be able to be formatted")
                     })
                     .collect();
+                
                 for row in chunk.rows() {
                     let index = row.row_index();
                     let record = formatters
@@ -165,7 +157,7 @@ impl TableBuilderInner {
                     .iter()
                     .map(|c| {
                         ArrayFormatter::try_new(c, &options)
-                            .expect("column should be able to be formatted")
+                            .expect("Column should be able to be formatted")
                     })
                     .collect_vec();
 
@@ -205,7 +197,6 @@ impl TableBuilder {
                 rows: vec![],
                 col_schema: vec![],
             },
-            // _ => todo!(),
         };
         let has_header = schema.is_some();
         if let Some(schema) = schema {
@@ -511,6 +502,19 @@ mod tests {
         let table = TableBuilder::new(Some(schema), options)
             .append_chunk(&build_test_data_chunk())
             .build();
+
         println!("{}", table);
+        assert_snapshot!(table, @r#"
+[
+  {
+    "a": "2",
+    "b": "def"
+  },
+  {
+    "a": "3",
+    "b": "ghi"
+  }
+]
+        "#);
     }
 }
