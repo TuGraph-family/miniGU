@@ -1,0 +1,84 @@
+---
+source: minigu/parser/src/parser/impls/procedure_call.rs
+assertion_line: 65
+expression: parsed
+---
+- optional: true
+  procedure:
+    - Named:
+        name:
+          - Ref:
+              schema:
+                - Absolute:
+                    - - Name: a
+                      - start: 15
+                        end: 16
+                    - - Name: b
+                      - start: 17
+                        end: 18
+                - start: 14
+                  end: 18
+              objects:
+                - - proc
+                  - start: 19
+                    end: 23
+          - start: 14
+            end: 23
+        args:
+          - - Value:
+                Literal:
+                  Numeric:
+                    Integer:
+                      - kind: Decimal
+                        integer: "1"
+                      - start: 24
+                        end: 25
+            - start: 24
+              end: 25
+          - - Value:
+                Literal:
+                  Numeric:
+                    Integer:
+                      - kind: Decimal
+                        integer: "2"
+                      - start: 27
+                        end: 28
+            - start: 27
+              end: 28
+          - - Value:
+                Literal:
+                  Numeric:
+                    Integer:
+                      - kind: Decimal
+                        integer: "3"
+                      - start: 30
+                        end: 31
+            - start: 30
+              end: 31
+        yield_clause:
+          - - - name:
+                  - a
+                  - start: 39
+                    end: 40
+                alias:
+                  - a1
+                  - start: 44
+                    end: 46
+              - start: 39
+                end: 46
+            - - name:
+                  - b
+                  - start: 48
+                    end: 49
+                alias:
+                  - b1
+                  - start: 53
+                    end: 55
+              - start: 48
+                end: 55
+          - start: 33
+            end: 55
+    - start: 14
+      end: 55
+- start: 0
+  end: 55

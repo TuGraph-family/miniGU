@@ -1,0 +1,48 @@
+---
+source: minigu/parser/src/parser/impls/procedure_call.rs
+expression: parsed
+---
+- name:
+    - Ref:
+        schema:
+          - Absolute:
+              - - Name: a
+                - start: 1
+                  end: 2
+          - start: 0
+            end: 2
+        objects:
+          - - b
+            - start: 3
+              end: 4
+          - - proc
+            - start: 5
+              end: 9
+    - start: 0
+      end: 9
+  args: []
+  yield_clause:
+    - - - name:
+            - a
+            - start: 18
+              end: 19
+          alias:
+            - a1
+            - start: 23
+              end: 25
+        - start: 18
+          end: 25
+      - - name:
+            - b
+            - start: 27
+              end: 28
+          alias:
+            - b1
+            - start: 32
+              end: 34
+        - start: 27
+          end: 34
+    - start: 12
+      end: 34
+- start: 0
+  end: 34

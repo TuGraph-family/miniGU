@@ -1,0 +1,199 @@
+---
+source: minigu/parser/src/parser/impls/query.rs
+expression: query
+---
+- Parts:
+    parts:
+      - - Match:
+            Simple:
+              - pattern:
+                  - match_mode: ~
+                    patterns:
+                      - - variable: ~
+                          prefix: ~
+                          expr:
+                            - Concat:
+                                - - Pattern:
+                                      Node:
+                                        variable:
+                                          - a
+                                          - start: 20
+                                            end: 21
+                                        label: ~
+                                        predicate: ~
+                                  - start: 19
+                                    end: 22
+                                - - Pattern:
+                                      Edge:
+                                        kind: Right
+                                        filler:
+                                          variable: ~
+                                          label:
+                                            - Label: KNOWS
+                                            - start: 25
+                                              end: 30
+                                          predicate: ~
+                                  - start: 22
+                                    end: 33
+                                - - Pattern:
+                                      Node:
+                                        variable:
+                                          - b
+                                          - start: 34
+                                            end: 35
+                                        label: ~
+                                        predicate: ~
+                                  - start: 33
+                                    end: 36
+                            - start: 19
+                              end: 36
+                        - start: 19
+                          end: 36
+                    keep: ~
+                    where_clause: ~
+                  - start: 19
+                    end: 36
+                yield_clause: []
+              - start: 19
+                end: 36
+        - start: 13
+          end: 36
+      - - Match:
+            Simple:
+              - pattern:
+                  - match_mode: ~
+                    patterns:
+                      - - variable: ~
+                          prefix: ~
+                          expr:
+                            - Concat:
+                                - - Pattern:
+                                      Node:
+                                        variable:
+                                          - b
+                                          - start: 56
+                                            end: 57
+                                        label: ~
+                                        predicate: ~
+                                  - start: 55
+                                    end: 58
+                                - - Pattern:
+                                      Edge:
+                                        kind: Right
+                                        filler:
+                                          variable: ~
+                                          label:
+                                            - Label: KNOWS
+                                            - start: 61
+                                              end: 66
+                                          predicate: ~
+                                  - start: 58
+                                    end: 69
+                                - - Pattern:
+                                      Node:
+                                        variable:
+                                          - c
+                                          - start: 70
+                                            end: 71
+                                        label: ~
+                                        predicate: ~
+                                  - start: 69
+                                    end: 72
+                            - start: 55
+                              end: 72
+                        - start: 55
+                          end: 72
+                    keep: ~
+                    where_clause: ~
+                  - start: 55
+                    end: 72
+                yield_clause: []
+              - start: 55
+                end: 72
+        - start: 49
+          end: 72
+    result:
+      - Return:
+          statement:
+            - quantifier: ~
+              items:
+                - Items:
+                    - - value:
+                          - Property:
+                              source:
+                                - Variable: a
+                                - start: 92
+                                  end: 93
+                              trailing_names:
+                                - - id
+                                  - start: 94
+                                    end: 96
+                          - start: 92
+                            end: 96
+                        alias: ~
+                      - start: 92
+                        end: 96
+                    - - value:
+                          - Aggregate:
+                              General:
+                                kind:
+                                  - Count
+                                  - start: 98
+                                    end: 103
+                                quantifier: ~
+                                expr:
+                                  - Variable: c
+                                  - start: 104
+                                    end: 105
+                          - start: 98
+                            end: 106
+                        alias: ~
+                      - start: 98
+                        end: 106
+                - start: 92
+                  end: 106
+              group_by: ~
+            - start: 85
+              end: 106
+          order_by:
+            - order_by:
+                - - key:
+                      - Property:
+                          source:
+                            - Variable: a
+                            - start: 128
+                              end: 129
+                          trailing_names:
+                            - - id
+                              - start: 130
+                                end: 132
+                      - start: 128
+                        end: 132
+                    ordering:
+                      - Desc
+                      - start: 133
+                        end: 137
+                    null_ordering:
+                      - Last
+                      - start: 138
+                        end: 148
+                  - start: 128
+                    end: 148
+              offset:
+                - Integer:
+                    kind: Decimal
+                    integer: "10"
+                - start: 168
+                  end: 170
+              limit:
+                - Integer:
+                    kind: Decimal
+                    integer: "10"
+                - start: 189
+                  end: 191
+            - start: 119
+              end: 191
+      - start: 85
+        end: 191
+- start: 13
+  end: 191

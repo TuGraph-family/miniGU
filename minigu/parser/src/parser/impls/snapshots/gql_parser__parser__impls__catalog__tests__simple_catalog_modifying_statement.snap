@@ -1,0 +1,30 @@
+---
+source: minigu/parser/src/parser/impls/catalog.rs
+expression: parsed
+---
+- Call:
+    optional: false
+    procedure:
+      - Named:
+          name:
+            - Ref:
+                schema: ~
+                objects:
+                  - - create_graph
+                    - start: 5
+                      end: 17
+            - start: 5
+              end: 17
+          args:
+            - - Value:
+                  Literal:
+                    String:
+                      kind: Char
+                      literal: abc
+              - start: 18
+                end: 23
+          yield_clause: ~
+      - start: 5
+        end: 24
+- start: 0
+  end: 24

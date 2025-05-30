@@ -1,0 +1,17 @@
+---
+source: minigu/binder/src/resolver/resolve_procedure.rs
+assertion_line: 125
+expression: stmt.unwrap()
+---
+statement:
+  Catalog:
+    - Call:
+        optional: true
+        procedure:
+          Named:
+            procedure_ref:
+              name: procedure_test
+            yield_index:
+              - 0
+              - 1
+next_statement: []
