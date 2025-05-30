@@ -140,7 +140,7 @@ impl TableBuilderInner {
                             .expect("Column should be able to be formatted")
                     })
                     .collect();
-                
+
                 for row in chunk.rows() {
                     let index = row.row_index();
                     let record = formatters
