@@ -6,6 +6,7 @@ use arrow::datatypes::{
     Schema as ArrowSchema,
 };
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 
 use crate::constants::{
     DST_FIELD_NAME, EID_FIELD_NAME, LABEL_FIELD_NAME, SRC_FIELD_NAME, VID_FIELD_NAME,
@@ -50,7 +51,7 @@ impl PredefinedFields {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum LogicalType {
     Int8,
     Int16,
@@ -172,7 +173,7 @@ impl DataSchema {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DataField {
     name: String,
     ty: LogicalType,
