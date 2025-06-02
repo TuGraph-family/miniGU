@@ -7,7 +7,7 @@ use smol_str::ToSmolStr;
 use crate::error::{BindError, BindResult};
 use crate::object_ref::ProcedureRef as ObjProcedureRef;
 use crate::program::Binder;
-use crate::statement::procedure::{
+use crate::procedure::procedure_call::{
     BoundCallProcedureStatement, BoundNamedProcedureCall, BoundProcedureCall,
 };
 
@@ -105,9 +105,9 @@ mod tests {
     use minigu_catalog::provider::CatalogRef;
 
     use crate::error::{BindError, BindResult};
-    use crate::mock_catalog::MockCatalog;
+    use crate::mock::MockCatalog;
     use crate::program::Binder;
-    use crate::statement::procedure_spec::BoundProcedure;
+    use crate::procedure::procedure_spec::BoundProcedure;
 
     fn get_bound_procedure(gql: &str) -> BindResult<BoundProcedure> {
         let parsed = gql_parser::parse_gql(gql);

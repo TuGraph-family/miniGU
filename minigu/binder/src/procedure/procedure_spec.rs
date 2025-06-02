@@ -1,24 +1,22 @@
 use serde::Serialize;
 
-use crate::object_ref::SchemaRef;
-use crate::statement::catalog::LinearBoundCatalogModifyingStatement;
+use super::catalog::BoundCatalogModifyingStatement;
 
 #[derive(Debug, Serialize)]
 pub struct BoundProcedure {
-    // pub binding_variable_def: BindingVariableDefBlock,
     pub statement: BoundStatement,
-    pub next_statement: Vec<BoundNextStatement>,
+    pub next_statements: Vec<BoundNextStatement>,
 }
 
 #[derive(Debug, Serialize)]
 pub enum BoundStatement {
-    Catalog(LinearBoundCatalogModifyingStatement),
+    Catalog(Vec<BoundCatalogModifyingStatement>),
     // Query(BoundCompositeQueryStatement),
     // Data(BoundLinearDataModifyingStatement),
 }
 
 #[derive(Debug, Serialize)]
 pub struct BoundNextStatement {
-    pub yield_clause: Option<Vec<usize>>,
+    pub yield_column_indices: Vec<usize>,
     pub statement: BoundStatement,
 }

@@ -1,11 +1,10 @@
 use serde::Serialize;
+use smol_str::SmolStr;
 
-use crate::object_ref::{GraphRef, SchemaRef};
-use crate::statement::object_ref::BoundGraphType;
-use crate::statement::procedure::BoundCallProcedureStatement;
-use crate::types::Ident;
+use super::object_ref::BoundGraphType;
+use super::procedure_call::BoundCallProcedureStatement;
+use crate::named_ref::NamedGraphRef;
 
-pub type LinearBoundCatalogModifyingStatement = Vec<BoundCatalogModifyingStatement>;
 #[derive(Debug, Serialize)]
 pub enum BoundCatalogModifyingStatement {
     Call(BoundCallProcedureStatement),
@@ -19,23 +18,23 @@ pub enum BoundCatalogModifyingStatement {
 
 #[derive(Debug, Serialize)]
 pub struct BoundCreateSchemaStatement {
-    pub schema_path: Vec<Ident>,
+    pub schema_path: Vec<SmolStr>,
     pub if_not_exists: bool,
 }
 
 #[derive(Debug, Serialize)]
 pub struct BoundDropSchemaStatement {
-    pub schema_path: Vec<Ident>,
+    pub schema_path: Vec<SmolStr>,
     pub if_exists: bool,
 }
 
 #[derive(Debug, Serialize)]
 pub struct BoundCreateGraphStatement {
-    pub schema: SchemaRef,
-    pub name: Ident,
+    // pub schema: SchemaRef,
+    pub name: SmolStr,
     pub kind: CreateKind,
-    pub type_ref: BoundGraphType,
-    pub source: Option<GraphRef>,
+    pub graph_type: BoundGraphType,
+    pub source: Option<NamedGraphRef>,
 }
 
 #[derive(Debug, Serialize)]
@@ -47,22 +46,22 @@ pub enum CreateKind {
 
 #[derive(Debug, Serialize)]
 pub struct BoundDropGraphStatement {
-    pub schema: SchemaRef,
-    pub graph: Ident,
+    // pub schema: NamedSchemaRef,
+    pub name: SmolStr,
     pub if_exists: bool,
 }
 
 #[derive(Debug, Serialize)]
 pub struct BoundCreateGraphTypeStatement {
-    pub schema: SchemaRef,
-    pub name: Ident,
+    // pub schema: NamedSchemaRef,
+    pub name: SmolStr,
     pub kind: CreateKind,
     pub source: BoundGraphType,
 }
 
 #[derive(Debug, Serialize)]
 pub struct BoundDropGraphTypeStatement {
-    pub schema: SchemaRef,
-    pub graph_type: Ident,
+   //  pub schema: NamedSchemaRef,
+    pub name: SmolStr,
     pub if_exists: bool,
 }

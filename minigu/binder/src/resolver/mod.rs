@@ -5,8 +5,8 @@ use gql_parser::ast::{CatalogModifyingStatement, Statement};
 
 use crate::error::{BindError, BindResult};
 use crate::program::Binder;
-use crate::statement::catalog::BoundCatalogModifyingStatement;
-use crate::statement::procedure_spec::BoundStatement;
+use crate::procedure::catalog::BoundCatalogModifyingStatement;
+use crate::procedure::procedure_spec::BoundStatement;
 
 impl Binder {
     pub fn resolve_statement(&mut self, statement: &Statement) -> BindResult<BoundStatement> {

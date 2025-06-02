@@ -106,7 +106,7 @@ mod tests {
     use smol_str::SmolStr;
 
     use crate::error::BindError;
-    use crate::mock_catalog::MockCatalog;
+    use crate::mock::MockCatalog;
     use crate::program::Binder;
 
     fn get_schema_ref(

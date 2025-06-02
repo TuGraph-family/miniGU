@@ -1,27 +1,24 @@
-#![allow(unused)]
-
 use gql_parser::ast::Procedure;
 use minigu_catalog::provider::{CatalogRef, SchemaRef};
 
 use crate::error::BindResult;
-use crate::program::Binder;
-use crate::statement::procedure_spec::BoundProcedure;
+use crate::procedure::procedure_spec::BoundProcedure;
+// use crate::program::Binder;
 
+mod binder;
 mod error;
-mod mock_catalog;
-mod object_ref;
-mod program;
-mod resolver;
-mod statement;
-mod type_checker;
-mod types;
-mod validator;
+mod named_ref;
+mod procedure;
+// mod resolver;
 
-pub fn bind(
-    procedure: &Procedure,
-    catalog: CatalogRef,
-    current_schema: Option<SchemaRef>,
-) -> BindResult<BoundProcedure> {
-    let mut binder = Binder::new(catalog, current_schema);
-    binder.bind_procedure(procedure)
-}
+// #[cfg(test)]
+// mod mock;
+
+// pub fn bind(
+//     procedure: &Procedure,
+//     catalog: CatalogRef,
+//     current_schema: Option<SchemaRef>,
+// ) -> BindResult<BoundProcedure> {
+//     let mut binder = Binder::new(catalog, current_schema);
+//     binder.bind_procedure(procedure)
+// }
