@@ -23,6 +23,9 @@ impl BoundCompositeQueryStatement {
 pub struct BoundLinearQueryStatement {}
 
 #[derive(Debug, Serialize)]
+pub struct BoundSimpleQueryStatement {}
+
+#[derive(Debug, Serialize)]
 pub enum QueryConjunction {
     SetOp(SetOp),
     Otherwise,

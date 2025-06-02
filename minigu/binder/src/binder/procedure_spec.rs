@@ -1,8 +1,5 @@
-use std::collections::HashMap;
-
 use gql_parser::ast::{Procedure, Statement};
 use itertools::Itertools;
-use smol_str::SmolStr;
 
 use super::Binder;
 use crate::error::{BindResult, not_implemented};
@@ -34,14 +31,10 @@ impl Binder {
                 .map(|s| self.bind_catalog_modifying_statement(s.value()))
                 .try_collect()
                 .map(BoundStatement::Catalog),
-            Statement::Query(statement) => {
-                todo!()
-            },
-            Statement::Data(_) => {
-                not_implemented("data-modifying statement".to_string(), None)
-            }
+            Statement::Query(statement) => self
+                .bind_composite_query_statement(statement)
+                .map(BoundStatement::Query),
+            Statement::Data(_) => not_implemented("data-modifying statement".to_string(), None),
         }
     }
 }
-
-

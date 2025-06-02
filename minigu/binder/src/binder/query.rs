@@ -1,17 +1,17 @@
-use std::collections::HashMap;
-
-use gql_parser::ast::{
-    CompositeQueryStatement, LinearQueryStatement, Procedure,
-    QueryConjunction as AstQueryConjunction, SetOp as AstSetOp, SetOpKind as AstSetOpKind,
-    SetQuantifier as AstSetQuantifier, Statement,
-};
 use itertools::Itertools;
+use gql_parser::ast::{
+    AmbientLinearQueryStatement, CompositeQueryStatement, FocusedLinearQueryStatement,
+    LinearQueryStatement, MatchStatement, Procedure, QueryConjunction as AstQueryConjunction,
+    ResultStatement, SetOp as AstSetOp, SetOpKind as AstSetOpKind,
+    SetQuantifier as AstSetQuantifier, SimpleQueryStatement, Statement,
+};
 
 use super::Binder;
 use crate::error::{BindResult, not_implemented};
 use crate::procedure::procedure_spec::{BoundProcedure, BoundStatement};
 use crate::procedure::query::{
-    BoundCompositeQueryStatement, BoundLinearQueryStatement, QueryConjunction, SetOp, SetOpKind,
+    BoundCompositeQueryStatement, BoundLinearQueryStatement, BoundSimpleQueryStatement,
+    QueryConjunction, SetOp, SetOpKind,
 };
 use crate::procedure::value_expr::SetQuantifier;
 
@@ -35,6 +35,67 @@ impl Binder {
         &mut self,
         statement: &LinearQueryStatement,
     ) -> BindResult<BoundLinearQueryStatement> {
+        match statement {
+            LinearQueryStatement::Focused(statement) => {
+                self.bind_focused_linear_query_statement(statement)
+            }
+            LinearQueryStatement::Ambient(statement) => {
+                self.bind_ambient_linear_query_statement(statement)
+            }
+        }
+    }
+
+    pub fn bind_focused_linear_query_statement(
+        &mut self,
+        statement: &FocusedLinearQueryStatement,
+    ) -> BindResult<BoundLinearQueryStatement> {
+        match statement {
+            FocusedLinearQueryStatement::Parts { parts, result } => {
+                not_implemented("focused linear query statement parts".into(), None)
+            }
+            FocusedLinearQueryStatement::Result { use_graph, result } => {
+                not_implemented("focused linear query statement result".into(), None)
+            }
+            FocusedLinearQueryStatement::Nested { .. } => {
+                not_implemented("nested focused linear query statement".into(), None)
+            }
+            FocusedLinearQueryStatement::Select { .. } => {
+                not_implemented("select statement".into(), None)
+            }
+        }
+    }
+
+    pub fn bind_ambient_linear_query_statement(
+        &mut self,
+        statement: &AmbientLinearQueryStatement,
+    ) -> BindResult<BoundLinearQueryStatement> {
+        match statement {
+            AmbientLinearQueryStatement::Parts { parts, result } => {
+                let statements: Vec<_> = parts
+                    .iter()
+                    .map(|p| self.bind_simple_query_statement(p.value()))
+                    .try_collect()?;
+                let result = self.bind_result_statement(result.value())?;
+                todo!()
+            }
+            AmbientLinearQueryStatement::Nested(query) => {
+                not_implemented("nested ambient linear query statement".into(), None)
+            }
+        }
+    }
+
+    pub fn bind_simple_query_statement(
+        &mut self,
+        statement: &SimpleQueryStatement,
+    ) -> BindResult<BoundSimpleQueryStatement> {
+        todo!()
+    }
+
+    pub fn bind_result_statement(&mut self, statement: &ResultStatement) -> BindResult<()> {
+        todo!()
+    }
+
+    pub fn bind_match_statement(&mut self, statement: &MatchStatement) -> BindResult<()> {
         todo!()
     }
 

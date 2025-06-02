@@ -1,6 +1,7 @@
 use serde::Serialize;
 
 use super::catalog::BoundCatalogModifyingStatement;
+use super::query::BoundCompositeQueryStatement;
 
 #[derive(Debug, Serialize)]
 pub struct BoundProcedure {
@@ -11,7 +12,7 @@ pub struct BoundProcedure {
 #[derive(Debug, Serialize)]
 pub enum BoundStatement {
     Catalog(Vec<BoundCatalogModifyingStatement>),
-    // Query(BoundCompositeQueryStatement),
+    Query(BoundCompositeQueryStatement),
     // Data(BoundLinearDataModifyingStatement),
 }
 
