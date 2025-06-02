@@ -1209,6 +1209,8 @@ version = "0.1.0"
 dependencies = [
  "gql-parser",
  "insta",
+ "itertools",
+ "miette",
  "minigu-catalog",
  "minigu-common",
  "serde",
@@ -1251,6 +1253,7 @@ dependencies = [
  "enum-as-inner",
  "insta",
  "itertools",
+ "miette",
  "ordered-float",
  "paste",
  "serde",
