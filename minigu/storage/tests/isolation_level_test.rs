@@ -1,111 +1,13 @@
-use std::sync::Arc;
+mod common;
 use std::thread;
 use std::time::Duration;
 
-use minigu_common::datatype::types::LabelId;
+use common::*;
 use minigu_common::datatype::value::PropertyValue;
-use minigu_storage::memory::checkpoint::CheckpointManagerConfig;
 use minigu_storage::model::edge::Edge;
 use minigu_storage::model::properties::PropertyRecord;
 use minigu_storage::model::vertex::Vertex;
-use minigu_storage::wal::graph_wal::WalManagerConfig;
-use minigu_storage::{Graph, IsolationLevel, MemoryGraph, MutGraph, StorageTransaction};
-
-const PERSON_LABEL_ID: LabelId = 0;
-const FRIEND_LABEL_ID: LabelId = 1;
-const FOLLOW_LABEL_ID: LabelId = 2;
-
-// Mock configuration helpers
-fn mock_checkpoint_config() -> CheckpointManagerConfig {
-    let dir = std::env::temp_dir().join(format!(
-        "test_isolation_checkpoint_{}_{}",
-        chrono::Utc::now().timestamp(),
-        rand::random::<u32>()
-    ));
-    std::fs::create_dir_all(&dir).unwrap();
-    CheckpointManagerConfig {
-        checkpoint_dir: dir,
-        max_checkpoints: 3,
-        auto_checkpoint_interval_secs: 0,
-        checkpoint_prefix: "test_isolation".to_string(),
-        transaction_timeout_secs: 10,
-    }
-}
-
-fn mock_wal_config() -> WalManagerConfig {
-    let file_name = format!(
-        "test_isolation_wal_{}_{}.log",
-        chrono::Utc::now().timestamp(),
-        rand::random::<u32>()
-    );
-    let path = std::env::temp_dir().join(file_name);
-    WalManagerConfig { wal_path: path }
-}
-
-struct TestCleaner {
-    wal_path: std::path::PathBuf,
-    checkpoint_dir: std::path::PathBuf,
-}
-
-impl TestCleaner {
-    fn new(checkpoint_config: &CheckpointManagerConfig, wal_config: &WalManagerConfig) -> Self {
-        Self {
-            wal_path: wal_config.wal_path.clone(),
-            checkpoint_dir: checkpoint_config.checkpoint_dir.clone(),
-        }
-    }
-}
-
-impl Drop for TestCleaner {
-    fn drop(&mut self) {
-        let _ = std::fs::remove_file(&self.wal_path);
-        let _ = std::fs::remove_dir_all(&self.checkpoint_dir);
-    }
-}
-
-fn create_test_graph() -> (Arc<MemoryGraph>, TestCleaner) {
-    let checkpoint_config = mock_checkpoint_config();
-    let wal_config = mock_wal_config();
-    let cleaner = TestCleaner::new(&checkpoint_config, &wal_config);
-    let graph = MemoryGraph::with_config_fresh(checkpoint_config, wal_config);
-
-    // Initialize some test data
-    let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-    let alice = Vertex::new(
-        1,
-        PERSON_LABEL_ID,
-        PropertyRecord::new(vec![
-            PropertyValue::String("Alice".into()),
-            PropertyValue::Int(25),
-        ]),
-    );
-
-    let bob = Vertex::new(
-        2,
-        PERSON_LABEL_ID,
-        PropertyRecord::new(vec![
-            PropertyValue::String("Bob".into()),
-            PropertyValue::Int(30),
-        ]),
-    );
-
-    graph.create_vertex(&txn, alice).unwrap();
-    graph.create_vertex(&txn, bob).unwrap();
-
-    let friend_edge = Edge::new(
-        1,
-        1,
-        2,
-        FRIEND_LABEL_ID,
-        PropertyRecord::new(vec![PropertyValue::String("2024-01-01".into())]),
-    );
-
-    graph.create_edge(&txn, friend_edge).unwrap();
-    txn.commit().unwrap();
-
-    (graph, cleaner)
-}
+use minigu_storage::{Graph, IsolationLevel, MutGraph, StorageTransaction};
 
 // ========== DIRTY READ TESTS ==========
 
