@@ -3,10 +3,10 @@ use gql_parser::ast::{
     SchemaRef as AstSchemaRef,
 };
 use minigu_catalog::provider::{CatalogProvider, DirectoryOrSchema, SchemaRef};
+use minigu_ir::named_ref::NamedProcedureRef;
 
 use super::Binder;
 use crate::error::{BindError, BindResult, not_implemented};
-use crate::named_ref::NamedProcedureRef;
 
 impl Binder {
     pub fn bind_schema_ref(&self, schema_ref: &AstSchemaRef) -> BindResult<SchemaRef> {

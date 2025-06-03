@@ -29,6 +29,15 @@ pub enum BindError {
     #[error("too many objects: {0:?}")]
     InvalidObjectReference(Vec<SmolStr>),
 
+    #[error("procedure without schema: {0}")]
+    ProcedureWithoutSchema(SmolStr),
+
+    #[error("yield item not found: {0}")]
+    YieldItemNotFound(SmolStr),
+
+    #[error("variable name already exists: {0}")]
+    NameAlreadyExists(SmolStr),
+
     #[error(transparent)]
     NotImplemented(#[from] NotImplemented),
 }

@@ -61,7 +61,7 @@ pub struct BoundCreateGraphTypeStatement {
 
 #[derive(Debug, Serialize)]
 pub struct BoundDropGraphTypeStatement {
-   //  pub schema: NamedSchemaRef,
+    //  pub schema: NamedSchemaRef,
     pub name: SmolStr,
     pub if_exists: bool,
 }

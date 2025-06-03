@@ -1,9 +1,9 @@
 use gql_parser::ast::{Procedure, Statement};
 use itertools::Itertools;
+use minigu_ir::bound::{BoundProcedure, BoundStatement};
 
 use super::Binder;
 use crate::error::{BindResult, not_implemented};
-use crate::procedure::procedure_spec::{BoundProcedure, BoundStatement};
 
 impl Binder {
     pub fn bind_procedure(&mut self, procedure: &Procedure) -> BindResult<BoundProcedure> {

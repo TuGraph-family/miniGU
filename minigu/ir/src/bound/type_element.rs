@@ -1,4 +1,3 @@
-use gql_parser::ast::ValueType;
 use minigu_catalog::label_set::LabelSet;
 use minigu_common::data_type::DataField;
 use serde::Serialize;

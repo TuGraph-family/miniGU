@@ -933,6 +933,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "indexmap"
+version = "2.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cea70ddb795996207ad57735b50c5982d8844f38ba9ee5f1aedcfb708a2aa11e"
+dependencies = [
+ "equivalent",
+ "hashbrown 0.15.3",
+]
+
+[[package]]
 name = "insta"
 version = "1.43.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1208,12 +1218,13 @@ name = "minigu-binder"
 version = "0.1.0"
 dependencies = [
  "gql-parser",
+ "indexmap",
  "insta",
  "itertools",
  "miette",
  "minigu-catalog",
  "minigu-common",
- "serde",
+ "minigu-ir",
  "smol_str",
  "thiserror",
 ]
@@ -1271,6 +1282,16 @@ dependencies = [
  "itertools",
  "minigu-common",
  "thiserror",
+]
+
+[[package]]
+name = "minigu-ir"
+version = "0.1.0"
+dependencies = [
+ "minigu-catalog",
+ "minigu-common",
+ "serde",
+ "smol_str",
 ]
 
 [[package]]

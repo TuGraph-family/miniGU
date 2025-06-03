@@ -2,14 +2,14 @@ use gql_parser::ast::{
     CatalogModifyingStatement, CreateGraphStatement, CreateGraphTypeStatement,
     CreateSchemaStatement, DropGraphStatement, DropGraphTypeStatement, DropSchemaStatement,
 };
-
-use super::Binder;
-use crate::error::BindResult;
-use crate::procedure::catalog::{
+use minigu_ir::bound::{
     BoundCatalogModifyingStatement, BoundCreateGraphStatement, BoundCreateGraphTypeStatement,
     BoundCreateSchemaStatement, BoundDropGraphStatement, BoundDropGraphTypeStatement,
     BoundDropSchemaStatement,
 };
+
+use super::Binder;
+use crate::error::BindResult;
 
 impl Binder {
     pub fn bind_catalog_modifying_statement(

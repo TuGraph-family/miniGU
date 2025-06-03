@@ -6,12 +6,13 @@ version = "0.1.0"
 
 [dependencies]
 gql-parser = { workspace = true }
+indexmap = { workspace = true }
 itertools = { workspace = true }
 miette = { workspace = true }
 minigu-catalog = { workspace = true }
 minigu-common = { workspace = true }
-serde = { workspace = true }
-smol_str = { workspace = true, features = ["serde"] }
+minigu-ir = { workspace = true }
+smol_str = { workspace = true }
 thiserror = { workspace = true }
 
 [dev-dependencies]

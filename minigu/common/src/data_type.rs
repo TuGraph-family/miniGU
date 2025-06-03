@@ -152,7 +152,7 @@ impl fmt::Display for LogicalType {
 
 pub type DataSchemaRef = Arc<DataSchema>;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DataSchema(Vec<DataField>);
 
 impl DataSchema {

@@ -1,19 +1,17 @@
-use itertools::Itertools;
 use gql_parser::ast::{
     AmbientLinearQueryStatement, CompositeQueryStatement, FocusedLinearQueryStatement,
     LinearQueryStatement, MatchStatement, Procedure, QueryConjunction as AstQueryConjunction,
     ResultStatement, SetOp as AstSetOp, SetOpKind as AstSetOpKind,
     SetQuantifier as AstSetQuantifier, SimpleQueryStatement, Statement,
 };
+use itertools::Itertools;
+use minigu_ir::bound::{
+    BoundCompositeQueryStatement, BoundLinearQueryStatement, BoundSimpleQueryStatement,
+    QueryConjunction, SetOp, SetOpKind, SetQuantifier,
+};
 
 use super::Binder;
 use crate::error::{BindResult, not_implemented};
-use crate::procedure::procedure_spec::{BoundProcedure, BoundStatement};
-use crate::procedure::query::{
-    BoundCompositeQueryStatement, BoundLinearQueryStatement, BoundSimpleQueryStatement,
-    QueryConjunction, SetOp, SetOpKind,
-};
-use crate::procedure::value_expr::SetQuantifier;
 
 impl Binder {
     pub fn bind_composite_query_statement(
@@ -88,14 +86,18 @@ impl Binder {
         &mut self,
         statement: &SimpleQueryStatement,
     ) -> BindResult<BoundSimpleQueryStatement> {
+        match statement {
+            SimpleQueryStatement::Match(statement) => todo!(),
+            SimpleQueryStatement::Call(statement) => todo!(),
+            SimpleQueryStatement::OrderByAndPage(statement) => todo!(),
+        }
+    }
+
+    pub fn bind_match_statement(&mut self, statement: &MatchStatement) -> BindResult<()> {
         todo!()
     }
 
     pub fn bind_result_statement(&mut self, statement: &ResultStatement) -> BindResult<()> {
-        todo!()
-    }
-
-    pub fn bind_match_statement(&mut self, statement: &MatchStatement) -> BindResult<()> {
         todo!()
     }
 
@@ -105,36 +107,33 @@ impl Binder {
     ) -> BindResult<QueryConjunction> {
         match conjunction {
             AstQueryConjunction::SetOp(set_op) => {
-                Ok(QueryConjunction::SetOp(set_op.clone().into()))
+                Ok(QueryConjunction::SetOp(self.bind_set_op(set_op)))
             }
             AstQueryConjunction::Otherwise => Ok(QueryConjunction::Otherwise),
         }
     }
-}
 
-impl From<AstSetQuantifier> for SetQuantifier {
-    fn from(quantifier: AstSetQuantifier) -> Self {
+    pub fn bind_set_op(&mut self, set_op: &AstSetOp) -> SetOp {
+        let kind = self.bind_set_op_kind(set_op.kind.value());
+        let quantifier = set_op
+            .quantifier
+            .as_ref()
+            .map(|q| self.bind_set_quantifier(q.value()));
+        SetOp { kind, quantifier }
+    }
+
+    pub fn bind_set_quantifier(&mut self, quantifier: &AstSetQuantifier) -> SetQuantifier {
         match quantifier {
             AstSetQuantifier::Distinct => SetQuantifier::Distinct,
             AstSetQuantifier::All => SetQuantifier::All,
         }
     }
-}
 
-impl From<AstSetOpKind> for SetOpKind {
-    fn from(kind: AstSetOpKind) -> Self {
+    pub fn bind_set_op_kind(&mut self, kind: &AstSetOpKind) -> SetOpKind {
         match kind {
             AstSetOpKind::Union => SetOpKind::Union,
             AstSetOpKind::Except => SetOpKind::Except,
             AstSetOpKind::Intersect => SetOpKind::Intersect,
         }
-    }
-}
-
-impl From<AstSetOp> for SetOp {
-    fn from(set_op: AstSetOp) -> Self {
-        let kind = set_op.kind.value().clone().into();
-        let quantifier = set_op.quantifier.as_ref().map(|q| q.value().clone().into());
-        SetOp { kind, quantifier }
     }
 }
