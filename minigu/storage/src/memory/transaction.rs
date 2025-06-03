@@ -592,6 +592,7 @@ impl MemTransaction {
                         if current.commit_ts == self.txn_id() {
                             // Restore properties
                             current.data.set_props(indices, props.clone());
+                            current.commit_ts = commit_ts;
                             // Update undo pointer to previous version
                             *entry.chain.undo_ptr.write().unwrap() = next;
                         }
@@ -604,6 +605,7 @@ impl MemTransaction {
                         if current.commit_ts == self.txn_id() {
                             // Restore properties
                             current.data.set_props(indices, props.clone());
+                            current.commit_ts = commit_ts;
                             // Update undo pointer to previous version
                             *entry.chain.undo_ptr.write().unwrap() = next;
                         }
@@ -615,7 +617,8 @@ impl MemTransaction {
                         let mut current = entry.chain.current.write().unwrap();
                         if current.commit_ts == self.txn_id() {
                             // Restore deletion flag
-                            current.data.is_tombstone = false;
+                            current.data.is_tombstone = true;
+                            current.commit_ts = commit_ts;
                             // Update undo pointer to previous version
                             *entry.chain.undo_ptr.write().unwrap() = next;
                         }
@@ -627,7 +630,8 @@ impl MemTransaction {
                         let mut current = entry.chain.current.write().unwrap();
                         if current.commit_ts == self.txn_id() {
                             // Restore deletion flag
-                            current.data.is_tombstone = false;
+                            current.data.is_tombstone = true;
+                            current.commit_ts = commit_ts;
                             // Update undo pointer to previous version
                             *entry.chain.undo_ptr.write().unwrap() = next;
                         }

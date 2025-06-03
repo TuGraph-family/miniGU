@@ -251,6 +251,15 @@ impl VersionedEdge {
                 _ => unreachable!("Unreachable delta op for an edge"),
             };
             MemTransaction::apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
+            // Check if the vertex is tombstone after applying the deltas
+            if current_edge.is_tombstone() {
+                return Err(StorageError::Transaction(
+                    TransactionError::VersionNotVisible(format!(
+                        "Edge is tombstone for {:?}",
+                        txn.txn_id()
+                    )),
+                ));
+            }
             Ok(current_edge)
         }
     }
@@ -802,10 +811,6 @@ impl MutGraph for MemoryGraph {
             }
         }
 
-        // Mark the vertex as deleted
-        let tombstone = Vertex::tombstone(current.data.clone());
-        current.data = tombstone;
-
         // Record the vertex deletion in the transaction
         let delta = DeltaOp::CreateVertex(current.data.clone());
         let undo_ptr = entry.chain.undo_ptr.read().unwrap().clone();
@@ -813,6 +818,10 @@ impl MutGraph for MemoryGraph {
         let undo_entry = Arc::new(UndoEntry::new(delta, current.commit_ts, undo_ptr));
         undo_buffer.push(undo_entry.clone());
         *entry.chain.undo_ptr.write().unwrap() = Arc::downgrade(&undo_entry);
+
+        // Mark the vertex as deleted
+        let tombstone = Vertex::tombstone(current.data.clone());
+        current.data = tombstone;
 
         // Write to WAL
         let wal_entry = RedoEntry {
@@ -836,10 +845,6 @@ impl MutGraph for MemoryGraph {
         let mut current = entry.chain.current.write().unwrap();
         check_write_conflict(current.commit_ts, txn)?;
 
-        // Mark the edge as deleted
-        let tombstone = Edge::tombstone(current.data.clone());
-        current.data = tombstone;
-
         // Record the edge deletion in the transaction
         let delta = DeltaOp::CreateEdge(current.data.clone());
         let undo_ptr = entry.chain.undo_ptr.read().unwrap().clone();
@@ -847,6 +852,10 @@ impl MutGraph for MemoryGraph {
         let undo_entry = Arc::new(UndoEntry::new(delta, current.commit_ts, undo_ptr));
         undo_buffer.push(undo_entry.clone());
         *entry.chain.undo_ptr.write().unwrap() = Arc::downgrade(&undo_entry);
+
+        // Mark the edge as deleted
+        let tombstone = Edge::tombstone(current.data.clone());
+        current.data = tombstone;
 
         // Write to WAL
         let wal_entry = RedoEntry {
@@ -873,6 +882,8 @@ impl MutGraph for MemoryGraph {
             VertexNotFoundError::VertexNotFound(vid.to_string()),
         ))?;
 
+        // println!("current before: {:?}", entry.chain.current.read().unwrap());
+
         update_properties!(
             self,
             vid,
@@ -882,6 +893,8 @@ impl MutGraph for MemoryGraph {
             props.clone(),
             SetVertexProps
         );
+
+        // println!("current after: {:?}", entry.chain.current.read().unwrap());
 
         // Write to WAL
         let wal_entry = RedoEntry {
