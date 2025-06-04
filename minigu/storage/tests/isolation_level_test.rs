@@ -107,7 +107,7 @@ fn test_serializable_prevents_non_repeatable_read_edge() {
 
     let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
 
-    // First read边
+    // First read edge
     let edge_v1 = graph.get_edge(&txn1, 1).unwrap();
     assert_eq!(
         edge_v1.properties()[0],
@@ -147,7 +147,7 @@ fn test_serializable_prevents_phantom_read_vertices() {
         *age >= 25 && *age <= 30
     });
     let count1: usize = iter1.count();
-    assert_eq!(count1, 2); // Alice (25) 和 Bob (30)
+    assert_eq!(count1, 2); // Alice (25) and Bob (30)
 
     // Another transaction inserts a new vertex
     let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
