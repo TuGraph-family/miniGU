@@ -1,3 +1,4 @@
+use minigu_common::data_type::DataSchemaRef;
 use serde::Serialize;
 
 use super::catalog::BoundCatalogModifyingStatement;
@@ -7,6 +8,12 @@ use super::query::BoundCompositeQueryStatement;
 pub struct BoundProcedure {
     pub statement: BoundStatement,
     pub next_statements: Vec<BoundNextStatement>,
+}
+
+impl BoundProcedure {
+    pub fn schema(&self) -> Option<DataSchemaRef> {
+        todo!()
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]

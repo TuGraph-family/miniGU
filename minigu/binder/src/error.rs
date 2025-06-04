@@ -1,7 +1,6 @@
 use std::num::ParseIntError;
 
 use minigu_catalog::error::CatalogError;
-use minigu_common::data_type::LogicalType;
 use minigu_common::error::NotImplemented;
 use smol_str::SmolStr;
 use thiserror::Error;

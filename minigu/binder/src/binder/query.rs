@@ -1,13 +1,15 @@
 use gql_parser::ast::{
     AmbientLinearQueryStatement, CompositeQueryStatement, FocusedLinearQueryStatement,
-    LinearQueryStatement, MatchStatement, Procedure, QueryConjunction as AstQueryConjunction,
-    ResultStatement, SetOp as AstSetOp, SetOpKind as AstSetOpKind,
-    SetQuantifier as AstSetQuantifier, SimpleQueryStatement, Statement,
+    LinearQueryStatement, MatchStatement, OrderByAndPageStatement, Procedure,
+    QueryConjunction as AstQueryConjunction, ResultStatement, Return, ReturnItem, ReturnStatement,
+    SetOp as AstSetOp, SetOpKind as AstSetOpKind, SetQuantifier as AstSetQuantifier,
+    SimpleQueryStatement, Statement,
 };
 use itertools::Itertools;
 use minigu_ir::bound::{
-    BoundCompositeQueryStatement, BoundLinearQueryStatement, BoundSimpleQueryStatement,
-    QueryConjunction, SetOp, SetOpKind, SetQuantifier,
+    BoundCompositeQueryStatement, BoundExpr, BoundLinearQueryStatement,
+    BoundOrderByAndPageStatement, BoundResultStatement, BoundReturnStatement,
+    BoundSimpleQueryStatement, QueryConjunction, SetOp, SetOpKind, SetQuantifier,
 };
 
 use super::Binder;
@@ -67,16 +69,17 @@ impl Binder {
     ) -> BindResult<BoundLinearQueryStatement> {
         match statement {
             AmbientLinearQueryStatement::Parts { parts, result } => {
-                let statements: Vec<_> = parts
+                let statements = parts
                     .iter()
                     .map(|p| self.bind_simple_query_statement(p.value()))
                     .try_collect()?;
                 let result = self.bind_result_statement(result.value())?;
-                todo!()
+                Ok(BoundLinearQueryStatement::Query { statements, result })
             }
-            AmbientLinearQueryStatement::Nested(query) => {
-                not_implemented("nested ambient linear query statement", None)
-            }
+            AmbientLinearQueryStatement::Nested(query) => self
+                .bind_procedure(query.value())
+                .map(Box::new)
+                .map(BoundLinearQueryStatement::Nested),
         }
     }
 
@@ -95,7 +98,60 @@ impl Binder {
         todo!()
     }
 
-    pub fn bind_result_statement(&mut self, statement: &ResultStatement) -> BindResult<()> {
+    pub fn bind_result_statement(
+        &mut self,
+        statement: &ResultStatement,
+    ) -> BindResult<BoundResultStatement> {
+        match statement {
+            ResultStatement::Finish => Ok(BoundResultStatement::Finish),
+            ResultStatement::Return {
+                statement,
+                order_by,
+            } => {
+                let statement = self.bind_return_statement(statement.value())?;
+                let order_by = order_by
+                    .as_ref()
+                    .map(|o| self.bind_order_by_and_page_statement(o.value()))
+                    .transpose()?;
+                Ok(BoundResultStatement::Return {
+                    statement,
+                    order_by,
+                })
+            }
+        }
+    }
+
+    pub fn bind_return_statement(
+        &mut self,
+        statement: &ReturnStatement,
+    ) -> BindResult<BoundReturnStatement> {
+        let quantifier = statement
+            .quantifier
+            .as_ref()
+            .map(|q| bind_set_quantifier(q.value()));
+        let items = self.bind_return(statement.items.value())?;
+        // TODO: Implement GROUP BY
+        // Ok(BoundReturnStatement { quantifier, items })
+        todo!()
+    }
+
+    pub fn bind_return(&mut self, ret: &Return) -> BindResult<Vec<BoundExpr>> {
+        match ret {
+            Return::Items(items) => {
+                for item in items {
+                    let item = item.value();
+                    let expr = self.bind_value_expression(item.value.value())?;
+                }
+                todo!()
+            }
+            Return::All => todo!(),
+        }
+    }
+
+    pub fn bind_order_by_and_page_statement(
+        &self,
+        order_by: &OrderByAndPageStatement,
+    ) -> BindResult<BoundOrderByAndPageStatement> {
         todo!()
     }
 }
