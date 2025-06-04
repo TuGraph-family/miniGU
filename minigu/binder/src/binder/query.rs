@@ -1,9 +1,9 @@
 use gql_parser::ast::{
     AmbientLinearQueryStatement, CompositeQueryStatement, FocusedLinearQueryStatement,
-    LinearQueryStatement, MatchStatement, OrderByAndPageStatement, Procedure,
-    QueryConjunction as AstQueryConjunction, ResultStatement, Return, ReturnItem, ReturnStatement,
+    LinearQueryStatement, MatchStatement, OrderByAndPageStatement,
+    QueryConjunction as AstQueryConjunction, ResultStatement, Return, ReturnStatement,
     SetOp as AstSetOp, SetOpKind as AstSetOpKind, SetQuantifier as AstSetQuantifier,
-    SimpleQueryStatement, Statement,
+    SimpleQueryStatement,
 };
 use itertools::Itertools;
 use minigu_ir::bound::{
