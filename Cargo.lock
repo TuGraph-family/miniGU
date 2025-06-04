@@ -1295,6 +1295,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "minigu-planner"
+version = "0.1.0"
+dependencies = [
+ "minigu-ir",
+]
+
+[[package]]
 name = "minigu-storage"
 version = "0.1.0"
 dependencies = [

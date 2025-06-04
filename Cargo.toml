@@ -17,6 +17,7 @@ members = [
     "minigu/storage",
     "minigu/execution",
     "minigu/ir",
+    "minigu/planner",
 ]
 resolver = "3"
 
@@ -48,6 +49,7 @@ minigu-catalog = { path = "minigu/catalog" }
 minigu-common = { path = "minigu/common" }
 minigu-execution = { path = "minigu/execution" }
 minigu-ir = { path = "minigu/ir" }
+minigu-planner = { path = "minigu/planner" }
 minigu-storage = { path = "minigu/storage" }
 paste = "1.0.15"
 serde = { version = "1.0.219", default-features = false, features = [
