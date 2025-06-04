@@ -1,4 +1,7 @@
+use std::num::ParseIntError;
+
 use minigu_catalog::error::CatalogError;
+use minigu_common::data_type::LogicalType;
 use minigu_common::error::NotImplemented;
 use smol_str::SmolStr;
 use thiserror::Error;
@@ -35,8 +38,15 @@ pub enum BindError {
     #[error("yield item not found: {0}")]
     YieldItemNotFound(SmolStr),
 
-    #[error("variable name already exists: {0}")]
-    NameAlreadyExists(SmolStr),
+    #[error("variable not found: {0}")]
+    VariableNotFound(SmolStr),
+
+    #[error("failed to parse integer")]
+    ParseInt(#[from] ParseIntError),
+
+    // TODO: Remove this error variant
+    #[error("unexpected bind error")]
+    Unexpected,
 
     #[error(transparent)]
     NotImplemented(#[from] NotImplemented),
@@ -44,9 +54,9 @@ pub enum BindError {
 
 pub type BindResult<T> = std::result::Result<T, BindError>;
 
-pub(crate) fn not_implemented<T>(feature: String, issue: Option<u32>) -> BindResult<T> {
+pub(crate) fn not_implemented<T>(feature: impl Into<String>, issue: Option<u32>) -> BindResult<T> {
     Err(BindError::NotImplemented(NotImplemented::new(
-        feature,
+        feature.into(),
         issue.into(),
     )))
 }

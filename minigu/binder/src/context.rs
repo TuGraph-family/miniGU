@@ -1,6 +1,3 @@
-use std::collections::HashMap;
-use std::collections::hash_map::Entry;
-
 use indexmap::IndexMap;
 use minigu_ir::bound::BoundExpr;
 use smol_str::SmolStr;
@@ -25,5 +22,9 @@ impl BindContext {
 
     pub fn insert(&mut self, name: SmolStr, expr: BoundExpr) {
         self.name_to_expr.insert(name, expr);
+    }
+
+    pub fn get(&self, name: &str) -> Option<&BoundExpr> {
+        self.name_to_expr.get(name)
     }
 }

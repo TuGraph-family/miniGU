@@ -3,7 +3,7 @@ use serde::Serialize;
 
 use super::value_expr::SetQuantifier;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub enum BoundCompositeQueryStatement {
     Conjunction {
         conjunction: QueryConjunction,
@@ -19,26 +19,26 @@ impl BoundCompositeQueryStatement {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct BoundLinearQueryStatement {}
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct BoundSimpleQueryStatement {}
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub enum QueryConjunction {
     SetOp(SetOp),
     Otherwise,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub enum SetOpKind {
     Union,
     Except,
     Intersect,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct SetOp {
     pub kind: SetOpKind,
     pub quantifier: Option<SetQuantifier>,

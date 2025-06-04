@@ -5,7 +5,7 @@ use super::object_ref::BoundGraphType;
 use super::procedure_call::BoundCallProcedureStatement;
 use crate::named_ref::NamedGraphRef;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub enum BoundCatalogModifyingStatement {
     Call(BoundCallProcedureStatement),
     CreateSchema(BoundCreateSchemaStatement),
@@ -16,19 +16,19 @@ pub enum BoundCatalogModifyingStatement {
     DropGraphType(BoundDropGraphTypeStatement),
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct BoundCreateSchemaStatement {
     pub schema_path: Vec<SmolStr>,
     pub if_not_exists: bool,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct BoundDropSchemaStatement {
     pub schema_path: Vec<SmolStr>,
     pub if_exists: bool,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct BoundCreateGraphStatement {
     // pub schema: SchemaRef,
     pub name: SmolStr,
@@ -37,21 +37,21 @@ pub struct BoundCreateGraphStatement {
     pub source: Option<NamedGraphRef>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub enum CreateKind {
     Create,
     CreateIfNotExists,
     CreateOrReplace,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct BoundDropGraphStatement {
     // pub schema: NamedSchemaRef,
     pub name: SmolStr,
     pub if_exists: bool,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct BoundCreateGraphTypeStatement {
     // pub schema: NamedSchemaRef,
     pub name: SmolStr,
@@ -59,7 +59,7 @@ pub struct BoundCreateGraphTypeStatement {
     pub source: BoundGraphType,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct BoundDropGraphTypeStatement {
     //  pub schema: NamedSchemaRef,
     pub name: SmolStr,

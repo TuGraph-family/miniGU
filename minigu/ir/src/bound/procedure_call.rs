@@ -4,7 +4,7 @@ use serde::Serialize;
 use super::value_expr::BoundExpr;
 use crate::named_ref::NamedProcedureRef;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct BoundCallProcedureStatement {
     pub optional: bool,
     pub procedure: BoundProcedureCall,
@@ -17,7 +17,7 @@ impl BoundCallProcedureStatement {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub enum BoundProcedureCall {
     Inline(BoundInlineProcedureCall),
     Named(BoundNamedProcedureCall),
@@ -33,10 +33,10 @@ impl BoundProcedureCall {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct BoundInlineProcedureCall {}
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct BoundNamedProcedureCall {
     /// The procedure reference. This can be a query, catalog-modifying or data-modifying
     /// procedure.

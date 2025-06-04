@@ -20,7 +20,7 @@ impl Binder {
     ) -> BindResult<BoundCompositeQueryStatement> {
         match statement {
             CompositeQueryStatement::Conjunction { .. } => {
-                not_implemented("query conjunction".into(), None)
+                not_implemented("query conjunction", None)
             }
             CompositeQueryStatement::Primary(statement) => {
                 let statement = self.bind_linear_query_statement(statement)?;
@@ -49,17 +49,15 @@ impl Binder {
     ) -> BindResult<BoundLinearQueryStatement> {
         match statement {
             FocusedLinearQueryStatement::Parts { parts, result } => {
-                not_implemented("focused linear query statement parts".into(), None)
+                not_implemented("focused linear query statement parts", None)
             }
             FocusedLinearQueryStatement::Result { use_graph, result } => {
-                not_implemented("focused linear query statement result".into(), None)
+                not_implemented("focused linear query statement result", None)
             }
             FocusedLinearQueryStatement::Nested { .. } => {
-                not_implemented("nested focused linear query statement".into(), None)
+                not_implemented("nested focused linear query statement", None)
             }
-            FocusedLinearQueryStatement::Select { .. } => {
-                not_implemented("select statement".into(), None)
-            }
+            FocusedLinearQueryStatement::Select { .. } => not_implemented("select statement", None),
         }
     }
 
@@ -77,7 +75,7 @@ impl Binder {
                 todo!()
             }
             AmbientLinearQueryStatement::Nested(query) => {
-                not_implemented("nested ambient linear query statement".into(), None)
+                not_implemented("nested ambient linear query statement", None)
             }
         }
     }
@@ -100,40 +98,35 @@ impl Binder {
     pub fn bind_result_statement(&mut self, statement: &ResultStatement) -> BindResult<()> {
         todo!()
     }
+}
 
-    pub fn bind_query_conjunction(
-        &mut self,
-        conjunction: &AstQueryConjunction,
-    ) -> BindResult<QueryConjunction> {
-        match conjunction {
-            AstQueryConjunction::SetOp(set_op) => {
-                Ok(QueryConjunction::SetOp(self.bind_set_op(set_op)))
-            }
-            AstQueryConjunction::Otherwise => Ok(QueryConjunction::Otherwise),
-        }
+pub fn bind_query_conjunction(conjunction: &AstQueryConjunction) -> BindResult<QueryConjunction> {
+    match conjunction {
+        AstQueryConjunction::SetOp(set_op) => Ok(QueryConjunction::SetOp(bind_set_op(set_op))),
+        AstQueryConjunction::Otherwise => Ok(QueryConjunction::Otherwise),
     }
+}
 
-    pub fn bind_set_op(&mut self, set_op: &AstSetOp) -> SetOp {
-        let kind = self.bind_set_op_kind(set_op.kind.value());
-        let quantifier = set_op
-            .quantifier
-            .as_ref()
-            .map(|q| self.bind_set_quantifier(q.value()));
-        SetOp { kind, quantifier }
+pub fn bind_set_op(set_op: &AstSetOp) -> SetOp {
+    let kind = bind_set_op_kind(set_op.kind.value());
+    let quantifier = set_op
+        .quantifier
+        .as_ref()
+        .map(|q| bind_set_quantifier(q.value()));
+    SetOp { kind, quantifier }
+}
+
+pub fn bind_set_quantifier(quantifier: &AstSetQuantifier) -> SetQuantifier {
+    match quantifier {
+        AstSetQuantifier::Distinct => SetQuantifier::Distinct,
+        AstSetQuantifier::All => SetQuantifier::All,
     }
+}
 
-    pub fn bind_set_quantifier(&mut self, quantifier: &AstSetQuantifier) -> SetQuantifier {
-        match quantifier {
-            AstSetQuantifier::Distinct => SetQuantifier::Distinct,
-            AstSetQuantifier::All => SetQuantifier::All,
-        }
-    }
-
-    pub fn bind_set_op_kind(&mut self, kind: &AstSetOpKind) -> SetOpKind {
-        match kind {
-            AstSetOpKind::Union => SetOpKind::Union,
-            AstSetOpKind::Except => SetOpKind::Except,
-            AstSetOpKind::Intersect => SetOpKind::Intersect,
-        }
+pub fn bind_set_op_kind(kind: &AstSetOpKind) -> SetOpKind {
+    match kind {
+        AstSetOpKind::Union => SetOpKind::Union,
+        AstSetOpKind::Except => SetOpKind::Except,
+        AstSetOpKind::Intersect => SetOpKind::Intersect,
     }
 }

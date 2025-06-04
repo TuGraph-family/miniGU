@@ -87,7 +87,6 @@ impl Binder {
             }
             schema
         };
-        // match (a)-->(b) return a, b next call func(a) return b
         Ok(BoundNamedProcedureCall {
             procedure_ref,
             args,

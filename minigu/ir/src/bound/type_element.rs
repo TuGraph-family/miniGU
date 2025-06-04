@@ -3,7 +3,7 @@ use minigu_common::data_type::DataField;
 use serde::Serialize;
 use smol_str::SmolStr;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub enum BoundGraphElementType {
     // Vertex(Box<BoundVertexType>),
     // Edge(Box<BoundEdgeType>),
