@@ -569,26 +569,19 @@ impl Graph for MemoryGraph {
         let commit_ts = current_version.commit_ts;
         match txn.isolation_level() {
             IsolationLevel::Serializable => {
-                // Check if the vertex is modified by other transactions
-                if commit_ts.is_txn_id() && commit_ts != txn.txn_id() {
-                    return Err(StorageError::Transaction(
-                        TransactionError::WriteReadConflict(format!(
-                            "Vertex is being modified by transaction {:?}",
-                            commit_ts
-                        )),
-                    ));
-                }
+                // Insert the vertex ID into the read set
                 txn.vertex_reads.insert(vid);
             }
             IsolationLevel::Snapshot => {
                 // Optimistic read allowed, no read set recording
             }
         }
-        // The vertex is visible, which means it is either modified by txn or nobody
         let mut visible_vertex = current_version.data.clone();
-        // Only when the vertex is modified by nobody and txn started before the vertex was
-        // modified, we need to apply the deltas to the vertex
-        if commit_ts.is_commit_ts() && commit_ts > txn.start_ts() {
+        // Only when the vertex is modified by other transactions, or txn started before the vertex
+        // was modified, we need to apply the deltas to the vertex
+        if (commit_ts.is_txn_id() && commit_ts != txn.txn_id())
+            || (commit_ts.is_commit_ts() && commit_ts > txn.start_ts())
+        {
             let undo_ptr = versioned_vertex.chain.undo_ptr.read().unwrap().clone();
             let apply_deltas = |undo_entry: &UndoEntry| match undo_entry.delta() {
                 DeltaOp::CreateVertex(original) => visible_vertex = original.clone(),
@@ -625,26 +618,19 @@ impl Graph for MemoryGraph {
         let commit_ts = current_version.commit_ts;
         match txn.isolation_level() {
             IsolationLevel::Serializable => {
-                // Check if the edge is modified by other transactions
-                if commit_ts.is_txn_id() && commit_ts != txn.txn_id() {
-                    return Err(StorageError::Transaction(
-                        TransactionError::WriteReadConflict(format!(
-                            "Edge is being modified by transaction {:?}",
-                            commit_ts
-                        )),
-                    ));
-                }
+                // Insert the edge ID into the read set
                 txn.edge_reads.insert(eid);
             }
             IsolationLevel::Snapshot => {
                 // Optimistic read allowed, no read set recording
             }
         }
-        // The edge is visible, which means it is either modified by txn or nobody
         let mut visible_edge = current_version.data.clone();
-        // Only when the edge is modified by nobody and txn started before the edge was
+        // Only when the edge is modified by other transactions, or txn started before the edge was
         // modified, we need to apply the deltas to the edge
-        if commit_ts.is_commit_ts() && commit_ts > txn.start_ts() {
+        if (commit_ts.is_txn_id() && commit_ts != txn.txn_id())
+            || (commit_ts.is_commit_ts() && commit_ts > txn.start_ts())
+        {
             let undo_ptr = versioned_edge.chain.undo_ptr.read().unwrap().clone();
             let apply_deltas = |undo_entry: &UndoEntry| match undo_entry.delta() {
                 DeltaOp::CreateEdge(original) => visible_edge = original.clone(),
@@ -882,8 +868,6 @@ impl MutGraph for MemoryGraph {
             VertexNotFoundError::VertexNotFound(vid.to_string()),
         ))?;
 
-        // println!("current before: {:?}", entry.chain.current.read().unwrap());
-
         update_properties!(
             self,
             vid,
@@ -893,8 +877,6 @@ impl MutGraph for MemoryGraph {
             props.clone(),
             SetVertexProps
         );
-
-        // println!("current after: {:?}", entry.chain.current.read().unwrap());
 
         // Write to WAL
         let wal_entry = RedoEntry {
