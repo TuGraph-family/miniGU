@@ -3,3 +3,4 @@ pub const LABEL_FIELD_NAME: &str = "_label";
 pub const EID_FIELD_NAME: &str = "_eid";
 pub const SRC_FIELD_NAME: &str = "_src";
 pub const DST_FIELD_NAME: &str = "_dst";
+pub const SESSION_USER: &str = "minigu";

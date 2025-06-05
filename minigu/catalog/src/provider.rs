@@ -133,6 +133,14 @@ pub enum DirectoryOrSchema {
 
 impl DirectoryOrSchema {
     #[inline]
+    pub fn parent(&self) -> Option<DirectoryRef> {
+        match self {
+            Self::Directory(dir) => dir.parent(),
+            Self::Schema(schema) => schema.parent(),
+        }
+    }
+
+    #[inline]
     pub fn is_directory(&self) -> bool {
         matches!(self, Self::Directory(_))
     }
@@ -140,6 +148,22 @@ impl DirectoryOrSchema {
     #[inline]
     pub fn is_schema(&self) -> bool {
         matches!(self, Self::Schema(_))
+    }
+
+    #[inline]
+    pub fn into_directory(self) -> Option<DirectoryRef> {
+        match self {
+            Self::Directory(dir) => Some(dir),
+            Self::Schema(_) => None,
+        }
+    }
+
+    #[inline]
+    pub fn into_schema(self) -> Option<SchemaRef> {
+        match self {
+            Self::Directory(_) => None,
+            Self::Schema(schema) => Some(schema),
+        }
     }
 
     #[inline]

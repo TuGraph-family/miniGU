@@ -1,6 +1,7 @@
 [package]
 edition.workspace = true
 name = "minigu-common"
+repository.workspace = true
 version = "0.1.0"
 
 [dependencies]
@@ -8,6 +9,7 @@ arrow = { workspace = true }
 csv = "1.3.1"
 enum-as-inner = "0.6.1"
 itertools = { workspace = true }
+miette = { workspace = true }
 ordered-float = { version = "5.0.0", features = ["serde"] }
 paste = { workspace = true }
 serde = { workspace = true }
