@@ -584,3 +584,251 @@ fn test_concurrent_transactions_stress() {
     assert!(alice.properties()[1].as_int().unwrap() >= &25);
     txn.abort().unwrap();
 }
+
+// ========== READ-ONLY TRANSACTION TESTS ==========
+#[test]
+fn test_read_only_transaction_consistency_under_concurrent_writes() {
+    let (graph, _cleaner) = create_test_graph();
+
+    // Start a read-only transaction to establish a consistent snapshot
+    let read_txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+    // Read initial state
+    let initial_alice = graph.get_vertex(&read_txn, 1).unwrap();
+    let initial_bob = graph.get_vertex(&read_txn, 2).unwrap();
+    let initial_edge = graph.get_edge(&read_txn, 1).unwrap();
+
+    assert_eq!(initial_alice.properties()[1], PropertyValue::Int(25));
+    assert_eq!(initial_bob.properties()[1], PropertyValue::Int(30));
+    assert_eq!(
+        initial_edge.properties()[0],
+        PropertyValue::String("2024-01-01".into())
+    );
+
+    let graph_clone1 = graph.clone();
+    let graph_clone2 = graph.clone();
+    let graph_clone3 = graph.clone();
+
+    // Concurrent writer 1: Update Alice's age multiple times
+    let handle1 = thread::spawn(move || {
+        for i in 0..5 {
+            let write_txn = graph_clone1.begin_transaction(IsolationLevel::Serializable);
+            if graph_clone1
+                .set_vertex_property(&write_txn, 1, vec![1], vec![PropertyValue::Int(26 + i)])
+                .is_ok()
+            {
+                let _ = write_txn.commit();
+            } else {
+                let _ = write_txn.abort();
+            }
+        }
+    });
+
+    // Concurrent writer 2: Update Bob's age multiple times
+    let handle2 = thread::spawn(move || {
+        for i in 0..5 {
+            let write_txn = graph_clone2.begin_transaction(IsolationLevel::Serializable);
+            if graph_clone2
+                .set_vertex_property(&write_txn, 2, vec![1], vec![PropertyValue::Int(31 + i)])
+                .is_ok()
+            {
+                let _ = write_txn.commit();
+            } else {
+                let _ = write_txn.abort();
+            }
+        }
+    });
+
+    // Concurrent writer 3: Update edge properties and create new vertices
+    let handle3 = thread::spawn(move || {
+        for i in 0..3 {
+            let write_txn = graph_clone3.begin_transaction(IsolationLevel::Serializable);
+
+            // Update edge property
+            if graph_clone3
+                .set_edge_property(&write_txn, 1, vec![0], vec![PropertyValue::String(
+                    format!("2024-0{}-01", i + 2),
+                )])
+                .is_ok()
+            {
+                // Create new vertex
+                let new_vertex = Vertex::new(
+                    10 + i as u64,
+                    PERSON_LABEL_ID,
+                    PropertyRecord::new(vec![
+                        PropertyValue::String(format!("User{}", i)),
+                        PropertyValue::Int(20 + i as i32),
+                    ]),
+                );
+                if graph_clone3.create_vertex(&write_txn, new_vertex).is_ok() {
+                    let _ = write_txn.commit();
+                } else {
+                    let _ = write_txn.abort();
+                }
+            } else {
+                let _ = write_txn.abort();
+            }
+        }
+    });
+
+    // Read-only transaction should see consistent snapshot throughout
+    let mid_alice = graph.get_vertex(&read_txn, 1).unwrap();
+    let mid_bob = graph.get_vertex(&read_txn, 2).unwrap();
+    let mid_edge = graph.get_edge(&read_txn, 1).unwrap();
+
+    // Values should be identical to initial reads (consistent snapshot)
+    assert_eq!(mid_alice.properties()[1], PropertyValue::Int(25));
+    assert_eq!(mid_bob.properties()[1], PropertyValue::Int(30));
+    assert_eq!(
+        mid_edge.properties()[0],
+        PropertyValue::String("2024-01-01".into())
+    );
+
+    // Wait for all writers to complete
+    handle1.join().unwrap();
+    handle2.join().unwrap();
+    handle3.join().unwrap();
+
+    // Final reads should still be consistent with initial snapshot
+    let final_alice = graph.get_vertex(&read_txn, 1).unwrap();
+    let final_bob = graph.get_vertex(&read_txn, 2).unwrap();
+    let final_edge = graph.get_edge(&read_txn, 1).unwrap();
+
+    assert_eq!(final_alice.properties()[1], PropertyValue::Int(25));
+    assert_eq!(final_bob.properties()[1], PropertyValue::Int(30));
+    assert_eq!(
+        final_edge.properties()[0],
+        PropertyValue::String("2024-01-01".into())
+    );
+
+    // New vertices created by writers should not be visible
+    assert!(graph.get_vertex(&read_txn, 10).is_err());
+    assert!(graph.get_vertex(&read_txn, 11).is_err());
+    assert!(graph.get_vertex(&read_txn, 12).is_err());
+
+    // Vertex count should remain consistent
+    let initial_count = read_txn.iter_vertices().filter_map(|v| v.ok()).count();
+    let final_count = read_txn.iter_vertices().filter_map(|v| v.ok()).count();
+    assert_eq!(initial_count, final_count);
+
+    read_txn.abort().unwrap();
+
+    // Verify that changes are visible in a new transaction
+    let verify_txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let updated_alice = graph.get_vertex(&verify_txn, 1).unwrap();
+    let updated_bob = graph.get_vertex(&verify_txn, 2).unwrap();
+
+    // Should see the updated values now
+    assert!(updated_alice.properties()[1].as_int().unwrap() > &25);
+    assert!(updated_bob.properties()[1].as_int().unwrap() > &30);
+
+    verify_txn.abort().unwrap();
+}
+
+// ========== TRANSACTION INTERRUPTION AND RECOVERY TESTS ==========
+
+#[test]
+fn test_transaction_panic_during_vertex_creation() {
+    let (graph, _cleaner) = create_test_graph();
+
+    // Record initial state
+    let initial_txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let initial_vertex_count = initial_txn.iter_vertices().filter_map(|v| v.ok()).count();
+    initial_txn.abort().unwrap();
+
+    // Create a transaction that will panic
+    let graph_clone = graph.clone();
+    let panic_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let txn = graph_clone.begin_transaction(IsolationLevel::Serializable);
+
+        // Create a vertex
+        let vertex = Vertex::new(
+            100,
+            PERSON_LABEL_ID,
+            PropertyRecord::new(vec![
+                PropertyValue::String("PanicVertex".into()),
+                PropertyValue::Int(99),
+            ]),
+        );
+        graph_clone.create_vertex(&txn, vertex).unwrap();
+
+        // Simulate panic before commit
+        panic!("Simulated panic during transaction");
+    }));
+
+    // Assert that panic happened
+    assert!(panic_result.is_err());
+
+    // Verify graph consistency - should not create new vertex
+    let verify_txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let final_vertex_count = verify_txn.iter_vertices().filter_map(|v| v.ok()).count();
+    assert_eq!(initial_vertex_count, final_vertex_count);
+
+    // Assert that panic vertex does not exist
+    assert!(graph.get_vertex(&verify_txn, 100).is_err());
+    verify_txn.abort().unwrap();
+}
+
+#[test]
+fn test_transaction_panic_during_property_update() {
+    let (graph, _cleaner) = create_test_graph();
+
+    // Record initial age of Alice
+    let initial_txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let initial_alice = graph.get_vertex(&initial_txn, 1).unwrap();
+    let initial_age = initial_alice.properties()[1].clone();
+    initial_txn.abort().unwrap();
+
+    // Create a transaction that will panic
+    let graph_clone = graph.clone();
+    let panic_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let txn = graph_clone.begin_transaction(IsolationLevel::Serializable);
+
+        // Update Alice's age
+        graph_clone
+            .set_vertex_property(&txn, 1, vec![1], vec![PropertyValue::Int(999)])
+            .unwrap();
+
+        // Simulate panic before commit
+        panic!("Simulated panic during property update");
+    }));
+
+    // Assert that panic happened
+    assert!(panic_result.is_err());
+
+    // Verify Alice's age did not change
+    let verify_txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let final_alice = graph.get_vertex(&verify_txn, 1).unwrap();
+    assert_eq!(final_alice.properties()[1], initial_age);
+    verify_txn.abort().unwrap();
+}
+
+#[test]
+fn test_transaction_panic_during_deletion() {
+    let (graph, _cleaner) = create_test_graph();
+
+    // Assert that Bob exists
+    let initial_txn = graph.begin_transaction(IsolationLevel::Serializable);
+    assert!(graph.get_vertex(&initial_txn, 2).is_ok());
+    initial_txn.abort().unwrap();
+
+    // Create a transaction that will panic
+    let graph_clone = graph.clone();
+    let panic_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let txn = graph_clone.begin_transaction(IsolationLevel::Serializable);
+
+        // Delete Bob
+        graph_clone.delete_vertex(&txn, 2).unwrap();
+
+        // Simulate panic before commit
+        panic!("Simulated panic during deletion");
+    }));
+
+    // Assert that panic happened
+    assert!(panic_result.is_err());
+
+    // Verify that Bob still exists
+    let verify_txn = graph.begin_transaction(IsolationLevel::Serializable);
+    assert!(graph.get_vertex(&verify_txn, 2).is_ok());
+    verify_txn.abort().unwrap();
+}
