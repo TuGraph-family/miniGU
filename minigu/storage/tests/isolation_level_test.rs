@@ -657,7 +657,7 @@ fn test_read_only_transaction_consistency_under_concurrent_writes() {
                     PERSON_LABEL_ID,
                     PropertyRecord::new(vec![
                         PropertyValue::String(format!("User{}", i)),
-                        PropertyValue::Int(20 + i as i32),
+                        PropertyValue::Int(20 + i),
                     ]),
                 );
                 if graph_clone3.create_vertex(&write_txn, new_vertex).is_ok() {
