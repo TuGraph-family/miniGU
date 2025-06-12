@@ -362,24 +362,24 @@ impl AggregateState {
 
 /// Check if a scalar value is null
 fn is_null_value(value: &ScalarValue) -> bool {
-    match value {
-        ScalarValue::Null => true,
-        ScalarValue::Boolean(None) => true,
-        ScalarValue::Int8(None) => true,
-        ScalarValue::Int16(None) => true,
-        ScalarValue::Int32(None) => true,
-        ScalarValue::Int64(None) => true,
-        ScalarValue::UInt8(None) => true,
-        ScalarValue::UInt16(None) => true,
-        ScalarValue::UInt32(None) => true,
-        ScalarValue::UInt64(None) => true,
-        ScalarValue::Float32(None) => true,
-        ScalarValue::Float64(None) => true,
-        ScalarValue::String(None) => true,
-        ScalarValue::Vertex(None) => true,
-        ScalarValue::Edge(None) => true,
-        _ => false,
-    }
+    matches!(
+        value,
+        ScalarValue::Null
+            | ScalarValue::Boolean(None)
+            | ScalarValue::Int8(None)
+            | ScalarValue::Int16(None)
+            | ScalarValue::Int32(None)
+            | ScalarValue::Int64(None)
+            | ScalarValue::UInt8(None)
+            | ScalarValue::UInt16(None)
+            | ScalarValue::UInt32(None)
+            | ScalarValue::UInt64(None)
+            | ScalarValue::Float32(None)
+            | ScalarValue::Float64(None)
+            | ScalarValue::String(None)
+            | ScalarValue::Vertex(None)
+            | ScalarValue::Edge(None)
+    )
 }
 
 /// Convert a vector of scalar values to an array using macro to reduce code duplication
