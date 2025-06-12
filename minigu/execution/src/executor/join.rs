@@ -1,9 +1,7 @@
 use std::collections::HashMap;
-use std::iter::zip;
 use std::sync::Arc;
 
-use arrow::array::{Array, ArrayRef, UInt32Array};
-use arrow::compute::concat;
+use arrow::array::{ArrayRef, UInt32Array};
 use itertools::Itertools;
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::value::{ScalarValue, ScalarValueAccessor};
@@ -107,7 +105,8 @@ where
                     }
                 }
                 if !left_chunks.is_empty() {
-                    let mut grouped : HashMap<*const DataChunk, (Arc<DataChunk>, Vec<u32>)> = HashMap::new();
+                    let mut grouped: HashMap<*const DataChunk, (Arc<DataChunk>, Vec<u32>)> =
+                        HashMap::new();
                     for (chunk, &row_index) in left_chunks.iter().zip(&left_indices) {
                         let ptr = Arc::as_ptr(chunk);
                         grouped
@@ -121,7 +120,7 @@ where
                         .into_values()
                         .map(|(chunk, indices)| chunk.take(&UInt32Array::from(indices)))
                         .collect();
-                    
+
                     let left_join_chunk = DataChunk::concat(left_join_chunks);
                     let right_join_chunk = chunk.take(&UInt32Array::from(right_indices));
                     let mut joined_chunk = left_join_chunk;
@@ -131,5 +130,132 @@ where
             }
         }
         .into_executor()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use minigu_common::data_chunk;
+
+    use super::*;
+    use crate::evaluator::column_ref::ColumnRef;
+    #[test]
+    fn test_hash_join_basic() {
+        let left_chunk = data_chunk!((Int32, [1, 2, 3]));
+        let right_chunk = data_chunk!((Int32, [2, 3, 4]));
+        let conds = vec![JoinCond::new(
+            Box::new(ColumnRef::new(0)),
+            Box::new(ColumnRef::new(0)),
+        )];
+        let left_executor = [Ok(left_chunk)].into_executor();
+        let right_executor = [Ok(right_chunk)].into_executor();
+        let join_executor = left_executor.join_with(right_executor, conds);
+
+        let results: Vec<DataChunk> = join_executor.into_iter().try_collect().unwrap();
+        let expected = data_chunk!((Int32, [2, 3]), (Int32, [2, 3]));
+        assert_eq!(results, vec![expected]);
+    }
+
+    #[test]
+    fn test_hash_join_duplicate_matches() {
+        let left_chunk = data_chunk!((Int32, [1, 1, 2]));
+        let right_chunk = data_chunk!((Int32, [1]));
+
+        let conds = vec![JoinCond::new(
+            Box::new(ColumnRef::new(0)),
+            Box::new(ColumnRef::new(0)),
+        )];
+
+        let left_executor = [Ok(left_chunk)].into_executor();
+        let right_executor = [Ok(right_chunk)].into_executor();
+
+        let join_executor = left_executor.join_with(right_executor, conds);
+        let results: Vec<DataChunk> = join_executor.into_iter().try_collect().unwrap();
+
+        let expected = data_chunk!((Int32, [1, 1]), (Int32, [1, 1]));
+        assert_eq!(results, vec![expected]);
+    }
+
+    #[test]
+    fn test_hash_join_no_match() {
+        let left_chunk = data_chunk!((Int32, [10, 20]));
+        let right_chunk = data_chunk!((Int32, [1, 2]));
+
+        let conds = vec![JoinCond::new(
+            Box::new(ColumnRef::new(0)),
+            Box::new(ColumnRef::new(0)),
+        )];
+
+        let left_executor = [Ok(left_chunk)].into_executor();
+        let right_executor = [Ok(right_chunk)].into_executor();
+
+        let join_executor = left_executor.join_with(right_executor, conds);
+        let results: Vec<DataChunk> = join_executor.into_iter().try_collect().unwrap();
+
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_hash_join_empty_right() {
+        let left_chunk = data_chunk!((Int32, [1, 2, 3]));
+        let right_chunk = data_chunk!((Int32, [None, None, None]));
+
+        let conds = vec![JoinCond::new(
+            Box::new(ColumnRef::new(0)),
+            Box::new(ColumnRef::new(0)),
+        )];
+
+        let left_executor = [Ok(left_chunk)].into_executor();
+        let right_executor = [Ok(right_chunk)].into_executor();
+
+        let join_executor = left_executor.join_with(right_executor, conds);
+        let results: Vec<DataChunk> = join_executor.into_iter().try_collect().unwrap();
+
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_hash_join_multi_column_key_match() {
+        let left_chunk = data_chunk!((Int32, [1, 1, 2]), (Utf8, ["a", "b", "c"]));
+        let right_chunk = data_chunk!((Int32, [1, 1]), (Utf8, ["b", "c"]));
+
+        let conds = vec![JoinCond::new(
+            Box::new(ColumnRef::new(0)),
+            Box::new(ColumnRef::new(0)),
+        )];
+
+        let left_executor = [Ok(left_chunk)].into_executor();
+        let right_executor = [Ok(right_chunk)].into_executor();
+
+        let join_executor = left_executor.join_with(right_executor, conds);
+        let results: Vec<DataChunk> = join_executor.into_iter().try_collect().unwrap();
+
+        let expected = data_chunk!(
+            (Int32, [1, 1, 1, 1]),
+            (Utf8, ["a", "b", "a", "b"]),
+            (Int32, [1, 1, 1, 1]),
+            (Utf8, ["b", "b", "c", "c"])
+        );
+        assert_eq!(results, vec![expected]);
+    }
+
+    #[test]
+    fn test_hash_join_multi_key_match() {
+        let left_chunk = data_chunk!((Int32, [1, 1, 2]), (Utf8, ["a", "b", "c"]));
+        let right_chunk = data_chunk!((Int32, [1, 1]), (Utf8, ["a", "x"]));
+
+        let conds = vec![
+            JoinCond::new(Box::new(ColumnRef::new(0)), Box::new(ColumnRef::new(0))),
+            JoinCond::new(Box::new(ColumnRef::new(1)), Box::new(ColumnRef::new(1))),
+        ];
+
+        let left_executor = [Ok(left_chunk)].into_executor();
+        let right_executor = [Ok(right_chunk)].into_executor();
+
+        let join_executor = left_executor.join_with(right_executor, conds);
+        let results: Vec<DataChunk> = join_executor.into_iter().try_collect().unwrap();
+
+        let expected = data_chunk!((Int32, [1]), (Utf8, ["a"]), (Int32, [1]), (Utf8, ["a"]));
+        assert_eq!(results, vec![expected]);
     }
 }

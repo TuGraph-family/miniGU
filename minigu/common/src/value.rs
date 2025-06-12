@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use arrow::array::{
-    Array, ArrayRef, AsArray, BooleanArray, Float32Array, Float64Array, Int8Array, Int16Array,
-    Int32Array, Int64Array, NullArray, StringArray, UInt8Array, UInt16Array, UInt32Array,
-    UInt64Array,
+    Array, ArrayRef, AsArray, BooleanArray, Float32Array, Float64Array, Int16Array, Int32Array,
+    Int64Array, Int8Array, NullArray, StringArray, UInt16Array, UInt32Array, UInt64Array,
+    UInt8Array,
 };
 use arrow::datatypes::DataType;
 use ordered_float::OrderedFloat;
@@ -47,8 +47,12 @@ impl ScalarValue {
             ScalarValue::UInt16(value) => Arc::new(UInt16Array::from_iter([*value])),
             ScalarValue::UInt32(value) => Arc::new(UInt32Array::from_iter([*value])),
             ScalarValue::UInt64(value) => Arc::new(UInt64Array::from_iter([*value])),
-            ScalarValue::Float32(value) => Arc::new(Float32Array::from_iter([value.map(|f|f.into_inner())])),
-            ScalarValue::Float64(value) => Arc::new(Float64Array::from_iter([value.map(|f|f.into_inner())])),
+            ScalarValue::Float32(value) => {
+                Arc::new(Float32Array::from_iter([value.map(|f| f.into_inner())]))
+            }
+            ScalarValue::Float64(value) => {
+                Arc::new(Float64Array::from_iter([value.map(|f| f.into_inner())]))
+            }
             ScalarValue::String(value) => Arc::new(StringArray::from_iter([value])),
             ScalarValue::Vertex(value) => todo!(),
             ScalarValue::Edge(_value) => todo!(),
@@ -224,11 +228,17 @@ impl ScalarValueAccessor for dyn Array + '_ {
             }
             DataType::Float32 => {
                 let array: &Float32Array = self.as_primitive();
-                array.is_valid(index).then(|| OrderedFloat(array.value(index))).into()
+                array
+                    .is_valid(index)
+                    .then(|| OrderedFloat(array.value(index)))
+                    .into()
             }
             DataType::Float64 => {
                 let array: &Float64Array = self.as_primitive();
-                array.is_valid(index).then(|| OrderedFloat(array.value(index))).into()
+                array
+                    .is_valid(index)
+                    .then(|| OrderedFloat(array.value(index)))
+                    .into()
             }
             DataType::Utf8 => {
                 let array: &StringArray = self.as_string();
