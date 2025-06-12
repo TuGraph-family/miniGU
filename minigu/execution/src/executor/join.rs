@@ -1,7 +1,8 @@
 use std::collections::HashMap;
+use std::iter::zip;
 use std::sync::Arc;
 
-use arrow::array::{Array, ArrayRef};
+use arrow::array::{Array, ArrayRef, UInt32Array};
 use arrow::compute::concat;
 use itertools::Itertools;
 use minigu_common::data_chunk::DataChunk;
@@ -9,6 +10,7 @@ use minigu_common::value::{ScalarValue, ScalarValueAccessor};
 
 use super::{Executor, IntoExecutor};
 use crate::evaluator::BoxedEvaluator;
+use crate::evaluator::datum::DatumRef;
 use crate::executor::utils::gen_try;
 #[derive(Debug)]
 pub struct JoinBuilder<L, R> {
@@ -60,7 +62,7 @@ where
     fn into_executor(self) -> Self::IntoExecutor {
         gen move {
             let JoinBuilder { left, right, conds } = self;
-            let (left_evals, right_evals): (Vec<_>, Vec<_>) =
+            let (left_eval, right_eval): (Vec<_>, Vec<_>) =
                 conds.into_iter().map(|c| (c.left_key, c.right_key)).unzip();
 
             // build
@@ -69,9 +71,9 @@ where
             for chunk in left.into_iter() {
                 let chunk = Arc::new(gen_try!(chunk));
                 let key_cols: Vec<_> = gen_try!(
-                    left_evals
+                    left_eval
                         .iter()
-                        .map(|e| e.evaluate(&chunk).map(|d| d.as_array().clone()))
+                        .map(|e| e.evaluate(&chunk).map(DatumRef::into_array))
                         .try_collect()
                 );
                 for row in 0..chunk.len() {
@@ -86,45 +88,45 @@ where
             for chunk in right.into_iter() {
                 let chunk: DataChunk = gen_try!(chunk);
                 let key_cols: Vec<_> = gen_try!(
-                    right_evals
+                    right_eval
                         .iter()
-                        .map(|e| e.evaluate(&chunk).map(|d| d.as_array().clone()))
+                        .map(|e| e.evaluate(&chunk).map(DatumRef::into_array))
                         .try_collect()
                 );
-                let mut out_rows = vec![];
+                let mut left_chunks = vec![];
+                let mut left_indices = vec![];
+                let mut right_indices = vec![];
                 for row in 0..chunk.len() {
                     let key = make_join_key(&key_cols, row);
                     if let Some(match_rows) = hash_table.get(&key) {
-                        let right_row: Vec<ArrayRef> =
-                            chunk.columns().iter().map(|c| c.slice(row, 1)).collect();
-                        for (build_chunk, build_row_index) in match_rows {
-                            let left_row: Vec<ArrayRef> = build_chunk
-                                .columns()
-                                .iter()
-                                .map(|c| c.slice(*build_row_index, 1))
-                                .collect();
-                            let mut join_row = left_row;
-                            join_row.extend(right_row.clone());
-                            out_rows.push(join_row)
+                        for (left_chunk, left_index) in match_rows {
+                            left_chunks.push(left_chunk.clone());
+                            left_indices.push(left_index);
+                            right_indices.push(row as u32);
                         }
                     }
                 }
-                if !out_rows.is_empty() {
-                    let cols = out_rows[0].len();
-                    let mut buffers = vec![vec![]; cols];
-                    for row in out_rows {
-                        for (i, arr) in row.into_iter().enumerate() {
-                            buffers[i].push(arr);
-                        }
+                if !left_chunks.is_empty() {
+                    let mut grouped : HashMap<*const DataChunk, (Arc<DataChunk>, Vec<u32>)> = HashMap::new();
+                    for (chunk, &row_index) in left_chunks.iter().zip(&left_indices) {
+                        let ptr = Arc::as_ptr(chunk);
+                        grouped
+                            .entry(ptr)
+                            .or_insert_with(|| (chunk.clone(), vec![]))
+                            .1
+                            .push(*row_index as u32);
                     }
-                    let result_cols: Vec<ArrayRef> = buffers
-                        .into_iter()
-                        .map(|vec_of_arc| {
-                            let slice: Vec<&dyn Array> = vec_of_arc.iter().map(|a| a.as_ref()).collect();
-                            concat(&slice).unwrap()
-                        })
+
+                    let left_join_chunks: Vec<DataChunk> = grouped
+                        .into_values()
+                        .map(|(chunk, indices)| chunk.take(&UInt32Array::from(indices)))
                         .collect();
-                    yield Ok(DataChunk::new(result_cols))
+                    
+                    let left_join_chunk = DataChunk::concat(left_join_chunks);
+                    let right_join_chunk = chunk.take(&UInt32Array::from(right_indices));
+                    let mut joined_chunk = left_join_chunk;
+                    joined_chunk.append_columns(right_join_chunk.columns().iter().cloned());
+                    yield Ok(joined_chunk)
                 }
             }
         }
