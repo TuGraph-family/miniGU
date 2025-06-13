@@ -104,7 +104,11 @@ where
                         }
                     }
                 }
+                // yield
                 if !left_chunks.is_empty() {
+                    // SAFETY: all Arc<DataChunk> instances in left_chunks are clone()s from the
+                    // same original Arc, so Arc::as_ptr() can be safely
+                    // used as identity key for deduplication.
                     let mut grouped: HashMap<*const DataChunk, (Arc<DataChunk>, Vec<u32>)> =
                         HashMap::new();
                     for (chunk, &row_index) in left_chunks.iter().zip(&left_indices) {
