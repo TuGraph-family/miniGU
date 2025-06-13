@@ -112,11 +112,18 @@ pub trait Executor {
         self,
         aggregate_specs: Vec<AggregateSpec>,
         group_by_expressions: Vec<BoxedEvaluator>,
+        output_expressions: Vec<Option<BoxedEvaluator>>,
     ) -> impl Executor
     where
         Self: Sized,
     {
-        AggregateBuilder::new(self, aggregate_specs, group_by_expressions).into_executor()
+        AggregateBuilder::new(
+            self,
+            aggregate_specs,
+            group_by_expressions,
+            output_expressions,
+        )
+        .into_executor()
     }
 }
 

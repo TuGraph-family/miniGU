@@ -446,6 +446,7 @@ pub struct AggregateBuilder<E> {
     child: E,
     aggregate_specs: Vec<AggregateSpec>,
     group_by_expressions: Vec<BoxedEvaluator>,
+    output_expressions: Vec<Option<BoxedEvaluator>>, // Expressions like `1 + COUNT(*)`
 }
 
 impl<E> AggregateBuilder<E> {
@@ -454,6 +455,7 @@ impl<E> AggregateBuilder<E> {
         child: E,
         aggregate_specs: Vec<AggregateSpec>,
         group_by_expressions: Vec<BoxedEvaluator>,
+        output_expressions: Vec<Option<BoxedEvaluator>>,
     ) -> Self {
         assert!(
             !aggregate_specs.is_empty(),
@@ -463,6 +465,7 @@ impl<E> AggregateBuilder<E> {
             child,
             aggregate_specs,
             group_by_expressions,
+            output_expressions,
         }
     }
 }
@@ -479,6 +482,7 @@ where
                 child,
                 aggregate_specs,
                 group_by_expressions,
+                output_expressions,
             } = self;
 
             // If there is no grouping expression, perform simple aggregation
@@ -550,6 +554,24 @@ where
                 for (i, spec) in aggregate_specs.iter().enumerate() {
                     let final_value = gen_try!(states[i].finalize(&spec.function));
                     result_columns.push(final_value.to_scalar_array());
+                }
+
+                // Apply output expressions if any
+                if !output_expressions.is_empty() {
+                    let mut output_columns: Vec<ArrayRef> = Vec::new();
+                    for expr in output_expressions {
+                        if let Some(expr) = expr {
+                            // Create a data chunk with the aggregate results
+                            let agg_chunk = DataChunk::new(result_columns.clone());
+                            // Evaluate the output expression
+                            let result = gen_try!(expr.evaluate(&agg_chunk));
+                            output_columns.push(result.as_array().clone());
+                        } else {
+                            // If no expression is provided, use the original aggregate result
+                            output_columns.push(result_columns[output_columns.len()].clone());
+                        }
+                    }
+                    result_columns = output_columns;
                 }
 
                 yield Ok(DataChunk::new(result_columns));
@@ -636,7 +658,7 @@ where
                     }
 
                     // Convert to ArrayRef
-                    let arrays: Vec<ArrayRef> = result_columns
+                    let mut arrays: Vec<ArrayRef> = result_columns
                         .into_iter()
                         .map(|col| {
                             if col.is_empty() {
@@ -646,6 +668,24 @@ where
                             }
                         })
                         .collect();
+
+                    // Apply output expressions if any
+                    if !output_expressions.is_empty() {
+                        let mut output_arrays: Vec<ArrayRef> = Vec::new();
+                        for expr in output_expressions {
+                            if let Some(expr) = expr {
+                                // Create a data chunk with the aggregate results
+                                let agg_chunk = DataChunk::new(arrays.clone());
+                                // Evaluate the output expression
+                                let result = gen_try!(expr.evaluate(&agg_chunk));
+                                output_arrays.push(result.as_array().clone());
+                            } else {
+                                // If no expression is provided, use the original aggregate result
+                                output_arrays.push(arrays[output_arrays.len()].clone());
+                            }
+                        }
+                        arrays = output_arrays;
+                    }
 
                     yield Ok(DataChunk::new(arrays));
                 }
@@ -662,7 +702,9 @@ mod tests {
     use minigu_common::data_chunk::DataChunk;
 
     use super::*;
+    use crate::evaluator::Evaluator;
     use crate::evaluator::column_ref::ColumnRef;
+    use crate::evaluator::constant::Constant;
 
     #[test]
     fn test_count_star() {
@@ -671,7 +713,7 @@ mod tests {
 
         let result: DataChunk = [Ok(chunk1), Ok(chunk2)]
             .into_executor()
-            .aggregate(vec![AggregateSpec::count()], vec![])
+            .aggregate(vec![AggregateSpec::count()], vec![], vec![])
             .into_iter()
             .try_collect()
             .unwrap();
@@ -691,6 +733,7 @@ mod tests {
                     Box::new(ColumnRef::new(0)),
                     false,
                 )],
+                vec![],
                 vec![],
             )
             .into_iter()
@@ -713,6 +756,7 @@ mod tests {
                     false,
                 )],
                 vec![],
+                vec![],
             )
             .into_iter()
             .try_collect()
@@ -730,6 +774,7 @@ mod tests {
             .into_executor()
             .aggregate(
                 vec![AggregateSpec::sum(Box::new(ColumnRef::new(0)), false)],
+                vec![],
                 vec![],
             )
             .into_iter()
@@ -752,6 +797,7 @@ mod tests {
                     AggregateSpec::max(Box::new(ColumnRef::new(0))),
                 ],
                 vec![],
+                vec![],
             )
             .into_iter()
             .try_collect()
@@ -770,6 +816,7 @@ mod tests {
             .into_executor()
             .aggregate(
                 vec![AggregateSpec::avg(Box::new(ColumnRef::new(0)), false)],
+                vec![],
                 vec![],
             )
             .into_iter()
@@ -791,6 +838,7 @@ mod tests {
             .aggregate(
                 vec![AggregateSpec::avg(Box::new(ColumnRef::new(0)), false)],
                 vec![],
+                vec![],
             )
             .into_iter()
             .try_collect()
@@ -810,6 +858,7 @@ mod tests {
             .into_executor()
             .aggregate(
                 vec![AggregateSpec::avg(Box::new(ColumnRef::new(0)), false)],
+                vec![],
                 vec![],
             )
             .into_iter()
@@ -839,6 +888,7 @@ mod tests {
                     AggregateSpec::sum(Box::new(ColumnRef::new(1)), false), // SUM(salary)
                 ],
                 vec![Box::new(ColumnRef::new(0))], // GROUP BY department
+                vec![],                            // No output expressions
             )
             .into_iter()
             .try_collect()
@@ -935,6 +985,7 @@ mod tests {
                     Box::new(ColumnRef::new(0)), // GROUP BY department
                     Box::new(ColumnRef::new(1)), // GROUP BY position
                 ],
+                vec![], // No output expressions
             )
             .into_iter()
             .try_collect()
@@ -1031,6 +1082,212 @@ mod tests {
                     );
                 }
                 _ => panic!("unexpected group key combination: ({}, {})", dept, pos),
+            }
+        }
+    }
+
+    #[test]
+    fn test_output_expressions_simple() {
+        // Test with simple output expressions using constant evaluators
+        let chunk = data_chunk!((Int32, [1, 2, 3, 4, 5]));
+
+        let add_ten = ColumnRef::new(0).add(Constant::new(ScalarValue::Int64(Some(10))));
+        let result: DataChunk = [Ok(chunk)]
+            .into_executor()
+            .aggregate(
+                vec![AggregateSpec::count()],  // COUNT(*)
+                vec![],                        // No grouping
+                vec![Some(Box::new(add_ten))], // Output: COUNT(*) + 10
+            )
+            .into_iter()
+            .try_collect()
+            .unwrap();
+
+        // The result should be COUNT(*) + 10 = 5 + 10 = 15
+        let expected = data_chunk!((Int64, [15]));
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_output_expressions_with_grouping() {
+        // Test output expressions with grouping
+        let chunk = data_chunk!(
+            (Int32, [1, 1, 2, 2, 1]),                // department
+            (Int32, [5000, 6000, 4000, 4500, 5500])  // salary
+        );
+
+        let count_times_100 = ColumnRef::new(1).mul(Constant::new(ScalarValue::Int64(Some(100))));
+
+        let result: DataChunk = [Ok(chunk)]
+            .into_executor()
+            .aggregate(
+                vec![
+                    AggregateSpec::count(),                                 // COUNT(*)
+                    AggregateSpec::sum(Box::new(ColumnRef::new(1)), false), // SUM(salary)
+                ],
+                vec![Box::new(ColumnRef::new(0))], // GROUP BY department
+                vec![
+                    None,                            // Keep department as-is
+                    Some(Box::new(count_times_100)), // COUNT(*) * 100
+                    None,                            // Keep SUM(salary) as-is
+                ],
+            )
+            .into_iter()
+            .try_collect()
+            .unwrap();
+
+        // The result should be:
+        // - The first column: department (group key)
+        // - The second column: COUNT(*) * 100
+        // - The third column: SUM(salary)
+        //
+        // The expected result:
+        // department 1: COUNT*100=300, SUM=16500
+        // department 2: COUNT*100=200, SUM=8500
+
+        assert_eq!(result.len(), 2);
+        assert_eq!(result.columns().len(), 3);
+
+        // Get the result data for verification
+        let dept_column = &result.columns()[0];
+        let count_times_100_column = &result.columns()[1];
+        let sum_column = &result.columns()[2];
+
+        let dept_values: Vec<i32> = dept_column
+            .as_any()
+            .downcast_ref::<arrow::array::Int32Array>()
+            .unwrap()
+            .iter()
+            .map(|v| v.unwrap())
+            .collect();
+
+        let count_times_100_values: Vec<i64> = count_times_100_column
+            .as_any()
+            .downcast_ref::<arrow::array::Int64Array>()
+            .unwrap()
+            .iter()
+            .map(|v| v.unwrap())
+            .collect();
+
+        let sum_values: Vec<i64> = sum_column
+            .as_any()
+            .downcast_ref::<arrow::array::Int64Array>()
+            .unwrap()
+            .iter()
+            .map(|v| v.unwrap())
+            .collect();
+
+        // Check if the result contains the correct group data
+        for i in 0..2 {
+            let dept = dept_values[i];
+            let count_times_100 = count_times_100_values[i];
+            let sum = sum_values[i];
+
+            match dept {
+                1 => {
+                    assert_eq!(
+                        count_times_100, 300,
+                        "department 1 should have COUNT(*) * 100 = 300"
+                    );
+                    assert_eq!(
+                        sum, 16500,
+                        "the sum of salary for department 1 should be 16500"
+                    );
+                }
+                2 => {
+                    assert_eq!(
+                        count_times_100, 200,
+                        "department 2 should have COUNT(*) * 100 = 200"
+                    );
+                    assert_eq!(
+                        sum, 8500,
+                        "the sum of salary for department 2 should be 8500"
+                    );
+                }
+                _ => panic!("unexpected department value: {}", dept),
+            }
+        }
+    }
+
+    #[test]
+    fn test_aggregate_operators_combination() {
+        // Test the combination of two aggregate operators: COUNT(*) + SUM(salary) / 1000
+        let chunk = data_chunk!(
+            (Int32, [1, 1, 2, 2, 1]),                // department
+            (Int32, [5000, 6000, 4000, 4500, 5500])  // salary
+        );
+
+        // Create expression: COUNT(*) + SUM(salary) / 1000
+        // We need to reference the aggregate result columns:
+        // - The first column: department (group key)
+        // - The second column: COUNT(*)
+        // - The third column: SUM(salary)
+        let sum_div_1000 = ColumnRef::new(2).div(Constant::new(ScalarValue::Int64(Some(1000))));
+        let count_plus_sum_div_1000 = ColumnRef::new(1).add(sum_div_1000);
+
+        let result: DataChunk = [Ok(chunk)]
+            .into_executor()
+            .aggregate(
+                vec![
+                    AggregateSpec::count(),                                 // COUNT(*)
+                    AggregateSpec::sum(Box::new(ColumnRef::new(1)), false), // SUM(salary)
+                ],
+                vec![Box::new(ColumnRef::new(0))], // GROUP BY department
+                vec![
+                    None,                                    // Keep department as-is
+                    Some(Box::new(count_plus_sum_div_1000)), // COUNT(*) + SUM(salary) / 1000
+                ],
+            )
+            .into_iter()
+            .try_collect()
+            .unwrap();
+
+        // Expected result:
+        // department 1: COUNT(*) + SUM(salary) / 1000 = 3 + 16500 / 1000 = 3 + 16 = 19
+        // department 2: COUNT(*) + SUM(salary) / 1000 = 2 + 8500 / 1000 = 2 + 8 = 10
+
+        assert_eq!(result.len(), 2);
+        assert_eq!(result.columns().len(), 2);
+
+        // Get the result data for verification
+        let dept_column = &result.columns()[0];
+        let combined_column = &result.columns()[1];
+
+        let dept_values: Vec<i32> = dept_column
+            .as_any()
+            .downcast_ref::<arrow::array::Int32Array>()
+            .unwrap()
+            .iter()
+            .map(|v| v.unwrap())
+            .collect();
+
+        let combined_values: Vec<i64> = combined_column
+            .as_any()
+            .downcast_ref::<arrow::array::Int64Array>()
+            .unwrap()
+            .iter()
+            .map(|v| v.unwrap())
+            .collect();
+
+        // Check if the result contains the correct combined data
+        for i in 0..2 {
+            let dept = dept_values[i];
+            let combined = combined_values[i];
+
+            match dept {
+                1 => {
+                    assert_eq!(
+                        combined, 19,
+                        "department 1 should have COUNT(*) + SUM(salary) / 1000 = 3 + 16 = 19"
+                    );
+                }
+                2 => {
+                    assert_eq!(
+                        combined, 10,
+                        "department 2 should have COUNT(*) + SUM(salary) / 1000 = 2 + 8 = 10"
+                    );
+                }
+                _ => panic!("unexpected department value: {}", dept),
             }
         }
     }
