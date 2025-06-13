@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use arrow::array::{
-    Array, ArrayRef, AsArray, BooleanArray, Float32Array, Float64Array, Int16Array, Int32Array,
-    Int64Array, Int8Array, NullArray, StringArray, UInt16Array, UInt32Array, UInt64Array,
-    UInt8Array,
+    Array, ArrayRef, AsArray, BooleanArray, Float32Array, Float64Array, Int8Array, Int16Array,
+    Int32Array, Int64Array, NullArray, StringArray, UInt8Array, UInt16Array, UInt32Array,
+    UInt64Array,
 };
 use arrow::datatypes::DataType;
 use ordered_float::OrderedFloat;
@@ -12,9 +12,12 @@ use serde::{Deserialize, Serialize};
 use crate::types::{EdgeId, LabelId, VertexId};
 
 pub type Nullable<T> = Option<T>;
+
+/// A wrapper around floats providing implementations of `Eq` and `Hash`.
 pub type F32 = OrderedFloat<f32>;
 pub type F64 = OrderedFloat<f64>;
-#[derive(Debug, Clone, PartialEq, Hash, Eq, Serialize, Deserialize)]
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ScalarValue {
     Null,
     Boolean(Nullable<bool>),
@@ -66,7 +69,7 @@ pub struct PropertyValue {
     value: ScalarValue,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct VertexValue {
     id: VertexId,
     label: LabelId,
