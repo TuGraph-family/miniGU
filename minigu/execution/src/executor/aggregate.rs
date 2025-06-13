@@ -446,7 +446,7 @@ pub struct AggregateBuilder<E> {
     child: E,
     aggregate_specs: Vec<AggregateSpec>,
     group_by_expressions: Vec<BoxedEvaluator>,
-    output_expressions: Vec<Option<BoxedEvaluator>>, // Expressions like `1 + COUNT(*)`
+    output_expressions: Vec<BoxedEvaluator>, // Expressions like `1 + COUNT(*)`
 }
 
 impl<E> AggregateBuilder<E> {
@@ -455,7 +455,7 @@ impl<E> AggregateBuilder<E> {
         child: E,
         aggregate_specs: Vec<AggregateSpec>,
         group_by_expressions: Vec<BoxedEvaluator>,
-        output_expressions: Vec<Option<BoxedEvaluator>>,
+        output_expressions: Vec<BoxedEvaluator>,
     ) -> Self {
         assert!(
             !aggregate_specs.is_empty(),
@@ -560,16 +560,11 @@ where
                 if !output_expressions.is_empty() {
                     let mut output_columns: Vec<ArrayRef> = Vec::new();
                     for expr in output_expressions {
-                        if let Some(expr) = expr {
-                            // Create a data chunk with the aggregate results
-                            let agg_chunk = DataChunk::new(result_columns.clone());
-                            // Evaluate the output expression
-                            let result = gen_try!(expr.evaluate(&agg_chunk));
-                            output_columns.push(result.as_array().clone());
-                        } else {
-                            // If no expression is provided, use the original aggregate result
-                            output_columns.push(result_columns[output_columns.len()].clone());
-                        }
+                        // Create a data chunk with the aggregate results
+                        let agg_chunk = DataChunk::new(result_columns.clone());
+                        // Evaluate the output expression
+                        let result = gen_try!(expr.evaluate(&agg_chunk));
+                        output_columns.push(result.as_array().clone());
                     }
                     result_columns = output_columns;
                 }
@@ -673,16 +668,11 @@ where
                     if !output_expressions.is_empty() {
                         let mut output_arrays: Vec<ArrayRef> = Vec::new();
                         for expr in output_expressions {
-                            if let Some(expr) = expr {
-                                // Create a data chunk with the aggregate results
-                                let agg_chunk = DataChunk::new(arrays.clone());
-                                // Evaluate the output expression
-                                let result = gen_try!(expr.evaluate(&agg_chunk));
-                                output_arrays.push(result.as_array().clone());
-                            } else {
-                                // If no expression is provided, use the original aggregate result
-                                output_arrays.push(arrays[output_arrays.len()].clone());
-                            }
+                            // Create a data chunk with the aggregate results
+                            let agg_chunk = DataChunk::new(arrays.clone());
+                            // Evaluate the output expression
+                            let result = gen_try!(expr.evaluate(&agg_chunk));
+                            output_arrays.push(result.as_array().clone());
                         }
                         arrays = output_arrays;
                     }
@@ -1095,9 +1085,9 @@ mod tests {
         let result: DataChunk = [Ok(chunk)]
             .into_executor()
             .aggregate(
-                vec![AggregateSpec::count()],  // COUNT(*)
-                vec![],                        // No grouping
-                vec![Some(Box::new(add_ten))], // Output: COUNT(*) + 10
+                vec![AggregateSpec::count()], // COUNT(*)
+                vec![],                       // No grouping
+                vec![Box::new(add_ten)],      // Output: COUNT(*) + 10
             )
             .into_iter()
             .try_collect()
@@ -1127,9 +1117,9 @@ mod tests {
                 ],
                 vec![Box::new(ColumnRef::new(0))], // GROUP BY department
                 vec![
-                    None,                            // Keep department as-is
-                    Some(Box::new(count_times_100)), // COUNT(*) * 100
-                    None,                            // Keep SUM(salary) as-is
+                    Box::new(ColumnRef::new(0)), // Keep department as-is
+                    Box::new(count_times_100),   // COUNT(*) * 100
+                    Box::new(ColumnRef::new(2)), // Keep SUM(salary) as-is
                 ],
             )
             .into_iter()
@@ -1234,8 +1224,8 @@ mod tests {
                 ],
                 vec![Box::new(ColumnRef::new(0))], // GROUP BY department
                 vec![
-                    None,                                    // Keep department as-is
-                    Some(Box::new(count_plus_sum_div_1000)), // COUNT(*) + SUM(salary) / 1000
+                    Box::new(ColumnRef::new(0)),       // Keep department as-is
+                    Box::new(count_plus_sum_div_1000), // COUNT(*) + SUM(salary) / 1000
                 ],
             )
             .into_iter()
