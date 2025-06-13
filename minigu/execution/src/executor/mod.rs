@@ -30,6 +30,7 @@ use vertex_property_scan::VertexPropertyScanBuilder;
 
 use crate::error::ExecutionResult;
 use crate::evaluator::BoxedEvaluator;
+use crate::executor::join::{JoinBuilder, JoinCond};
 use crate::source::{ExpandSource, VertexPropertySource};
 
 /// A trait for pull-based vectorized volcano executors.
@@ -91,6 +92,14 @@ pub trait Executor {
         Self: Sized,
     {
         SortBuilder::new(self, specs, max_chunk_size).into_executor()
+    }
+
+    fn join_with<R>(self, right: R, conds: Vec<JoinCond>) -> impl Executor
+    where
+        Self: Sized,
+        R: Executor,
+    {
+        JoinBuilder::new(self, right, conds).into_executor()
     }
 
     fn flatten(self, column_indices: Vec<usize>) -> impl Executor
