@@ -1,4 +1,6 @@
 mod catalog;
+mod common;
+mod object_expr;
 mod object_ref;
 mod procedure_call;
 mod procedure_spec;

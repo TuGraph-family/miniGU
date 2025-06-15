@@ -19,14 +19,23 @@ pub enum BindError {
     #[error("no such directory or schema at: {0}")]
     DirectoryOrSchemaNotFound(String),
 
+    #[error("current graph is not specified")]
+    CurrentGraphNotSpecified,
+
     #[error("current schema is not specified")]
     CurrentSchemaNotSpecified,
 
     #[error("home schema is not specified")]
     HomeSchemaNotSpecified,
 
+    #[error("home graph is not specified")]
+    HomeGraphNotSpecified,
+
     #[error("procedure not found: {0}")]
     ProcedureNotFound(SmolStr),
+
+    #[error("graph not found: {0}")]
+    GraphNotFound(SmolStr),
 
     #[error("too many objects: {0:?}")]
     InvalidObjectReference(Vec<SmolStr>),

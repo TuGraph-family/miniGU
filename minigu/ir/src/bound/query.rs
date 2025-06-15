@@ -89,7 +89,9 @@ pub struct BoundSortSpec {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct BoundSimpleQueryStatement {}
+pub struct BoundSimpleQueryStatement {
+    
+}
 
 #[derive(Debug, Clone, Serialize)]
 pub enum QueryConjunction {

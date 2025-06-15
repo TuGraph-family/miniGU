@@ -1,9 +1,9 @@
 use gql_parser::ast::{
-    PredefinedSchemaRef, ProcedureRef as AstProcedureRef, SchemaPath, SchemaPathSegment,
+    GraphRef, PredefinedSchemaRef, ProcedureRef as AstProcedureRef, SchemaPath, SchemaPathSegment,
     SchemaRef as AstSchemaRef,
 };
 use minigu_catalog::provider::{CatalogProvider, DirectoryOrSchema, SchemaRef};
-use minigu_ir::named_ref::NamedProcedureRef;
+use minigu_ir::named_ref::{NamedGraphRef, NamedProcedureRef};
 
 use super::Binder;
 use crate::error::{BindError, BindResult, not_implemented};
@@ -78,6 +78,50 @@ impl Binder {
             AstProcedureRef::Parameter(_) => {
                 not_implemented("procedure reference parameter".to_string(), None)
             }
+        }
+    }
+
+    pub fn bind_graph_ref(&self, graph_ref: &GraphRef) -> BindResult<NamedGraphRef> {
+        match graph_ref {
+            GraphRef::Name(name) => {
+                let schema = self
+                    .current_schema
+                    .as_ref()
+                    .ok_or(BindError::CurrentSchemaNotSpecified)?;
+                let graph = schema
+                    .get_graph(name)?
+                    .ok_or_else(|| BindError::GraphNotFound(name.clone()))?;
+                Ok(NamedGraphRef::new(name.clone(), graph))
+            }
+            GraphRef::Parameter(_) => {
+                not_implemented("graph reference parameter".to_string(), None)
+            }
+            GraphRef::Ref(catalog_object_ref) => {
+                let schema = if let Some(schema) = &catalog_object_ref.schema {
+                    self.bind_schema_ref(schema.value())?
+                } else {
+                    self.current_schema
+                        .clone()
+                        .ok_or(BindError::CurrentSchemaNotSpecified)?
+                };
+                match catalog_object_ref.objects.as_slice() {
+                    [] => unreachable!(),
+                    [name] => {
+                        let name = name.value();
+                        let graph = schema
+                            .get_graph(name)?
+                            .ok_or_else(|| BindError::GraphNotFound(name.clone()))?;
+                        Ok(NamedGraphRef::new(name.clone(), graph))
+                    }
+                    objects => Err(BindError::InvalidObjectReference(
+                        objects.iter().map(|o| o.value().clone()).collect(),
+                    )),
+                }
+            }
+            GraphRef::Home => self
+                .home_graph
+                .clone()
+                .ok_or(BindError::HomeGraphNotSpecified),
         }
     }
 }

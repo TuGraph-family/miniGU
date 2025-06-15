@@ -1208,6 +1208,8 @@ dependencies = [
  "arrow",
  "gql-parser",
  "miette",
+ "minigu-binder",
+ "minigu-catalog",
  "minigu-common",
  "minigu-execution",
  "thiserror",

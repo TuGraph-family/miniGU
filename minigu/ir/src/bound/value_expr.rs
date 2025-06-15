@@ -1,11 +1,19 @@
+use std::sync::Arc;
+
 use minigu_common::data_type::LogicalType;
 use minigu_common::value::ScalarValue;
 use serde::Serialize;
+
+use crate::bound::{BoundEdgePattern, BoundPathPattern, BoundSubpathPattern, BoundVertexPattern};
 
 #[derive(Debug, Clone, Serialize)]
 pub enum BoundExprKind {
     Value(ScalarValue),
     ColumnRef(usize),
+    Path(Arc<BoundPathPattern>),
+    Subpath(Arc<BoundSubpathPattern>),
+    Vertex(Arc<BoundVertexPattern>),
+    Edge(Arc<BoundEdgePattern>),
 }
 
 #[derive(Debug, Clone, Serialize)]

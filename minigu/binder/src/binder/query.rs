@@ -1,15 +1,9 @@
 use gql_parser::ast::{
-    AmbientLinearQueryStatement, CompositeQueryStatement, FocusedLinearQueryStatement,
-    LinearQueryStatement, MatchStatement, OrderByAndPageStatement,
-    QueryConjunction as AstQueryConjunction, ResultStatement, Return, ReturnStatement,
-    SetOp as AstSetOp, SetOpKind as AstSetOpKind, SetQuantifier as AstSetQuantifier,
-    SimpleQueryStatement,
+    AmbientLinearQueryStatement, CompositeQueryStatement, FocusedLinearQueryStatement, FocusedLinearQueryStatementPart, GraphPattern, GraphPatternBindingTable, LinearQueryStatement, MatchStatement, OrderByAndPageStatement, QueryConjunction as AstQueryConjunction, ResultStatement, Return, ReturnStatement, SetOp as AstSetOp, SetOpKind as AstSetOpKind, SetQuantifier as AstSetQuantifier, SimpleQueryStatement
 };
 use itertools::Itertools;
 use minigu_ir::bound::{
-    BoundCompositeQueryStatement, BoundExpr, BoundLinearQueryStatement,
-    BoundOrderByAndPageStatement, BoundResultStatement, BoundReturnStatement,
-    BoundSimpleQueryStatement, QueryConjunction, SetOp, SetOpKind, SetQuantifier,
+    BoundCompositeQueryStatement, BoundExpr, BoundGraphPattern, BoundLinearQueryStatement, BoundOrderByAndPageStatement, BoundResultStatement, BoundReturnStatement, BoundSimpleQueryStatement, QueryConjunction, SetOp, SetOpKind, SetQuantifier
 };
 
 use super::Binder;
@@ -51,16 +45,46 @@ impl Binder {
     ) -> BindResult<BoundLinearQueryStatement> {
         match statement {
             FocusedLinearQueryStatement::Parts { parts, result } => {
-                not_implemented("focused linear query statement parts", None)
+                let statements = parts
+                    .iter()
+                    .map(|p| self.bind_focused_linear_query_statement_part(p.value()))
+                    .reduce(|a, b| {
+                        let mut a = a?;
+                        a.extend(b?);
+                        Ok(a)
+                    })
+                    .transpose()?
+                    .unwrap_or_default();
+                let result = self.bind_result_statement(result.value())?;
+                Ok(BoundLinearQueryStatement::Query { statements, result })
             }
             FocusedLinearQueryStatement::Result { use_graph, result } => {
-                not_implemented("focused linear query statement result", None)
+                let _graph = self.bind_graph_expr(use_graph.value())?;
+                let result = self.bind_result_statement(result.value())?;
+                Ok(BoundLinearQueryStatement::Query {
+                    statements: vec![],
+                    result,
+                })
             }
-            FocusedLinearQueryStatement::Nested { .. } => {
-                not_implemented("nested focused linear query statement", None)
+            FocusedLinearQueryStatement::Nested { use_graph, query } => {
+                let _graph = self.bind_graph_expr(use_graph.value())?;
+                let query = self.bind_procedure(query.value())?;
+                Ok(BoundLinearQueryStatement::Nested(Box::new(query)))
             }
             FocusedLinearQueryStatement::Select { .. } => not_implemented("select statement", None),
         }
+    }
+
+    pub fn bind_focused_linear_query_statement_part(
+        &mut self,
+        part: &FocusedLinearQueryStatementPart,
+    ) -> BindResult<Vec<BoundSimpleQueryStatement>> {
+        let graph = self.bind_graph_expr(part.use_graph.value())?;
+        self.current_graph = Some(graph);
+        part.statements
+            .iter()
+            .map(|s| self.bind_simple_query_statement(s.value()))
+            .try_collect()
     }
 
     pub fn bind_ambient_linear_query_statement(
@@ -95,7 +119,10 @@ impl Binder {
     }
 
     pub fn bind_match_statement(&mut self, statement: &MatchStatement) -> BindResult<()> {
-        todo!()
+        match statement {
+            MatchStatement::Simple(table) => todo!(),
+            MatchStatement::Optional(_) => not_implemented("optional match statement", None),
+        }
     }
 
     pub fn bind_result_statement(

@@ -2,7 +2,10 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use arrow::array::create_array;
+use gql_parser::ast::{Program, ProgramActivity};
 use gql_parser::parse_gql;
+use minigu_binder::binder::Binder;
+use minigu_catalog::memory::MemoryCatalog;
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 
@@ -15,8 +18,22 @@ pub struct Session {}
 
 impl Session {
     pub fn query(&self, query: &str) -> Result<QueryResult> {
+        let catalog = Arc::new(MemoryCatalog::new());
         // TODO: Remove the placeholder code.
-        let programs = parse_gql(query)?;
+        let program = parse_gql(query)?;
+        let activity = &program.value().activity;
+        if let Some(activity) = activity {
+            match activity.value() {
+                ProgramActivity::Session(session_activity) => todo!(),
+                ProgramActivity::Transaction(activity) => {
+                    if let Some(procedure) = &activity.procedure {
+                        let bound =
+                            Binder::new(catalog, None, None, None, None).bind(procedure.value())?;
+                        println!("{:?}", bound);
+                    }
+                }
+            }
+        }
         let col1 = create_array!(Int32, [Some(1), Some(2), None]);
         let col2 = create_array!(Utf8, ["a", "b", "c"]);
         let chunk = DataChunk::new(vec![col1, col2]);

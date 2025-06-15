@@ -1,4 +1,5 @@
 mod catalog;
+mod common;
 mod object_ref;
 mod procedure_call;
 mod procedure_spec;
@@ -7,6 +8,7 @@ mod type_element;
 mod value_expr;
 
 pub use catalog::*;
+pub use common::*;
 pub use object_ref::*;
 pub use procedure_call::*;
 pub use procedure_spec::*;
