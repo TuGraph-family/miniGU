@@ -54,94 +54,84 @@ pub struct SchemaManager {
 
 impl SchemaManager {
     pub fn new() -> Self {
-        SchemaManager {
-            vertex_schemas: HashMap::new(),
-            edge_schemas: HashMap::new(),
-            id_to_vertex_schema_map: HashMap::new(),
-            id_to_edge_schema_map: HashMap::new(),
-            vertex_label_id: 0,
-            edge_label_id: 0,
-        }
+        Self::default()
     }
 
-    // Add a new vertex schema
-    pub fn add_vertex_schema(
+    pub fn create_vertex_schema(
         &mut self,
-        vertex_label: String,
-        schema: Arc<VertexSchema>,
+        schema_name: &str,
+        schema: VertexSchema,
     ) -> StorageResult<()> {
-        if self.vertex_schemas.contains_key(&vertex_label) {
+        if self.vertex_schemas.contains_key(schema_name) {
             return Err(StorageError::Schema(SchemaError::VertexSchemaAlreadyExists));
         }
-        self.vertex_schemas.insert(vertex_label.clone(), schema);
+
+        self.vertex_schemas
+            .insert(schema_name.to_string(), Arc::new(schema));
         self.id_to_vertex_schema_map
-            .insert(self.vertex_label_id, vertex_label);
+            .insert(self.vertex_label_id, schema_name.to_string());
         self.vertex_label_id += 1;
         Ok(())
     }
 
-    pub fn get_vertex_schema_by_name(&self, name: &str) -> StorageResult<Arc<VertexSchema>> {
-        self.vertex_schemas
-            .get(name)
-            .ok_or(StorageError::Schema(SchemaError::VertexSchemaNotFound))
-            .cloned()
+    pub fn get_vertex_schema(&self, schema_name: &str) -> Option<Arc<VertexSchema>> {
+        self.vertex_schemas.get(schema_name).cloned()
     }
 
-    pub fn get_vertex_schema_by_id(&self, id: LabelId) -> StorageResult<Arc<VertexSchema>> {
-        let name = self
-            .id_to_vertex_schema_map
-            .get(&id)
-            .ok_or(StorageError::Schema(SchemaError::VertexSchemaNotFound))?;
-        self.vertex_schemas
-            .get(name)
-            .ok_or(StorageError::Schema(SchemaError::VertexSchemaNotFound))
-            .cloned()
-    }
-
-    // Add a new edge schema
-    pub fn add_edge_schema(
+    pub fn create_edge_schema(
         &mut self,
-        edge_label: String,
-        schema: Arc<EdgeSchema>,
+        schema_name: &str,
+        schema: EdgeSchema,
     ) -> StorageResult<()> {
-        if self.edge_schemas.contains_key(&edge_label) {
+        if self.edge_schemas.contains_key(schema_name) {
             return Err(StorageError::Schema(SchemaError::EdgeSchemaAlreadyExists));
         }
-        self.edge_schemas.insert(edge_label.clone(), schema);
+
+        self.edge_schemas
+            .insert(schema_name.to_string(), Arc::new(schema));
         self.id_to_edge_schema_map
-            .insert(self.edge_label_id, edge_label);
+            .insert(self.edge_label_id, schema_name.to_string());
         self.edge_label_id += 1;
         Ok(())
     }
 
-    // Get the schema for an edge by label
-    pub fn get_edge_schema_by_name(&self, name: &str) -> StorageResult<Arc<EdgeSchema>> {
-        self.edge_schemas
-            .get(name)
-            .ok_or(StorageError::Schema(SchemaError::EdgeSchemaNotFound))
-            .cloned()
+    pub fn get_edge_schema(&self, schema_name: &str) -> Option<Arc<EdgeSchema>> {
+        self.edge_schemas.get(schema_name).cloned()
     }
 
-    // Get the schema for an edge by ID
-    pub fn get_edge_schema_by_id(&self, id: LabelId) -> StorageResult<Arc<EdgeSchema>> {
-        let name = self
-            .id_to_edge_schema_map
-            .get(&id)
-            .ok_or(StorageError::Schema(SchemaError::EdgeSchemaNotFound))?;
-        self.edge_schemas
-            .get(name)
-            .ok_or(StorageError::Schema(SchemaError::EdgeSchemaNotFound))
-            .cloned()
+    pub fn get_vertex_schema_by_label_id(&self, label_id: LabelId) -> Option<Arc<VertexSchema>> {
+        let schema_name = self.id_to_vertex_schema_map.get(&label_id)?;
+        self.vertex_schemas.get(schema_name).cloned()
+    }
+
+    pub fn get_edge_schema_by_label_id(&self, label_id: LabelId) -> Option<Arc<EdgeSchema>> {
+        let schema_name = self.id_to_edge_schema_map.get(&label_id)?;
+        self.edge_schemas.get(schema_name).cloned()
+    }
+
+    pub fn get_label_id_by_vertex_schema_name(&self, schema_name: &str) -> Option<LabelId> {
+        for (label_id, name) in &self.id_to_vertex_schema_map {
+            if name == schema_name {
+                return Some(*label_id);
+            }
+        }
+        None
+    }
+
+    pub fn get_label_id_by_edge_schema_name(&self, schema_name: &str) -> Option<LabelId> {
+        for (label_id, name) in &self.id_to_edge_schema_map {
+            if name == schema_name {
+                return Some(*label_id);
+            }
+        }
+        None
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use minigu_common::datatype::value::{DataType, PropertyMeta, PropertyValue};
+    use minigu_common::datatype::value::{DataType, PropertyMeta};
 
-    use super::super::edge::Edge;
-    use super::super::properties::PropertyRecord;
-    use super::super::vertex::Vertex;
     use super::*;
 
     fn create_vertex_schema() -> VertexSchema {
@@ -149,28 +139,6 @@ mod tests {
             PropertyMeta::new("name".to_string(), DataType::String, false, false, None),
             PropertyMeta::new("age".to_string(), DataType::Int, false, false, None),
         ])
-    }
-
-    fn create_person_alice() -> Vertex {
-        Vertex::new(
-            0,
-            0,
-            PropertyRecord::new(vec![
-                PropertyValue::String("Alice".to_string()),
-                PropertyValue::Int(30),
-            ]),
-        )
-    }
-
-    fn create_person_bob() -> Vertex {
-        Vertex::new(
-            1,
-            0,
-            PropertyRecord::new(vec![
-                PropertyValue::String("Bob".to_string()),
-                PropertyValue::Int(40),
-            ]),
-        )
     }
 
     fn create_edge_schema() -> EdgeSchema {
@@ -183,65 +151,51 @@ mod tests {
         )])
     }
 
-    fn create_edge_alice_knows_bob() -> Edge {
-        Edge::new(0, 0, 1, 0, PropertyRecord::new(vec![PropertyValue::Int(5)]))
+    #[test]
+    fn test_vertex_schema_creation() {
+        let mut schema_manager = SchemaManager::new();
+        let vertex_schema = create_vertex_schema();
+
+        assert!(
+            schema_manager
+                .create_vertex_schema("Person", vertex_schema.clone())
+                .is_ok()
+        );
+
+        let retrieved_schema = schema_manager.get_vertex_schema("Person");
+        assert!(retrieved_schema.is_some());
+        assert_eq!(retrieved_schema.unwrap().schema.len(), 2);
     }
 
     #[test]
-    fn test_schema_manager() {
+    fn test_edge_schema_creation() {
         let mut schema_manager = SchemaManager::new();
-        let person_vertex_schema = Arc::new(create_vertex_schema());
-        let knows_edge_schema = Arc::new(create_edge_schema());
+        let edge_schema = create_edge_schema();
 
-        // Add vertex schema
+        assert!(
+            schema_manager
+                .create_edge_schema("Knows", edge_schema.clone())
+                .is_ok()
+        );
+
+        let retrieved_schema = schema_manager.get_edge_schema("Knows");
+        assert!(retrieved_schema.is_some());
+        assert_eq!(retrieved_schema.unwrap().schema.len(), 1);
+    }
+
+    #[test]
+    fn test_schema_name_mapping() {
+        let mut schema_manager = SchemaManager::new();
+        let vertex_schema = create_vertex_schema();
+
         schema_manager
-            .add_vertex_schema("person".to_string(), person_vertex_schema.to_owned())
+            .create_vertex_schema("Person", vertex_schema)
             .unwrap();
-        let vertex_schema = schema_manager.get_vertex_schema_by_name("person").unwrap();
-        assert_eq!(vertex_schema.schema.len(), 2);
 
-        // Add edge schema
-        schema_manager
-            .add_edge_schema("knows".to_string(), knows_edge_schema.to_owned())
-            .unwrap();
-        let edge_schema = schema_manager.get_edge_schema_by_name("knows").unwrap();
-        assert_eq!(edge_schema.schema.len(), 1);
+        let label_id = schema_manager.get_label_id_by_vertex_schema_name("Person");
+        assert!(label_id.is_some());
 
-        // create vertex and verify each property by schema
-        let alice = create_person_alice();
-        let vertex_schema = schema_manager
-            .get_vertex_schema_by_id(alice.label_id)
-            .unwrap();
-        assert_eq!(
-            vertex_schema.schema.first().unwrap().data_type,
-            alice.properties.get(0).unwrap().data_type()
-        );
-        assert_eq!(
-            vertex_schema.schema.get(1).unwrap().data_type,
-            alice.properties.get(1).unwrap().data_type()
-        );
-
-        let bob = create_person_bob();
-        let vertex_schema = schema_manager
-            .get_vertex_schema_by_id(bob.label_id)
-            .unwrap();
-        assert_eq!(
-            vertex_schema.schema.first().unwrap().data_type,
-            bob.properties.get(0).unwrap().data_type()
-        );
-        assert_eq!(
-            vertex_schema.schema.get(1).unwrap().data_type,
-            bob.properties.get(1).unwrap().data_type()
-        );
-
-        // create edge and verify each property by schema
-        let alice_knows_bob = create_edge_alice_knows_bob();
-        let edge_schema = schema_manager
-            .get_edge_schema_by_id(alice_knows_bob.label_id())
-            .unwrap();
-        assert_eq!(
-            edge_schema.schema.first().unwrap().data_type,
-            alice_knows_bob.properties.get(0).unwrap().data_type()
-        );
+        let retrieved_schema = schema_manager.get_vertex_schema_by_label_id(label_id.unwrap());
+        assert!(retrieved_schema.is_some());
     }
 }

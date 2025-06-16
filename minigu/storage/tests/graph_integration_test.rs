@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::{env, fs};
 
 use minigu_common::datatype::types::{EdgeId, LabelId, VertexId};
-use minigu_common::datatype::value::PropertyValue;
+use minigu_common::value::ScalarValue;
 use minigu_storage::memory::checkpoint::CheckpointManagerConfig;
 use minigu_storage::model::edge::Edge;
 use minigu_storage::model::properties::PropertyRecord;
@@ -21,8 +21,8 @@ fn create_test_vertex(id: VertexId, name: &str, age: i32) -> Vertex {
         id,
         PERSON_LABEL_ID,
         PropertyRecord::new(vec![
-            PropertyValue::String(name.into()),
-            PropertyValue::Int(age),
+            ScalarValue::String(Some(name.to_string())),
+            ScalarValue::Int32(Some(age)),
         ]),
     )
 }
@@ -33,7 +33,7 @@ fn create_test_edge(id: EdgeId, from: VertexId, to: VertexId, relation: LabelId)
         from,
         to,
         relation,
-        PropertyRecord::new(vec![PropertyValue::String("2024-01-01".into())]),
+        PropertyRecord::new(vec![ScalarValue::String(Some("2024-01-01".to_string()))]),
     )
 }
 
@@ -148,8 +148,12 @@ fn test_graph_basic_operations() -> StorageResult<()> {
     {
         let mut vertex_count = 0;
         let vertex_iter = txn.iter_vertices().filter_map(|v| v.ok()).filter(|v| {
-            let name = v.properties()[0].as_string().unwrap();
-            name == "Alice" || name == "Bob" || name == "Carol" || name == "Dave"
+            match v.properties()[0].try_as_string() {
+                Some(Some(name)) => {
+                    name == "Alice" || name == "Bob" || name == "Carol" || name == "Dave"
+                }
+                _ => false,
+            }
         });
 
         for _ in vertex_iter {
@@ -222,9 +226,11 @@ fn test_graph_basic_operations() -> StorageResult<()> {
         let vertex_iter = verify_txn
             .iter_vertices()
             .filter_map(|v| v.ok())
-            .filter(|v| {
-                let name = v.properties()[0].as_string().unwrap();
-                name == "Alice" || name == "Bob" || name == "Carol" || name == "Dave"
+            .filter(|v| match v.properties()[0].try_as_string() {
+                Some(Some(name)) => {
+                    name == "Alice" || name == "Bob" || name == "Carol" || name == "Dave"
+                }
+                _ => false,
             });
         for _ in vertex_iter {
             vertex_count += 1;
