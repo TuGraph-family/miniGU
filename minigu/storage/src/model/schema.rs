@@ -1,38 +1,33 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use minigu_common::data_type::DataField;
 use minigu_common::datatype::types::LabelId;
-use minigu_common::datatype::value::PropertyMeta;
-use serde::{Deserialize, Serialize};
 
 use crate::error::{SchemaError, StorageError, StorageResult};
 
 pub type Identifier = String;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Clone)]
 pub struct VertexSchema {
-    pub schema: Vec<PropertyMeta>, // propertyName -> PropertyMeta
+    pub schema: Vec<DataField>, // propertyName -> DataField
 }
 
 impl VertexSchema {
-    pub fn new(schema: Vec<PropertyMeta>) -> Self {
+    pub fn new(schema: Vec<DataField>) -> Self {
         VertexSchema { schema }
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Clone)]
 pub struct EdgeSchema {
     pub source_label_id: LabelId,
     pub target_label_id: LabelId,
-    pub schema: Vec<PropertyMeta>,
+    pub schema: Vec<DataField>,
 }
 
 impl EdgeSchema {
-    pub fn new(
-        source_label_id: LabelId,
-        target_label_id: LabelId,
-        schema: Vec<PropertyMeta>,
-    ) -> Self {
+    pub fn new(source_label_id: LabelId, target_label_id: LabelId, schema: Vec<DataField>) -> Self {
         EdgeSchema {
             source_label_id,
             target_label_id,
@@ -130,24 +125,22 @@ impl SchemaManager {
 
 #[cfg(test)]
 mod tests {
-    use minigu_common::datatype::value::{DataType, PropertyMeta};
+    use minigu_common::data_type::{DataField, LogicalType};
 
     use super::*;
 
     fn create_vertex_schema() -> VertexSchema {
         VertexSchema::new(vec![
-            PropertyMeta::new("name".to_string(), DataType::String, false, false, None),
-            PropertyMeta::new("age".to_string(), DataType::Int, false, false, None),
+            DataField::new("name".to_string(), LogicalType::String, false),
+            DataField::new("age".to_string(), LogicalType::Int32, false),
         ])
     }
 
     fn create_edge_schema() -> EdgeSchema {
-        EdgeSchema::new(0, 2, vec![PropertyMeta::new(
+        EdgeSchema::new(0, 2, vec![DataField::new(
             "from".to_string(),
-            DataType::Int,
+            LogicalType::Int32,
             false,
-            false,
-            None,
         )])
     }
 
