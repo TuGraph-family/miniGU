@@ -960,7 +960,7 @@ fn check_write_conflict(commit_ts: Timestamp, txn: &MemTransaction) -> StorageRe
 pub mod tests {
     use std::{env, fs};
 
-    use minigu_common::datatype::types::LabelId;
+    use minigu_common::types::LabelId;
     use minigu_common::value::ScalarValue;
     use {Edge, Vertex};
 
@@ -968,9 +968,9 @@ pub mod tests {
     use crate::model::properties::PropertyRecord;
     use crate::storage::StorageTransaction;
 
-    const PERSON: LabelId = 1;
-    const FRIEND: LabelId = 1;
-    const FOLLOW: LabelId = 2;
+    const PERSON: LabelId = LabelId::new(1).unwrap();
+    const FRIEND: LabelId = LabelId::new(1).unwrap();
+    const FOLLOW: LabelId = LabelId::new(2).unwrap();
 
     fn create_vertex(id: VertexId, label_id: LabelId, properties: Vec<ScalarValue>) -> Vertex {
         Vertex::new(id, label_id, PropertyRecord::new(properties))
@@ -1852,7 +1852,7 @@ pub mod tests {
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let vertex1 = Vertex::new(
             1,
-            1,
+            LabelId::new(1).unwrap(),
             PropertyRecord::new(vec![ScalarValue::String(Some(
                 "Before Checkpoint".to_string(),
             ))]),
@@ -1878,7 +1878,7 @@ pub mod tests {
         let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
         let vertex2 = Vertex::new(
             2,
-            1,
+            LabelId::new(1).unwrap(),
             PropertyRecord::new(vec![ScalarValue::String(Some(
                 "After Checkpoint".to_string(),
             ))]),

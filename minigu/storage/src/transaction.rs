@@ -1,7 +1,6 @@
 use std::sync::Weak;
 
-use minigu_common::datatype::types::LabelId;
-use minigu_common::types::{EdgeId, VertexId};
+use minigu_common::types::{EdgeId, LabelId, VertexId};
 use minigu_common::value::ScalarValue;
 use serde::{Deserialize, Serialize};
 

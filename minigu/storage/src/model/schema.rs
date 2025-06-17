@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use minigu_common::data_type::DataField;
-use minigu_common::datatype::types::LabelId;
+use minigu_common::types::LabelId;
 
 use crate::error::{SchemaError, StorageError, StorageResult};
 
@@ -36,7 +36,7 @@ impl EdgeSchema {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct SchemaManager {
     pub vertex_schemas: HashMap<Identifier, Arc<VertexSchema>>, /* vertex_label_name ->
                                                                  * VertexSchema */
@@ -49,7 +49,14 @@ pub struct SchemaManager {
 
 impl SchemaManager {
     pub fn new() -> Self {
-        Self::default()
+        SchemaManager {
+            vertex_schemas: HashMap::new(),
+            edge_schemas: HashMap::new(),
+            id_to_vertex_schema_map: HashMap::new(),
+            id_to_edge_schema_map: HashMap::new(),
+            vertex_label_id: LabelId::new(1).unwrap(),
+            edge_label_id: LabelId::new(1).unwrap(),
+        }
     }
 
     pub fn create_vertex_schema(
@@ -65,7 +72,7 @@ impl SchemaManager {
             .insert(schema_name.to_string(), Arc::new(schema));
         self.id_to_vertex_schema_map
             .insert(self.vertex_label_id, schema_name.to_string());
-        self.vertex_label_id += 1;
+        self.vertex_label_id = LabelId::new(self.vertex_label_id.get() + 1).unwrap();
         Ok(())
     }
 
@@ -86,7 +93,7 @@ impl SchemaManager {
             .insert(schema_name.to_string(), Arc::new(schema));
         self.id_to_edge_schema_map
             .insert(self.edge_label_id, schema_name.to_string());
-        self.edge_label_id += 1;
+        self.edge_label_id = LabelId::new(self.edge_label_id.get() + 1).unwrap();
         Ok(())
     }
 
@@ -137,11 +144,9 @@ mod tests {
     }
 
     fn create_edge_schema() -> EdgeSchema {
-        EdgeSchema::new(0, 2, vec![DataField::new(
-            "from".to_string(),
-            LogicalType::Int32,
-            false,
-        )])
+        EdgeSchema::new(LabelId::new(1).unwrap(), LabelId::new(2).unwrap(), vec![
+            DataField::new("from".to_string(), LogicalType::Int32, false),
+        ])
     }
 
     #[test]

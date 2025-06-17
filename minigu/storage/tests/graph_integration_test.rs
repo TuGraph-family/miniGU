@@ -1,8 +1,7 @@
 use std::sync::Arc;
 use std::{env, fs};
 
-use minigu_common::datatype::types::LabelId;
-use minigu_common::types::{EdgeId, VertexId};
+use minigu_common::types::{EdgeId, LabelId, VertexId};
 use minigu_common::value::ScalarValue;
 use minigu_storage::memory::checkpoint::CheckpointManagerConfig;
 use minigu_storage::model::edge::Edge;
@@ -13,9 +12,9 @@ use minigu_storage::{
     Graph, IsolationLevel, MemoryGraph, MutGraph, StorageResult, StorageTransaction,
 };
 
-const PERSON_LABEL_ID: LabelId = 0;
-const FRIEND_LABEL_ID: LabelId = 1;
-const FOLLOW_LABEL_ID: LabelId = 2;
+const PERSON_LABEL_ID: LabelId = LabelId::new(1).unwrap();
+const FRIEND_LABEL_ID: LabelId = LabelId::new(1).unwrap();
+const FOLLOW_LABEL_ID: LabelId = LabelId::new(2).unwrap();
 
 fn create_test_vertex(id: VertexId, name: &str, age: i32) -> Vertex {
     Vertex::new(
