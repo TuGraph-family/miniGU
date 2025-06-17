@@ -1,7 +1,6 @@
 use std::fmt::Debug;
 
-use minigu_common::datatype::types::EdgeId;
-use minigu_common::types::VertexId;
+use minigu_common::types::{EdgeId, VertexId};
 use minigu_common::value::ScalarValue;
 
 use crate::MemTransaction;

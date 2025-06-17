@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use dashmap::iter::Iter;
-use minigu_common::datatype::types::EdgeId;
+use minigu_common::types::EdgeId;
 
 use super::transaction::MemTransaction;
 use crate::error::StorageResult;

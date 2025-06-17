@@ -2,8 +2,7 @@ use std::sync::{Arc, RwLock, Weak};
 
 use crossbeam_skiplist::SkipSet;
 use dashmap::DashMap;
-use minigu_common::datatype::types::EdgeId;
-use minigu_common::types::VertexId;
+use minigu_common::types::{EdgeId, VertexId};
 use minigu_common::value::ScalarValue;
 
 use super::checkpoint::{CheckpointManager, CheckpointManagerConfig};

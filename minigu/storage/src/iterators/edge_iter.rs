@@ -1,4 +1,4 @@
-use minigu_common::datatype::types::EdgeId;
+use minigu_common::types::EdgeId;
 
 use crate::error::StorageResult;
 use crate::iterators::ChunkData;
