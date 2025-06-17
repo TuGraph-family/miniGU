@@ -47,6 +47,12 @@ pub struct SchemaManager {
     pub edge_label_id: LabelId,
 }
 
+impl Default for SchemaManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SchemaManager {
     pub fn new() -> Self {
         SchemaManager {
