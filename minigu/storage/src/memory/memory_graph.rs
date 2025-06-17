@@ -1233,7 +1233,7 @@ pub mod tests {
             txn1.iter_vertices()
                 .filter_map(|v| v.ok())
                 .filter(|v| match v.properties()[1] {
-                    ScalarValue::Int32(Some(age)) => age >= 24 && age <= 28,
+                    ScalarValue::Int32(Some(age)) => (24..=28).contains(&age),
                     _ => false,
                 });
         let mut count = 0;
@@ -1253,7 +1253,7 @@ pub mod tests {
             txn1.iter_vertices()
                 .filter_map(|v| v.ok())
                 .filter(|v| match v.properties()[1] {
-                    ScalarValue::Int32(Some(age)) => age >= 24 && age <= 28,
+                    ScalarValue::Int32(Some(age)) => (24..=28).contains(&age),
                     _ => false,
                 });
         let mut count = 0;
@@ -1440,7 +1440,7 @@ pub mod tests {
                 txn2.iter_vertices()
                     .filter_map(|v| v.ok())
                     .filter(|v| match v.properties()[1] {
-                        ScalarValue::Int32(Some(age)) => age >= 20 && age <= 25,
+                        ScalarValue::Int32(Some(age)) => (20..=25).contains(&age),
                         _ => false,
                     });
             let mut count = 0;
