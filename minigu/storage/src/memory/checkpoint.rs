@@ -13,7 +13,8 @@ use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crc32fast::Hasher;
-use minigu_common::datatype::types::{EdgeId, VertexId};
+use minigu_common::datatype::types::EdgeId;
+use minigu_common::types::VertexId;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

@@ -1,7 +1,8 @@
 use std::sync::Arc;
 use std::{env, fs};
 
-use minigu_common::datatype::types::{EdgeId, LabelId, VertexId};
+use minigu_common::datatype::types::{EdgeId, LabelId};
+use minigu_common::types::VertexId;
 use minigu_common::value::ScalarValue;
 use minigu_storage::memory::checkpoint::CheckpointManagerConfig;
 use minigu_storage::model::edge::Edge;

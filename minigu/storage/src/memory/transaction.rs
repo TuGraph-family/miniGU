@@ -4,7 +4,8 @@ use std::sync::{Arc, Mutex, OnceLock, RwLock};
 
 use crossbeam_skiplist::SkipMap;
 use dashmap::DashSet;
-use minigu_common::datatype::types::{EdgeId, VertexId};
+use minigu_common::datatype::types::EdgeId;
+use minigu_common::types::VertexId;
 
 use super::memory_graph::MemoryGraph;
 use crate::error::{
