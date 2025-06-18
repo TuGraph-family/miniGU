@@ -1,6 +1,7 @@
 pub mod expand;
 pub mod filter;
 pub mod flatten;
+pub mod procedure_call;
 
 // TODO: Implement join executor.
 pub mod join;

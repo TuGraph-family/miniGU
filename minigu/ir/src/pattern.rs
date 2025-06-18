@@ -21,7 +21,6 @@ pub enum PathPattern {
     Union(Vec<PathPattern>),
 }
 
-
 #[derive(Debug, Default, Clone, Serialize)]
 pub struct PatternGraph {
     vertices: Vec<PatternVertex>,
@@ -50,7 +49,10 @@ impl PatternGraphBuilder {
     }
 
     pub fn build(self) -> PatternGraph {
-        PatternGraph { vertices: self.vertices, edges: self.edges }
+        PatternGraph {
+            vertices: self.vertices,
+            edges: self.edges,
+        }
     }
 }
 
@@ -91,7 +93,8 @@ impl PatternEdge {
         src: usize,
         dst: usize,
     ) -> Self {
-        Self { id,
+        Self {
+            id,
             ty,
             label,
             src,

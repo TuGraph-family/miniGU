@@ -9,8 +9,8 @@ pub enum ExecutionError {
     #[error("arrow error")]
     Arrow(#[from] arrow::error::ArrowError),
 
-    #[error("external error")]
-    External(#[from] Box<dyn Error + Send + Sync + 'static>),
+    #[error(transparent)]
+    Custom(#[from] Box<dyn Error + Send + Sync + 'static>),
 
     #[error(transparent)]
     #[diagnostic(transparent)]

@@ -4,6 +4,7 @@ use std::time::{Duration, Instant};
 use arrow::array::create_array;
 use gql_parser::ast::{Procedure, Program, ProgramActivity, SessionActivity, TransactionActivity};
 use gql_parser::parse_gql;
+use itertools::Itertools;
 use minigu_binder::binder::Binder;
 use minigu_catalog::memory::MemoryCatalog;
 use minigu_catalog::provider::SchemaRef;
@@ -12,6 +13,8 @@ use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 use minigu_common::error::not_implemented;
 use minigu_context::database::DatabaseContext;
 use minigu_context::session::SessionContext;
+use minigu_execution::builder::ExecutorBuilder;
+use minigu_execution::executor::Executor;
 use minigu_planner::logical_planner::LogicalPlanner;
 use minigu_planner::optimizer::Optimizer;
 
@@ -109,6 +112,9 @@ impl Session {
     }
 
     fn handle_procedure(&self, procedure: &Procedure) -> Result<QueryResult> {
+        let mut metrics = QueryMetrics::default();
+
+        let start = Instant::now();
         let binder = Binder::new(
             self.context.database().catalog(),
             self.context.current_schema.clone(),
@@ -117,9 +123,21 @@ impl Session {
             self.context.home_graph.clone(),
         );
         let bound = binder.bind(procedure)?;
+        metrics.binding_time = start.elapsed();
+
+        let start = Instant::now();
         let logical_plan = LogicalPlanner::new().create_logical_plan(bound)?;
-        let physical_plan = Optimizer::new().create_physical_plan(logical_plan)?;
-        println!("{:?}", physical_plan);
-        Ok(QueryResult::default())
+        let physical_plan = Optimizer::new().create_physical_plan(&logical_plan)?;
+        metrics.planning_time = start.elapsed();
+
+        let data_schema = physical_plan.schema().cloned();
+        let start = Instant::now();
+        let chunks: Vec<_> = self.context.database().runtime().scope(|_| {
+            let mut executor = ExecutorBuilder::new(self.context.clone()).build(&physical_plan);
+            executor.into_iter().try_collect()
+        })?;
+        metrics.execution_time = start.elapsed();
+
+        Ok(QueryResult::new(data_schema, metrics, chunks))
     }
 }

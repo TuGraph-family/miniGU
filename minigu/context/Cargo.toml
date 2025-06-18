@@ -9,6 +9,7 @@ minigu-catalog = { workspace = true }
 minigu-common = { workspace = true }
 minigu-ir = { workspace = true }
 minigu-storage = { workspace = true }
+rayon = { workspace = true }
 
 [lints]
 workspace = true

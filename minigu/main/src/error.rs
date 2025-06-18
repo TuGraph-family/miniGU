@@ -19,6 +19,13 @@ pub enum Error {
     #[error("catalog error")]
     Catalog(#[from] minigu_catalog::error::CatalogError),
 
+    #[error("execution error")]
+    #[diagnostic(transparent)]
+    Execution(#[from] minigu_execution::error::ExecutionError),
+
+    #[error("rayon error")]
+    Rayon(#[from] rayon::ThreadPoolBuildError),
+
     #[error("current session is closed")]
     SessionClosed,
 

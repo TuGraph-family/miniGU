@@ -47,11 +47,27 @@ pub enum PlanNode {
 impl PlanNode {
     // TODO: Rewrite this with macro
     pub fn schema(&self) -> Option<&DataSchemaRef> {
-        todo!()
+        match self {
+            PlanNode::LogicalMatch(node) => node.schema(),
+            PlanNode::LogicalFilter(node) => node.schema(),
+            PlanNode::LogicalProject(node) => node.schema(),
+            PlanNode::LogicalCall(node) => node.schema(),
+            PlanNode::PhysicalFilter(node) => node.schema(),
+            PlanNode::PhysicalProject(node) => node.schema(),
+            PlanNode::PhysicalCall(node) => node.schema(),
+        }
     }
 
     // TODO: Rewrite this with macro
     pub fn children(&self) -> &[PlanNode] {
-        todo!()
+        match self {
+            PlanNode::LogicalMatch(node) => node.children(),
+            PlanNode::LogicalFilter(node) => node.children(),
+            PlanNode::LogicalProject(node) => node.children(),
+            PlanNode::LogicalCall(node) => node.children(),
+            PlanNode::PhysicalFilter(node) => node.children(),
+            PlanNode::PhysicalProject(node) => node.children(),
+            PlanNode::PhysicalCall(node) => node.children(),
+        }
     }
 }

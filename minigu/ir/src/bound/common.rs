@@ -107,6 +107,6 @@ pub struct BoundGraphPattern {
 // b: VertexRef(a)
 // a: ColumnRef(0)
 // b: ColumnRef(1)
-// (a) --> (b) 
+// (a) --> (b)
 // (a, b, p1)
 // VertexScan  --> Projection

@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::fmt::{self, Debug};
 use std::sync::Arc;
 
@@ -30,7 +31,9 @@ impl GraphContainer {
 
 impl Debug for GraphContainer {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "GraphContainer {{ graph_type: {:?} }}", self.graph_type)
+        f.debug_struct("GraphContainer")
+            .field("graph_type", &self.graph_type)
+            .finish()
     }
 }
 
@@ -38,5 +41,10 @@ impl GraphProvider for GraphContainer {
     #[inline]
     fn graph_type(&self) -> GraphTypeRef {
         self.graph_type.clone()
+    }
+
+    #[inline]
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }

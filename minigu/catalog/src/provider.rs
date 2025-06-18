@@ -66,6 +66,9 @@ pub trait SchemaProvider: Debug + Send + Sync {
 pub trait GraphProvider: Debug + Send + Sync + Any {
     /// Returns the graph type of the graph.
     fn graph_type(&self) -> GraphTypeRef;
+
+    /// Returns a reference to the underlying graph.
+    fn as_any(&self) -> &dyn Any;
 }
 
 /// Represents a graph type, which defines the structure of a graph.
@@ -117,12 +120,16 @@ pub trait PropertiesProvider: Debug + Send + Sync {
     fn properties(&self) -> Vec<(PropertyId, Property)>;
 }
 
+/// Represents the metadata of a procedure.
 pub trait ProcedureProvider: Debug + Send + Sync + Any {
     /// Returns the parameters of the procedure.
     fn parameters(&self) -> &[LogicalType];
 
     /// Returns the data schema of the procedure.
     fn schema(&self) -> Option<DataSchemaRef>;
+
+    /// Returns a reference to the underlying procedure.
+    fn as_any(&self) -> &dyn Any;
 }
 
 #[derive(Debug, Clone)]
