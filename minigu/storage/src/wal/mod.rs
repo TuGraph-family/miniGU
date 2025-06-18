@@ -1,7 +1,7 @@
 pub mod entry;
 pub mod error;
-pub mod storage_wal;
 pub mod graph_wal;
+pub mod storage_wal;
 
 use std::path::Path;
 

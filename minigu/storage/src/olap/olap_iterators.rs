@@ -1,11 +1,15 @@
 use std::slice::SliceIndex;
-use common::datatype::types::VertexId;
+
+use minigu_common::datatype::types::VertexId;
+
 use crate::error::StorageError;
-use crate::olap::olap_graph::{OlapEdge, OlapMvccGraphStorage, OlapPropertyStore, OlapStorageEdge, OlapVertex};
+use crate::olap::olap_graph::{
+    OlapEdge, OlapMvccGraphStorage, OlapPropertyStore, OlapStorageEdge, OlapVertex,
+};
 
 const BLOCK_CAPACITY: usize = 256;
 
-pub struct EdgeIter<'a>{
+pub struct EdgeIter<'a> {
     pub storage: &'a OlapMvccGraphStorage,
     // Index of the current block
     pub block_idx: usize,
@@ -43,7 +47,7 @@ impl Iterator for EdgeIter<'_> {
             if self.offset < block.edges.len() {
                 let raw: &OlapStorageEdge = &block.edges[self.offset];
                 // 2.1 Scan next block once scanned empty edge
-                if raw.label_id == 0 && raw.dst_id == 0 && raw.dst_id == 0{
+                if raw.label_id == 0 && raw.dst_id == 0 && raw.dst_id == 0 {
                     self.offset = 0;
                     self.block_idx += 1;
                     continue;
@@ -56,7 +60,9 @@ impl Iterator for EdgeIter<'_> {
                     properties: {
                         let mut props = OlapPropertyStore::default();
 
-                        for (col_idx, column) in self.storage.property_columns.borrow().iter().enumerate() {
+                        for (col_idx, column) in
+                            self.storage.property_columns.borrow().iter().enumerate()
+                        {
                             if let Some(val) = column
                                 .blocks
                                 .get(self.block_idx)
@@ -78,7 +84,6 @@ impl Iterator for EdgeIter<'_> {
     }
 }
 
-
 pub struct VertexIter<'a> {
     pub storage: &'a OlapMvccGraphStorage,
     // Vertex index
@@ -97,16 +102,13 @@ impl Iterator for VertexIter<'_> {
             self.idx += 1;
         }
 
-
         let clone = self.storage.vertices.borrow().get(self.idx).cloned()?;
         self.idx += 1;
         Some(Ok(clone))
     }
 }
 
-
-pub struct AdjacencyIterator<'a>{
-
+pub struct AdjacencyIterator<'a> {
     pub storage: &'a OlapMvccGraphStorage,
     // Vertex ID
     pub vertex_id: VertexId,
@@ -116,7 +118,7 @@ pub struct AdjacencyIterator<'a>{
     pub offset: usize,
 }
 impl Iterator for AdjacencyIterator<'_> {
-    type Item = Result<OlapEdge,StorageError>;
+    type Item = Result<OlapEdge, StorageError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let borrow = self.storage.edges.borrow();
@@ -148,7 +150,7 @@ impl Iterator for AdjacencyIterator<'_> {
                     usize::MAX
                 } else {
                     block.pre_block_index.unwrap()
-                }; ;
+                };
                 continue;
             }
 
@@ -172,7 +174,9 @@ impl Iterator for AdjacencyIterator<'_> {
                     properties: {
                         let mut props = OlapPropertyStore::default();
 
-                        for (col_idx, column) in self.storage.property_columns.borrow().iter().enumerate() {
+                        for (col_idx, column) in
+                            self.storage.property_columns.borrow().iter().enumerate()
+                        {
                             if let Some(val) = column
                                 .blocks
                                 .get(self.block_idx)
