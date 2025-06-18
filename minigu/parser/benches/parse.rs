@@ -8,7 +8,7 @@ fn main() {
     divan::main();
 }
 
-#[cfg(feature = "bench_antlr4")]
+#[cfg(feature = "bench-antlr4")]
 mod antlr4 {
     use std::ffi::c_char;
 
@@ -27,7 +27,7 @@ macro_rules! add_parser_bench {
                     black_box(gql_parser::parse_gql(input).unwrap())
                 }
 
-                #[cfg(feature = "bench_antlr4")]
+                #[cfg(feature = "bench-antlr4")]
                 #[divan::bench]
                 fn [<parse_ $dataset _ $query _antlr>](b: divan::Bencher) {
                     use std::ffi::CString;

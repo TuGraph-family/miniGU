@@ -1,0 +1,870 @@
+-- Case 1
+CREATE GRAPH test_graph {
+  (Entity: EntityLabel {
+    id STRING,
+    entity_type STRING,
+    deleted INT64,
+    gen_time INT64,
+    name STRING,
+    guid STRING,
+    status INT64,
+    props STRING,
+    test1 INT64,
+    test2 INT64,
+    test3 STRING,
+    test4 STRING,
+    test5 STRING,
+    test6 STRING,
+    test7 STRING,
+    test8 STRING,
+    test9 STRING,
+    test10 STRING,
+    test11 STRING,
+    test12 STRING,
+    PRIMARY KEY (id)
+  }),
+  (Entity)-[Rel: RelLabel {
+    timestamp	INT64,
+    deleted	INT64,
+    rel_scene	STRING,
+    rel_type	STRING,
+    gen_time	INT64,
+    rel_chain	STRING,
+    dst_guid	STRING,
+    src_guid	STRING,
+    status	INT64,
+    props	STRING,
+    PRIMARY KEY (SOURCE_PRIMARY_KEY, timestamp, DESTINATION_PRIMARY_KEY)
+  }]->(Entity),
+};
+INSERT (n:Entity {id:'table1001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table1001',status:1,props:'table1001',test1:1001,test2:1,test3:'table1001',test4:'table1001',test5:'table1001',test6:'table1001',test7:'table1001',test8:'table1001',test9:'table1001',test10:'table1001',test11:'table1001',test12:'table1001'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity {id:'table10001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table1001',status:1,props:'table1001',test1:1001,test2:1,test3:'table1001',test4:'table1001',test5:'table1001',test6:'table1001',test7:'table1001',test8:'table1001',test9:'table1001',test10:'table1001',test11:'table1001',test12:'table1001'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id:'table10001'}), (m:Entity{id:'table1001'})
+INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'table2table',gen_time:0,rel_chain:'0',dst_guid:'table1001',src_guid:'table10001',status:0,props:'table10001_table2table_table1001'}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity  {id: 'table1001'})
+RETURN n.id, n.name, n.entity_type;
++-----------+----------+---------------+
+|      n.id |   n.name | n.entity_type |
++-----------+----------+---------------+
+| table1001 | dml-test |         table |
++-----------+----------+---------------+
+MATCH (n:Entity {id: 'table1001'})
+RETURN n.id, n.name;
++-----------+----------+
+|      n.id |   n.name |
++-----------+----------+
+| table1001 | dml-test |
++-----------+----------+
+MATCH (n:Entity{id:'table10001'})-[b:Rel]->(m:Entity{id:'table1001'})
+RETURN n.id, b.timestamp, b.dst_guid, b.src_guid,m.id;
++------------+-------------+------------+------------+-----------+
+|       n.id | b.timestamp | b.dst_guid | b.src_guid |      m.id |
++------------+-------------+------------+------------+-----------+
+| table10001 |           0 |  table1001 | table10001 | table1001 |
++------------+-------------+------------+------------+-----------+
+DROP GRAPH test_graph;
+
+-- Case 2
+CREATE GRAPH test_graph {
+  (Entity: EntityLabel {
+    id INT64,
+    entity_type STRING,
+    deleted INT64,
+    gen_time INT64,
+    name STRING,
+    guid STRING,
+    status INT64,
+    props STRING,
+    test1 STRING,
+    test2 STRING,
+    test3 STRING,
+    test4 STRING,
+    test5 STRING,
+    test6 STRING,
+    test7 STRING,
+    test8 STRING,
+    test9 STRING,
+    test10 STRING,
+    test11 STRING,
+    test12 STRING,
+    PRIMARY KEY (id)
+  }),
+  (Entity)-[Rel: RelLabel {
+    timestamp	INT64,
+    deleted	INT64,
+    rel_scene	STRING,
+    rel_type	STRING,
+    gen_time	INT64,
+    rel_chain	STRING,
+    dst_guid	STRING,
+    src_guid	STRING,
+    status	INT64,
+    props	STRING,
+    PRIMARY KEY (SOURCE_PRIMARY_KEY, timestamp, DESTINATION_PRIMARY_KEY)
+  }]->(Entity),
+  (Entity1: EntityLabel1 {
+    id INT64,
+    entity_type STRING,
+    deleted INT64,
+    PRIMARY KEY (id)
+  }),
+  (Entity2: EntityLabel2 {
+    id INT64,
+    entity_type STRING,
+    deleted INT64,
+    gen_time INT64,
+    PRIMARY KEY (id)
+  }),
+  (Entity3: EntityLabel3 {
+      id INT64,
+      name STRING,
+      PRIMARY KEY (id)
+    }),
+  (Entity4: EntityLabel4 {
+      id INT64,
+      text STRING,
+      PRIMARY KEY (id)
+    }),
+  (Entity1)-[Rel_1_2a: RelLabel_1_2a {
+    timestamp	INT64,
+    PRIMARY KEY (SOURCE_PRIMARY_KEY, timestamp, DESTINATION_PRIMARY_KEY)
+  }]->(Entity2),
+  (Entity1)-[Rel_1_2b: RelLabel_1_2b {
+    timestamp	INT64,
+    PRIMARY KEY (SOURCE_PRIMARY_KEY, timestamp, DESTINATION_PRIMARY_KEY)
+  }]->(Entity2),
+  (Entity3)-[Rel_3_3: RelLabel_3_3 {
+      timestamp	INT64,
+      PRIMARY KEY (SOURCE_PRIMARY_KEY, timestamp, DESTINATION_PRIMARY_KEY)
+    }]->(Entity3),
+};
+INSERT (n:Entity {id: 30001, entity_type: 'table30001', deleted: 0, gen_time: 1001, name: 'table30001', guid:'table30001', status: 1, props: 'table30001', test1: 'table30001', test2: 'table30001', test3: 'table30001', test4: 'table30001', test5: 'table30001', test6: 'table30001', test7: 'table30001', test8: 'table30001', test9: 'table30001', test10: 'table30001', test11: 'table30001', test12: 'table30001'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity {id: 30002, entity_type: 'table30002', deleted: 0, gen_time: 1001, name: 'table30002', guid:'table30002', status: 1, props: 'table30002', test1: 'table30002', test2: 'table30002', test3: 'table30002', test4: 'table30002', test5: 'table30002', test6: 'table30002', test7: 'table30002', test8: 'table30002', test9: 'table30002', test10: 'table30002', test11: 'table30002', test12: 'table30002'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity {id: 30003, entity_type: 'table30003', deleted: 0, gen_time: 1001, name: 'table30003', guid:'table30003', status: 1, props: 'table30003', test1: 'table30003', test2: 'table30003', test3: 'table30003', test4: 'table30003', test5: 'table30003', test6: 'table30003', test7: 'table30003', test8: 'table30003', test9: 'table30003', test10: 'table30003', test11: 'table30003', test12: 'table30003'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity {id: 30004, entity_type: 'table30004', deleted: 0, gen_time: 1001, name: 'table30004', guid:'table30004', status: 1, props: 'table30004', test1: 'table30004', test2: 'table30004', test3: 'table30004', test4: 'table30004', test5: 'table30004', test6: 'table30004', test7: 'table30004', test8: 'table30004', test9: 'table30004', test10: 'table30004', test11: 'table30004', test12: 'table30004'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity {id: 30005, entity_type: 'table30005', deleted: 0, gen_time: 1001, name: 'table30005', guid:'table30005', status: 1, props: 'table30005', test1: 'table30005', test2: 'table30005', test3: 'table30005', test4: 'table30005', test5: 'table30005', test6: 'table30005', test7: 'table30005', test8: 'table30005', test9: 'table30005', test10: 'table30005', test11: 'table30005', test12: 'table30005'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity {id: 30006, entity_type: 'table30006', deleted: 0, gen_time: 1001, name: 'table30006', guid:'table30006', status: 1, props: 'table30006', test1: 'table30006', test2: 'table30006', test3: 'table30006', test4: 'table30006', test5: 'table30006', test6: 'table30006', test7: 'table30006', test8: 'table30006', test9: 'table30006', test10: 'table30006', test11: 'table30006', test12: 'table30006'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity {id: 30007, entity_type: 'table30007', deleted: 0, gen_time: 1001, name: 'table30007', guid:'table30007', status: 1, props: 'table30007', test1: 'table30007', test2: 'table30007', test3: 'table30007', test4: 'table30007', test5: 'table30007', test6: 'table30007', test7: 'table30007', test8: 'table30007', test9: 'table30007', test10: 'table30007', test11: 'table30007', test12: 'table30007'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity {id: 30008, entity_type: 'table30008', deleted: 0, gen_time: 1001, name: 'table30008', guid:'table30008', status: 1, props: 'table30008', test1: 'table30008', test2: 'table30008', test3: 'table30008', test4: 'table30008', test5: 'table30008', test6: 'table30008', test7: 'table30008', test8: 'table30008', test9: 'table30008', test10: 'table30008', test11: 'table30008', test12: 'table30008'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity {id: 401, entity_type: 'e', deleted: 0, gen_time: 1001, name: 'table401', guid:'table401', status: 1, props: 'table401', test1: 'FAKE', test2: 'FAKE', test3: 'FAKE', test4: 'FAKE', test5: 'FAKE', test6: 'FAKE', test7: 'FAKE', test8: 'FAKE', test9: 'FAKE', test10: 'FAKE', test11: 'FAKE', test12: 'FAKE'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity {id: 402, entity_type: 'e', deleted: 0, gen_time: 1001, name: 'table402', guid:'table402', status: 1, props: 'table402', test1: 'FAKE', test2: 'FAKE', test3: 'FAKE', test4: 'FAKE', test5: 'FAKE', test6: 'FAKE', test7: 'FAKE', test8: 'FAKE', test9: 'FAKE', test10: 'FAKE', test11: 'FAKE', test12: 'FAKE'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity {id: 403, entity_type: 'e', deleted: 0, gen_time: 1001, name: 'table403', guid:'table403', status: 1, props: 'table403', test1: 'FAKE', test2: 'FAKE', test3: 'FAKE', test4: 'FAKE', test5: 'FAKE', test6: 'FAKE', test7: 'FAKE', test8: 'FAKE', test9: 'FAKE', test10: 'FAKE', test11: 'FAKE', test12: 'FAKE'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity {id: 404, entity_type: 'e', deleted: 0, gen_time: 1001, name: 'table404', guid:'table404', status: 1, props: 'table404', test1: 'FAKE', test2: 'FAKE', test3: 'FAKE', test4: 'FAKE', test5: 'FAKE', test6: 'FAKE', test7: 'FAKE', test8: 'FAKE', test9: 'FAKE', test10: 'FAKE', test11: 'FAKE', test12: 'FAKE'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity1 {id:1000, entity_type: 'Bob1000', deleted:0});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity1 {id:1001, entity_type: 'Bob1001', deleted:0});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity2 {id:1002, entity_type: 'Bob1002', deleted:0, gen_time:1002});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity2 {id:1003, entity_type: 'Bob1003', deleted:0, gen_time:1003});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity2 {id:1004, entity_type: 'Bob1004', deleted:0, gen_time:1004});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity3 {id:1, name: 'Bob'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity3{id:1}), (m:Entity3{id:1}) INSERT (n)-[r:Rel_3_3{timestamp:4}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity3 {id:2, name: 'Bob1'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity3 {id:3, name: 'Bob12'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity3 {id:4, name: 'Bob123'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity3 {id:5, name: 'Bob222'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity3 {id:6, name: '666'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity4 {id:7, text: 'hello world'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity4 {id:8, text: '666'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity4 {id:9, text: '{"a":1, "b":2}'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity4 {id:10, text: '{"a":3}'});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id: 30001}), (m:Entity{id: 30002}) INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'rel1',gen_time:0,rel_chain:'0',dst_guid:'table30002',src_guid:'table30001',status:0,props:'rel1'}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id: 30001}), (m:Entity{id: 30003}) INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'rel1',gen_time:0,rel_chain:'0',dst_guid:'table30002',src_guid:'table30001',status:0,props:'rel1'}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id: 30001}), (m:Entity{id: 30004}) INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'rel1',gen_time:0,rel_chain:'0',dst_guid:'table30002',src_guid:'table30001',status:0,props:'rel1'}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id: 30001}), (m:Entity{id: 30005}) INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'rel1',gen_time:0,rel_chain:'0',dst_guid:'table30002',src_guid:'table30001',status:0,props:'rel1'}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id: 30001}), (m:Entity{id: 30006}) INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'rel1',gen_time:0,rel_chain:'0',dst_guid:'table30002',src_guid:'table30001',status:0,props:'rel1'}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id: 30001}), (m:Entity{id: 30007}) INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'rel1',gen_time:0,rel_chain:'0',dst_guid:'table30002',src_guid:'table30001',status:0,props:'rel1'}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id: 30002}), (m:Entity{id: 30003}) INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'rel2',gen_time:0,rel_chain:'0',dst_guid:'table30003',src_guid:'table30002',status:0,props:'rel2'}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id: 30003}), (m:Entity{id: 30004}) INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'rel3',gen_time:0,rel_chain:'0',dst_guid:'table30004',src_guid:'table30003',status:0,props:'rel3'}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id: 30004}), (m:Entity{id: 30005}) INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'rel4',gen_time:0,rel_chain:'0',dst_guid:'table30005',src_guid:'table30004',status:0,props:'rel4'}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id: 30005}), (m:Entity{id: 30006}) INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'rel5',gen_time:0,rel_chain:'0',dst_guid:'table30006',src_guid:'table30005',status:0,props:'rel5'}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id: 30006}), (m:Entity{id: 30007}) INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'rel6',gen_time:0,rel_chain:'0',dst_guid:'table30007',src_guid:'table30006',status:0,props:'rel6'}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id: 401}), (m:Entity{id: 402}) INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'rel2',gen_time:0,rel_chain:'0',dst_guid:'FAKE',src_guid:'FAKE',status:0,props:'rel2'}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id: 402}), (m:Entity{id: 403}) INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'rel2',gen_time:0,rel_chain:'0',dst_guid:'FAKE',src_guid:'FAKE',status:0,props:'rel2'}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id: 403}), (m:Entity{id: 404}) INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'rel2',gen_time:0,rel_chain:'0',dst_guid:'FAKE',src_guid:'FAKE',status:0,props:'rel2'}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id: 403}), (m:Entity{id: 402}) INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'rel2',gen_time:0,rel_chain:'0',dst_guid:'FAKE',src_guid:'FAKE',status:0,props:'rel2'}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity1{id:1001}), (m:Entity2{id:1002}) INSERT (n)-[r:Rel_1_2a{timestamp:4}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity1{id:1001}), (m:Entity2{id:1002}) INSERT (n)-[r:Rel_1_2b{timestamp:5}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity WHERE n.id = 30001) - [r:Rel] -> {6}(m:Entity) RETURN m.id;
++-------+
+|  m.id |
++-------+
+| 30007 |
++-------+
+MATCH (n:Entity WHERE n.id = 30001) - [r:Rel] -> {1,6}(m:Entity) RETURN m.id;
++-------+
+|  m.id |
++-------+
+| 30006 |
+| 30006 |
+| 30006 |
+| 30006 |
+| 30006 |
+| 30005 |
+| 30005 |
+| 30005 |
+| 30005 |
+| 30007 |
+| 30007 |
+| 30007 |
+| 30007 |
+| 30007 |
+| 30007 |
+| 30004 |
+| 30004 |
+| 30004 |
+| 30002 |
+| 30003 |
+| 30003 |
++-------+
+MATCH (n:Entity WHERE n.id = 30001) - [r:Rel] -> {1,6}(m:Entity) RETURN m.id;
++-------+
+|  m.id |
++-------+
+| 30006 |
+| 30006 |
+| 30006 |
+| 30006 |
+| 30006 |
+| 30005 |
+| 30005 |
+| 30005 |
+| 30005 |
+| 30007 |
+| 30007 |
+| 30007 |
+| 30007 |
+| 30007 |
+| 30007 |
+| 30004 |
+| 30004 |
+| 30004 |
+| 30002 |
+| 30003 |
+| 30003 |
++-------+
+MATCH (n:Entity WHERE n.id = 30001) - [r:Rel] ->(m:Entity)-[r2:Rel]->(s:Entity) RETURN r2.deleted, r.deleted ,s.id;
++------------+-----------+-------+
+| r2.deleted | r.deleted |  s.id |
++------------+-----------+-------+
+|          0 |         0 | 30006 |
+|          0 |         0 | 30005 |
+|          0 |         0 | 30007 |
+|          0 |         0 | 30004 |
+|          0 |         0 | 30003 |
++------------+-----------+-------+
+MATCH (n:Entity WHERE n.id = 30001)-[r:Rel]->(m:Entity)-[r2:Rel]->(s:Entity)-[r3:Rel]->(s2:Entity) RETURN r2.deleted, r.deleted, s.id ,s2.id;
++------------+-----------+-------+-------+
+| r2.deleted | r.deleted |  s.id | s2.id |
++------------+-----------+-------+-------+
+|          0 |         0 | 30005 | 30006 |
+|          0 |         0 | 30004 | 30005 |
+|          0 |         0 | 30006 | 30007 |
+|          0 |         0 | 30003 | 30004 |
++------------+-----------+-------+-------+
+MATCH (n:Entity WHERE n.id = 30001) - [r:Rel] -> {1,6}(m:Entity) RETURN m.id LIMIT 3;
++-------+
+|  m.id |
++-------+
+| 30006 |
+| 30006 |
+| 30006 |
++-------+
+MATCH (n:Entity WHERE n.id = 30001) - [r:Rel] -> {1,6}(m:Entity) RETURN m.id OFFSET 5;
++-------+
+|  m.id |
++-------+
+| 30005 |
+| 30005 |
+| 30005 |
+| 30005 |
+| 30007 |
+| 30007 |
+| 30007 |
+| 30007 |
+| 30007 |
+| 30007 |
+| 30004 |
+| 30004 |
+| 30004 |
+| 30002 |
+| 30003 |
+| 30003 |
++-------+
+MATCH (n:Entity WHERE n.id = 30001) RETURN true AND n.id = 30001 AS result;
++--------+
+| result |
++--------+
+|   true |
++--------+
+MATCH (n:Entity WHERE n.id = 30001) RETURN true OR n.id = 30001 AS result;
++--------+
+| result |
++--------+
+|   true |
++--------+
+MATCH (n0:Entity WHERE n0.id = 30003) <- [r1:Rel] - (n1:Entity) RETURN n0.id, n1.id, r1.src_id, r1.dst_id;
++-------+-------+-----------+-----------+
+| n0.id | n1.id | r1.src_id | r1.dst_id |
++-------+-------+-----------+-----------+
+| 30003 | 30001 |     30001 |     30003 |
+| 30003 | 30002 |     30002 |     30003 |
++-------+-------+-----------+-----------+
+MATCH (n:Entity) RETURN n.id, n.name;
++-------+------------+
+|  n.id |     n.name |
++-------+------------+
+|   402 |   table402 |
+| 30005 | table30005 |
+| 30007 | table30007 |
+| 30008 | table30008 |
+|   404 |   table404 |
+| 30004 | table30004 |
+|   403 |   table403 |
+| 30001 | table30001 |
+| 30002 | table30002 |
+| 30003 | table30003 |
+|   401 |   table401 |
+| 30006 | table30006 |
++-------+------------+
+MATCH (n:Entity WHERE n.id = 30001)-[e:Rel]->(n1:Entity WHERE n1.id = 30002) RETURN n;
++------------------------------------------------------------------+
+|                                                                n |
++------------------------------------------------------------------+
+| {label=Entity, type=VERTEX, props={test12=table30001, test11=table30001, test10=table30001, gen_time=1001, test1=table30001, props=table30001, test4=table30001, test5=table30001, test2=table30001, entity_type=table30001, deleted=0, test3=table30001, test8=table30001, test9=table30001, test6=table30001, test7=table30001, name=table30001, guid=table30001, id=30001, status=1}} |
++------------------------------------------------------------------+
+MATCH (n:Entity WHERE n.id = 30001)-[e:Rel]->(n1:Entity WHERE n1.id = 30002) RETURN e;
++------------------------------------------------------------------+
+|                                                                e |
++------------------------------------------------------------------+
+| {label=Rel, type=EDGE, props={deleted=0, src_id=30001, rel_scene=0, rel_type=rel1, gen_time=0, rel_chain=0, dst_id=30002, dst_guid=table30002, src_guid=table30001, timestamp=0, status=0, props=rel1}} |
++------------------------------------------------------------------+
+MATCH (n:Entity WHERE n.id = 30001)-[e:Rel]->(n1:Entity WHERE n1.id = 30002) RETURN n1;
++------------------------------------------------------------------+
+|                                                               n1 |
++------------------------------------------------------------------+
+| {label=Entity, type=VERTEX, props={test12=table30002, test11=table30002, test10=table30002, gen_time=1001, test1=table30002, props=table30002, test4=table30002, test5=table30002, test2=table30002, entity_type=table30002, deleted=0, test3=table30002, test8=table30002, test9=table30002, test6=table30002, test7=table30002, name=table30002, guid=table30002, id=30002, status=1}} |
++------------------------------------------------------------------+
+MATCH p=(n:Entity WHERE n.id = 30001)-[e:Rel]->(n1:Entity WHERE n1.id = 30002) RETURN p;
++------------------------------------------------------------------+
+|                                                                p |
++------------------------------------------------------------------+
+| {label=FAKE LABEL PATH, type=PATH, props=[{label=Entity, type=VERTEX, props={test12=table30001, test11=table30001, test10=table30001, gen_time=1001, test1=table30001, props=table30001, test4=table30001, test5=table30001, test2=table30001, entity_type=table30001, deleted=0, test3=table30001, test8=table30001, test9=table30001, test6=table30001, test7=table30001, name=table30001, guid=table30001, id=30001, status=1}}, {label=Rel, type=EDGE, props={deleted=0, src_id=30001, rel_scene=0, rel_type=rel1, gen_time=0, rel_chain=0, dst_id=30002, dst_guid=table30002, src_guid=table30001, timestamp=0, status=0, props=rel1}}, {label=Entity, type=VERTEX, props={test12=table30002, test11=table30002, test10=table30002, gen_time=1001, test1=table30002, props=table30002, test4=table30002, test5=table30002, test2=table30002, entity_type=table30002, deleted=0, test3=table30002, test8=table30002, test9=table30002, test6=table30002, test7=table30002, name=table30002, guid=table30002, id=30002, status=1}}]} |
++------------------------------------------------------------------+
+MATCH SIMPLE (n:Entity WHERE n.id = 401)-[e:Rel]->{3}(n1:Entity) RETURN n.id, n1.id;
++------+-------+
+| n.id | n1.id |
++------+-------+
+|  401 |   404 |
++------+-------+
+MATCH WALK (n:Entity WHERE n.id = 401)-[e:Rel]->{3}(n1:Entity) RETURN n.id, n1.id;
++------+-------+
+| n.id | n1.id |
++------+-------+
+|  401 |   404 |
+|  401 |   402 |
++------+-------+
+MATCH (n:Entity) RETURN COUNT(n);
++----------+
+| COUNT(n) |
++----------+
+|       12 |
++----------+
+MATCH (n:Entity WHERE n.id = 30001) -[e:Rel]-> (m:Entity) RETURN COUNT(m);
++----------+
+| COUNT(m) |
++----------+
+|        6 |
++----------+
+MATCH (n:Entity WHERE n.id = 30001) -[e:Rel]-> (m:Entity) RETURN COUNT(DISTINCT(m));
++--------------------+
+| COUNT(DISTINCT(m)) |
++--------------------+
+|                  6 |
++--------------------+
+MATCH (n:Entity WHERE n.id = 30001) -[r:Rel]-> (m:Entity)  RETURN SUM(m.status);
++---------------+
+| SUM(m.status) |
++---------------+
+|             6 |
++---------------+
+MATCH (n:Entity WHERE n.id = 30001) -[r:Rel]-> (m:Entity)  RETURN MAX(m.gen_time);
++-----------------+
+| MAX(m.gen_time) |
++-----------------+
+|            1001 |
++-----------------+
+MATCH (n:Entity WHERE n.id = 30001) -[r:Rel]-> (m:Entity)  RETURN MIN(m.gen_time);
++-----------------+
+| MIN(m.gen_time) |
++-----------------+
+|            1001 |
++-----------------+
+MATCH (n:Entity WHERE n.id = 30001) -[r:Rel]-> (m:Entity)  RETURN SUM(m.gen_time) GROUP BY m.id;
++-----------------+
+| SUM(m.gen_time) |
++-----------------+
+|            1001 |
+|            1001 |
+|            1001 |
+|            1001 |
+|            1001 |
+|            1001 |
++-----------------+
+MATCH (n:Entity WHERE n.id = 30001) -[r:Rel]-> (m:Entity)  RETURN m.gen_time GROUP BY m.gen_time;
++------------+
+| m.gen_time |
++------------+
+|       1001 |
++------------+
+MATCH (n:Entity WHERE n.id = 30001) -[r:Rel]-> (m:Entity) RETURN n.id,m.id ORDER BY m.id DESC;
++-------+-------+
+|  n.id |  m.id |
++-------+-------+
+| 30001 | 30007 |
+| 30001 | 30006 |
+| 30001 | 30005 |
+| 30001 | 30004 |
+| 30001 | 30003 |
+| 30001 | 30002 |
++-------+-------+
+MATCH (n:Entity WHERE n.id = 30001) -[r:Rel]-> (m:Entity) RETURN n.id,m.id ORDER BY m.id ASC;
++-------+-------+
+|  n.id |  m.id |
++-------+-------+
+| 30001 | 30002 |
+| 30001 | 30003 |
+| 30001 | 30004 |
+| 30001 | 30005 |
+| 30001 | 30006 |
+| 30001 | 30007 |
++-------+-------+
+MATCH (n:Entity1|Entity2) RETURN n;
++------------------------------------------------------------------+
+|                                                                n |
++------------------------------------------------------------------+
+| {label=Entity1, type=VERTEX, props={entity_type=Bob1000, deleted=0, id=1000}} |
+| {label=Entity1, type=VERTEX, props={entity_type=Bob1001, deleted=0, id=1001}} |
+| {label=Entity2, type=VERTEX, props={entity_type=Bob1002, deleted=0, gen_time=1002, id=1002}} |
+| {label=Entity2, type=VERTEX, props={entity_type=Bob1004, deleted=0, gen_time=1004, id=1004}} |
+| {label=Entity2, type=VERTEX, props={entity_type=Bob1003, deleted=0, gen_time=1003, id=1003}} |
++------------------------------------------------------------------+
+MATCH (n:Entity WHERE n.id IN [401, 402, 403, 404]) RETURN n.name;
++----------+
+|   n.name |
++----------+
+| table404 |
+| table403 |
+| table402 |
+| table401 |
++----------+
+MATCH p=(n:Entity3 WHERE n.id = 1)-[r:Rel_3_3]->{1,2}(n1:Entity3) RETURN p;
++------------------------------------------------------------------+
+|                                                                p |
++------------------------------------------------------------------+
+| {label=FAKE LABEL PATH, type=PATH, props=[{label=Entity3, type=VERTEX, props={name=Bob, id=1}}, {label=Rel_3_3, type=EDGE, props={src_id=1, dst_id=1, timestamp=4}}, {label=Entity3, type=VERTEX, props={name=Bob, id=1}}]} |
+| {label=FAKE LABEL PATH, type=PATH, props=[{label=Entity3, type=VERTEX, props={name=Bob, id=1}}, {label=Rel_3_3, type=EDGE, props={src_id=1, dst_id=1, timestamp=4}}, {label=Entity3, type=VERTEX, props={name=Bob, id=1}}, {label=Rel_3_3, type=EDGE, props={src_id=1, dst_id=1, timestamp=4}}, {label=Entity3, type=VERTEX, props={name=Bob, id=1}}]} |
++------------------------------------------------------------------+
+MATCH (n:Entity3) RETURN n.id, LOWER(n.name);
++------+---------------+
+| n.id | LOWER(n.name) |
++------+---------------+
+|    4 |        bob123 |
+|    5 |        bob222 |
+|    2 |          bob1 |
+|    6 |           666 |
+|    1 |           bob |
+|    3 |         bob12 |
++------+---------------+
+MATCH (n:Entity3 {id:6}) RETURN n.id, TO_INTEGER(n.name);
++------+--------------------+
+| n.id | TO_INTEGER(n.name) |
++------+--------------------+
+|    6 |                666 |
++------+--------------------+
+MATCH (n:Entity3) WHERE n.name like "%ob%" RETURN n;
++---------------------------------------------------------+
+|                                                       n |
++---------------------------------------------------------+
+| {label=Entity3, type=VERTEX, props={name=Bob123, id=4}} |
+| {label=Entity3, type=VERTEX, props={name=Bob222, id=5}} |
+|   {label=Entity3, type=VERTEX, props={name=Bob1, id=2}} |
+|    {label=Entity3, type=VERTEX, props={name=Bob, id=1}} |
+|  {label=Entity3, type=VERTEX, props={name=Bob12, id=3}} |
++---------------------------------------------------------+
+MATCH (n:Entity3) WHERE n.name like "Bob%" RETURN n;
++---------------------------------------------------------+
+|                                                       n |
++---------------------------------------------------------+
+| {label=Entity3, type=VERTEX, props={name=Bob123, id=4}} |
+| {label=Entity3, type=VERTEX, props={name=Bob222, id=5}} |
+|   {label=Entity3, type=VERTEX, props={name=Bob1, id=2}} |
+|    {label=Entity3, type=VERTEX, props={name=Bob, id=1}} |
+|  {label=Entity3, type=VERTEX, props={name=Bob12, id=3}} |
++---------------------------------------------------------+
+MATCH (n:Entity3) WHERE n.name like "%ob_2%" RETURN n;
++---------------------------------------------------------+
+|                                                       n |
++---------------------------------------------------------+
+| {label=Entity3, type=VERTEX, props={name=Bob123, id=4}} |
+| {label=Entity3, type=VERTEX, props={name=Bob222, id=5}} |
+|  {label=Entity3, type=VERTEX, props={name=Bob12, id=3}} |
++---------------------------------------------------------+
+MATCH (n:Entity4) RETURN n.id, n.text, JSON_VALID(n.text);
++------+----------------+--------------------+
+| n.id |         n.text | JSON_VALID(n.text) |
++------+----------------+--------------------+
+|    9 | {"a":1, "b":2} |               true |
+|    8 |            666 |               true |
+|   10 |        {"a":3} |               true |
+|    7 |    hello world |              false |
++------+----------------+--------------------+
+MATCH (n:Entity4 WHERE n.id in [8,9,10]) RETURN n.id, n.text, JSON_EXTRACT(n.text, "$.b");
++------+----------------+-----------------------------+
+| n.id |         n.text | JSON_EXTRACT(n.text, "$.b") |
++------+----------------+-----------------------------+
+|    9 | {"a":1, "b":2} |                           2 |
+|    8 |            666 |                             |
+|   10 |        {"a":3} |                             |
++------+----------------+-----------------------------+
+MATCH (n:Entity1)-[e:Rel_1_2a]->(m) RETURN n, e, m;
++------------------------------------------------------------------+------------------------------------------------------------------+------------------------------------------------------------------+
+|                                                                n |                                                                e |                                                                m |
++------------------------------------------------------------------+------------------------------------------------------------------+------------------------------------------------------------------+
+| {label=Entity1, type=VERTEX, props={entity_type=Bob1001, deleted=0, id=1001}} | {label=Rel_1_2a, type=EDGE, props={src_id=1001, dst_id=1002, timestamp=4}} | {label=Entity2, type=VERTEX, props={entity_type=Bob1002, deleted=0, gen_time=1002, id=1002}} |
++------------------------------------------------------------------+------------------------------------------------------------------+------------------------------------------------------------------+
+MATCH p=(n:Entity WHERE n.id = 30001)-[e:Rel]->{5,6}(n1:Entity) RETURN length(subpath(p,0,-2)) as len ORDER BY len;
++-----+
+| len |
++-----+
+|   4 |
+|   4 |
+|   5 |
++-----+
+MATCH p=(n:Entity WHERE n.id = 30001)-[e:Rel]->{5,6}(n1:Entity) RETURN length(subpath(p,2)) as len ORDER BY len;
++-----+
+| len |
++-----+
+|   4 |
+|   4 |
+|   5 |
++-----+
+MATCH p=(n:Entity WHERE n.id = 30001)-[e:Rel]->{5,6}(n1:Entity) RETURN length(subpath(p,8,-2)) as len ORDER BY len;
++-----+
+| len |
++-----+
+|   0 |
+|   0 |
+|   1 |
++-----+
+INSERT (n:Entity {id: 28, name: 'Bob8', deleted:0, gen_time:99});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity {id: 29, name: 'Bob9', deleted:0, gen_time:100});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id: 28}), (m:Entity{id: 29}) INSERT (n)-[r:Rel{timestamp: 7,deleted:0}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity {id: 30, name: 'Bob10', deleted:0, gen_time:100});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id: 29}), (m:Entity{id: 30}) INSERT (n)-[r:Rel{timestamp: 8,deleted:0}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity {id: 38, name: 'Bob38', deleted:0, gen_time:99});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity {id: 381, name: 'Bob381', deleted:0, gen_time:99});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id: 38}), (m:Entity{id: 381}) INSERT (n)-[r:Rel{timestamp: 7,deleted:0}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+INSERT (n:Entity {id: 39, name: 'Bob39', deleted:0, gen_time:100});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id: 38}), (m:Entity{id: 39}) INSERT (n)-[r:Rel{timestamp: 7,deleted:0}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH (n:Entity{id: 39}), (m:Entity{id: 30}) INSERT (n)-[r:Rel{timestamp: 8,deleted:0}]->(m);
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH p=(n0:Entity where n0.id = 30) <- [r1:Rel] - {1, 2} (n1:Entity) return p INTERSECT  MATCH p=(n0:Entity where n0.id = 30) <- [r1:Rel] - {1, 2} (n1:Entity) - [r2:Rel] -> (n2:Entity where n2.id=381) RETURN SUBPATH(p, 0, -2) as p;
++------------------------------------------------------------------+
+|                                                                p |
++------------------------------------------------------------------+
+| {label=FAKE LABEL PATH, type=PATH, props=[{label=Entity, type=VERTEX, props={test12=null, test11=null, test10=null, gen_time=100, test1=null, props=null, test4=null, test5=null, test2=null, entity_type=null, deleted=0, test3=null, test8=null, test9=null, test6=null, test7=null, name=Bob10, guid=null, id=30, status=0}}, {label=Rel, type=EDGE, props={deleted=0, src_id=39, rel_scene=null, rel_type=null, gen_time=0, rel_chain=null, dst_id=30, dst_guid=null, src_guid=null, timestamp=8, status=0, props=null}}, {label=Entity, type=VERTEX, props={test12=null, test11=null, test10=null, gen_time=100, test1=null, props=null, test4=null, test5=null, test2=null, entity_type=null, deleted=0, test3=null, test8=null, test9=null, test6=null, test7=null, name=Bob39, guid=null, id=39, status=0}}, {label=Rel, type=EDGE, props={deleted=0, src_id=38, rel_scene=null, rel_type=null, gen_time=0, rel_chain=null, dst_id=39, dst_guid=null, src_guid=null, timestamp=7, status=0, props=null}}, {label=Entity, type=VERTEX, props={test12=null, test11=null, test10=null, gen_time=99, test1=null, props=null, test4=null, test5=null, test2=null, entity_type=null, deleted=0, test3=null, test8=null, test9=null, test6=null, test7=null, name=Bob38, guid=null, id=38, status=0}}]} |
++------------------------------------------------------------------+
+DROP GRAPH test_graph;

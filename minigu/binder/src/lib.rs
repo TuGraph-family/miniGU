@@ -1,14 +1,27 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+#![allow(unused)]
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+use gql_parser::ast::Procedure;
+use minigu_catalog::provider::{CatalogRef, SchemaRef};
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+use crate::error::BindResult;
+use crate::program::Binder;
+use crate::statement::procedure_spec::BoundProcedure;
+
+mod error;
+mod mock_catalog;
+mod object_ref;
+mod program;
+mod resolver;
+mod statement;
+mod type_checker;
+mod types;
+mod validator;
+
+pub fn bind(
+    procedure: &Procedure,
+    catalog: CatalogRef,
+    current_schema: Option<SchemaRef>,
+) -> BindResult<BoundProcedure> {
+    let mut binder = Binder::new(catalog, current_schema);
+    binder.bind_procedure(procedure)
 }

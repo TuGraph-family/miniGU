@@ -1,4 +1,4 @@
-use common::datatype::value::PropertyValue;
+use minigu_common::datatype::value::PropertyValue;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Default)]

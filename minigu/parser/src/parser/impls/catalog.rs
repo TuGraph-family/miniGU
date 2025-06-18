@@ -346,4 +346,13 @@ mod tests {
         );
         assert_yaml_snapshot!(parsed);
     }
+
+    #[test]
+    fn test_simple_catalog_modifying_statement() {
+        let parsed = parse!(
+            simple_catalog_modifying_statement,
+            "call create_graph(\"abc\")"
+        );
+        assert_yaml_snapshot!(parsed);
+    }
 }

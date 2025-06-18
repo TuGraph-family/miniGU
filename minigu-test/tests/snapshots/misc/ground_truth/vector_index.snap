@@ -1,0 +1,24 @@
+CREATE GRAPH test_graph {
+  (Entity: EntityLabel {
+    id INT64,
+    embedding vector<float, 4>,
+    PRIMARY KEY (id)
+  }),
+  (Entity)-[Rel: RelLabel {
+    timestamp	INT64,
+    PRIMARY KEY (SOURCE_PRIMARY_KEY, timestamp, DESTINATION_PRIMARY_KEY)
+  }]->(Entity),
+};
+INSERT (n:Entity {id: 30001, embedding: VECTOR [1, 2, 3, 4]});
++----------+
+| affected |
++----------+
+|        1 |
++----------+
+MATCH  (n:Entity {id: 30001}) return n, n.embedding;
++---------------------------------------------------------------+-------------+
+|                                                             n | n.embedding |
++---------------------------------------------------------------+-------------+
+| {label=Entity, type=VERTEX, props={id=30001, embedding=null}} |        null |
++---------------------------------------------------------------+-------------+
+DROP GRAPH test_graph;

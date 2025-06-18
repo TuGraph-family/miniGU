@@ -1,5 +1,6 @@
-mod adjacency_iterator;
-mod edge_iterator;
-mod memory_graph;
-mod transaction;
-mod vertex_iterator;
+pub mod adjacency_iterator;
+pub mod checkpoint;
+pub mod edge_iterator;
+pub mod memory_graph;
+pub mod transaction;
+pub mod vertex_iterator;

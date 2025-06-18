@@ -44,3 +44,9 @@ add_e2e_tests!("opengql", [
     "session_set"
 ]);
 add_e2e_tests!("gql_on_one_page", ["gql_on_one_page"]);
+add_e2e_tests!("misc", [
+    "ddl_drop",
+    "ddl_truncate",
+    "dml_dql",
+    "vector_index"
+]);
