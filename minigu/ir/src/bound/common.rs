@@ -99,3 +99,14 @@ pub struct BoundGraphPattern {
     pub paths: Vec<Arc<BoundPathPattern>>,
     pub predicate: Option<BoundExpr>,
 }
+
+// match p1 = (a)-->()-->(b), p2 = (c)-->(d) return *;
+// a, b, p1, c, d, p2
+// (a, b, p1), (c, d, p2)
+// a: VertexRef(a)
+// b: VertexRef(a)
+// a: ColumnRef(0)
+// b: ColumnRef(1)
+// (a) --> (b) 
+// (a, b, p1)
+// VertexScan  --> Projection

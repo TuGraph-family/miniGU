@@ -1,11 +1,12 @@
 use gql_parser::ast::{Procedure, Statement};
 use itertools::Itertools;
+use minigu_common::error::not_implemented;
 use minigu_ir::bound::{BoundProcedure, BoundStatement};
 
 use super::Binder;
-use crate::error::{BindResult, not_implemented};
+use crate::error::BindResult;
 
-impl Binder {
+impl Binder<'_> {
     pub fn bind_procedure(&mut self, procedure: &Procedure) -> BindResult<BoundProcedure> {
         if let Some(schema) = &procedure.at {
             let schema = self.bind_schema_ref(schema.value())?;

@@ -65,3 +65,11 @@ impl NotImplemented {
         &self.issue
     }
 }
+
+#[inline]
+pub fn not_implemented<T, E>(feature: impl Into<String>, issue: Option<u32>) -> Result<T, E>
+where
+    E: From<NotImplemented>,
+{
+    Err(E::from(NotImplemented::new(feature.into(), issue.into())))
+}

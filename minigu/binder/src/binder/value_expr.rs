@@ -1,16 +1,17 @@
 use gql_parser::ast::{
-    BinaryOp as AstBinaryOp, BooleanLiteral, Expr, Literal, StringLiteral, StringLiteralKind,
-    UnsignedInteger, UnsignedIntegerKind, UnsignedNumericLiteral, Value,
+    BinaryOp, BooleanLiteral, Expr, Literal, StringLiteral, StringLiteralKind, UnsignedInteger,
+    UnsignedIntegerKind, UnsignedNumericLiteral, Value,
 };
 use minigu_common::constants::SESSION_USER;
 use minigu_common::data_type::LogicalType;
+use minigu_common::error::not_implemented;
 use minigu_common::value::ScalarValue;
-use minigu_ir::bound::{BinaryOp, BoundExpr};
+use minigu_ir::bound::{BoundBinaryOp, BoundExpr};
 
 use super::Binder;
-use crate::error::{BindError, BindResult, not_implemented};
+use crate::error::{BindError, BindResult};
 
-impl Binder {
+impl Binder<'_> {
     pub fn bind_value_expression(&self, expr: &Expr) -> BindResult<BoundExpr> {
         match expr {
             Expr::Binary { .. } => not_implemented("binary expression", None),
@@ -21,11 +22,13 @@ impl Binder {
             Expr::Function(_) => not_implemented("function expression", None),
             Expr::Aggregate(_) => not_implemented("aggregate expression", None),
             Expr::Variable(variable) => {
-                let expr = self
+                let mut expr = self
                     .context
                     .get(variable)
-                    .ok_or_else(|| BindError::VariableNotFound(variable.clone()))?;
-                Ok(expr.clone())
+                    .ok_or_else(|| BindError::VariableNotFound(variable.clone()))?
+                    .clone();
+                expr.name = variable.to_string();
+                Ok(expr)
             }
             Expr::Value(value) => bind_value(value),
             Expr::Path(_) => not_implemented("path expression", None),
@@ -35,22 +38,22 @@ impl Binder {
     }
 }
 
-pub fn bind_binary_op(op: &AstBinaryOp) -> BinaryOp {
+pub fn bind_binary_op(op: &BinaryOp) -> BoundBinaryOp {
     match op {
-        AstBinaryOp::Add => BinaryOp::Add,
-        AstBinaryOp::Sub => BinaryOp::Sub,
-        AstBinaryOp::Mul => BinaryOp::Mul,
-        AstBinaryOp::Div => BinaryOp::Div,
-        AstBinaryOp::Concat => BinaryOp::Concat,
-        AstBinaryOp::Or => BinaryOp::Or,
-        AstBinaryOp::Xor => BinaryOp::Xor,
-        AstBinaryOp::And => BinaryOp::And,
-        AstBinaryOp::Lt => BinaryOp::Lt,
-        AstBinaryOp::Le => BinaryOp::Le,
-        AstBinaryOp::Gt => BinaryOp::Gt,
-        AstBinaryOp::Ge => BinaryOp::Ge,
-        AstBinaryOp::Eq => BinaryOp::Eq,
-        AstBinaryOp::Ne => BinaryOp::Ne,
+        BinaryOp::Add => BoundBinaryOp::Add,
+        BinaryOp::Sub => BoundBinaryOp::Sub,
+        BinaryOp::Mul => BoundBinaryOp::Mul,
+        BinaryOp::Div => BoundBinaryOp::Div,
+        BinaryOp::Concat => BoundBinaryOp::Concat,
+        BinaryOp::Or => BoundBinaryOp::Or,
+        BinaryOp::Xor => BoundBinaryOp::Xor,
+        BinaryOp::And => BoundBinaryOp::And,
+        BinaryOp::Lt => BoundBinaryOp::Lt,
+        BinaryOp::Le => BoundBinaryOp::Le,
+        BinaryOp::Gt => BoundBinaryOp::Gt,
+        BinaryOp::Ge => BoundBinaryOp::Ge,
+        BinaryOp::Eq => BoundBinaryOp::Eq,
+        BinaryOp::Ne => BoundBinaryOp::Ne,
     }
 }
 

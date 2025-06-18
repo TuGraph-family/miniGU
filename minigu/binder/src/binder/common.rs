@@ -4,18 +4,21 @@ use gql_parser::ast::{
     GraphPattern, GraphPatternBindingTable, MatchMode, PathMode, PathPattern, PathPatternExpr,
     PathPatternPrefix,
 };
+use minigu_common::error::not_implemented;
 use minigu_ir::bound::{
     BoundGraphPattern, BoundMatchMode, BoundPathMode, BoundPathPattern, BoundPathPatternExpr,
 };
 
 use crate::binder::Binder;
-use crate::error::{BindResult, not_implemented};
+use crate::error::BindResult;
 
-impl Binder {
+impl Binder<'_> {
     pub fn bind_graph_pattern_binding_table(
         &mut self,
         table: &GraphPatternBindingTable,
-    ) -> BindResult<()> {
+    ) -> BindResult<BoundGraphPattern> {
+        let graph = self.bind_graph_pattern(table.pattern.value())?;
+
         todo!()
     }
 

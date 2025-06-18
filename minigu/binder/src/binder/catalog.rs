@@ -11,7 +11,7 @@ use minigu_ir::bound::{
 use super::Binder;
 use crate::error::BindResult;
 
-impl Binder {
+impl Binder<'_> {
     pub fn bind_catalog_modifying_statement(
         &mut self,
         statement: &CatalogModifyingStatement,

@@ -1,10 +1,11 @@
 use gql_parser::ast::GraphExpr;
+use minigu_common::error::not_implemented;
 use minigu_ir::named_ref::NamedGraphRef;
 
 use crate::binder::Binder;
-use crate::error::{BindError, BindResult, not_implemented};
+use crate::error::{BindError, BindResult};
 
-impl Binder {
+impl Binder<'_> {
     pub fn bind_graph_expr(&self, expr: &GraphExpr) -> BindResult<NamedGraphRef> {
         match expr {
             GraphExpr::Name(_) => not_implemented("graph expression from name", None),

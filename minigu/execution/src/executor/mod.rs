@@ -32,6 +32,8 @@ use crate::error::ExecutionResult;
 use crate::evaluator::BoxedEvaluator;
 use crate::source::{ExpandSource, VertexPropertySource};
 
+pub type BoxedExecutor = Box<dyn Executor>;
+
 /// A trait for pull-based vectorized volcano executors.
 ///
 /// This is generally equivalent to `Iterator<Item = ExecutionResult<DataChunk>>`. To avoid naming

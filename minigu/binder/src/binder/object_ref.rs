@@ -3,12 +3,13 @@ use gql_parser::ast::{
     SchemaRef as AstSchemaRef,
 };
 use minigu_catalog::provider::{CatalogProvider, DirectoryOrSchema, SchemaRef};
+use minigu_common::error::not_implemented;
 use minigu_ir::named_ref::{NamedGraphRef, NamedProcedureRef};
 
 use super::Binder;
-use crate::error::{BindError, BindResult, not_implemented};
+use crate::error::{BindError, BindResult};
 
-impl Binder {
+impl Binder<'_> {
     pub fn bind_schema_ref(&self, schema_ref: &AstSchemaRef) -> BindResult<SchemaRef> {
         match schema_ref {
             AstSchemaRef::Absolute(path) => self.bind_absolute_schema_path(path),
@@ -21,7 +22,7 @@ impl Binder {
     }
 
     pub fn bind_absolute_schema_path(&self, schema_path: &SchemaPath) -> BindResult<SchemaRef> {
-        bind_absolute_schema_path(self.catalog.as_ref(), schema_path)
+        bind_absolute_schema_path(self.catalog, schema_path)
     }
 
     pub fn bind_relative_schema_path(&self, schema_path: &SchemaPath) -> BindResult<SchemaRef> {

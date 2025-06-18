@@ -1,15 +1,25 @@
+use std::sync::Arc;
+
 use gql_parser::ast::{
-    AmbientLinearQueryStatement, CompositeQueryStatement, FocusedLinearQueryStatement, FocusedLinearQueryStatementPart, GraphPattern, GraphPatternBindingTable, LinearQueryStatement, MatchStatement, OrderByAndPageStatement, QueryConjunction as AstQueryConjunction, ResultStatement, Return, ReturnStatement, SetOp as AstSetOp, SetOpKind as AstSetOpKind, SetQuantifier as AstSetQuantifier, SimpleQueryStatement
+    AmbientLinearQueryStatement, CompositeQueryStatement, FocusedLinearQueryStatement,
+    FocusedLinearQueryStatementPart, GraphPattern, GraphPatternBindingTable, LinearQueryStatement,
+    MatchStatement, OrderByAndPageStatement, QueryConjunction, ResultStatement, Return,
+    ReturnStatement, SetOp, SetOpKind, SetQuantifier, SimpleQueryStatement,
 };
 use itertools::Itertools;
+use minigu_common::data_type::{DataField, DataSchema};
+use minigu_common::error::not_implemented;
 use minigu_ir::bound::{
-    BoundCompositeQueryStatement, BoundExpr, BoundGraphPattern, BoundLinearQueryStatement, BoundOrderByAndPageStatement, BoundResultStatement, BoundReturnStatement, BoundSimpleQueryStatement, QueryConjunction, SetOp, SetOpKind, SetQuantifier
+    BoundCompositeQueryStatement, BoundExpr, BoundGraphPattern, BoundLinearQueryStatement,
+    BoundOrderByAndPageStatement, BoundQueryConjunction, BoundResultStatement,
+    BoundReturnStatement, BoundSetOp, BoundSetOpKind, BoundSetQuantifier,
+    BoundSimpleQueryStatement,
 };
 
 use super::Binder;
-use crate::error::{BindResult, not_implemented};
+use crate::error::BindResult;
 
-impl Binder {
+impl Binder<'_> {
     pub fn bind_composite_query_statement(
         &mut self,
         statement: &CompositeQueryStatement,
@@ -113,7 +123,10 @@ impl Binder {
     ) -> BindResult<BoundSimpleQueryStatement> {
         match statement {
             SimpleQueryStatement::Match(statement) => todo!(),
-            SimpleQueryStatement::Call(statement) => todo!(),
+            SimpleQueryStatement::Call(statement) => {
+                let statement = self.bind_call_procedure_statement(statement)?;
+                Ok(BoundSimpleQueryStatement::Call(statement))
+            }
             SimpleQueryStatement::OrderByAndPage(statement) => todo!(),
         }
     }
@@ -157,21 +170,32 @@ impl Binder {
             .as_ref()
             .map(|q| bind_set_quantifier(q.value()));
         let items = self.bind_return(statement.items.value())?;
+        let fields = items
+            .iter()
+            .map(|e| DataField::new(e.name.clone(), e.logical_type.clone(), false))
+            .collect();
+        let schema = Arc::new(DataSchema::new(fields));
         // TODO: Implement GROUP BY
-        // Ok(BoundReturnStatement { quantifier, items })
-        todo!()
+        Ok(BoundReturnStatement {
+            quantifier,
+            items,
+            schema,
+        })
     }
 
     pub fn bind_return(&mut self, ret: &Return) -> BindResult<Vec<BoundExpr>> {
         match ret {
             Return::Items(items) => {
+                let mut exprs = Vec::new();
                 for item in items {
                     let item = item.value();
                     let expr = self.bind_value_expression(item.value.value())?;
+                    // TODO: Handle item alias
+                    exprs.push(expr);
                 }
-                todo!()
+                Ok(exprs)
             }
-            Return::All => todo!(),
+            Return::All => Ok(self.context.exprs().cloned().collect()),
         }
     }
 
@@ -183,33 +207,33 @@ impl Binder {
     }
 }
 
-pub fn bind_query_conjunction(conjunction: &AstQueryConjunction) -> BindResult<QueryConjunction> {
+pub fn bind_query_conjunction(conjunction: &QueryConjunction) -> BindResult<BoundQueryConjunction> {
     match conjunction {
-        AstQueryConjunction::SetOp(set_op) => Ok(QueryConjunction::SetOp(bind_set_op(set_op))),
-        AstQueryConjunction::Otherwise => Ok(QueryConjunction::Otherwise),
+        QueryConjunction::SetOp(set_op) => Ok(BoundQueryConjunction::SetOp(bind_set_op(set_op))),
+        QueryConjunction::Otherwise => Ok(BoundQueryConjunction::Otherwise),
     }
 }
 
-pub fn bind_set_op(set_op: &AstSetOp) -> SetOp {
+pub fn bind_set_op(set_op: &SetOp) -> BoundSetOp {
     let kind = bind_set_op_kind(set_op.kind.value());
     let quantifier = set_op
         .quantifier
         .as_ref()
         .map(|q| bind_set_quantifier(q.value()));
-    SetOp { kind, quantifier }
+    BoundSetOp { kind, quantifier }
 }
 
-pub fn bind_set_quantifier(quantifier: &AstSetQuantifier) -> SetQuantifier {
+pub fn bind_set_quantifier(quantifier: &SetQuantifier) -> BoundSetQuantifier {
     match quantifier {
-        AstSetQuantifier::Distinct => SetQuantifier::Distinct,
-        AstSetQuantifier::All => SetQuantifier::All,
+        SetQuantifier::Distinct => BoundSetQuantifier::Distinct,
+        SetQuantifier::All => BoundSetQuantifier::All,
     }
 }
 
-pub fn bind_set_op_kind(kind: &AstSetOpKind) -> SetOpKind {
+pub fn bind_set_op_kind(kind: &SetOpKind) -> BoundSetOpKind {
     match kind {
-        AstSetOpKind::Union => SetOpKind::Union,
-        AstSetOpKind::Except => SetOpKind::Except,
-        AstSetOpKind::Intersect => SetOpKind::Intersect,
+        SetOpKind::Union => BoundSetOpKind::Union,
+        SetOpKind::Except => BoundSetOpKind::Except,
+        SetOpKind::Intersect => BoundSetOpKind::Intersect,
     }
 }

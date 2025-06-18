@@ -10,7 +10,7 @@ mod value_expr;
 use std::mem;
 
 use gql_parser::ast::Procedure;
-use minigu_catalog::provider::{CatalogRef, SchemaRef};
+use minigu_catalog::provider::{CatalogProvider, SchemaRef};
 use minigu_ir::bound::BoundProcedure;
 use minigu_ir::named_ref::NamedGraphRef;
 
@@ -18,8 +18,8 @@ use crate::context::BindContext;
 use crate::error::BindResult;
 
 #[derive(Debug)]
-pub struct Binder {
-    catalog: CatalogRef,
+pub struct Binder<'a> {
+    catalog: &'a dyn CatalogProvider,
     current_schema: Option<SchemaRef>,
     home_schema: Option<SchemaRef>,
     current_graph: Option<NamedGraphRef>,
@@ -27,9 +27,9 @@ pub struct Binder {
     context: BindContext,
 }
 
-impl Binder {
+impl<'a> Binder<'a> {
     pub fn new(
-        catalog: CatalogRef,
+        catalog: &'a dyn CatalogProvider,
         current_schema: Option<SchemaRef>,
         home_schema: Option<SchemaRef>,
         current_graph: Option<NamedGraphRef>,

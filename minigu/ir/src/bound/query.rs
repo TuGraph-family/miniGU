@@ -2,13 +2,13 @@ use minigu_common::data_type::DataSchemaRef;
 use minigu_common::ordering::{NullOrdering, SortOrdering};
 use serde::Serialize;
 
-use super::value_expr::SetQuantifier;
-use crate::bound::{BoundExpr, BoundProcedure};
+use super::value_expr::BoundSetQuantifier;
+use crate::bound::{BoundCallProcedureStatement, BoundExpr, BoundProcedure};
 
 #[derive(Debug, Clone, Serialize)]
 pub enum BoundCompositeQueryStatement {
     Conjunction {
-        conjunction: QueryConjunction,
+        conjunction: BoundQueryConjunction,
         left: Box<BoundCompositeQueryStatement>,
         right: Box<BoundCompositeQueryStatement>,
     },
@@ -54,7 +54,7 @@ pub enum BoundResultStatement {
 impl BoundResultStatement {
     pub fn schema(&self) -> Option<&DataSchemaRef> {
         match self {
-            BoundResultStatement::Return { statement, .. } => Some(statement.schema()),
+            BoundResultStatement::Return { statement, .. } => Some(&statement.schema),
             BoundResultStatement::Finish => None,
         }
     }
@@ -62,17 +62,10 @@ impl BoundResultStatement {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct BoundReturnStatement {
-    pub quantifier: Option<SetQuantifier>,
+    pub quantifier: Option<BoundSetQuantifier>,
     pub items: Vec<BoundExpr>,
     // TODO: Implement GROUP BY
     pub schema: DataSchemaRef,
-}
-
-impl BoundReturnStatement {
-    #[inline]
-    pub fn schema(&self) -> &DataSchemaRef {
-        &self.schema
-    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -89,25 +82,25 @@ pub struct BoundSortSpec {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct BoundSimpleQueryStatement {
-    
+pub enum BoundSimpleQueryStatement {
+    Call(BoundCallProcedureStatement),
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub enum QueryConjunction {
-    SetOp(SetOp),
+pub enum BoundQueryConjunction {
+    SetOp(BoundSetOp),
     Otherwise,
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub enum SetOpKind {
+pub enum BoundSetOpKind {
     Union,
     Except,
     Intersect,
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct SetOp {
-    pub kind: SetOpKind,
-    pub quantifier: Option<SetQuantifier>,
+pub struct BoundSetOp {
+    pub kind: BoundSetOpKind,
+    pub quantifier: Option<BoundSetQuantifier>,
 }

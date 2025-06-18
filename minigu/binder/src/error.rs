@@ -1,11 +1,12 @@
 use std::num::ParseIntError;
 
+use miette::Diagnostic;
 use minigu_catalog::error::CatalogError;
 use minigu_common::error::NotImplemented;
 use smol_str::SmolStr;
 use thiserror::Error;
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Diagnostic)]
 pub enum BindError {
     #[error("catalog error")]
     Catalog(#[from] CatalogError),
@@ -57,14 +58,8 @@ pub enum BindError {
     Unexpected,
 
     #[error(transparent)]
+    #[diagnostic(transparent)]
     NotImplemented(#[from] NotImplemented),
 }
 
 pub type BindResult<T> = std::result::Result<T, BindError>;
-
-pub(crate) fn not_implemented<T>(feature: impl Into<String>, issue: Option<u32>) -> BindResult<T> {
-    Err(BindError::NotImplemented(NotImplemented::new(
-        feature.into(),
-        issue.into(),
-    )))
-}

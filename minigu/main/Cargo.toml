@@ -10,7 +10,9 @@ miette = { workspace = true }
 minigu-binder = { workspace = true }
 minigu-catalog = { workspace = true }
 minigu-common = { workspace = true }
+minigu-context = { workspace = true }
 minigu-execution = { workspace = true }
+minigu-planner = { workspace = true }
 thiserror = { workspace = true }
 
 [lints]

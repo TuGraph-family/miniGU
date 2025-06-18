@@ -18,30 +18,38 @@ pub enum BoundExprKind {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct BoundExpr {
+    pub name: String,
     pub kind: BoundExprKind,
     pub logical_type: LogicalType,
 }
 
 impl BoundExpr {
-    #[inline]
     pub fn column_ref(index: usize, logical_type: LogicalType) -> Self {
         Self {
+            name: format!("_col{0}", index),
             kind: BoundExprKind::ColumnRef(index),
             logical_type,
         }
     }
 
-    #[inline]
     pub fn value(value: ScalarValue, logical_type: LogicalType) -> Self {
         Self {
+            name: format!("{value:?}"),
             kind: BoundExprKind::Value(value),
             logical_type,
+        }
+    }
+
+    pub fn evaluate_scalar(self) -> Option<ScalarValue> {
+        match self.kind {
+            BoundExprKind::Value(value) => Some(value),
+            _ => None,
         }
     }
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub enum BinaryOp {
+pub enum BoundBinaryOp {
     Add,
     Sub,
     Mul,
@@ -59,14 +67,16 @@ pub enum BinaryOp {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub enum UnaryOp {
+pub enum BoundUnaryOp {
     Plus,
     Minus,
     Not,
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub enum SetQuantifier {
+pub enum BoundSetQuantifier {
     Distinct,
     All,
 }
+
+// where Vertex(v) + 1

@@ -3,14 +3,15 @@ use std::sync::Arc;
 use gql_parser::ast::{CallProcedureStatement, NamedProcedureCall, ProcedureCall, YieldItem};
 use itertools::Itertools;
 use minigu_common::data_type::{DataField, DataSchema};
+use minigu_common::error::not_implemented;
 use minigu_ir::bound::{
     BoundCallProcedureStatement, BoundExpr, BoundNamedProcedureCall, BoundProcedureCall,
 };
 
 use super::Binder;
-use crate::error::{BindError, BindResult, not_implemented};
+use crate::error::{BindError, BindResult};
 
-impl Binder {
+impl Binder<'_> {
     pub fn bind_call_procedure_statement(
         &mut self,
         statement: &CallProcedureStatement,

@@ -18,6 +18,7 @@ members = [
     "minigu/execution",
     "minigu/ir",
     "minigu/planner",
+    "minigu/context",
 ]
 resolver = "3"
 
@@ -47,6 +48,7 @@ minigu = { path = "minigu/main" }
 minigu-binder = { path = "minigu/binder" }
 minigu-catalog = { path = "minigu/catalog" }
 minigu-common = { path = "minigu/common" }
+minigu-context = { path = "minigu/context" }
 minigu-execution = { path = "minigu/execution" }
 minigu-ir = { path = "minigu/ir" }
 minigu-planner = { path = "minigu/planner" }
