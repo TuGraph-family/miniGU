@@ -1,5 +1,3 @@
-use std::slice::SliceIndex;
-
 use minigu_common::datatype::types::VertexId;
 
 use crate::error::StorageError;
@@ -47,7 +45,7 @@ impl Iterator for EdgeIter<'_> {
             if self.offset < block.edges.len() {
                 let raw: &OlapStorageEdge = &block.edges[self.offset];
                 // 2.1 Scan next block once scanned empty edge
-                if raw.label_id == 0 && raw.dst_id == 0 && raw.dst_id == 0 {
+                if raw.label_id == 0 && raw.dst_id == 0 {
                     self.offset = 0;
                     self.block_idx += 1;
                     continue;
@@ -107,7 +105,7 @@ impl Iterator for VertexIter<'_> {
         Some(Ok(clone))
     }
 }
-
+#[allow(dead_code)]
 pub struct AdjacencyIterator<'a> {
     pub storage: &'a OlapMvccGraphStorage,
     // Vertex ID
@@ -121,16 +119,14 @@ impl Iterator for AdjacencyIterator<'_> {
     type Item = Result<OlapEdge, StorageError>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let borrow = self.storage.edges.borrow();
+        let _borrow = self.storage.edges.borrow();
 
         while self.block_idx != usize::MAX {
             let temporary = self.storage.edges.borrow();
             let option = temporary.get(self.block_idx);
 
             // Return if none,should not happen
-            if option.is_none() {
-                return None;
-            }
+            let _v = option?;
 
             let block = option.unwrap();
             // Return if tombstone
@@ -157,7 +153,7 @@ impl Iterator for AdjacencyIterator<'_> {
             if self.offset < BLOCK_CAPACITY {
                 let raw: &OlapStorageEdge = &block.edges[self.offset];
                 // Scan next block once scanned empty edge
-                if raw.label_id == 0 && raw.dst_id == 0 && raw.dst_id == 0 {
+                if raw.label_id == 0 && raw.dst_id == 0 {
                     self.offset = 0;
                     self.block_idx = if block.pre_block_index.is_none() {
                         usize::MAX
