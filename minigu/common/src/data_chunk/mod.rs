@@ -3,7 +3,7 @@ pub mod row;
 
 use std::sync::Arc;
 
-use arrow::array::{Array, ArrayRef, AsArray, BooleanArray, RecordBatch};
+use arrow::array::{Array, ArrayRef, AsArray, BooleanArray, RecordBatch, new_empty_array};
 use arrow::compute;
 use itertools::Itertools;
 use row::{RowIndexIter, Rows};
@@ -28,6 +28,19 @@ impl DataChunk {
             columns,
             filter: None,
         }
+    }
+
+    #[inline]
+    pub fn new_empty(schema: &DataSchema) -> Self {
+        let columns = schema
+            .fields()
+            .iter()
+            .map(|f| {
+                let ty = f.ty().to_arrow_data_type();
+                new_empty_array(&ty)
+            })
+            .collect();
+        Self::new(columns)
     }
 
     #[inline]

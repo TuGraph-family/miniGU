@@ -7,10 +7,10 @@ use minigu_common::data_type::{DataSchema, DataSchemaRef};
 use crate::error::Result;
 use crate::metrics::QueryMetrics;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct QueryResult {
     schema: Option<DataSchemaRef>,
-    metrics: QueryMetrics,
+    pub(crate) metrics: QueryMetrics,
     chunks: Vec<DataChunk>,
 }
 

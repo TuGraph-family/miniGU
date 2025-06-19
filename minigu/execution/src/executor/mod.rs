@@ -1,6 +1,7 @@
 pub mod expand;
 pub mod filter;
 pub mod flatten;
+pub mod procedure_call;
 
 // TODO: Implement join executor.
 pub mod join;
@@ -31,6 +32,8 @@ use vertex_property_scan::VertexPropertyScanBuilder;
 use crate::error::ExecutionResult;
 use crate::evaluator::BoxedEvaluator;
 use crate::source::{ExpandSource, VertexPropertySource};
+
+pub type BoxedExecutor = Box<dyn Executor>;
 
 /// A trait for pull-based vectorized volcano executors.
 ///

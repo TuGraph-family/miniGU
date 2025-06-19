@@ -1,0 +1,15 @@
+[package]
+edition.workspace = true
+name = "minigu-planner"
+repository.workspace = true
+version = "0.1.0"
+
+[dependencies]
+itertools = { workspace = true }
+miette = { workspace = true }
+minigu-common = { workspace = true }
+minigu-ir = { workspace = true }
+thiserror = { workspace = true }
+
+[lints]
+workspace = true
