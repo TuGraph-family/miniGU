@@ -62,33 +62,6 @@ impl Session {
             self.closed = true;
         }
         Ok(result)
-        // let catalog = Arc::new(MemoryCatalog::new());
-        // // TODO: Remove the placeholder code.
-        // let program = parse_gql(query)?;
-        // let activity = &program.value().activity;
-        // if let Some(activity) = activity {
-        //     match activity.value() {
-        //         ProgramActivity::Session(session_activity) => todo!(),
-        //         ProgramActivity::Transaction(activity) => {
-        //             if let Some(procedure) = &activity.procedure {
-        //                 let bound =
-        //                     Binder::new(catalog, None, None, None,
-        // None).bind(procedure.value())?;                 println!("{:?}", bound);
-        //             }
-        //         }
-        //     }
-        // }
-        // let col1 = create_array!(Int32, [Some(1), Some(2), None]);
-        // let col2 = create_array!(Utf8, ["a", "b", "c"]);
-        // let chunk = DataChunk::new(vec![col1, col2]);
-        // let schema = DataSchema::new(vec![
-        //     DataField::new("a".to_string(), LogicalType::Int32, true),
-        //     DataField::new("b".to_string(), LogicalType::String, false),
-        // ]);
-        // let metrics = QueryMetrics::default();
-        // Ok(QueryResult::new(Some(Arc::new(schema)), metrics, vec![
-        //     chunk,
-        // ]))
     }
 
     fn handle_session_activity(&self, activity: &SessionActivity) -> Result<QueryResult> {
