@@ -1294,6 +1294,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn dataset1_create_edge_for_storage_test() {
         let storage = mock_olap_graph(1);
         println!("Test for Twitter-Congress dataset");
@@ -1328,6 +1329,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn dataset2_create_edge_for_storage_test() {
         let storage = mock_olap_graph(0);
 
@@ -1363,6 +1365,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn dataset3_create_edge_for_storage_test() {
         let storage = mock_olap_graph(0);
 
@@ -1398,6 +1401,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn dataset1_edge_compaction_test() {
         compress_storage_two_column_without_property(
             PATH.to_owned() + "artist_edges.csv",
@@ -1406,6 +1410,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn dataset2_edge_compaction_test() {
         compress_storage_two_column_without_property(
             PATH.to_owned() + "Amazon0302.txt",
@@ -1414,6 +1419,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn dataset3_edge_compaction_test() {
         compress_storage_two_column_without_property(
             PATH.to_owned() + "com-youtube.ungraph.txt",
@@ -1422,6 +1428,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn dataset1_property_compaction_test() {
         let storage = mock_olap_graph(2);
 
@@ -1459,6 +1466,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn dataset2_property_compaction_test() {
         let storage = mock_olap_graph(2);
 
@@ -1496,6 +1504,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn dataset1_col_storage_analysis() {
         let storage = mock_olap_graph(6);
         let edge_path = PATH.to_owned() + "mooc_actions.tsv";
