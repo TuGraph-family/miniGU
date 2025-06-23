@@ -1,5 +1,5 @@
-use minigu_common::datatype::types::{LabelId, VertexId};
-use minigu_common::datatype::value::PropertyValue;
+use minigu_common::types::{LabelId, VertexId};
+use minigu_common::value::ScalarValue;
 use serde::{Deserialize, Serialize};
 
 use super::properties::PropertyRecord;
@@ -42,13 +42,13 @@ impl Vertex {
         self.is_tombstone
     }
 
-    pub fn set_props(&mut self, indices: &[usize], props: Vec<PropertyValue>) {
+    pub fn set_props(&mut self, indices: &[usize], props: Vec<ScalarValue>) {
         for (&index, prop) in indices.iter().zip(props.into_iter()) {
             self.properties.set_prop(index, prop);
         }
     }
 
-    pub fn properties(&self) -> &Vec<PropertyValue> {
+    pub fn properties(&self) -> &Vec<ScalarValue> {
         self.properties.props()
     }
 }

@@ -1,8 +1,10 @@
 ---
-name: 🙋 Question
+name: "\U0001F64B Question"
 about: I have a question.
 title: "[Question]: "
-labels: ["type: question"]
+labels: ''
+assignees: ''
+
 ---
 
 **Question**
