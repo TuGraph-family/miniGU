@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use dashmap::iter::Iter;
-use minigu_common::datatype::types::VertexId;
+use minigu_common::types::VertexId;
 
 use super::transaction::MemTransaction;
 use crate::error::StorageResult;

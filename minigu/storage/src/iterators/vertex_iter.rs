@@ -1,4 +1,4 @@
-use minigu_common::datatype::types::VertexId;
+use minigu_common::types::VertexId;
 
 use crate::error::StorageResult;
 use crate::iterators::{AdjacencyIteratorTrait, ChunkData};

@@ -2,8 +2,8 @@ use std::sync::{Arc, RwLock, Weak};
 
 use crossbeam_skiplist::SkipSet;
 use dashmap::DashMap;
-use minigu_common::datatype::types::{EdgeId, VertexId};
-use minigu_common::datatype::value::PropertyValue;
+use minigu_common::types::{EdgeId, VertexId};
+use minigu_common::value::ScalarValue;
 
 use super::checkpoint::{CheckpointManager, CheckpointManagerConfig};
 use super::transaction::{MemTransaction, MemTxnManager, TransactionHandle};
@@ -872,7 +872,7 @@ impl MutGraph for MemoryGraph {
         txn: &TransactionHandle,
         vid: VertexId,
         indices: Vec<usize>,
-        props: Vec<PropertyValue>,
+        props: Vec<ScalarValue>,
     ) -> StorageResult<()> {
         // Atomically retrieve the versioned vertex (check existence).
         let entry = self.vertices.get(&vid).ok_or(StorageError::VertexNotFound(
@@ -907,7 +907,7 @@ impl MutGraph for MemoryGraph {
         txn: &TransactionHandle,
         eid: EdgeId,
         indices: Vec<usize>,
-        props: Vec<PropertyValue>,
+        props: Vec<ScalarValue>,
     ) -> StorageResult<()> {
         // Atomically retrieve the versioned edge (check existence).
         let entry = self.edges.get(&eid).ok_or(StorageError::EdgeNotFound(
@@ -966,19 +966,19 @@ fn check_write_conflict(commit_ts: Timestamp, txn: &TransactionHandle) -> Storag
 pub mod tests {
     use std::{env, fs};
 
-    use minigu_common::datatype::types::LabelId;
-    use minigu_common::datatype::value::PropertyValue;
+    use minigu_common::types::LabelId;
+    use minigu_common::value::ScalarValue;
     use {Edge, Vertex};
 
     use super::*;
     use crate::model::properties::PropertyRecord;
     use crate::storage::StorageTransaction;
 
-    const PERSON: LabelId = 1;
-    const FRIEND: LabelId = 1;
-    const FOLLOW: LabelId = 2;
+    const PERSON: LabelId = LabelId::new(1).unwrap();
+    const FRIEND: LabelId = LabelId::new(1).unwrap();
+    const FOLLOW: LabelId = LabelId::new(2).unwrap();
 
-    fn create_vertex(id: VertexId, label_id: LabelId, properties: Vec<PropertyValue>) -> Vertex {
+    fn create_vertex(id: VertexId, label_id: LabelId, properties: Vec<ScalarValue>) -> Vertex {
         Vertex::new(id, label_id, PropertyRecord::new(properties))
     }
 
@@ -987,7 +987,7 @@ pub mod tests {
         src_id: VertexId,
         dst_id: VertexId,
         label_id: LabelId,
-        properties: Vec<PropertyValue>,
+        properties: Vec<ScalarValue>,
     ) -> Edge {
         Edge::new(
             id,
@@ -1073,23 +1073,23 @@ pub mod tests {
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
         let alice = create_vertex(1, PERSON, vec![
-            PropertyValue::String("Alice".into()),
-            PropertyValue::Int(25),
+            ScalarValue::String(Some("Alice".to_string())),
+            ScalarValue::Int32(Some(25)),
         ]);
 
         let bob = create_vertex(2, PERSON, vec![
-            PropertyValue::String("Bob".into()),
-            PropertyValue::Int(28),
+            ScalarValue::String(Some("Bob".to_string())),
+            ScalarValue::Int32(Some(28)),
         ]);
 
         let carol = create_vertex(3, PERSON, vec![
-            PropertyValue::String("Carol".into()),
-            PropertyValue::Int(24),
+            ScalarValue::String(Some("Carol".to_string())),
+            ScalarValue::Int32(Some(24)),
         ]);
 
         let david = create_vertex(4, PERSON, vec![
-            PropertyValue::String("David".into()),
-            PropertyValue::Int(27),
+            ScalarValue::String(Some("David".to_string())),
+            ScalarValue::Int32(Some(27)),
         ]);
 
         // Add vertices to the graph
@@ -1099,22 +1099,22 @@ pub mod tests {
         graph.create_vertex(&txn, david).unwrap();
 
         // Create friend edges
-        let friend1 = create_edge(1, 1, 2, FRIEND, vec![PropertyValue::String(
-            "2020-01-01".into(),
-        )]);
+        let friend1 = create_edge(1, 1, 2, FRIEND, vec![ScalarValue::String(Some(
+            "2020-01-01".to_string(),
+        ))]);
 
-        let friend2 = create_edge(2, 2, 3, FRIEND, vec![PropertyValue::String(
-            "2021-03-15".into(),
-        )]);
+        let friend2 = create_edge(2, 2, 3, FRIEND, vec![ScalarValue::String(Some(
+            "2021-03-15".to_string(),
+        ))]);
 
         // Create follow edges
-        let follow1 = create_edge(3, 1, 3, FOLLOW, vec![PropertyValue::String(
-            "2022-06-01".into(),
-        )]);
+        let follow1 = create_edge(3, 1, 3, FOLLOW, vec![ScalarValue::String(Some(
+            "2022-06-01".to_string(),
+        ))]);
 
-        let follow2 = create_edge(4, 4, 1, FOLLOW, vec![PropertyValue::String(
-            "2022-07-15".into(),
-        )]);
+        let follow2 = create_edge(4, 4, 1, FOLLOW, vec![ScalarValue::String(Some(
+            "2022-07-15".to_string(),
+        ))]);
 
         // Add edges to the graph
         graph.create_edge(&txn, friend1).unwrap();
@@ -1128,22 +1128,22 @@ pub mod tests {
 
     fn create_vertex_eve() -> Vertex {
         create_vertex(5, PERSON, vec![
-            PropertyValue::String("Eve".into()),
-            PropertyValue::Int(24),
+            ScalarValue::String(Some("Eve".to_string())),
+            ScalarValue::Int32(Some(24)),
         ])
     }
 
     fn create_vertex_frank() -> Vertex {
         create_vertex(6, PERSON, vec![
-            PropertyValue::String("Frank".into()),
-            PropertyValue::Int(25),
+            ScalarValue::String(Some("Frank".to_string())),
+            ScalarValue::Int32(Some(25)),
         ])
     }
 
     fn create_edge_alice_to_eve() -> Edge {
-        create_edge(5, 1, 5, FRIEND, vec![PropertyValue::String(
-            "2025-03-31".into(),
-        )])
+        create_edge(5, 1, 5, FRIEND, vec![ScalarValue::String(Some(
+            "2025-03-31".to_string(),
+        ))])
     }
 
     #[test]
@@ -1172,17 +1172,17 @@ pub mod tests {
 
         let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
         let old_v1: Vertex = graph.get_vertex(&txn2, vid1).unwrap();
-        assert_eq!(old_v1.properties()[1], PropertyValue::Int(24));
+        assert_eq!(old_v1.properties()[1], ScalarValue::Int32(Some(24)));
         assert!(
             graph
-                .set_vertex_property(&txn2, vid1, vec![1], vec![PropertyValue::Int(25)])
+                .set_vertex_property(&txn2, vid1, vec![1], vec![ScalarValue::Int32(Some(25))])
                 .is_ok()
         );
         assert!(txn2.commit().is_ok());
 
         let txn3 = graph.begin_transaction(IsolationLevel::Serializable);
         let new_v1: Vertex = graph.get_vertex(&txn3, vid1).unwrap();
-        assert_eq!(new_v1.properties()[1], PropertyValue::Int(25));
+        assert_eq!(new_v1.properties()[1], ScalarValue::Int32(Some(25)));
     }
 
     #[test]
@@ -1298,13 +1298,13 @@ pub mod tests {
 
         let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
         graph
-            .set_vertex_property(&txn2, vid1, vec![0], vec![PropertyValue::Int(25)])
+            .set_vertex_property(&txn2, vid1, vec![0], vec![ScalarValue::Int32(Some(25))])
             .unwrap();
         assert!(txn2.commit().is_ok());
 
         let txn3 = graph.begin_transaction(IsolationLevel::Serializable);
         let v = graph.get_vertex(&txn3, vid1).unwrap();
-        assert_eq!(v.properties()[0], PropertyValue::Int(25));
+        assert_eq!(v.properties()[0], ScalarValue::Int32(Some(25)));
     }
 
     #[test]
@@ -1320,10 +1320,13 @@ pub mod tests {
 
         let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
         {
-            let iter1 = txn2
-                .iter_vertices()
-                .filter_map(|v| v.ok())
-                .filter(|v| v.properties()[0].as_string().unwrap() == "Eve");
+            let iter1 =
+                txn2.iter_vertices()
+                    .filter_map(|v| v.ok())
+                    .filter(|v| match &v.properties()[0] {
+                        ScalarValue::String(Some(name)) => name == "Eve",
+                        _ => false,
+                    });
             let mut count = 0;
             for _ in iter1 {
                 count += 1;
@@ -1331,10 +1334,13 @@ pub mod tests {
             assert_eq!(count, 1);
         }
         {
-            let iter2 = txn2.iter_vertices().filter_map(|v| v.ok()).filter(|v| {
-                v.properties()[1].as_int().unwrap() >= &20
-                    && v.properties()[1].as_int().unwrap() <= &25
-            });
+            let iter2 =
+                txn2.iter_vertices()
+                    .filter_map(|v| v.ok())
+                    .filter(|v| match v.properties()[1] {
+                        ScalarValue::Int32(Some(age)) => (20..=25).contains(&age),
+                        _ => false,
+                    });
             let mut count = 0;
             for _ in iter2 {
                 count += 1;
@@ -1703,7 +1709,7 @@ pub mod tests {
             vid1,   // from Eve
             vid2,   // to Frank
             FRIEND, // label
-            PropertyRecord::new(vec![PropertyValue::String("2023-01-01".into())]),
+            PropertyRecord::new(vec![ScalarValue::String(Some("2023-01-01".to_string()))]),
         );
         let eid1 = graph.create_edge(&txn2, e1.clone()).unwrap();
         assert!(txn2.commit().is_ok());
@@ -1744,8 +1750,10 @@ pub mod tests {
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let vertex1 = Vertex::new(
             1,
-            1,
-            PropertyRecord::new(vec![PropertyValue::String("Before Checkpoint".into())]),
+            LabelId::new(1).unwrap(),
+            PropertyRecord::new(vec![ScalarValue::String(Some(
+                "Before Checkpoint".to_string(),
+            ))]),
         );
 
         graph.create_vertex(&txn1, vertex1.clone()).unwrap();
@@ -1768,8 +1776,10 @@ pub mod tests {
         let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
         let vertex2 = Vertex::new(
             2,
-            1,
-            PropertyRecord::new(vec![PropertyValue::String("After Checkpoint".into())]),
+            LabelId::new(1).unwrap(),
+            PropertyRecord::new(vec![ScalarValue::String(Some(
+                "After Checkpoint".to_string(),
+            ))]),
         );
         graph.create_vertex(&txn2, vertex2.clone()).unwrap();
         txn2.commit().unwrap();
@@ -1800,13 +1810,13 @@ pub mod tests {
         assert_eq!(recovered_vertex1.vid(), vertex1.vid());
         assert_eq!(
             recovered_vertex1.properties()[0],
-            PropertyValue::String("Before Checkpoint".into())
+            ScalarValue::String(Some("Before Checkpoint".to_string()))
         );
 
         assert_eq!(recovered_vertex2.vid(), vertex2.vid());
         assert_eq!(
             recovered_vertex2.properties()[0],
-            PropertyValue::String("After Checkpoint".into())
+            ScalarValue::String(Some("After Checkpoint".to_string()))
         );
     }
 }

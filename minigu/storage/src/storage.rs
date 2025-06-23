@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
-use minigu_common::datatype::types::{EdgeId, VertexId};
-use minigu_common::datatype::value::PropertyValue;
+use minigu_common::types::{EdgeId, VertexId};
+use minigu_common::value::ScalarValue;
 
 use crate::error::StorageResult;
 use crate::memory::transaction::TransactionHandle;
@@ -103,7 +103,7 @@ pub trait MutGraph: Graph {
         txn: &Self::Transaction,
         vid: Self::VertexID,
         indices: Vec<usize>,
-        props: Vec<PropertyValue>,
+        props: Vec<ScalarValue>,
     ) -> StorageResult<()>;
 
     /// Update the properties of an edge within a transaction.
@@ -112,7 +112,7 @@ pub trait MutGraph: Graph {
         txn: &Self::Transaction,
         eid: Self::EdgeID,
         indices: Vec<usize>,
-        props: Vec<PropertyValue>,
+        props: Vec<ScalarValue>,
     ) -> StorageResult<()>;
 }
 

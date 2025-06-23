@@ -59,8 +59,12 @@ fn test_graph_basic_operations() -> StorageResult<()> {
     {
         let mut vertex_count = 0;
         let vertex_iter = txn.iter_vertices().filter_map(|v| v.ok()).filter(|v| {
-            let name = v.properties()[0].as_string().unwrap();
-            name == "Alice" || name == "Bob" || name == "Carol" || name == "Dave"
+            match v.properties()[0].try_as_string() {
+                Some(Some(name)) => {
+                    name == "Alice" || name == "Bob" || name == "Carol" || name == "Dave"
+                }
+                _ => false,
+            }
         });
 
         for _ in vertex_iter {
@@ -133,9 +137,11 @@ fn test_graph_basic_operations() -> StorageResult<()> {
         let vertex_iter = verify_txn
             .iter_vertices()
             .filter_map(|v| v.ok())
-            .filter(|v| {
-                let name = v.properties()[0].as_string().unwrap();
-                name == "Alice" || name == "Bob" || name == "Carol" || name == "Dave"
+            .filter(|v| match v.properties()[0].try_as_string() {
+                Some(Some(name)) => {
+                    name == "Alice" || name == "Bob" || name == "Carol" || name == "Dave"
+                }
+                _ => false,
             });
         for _ in vertex_iter {
             vertex_count += 1;
