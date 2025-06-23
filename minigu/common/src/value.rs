@@ -6,13 +6,18 @@ use arrow::array::{
     UInt64Array,
 };
 use arrow::datatypes::DataType;
+use ordered_float::OrderedFloat;
 use serde::{Deserialize, Serialize};
 
 use crate::types::{EdgeId, LabelId, VertexId};
 
 pub type Nullable<T> = Option<T>;
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+/// A wrapper around floats providing implementations of `Eq` and `Hash`.
+pub type F32 = OrderedFloat<f32>;
+pub type F64 = OrderedFloat<f64>;
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ScalarValue {
     Null,
     Boolean(Nullable<bool>),
@@ -24,8 +29,8 @@ pub enum ScalarValue {
     UInt16(Nullable<u16>),
     UInt32(Nullable<u32>),
     UInt64(Nullable<u64>),
-    Float32(Nullable<f32>),
-    Float64(Nullable<f64>),
+    Float32(Nullable<F32>),
+    Float64(Nullable<F64>),
     String(Nullable<String>),
     Vertex(Nullable<VertexValue>),
     Edge(Nullable<EdgeValue>),
@@ -45,8 +50,12 @@ impl ScalarValue {
             ScalarValue::UInt16(value) => Arc::new(UInt16Array::from_iter([*value])),
             ScalarValue::UInt32(value) => Arc::new(UInt32Array::from_iter([*value])),
             ScalarValue::UInt64(value) => Arc::new(UInt64Array::from_iter([*value])),
-            ScalarValue::Float32(value) => Arc::new(Float32Array::from_iter([*value])),
-            ScalarValue::Float64(value) => Arc::new(Float64Array::from_iter([*value])),
+            ScalarValue::Float32(value) => {
+                Arc::new(Float32Array::from_iter([value.map(|f| f.into_inner())]))
+            }
+            ScalarValue::Float64(value) => {
+                Arc::new(Float64Array::from_iter([value.map(|f| f.into_inner())]))
+            }
             ScalarValue::String(value) => Arc::new(StringArray::from_iter([value])),
             ScalarValue::Vertex(value) => todo!(),
             ScalarValue::Edge(_value) => todo!(),
@@ -54,20 +63,20 @@ impl ScalarValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PropertyValue {
     name: String,
     value: ScalarValue,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct VertexValue {
     id: VertexId,
     label: LabelId,
     properties: Vec<PropertyValue>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct EdgeValue {
     id: EdgeId,
     src: VertexId,
@@ -87,8 +96,8 @@ macro_rules! for_each_non_null_variant {
         $m!(uint16, u16, UInt16);
         $m!(uint32, u32, UInt32);
         $m!(uint64, u64, UInt64);
-        $m!(float32, f32, Float32);
-        $m!(float64, f64, Float64);
+        $m!(float32, F32, Float32);
+        $m!(float64, F64, Float64);
         $m!(string, String, String);
         $m!(vertex_value, VertexValue, Vertex);
         $m!(edge_value, EdgeValue, Edge);
@@ -222,11 +231,17 @@ impl ScalarValueAccessor for dyn Array + '_ {
             }
             DataType::Float32 => {
                 let array: &Float32Array = self.as_primitive();
-                array.is_valid(index).then(|| array.value(index)).into()
+                array
+                    .is_valid(index)
+                    .then(|| OrderedFloat(array.value(index)))
+                    .into()
             }
             DataType::Float64 => {
                 let array: &Float64Array = self.as_primitive();
-                array.is_valid(index).then(|| array.value(index)).into()
+                array
+                    .is_valid(index)
+                    .then(|| OrderedFloat(array.value(index)))
+                    .into()
             }
             DataType::Utf8 => {
                 let array: &StringArray = self.as_string();
