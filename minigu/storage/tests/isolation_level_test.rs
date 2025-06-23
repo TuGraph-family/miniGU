@@ -2,7 +2,7 @@ mod common;
 use std::thread;
 
 use common::*;
-use minigu_common::datatype::value::PropertyValue;
+use minigu_common::value::ScalarValue;
 use minigu_storage::model::edge::Edge;
 use minigu_storage::model::properties::PropertyRecord;
 use minigu_storage::model::vertex::Vertex;
@@ -17,17 +17,17 @@ fn test_serializable_prevents_dirty_read_vertex() {
     // Transaction 1 reads the vertex
     let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
     let alice_v1 = graph.get_vertex(&txn1, 1).unwrap();
-    assert_eq!(alice_v1.properties()[1], PropertyValue::Int(25));
+    assert_eq!(alice_v1.properties()[1], ScalarValue::Int32(Some(25)));
 
     // Transaction 2 modifies the vertex but does not commit
     let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
     graph
-        .set_vertex_property(&txn2, 1, vec![1], vec![PropertyValue::Int(26)])
+        .set_vertex_property(&txn2, 1, vec![1], vec![ScalarValue::Int32(Some(26))])
         .unwrap();
 
     // Transaction 1 tries to read the vertex
     let alice_v2 = graph.get_vertex(&txn1, 1).unwrap();
-    assert_eq!(alice_v2.properties()[1], PropertyValue::Int(25)); // Should see original value
+    assert_eq!(alice_v2.properties()[1], ScalarValue::Int32(Some(25))); // Should see original value
 
     assert!(txn2.commit().is_ok());
     assert!(txn1.commit().is_err()); // Should fail due to read-write conflict
@@ -42,21 +42,21 @@ fn test_serializable_prevents_dirty_read_edge() {
     let edge_v1 = graph.get_edge(&txn1, 1).unwrap();
     assert_eq!(
         edge_v1.properties()[0],
-        PropertyValue::String("2024-01-01".into())
+        ScalarValue::String(Some("2024-01-01".to_string()))
     );
 
     // Transaction 2 modifies the edge but does not commit
     let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
     graph
-        .set_edge_property(&txn2, 1, vec![0], vec![PropertyValue::String(
-            "2024-02-01".into(),
-        )])
+        .set_edge_property(&txn2, 1, vec![0], vec![ScalarValue::String(Some(
+            "2024-02-01".to_string(),
+        ))])
         .unwrap();
 
     let edge_v2 = graph.get_edge(&txn1, 1).unwrap();
     assert_eq!(
         edge_v2.properties()[0],
-        PropertyValue::String("2024-01-01".into())
+        ScalarValue::String(Some("2024-01-01".to_string()))
     );
 
     assert!(txn2.commit().is_ok());
@@ -77,8 +77,8 @@ fn test_serializable_prevents_dirty_read_new_vertex() {
         3,
         PERSON_LABEL_ID,
         PropertyRecord::new(vec![
-            PropertyValue::String("Carol".into()),
-            PropertyValue::Int(28),
+            ScalarValue::String(Some("Carol".to_string())),
+            ScalarValue::Int32(Some(28)),
         ]),
     );
     graph.create_vertex(&txn2, carol).unwrap();
@@ -98,18 +98,18 @@ fn test_serializable_prevents_non_repeatable_read() {
     // Transaction 1 reads the vertex
     let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
     let alice_v1 = graph.get_vertex(&txn1, 1).unwrap();
-    assert_eq!(alice_v1.properties()[1], PropertyValue::Int(25));
+    assert_eq!(alice_v1.properties()[1], ScalarValue::Int32(Some(25)));
 
     // Transaction 2 modifies and commits
     let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
     graph
-        .set_vertex_property(&txn2, 1, vec![1], vec![PropertyValue::Int(26)])
+        .set_vertex_property(&txn2, 1, vec![1], vec![ScalarValue::Int32(Some(26))])
         .unwrap();
     txn2.commit().unwrap(); // Commit the change
 
     // Second read should return the same value as the first read
     let alice_v2 = graph.get_vertex(&txn1, 1).unwrap();
-    assert_eq!(alice_v2.properties()[1], PropertyValue::Int(25));
+    assert_eq!(alice_v2.properties()[1], ScalarValue::Int32(Some(25)));
 
     assert!(txn1.commit().is_err()); // Should fail due to read-write conflict
 }
@@ -123,15 +123,15 @@ fn test_serializable_prevents_non_repeatable_read_edge() {
     let edge_v1 = graph.get_edge(&txn1, 1).unwrap();
     assert_eq!(
         edge_v1.properties()[0],
-        PropertyValue::String("2024-01-01".into())
+        ScalarValue::String(Some("2024-01-01".to_string()))
     );
 
     // Transaction 2 modifies the edge and commits
     let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
     graph
-        .set_edge_property(&txn2, 1, vec![0], vec![PropertyValue::String(
-            "2024-02-01".into(),
-        )])
+        .set_edge_property(&txn2, 1, vec![0], vec![ScalarValue::String(Some(
+            "2024-02-01".to_string(),
+        ))])
         .unwrap();
     txn2.commit().unwrap();
 
@@ -139,7 +139,7 @@ fn test_serializable_prevents_non_repeatable_read_edge() {
     let edge_v2 = graph.get_edge(&txn1, 1).unwrap();
     assert_eq!(
         edge_v2.properties()[0],
-        PropertyValue::String("2024-01-01".into())
+        ScalarValue::String(Some("2024-01-01".to_string()))
     );
 
     assert!(txn1.commit().is_err()); // Should fail due to read-write conflict
@@ -153,10 +153,13 @@ fn test_serializable_prevents_phantom_read_vertices() {
 
     // Transaction 1 reads vertices within a certain age range
     let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-    let iter1 = txn1.iter_vertices().filter_map(|v| v.ok()).filter(|v| {
-        let age = v.properties()[1].as_int().unwrap();
-        *age >= 25 && *age <= 30
-    });
+    let iter1 = txn1
+        .iter_vertices()
+        .filter_map(|v| v.ok())
+        .filter(|v| match v.properties()[1] {
+            ScalarValue::Int32(Some(age)) => (25..=30).contains(&age),
+            _ => false,
+        });
     let count1: usize = iter1.count();
     assert_eq!(count1, 2); // Alice (25) and Bob (30)
 
@@ -166,18 +169,21 @@ fn test_serializable_prevents_phantom_read_vertices() {
         3,
         PERSON_LABEL_ID,
         PropertyRecord::new(vec![
-            PropertyValue::String("Carol".into()),
-            PropertyValue::Int(27),
+            ScalarValue::String(Some("Carol".to_string())),
+            ScalarValue::Int32(Some(27)),
         ]),
     );
     graph.create_vertex(&txn2, carol).unwrap();
     txn2.commit().unwrap();
 
     // Second query, should return the same result (prevent phantom read)
-    let iter2 = txn1.iter_vertices().filter_map(|v| v.ok()).filter(|v| {
-        let age = v.properties()[1].as_int().unwrap();
-        *age >= 25 && *age <= 30
-    });
+    let iter2 = txn1
+        .iter_vertices()
+        .filter_map(|v| v.ok())
+        .filter(|v| match v.properties()[1] {
+            ScalarValue::Int32(Some(age)) => (25..=30).contains(&age),
+            _ => false,
+        });
     let count2: usize = iter2.count();
     assert_eq!(count2, 2); // Still 2 results, Carol is not visible
 
@@ -204,7 +210,7 @@ fn test_serializable_prevents_phantom_read_edges() {
         2,
         1,
         FRIEND_LABEL_ID,
-        PropertyRecord::new(vec![PropertyValue::String("2024-03-01".into())]),
+        PropertyRecord::new(vec![ScalarValue::String(Some("2024-03-01".to_string()))]),
     );
     graph.create_edge(&txn2, new_friend_edge).unwrap();
     txn2.commit().unwrap();
@@ -231,13 +237,13 @@ fn test_serializable_write_write_conflict_vertex() {
 
     // Transaction 1 modifies the vertex
     graph
-        .set_vertex_property(&txn1, 1, vec![1], vec![PropertyValue::Int(26)])
+        .set_vertex_property(&txn1, 1, vec![1], vec![ScalarValue::Int32(Some(26))])
         .unwrap();
 
     // Transaction 2 tries to modify the same vertex, should fail
     assert!(
         graph
-            .set_vertex_property(&txn2, 1, vec![1], vec![PropertyValue::Int(27)])
+            .set_vertex_property(&txn2, 1, vec![1], vec![ScalarValue::Int32(Some(27))])
             .is_err()
     );
 
@@ -254,17 +260,17 @@ fn test_serializable_write_write_conflict_edge() {
 
     // Transaction 1 modifies the edge
     graph
-        .set_edge_property(&txn1, 1, vec![0], vec![PropertyValue::String(
-            "2024-02-01".into(),
-        )])
+        .set_edge_property(&txn1, 1, vec![0], vec![ScalarValue::String(Some(
+            "2024-02-01".to_string(),
+        ))])
         .unwrap();
 
     // Transaction 2 tries to modify the same edge, should fail
     assert!(
         graph
-            .set_edge_property(&txn2, 1, vec![0], vec![PropertyValue::String(
-                "2024-03-01".into()
-            )])
+            .set_edge_property(&txn2, 1, vec![0], vec![ScalarValue::String(Some(
+                "2024-03-01".to_string(),
+            ))])
             .is_err()
     );
 
@@ -283,7 +289,7 @@ fn test_serializable_delete_vertex_conflict() {
 
     // Transaction 1 modifies the vertex
     graph
-        .set_vertex_property(&txn1, 1, vec![1], vec![PropertyValue::Int(26)])
+        .set_vertex_property(&txn1, 1, vec![1], vec![ScalarValue::Int32(Some(26))])
         .unwrap();
 
     // Transaction 2 tries to delete the same vertex, should fail
@@ -302,9 +308,9 @@ fn test_serializable_delete_edge_conflict() {
 
     // Transaction 1 modifies the edge
     graph
-        .set_edge_property(&txn1, 1, vec![0], vec![PropertyValue::String(
-            "2024-02-01".into(),
-        )])
+        .set_edge_property(&txn1, 1, vec![0], vec![ScalarValue::String(Some(
+            "2024-02-01".to_string(),
+        ))])
         .unwrap();
 
     // Transaction 2 tries to delete the same edge, should fail
@@ -322,7 +328,10 @@ fn test_serializable_read_deleted_vertex() {
 
     // First read of the vertex
     let alice = graph.get_vertex(&txn1, 1).unwrap();
-    assert_eq!(alice.properties()[0], PropertyValue::String("Alice".into()));
+    assert_eq!(
+        alice.properties()[0],
+        ScalarValue::String(Some("Alice".to_string()))
+    );
 
     // Transaction 2 deletes the vertex
     let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
@@ -333,7 +342,7 @@ fn test_serializable_read_deleted_vertex() {
     let alice_again = graph.get_vertex(&txn1, 1).unwrap();
     assert_eq!(
         alice_again.properties()[0],
-        PropertyValue::String("Alice".into())
+        ScalarValue::String(Some("Alice".to_string()))
     );
 
     txn1.abort().unwrap();
@@ -349,7 +358,7 @@ fn test_serializable_read_deleted_edge() {
     let friend_edge = graph.get_edge(&txn1, 1).unwrap();
     assert_eq!(
         friend_edge.properties()[0],
-        PropertyValue::String("2024-01-01".into())
+        ScalarValue::String(Some("2024-01-01".to_string()))
     );
 
     // Transaction 2 deletes the edge
@@ -361,7 +370,7 @@ fn test_serializable_read_deleted_edge() {
     let friend_edge_again = graph.get_edge(&txn1, 1).unwrap();
     assert_eq!(
         friend_edge_again.properties()[0],
-        PropertyValue::String("2024-01-01".into())
+        ScalarValue::String(Some("2024-01-01".to_string()))
     );
 
     txn1.abort().unwrap();
@@ -386,8 +395,8 @@ fn test_serializable_adjacency_consistency() {
         3,
         PERSON_LABEL_ID,
         PropertyRecord::new(vec![
-            PropertyValue::String("Carol".into()),
-            PropertyValue::Int(28),
+            ScalarValue::String(Some("Carol".to_string())),
+            ScalarValue::Int32(Some(28)),
         ]),
     );
     graph.create_vertex(&txn2, carol).unwrap();
@@ -397,7 +406,7 @@ fn test_serializable_adjacency_consistency() {
         1,
         3,
         FOLLOW_LABEL_ID,
-        PropertyRecord::new(vec![PropertyValue::String("2024-04-01".into())]),
+        PropertyRecord::new(vec![ScalarValue::String(Some("2024-04-01".to_string()))]),
     );
     graph.create_edge(&txn2, new_edge).unwrap();
     txn2.commit().unwrap();
@@ -433,8 +442,8 @@ fn test_serializable_complex_transaction_scenario() {
         4,
         PERSON_LABEL_ID,
         PropertyRecord::new(vec![
-            PropertyValue::String("David".into()),
-            PropertyValue::Int(32),
+            ScalarValue::String(Some("David".to_string())),
+            ScalarValue::Int32(Some(32)),
         ]),
     );
     graph.create_vertex(&txn2, david).unwrap();
@@ -444,7 +453,7 @@ fn test_serializable_complex_transaction_scenario() {
         1,
         4,
         FRIEND_LABEL_ID,
-        PropertyRecord::new(vec![PropertyValue::String("2024-05-01".into())]),
+        PropertyRecord::new(vec![ScalarValue::String(Some("2024-05-01".to_string()))]),
     );
     graph.create_edge(&txn2, friend_edge).unwrap();
     txn2.commit().unwrap();
@@ -472,8 +481,8 @@ fn test_rollback_vertex_creation() {
         3,
         PERSON_LABEL_ID,
         PropertyRecord::new(vec![
-            PropertyValue::String("Carol".into()),
-            PropertyValue::Int(28),
+            ScalarValue::String(Some("Carol".to_string())),
+            ScalarValue::Int32(Some(28)),
         ]),
     );
     graph.create_vertex(&txn1, carol).unwrap();
@@ -498,7 +507,7 @@ fn test_rollback_edge_creation() {
         2,
         1,
         FOLLOW_LABEL_ID,
-        PropertyRecord::new(vec![PropertyValue::String("2024-06-01".into())]),
+        PropertyRecord::new(vec![ScalarValue::String(Some("2024-06-01".to_string()))]),
     );
     graph.create_edge(&txn1, follow_edge).unwrap();
 
@@ -519,7 +528,7 @@ fn test_rollback_property_update() {
 
     // Modify property
     graph
-        .set_vertex_property(&txn1, 1, vec![1], vec![PropertyValue::Int(99)])
+        .set_vertex_property(&txn1, 1, vec![1], vec![ScalarValue::Int32(Some(99))])
         .unwrap();
 
     // Rollback transaction
@@ -528,7 +537,7 @@ fn test_rollback_property_update() {
     // Verify the property has not changed
     let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
     let alice = graph.get_vertex(&txn2, 1).unwrap();
-    assert_eq!(alice.properties()[1], PropertyValue::Int(25)); // Original value
+    assert_eq!(alice.properties()[1], ScalarValue::Int32(Some(25))); // Original value
     txn2.abort().unwrap();
 }
 
@@ -548,8 +557,8 @@ fn test_concurrent_transactions_stress() {
                 100 + i,
                 PERSON_LABEL_ID,
                 PropertyRecord::new(vec![
-                    PropertyValue::String(format!("User{}", i)),
-                    PropertyValue::Int(20 + i as i32),
+                    ScalarValue::String(Some(format!("User{}", i))),
+                    ScalarValue::Int32(Some(20 + i as i32)),
                 ]),
             );
             if graph_clone.create_vertex(&txn, vertex).is_ok() {
@@ -565,7 +574,7 @@ fn test_concurrent_transactions_stress() {
         for i in 0..10 {
             let txn = graph_clone2.begin_transaction(IsolationLevel::Serializable);
             if graph_clone2
-                .set_vertex_property(&txn, 1, vec![1], vec![PropertyValue::Int(30 + i)])
+                .set_vertex_property(&txn, 1, vec![1], vec![ScalarValue::Int32(Some(30 + i))])
                 .is_ok()
             {
                 let _ = txn.commit();
@@ -581,7 +590,7 @@ fn test_concurrent_transactions_stress() {
     // Verify the graph is still consistent
     let txn = graph.begin_transaction(IsolationLevel::Serializable);
     let alice = graph.get_vertex(&txn, 1).unwrap();
-    assert!(alice.properties()[1].as_int().unwrap() >= &25);
+    assert!(alice.properties()[1].try_as_int32().unwrap().unwrap() >= 25);
     txn.abort().unwrap();
 }
 
@@ -598,11 +607,11 @@ fn test_read_only_transaction_consistency_under_concurrent_writes() {
     let initial_bob = graph.get_vertex(&read_txn, 2).unwrap();
     let initial_edge = graph.get_edge(&read_txn, 1).unwrap();
 
-    assert_eq!(initial_alice.properties()[1], PropertyValue::Int(25));
-    assert_eq!(initial_bob.properties()[1], PropertyValue::Int(30));
+    assert_eq!(initial_alice.properties()[1], ScalarValue::Int32(Some(25)));
+    assert_eq!(initial_bob.properties()[1], ScalarValue::Int32(Some(30)));
     assert_eq!(
         initial_edge.properties()[0],
-        PropertyValue::String("2024-01-01".into())
+        ScalarValue::String(Some("2024-01-01".to_string()))
     );
 
     let graph_clone1 = graph.clone();
@@ -614,7 +623,9 @@ fn test_read_only_transaction_consistency_under_concurrent_writes() {
         for i in 0..5 {
             let write_txn = graph_clone1.begin_transaction(IsolationLevel::Serializable);
             if graph_clone1
-                .set_vertex_property(&write_txn, 1, vec![1], vec![PropertyValue::Int(26 + i)])
+                .set_vertex_property(&write_txn, 1, vec![1], vec![ScalarValue::Int32(Some(
+                    26 + i,
+                ))])
                 .is_ok()
             {
                 let _ = write_txn.commit();
@@ -629,7 +640,9 @@ fn test_read_only_transaction_consistency_under_concurrent_writes() {
         for i in 0..5 {
             let write_txn = graph_clone2.begin_transaction(IsolationLevel::Serializable);
             if graph_clone2
-                .set_vertex_property(&write_txn, 2, vec![1], vec![PropertyValue::Int(31 + i)])
+                .set_vertex_property(&write_txn, 2, vec![1], vec![ScalarValue::Int32(Some(
+                    31 + i,
+                ))])
                 .is_ok()
             {
                 let _ = write_txn.commit();
@@ -646,9 +659,9 @@ fn test_read_only_transaction_consistency_under_concurrent_writes() {
 
             // Update edge property
             if graph_clone3
-                .set_edge_property(&write_txn, 1, vec![0], vec![PropertyValue::String(
+                .set_edge_property(&write_txn, 1, vec![0], vec![ScalarValue::String(Some(
                     format!("2024-0{}-01", i + 2),
-                )])
+                ))])
                 .is_ok()
             {
                 // Create new vertex
@@ -656,8 +669,8 @@ fn test_read_only_transaction_consistency_under_concurrent_writes() {
                     10 + i as u64,
                     PERSON_LABEL_ID,
                     PropertyRecord::new(vec![
-                        PropertyValue::String(format!("User{}", i)),
-                        PropertyValue::Int(20 + i),
+                        ScalarValue::String(Some(format!("User{}", i))),
+                        ScalarValue::Int32(Some(20 + i)),
                     ]),
                 );
                 if graph_clone3.create_vertex(&write_txn, new_vertex).is_ok() {
@@ -677,11 +690,11 @@ fn test_read_only_transaction_consistency_under_concurrent_writes() {
     let mid_edge = graph.get_edge(&read_txn, 1).unwrap();
 
     // Values should be identical to initial reads (consistent snapshot)
-    assert_eq!(mid_alice.properties()[1], PropertyValue::Int(25));
-    assert_eq!(mid_bob.properties()[1], PropertyValue::Int(30));
+    assert_eq!(mid_alice.properties()[1], ScalarValue::Int32(Some(25)));
+    assert_eq!(mid_bob.properties()[1], ScalarValue::Int32(Some(30)));
     assert_eq!(
         mid_edge.properties()[0],
-        PropertyValue::String("2024-01-01".into())
+        ScalarValue::String(Some("2024-01-01".to_string()))
     );
 
     // Wait for all writers to complete
@@ -694,11 +707,11 @@ fn test_read_only_transaction_consistency_under_concurrent_writes() {
     let final_bob = graph.get_vertex(&read_txn, 2).unwrap();
     let final_edge = graph.get_edge(&read_txn, 1).unwrap();
 
-    assert_eq!(final_alice.properties()[1], PropertyValue::Int(25));
-    assert_eq!(final_bob.properties()[1], PropertyValue::Int(30));
+    assert_eq!(final_alice.properties()[1], ScalarValue::Int32(Some(25)));
+    assert_eq!(final_bob.properties()[1], ScalarValue::Int32(Some(30)));
     assert_eq!(
         final_edge.properties()[0],
-        PropertyValue::String("2024-01-01".into())
+        ScalarValue::String(Some("2024-01-01".to_string()))
     );
 
     // New vertices created by writers should not be visible
@@ -719,8 +732,14 @@ fn test_read_only_transaction_consistency_under_concurrent_writes() {
     let updated_bob = graph.get_vertex(&verify_txn, 2).unwrap();
 
     // Should see the updated values now
-    assert!(updated_alice.properties()[1].as_int().unwrap() > &25);
-    assert!(updated_bob.properties()[1].as_int().unwrap() > &30);
+    assert!(
+        updated_alice.properties()[1]
+            .try_as_int32()
+            .unwrap()
+            .unwrap()
+            > 25
+    );
+    assert!(updated_bob.properties()[1].try_as_int32().unwrap().unwrap() > 30);
 
     verify_txn.abort().unwrap();
 }
@@ -746,8 +765,8 @@ fn test_transaction_panic_during_vertex_creation() {
             100,
             PERSON_LABEL_ID,
             PropertyRecord::new(vec![
-                PropertyValue::String("PanicVertex".into()),
-                PropertyValue::Int(99),
+                ScalarValue::String(Some("PanicVertex".to_string())),
+                ScalarValue::Int32(Some(99)),
             ]),
         );
         graph_clone.create_vertex(&txn, vertex).unwrap();
@@ -786,7 +805,7 @@ fn test_transaction_panic_during_property_update() {
 
         // Update Alice's age
         graph_clone
-            .set_vertex_property(&txn, 1, vec![1], vec![PropertyValue::Int(999)])
+            .set_vertex_property(&txn, 1, vec![1], vec![ScalarValue::Int32(Some(999))])
             .unwrap();
 
         // Simulate panic before commit

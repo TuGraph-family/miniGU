@@ -1,8 +1,8 @@
 use std::fs;
 use std::sync::Arc;
 
-use minigu_common::datatype::types::{EdgeId, LabelId, VertexId};
-use minigu_common::datatype::value::PropertyValue;
+use minigu_common::types::{EdgeId, LabelId, VertexId};
+use minigu_common::value::ScalarValue;
 use minigu_storage::memory::checkpoint::CheckpointManagerConfig;
 use minigu_storage::model::edge::Edge;
 use minigu_storage::model::properties::PropertyRecord;
@@ -10,9 +10,9 @@ use minigu_storage::model::vertex::Vertex;
 use minigu_storage::wal::graph_wal::WalManagerConfig;
 use minigu_storage::{IsolationLevel, MemoryGraph, MutGraph, StorageTransaction};
 
-pub const PERSON_LABEL_ID: LabelId = 0;
-pub const FRIEND_LABEL_ID: LabelId = 1;
-pub const FOLLOW_LABEL_ID: LabelId = 2;
+pub const PERSON_LABEL_ID: LabelId = LabelId::new(1).unwrap();
+pub const FRIEND_LABEL_ID: LabelId = LabelId::new(1).unwrap();
+pub const FOLLOW_LABEL_ID: LabelId = LabelId::new(2).unwrap();
 
 pub struct TestCleaner {
     wal_path: std::path::PathBuf,
@@ -80,8 +80,8 @@ pub fn create_test_graph() -> (Arc<MemoryGraph>, TestCleaner) {
         1,
         PERSON_LABEL_ID,
         PropertyRecord::new(vec![
-            PropertyValue::String("Alice".into()),
-            PropertyValue::Int(25),
+            ScalarValue::String(Some("Alice".to_string())),
+            ScalarValue::Int32(Some(25)),
         ]),
     );
 
@@ -89,8 +89,8 @@ pub fn create_test_graph() -> (Arc<MemoryGraph>, TestCleaner) {
         2,
         PERSON_LABEL_ID,
         PropertyRecord::new(vec![
-            PropertyValue::String("Bob".into()),
-            PropertyValue::Int(30),
+            ScalarValue::String(Some("Bob".to_string())),
+            ScalarValue::Int32(Some(30)),
         ]),
     );
 
@@ -102,7 +102,7 @@ pub fn create_test_graph() -> (Arc<MemoryGraph>, TestCleaner) {
         1,
         2,
         FRIEND_LABEL_ID,
-        PropertyRecord::new(vec![PropertyValue::String("2024-01-01".into())]),
+        PropertyRecord::new(vec![ScalarValue::String(Some("2024-01-01".to_string()))]),
     );
 
     graph.create_edge(&txn, friend_edge).unwrap();
@@ -117,8 +117,8 @@ pub fn create_test_vertex(id: VertexId, name: &str, age: i32) -> Vertex {
         id,
         PERSON_LABEL_ID,
         PropertyRecord::new(vec![
-            PropertyValue::String(name.into()),
-            PropertyValue::Int(age),
+            ScalarValue::String(Some(name.to_string())),
+            ScalarValue::Int32(Some(age)),
         ]),
     )
 }
@@ -130,6 +130,6 @@ pub fn create_test_edge(id: EdgeId, from: VertexId, to: VertexId, relation: Labe
         from,
         to,
         relation,
-        PropertyRecord::new(vec![PropertyValue::String("2024-01-01".into())]),
+        PropertyRecord::new(vec![ScalarValue::String(Some("2024-01-01".to_string()))]),
     )
 }
