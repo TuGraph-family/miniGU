@@ -32,6 +32,7 @@ use vertex_property_scan::VertexPropertyScanBuilder;
 
 use crate::error::ExecutionResult;
 use crate::evaluator::BoxedEvaluator;
+use crate::executor::limit::LimitBuilder;
 use crate::source::{ExpandSource, VertexPropertySource};
 
 /// A trait for pull-based vectorized volcano executors.
@@ -108,6 +109,7 @@ pub trait Executor {
     {
         ProjectBuilder::new(self, evaluators).into_executor()
     }
+
     fn aggregate(
         self,
         aggregate_specs: Vec<AggregateSpec>,
@@ -124,6 +126,13 @@ pub trait Executor {
             output_expressions,
         )
         .into_executor()
+    }
+
+    fn limit(self, limit: usize) -> impl Executor
+    where
+        Self: Sized,
+    {
+        LimitBuilder::new(self, limit).into_executor()
     }
 }
 
