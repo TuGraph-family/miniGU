@@ -31,6 +31,7 @@ use vertex_property_scan::VertexPropertyScanBuilder;
 
 use crate::error::ExecutionResult;
 use crate::evaluator::BoxedEvaluator;
+use crate::executor::limit::LimitBuilder;
 use crate::source::{ExpandSource, VertexPropertySource};
 
 pub type BoxedExecutor = Box<dyn Executor>;
@@ -108,6 +109,13 @@ pub trait Executor {
         Self: Sized,
     {
         ProjectBuilder::new(self, evaluators).into_executor()
+    }
+
+    fn limit(self, limit: usize) -> impl Executor
+    where
+        Self: Sized,
+    {
+        LimitBuilder::new(self, limit).into_executor()
     }
 }
 

@@ -1,5 +1,3 @@
-use std::fmt;
-
 use arrow::util::display::{ArrayFormatter, FormatOptions};
 use itertools::Itertools;
 use tabled::builder::Builder;
@@ -73,6 +71,14 @@ pub struct TableBuilder {
 #[derive(Debug)]
 enum TableBuilderInner {
     Tabled(Builder),
+    Csv {
+        rows: Vec<Vec<String>>,
+        delimiter: u8,
+    },
+    Json {
+        rows: Vec<serde_json::Value>,
+        col_schema: Vec<Vec<String>>,
+    },
 }
 
 impl TableBuilderInner {
@@ -88,6 +94,22 @@ impl TableBuilderInner {
                 });
                 builder.push_record(header);
             }
+            TableBuilderInner::Csv { rows, .. } => {
+                let header: Vec<String> = schema
+                    .fields()
+                    .iter()
+                    .map(|f| f.name().to_string())
+                    .collect();
+                rows.push(header);
+            }
+            TableBuilderInner::Json { col_schema, .. } => {
+                let header = schema
+                    .fields()
+                    .iter()
+                    .map(|f| f.name().to_string())
+                    .collect();
+                col_schema.push(header);
+            }
         }
     }
 
@@ -100,12 +122,60 @@ impl TableBuilderInner {
                     .iter()
                     .map(|c| {
                         ArrayFormatter::try_new(c, &options)
-                            .expect("column should be able to be formatted")
+                            .expect("Column should be able to be formatted")
                     })
                     .collect_vec();
                 for row in chunk.rows() {
                     let index = row.row_index();
                     builder.push_record(formatters.iter().map(|f| f.value(index).to_string()));
+                }
+            }
+            TableBuilderInner::Csv { rows, .. } => {
+                let options = FormatOptions::new().with_null(null_str);
+                let formatters: Vec<ArrayFormatter> = chunk
+                    .columns()
+                    .iter()
+                    .map(|c| {
+                        ArrayFormatter::try_new(c, &options)
+                            .expect("Column should be able to be formatted")
+                    })
+                    .collect();
+
+                for row in chunk.rows() {
+                    let index = row.row_index();
+                    let record = formatters
+                        .iter()
+                        .map(|f| f.value(index).to_string())
+                        .collect();
+                    rows.push(record);
+                }
+            }
+            TableBuilderInner::Json { rows, col_schema } => {
+                let options = FormatOptions::new().with_null(null_str);
+                let formatters = chunk
+                    .columns()
+                    .iter()
+                    .map(|c| {
+                        ArrayFormatter::try_new(c, &options)
+                            .expect("Column should be able to be formatted")
+                    })
+                    .collect_vec();
+
+                let field_names = col_schema[0].clone();
+
+                for row in chunk.rows() {
+                    let index = row.row_index();
+                    let mut map = serde_json::Map::new();
+
+                    for (i, f) in formatters.iter().enumerate() {
+                        let field_name = &field_names[i];
+                        map.insert(
+                            field_name.clone(),
+                            serde_json::Value::String(f.value(index).to_string()),
+                        );
+                    }
+
+                    rows.push(serde_json::Value::Object(map));
                 }
             }
         }
@@ -119,7 +189,14 @@ impl TableBuilder {
             TableStyle::Sharp | TableStyle::Modern | TableStyle::Psql | TableStyle::Markdown => {
                 TableBuilderInner::Tabled(Builder::new())
             }
-            _ => todo!(),
+            TableStyle::Csv(delimiter) => TableBuilderInner::Csv {
+                rows: vec![],
+                delimiter,
+            },
+            TableStyle::Json => TableBuilderInner::Json {
+                rows: vec![],
+                col_schema: vec![],
+            },
         };
         let has_header = schema.is_some();
         if let Some(schema) = schema {
@@ -164,18 +241,41 @@ impl TableBuilder {
                     _ => (),
                 }
                 table.with(theme);
-                Table(table)
+                Table::Tabled(Box::new(table))
+            }
+            TableBuilderInner::Csv { rows, delimiter } => {
+                let mut wrt = Vec::new();
+                {
+                    let mut writer = csv::WriterBuilder::new()
+                        .delimiter(delimiter)
+                        .from_writer(&mut wrt);
+                    for row in rows {
+                        writer.write_record(row).unwrap();
+                    }
+                    writer.flush().unwrap();
+                }
+                Table::Csv(String::from_utf8(wrt).unwrap())
+            }
+            TableBuilderInner::Json { rows, .. } => {
+                Table::Json(serde_json::to_string_pretty(&rows).unwrap())
             }
         }
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Table(tabled::Table);
+pub enum Table {
+    Tabled(Box<tabled::Table>),
+    Csv(String),
+    Json(String),
+}
 
-impl fmt::Display for Table {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
+impl std::fmt::Display for Table {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Table::Tabled(t) => write!(f, "{}", t),
+            Table::Csv(s) | Table::Json(s) => write!(f, "{}", s),
+        }
     }
 }
 
@@ -374,5 +474,47 @@ mod tests {
         | 2     | def    |
         | 3     | ghi    |
         ");
+    }
+    #[test]
+    fn test_table_csv() {
+        let schema = build_test_schema();
+        let options = TableOptions::new()
+            .with_style(TableStyle::Csv(b','))
+            .with_type_info(false);
+
+        let table = TableBuilder::new(Some(schema), options)
+            .append_chunk(&build_test_data_chunk())
+            .build();
+        assert_snapshot!(table, @r"
+        a,b
+        2,def
+        3,ghi
+        ");
+    }
+
+    #[test]
+    fn test_table_json() {
+        let schema = build_test_schema();
+        let options = TableOptions::new()
+            .with_style(TableStyle::Json)
+            .with_type_info(false);
+
+        let table = TableBuilder::new(Some(schema), options)
+            .append_chunk(&build_test_data_chunk())
+            .build();
+
+        println!("{}", table);
+        assert_snapshot!(table, @r#"
+[
+  {
+    "a": "2",
+    "b": "def"
+  },
+  {
+    "a": "3",
+    "b": "ghi"
+  }
+]
+        "#);
     }
 }
