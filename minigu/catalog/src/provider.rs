@@ -9,7 +9,6 @@ use crate::error::CatalogResult;
 use crate::label_set::LabelSet;
 use crate::property::Property;
 
-pub type CatalogRef = Arc<dyn CatalogProvider>;
 pub type DirectoryRef = Arc<dyn DirectoryProvider>;
 pub type SchemaRef = Arc<dyn SchemaProvider>;
 pub type GraphRef = Arc<dyn GraphProvider>;

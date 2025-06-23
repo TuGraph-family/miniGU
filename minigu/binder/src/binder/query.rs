@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use gql_parser::ast::{
     AmbientLinearQueryStatement, CompositeQueryStatement, FocusedLinearQueryStatement,
-    FocusedLinearQueryStatementPart, GraphPattern, GraphPatternBindingTable, LinearQueryStatement,
+    FocusedLinearQueryStatementPart, LinearQueryStatement,
     MatchStatement, OrderByAndPageStatement, QueryConjunction, ResultStatement, Return,
     ReturnStatement, SetOp, SetOpKind, SetQuantifier, SimpleQueryStatement,
 };
@@ -10,7 +10,7 @@ use itertools::Itertools;
 use minigu_common::data_type::{DataField, DataSchema};
 use minigu_common::error::not_implemented;
 use minigu_ir::bound::{
-    BoundCompositeQueryStatement, BoundExpr, BoundGraphPattern, BoundLinearQueryStatement,
+    BoundCompositeQueryStatement, BoundExpr, BoundLinearQueryStatement,
     BoundOrderByAndPageStatement, BoundQueryConjunction, BoundResultStatement,
     BoundReturnStatement, BoundSetOp, BoundSetOpKind, BoundSetQuantifier,
     BoundSimpleQueryStatement,

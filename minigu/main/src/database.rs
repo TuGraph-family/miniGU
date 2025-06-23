@@ -13,18 +13,31 @@ use crate::error::Result;
 use crate::procedures::build_predefined_procedures;
 use crate::session::Session;
 
+#[derive(Debug, Clone)]
+pub struct DatabaseConfig {
+    pub num_threads: usize,
+}
+
+impl Default for DatabaseConfig {
+    fn default() -> Self {
+        Self { num_threads: 1 }
+    }
+}
+
 pub struct Database {
     context: Arc<DatabaseContext>,
 }
 
 impl Database {
-    pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
+    pub fn open<P: AsRef<Path>>(_path: P, _config: &DatabaseConfig) -> Result<Self> {
         todo!("on-disk database is not implemented yet")
     }
 
-    pub fn open_in_memory() -> Result<Self> {
+    pub fn open_in_memory(config: &DatabaseConfig) -> Result<Self> {
         let catalog = init_memory_catalog()?;
-        let runtime = ThreadPoolBuilder::new().build()?;
+        let runtime = ThreadPoolBuilder::new()
+            .num_threads(config.num_threads)
+            .build()?;
         let context = Arc::new(DatabaseContext::new(catalog, runtime));
         Ok(Self { context })
     }
