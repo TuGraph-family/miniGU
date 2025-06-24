@@ -126,10 +126,13 @@ mod tests {
         let chunk = data_chunk!(
             (Boolean, [Some(true), None, Some(false), None, None]),
             (Boolean, [Some(true), None, None, Some(true), Some(false)]),
-            (
-                Boolean,
-                [Some(false), Some(true), None, Some(false), Some(false)]
-            )
+            (Boolean, [
+                Some(false),
+                Some(true),
+                None,
+                Some(false),
+                Some(false)
+            ])
         );
         // c0 AND c1 OR c2
         let c0_and_c1_or_c2 = ColumnRef::new(0)

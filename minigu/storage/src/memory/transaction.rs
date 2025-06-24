@@ -448,11 +448,11 @@ impl MemTransaction {
         let _guard = self.graph.txn_manager.commit_lock.lock().unwrap();
 
         // Step 1: Validate serializability if isolution level is Serializable.
-        if let IsolationLevel::Serializable = self.isolation_level
-            && let Err(e) = self.validate_read_sets()
-        {
-            self.abort()?;
-            return Err(e);
+        if let IsolationLevel::Serializable = self.isolation_level {
+            if let Err(e) = self.validate_read_sets() {
+                self.abort()?;
+                return Err(e);
+            }
         }
 
         // Step 2: Assign a commit timestamp (atomic operation).

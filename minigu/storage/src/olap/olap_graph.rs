@@ -240,9 +240,9 @@ impl OlapMvccGraphStorage {
 
             label_ids[0] = edges[0].label_id;
             // 3.3 Build compressed edge block
-            self.compressed_edges.borrow_mut().insert(
-                index,
-                CompressedEdgeBlock {
+            self.compressed_edges
+                .borrow_mut()
+                .insert(index, CompressedEdgeBlock {
                     pre_block_index: edge_block.pre_block_index,
                     cur_block_index: index,
                     max_label_id: edge_block.max_label_id,
@@ -255,8 +255,7 @@ impl OlapMvccGraphStorage {
                     first_dst_id: edge_block.edges[0].dst_id,
                     compressed_dst_ids,
                     label_ids,
-                },
-            )
+                })
         }
         let _ = std::mem::take(&mut *edges_borrow);
     }
@@ -304,14 +303,13 @@ impl OlapMvccGraphStorage {
                     *offset = ones_count;
                 }
 
-                compressed_blocks.blocks.insert(
-                    block_index,
-                    CompressedPropertyBlock {
+                compressed_blocks
+                    .blocks
+                    .insert(block_index, CompressedPropertyBlock {
                         bitmap,
                         offsets,
                         values,
-                    },
-                )
+                    })
             }
             compressed_properties.insert(column_index, compressed_blocks);
         }
@@ -571,12 +569,9 @@ impl MutOlapGraph for OlapMvccGraphStorage {
             let property_block = if let Some(block) = column.blocks.get_mut(vertex.block_offset) {
                 block
             } else {
-                column.blocks.insert(
-                    vertex.block_offset,
-                    PropertyBlock {
-                        values: vec![None; BLOCK_CAPACITY],
-                    },
-                );
+                column.blocks.insert(vertex.block_offset, PropertyBlock {
+                    values: vec![None; BLOCK_CAPACITY],
+                });
                 column.blocks.get_mut(vertex.block_offset).unwrap()
             };
 
@@ -793,17 +788,14 @@ mod tests {
     fn create_vertex_test() {
         let storage = mock_olap_graph(0);
         for i in 1..=289 {
-            let _result = storage.create_vertex(
-                &(),
-                OlapVertex {
-                    vid: (i + 30) as VertexId,
-                    properties: PropertyRecord::new(vec![
-                        ScalarValue::Int32(Some(i + 100)),
-                        ScalarValue::String(Some("hello".to_string())),
-                    ]),
-                    block_offset: 0,
-                },
-            );
+            let _result = storage.create_vertex(&(), OlapVertex {
+                vid: (i + 30) as VertexId,
+                properties: PropertyRecord::new(vec![
+                    ScalarValue::Int32(Some(i + 100)),
+                    ScalarValue::String(Some("hello".to_string())),
+                ]),
+                block_offset: 0,
+            });
         }
 
         let vertices = storage.vertices.borrow();
@@ -832,27 +824,21 @@ mod tests {
         let storage = mock_olap_graph(1);
         // Insert vertex
         for i in 1u32..=5 {
-            let _result = storage.create_vertex(
-                &(),
-                OlapVertex {
-                    vid: i as VertexId,
-                    properties: PropertyRecord::default(),
-                    block_offset: 0,
-                },
-            );
+            let _result = storage.create_vertex(&(), OlapVertex {
+                vid: i as VertexId,
+                properties: PropertyRecord::default(),
+                block_offset: 0,
+            });
 
             for j in 1u32..=(400 - (i - 1) * 10) {
-                let _result1 = storage.create_edge(
-                    &(),
-                    OlapEdge {
-                        label_id: NonZeroU32::new(i * 10000 + j),
-                        src_id: i as u64,
-                        dst_id: ((j - 1) * i) as u64,
-                        properties: OlapPropertyStore::new(vec![Some(ScalarValue::String(Some(
-                            "hello".to_string(),
-                        )))]),
-                    },
-                );
+                let _result1 = storage.create_edge(&(), OlapEdge {
+                    label_id: NonZeroU32::new(i * 10000 + j),
+                    src_id: i as u64,
+                    dst_id: ((j - 1) * i) as u64,
+                    properties: OlapPropertyStore::new(vec![Some(ScalarValue::String(Some(
+                        "hello".to_string(),
+                    )))]),
+                });
             }
         }
 
@@ -873,17 +859,14 @@ mod tests {
     fn get_vertex_test() {
         let storage = mock_olap_graph(0);
         for i in 0..289 {
-            let _result = storage.create_vertex(
-                &(),
-                OlapVertex {
-                    vid: (i + 30) as VertexId,
-                    properties: PropertyRecord::new(vec![
-                        ScalarValue::Int32(Some(i + 100)),
-                        ScalarValue::String(Some("hello".to_string())),
-                    ]),
-                    block_offset: 0,
-                },
-            );
+            let _result = storage.create_vertex(&(), OlapVertex {
+                vid: (i + 30) as VertexId,
+                properties: PropertyRecord::new(vec![
+                    ScalarValue::Int32(Some(i + 100)),
+                    ScalarValue::String(Some("hello".to_string())),
+                ]),
+                block_offset: 0,
+            });
         }
 
         let result1 = storage.get_vertex(&(), 33);
@@ -900,27 +883,21 @@ mod tests {
         let storage = mock_olap_graph(1);
         // Insert vertex
         for i in 1..=5 {
-            let _result = storage.create_vertex(
-                &(),
-                OlapVertex {
-                    vid: i as VertexId,
-                    properties: PropertyRecord::default(),
-                    block_offset: 0,
-                },
-            );
+            let _result = storage.create_vertex(&(), OlapVertex {
+                vid: i as VertexId,
+                properties: PropertyRecord::default(),
+                block_offset: 0,
+            });
 
             for j in 1..=(400 - i * 10) {
-                let _result1 = storage.create_edge(
-                    &(),
-                    OlapEdge {
-                        label_id: NonZeroU32::new(i * 10000 + j),
-                        src_id: i as u64,
-                        dst_id: (j * (i + 1)) as u64,
-                        properties: OlapPropertyStore::new(vec![Some(ScalarValue::String(Some(
-                            "hello".to_string(),
-                        )))]),
-                    },
-                );
+                let _result1 = storage.create_edge(&(), OlapEdge {
+                    label_id: NonZeroU32::new(i * 10000 + j),
+                    src_id: i as u64,
+                    dst_id: (j * (i + 1)) as u64,
+                    properties: OlapPropertyStore::new(vec![Some(ScalarValue::String(Some(
+                        "hello".to_string(),
+                    )))]),
+                });
             }
         }
 
@@ -938,17 +915,14 @@ mod tests {
     fn vertex_iterator_test() {
         let storage = mock_olap_graph(0);
         for i in 0..500 {
-            let _result = storage.create_vertex(
-                &(),
-                OlapVertex {
-                    vid: (i + 30) as VertexId,
-                    properties: PropertyRecord::new(vec![
-                        ScalarValue::Int32(Some(i + 100)),
-                        ScalarValue::String(Some("hello".to_string())),
-                    ]),
-                    block_offset: 0,
-                },
-            );
+            let _result = storage.create_vertex(&(), OlapVertex {
+                vid: (i + 30) as VertexId,
+                properties: PropertyRecord::new(vec![
+                    ScalarValue::Int32(Some(i + 100)),
+                    ScalarValue::String(Some("hello".to_string())),
+                ]),
+                block_offset: 0,
+            });
         }
 
         let mut vertex_iter = storage.iter_vertices(&()).unwrap();
@@ -963,30 +937,24 @@ mod tests {
     fn edge_iterator_test() {
         let storage = mock_olap_graph(1);
         for i in 1i32..=4 {
-            let _result = storage.create_vertex(
-                &(),
-                OlapVertex {
-                    vid: i as VertexId,
-                    properties: PropertyRecord::new(vec![
-                        ScalarValue::Int32(Some(i + 100)),
-                        ScalarValue::String(Some("hello".to_string())),
-                    ]),
-                    block_offset: 0,
-                },
-            );
+            let _result = storage.create_vertex(&(), OlapVertex {
+                vid: i as VertexId,
+                properties: PropertyRecord::new(vec![
+                    ScalarValue::Int32(Some(i + 100)),
+                    ScalarValue::String(Some("hello".to_string())),
+                ]),
+                block_offset: 0,
+            });
 
             for j in 1i32..=(i * 10) {
-                let _result1 = storage.create_edge(
-                    &(),
-                    OlapEdge {
-                        label_id: NonZeroU32::new((i * 10000 + j) as u32),
-                        src_id: i as VertexId,
-                        dst_id: (j * (i + 1)) as VertexId,
-                        properties: OlapPropertyStore::new(vec![Option::from(
-                            ScalarValue::String(Some("hello".to_string())),
-                        )]),
-                    },
-                );
+                let _result1 = storage.create_edge(&(), OlapEdge {
+                    label_id: NonZeroU32::new((i * 10000 + j) as u32),
+                    src_id: i as VertexId,
+                    dst_id: (j * (i + 1)) as VertexId,
+                    properties: OlapPropertyStore::new(vec![Option::from(ScalarValue::String(
+                        Some("hello".to_string()),
+                    ))]),
+                });
             }
         }
 
@@ -1012,27 +980,21 @@ mod tests {
         let storage = mock_olap_graph(1);
 
         for i in 0..10 {
-            let _result = storage.create_vertex(
-                &(),
-                OlapVertex {
-                    vid: i as VertexId,
-                    properties: PropertyRecord::default(),
-                    block_offset: 0,
-                },
-            );
+            let _result = storage.create_vertex(&(), OlapVertex {
+                vid: i as VertexId,
+                properties: PropertyRecord::default(),
+                block_offset: 0,
+            });
 
             for j in 0..(i * 100) {
-                let _result1 = storage.create_edge(
-                    &(),
-                    OlapEdge {
-                        label_id: NonZeroU32::new(i * 10000 + j),
-                        src_id: i as VertexId,
-                        dst_id: (j * (i + 1)) as VertexId,
-                        properties: OlapPropertyStore::new(vec![Option::from(
-                            ScalarValue::String(Some("hello".to_string())),
-                        )]),
-                    },
-                );
+                let _result1 = storage.create_edge(&(), OlapEdge {
+                    label_id: NonZeroU32::new(i * 10000 + j),
+                    src_id: i as VertexId,
+                    dst_id: (j * (i + 1)) as VertexId,
+                    properties: OlapPropertyStore::new(vec![Option::from(ScalarValue::String(
+                        Some("hello".to_string()),
+                    ))]),
+                });
             }
         }
 
@@ -1070,27 +1032,21 @@ mod tests {
     fn set_vertex_properties_test() {
         let storage = mock_olap_graph(0);
         for i in 0..100 {
-            let _result = storage.create_vertex(
-                &(),
-                OlapVertex {
-                    vid: (i + 30) as VertexId,
-                    properties: PropertyRecord::new(vec![
-                        ScalarValue::Int32(Some(i + 100)),
-                        ScalarValue::String(Some("hello".to_string())),
-                    ]),
-                    block_offset: 0,
-                },
-            );
+            let _result = storage.create_vertex(&(), OlapVertex {
+                vid: (i + 30) as VertexId,
+                properties: PropertyRecord::new(vec![
+                    ScalarValue::Int32(Some(i + 100)),
+                    ScalarValue::String(Some("hello".to_string())),
+                ]),
+                block_offset: 0,
+            });
         }
 
         let result1 =
             storage.set_vertex_property(&(), 30, vec![0], vec![ScalarValue::Int32(Some(1))]);
-        let result2 = storage.set_vertex_property(
-            &(),
-            50,
-            vec![1],
-            vec![ScalarValue::String(Some("No hello".to_string()))],
-        );
+        let result2 = storage.set_vertex_property(&(), 50, vec![1], vec![ScalarValue::String(
+            Some("No hello".to_string()),
+        )]);
         assert!(result1.is_ok());
         assert!(result2.is_ok());
         assert_eq!(
@@ -1123,46 +1079,32 @@ mod tests {
     fn set_edge_properties_test() {
         let storage = mock_olap_graph(3);
         for i in 0..2 {
-            let _result = storage.create_vertex(
-                &(),
-                OlapVertex {
-                    vid: i as VertexId,
-                    properties: PropertyRecord::default(),
-                    block_offset: 0,
-                },
-            );
+            let _result = storage.create_vertex(&(), OlapVertex {
+                vid: i as VertexId,
+                properties: PropertyRecord::default(),
+                block_offset: 0,
+            });
             for j in 0..3 {
-                let _result1 = storage.create_edge(
-                    &(),
-                    OlapEdge {
-                        label_id: NonZeroU32::new(i * 10000 + j),
-                        src_id: i as VertexId,
-                        dst_id: (j + i) as VertexId,
-                        properties: OlapPropertyStore::new(vec![
-                            Some(ScalarValue::UInt32(Some(j * 10))),
-                            Some(ScalarValue::String(Some("hello".to_string()))),
-                            Some(ScalarValue::Boolean(Some(true))),
-                        ]),
-                    },
-                );
+                let _result1 = storage.create_edge(&(), OlapEdge {
+                    label_id: NonZeroU32::new(i * 10000 + j),
+                    src_id: i as VertexId,
+                    dst_id: (j + i) as VertexId,
+                    properties: OlapPropertyStore::new(vec![
+                        Some(ScalarValue::UInt32(Some(j * 10))),
+                        Some(ScalarValue::String(Some("hello".to_string()))),
+                        Some(ScalarValue::Boolean(Some(true))),
+                    ]),
+                });
             }
         }
 
-        let _ = storage.set_edge_property(
-            &(),
-            NonZeroU32::new(10001),
-            vec![0],
-            vec![ScalarValue::Int32(Some(10086))],
-        );
-        let _ = storage.set_edge_property(
-            &(),
-            NonZeroU32::new(10002),
-            vec![1, 2],
-            vec![
-                ScalarValue::String(Some("No hello".to_string())),
-                ScalarValue::Boolean(Some(false)),
-            ],
-        );
+        let _ = storage.set_edge_property(&(), NonZeroU32::new(10001), vec![0], vec![
+            ScalarValue::Int32(Some(10086)),
+        ]);
+        let _ = storage.set_edge_property(&(), NonZeroU32::new(10002), vec![1, 2], vec![
+            ScalarValue::String(Some("No hello".to_string())),
+            ScalarValue::Boolean(Some(false)),
+        ]);
 
         let store1 = storage
             .get_edge(&(), NonZeroU32::new(10001))
@@ -1189,24 +1131,18 @@ mod tests {
         let storage = mock_olap_graph(3);
 
         for i in 0..5 {
-            let _result = storage.create_vertex(
-                &(),
-                OlapVertex {
-                    vid: i as VertexId,
-                    properties: PropertyRecord::default(),
-                    block_offset: 0,
-                },
-            );
+            let _result = storage.create_vertex(&(), OlapVertex {
+                vid: i as VertexId,
+                properties: PropertyRecord::default(),
+                block_offset: 0,
+            });
             for j in 0..300 {
-                let _result1 = storage.create_edge(
-                    &(),
-                    OlapEdge {
-                        label_id: NonZeroU32::new(i * 10000 + j),
-                        src_id: i as VertexId,
-                        dst_id: (j + i) as VertexId,
-                        properties: OlapPropertyStore::default(),
-                    },
-                );
+                let _result1 = storage.create_edge(&(), OlapEdge {
+                    label_id: NonZeroU32::new(i * 10000 + j),
+                    src_id: i as VertexId,
+                    dst_id: (j + i) as VertexId,
+                    properties: OlapPropertyStore::default(),
+                });
             }
         }
 
@@ -1225,31 +1161,25 @@ mod tests {
     fn delete_property_test() {
         let storage = mock_olap_graph(5);
 
-        let _result = storage.create_vertex(
-            &(),
-            OlapVertex {
-                vid: 1 as VertexId,
-                properties: PropertyRecord::default(),
-                block_offset: 0,
-            },
-        );
+        let _result = storage.create_vertex(&(), OlapVertex {
+            vid: 1 as VertexId,
+            properties: PropertyRecord::default(),
+            block_offset: 0,
+        });
 
         for i in 1..=5 {
-            let _result1 = storage.create_edge(
-                &(),
-                OlapEdge {
-                    label_id: NonZeroU32::new(i),
-                    src_id: 1 as VertexId,
-                    dst_id: (10000 + i) as VertexId,
-                    properties: OlapPropertyStore::new(vec![
-                        Some(ScalarValue::UInt32(Some(i * 10))),
-                        Some(ScalarValue::String(Some("hello".to_string()))),
-                        Some(ScalarValue::Boolean(Some(true))),
-                        Some(ScalarValue::Float32(Some(0.5 + i as f32))),
-                        Some(ScalarValue::String(Some("another hello".to_string()))),
-                    ]),
-                },
-            );
+            let _result1 = storage.create_edge(&(), OlapEdge {
+                label_id: NonZeroU32::new(i),
+                src_id: 1 as VertexId,
+                dst_id: (10000 + i) as VertexId,
+                properties: OlapPropertyStore::new(vec![
+                    Some(ScalarValue::UInt32(Some(i * 10))),
+                    Some(ScalarValue::String(Some("hello".to_string()))),
+                    Some(ScalarValue::Boolean(Some(true))),
+                    Some(ScalarValue::Float32(Some(0.5 + i as f32))),
+                    Some(ScalarValue::String(Some("another hello".to_string()))),
+                ]),
+            });
         }
 
         let _ = storage.delete_edge(&(), NonZeroU32::new(2));
@@ -1287,25 +1217,19 @@ mod tests {
         let storage = mock_olap_graph(0);
         // Insert vertex
         for i in 1..=5 {
-            let _result = storage.create_vertex(
-                &(),
-                OlapVertex {
-                    vid: i as VertexId,
-                    properties: PropertyRecord::default(),
-                    block_offset: 0,
-                },
-            );
+            let _result = storage.create_vertex(&(), OlapVertex {
+                vid: i as VertexId,
+                properties: PropertyRecord::default(),
+                block_offset: 0,
+            });
 
             for j in 1..=(400 - (i - 1) * 10) {
-                let _result1 = storage.create_edge(
-                    &(),
-                    OlapEdge {
-                        label_id: NonZeroU32::new(i * 10000 + j),
-                        src_id: i as u64,
-                        dst_id: (j + i) as u64,
-                        properties: Default::default(),
-                    },
-                );
+                let _result1 = storage.create_edge(&(), OlapEdge {
+                    label_id: NonZeroU32::new(i * 10000 + j),
+                    src_id: i as u64,
+                    dst_id: (j + i) as u64,
+                    properties: Default::default(),
+                });
             }
         }
 
@@ -1333,43 +1257,34 @@ mod tests {
         let storage = mock_olap_graph(2);
 
         for i in 1..=5 {
-            let _result = storage.create_vertex(
-                &(),
-                OlapVertex {
-                    vid: i as VertexId,
-                    properties: PropertyRecord::default(),
-                    block_offset: 0,
-                },
-            );
+            let _result = storage.create_vertex(&(), OlapVertex {
+                vid: i as VertexId,
+                properties: PropertyRecord::default(),
+                block_offset: 0,
+            });
 
             for j in 1..=400 {
-                let _result1 = storage.create_edge(
-                    &(),
-                    OlapEdge {
-                        label_id: NonZeroU32::new(i * 10000 + j),
-                        src_id: i as u64,
-                        dst_id: (j * (i + 1)) as u64,
-                        properties: OlapPropertyStore::new(vec![
-                            Option::from(ScalarValue::UInt32(Some(j))),
-                            None,
-                        ]),
-                    },
-                );
+                let _result1 = storage.create_edge(&(), OlapEdge {
+                    label_id: NonZeroU32::new(i * 10000 + j),
+                    src_id: i as u64,
+                    dst_id: (j * (i + 1)) as u64,
+                    properties: OlapPropertyStore::new(vec![
+                        Option::from(ScalarValue::UInt32(Some(j))),
+                        None,
+                    ]),
+                });
             }
 
             for j in 1..=400 {
-                let _result1 = storage.create_edge(
-                    &(),
-                    OlapEdge {
-                        label_id: NonZeroU32::new(i * 2 * 10000 + j),
-                        src_id: i as u64,
-                        dst_id: (j * (i * 2 + 1)) as u64,
-                        properties: OlapPropertyStore::new(vec![
-                            None,
-                            Option::from(ScalarValue::String(Some("hello".to_string()))),
-                        ]),
-                    },
-                );
+                let _result1 = storage.create_edge(&(), OlapEdge {
+                    label_id: NonZeroU32::new(i * 2 * 10000 + j),
+                    src_id: i as u64,
+                    dst_id: (j * (i * 2 + 1)) as u64,
+                    properties: OlapPropertyStore::new(vec![
+                        None,
+                        Option::from(ScalarValue::String(Some("hello".to_string()))),
+                    ]),
+                });
             }
         }
 

@@ -25,10 +25,8 @@ impl Session {
             DataField::new("b".to_string(), LogicalType::String, false),
         ]);
         let metrics = QueryMetrics::default();
-        Ok(QueryResult::new(
-            Some(Arc::new(schema)),
-            metrics,
-            vec![chunk],
-        ))
+        Ok(QueryResult::new(Some(Arc::new(schema)), metrics, vec![
+            chunk,
+        ]))
     }
 }
