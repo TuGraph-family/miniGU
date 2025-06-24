@@ -1,4 +1,6 @@
-use minigu_common::datatype::types::VertexId;
+use std::num::NonZeroU32;
+
+use minigu_common::types::VertexId;
 
 use crate::error::StorageError;
 use crate::olap::olap_graph::{
@@ -45,7 +47,7 @@ impl Iterator for EdgeIter<'_> {
             if self.offset < block.edges.len() {
                 let raw: &OlapStorageEdge = &block.edges[self.offset];
                 // 2.1 Scan next block once scanned empty edge
-                if raw.label_id == 0 && raw.dst_id == 0 {
+                if raw.label_id == NonZeroU32::new(1) && raw.dst_id == 1 {
                     self.offset = 0;
                     self.block_idx += 1;
                     continue;
@@ -153,7 +155,7 @@ impl Iterator for AdjacencyIterator<'_> {
             if self.offset < BLOCK_CAPACITY {
                 let raw: &OlapStorageEdge = &block.edges[self.offset];
                 // Scan next block once scanned empty edge
-                if raw.label_id == 0 && raw.dst_id == 0 {
+                if raw.label_id == NonZeroU32::new(1) && raw.dst_id == 1 {
                     self.offset = 0;
                     self.block_idx = if block.pre_block_index.is_none() {
                         usize::MAX

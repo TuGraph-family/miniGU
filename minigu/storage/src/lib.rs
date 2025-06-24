@@ -11,7 +11,7 @@ pub mod transaction;
 pub mod wal;
 pub use error::StorageResult;
 pub use memory::memory_graph::MemoryGraph;
-pub use memory::transaction::MemTransaction;
+pub use memory::transaction::{MemTransaction, TransactionHandle};
 pub use storage::{BoxedGraph, Graph, MutGraph, MutOlapGraph, OlapGraph, StorageTransaction};
 pub use transaction::IsolationLevel;
 mod olap;

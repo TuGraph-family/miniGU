@@ -12,9 +12,9 @@ pub enum WalError {
 impl fmt::Display for WalError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            WalError::Io(err) => write!(f, "I/O error: {}", err),
-            WalError::Serialize(err) => write!(f, "Serialization error: {}", err),
-            WalError::Deserialize(err) => write!(f, "Deserialization error: {}", err),
+            WalError::Io(err) => write!(f, "I/O error: {err}"),
+            WalError::Serialize(err) => write!(f, "Serialization error: {err}"),
+            WalError::Deserialize(err) => write!(f, "Deserialization error: {err}"),
         }
     }
 }

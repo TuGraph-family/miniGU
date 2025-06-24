@@ -1,16 +1,16 @@
 use std::fmt::Debug;
 
-use minigu_common::datatype::types::{EdgeId, VertexId};
-use minigu_common::datatype::value::PropertyValue;
+use minigu_common::types::{EdgeId, VertexId};
+use minigu_common::value::ScalarValue;
 
-use crate::MemTransaction;
 use crate::error::StorageResult;
+use crate::memory::transaction::TransactionHandle;
 use crate::model::edge::{Edge, Neighbor};
 use crate::model::vertex::Vertex;
 
 pub trait DynGraph:
     Graph<
-        Transaction = MemTransaction,
+        Transaction = TransactionHandle,
         VertexID = VertexId,
         EdgeID = EdgeId,
         Vertex = Vertex,
@@ -24,7 +24,7 @@ pub trait DynGraph:
 
 impl<T> DynGraph for T where
     T: Graph<
-            Transaction = MemTransaction,
+            Transaction = TransactionHandle,
             VertexID = u64,
             EdgeID = u64,
             Vertex = Vertex,
@@ -103,7 +103,7 @@ pub trait MutGraph: Graph {
         txn: &Self::Transaction,
         vid: Self::VertexID,
         indices: Vec<usize>,
-        props: Vec<PropertyValue>,
+        props: Vec<ScalarValue>,
     ) -> StorageResult<()>;
 
     /// Update the properties of an edge within a transaction.
@@ -112,7 +112,7 @@ pub trait MutGraph: Graph {
         txn: &Self::Transaction,
         eid: Self::EdgeID,
         indices: Vec<usize>,
-        props: Vec<PropertyValue>,
+        props: Vec<ScalarValue>,
     ) -> StorageResult<()>;
 }
 
@@ -196,7 +196,7 @@ pub trait MutOlapGraph: OlapGraph {
         txn: &Self::Transaction,
         vid: Self::VertexID,
         indices: Vec<usize>,
-        props: Vec<PropertyValue>,
+        props: Vec<ScalarValue>,
     ) -> StorageResult<()>;
 
     /// Update the properties of an edge within a transaction.
@@ -205,6 +205,6 @@ pub trait MutOlapGraph: OlapGraph {
         txn: &Self::Transaction,
         eid: Self::EdgeID,
         indices: Vec<usize>,
-        props: Vec<PropertyValue>,
+        props: Vec<ScalarValue>,
     ) -> StorageResult<()>;
 }

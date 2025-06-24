@@ -1,10 +1,11 @@
 use std::collections::HashMap;
+use std::ops::Deref;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock, RwLock};
 
 use crossbeam_skiplist::SkipMap;
 use dashmap::DashSet;
-use minigu_common::datatype::types::{EdgeId, VertexId};
+use minigu_common::types::{EdgeId, VertexId};
 
 use super::memory_graph::MemoryGraph;
 use crate::error::{
@@ -447,18 +448,18 @@ impl MemTransaction {
         let _guard = self.graph.txn_manager.commit_lock.lock().unwrap();
 
         // Step 1: Validate serializability if isolution level is Serializable.
-        if let IsolationLevel::Serializable = self.isolation_level {
-            if let Err(e) = self.validate_read_sets() {
-                self.abort()?;
-                return Err(e);
-            }
+        if let IsolationLevel::Serializable = self.isolation_level
+            && let Err(e) = self.validate_read_sets()
+        {
+            self.abort()?;
+            return Err(e);
         }
 
         // Step 2: Assign a commit timestamp (atomic operation).
         if let Err(e) = self.commit_ts.set(commit_ts) {
             self.abort()?;
             return Err(StorageError::Transaction(
-                TransactionError::TransactionAlreadyCommitted(format!("{:?}", e)),
+                TransactionError::TransactionAlreadyCommitted(format!("{e:?}")),
             ));
         }
 
@@ -592,6 +593,7 @@ impl MemTransaction {
                         if current.commit_ts == self.txn_id() {
                             // Restore properties
                             current.data.set_props(indices, props.clone());
+                            current.commit_ts = commit_ts;
                             // Update undo pointer to previous version
                             *entry.chain.undo_ptr.write().unwrap() = next;
                         }
@@ -604,6 +606,7 @@ impl MemTransaction {
                         if current.commit_ts == self.txn_id() {
                             // Restore properties
                             current.data.set_props(indices, props.clone());
+                            current.commit_ts = commit_ts;
                             // Update undo pointer to previous version
                             *entry.chain.undo_ptr.write().unwrap() = next;
                         }
@@ -615,7 +618,8 @@ impl MemTransaction {
                         let mut current = entry.chain.current.write().unwrap();
                         if current.commit_ts == self.txn_id() {
                             // Restore deletion flag
-                            current.data.is_tombstone = false;
+                            current.data.is_tombstone = true;
+                            current.commit_ts = commit_ts;
                             // Update undo pointer to previous version
                             *entry.chain.undo_ptr.write().unwrap() = next;
                         }
@@ -627,7 +631,8 @@ impl MemTransaction {
                         let mut current = entry.chain.current.write().unwrap();
                         if current.commit_ts == self.txn_id() {
                             // Restore deletion flag
-                            current.data.is_tombstone = false;
+                            current.data.is_tombstone = true;
+                            current.commit_ts = commit_ts;
                             // Update undo pointer to previous version
                             *entry.chain.undo_ptr.write().unwrap() = next;
                         }
@@ -663,6 +668,90 @@ impl MemTransaction {
     }
 }
 
+/// A smart pointer wrapper around `Arc<MemTransaction>` that provides automatic rollback
+/// functionality when the transaction goes out of scope without being explicitly committed or
+/// aborted.
+///
+/// This wrapper implements the RAII (Resource Acquisition Is Initialization) pattern to ensure
+/// that transactions are properly cleaned up in case of panics or when they go out of scope.
+pub struct TransactionHandle {
+    inner: Arc<MemTransaction>,
+    /// Flag to track whether the transaction has been explicitly handled (committed or aborted)
+    is_handled: std::cell::Cell<bool>,
+}
+
+impl TransactionHandle {
+    /// Creates a new `TransactionHandle` wrapper around an `Arc<MemTransaction>`.
+    pub fn new(txn: Arc<MemTransaction>) -> Self {
+        Self {
+            inner: txn,
+            is_handled: std::cell::Cell::new(false),
+        }
+    }
+
+    /// Marks the transaction as handled (committed or aborted).
+    /// This prevents the automatic rollback in the Drop implementation.
+    pub fn mark_handled(&self) {
+        self.is_handled.set(true);
+    }
+
+    /// Returns a reference to the inner `Arc<MemTransaction>`.
+    pub fn inner(&self) -> &Arc<MemTransaction> {
+        &self.inner
+    }
+}
+
+impl Deref for TransactionHandle {
+    type Target = MemTransaction;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
+impl Drop for TransactionHandle {
+    fn drop(&mut self) {
+        // Only perform automatic rollback if:
+        // 1. The transaction hasn't been explicitly handled (committed or aborted)
+        // 2. This is the last reference to the transaction (strong_count == 1)
+        if !self.is_handled.get() {
+            // Attempt to abort the transaction
+            // We ignore errors here since we're in a Drop implementation
+            let _ = self.inner.abort();
+            println!("abort transaction {:?}", self.inner.txn_id());
+        }
+    }
+}
+
+impl StorageTransaction for TransactionHandle {
+    type CommitTimestamp = Timestamp;
+
+    fn commit(&self) -> StorageResult<Self::CommitTimestamp> {
+        let result = self.inner.commit();
+        if result.is_ok() {
+            self.mark_handled();
+        }
+        result
+    }
+
+    fn abort(&self) -> StorageResult<()> {
+        let result = self.inner.abort();
+        if result.is_ok() {
+            self.mark_handled();
+        }
+        result
+    }
+}
+
+impl Clone for TransactionHandle {
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+            is_handled: std::cell::Cell::new(self.is_handled.get()),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -675,7 +764,7 @@ mod tests {
         let base_commit_ts = graph.txn_manager.latest_commit_ts.load(Ordering::Acquire);
 
         // Start txn0
-        let txn0: Arc<MemTransaction> = graph.begin_transaction(IsolationLevel::Serializable);
+        let txn0 = graph.begin_transaction(IsolationLevel::Serializable);
         assert_eq!(txn0.start_ts().0, base_commit_ts + 1);
         assert_eq!(
             graph.txn_manager.watermark.load(Ordering::Acquire),

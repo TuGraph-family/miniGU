@@ -366,7 +366,7 @@ mod tests {
     use std::fs;
     use std::path::PathBuf;
 
-    use minigu_common::datatype::value::PropertyValue;
+    use minigu_common::value::ScalarValue;
     use serial_test::serial;
 
     use super::*;
@@ -387,13 +387,16 @@ mod tests {
     fn test_walentry_serialization() {
         // Create a WalEntry with SetVertexProps operation
         let txn_id = Timestamp(100);
-        let delta = DeltaOp::SetVertexProps(42, SetPropsOp {
-            indices: vec![0, 1],
-            props: vec![
-                PropertyValue::Int(10),
-                PropertyValue::String("test".to_string()),
-            ],
-        });
+        let delta = DeltaOp::SetVertexProps(
+            42,
+            SetPropsOp {
+                indices: vec![0, 1],
+                props: vec![
+                    ScalarValue::Int32(10.into()),
+                    ScalarValue::String("test".to_string().into()),
+                ],
+            },
+        );
         let entry = RedoEntry {
             lsn: 0,
             txn_id,
@@ -412,10 +415,13 @@ mod tests {
             Operation::Delta(DeltaOp::SetVertexProps(vid, SetPropsOp { indices, props })) => {
                 assert_eq!(*vid, 42);
                 assert_eq!(*indices, vec![0, 1]);
-                assert_eq!(*props, vec![
-                    PropertyValue::Int(10),
-                    PropertyValue::String("test".to_string())
-                ]);
+                assert_eq!(
+                    *props,
+                    vec![
+                        ScalarValue::Int32(10.into()),
+                        ScalarValue::String("test".to_string().into())
+                    ]
+                );
             }
             _ => panic!("Expected Delta(SetVertexProps) operation"),
         }

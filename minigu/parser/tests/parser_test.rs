@@ -28,12 +28,15 @@ macro_rules! add_parser_tests {
 
 add_parser_tests!("finbench", ["tsr1", "tsr2", "tsr3", "tsr4", "tsr5", "tsr6"]);
 add_parser_tests!("snb", ["is1", "is2", "is3", "is4", "is5", "is6", "is7"]);
-add_parser_tests!("opengql", [
-    "create_graph",
-    "create_schema",
-    "insert",
-    "match_and_insert",
-    "match",
-    "session_set"
-]);
+add_parser_tests!(
+    "opengql",
+    [
+        "create_graph",
+        "create_schema",
+        "insert",
+        "match_and_insert",
+        "match",
+        "session_set"
+    ]
+);
 add_parser_tests!("gql_on_one_page", ["gql_on_one_page"]);

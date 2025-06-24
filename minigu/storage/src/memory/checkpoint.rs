@@ -13,7 +13,7 @@ use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crc32fast::Hasher;
-use minigu_common::datatype::types::{EdgeId, VertexId};
+use minigu_common::types::{EdgeId, VertexId};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -122,7 +122,7 @@ impl GraphCheckpoint {
     ///
     /// # Returns
     ///
-    /// A fully materialized `GraphCheckpoint` containing the graph’s current state.
+    /// A fully materialized `GraphCheckpoint` containing the graph's current state.
     ///
     /// # Panics
     ///
@@ -153,10 +153,13 @@ impl GraphCheckpoint {
             let versioned_vertex = entry.value();
             let current = versioned_vertex.chain.current.read().unwrap();
 
-            vertices.insert(*entry.key(), SerializedVertex {
-                data: current.data.clone(),
-                commit_ts: current.commit_ts,
-            });
+            vertices.insert(
+                *entry.key(),
+                SerializedVertex {
+                    data: current.data.clone(),
+                    commit_ts: current.commit_ts,
+                },
+            );
         }
 
         // Serialize edges
@@ -165,10 +168,13 @@ impl GraphCheckpoint {
             let versioned_edge = entry.value();
             let current = versioned_edge.chain.current.read().unwrap();
 
-            edges.insert(*entry.key(), SerializedEdge {
-                data: current.data.clone(),
-                commit_ts: current.commit_ts,
-            });
+            edges.insert(
+                *entry.key(),
+                SerializedEdge {
+                    data: current.data.clone(),
+                    commit_ts: current.commit_ts,
+                },
+            );
         }
 
         // Serialize adjacency list
@@ -290,7 +296,7 @@ impl GraphCheckpoint {
     /// # Arguments
     ///
     /// * `checkpoint_config` - Configuration options for the graph's checkpoint behavior.
-    /// * `wal_config` - Configuration for initializing the graph’s write-ahead log (WAL) system.
+    /// * `wal_config` - Configuration for initializing the graph's write-ahead log (WAL) system.
     ///
     /// # Returns
     ///
@@ -492,7 +498,7 @@ impl CheckpointManager {
                 }
                 Err(e) => {
                     // Log error but continue with other checkpoints
-                    eprintln!("Failed to load checkpoint at {:?}: {:?}", path, e);
+                    eprintln!("Failed to load checkpoint at {path:?}: {e:?}");
                 }
             }
         }
@@ -835,7 +841,7 @@ mod tests {
     use std::io::Seek;
     use std::{env, fs};
 
-    use minigu_common::datatype::value::PropertyValue;
+    use minigu_common::value::ScalarValue;
 
     use super::*;
     use crate::error::CheckpointError;
@@ -865,7 +871,7 @@ mod tests {
         assert_eq!(alice_serialized.data.vid(), alice_vid);
         assert_eq!(
             alice_serialized.data.properties()[0],
-            PropertyValue::String("Alice".into())
+            ScalarValue::String(Some("Alice".to_string()))
         );
 
         // Verify adjacency list
@@ -1010,7 +1016,7 @@ mod tests {
         // Create 5 checkpoints
         let mut checkpoint_ids = Vec::new();
         for i in 0..5 {
-            let description = Some(format!("Test checkpoint {}", i));
+            let description = Some(format!("Test checkpoint {i}"));
             let id = manager.create_checkpoint(description).unwrap();
             // sleep for 1 second to make sure the created_at time is different
             std::thread::sleep(std::time::Duration::from_millis(1000));

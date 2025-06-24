@@ -52,6 +52,104 @@ impl ScalarValue {
             ScalarValue::Edge(_value) => todo!(),
         }
     }
+
+    pub fn get_bool(&self) -> bool {
+        match self {
+            ScalarValue::Boolean(Some(val)) => *val,
+            _ => false,
+        }
+    }
+
+    pub fn get_int8(&self) -> i8 {
+        match self {
+            ScalarValue::Int8(Some(val)) => *val,
+            _ => 0,
+        }
+    }
+
+    pub fn get_int16(&self) -> i16 {
+        match self {
+            ScalarValue::Int16(Some(val)) => *val,
+            _ => 0,
+        }
+    }
+
+    pub fn get_int32(&self) -> i32 {
+        match self {
+            ScalarValue::Int32(Some(val)) => *val,
+            _ => 0,
+        }
+    }
+
+    pub fn get_int64(&self) -> i64 {
+        match self {
+            ScalarValue::Int64(Some(val)) => *val,
+            _ => 0,
+        }
+    }
+
+    pub fn get_uint8(&self) -> u8 {
+        match self {
+            ScalarValue::UInt8(Some(val)) => *val,
+            _ => 0,
+        }
+    }
+
+    pub fn get_uint16(&self) -> u16 {
+        match self {
+            ScalarValue::UInt16(Some(val)) => *val,
+            _ => 0,
+        }
+    }
+
+    pub fn get_uint32(&self) -> u32 {
+        match self {
+            ScalarValue::UInt32(Some(val)) => *val,
+            _ => 0,
+        }
+    }
+
+    pub fn get_uint64(&self) -> u64 {
+        match self {
+            ScalarValue::UInt64(Some(val)) => *val,
+            _ => 0,
+        }
+    }
+
+    pub fn get_float32(&self) -> f32 {
+        match self {
+            ScalarValue::Float32(Some(val)) => *val,
+            _ => 0.0,
+        }
+    }
+
+    pub fn get_float64(&self) -> f64 {
+        match self {
+            ScalarValue::Float64(Some(val)) => *val,
+            _ => 0.0,
+        }
+    }
+
+    pub fn get_string(&self) -> String {
+        match self {
+            ScalarValue::String(Some(val)) => val.clone(), // 返回克隆的 String
+            _ => String::new(),
+        }
+    }
+
+    pub fn get_vertex(&self) -> Option<VertexValue> {
+        match self {
+            ScalarValue::Vertex(Some(val)) => Some(val.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn get_edge(&self) -> Option<EdgeValue> {
+        match self {
+            ScalarValue::Edge(Some(val)) => Some(val.clone()),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

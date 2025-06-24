@@ -2,11 +2,11 @@ use std::sync::{Arc, RwLock, Weak};
 
 use crossbeam_skiplist::SkipSet;
 use dashmap::DashMap;
-use minigu_common::datatype::types::{EdgeId, VertexId};
-use minigu_common::datatype::value::PropertyValue;
+use minigu_common::types::{EdgeId, VertexId};
+use minigu_common::value::ScalarValue;
 
 use super::checkpoint::{CheckpointManager, CheckpointManagerConfig};
-use super::transaction::{MemTransaction, MemTxnManager};
+use super::transaction::{MemTransaction, MemTxnManager, TransactionHandle};
 use crate::error::{
     EdgeNotFoundError, StorageError, StorageResult, TransactionError, VertexNotFoundError,
 };
@@ -28,10 +28,13 @@ macro_rules! update_properties {
             .iter()
             .map(|i| current.data.properties.get(*i).unwrap().clone())
             .collect();
-        let delta = DeltaOp::$op($id, SetPropsOp {
-            indices: $indices,
-            props: delta_props,
-        });
+        let delta = DeltaOp::$op(
+            $id,
+            SetPropsOp {
+                indices: $indices,
+                props: delta_props,
+            },
+        );
 
         let undo_ptr = $entry.chain.undo_ptr.read().unwrap().clone();
         let mut undo_buffer = $txn.undo_buffer.write().unwrap();
@@ -251,6 +254,15 @@ impl VersionedEdge {
                 _ => unreachable!("Unreachable delta op for an edge"),
             };
             MemTransaction::apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
+            // Check if the vertex is tombstone after applying the deltas
+            if current_edge.is_tombstone() {
+                return Err(StorageError::Transaction(
+                    TransactionError::VersionNotVisible(format!(
+                        "Edge is tombstone for {:?}",
+                        txn.txn_id()
+                    )),
+                ));
+            }
             Ok(current_edge)
         }
     }
@@ -416,53 +428,61 @@ impl MemoryGraph {
 
     /// Applies a list of WAL entries to the graph
     pub fn apply_wal_entries(self: &Arc<Self>, entries: Vec<RedoEntry>) -> StorageResult<()> {
+        let mut txn: Option<TransactionHandle> = None;
         for entry in entries {
             self.wal_manager.set_next_lsn(entry.lsn + 1);
             match entry.op {
                 Operation::BeginTransaction(start_ts) => {
                     // Create a new transaction
-                    let txn = self.begin_transaction_at(
+                    let t = self.begin_transaction_at(
                         Some(entry.txn_id),
                         Some(start_ts),
                         entry.iso_level,
                         true,
                     );
-                    assert_eq!(txn.start_ts(), start_ts);
+                    txn = Some(TransactionHandle::new(t));
                 }
                 Operation::CommitTransaction(commit_ts) => {
                     // Commit the transaction
-                    let txn = self.txn_manager.active_txns.get(&entry.txn_id).unwrap();
-                    txn.value().commit_at(Some(commit_ts), true)?;
+                    if let Some(txn) = txn.as_ref() {
+                        txn.commit_at(Some(commit_ts), true)?;
+                        txn.mark_handled(); // Avoid dropping the transaction handle
+                    }
+                    txn = None;
                 }
                 Operation::AbortTransaction => {
                     // Abort the transaction
-                    let txn = self.txn_manager.active_txns.get(&entry.txn_id).unwrap();
-                    txn.value().abort_at(true)?;
+                    if let Some(txn) = txn.as_ref() {
+                        txn.abort_at(true)?;
+                        txn.mark_handled(); // Avoid dropping the transaction handle
+                    }
+                    txn = None;
                 }
                 Operation::Delta(delta) => {
                     // Apply the delta
-                    let txn = self.txn_manager.active_txns.get(&entry.txn_id).unwrap();
-                    match delta {
-                        DeltaOp::CreateVertex(vertex) => {
-                            self.create_vertex(txn.value(), vertex)?;
+                    if let Some(txn) = txn.as_ref() {
+                        match delta {
+                            DeltaOp::CreateVertex(vertex) => {
+                                self.create_vertex(txn, vertex)?;
+                            }
+                            DeltaOp::CreateEdge(edge) => {
+                                self.create_edge(txn, edge)?;
+                            }
+                            DeltaOp::DelVertex(vid) => {
+                                self.delete_vertex(txn, vid)?;
+                            }
+                            DeltaOp::DelEdge(eid) => {
+                                self.delete_edge(txn, eid)?;
+                            }
+                            DeltaOp::SetVertexProps(vid, SetPropsOp { indices, props }) => {
+                                self.set_vertex_property(txn, vid, indices, props)?;
+                            }
+                            DeltaOp::SetEdgeProps(eid, SetPropsOp { indices, props }) => {
+                                self.set_edge_property(txn, eid, indices, props)?;
+                            }
+                            DeltaOp::AddLabel(_) => todo!(),
+                            DeltaOp::RemoveLabel(_) => todo!(),
                         }
-                        DeltaOp::CreateEdge(edge) => {
-                            self.create_edge(txn.value(), edge)?;
-                        }
-                        DeltaOp::DelVertex(vid) => {
-                            self.delete_vertex(txn.value(), vid)?;
-                        }
-                        DeltaOp::DelEdge(eid) => {
-                            self.delete_edge(txn.value(), eid)?;
-                        }
-                        DeltaOp::SetVertexProps(vid, SetPropsOp { indices, props }) => {
-                            self.set_vertex_property(txn.value(), vid, indices, props)?;
-                        }
-                        DeltaOp::SetEdgeProps(eid, SetPropsOp { indices, props }) => {
-                            self.set_edge_property(txn.value(), eid, indices, props)?;
-                        }
-                        DeltaOp::AddLabel(_) => todo!(),
-                        DeltaOp::RemoveLabel(_) => todo!(),
                     }
                 }
             }
@@ -470,12 +490,13 @@ impl MemoryGraph {
         Ok(())
     }
 
-    /// Begins a new transaction and returns a `MemTransaction` instance.
+    /// Begins a new transaction and returns a `TransactionHandle` instance.
     pub fn begin_transaction(
         self: &Arc<Self>,
         isolation_level: IsolationLevel,
-    ) -> Arc<MemTransaction> {
-        self.begin_transaction_at(None, None, isolation_level, false)
+    ) -> TransactionHandle {
+        let txn = self.begin_transaction_at(None, None, isolation_level, false);
+        TransactionHandle::new(txn)
     }
 
     pub fn begin_transaction_at(
@@ -544,12 +565,12 @@ impl Graph for MemoryGraph {
     type Adjacency = Neighbor;
     type Edge = Edge;
     type EdgeID = EdgeId;
-    type Transaction = MemTransaction;
+    type Transaction = TransactionHandle;
     type Vertex = Vertex;
     type VertexID = VertexId;
 
     /// Retrieves a vertex by its ID within the context of a transaction.
-    fn get_vertex(&self, txn: &MemTransaction, vid: VertexId) -> StorageResult<Vertex> {
+    fn get_vertex(&self, txn: &TransactionHandle, vid: VertexId) -> StorageResult<Vertex> {
         // Step 1: Atomically retrieve the versioned vertex (check existence).
         let versioned_vertex = self.vertices.get(&vid).ok_or(StorageError::VertexNotFound(
             VertexNotFoundError::VertexNotFound(vid.to_string()),
@@ -560,26 +581,19 @@ impl Graph for MemoryGraph {
         let commit_ts = current_version.commit_ts;
         match txn.isolation_level() {
             IsolationLevel::Serializable => {
-                // Check if the vertex is modified by other transactions
-                if commit_ts.is_txn_id() && commit_ts != txn.txn_id() {
-                    return Err(StorageError::Transaction(
-                        TransactionError::WriteReadConflict(format!(
-                            "Vertex is being modified by transaction {:?}",
-                            commit_ts
-                        )),
-                    ));
-                }
+                // Insert the vertex ID into the read set
                 txn.vertex_reads.insert(vid);
             }
             IsolationLevel::Snapshot => {
                 // Optimistic read allowed, no read set recording
             }
         }
-        // The vertex is visible, which means it is either modified by txn or nobody
         let mut visible_vertex = current_version.data.clone();
-        // Only when the vertex is modified by nobody and txn started before the vertex was
-        // modified, we need to apply the deltas to the vertex
-        if commit_ts.is_commit_ts() && commit_ts > txn.start_ts() {
+        // Only when the vertex is modified by other transactions, or txn started before the vertex
+        // was modified, we need to apply the deltas to the vertex
+        if (commit_ts.is_txn_id() && commit_ts != txn.txn_id())
+            || (commit_ts.is_commit_ts() && commit_ts > txn.start_ts())
+        {
             let undo_ptr = versioned_vertex.chain.undo_ptr.read().unwrap().clone();
             let apply_deltas = |undo_entry: &UndoEntry| match undo_entry.delta() {
                 DeltaOp::CreateVertex(original) => visible_vertex = original.clone(),
@@ -605,7 +619,7 @@ impl Graph for MemoryGraph {
     }
 
     /// Retrieves an edge by its ID within the context of a transaction.
-    fn get_edge(&self, txn: &MemTransaction, eid: EdgeId) -> StorageResult<Edge> {
+    fn get_edge(&self, txn: &TransactionHandle, eid: EdgeId) -> StorageResult<Edge> {
         // Step 1: Atomically retrieve the versioned edge (check existence).
         let versioned_edge = self.edges.get(&eid).ok_or(StorageError::EdgeNotFound(
             EdgeNotFoundError::EdgeNotFound(eid.to_string()),
@@ -616,26 +630,19 @@ impl Graph for MemoryGraph {
         let commit_ts = current_version.commit_ts;
         match txn.isolation_level() {
             IsolationLevel::Serializable => {
-                // Check if the edge is modified by other transactions
-                if commit_ts.is_txn_id() && commit_ts != txn.txn_id() {
-                    return Err(StorageError::Transaction(
-                        TransactionError::WriteReadConflict(format!(
-                            "Edge is being modified by transaction {:?}",
-                            commit_ts
-                        )),
-                    ));
-                }
+                // Insert the edge ID into the read set
                 txn.edge_reads.insert(eid);
             }
             IsolationLevel::Snapshot => {
                 // Optimistic read allowed, no read set recording
             }
         }
-        // The edge is visible, which means it is either modified by txn or nobody
         let mut visible_edge = current_version.data.clone();
-        // Only when the edge is modified by nobody and txn started before the edge was
+        // Only when the edge is modified by other transactions, or txn started before the edge was
         // modified, we need to apply the deltas to the edge
-        if commit_ts.is_commit_ts() && commit_ts > txn.start_ts() {
+        if (commit_ts.is_txn_id() && commit_ts != txn.txn_id())
+            || (commit_ts.is_commit_ts() && commit_ts > txn.start_ts())
+        {
             let undo_ptr = versioned_edge.chain.undo_ptr.read().unwrap().clone();
             let apply_deltas = |undo_entry: &UndoEntry| match undo_entry.delta() {
                 DeltaOp::CreateEdge(original) => visible_edge = original.clone(),
@@ -689,7 +696,7 @@ impl Graph for MemoryGraph {
 // Mutable graph methods
 impl MutGraph for MemoryGraph {
     /// Inserts a new vertex into the graph within a transaction.
-    fn create_vertex(&self, txn: &MemTransaction, vertex: Vertex) -> StorageResult<VertexId> {
+    fn create_vertex(&self, txn: &TransactionHandle, vertex: Vertex) -> StorageResult<VertexId> {
         let vid = vertex.vid();
         let entry = self
             .vertices
@@ -725,7 +732,7 @@ impl MutGraph for MemoryGraph {
     }
 
     /// Inserts a new edge into the graph within a transaction.
-    fn create_edge(&self, txn: &MemTransaction, edge: Edge) -> StorageResult<EdgeId> {
+    fn create_edge(&self, txn: &TransactionHandle, edge: Edge) -> StorageResult<EdgeId> {
         let eid = edge.eid();
         let src_id = edge.src_id();
         let dst_id = edge.dst_id();
@@ -779,7 +786,7 @@ impl MutGraph for MemoryGraph {
     }
 
     /// Deletes a vertex from the graph within a transaction.
-    fn delete_vertex(&self, txn: &MemTransaction, vid: VertexId) -> StorageResult<()> {
+    fn delete_vertex(&self, txn: &TransactionHandle, vid: VertexId) -> StorageResult<()> {
         // Atomically retrieve the versioned vertex (check existence).
         let entry = self.vertices.get(&vid).ok_or(StorageError::VertexNotFound(
             VertexNotFoundError::VertexNotFound(vid.to_string()),
@@ -802,10 +809,6 @@ impl MutGraph for MemoryGraph {
             }
         }
 
-        // Mark the vertex as deleted
-        let tombstone = Vertex::tombstone(current.data.clone());
-        current.data = tombstone;
-
         // Record the vertex deletion in the transaction
         let delta = DeltaOp::CreateVertex(current.data.clone());
         let undo_ptr = entry.chain.undo_ptr.read().unwrap().clone();
@@ -813,6 +816,11 @@ impl MutGraph for MemoryGraph {
         let undo_entry = Arc::new(UndoEntry::new(delta, current.commit_ts, undo_ptr));
         undo_buffer.push(undo_entry.clone());
         *entry.chain.undo_ptr.write().unwrap() = Arc::downgrade(&undo_entry);
+
+        // Mark the vertex as deleted
+        let tombstone = Vertex::tombstone(current.data.clone());
+        current.data = tombstone;
+        current.commit_ts = txn.txn_id();
 
         // Write to WAL
         let wal_entry = RedoEntry {
@@ -827,7 +835,7 @@ impl MutGraph for MemoryGraph {
     }
 
     /// Deletes an edge from the graph within a transaction.
-    fn delete_edge(&self, txn: &MemTransaction, eid: EdgeId) -> StorageResult<()> {
+    fn delete_edge(&self, txn: &TransactionHandle, eid: EdgeId) -> StorageResult<()> {
         // Atomically retrieve the versioned edge (check existence).
         let entry = self.edges.get(&eid).ok_or(StorageError::EdgeNotFound(
             EdgeNotFoundError::EdgeNotFound(eid.to_string()),
@@ -836,10 +844,6 @@ impl MutGraph for MemoryGraph {
         let mut current = entry.chain.current.write().unwrap();
         check_write_conflict(current.commit_ts, txn)?;
 
-        // Mark the edge as deleted
-        let tombstone = Edge::tombstone(current.data.clone());
-        current.data = tombstone;
-
         // Record the edge deletion in the transaction
         let delta = DeltaOp::CreateEdge(current.data.clone());
         let undo_ptr = entry.chain.undo_ptr.read().unwrap().clone();
@@ -847,6 +851,11 @@ impl MutGraph for MemoryGraph {
         let undo_entry = Arc::new(UndoEntry::new(delta, current.commit_ts, undo_ptr));
         undo_buffer.push(undo_entry.clone());
         *entry.chain.undo_ptr.write().unwrap() = Arc::downgrade(&undo_entry);
+
+        // Mark the edge as deleted
+        let tombstone = Edge::tombstone(current.data.clone());
+        current.data = tombstone;
+        current.commit_ts = txn.txn_id();
 
         // Write to WAL
         let wal_entry = RedoEntry {
@@ -863,10 +872,10 @@ impl MutGraph for MemoryGraph {
     /// Updates the properties of a vertex within a transaction.
     fn set_vertex_property(
         &self,
-        txn: &MemTransaction,
+        txn: &TransactionHandle,
         vid: VertexId,
         indices: Vec<usize>,
-        props: Vec<PropertyValue>,
+        props: Vec<ScalarValue>,
     ) -> StorageResult<()> {
         // Atomically retrieve the versioned vertex (check existence).
         let entry = self.vertices.get(&vid).ok_or(StorageError::VertexNotFound(
@@ -898,10 +907,10 @@ impl MutGraph for MemoryGraph {
     /// Updates the properties of an edge within a transaction.
     fn set_edge_property(
         &self,
-        txn: &MemTransaction,
+        txn: &TransactionHandle,
         eid: EdgeId,
         indices: Vec<usize>,
-        props: Vec<PropertyValue>,
+        props: Vec<ScalarValue>,
     ) -> StorageResult<()> {
         // Atomically retrieve the versioned edge (check existence).
         let entry = self.edges.get(&eid).ok_or(StorageError::EdgeNotFound(
@@ -935,13 +944,12 @@ impl MutGraph for MemoryGraph {
 /// the current transaction.
 /// Current check applies to both Snapshot Isolation and Serializable isolation levels.
 #[inline]
-fn check_write_conflict(commit_ts: Timestamp, txn: &MemTransaction) -> StorageResult<()> {
+fn check_write_conflict(commit_ts: Timestamp, txn: &TransactionHandle) -> StorageResult<()> {
     match commit_ts {
         // If the vertex is modified by other transactions, return write-write conflict
         ts if ts.is_txn_id() && ts != txn.txn_id() => Err(StorageError::Transaction(
             TransactionError::WriteWriteConflict(format!(
-                "Data is being modified by transaction {:?}",
-                ts
+                "Data is being modified by transaction {ts:?}"
             )),
         )),
         // If the vertex is committed by other transactions and its commit timestamp is greater
@@ -960,19 +968,19 @@ fn check_write_conflict(commit_ts: Timestamp, txn: &MemTransaction) -> StorageRe
 pub mod tests {
     use std::{env, fs};
 
-    use minigu_common::datatype::types::LabelId;
-    use minigu_common::datatype::value::PropertyValue;
+    use minigu_common::types::LabelId;
+    use minigu_common::value::ScalarValue;
     use {Edge, Vertex};
 
     use super::*;
     use crate::model::properties::PropertyRecord;
     use crate::storage::StorageTransaction;
 
-    const PERSON: LabelId = 1;
-    const FRIEND: LabelId = 1;
-    const FOLLOW: LabelId = 2;
+    const PERSON: LabelId = LabelId::new(1).unwrap();
+    const FRIEND: LabelId = LabelId::new(1).unwrap();
+    const FOLLOW: LabelId = LabelId::new(2).unwrap();
 
-    fn create_vertex(id: VertexId, label_id: LabelId, properties: Vec<PropertyValue>) -> Vertex {
+    fn create_vertex(id: VertexId, label_id: LabelId, properties: Vec<ScalarValue>) -> Vertex {
         Vertex::new(id, label_id, PropertyRecord::new(properties))
     }
 
@@ -981,7 +989,7 @@ pub mod tests {
         src_id: VertexId,
         dst_id: VertexId,
         label_id: LabelId,
-        properties: Vec<PropertyValue>,
+        properties: Vec<ScalarValue>,
     ) -> Edge {
         Edge::new(
             id,
@@ -1066,25 +1074,41 @@ pub mod tests {
 
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-        let alice = create_vertex(1, PERSON, vec![
-            PropertyValue::String("Alice".into()),
-            PropertyValue::Int(25),
-        ]);
+        let alice = create_vertex(
+            1,
+            PERSON,
+            vec![
+                ScalarValue::String(Some("Alice".to_string())),
+                ScalarValue::Int32(Some(25)),
+            ],
+        );
 
-        let bob = create_vertex(2, PERSON, vec![
-            PropertyValue::String("Bob".into()),
-            PropertyValue::Int(28),
-        ]);
+        let bob = create_vertex(
+            2,
+            PERSON,
+            vec![
+                ScalarValue::String(Some("Bob".to_string())),
+                ScalarValue::Int32(Some(28)),
+            ],
+        );
 
-        let carol = create_vertex(3, PERSON, vec![
-            PropertyValue::String("Carol".into()),
-            PropertyValue::Int(24),
-        ]);
+        let carol = create_vertex(
+            3,
+            PERSON,
+            vec![
+                ScalarValue::String(Some("Carol".to_string())),
+                ScalarValue::Int32(Some(24)),
+            ],
+        );
 
-        let david = create_vertex(4, PERSON, vec![
-            PropertyValue::String("David".into()),
-            PropertyValue::Int(27),
-        ]);
+        let david = create_vertex(
+            4,
+            PERSON,
+            vec![
+                ScalarValue::String(Some("David".to_string())),
+                ScalarValue::Int32(Some(27)),
+            ],
+        );
 
         // Add vertices to the graph
         graph.create_vertex(&txn, alice).unwrap();
@@ -1093,22 +1117,38 @@ pub mod tests {
         graph.create_vertex(&txn, david).unwrap();
 
         // Create friend edges
-        let friend1 = create_edge(1, 1, 2, FRIEND, vec![PropertyValue::String(
-            "2020-01-01".into(),
-        )]);
+        let friend1 = create_edge(
+            1,
+            1,
+            2,
+            FRIEND,
+            vec![ScalarValue::String(Some("2020-01-01".to_string()))],
+        );
 
-        let friend2 = create_edge(2, 2, 3, FRIEND, vec![PropertyValue::String(
-            "2021-03-15".into(),
-        )]);
+        let friend2 = create_edge(
+            2,
+            2,
+            3,
+            FRIEND,
+            vec![ScalarValue::String(Some("2021-03-15".to_string()))],
+        );
 
         // Create follow edges
-        let follow1 = create_edge(3, 1, 3, FOLLOW, vec![PropertyValue::String(
-            "2022-06-01".into(),
-        )]);
+        let follow1 = create_edge(
+            3,
+            1,
+            3,
+            FOLLOW,
+            vec![ScalarValue::String(Some("2022-06-01".to_string()))],
+        );
 
-        let follow2 = create_edge(4, 4, 1, FOLLOW, vec![PropertyValue::String(
-            "2022-07-15".into(),
-        )]);
+        let follow2 = create_edge(
+            4,
+            4,
+            1,
+            FOLLOW,
+            vec![ScalarValue::String(Some("2022-07-15".to_string()))],
+        );
 
         // Add edges to the graph
         graph.create_edge(&txn, friend1).unwrap();
@@ -1121,23 +1161,35 @@ pub mod tests {
     }
 
     fn create_vertex_eve() -> Vertex {
-        create_vertex(5, PERSON, vec![
-            PropertyValue::String("Eve".into()),
-            PropertyValue::Int(24),
-        ])
+        create_vertex(
+            5,
+            PERSON,
+            vec![
+                ScalarValue::String(Some("Eve".to_string())),
+                ScalarValue::Int32(Some(24)),
+            ],
+        )
     }
 
     fn create_vertex_frank() -> Vertex {
-        create_vertex(6, PERSON, vec![
-            PropertyValue::String("Frank".into()),
-            PropertyValue::Int(25),
-        ])
+        create_vertex(
+            6,
+            PERSON,
+            vec![
+                ScalarValue::String(Some("Frank".to_string())),
+                ScalarValue::Int32(Some(25)),
+            ],
+        )
     }
 
     fn create_edge_alice_to_eve() -> Edge {
-        create_edge(5, 1, 5, FRIEND, vec![PropertyValue::String(
-            "2025-03-31".into(),
-        )])
+        create_edge(
+            5,
+            1,
+            5,
+            FRIEND,
+            vec![ScalarValue::String(Some("2025-03-31".to_string()))],
+        )
     }
 
     #[test]
@@ -1156,98 +1208,6 @@ pub mod tests {
     }
 
     #[test]
-    fn test_serializable_prevent_dirty_read() {
-        let (graph, _cleaner) = mock_graph();
-
-        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-        let alice_vid = 1;
-        graph
-            .set_vertex_property(&txn1, alice_vid, vec![1], vec![PropertyValue::Int(26)])
-            .unwrap();
-
-        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
-        // Under serializable isolation, dirty read (read vertex/edge which is modified by other
-        // transactions) is not allowed
-        assert!(graph.get_vertex(&txn2, alice_vid).is_err());
-
-        let _ = txn1.commit().unwrap();
-        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
-        let read_v1 = graph.get_vertex(&txn2, alice_vid).unwrap();
-        assert_eq!(read_v1.properties()[1], PropertyValue::Int(26));
-        assert!(txn2.commit().is_ok());
-    }
-
-    #[test]
-    fn test_serializable_prevent_write_write_conflict() {
-        let (graph, _cleaner) = mock_graph();
-
-        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-        let alice_vid = 1;
-        graph
-            .set_vertex_property(&txn1, alice_vid, vec![1], vec![PropertyValue::Int(26)])
-            .unwrap();
-
-        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
-        assert!(
-            graph
-                .set_vertex_property(&txn2, alice_vid, vec![1], vec![PropertyValue::Int(27)])
-                .is_err()
-        );
-    }
-
-    #[test]
-    fn test_serializable_prevent_non_repeatable_read() {
-        let (graph, _cleaner) = mock_graph();
-
-        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-        let alice_vid = 1;
-        let read_v1 = graph.get_vertex(&txn1, alice_vid).unwrap();
-        assert_eq!(read_v1.properties()[1], PropertyValue::Int(25));
-
-        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
-        graph
-            .set_vertex_property(&txn2, alice_vid, vec![1], vec![PropertyValue::Int(26)])
-            .unwrap();
-        assert!(txn2.commit().is_ok());
-
-        // Txn1 should should not see the update from txn2
-        let read_v1 = graph.get_vertex(&txn1, alice_vid).unwrap();
-        assert_eq!(read_v1.properties()[1], PropertyValue::Int(25));
-    }
-
-    #[test]
-    fn test_serializable_prevent_phantom() {
-        let (graph, _cleaner) = mock_graph();
-
-        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-        // Read verticex with age ranging from 24 to 28
-        let iter1 = txn1.iter_vertices().filter_map(|v| v.ok()).filter(|v| {
-            v.properties()[1].as_int().unwrap() >= &24 && v.properties()[1].as_int().unwrap() <= &28
-        });
-        let mut count = 0;
-        for _ in iter1 {
-            count += 1;
-        }
-        assert_eq!(count, 4);
-
-        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
-        let eve = create_vertex_eve();
-        graph.create_vertex(&txn2, eve).unwrap();
-        assert!(txn2.commit().is_ok());
-
-        // Txn1 should not be able to read vertex `eve`,
-        // since it is created after txn1 started
-        let iter2 = txn1.iter_vertices().filter_map(|v| v.ok()).filter(|v| {
-            v.properties()[1].as_int().unwrap() >= &24 && v.properties()[1].as_int().unwrap() <= &28
-        });
-        let mut count = 0;
-        for _ in iter2 {
-            count += 1;
-        }
-        assert_eq!(count, 4);
-    }
-
-    #[test]
     fn test_mvcc_version_chain() {
         let (graph, _cleaner) = mock_graph();
 
@@ -1258,17 +1218,17 @@ pub mod tests {
 
         let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
         let old_v1: Vertex = graph.get_vertex(&txn2, vid1).unwrap();
-        assert_eq!(old_v1.properties()[1], PropertyValue::Int(24));
+        assert_eq!(old_v1.properties()[1], ScalarValue::Int32(Some(24)));
         assert!(
             graph
-                .set_vertex_property(&txn2, vid1, vec![1], vec![PropertyValue::Int(25)])
+                .set_vertex_property(&txn2, vid1, vec![1], vec![ScalarValue::Int32(Some(25))])
                 .is_ok()
         );
         assert!(txn2.commit().is_ok());
 
         let txn3 = graph.begin_transaction(IsolationLevel::Serializable);
         let new_v1: Vertex = graph.get_vertex(&txn3, vid1).unwrap();
-        assert_eq!(new_v1.properties()[1], PropertyValue::Int(25));
+        assert_eq!(new_v1.properties()[1], ScalarValue::Int32(Some(25)));
     }
 
     #[test]
@@ -1384,13 +1344,13 @@ pub mod tests {
 
         let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
         graph
-            .set_vertex_property(&txn2, vid1, vec![0], vec![PropertyValue::Int(25)])
+            .set_vertex_property(&txn2, vid1, vec![0], vec![ScalarValue::Int32(Some(25))])
             .unwrap();
         assert!(txn2.commit().is_ok());
 
         let txn3 = graph.begin_transaction(IsolationLevel::Serializable);
         let v = graph.get_vertex(&txn3, vid1).unwrap();
-        assert_eq!(v.properties()[0], PropertyValue::Int(25));
+        assert_eq!(v.properties()[0], ScalarValue::Int32(Some(25)));
     }
 
     #[test]
@@ -1406,10 +1366,13 @@ pub mod tests {
 
         let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
         {
-            let iter1 = txn2
-                .iter_vertices()
-                .filter_map(|v| v.ok())
-                .filter(|v| v.properties()[0].as_string().unwrap() == "Eve");
+            let iter1 =
+                txn2.iter_vertices()
+                    .filter_map(|v| v.ok())
+                    .filter(|v| match &v.properties()[0] {
+                        ScalarValue::String(Some(name)) => name == "Eve",
+                        _ => false,
+                    });
             let mut count = 0;
             for _ in iter1 {
                 count += 1;
@@ -1417,10 +1380,13 @@ pub mod tests {
             assert_eq!(count, 1);
         }
         {
-            let iter2 = txn2.iter_vertices().filter_map(|v| v.ok()).filter(|v| {
-                v.properties()[1].as_int().unwrap() >= &20
-                    && v.properties()[1].as_int().unwrap() <= &25
-            });
+            let iter2 =
+                txn2.iter_vertices()
+                    .filter_map(|v| v.ok())
+                    .filter(|v| match v.properties()[1] {
+                        ScalarValue::Int32(Some(age)) => (20..=25).contains(&age),
+                        _ => false,
+                    });
             let mut count = 0;
             for _ in iter2 {
                 count += 1;
@@ -1789,7 +1755,7 @@ pub mod tests {
             vid1,   // from Eve
             vid2,   // to Frank
             FRIEND, // label
-            PropertyRecord::new(vec![PropertyValue::String("2023-01-01".into())]),
+            PropertyRecord::new(vec![ScalarValue::String(Some("2023-01-01".to_string()))]),
         );
         let eid1 = graph.create_edge(&txn2, e1.clone()).unwrap();
         assert!(txn2.commit().is_ok());
@@ -1830,8 +1796,10 @@ pub mod tests {
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let vertex1 = Vertex::new(
             1,
-            1,
-            PropertyRecord::new(vec![PropertyValue::String("Before Checkpoint".into())]),
+            LabelId::new(1).unwrap(),
+            PropertyRecord::new(vec![ScalarValue::String(Some(
+                "Before Checkpoint".to_string(),
+            ))]),
         );
 
         graph.create_vertex(&txn1, vertex1.clone()).unwrap();
@@ -1854,8 +1822,10 @@ pub mod tests {
         let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
         let vertex2 = Vertex::new(
             2,
-            1,
-            PropertyRecord::new(vec![PropertyValue::String("After Checkpoint".into())]),
+            LabelId::new(1).unwrap(),
+            PropertyRecord::new(vec![ScalarValue::String(Some(
+                "After Checkpoint".to_string(),
+            ))]),
         );
         graph.create_vertex(&txn2, vertex2.clone()).unwrap();
         txn2.commit().unwrap();
@@ -1886,13 +1856,13 @@ pub mod tests {
         assert_eq!(recovered_vertex1.vid(), vertex1.vid());
         assert_eq!(
             recovered_vertex1.properties()[0],
-            PropertyValue::String("Before Checkpoint".into())
+            ScalarValue::String(Some("Before Checkpoint".to_string()))
         );
 
         assert_eq!(recovered_vertex2.vid(), vertex2.vid());
         assert_eq!(
             recovered_vertex2.properties()[0],
-            PropertyValue::String("After Checkpoint".into())
+            ScalarValue::String(Some("After Checkpoint".to_string()))
         );
     }
 }

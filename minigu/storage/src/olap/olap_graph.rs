@@ -1,13 +1,14 @@
 use std::cell::RefCell;
 use std::hash::{Hash, Hasher};
+use std::num::NonZeroU32;
 use std::sync::atomic::AtomicU64;
 
 use bitvec::bitvec;
 use bitvec::prelude::Lsb0;
 use bitvec::vec::BitVec;
 use dashmap::DashMap;
-use minigu_common::datatype::types::{EdgeId, LabelId, VertexId};
-use minigu_common::datatype::value::PropertyValue;
+use minigu_common::types::{LabelId, VertexId};
+use minigu_common::value::ScalarValue;
 use serde::{Deserialize, Serialize};
 
 use crate::error::EdgeNotFoundError::EdgeNotFound;
@@ -53,15 +54,15 @@ impl Hash for OlapVertex {
 #[derive(Clone, Debug, Copy)]
 pub struct OlapStorageEdge {
     // Edge data
-    pub label_id: LabelId,
+    pub label_id: Option<LabelId>,
     pub dst_id: VertexId,
 }
 impl OlapStorageEdge {
     // (Temporarily) Stands for null
     fn default() -> OlapStorageEdge {
         OlapStorageEdge {
-            label_id: 0,
-            dst_id: 0,
+            label_id: NonZeroU32::new(1),
+            dst_id: 1,
         }
     }
 }
@@ -70,7 +71,7 @@ impl OlapStorageEdge {
 #[derive(Clone, Debug)]
 pub struct OlapEdge {
     // Edge data
-    pub label_id: LabelId,
+    pub label_id: Option<LabelId>,
     pub src_id: VertexId,
     pub dst_id: VertexId,
     pub properties: OlapPropertyStore,
@@ -79,20 +80,20 @@ pub struct OlapEdge {
 // Olap-Property (Add 'Option' for compaction)
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Default)]
 pub struct OlapPropertyStore {
-    properties: Vec<Option<PropertyValue>>,
+    properties: Vec<Option<ScalarValue>>,
 }
 
 #[allow(dead_code)]
 impl OlapPropertyStore {
-    pub fn set_prop(&mut self, index: usize, prop: Option<PropertyValue>) {
+    pub fn set_prop(&mut self, index: usize, prop: Option<ScalarValue>) {
         self.properties.insert(index, prop);
     }
 
-    pub fn get(&self, index: usize) -> Option<PropertyValue> {
+    pub fn get(&self, index: usize) -> Option<ScalarValue> {
         self.properties.get(index).cloned().flatten()
     }
 
-    pub(crate) fn new(properties: Vec<Option<PropertyValue>>) -> OlapPropertyStore {
+    pub(crate) fn new(properties: Vec<Option<ScalarValue>>) -> OlapPropertyStore {
         OlapPropertyStore { properties }
     }
 }
@@ -107,8 +108,8 @@ pub struct EdgeBlock {
     pub is_tombstone: bool,
     // Min and max edge id (Eid)
     // For accelerating get_edge
-    pub max_label_id: LabelId,
-    pub min_label_id: LabelId,
+    pub max_label_id: Option<LabelId>,
+    pub min_label_id: Option<LabelId>,
     // Min and max to id (However may not be used)
     pub max_dst_id: VertexId,
     pub min_dst_id: VertexId,
@@ -127,8 +128,8 @@ pub struct CompressedEdgeBlock {
     pub cur_block_index: usize,
     // Min and max edge id (Eid)
     // For accelerating get_edge
-    pub max_label_id: LabelId,
-    pub min_label_id: LabelId,
+    pub max_label_id: Option<LabelId>,
+    pub min_label_id: Option<LabelId>,
     // Min and max to id (Vid)
     pub max_dst_id: VertexId,
     pub min_dst_id: VertexId,
@@ -138,14 +139,14 @@ pub struct CompressedEdgeBlock {
     pub delta_bit_width: u8,
     pub first_dst_id: VertexId,
     pub compressed_dst_ids: BitVec<u64, Lsb0>,
-    pub label_ids: [LabelId; BLOCK_CAPACITY],
+    pub label_ids: [Option<LabelId>; BLOCK_CAPACITY],
 }
 
 // Property block (Column storage)
 #[derive(Clone, Debug)]
 pub struct PropertyBlock {
     /// Property storage
-    pub values: Vec<Option<PropertyValue>>,
+    pub values: Vec<Option<ScalarValue>>,
 }
 // Property column storage
 #[derive(Debug)]
@@ -160,7 +161,7 @@ pub struct CompressedPropertyBlock {
     pub bitmap: BitVec<u16, Lsb0>,
     // Stands for numbers not null elements in every 16 elements
     pub offsets: [u8; BLOCK_CAPACITY / 16],
-    pub values: Vec<PropertyValue>,
+    pub values: Vec<ScalarValue>,
 }
 // Property column after compaction
 #[derive(Debug)]
@@ -205,7 +206,7 @@ impl OlapMvccGraphStorage {
             for i in 1..edge_block.edges.len() {
                 let cur_dst_id = edge_block.edges[i].dst_id;
                 let pre_dst_id = edge_block.edges[i - 1].dst_id;
-                if cur_dst_id == 0 {
+                if cur_dst_id == 1 {
                     break;
                 }
                 max_delta = max_delta.max(cur_dst_id - pre_dst_id);
@@ -221,7 +222,8 @@ impl OlapMvccGraphStorage {
             // 3. Start compressing
             // 3.1 Allocate some structs
             let required_bits = bit_width as usize * (edge_block.edge_counter - 1);
-            let mut label_ids: [LabelId; BLOCK_CAPACITY] = [0 as LabelId; BLOCK_CAPACITY];
+            let mut label_ids: [Option<LabelId>; BLOCK_CAPACITY] =
+                [NonZeroU32::new(1); BLOCK_CAPACITY];
             let mut compressed_dst_ids: BitVec<u64, Lsb0> = bitvec![u64, Lsb0; 0; required_bits];
             let edges = edge_block.edges;
 
@@ -238,9 +240,9 @@ impl OlapMvccGraphStorage {
 
             label_ids[0] = edges[0].label_id;
             // 3.3 Build compressed edge block
-            self.compressed_edges
-                .borrow_mut()
-                .insert(index, CompressedEdgeBlock {
+            self.compressed_edges.borrow_mut().insert(
+                index,
+                CompressedEdgeBlock {
                     pre_block_index: edge_block.pre_block_index,
                     cur_block_index: index,
                     max_label_id: edge_block.max_label_id,
@@ -253,7 +255,8 @@ impl OlapMvccGraphStorage {
                     first_dst_id: edge_block.edges[0].dst_id,
                     compressed_dst_ids,
                     label_ids,
-                })
+                },
+            )
         }
         let _ = std::mem::take(&mut *edges_borrow);
     }
@@ -277,7 +280,7 @@ impl OlapMvccGraphStorage {
 
             for (block_index, block) in column.blocks.iter().enumerate() {
                 let mut bitmap: BitVec<u16, Lsb0> = bitvec![u16, Lsb0; 0; BLOCK_CAPACITY];
-                let mut values: Vec<PropertyValue> = Vec::new();
+                let mut values: Vec<ScalarValue> = Vec::new();
                 let mut offsets: [u8; BLOCK_CAPACITY / 16] = [0u8; BLOCK_CAPACITY / 16];
 
                 for (value_index, value_option) in block.values.iter().enumerate() {
@@ -301,13 +304,14 @@ impl OlapMvccGraphStorage {
                     *offset = ones_count;
                 }
 
-                compressed_blocks
-                    .blocks
-                    .insert(block_index, CompressedPropertyBlock {
+                compressed_blocks.blocks.insert(
+                    block_index,
+                    CompressedPropertyBlock {
                         bitmap,
                         offsets,
                         values,
-                    })
+                    },
+                )
             }
             compressed_properties.insert(column_index, compressed_blocks);
         }
@@ -320,7 +324,8 @@ impl OlapGraph for OlapMvccGraphStorage {
     type Adjacency = OlapEdge;
     type AdjacencyIter<'a> = AdjacencyIterator<'a>;
     type Edge = OlapEdge;
-    type EdgeID = EdgeId;
+    // TODO: type EdgeID = EdgeId;
+    type EdgeID = Option<NonZeroU32>;
     type EdgeIter<'a> = EdgeIter<'a>;
     type Transaction = ();
     type Vertex = OlapVertex;
@@ -337,8 +342,7 @@ impl OlapGraph for OlapMvccGraphStorage {
             Some(mapping) => *mapping.value() as usize,
             None => {
                 return Err(StorageError::from(VertexNotFound(format!(
-                    "Vertex {} not found",
-                    id
+                    "Vertex {id} not found"
                 ))));
             }
         };
@@ -346,7 +350,7 @@ impl OlapGraph for OlapMvccGraphStorage {
         // 2. Directly access vertex data without lock
         let borrow = self.vertices.borrow();
         let vertex = borrow.get(logical_id).ok_or_else(|| {
-            StorageError::EdgeNotFound(EdgeNotFound(format!("Edge {} not found", id)))
+            StorageError::EdgeNotFound(EdgeNotFound(format!("Edge {id} not found")))
         })?;
 
         // 3. Clone and return the vertex data
@@ -399,7 +403,7 @@ impl OlapGraph for OlapMvccGraphStorage {
         }
         Err(StorageError::EdgeNotFound(EdgeNotFound(format!(
             "Edge {} not found",
-            eid
+            eid.unwrap()
         ))))
     }
 
@@ -494,8 +498,8 @@ impl MutOlapGraph for OlapMvccGraphStorage {
                 pre_block_index: None,
                 cur_block_index: index,
                 is_tombstone: false,
-                max_label_id: 0,
-                min_label_id: u64::MAX,
+                max_label_id: NonZeroU32::new(1),
+                min_label_id: NonZeroU32::new(u32::MAX),
                 max_dst_id: 0,
                 min_dst_id: u64::MAX,
                 edge_counter: 0,
@@ -522,8 +526,8 @@ impl MutOlapGraph for OlapMvccGraphStorage {
                     pre_block_index: Option::from(vertex.block_offset),
                     cur_block_index: index,
                     is_tombstone: false,
-                    max_label_id: 0,
-                    min_label_id: u64::MAX,
+                    max_label_id: NonZeroU32::new(1),
+                    min_label_id: NonZeroU32::new(u32::MAX),
                     max_dst_id: 0,
                     min_dst_id: u64::MAX,
                     src_id: edge.src_id,
@@ -567,9 +571,12 @@ impl MutOlapGraph for OlapMvccGraphStorage {
             let property_block = if let Some(block) = column.blocks.get_mut(vertex.block_offset) {
                 block
             } else {
-                column.blocks.insert(vertex.block_offset, PropertyBlock {
-                    values: vec![None; BLOCK_CAPACITY],
-                });
+                column.blocks.insert(
+                    vertex.block_offset,
+                    PropertyBlock {
+                        values: vec![None; BLOCK_CAPACITY],
+                    },
+                );
                 column.blocks.get_mut(vertex.block_offset).unwrap()
             };
 
@@ -607,8 +614,7 @@ impl MutOlapGraph for OlapMvccGraphStorage {
 
         if !is_found {
             return Err(StorageError::VertexNotFound(VertexNotFound(format!(
-                "Vertex {} not found",
-                vid
+                "Vertex {vid} not found"
             ))));
         }
 
@@ -643,7 +649,7 @@ impl MutOlapGraph for OlapMvccGraphStorage {
         if !is_found {
             return Err(StorageError::EdgeNotFound(EdgeNotFound(format!(
                 "Edge {} not found",
-                eid
+                eid.unwrap()
             ))));
         }
 
@@ -667,8 +673,8 @@ impl MutOlapGraph for OlapMvccGraphStorage {
         }
 
         edges[edge_block.edge_counter] = OlapStorageEdge {
-            label_id: 0,
-            dst_id: 0,
+            label_id: NonZeroU32::new(1),
+            dst_id: 1,
         };
 
         // Remove property
@@ -688,13 +694,12 @@ impl MutOlapGraph for OlapMvccGraphStorage {
         _txn: &Self::Transaction,
         vid: Self::VertexID,
         indices: Vec<usize>,
-        props: Vec<PropertyValue>,
+        props: Vec<ScalarValue>,
     ) -> StorageResult<()> {
         let logical_id = self.dense_id_map.get(&vid);
         if logical_id.is_none() {
             return Err(StorageError::VertexNotFound(VertexNotFound(format!(
-                "Vertex ID {} not found",
-                vid
+                "Vertex ID {vid} not found"
             ))));
         }
         let logical_id = *logical_id.unwrap();
@@ -714,7 +719,7 @@ impl MutOlapGraph for OlapMvccGraphStorage {
         txn: &Self::Transaction,
         eid: Self::EdgeID,
         indices: Vec<usize>,
-        props: Vec<PropertyValue>,
+        props: Vec<ScalarValue>,
     ) -> StorageResult<()> {
         let mut iterator = self.iter_edges(txn)?;
         while let Some(edge) = iterator.next() {
@@ -730,7 +735,7 @@ impl MutOlapGraph for OlapMvccGraphStorage {
         }
         Err(StorageError::EdgeNotFound(EdgeNotFound(format!(
             "Edge {} not found",
-            eid
+            eid.unwrap()
         ))))
     }
 }
@@ -742,14 +747,15 @@ mod tests {
     use std::fs::File;
     use std::io;
     use std::io::BufRead;
+    use std::num::NonZeroU32;
     use std::sync::atomic::AtomicU64;
     use std::time::Instant;
 
     use bitvec::order::Lsb0;
     use bitvec::prelude::BitVec;
     use dashmap::DashMap;
-    use minigu_common::datatype::types::{LabelId, VertexId};
-    use minigu_common::datatype::value::PropertyValue;
+    use minigu_common::types::{LabelId, VertexId};
+    use minigu_common::value::ScalarValue;
 
     use crate::model::properties::PropertyRecord;
     use crate::olap::olap_graph::{
@@ -759,7 +765,7 @@ mod tests {
     };
     use crate::storage::{MutOlapGraph, OlapGraph};
 
-    const PATH: &str = "";
+    const PATH: &str = "E:/Workspace/miniGU/miniGU/datasets/";
 
     fn mock_olap_graph(property_cnt: u64) -> OlapMvccGraphStorage {
         let storage = OlapMvccGraphStorage {
@@ -786,26 +792,30 @@ mod tests {
     #[test]
     fn create_vertex_test() {
         let storage = mock_olap_graph(0);
-        for i in 0..289 {
-            let _result = storage.create_vertex(&(), OlapVertex {
-                vid: (i + 30) as VertexId,
-                properties: PropertyRecord::new(vec![
-                    PropertyValue::Int(i + 100),
-                    PropertyValue::String("hello".to_string()),
-                ]),
-                block_offset: 0,
-            });
+        for i in 1..=289 {
+            let _result = storage.create_vertex(
+                &(),
+                OlapVertex {
+                    vid: (i + 30) as VertexId,
+                    properties: PropertyRecord::new(vec![
+                        ScalarValue::Int32(Some(i + 100)),
+                        ScalarValue::String(Some("hello".to_string())),
+                    ]),
+                    block_offset: 0,
+                },
+            );
         }
 
         let vertices = storage.vertices.borrow();
-        assert_eq!(vertices.get(128).unwrap().vid, 158);
+
+        assert_eq!(vertices.get(128).unwrap().vid, 159);
         assert_eq!(
             vertices.get(128).unwrap().properties.get(0),
-            Some(&PropertyValue::Int(228))
+            Some(&ScalarValue::Int32(Some(229)))
         );
         assert_eq!(
             vertices.get(128).unwrap().properties.get(1),
-            Some(&PropertyValue::String("hello".to_string()))
+            Some(&ScalarValue::String(Some("hello".to_string())))
         );
 
         let vertices_len = vertices.len();
@@ -813,7 +823,7 @@ mod tests {
         assert_eq!(vertices_len, 289);
         assert_eq!(id_map_len, 289);
 
-        let id = *storage.dense_id_map.get(&128).unwrap();
+        let id = *storage.dense_id_map.get(&129).unwrap();
         assert_eq!(id, 98);
     }
 
@@ -821,47 +831,59 @@ mod tests {
     fn create_edge_test() {
         let storage = mock_olap_graph(1);
         // Insert vertex
-        for i in 0..5 {
-            let _result = storage.create_vertex(&(), OlapVertex {
-                vid: i as VertexId,
-                properties: PropertyRecord::default(),
-                block_offset: 0,
-            });
+        for i in 1u32..=5 {
+            let _result = storage.create_vertex(
+                &(),
+                OlapVertex {
+                    vid: i as VertexId,
+                    properties: PropertyRecord::default(),
+                    block_offset: 0,
+                },
+            );
 
-            for j in 0..(400 - i * 10) {
-                let _result1 = storage.create_edge(&(), OlapEdge {
-                    label_id: i * 10000 + j,
-                    src_id: i,
-                    dst_id: j * (i + 1),
-                    properties: OlapPropertyStore::new(vec![Some(PropertyValue::String(
-                        "hello".to_string(),
-                    ))]),
-                });
+            for j in 1u32..=(400 - (i - 1) * 10) {
+                let _result1 = storage.create_edge(
+                    &(),
+                    OlapEdge {
+                        label_id: NonZeroU32::new(i * 10000 + j),
+                        src_id: i as u64,
+                        dst_id: ((j - 1) * i) as u64,
+                        properties: OlapPropertyStore::new(vec![Some(ScalarValue::String(Some(
+                            "hello".to_string(),
+                        )))]),
+                    },
+                );
             }
         }
 
         let edges = storage.edges.borrow();
         assert_eq!(edges.len(), 5 * 2);
         assert_eq!(edges.get(5).unwrap().edges[0].dst_id, 3 * 256);
-        assert_eq!(edges.get(4).unwrap().edges[0].label_id, 20000);
+        assert_eq!(
+            edges.get(4).unwrap().edges[0].label_id,
+            NonZeroU32::new(30001)
+        );
         assert_eq!(edges.get(3).unwrap().pre_block_index.unwrap(), 2);
         assert_eq!(edges.get(2).unwrap().pre_block_index, None);
         assert_eq!(edges.get(1).unwrap().edge_counter, 144);
-        assert_eq!(edges.first().unwrap().src_id, 0);
+        assert_eq!(edges.first().unwrap().src_id, 1);
     }
 
     #[test]
     fn get_vertex_test() {
         let storage = mock_olap_graph(0);
         for i in 0..289 {
-            let _result = storage.create_vertex(&(), OlapVertex {
-                vid: (i + 30) as VertexId,
-                properties: PropertyRecord::new(vec![
-                    PropertyValue::Int(i + 100),
-                    PropertyValue::String("hello".to_string()),
-                ]),
-                block_offset: 0,
-            });
+            let _result = storage.create_vertex(
+                &(),
+                OlapVertex {
+                    vid: (i + 30) as VertexId,
+                    properties: PropertyRecord::new(vec![
+                        ScalarValue::Int32(Some(i + 100)),
+                        ScalarValue::String(Some("hello".to_string())),
+                    ]),
+                    block_offset: 0,
+                },
+            );
         }
 
         let result1 = storage.get_vertex(&(), 33);
@@ -870,64 +892,63 @@ mod tests {
 
         let result2 = storage.get_vertex(&(), 63);
         assert!(result2.is_ok());
-        assert_eq!(
-            result2
-                .unwrap()
-                .properties
-                .get(0)
-                .unwrap()
-                .as_int()
-                .unwrap()
-                .clone(),
-            133
-        );
+        assert_eq!(result2.unwrap().properties.get(0).unwrap().get_int32(), 133);
     }
 
     #[test]
     fn get_edge_test() {
         let storage = mock_olap_graph(1);
         // Insert vertex
-        for i in 0..5 {
-            let _result = storage.create_vertex(&(), OlapVertex {
-                vid: i as VertexId,
-                properties: PropertyRecord::default(),
-                block_offset: 0,
-            });
+        for i in 1..=5 {
+            let _result = storage.create_vertex(
+                &(),
+                OlapVertex {
+                    vid: i as VertexId,
+                    properties: PropertyRecord::default(),
+                    block_offset: 0,
+                },
+            );
 
-            for j in 0..(400 - i * 10) {
-                let _result1 = storage.create_edge(&(), OlapEdge {
-                    label_id: i * 10000 + j,
-                    src_id: i,
-                    dst_id: j * (i + 1),
-                    properties: OlapPropertyStore::new(vec![Some(PropertyValue::String(
-                        "hello".to_string(),
-                    ))]),
-                });
+            for j in 1..=(400 - i * 10) {
+                let _result1 = storage.create_edge(
+                    &(),
+                    OlapEdge {
+                        label_id: NonZeroU32::new(i * 10000 + j),
+                        src_id: i as u64,
+                        dst_id: (j * (i + 1)) as u64,
+                        properties: OlapPropertyStore::new(vec![Some(ScalarValue::String(Some(
+                            "hello".to_string(),
+                        )))]),
+                    },
+                );
             }
         }
 
-        let result1 = storage.get_edge(&(), 30099);
-        println!("{:?}", result1);
+        let result1 = storage.get_edge(&(), NonZeroU32::new(30099));
+        println!("{result1:?}");
         assert!(result1.is_ok());
         assert_eq!(result1.unwrap().dst_id, 396);
 
-        let result2 = storage.get_edge(&(), 20333);
+        let result2 = storage.get_edge(&(), NonZeroU32::new(20333));
         assert!(result2.is_ok());
-        assert_eq!(result2.unwrap().label_id, 20333);
+        assert_eq!(result2.unwrap().label_id, NonZeroU32::new(20333));
     }
 
     #[test]
     fn vertex_iterator_test() {
         let storage = mock_olap_graph(0);
         for i in 0..500 {
-            let _result = storage.create_vertex(&(), OlapVertex {
-                vid: (i + 30) as VertexId,
-                properties: PropertyRecord::new(vec![
-                    PropertyValue::Int(i + 100),
-                    PropertyValue::String("hello".to_string()),
-                ]),
-                block_offset: 0,
-            });
+            let _result = storage.create_vertex(
+                &(),
+                OlapVertex {
+                    vid: (i + 30) as VertexId,
+                    properties: PropertyRecord::new(vec![
+                        ScalarValue::Int32(Some(i + 100)),
+                        ScalarValue::String(Some("hello".to_string())),
+                    ]),
+                    block_offset: 0,
+                },
+            );
         }
 
         let mut vertex_iter = storage.iter_vertices(&()).unwrap();
@@ -941,25 +962,31 @@ mod tests {
     #[test]
     fn edge_iterator_test() {
         let storage = mock_olap_graph(1);
-        for i in 0..5 {
-            let _result = storage.create_vertex(&(), OlapVertex {
-                vid: i as VertexId,
-                properties: PropertyRecord::new(vec![
-                    PropertyValue::Int(i + 100),
-                    PropertyValue::String("hello".to_string()),
-                ]),
-                block_offset: 0,
-            });
+        for i in 1i32..=4 {
+            let _result = storage.create_vertex(
+                &(),
+                OlapVertex {
+                    vid: i as VertexId,
+                    properties: PropertyRecord::new(vec![
+                        ScalarValue::Int32(Some(i + 100)),
+                        ScalarValue::String(Some("hello".to_string())),
+                    ]),
+                    block_offset: 0,
+                },
+            );
 
-            for j in 0..(i * 10) {
-                let _result1 = storage.create_edge(&(), OlapEdge {
-                    label_id: (i * 10000 + j) as LabelId,
-                    src_id: i as VertexId,
-                    dst_id: (j * (i + 1)) as VertexId,
-                    properties: OlapPropertyStore::new(vec![Option::from(PropertyValue::String(
-                        "hello".to_string(),
-                    ))]),
-                });
+            for j in 1i32..=(i * 10) {
+                let _result1 = storage.create_edge(
+                    &(),
+                    OlapEdge {
+                        label_id: NonZeroU32::new((i * 10000 + j) as u32),
+                        src_id: i as VertexId,
+                        dst_id: (j * (i + 1)) as VertexId,
+                        properties: OlapPropertyStore::new(vec![Option::from(
+                            ScalarValue::String(Some("hello".to_string())),
+                        )]),
+                    },
+                );
             }
         }
 
@@ -969,14 +996,10 @@ mod tests {
         for next in edge_iter {
             // Check properties
             // unwrap unwrap unwrap unwrap ??
+            let edge = next.unwrap();
             assert_eq!(
-                next.unwrap()
-                    .properties
-                    .get(0)
-                    .unwrap()
-                    .as_string()
-                    .unwrap(),
-                "hello"
+                edge.properties.get(0).unwrap().get_string(),
+                "hello".to_string()
             );
             cnt += 1;
         }
@@ -989,21 +1012,27 @@ mod tests {
         let storage = mock_olap_graph(1);
 
         for i in 0..10 {
-            let _result = storage.create_vertex(&(), OlapVertex {
-                vid: i as VertexId,
-                properties: PropertyRecord::default(),
-                block_offset: 0,
-            });
+            let _result = storage.create_vertex(
+                &(),
+                OlapVertex {
+                    vid: i as VertexId,
+                    properties: PropertyRecord::default(),
+                    block_offset: 0,
+                },
+            );
 
             for j in 0..(i * 100) {
-                let _result1 = storage.create_edge(&(), OlapEdge {
-                    label_id: (i * 10000 + j) as LabelId,
-                    src_id: i as VertexId,
-                    dst_id: (j * (i + 1)) as VertexId,
-                    properties: OlapPropertyStore::new(vec![Option::from(PropertyValue::String(
-                        "hello".to_string(),
-                    ))]),
-                });
+                let _result1 = storage.create_edge(
+                    &(),
+                    OlapEdge {
+                        label_id: NonZeroU32::new(i * 10000 + j),
+                        src_id: i as VertexId,
+                        dst_id: (j * (i + 1)) as VertexId,
+                        properties: OlapPropertyStore::new(vec![Option::from(
+                            ScalarValue::String(Some("hello".to_string())),
+                        )]),
+                    },
+                );
             }
         }
 
@@ -1041,24 +1070,31 @@ mod tests {
     fn set_vertex_properties_test() {
         let storage = mock_olap_graph(0);
         for i in 0..100 {
-            let _result = storage.create_vertex(&(), OlapVertex {
-                vid: (i + 30) as VertexId,
-                properties: PropertyRecord::new(vec![
-                    PropertyValue::Int(i + 100),
-                    PropertyValue::String("hello".to_string()),
-                ]),
-                block_offset: 0,
-            });
+            let _result = storage.create_vertex(
+                &(),
+                OlapVertex {
+                    vid: (i + 30) as VertexId,
+                    properties: PropertyRecord::new(vec![
+                        ScalarValue::Int32(Some(i + 100)),
+                        ScalarValue::String(Some("hello".to_string())),
+                    ]),
+                    block_offset: 0,
+                },
+            );
         }
 
-        let result1 = storage.set_vertex_property(&(), 30, vec![0], vec![PropertyValue::Int(0)]);
-        let result2 = storage.set_vertex_property(&(), 50, vec![1], vec![PropertyValue::String(
-            "No hello".to_string(),
-        )]);
+        let result1 =
+            storage.set_vertex_property(&(), 30, vec![0], vec![ScalarValue::Int32(Some(1))]);
+        let result2 = storage.set_vertex_property(
+            &(),
+            50,
+            vec![1],
+            vec![ScalarValue::String(Some("No hello".to_string()))],
+        );
         assert!(result1.is_ok());
         assert!(result2.is_ok());
         assert_eq!(
-            *storage
+            storage
                 .vertices
                 .borrow()
                 .first()
@@ -1066,9 +1102,8 @@ mod tests {
                 .properties
                 .get(0)
                 .unwrap()
-                .as_int()
-                .unwrap(),
-            0
+                .get_int32(),
+            1
         );
         assert_eq!(
             storage
@@ -1079,9 +1114,8 @@ mod tests {
                 .properties
                 .get(1)
                 .unwrap()
-                .as_string()
-                .unwrap(),
-            "No hello"
+                .get_string(),
+            "No hello".to_string()
         );
     }
 
@@ -1089,40 +1123,65 @@ mod tests {
     fn set_edge_properties_test() {
         let storage = mock_olap_graph(3);
         for i in 0..2 {
-            let _result = storage.create_vertex(&(), OlapVertex {
-                vid: i as VertexId,
-                properties: PropertyRecord::default(),
-                block_offset: 0,
-            });
+            let _result = storage.create_vertex(
+                &(),
+                OlapVertex {
+                    vid: i as VertexId,
+                    properties: PropertyRecord::default(),
+                    block_offset: 0,
+                },
+            );
             for j in 0..3 {
-                let _result1 = storage.create_edge(&(), OlapEdge {
-                    label_id: (i * 10000 + j) as LabelId,
-                    src_id: i as VertexId,
-                    dst_id: (j + i) as VertexId,
-                    properties: OlapPropertyStore::new(vec![
-                        Some(PropertyValue::Int(j * 10)),
-                        Some(PropertyValue::String("hello".to_string())),
-                        Some(PropertyValue::Boolean(true)),
-                    ]),
-                });
+                let _result1 = storage.create_edge(
+                    &(),
+                    OlapEdge {
+                        label_id: NonZeroU32::new(i * 10000 + j),
+                        src_id: i as VertexId,
+                        dst_id: (j + i) as VertexId,
+                        properties: OlapPropertyStore::new(vec![
+                            Some(ScalarValue::UInt32(Some(j * 10))),
+                            Some(ScalarValue::String(Some("hello".to_string()))),
+                            Some(ScalarValue::Boolean(Some(true))),
+                        ]),
+                    },
+                );
             }
         }
 
-        let _ = storage.set_edge_property(&(), 10001, vec![0], vec![PropertyValue::Int(10086)]);
-        let _ = storage.set_edge_property(&(), 10002, vec![1, 2], vec![
-            PropertyValue::String("No hello".to_string()),
-            PropertyValue::Boolean(false),
-        ]);
+        let _ = storage.set_edge_property(
+            &(),
+            NonZeroU32::new(10001),
+            vec![0],
+            vec![ScalarValue::Int32(Some(10086))],
+        );
+        let _ = storage.set_edge_property(
+            &(),
+            NonZeroU32::new(10002),
+            vec![1, 2],
+            vec![
+                ScalarValue::String(Some("No hello".to_string())),
+                ScalarValue::Boolean(Some(false)),
+            ],
+        );
 
-        let store1 = storage.get_edge(&(), 10001).unwrap().properties;
+        let store1 = storage
+            .get_edge(&(), NonZeroU32::new(10001))
+            .unwrap()
+            .properties;
         let clone1 = store1.properties.first().unwrap().clone();
-        assert_eq!(*clone1.unwrap().as_int().unwrap(), 10086);
+        assert_eq!(clone1.unwrap(), ScalarValue::Int32(Some(10086)));
 
-        let store2 = storage.get_edge(&(), 10002).unwrap().properties;
+        let store2 = storage
+            .get_edge(&(), NonZeroU32::new(10002))
+            .unwrap()
+            .properties;
         let clone2 = store2.properties.get(1).unwrap().clone();
         let clone3 = store2.properties.get(2).unwrap().clone();
-        assert_eq!(clone2.unwrap().as_string().unwrap(), "No hello");
-        assert!(!(*clone3.unwrap().as_boolean().unwrap()));
+        assert_eq!(
+            clone2.unwrap(),
+            ScalarValue::String(Some("No hello".to_string()))
+        );
+        assert_eq!(clone3.unwrap(), ScalarValue::Boolean(Some(false)));
     }
 
     #[test]
@@ -1130,18 +1189,24 @@ mod tests {
         let storage = mock_olap_graph(3);
 
         for i in 0..5 {
-            let _result = storage.create_vertex(&(), OlapVertex {
-                vid: i as VertexId,
-                properties: PropertyRecord::default(),
-                block_offset: 0,
-            });
+            let _result = storage.create_vertex(
+                &(),
+                OlapVertex {
+                    vid: i as VertexId,
+                    properties: PropertyRecord::default(),
+                    block_offset: 0,
+                },
+            );
             for j in 0..300 {
-                let _result1 = storage.create_edge(&(), OlapEdge {
-                    label_id: (i * 10000 + j) as LabelId,
-                    src_id: i as VertexId,
-                    dst_id: (j + i) as VertexId,
-                    properties: OlapPropertyStore::default(),
-                });
+                let _result1 = storage.create_edge(
+                    &(),
+                    OlapEdge {
+                        label_id: NonZeroU32::new(i * 10000 + j),
+                        src_id: i as VertexId,
+                        dst_id: (j + i) as VertexId,
+                        properties: OlapPropertyStore::default(),
+                    },
+                );
             }
         }
 
@@ -1160,46 +1225,58 @@ mod tests {
     fn delete_property_test() {
         let storage = mock_olap_graph(5);
 
-        let _result = storage.create_vertex(&(), OlapVertex {
-            vid: 1 as VertexId,
-            properties: PropertyRecord::default(),
-            block_offset: 0,
-        });
+        let _result = storage.create_vertex(
+            &(),
+            OlapVertex {
+                vid: 1 as VertexId,
+                properties: PropertyRecord::default(),
+                block_offset: 0,
+            },
+        );
 
-        for i in 0..5 {
-            let _result1 = storage.create_edge(&(), OlapEdge {
-                label_id: i as LabelId,
-                src_id: 1 as VertexId,
-                dst_id: (10000 + i) as VertexId,
-                properties: OlapPropertyStore::new(vec![
-                    Some(PropertyValue::Int(i * 10)),
-                    Some(PropertyValue::String("hello".to_string())),
-                    Some(PropertyValue::Boolean(true)),
-                    Some(PropertyValue::Double(0.5 + i as f64)),
-                    Some(PropertyValue::String("another hello".to_string())),
-                ]),
-            });
+        for i in 1..=5 {
+            let _result1 = storage.create_edge(
+                &(),
+                OlapEdge {
+                    label_id: NonZeroU32::new(i),
+                    src_id: 1 as VertexId,
+                    dst_id: (10000 + i) as VertexId,
+                    properties: OlapPropertyStore::new(vec![
+                        Some(ScalarValue::UInt32(Some(i * 10))),
+                        Some(ScalarValue::String(Some("hello".to_string()))),
+                        Some(ScalarValue::Boolean(Some(true))),
+                        Some(ScalarValue::Float32(Some(0.5 + i as f32))),
+                        Some(ScalarValue::String(Some("another hello".to_string()))),
+                    ]),
+                },
+            );
         }
 
-        let _ = storage.delete_edge(&(), 1);
+        let _ = storage.delete_edge(&(), NonZeroU32::new(2));
 
         {
             let binding = storage.edges.borrow();
             let edge_block = binding.first().unwrap();
             assert_eq!(edge_block.edge_counter, 4);
-            assert_eq!(edge_block.edges[0].label_id, 0);
-            assert_eq!(edge_block.edges[1].label_id, 2);
+            assert_eq!(edge_block.edges[0].label_id, NonZeroU32::new(1));
+            assert_eq!(edge_block.edges[1].label_id, NonZeroU32::new(3));
 
             let binding = storage.property_columns.borrow();
             let property_block = binding.first().unwrap().blocks.first().unwrap();
-            assert_eq!(property_block.values[0], Some(PropertyValue::Int(0)));
-            assert_eq!(property_block.values[1], Some(PropertyValue::Int(20)));
+            assert_eq!(
+                property_block.values[0],
+                Some(ScalarValue::UInt32(Some(10)))
+            );
+            assert_eq!(
+                property_block.values[1],
+                Some(ScalarValue::UInt32(Some(30)))
+            );
         }
 
-        let _ = storage.delete_edge(&(), 0);
-        let _ = storage.delete_edge(&(), 2);
-        let _ = storage.delete_edge(&(), 3);
-        let _ = storage.delete_edge(&(), 4);
+        let _ = storage.delete_edge(&(), NonZeroU32::new(1));
+        let _ = storage.delete_edge(&(), NonZeroU32::new(3));
+        let _ = storage.delete_edge(&(), NonZeroU32::new(4));
+        let _ = storage.delete_edge(&(), NonZeroU32::new(5));
 
         assert_eq!(storage.edges.borrow().first().unwrap().edge_counter, 0);
         assert!(storage.edges.borrow().first().unwrap().is_tombstone);
@@ -1209,20 +1286,26 @@ mod tests {
     fn compress_edge_test() {
         let storage = mock_olap_graph(0);
         // Insert vertex
-        for i in 0..5 {
-            let _result = storage.create_vertex(&(), OlapVertex {
-                vid: i as VertexId,
-                properties: PropertyRecord::default(),
-                block_offset: 0,
-            });
+        for i in 1..=5 {
+            let _result = storage.create_vertex(
+                &(),
+                OlapVertex {
+                    vid: i as VertexId,
+                    properties: PropertyRecord::default(),
+                    block_offset: 0,
+                },
+            );
 
-            for j in 0..(400 - i * 10) {
-                let _result1 = storage.create_edge(&(), OlapEdge {
-                    label_id: i * 10000 + j,
-                    src_id: i,
-                    dst_id: j + i,
-                    properties: Default::default(),
-                });
+            for j in 1..=(400 - (i - 1) * 10) {
+                let _result1 = storage.create_edge(
+                    &(),
+                    OlapEdge {
+                        label_id: NonZeroU32::new(i * 10000 + j),
+                        src_id: i as u64,
+                        dst_id: (j + i) as u64,
+                        properties: Default::default(),
+                    },
+                );
             }
         }
 
@@ -1231,8 +1314,8 @@ mod tests {
         let compaction_borrow = storage.compressed_edges.borrow();
         assert_eq!(compaction_borrow.len(), 10);
 
-        assert_eq!(compaction_borrow.first().unwrap().src_id, 0);
-        assert_eq!(compaction_borrow.first().unwrap().first_dst_id, 0);
+        assert_eq!(compaction_borrow.first().unwrap().src_id, 1);
+        assert_eq!(compaction_borrow.first().unwrap().first_dst_id, 2);
         assert_eq!(compaction_borrow.first().unwrap().edge_counter, 256);
         assert_eq!(compaction_borrow.first().unwrap().delta_bit_width, 1);
 
@@ -1242,42 +1325,51 @@ mod tests {
             .compressed_dst_ids
             .clone();
 
-        println!("{}", bit_ref);
+        println!("{bit_ref}");
     }
 
     #[test]
     fn compress_property_test() {
         let storage = mock_olap_graph(2);
 
-        for i in 0..5 {
-            let _result = storage.create_vertex(&(), OlapVertex {
-                vid: i as VertexId,
-                properties: PropertyRecord::default(),
-                block_offset: 0,
-            });
+        for i in 1..=5 {
+            let _result = storage.create_vertex(
+                &(),
+                OlapVertex {
+                    vid: i as VertexId,
+                    properties: PropertyRecord::default(),
+                    block_offset: 0,
+                },
+            );
 
-            for j in 0..400 {
-                let _result1 = storage.create_edge(&(), OlapEdge {
-                    label_id: i * 10000 + j,
-                    src_id: i,
-                    dst_id: j * (i + 1),
-                    properties: OlapPropertyStore::new(vec![
-                        Option::from(PropertyValue::Int(j as i32)),
-                        None,
-                    ]),
-                });
+            for j in 1..=400 {
+                let _result1 = storage.create_edge(
+                    &(),
+                    OlapEdge {
+                        label_id: NonZeroU32::new(i * 10000 + j),
+                        src_id: i as u64,
+                        dst_id: (j * (i + 1)) as u64,
+                        properties: OlapPropertyStore::new(vec![
+                            Option::from(ScalarValue::UInt32(Some(j))),
+                            None,
+                        ]),
+                    },
+                );
             }
 
-            for j in 0..400 {
-                let _result1 = storage.create_edge(&(), OlapEdge {
-                    label_id: i * 2 * 10000 + j,
-                    src_id: i,
-                    dst_id: j * (i * 2 + 1),
-                    properties: OlapPropertyStore::new(vec![
-                        None,
-                        Option::from(PropertyValue::String("hello".to_string())),
-                    ]),
-                });
+            for j in 1..=400 {
+                let _result1 = storage.create_edge(
+                    &(),
+                    OlapEdge {
+                        label_id: NonZeroU32::new(i * 2 * 10000 + j),
+                        src_id: i as u64,
+                        dst_id: (j * (i * 2 + 1)) as u64,
+                        properties: OlapPropertyStore::new(vec![
+                            None,
+                            Option::from(ScalarValue::String(Some("hello".to_string()))),
+                        ]),
+                    },
+                );
             }
         }
 
@@ -1288,8 +1380,8 @@ mod tests {
         assert_eq!(compaction_borrow.first().unwrap().blocks.len(), 20);
         let block = compaction_borrow.first().unwrap().blocks.first().unwrap();
         assert_eq!(block.offsets[0], 16);
-        assert_eq!(*block.values[10].as_int().unwrap(), 10);
-        assert_eq!(*block.values[100].as_int().unwrap(), 100);
+        assert_eq!(block.values[10].get_uint32(), 11);
+        assert_eq!(block.values[100].get_uint32(), 101);
         println!("{}", block.bitmap);
     }
 
@@ -1321,7 +1413,7 @@ mod tests {
         }
         let duration_edge = start_edge.elapsed();
 
-        println!("Storage - create_edge time: {:?}", duration_edge);
+        println!("Storage - create_edge time: {duration_edge:?}");
 
         create_edge_csr1(vertices.clone(), edges.clone());
         create_edge_csr0(vertices.clone(), edges.clone());
@@ -1357,7 +1449,7 @@ mod tests {
         }
         let duration_edge = start_edge.elapsed();
 
-        println!("Storage - create_edge time: {:?}", duration_edge);
+        println!("Storage - create_edge time: {duration_edge:?}");
 
         create_edge_csr1(vertices.clone(), edges.clone());
         create_edge_csr0(vertices.clone(), edges.clone());
@@ -1393,7 +1485,7 @@ mod tests {
         }
         let duration_edge = start_edge.elapsed();
 
-        println!("Storage - create_edge time: {:?}", duration_edge);
+        println!("Storage - create_edge time: {duration_edge:?}");
 
         create_edge_csr1(vertices.clone(), edges.clone());
         create_edge_csr0(vertices.clone(), edges.clone());
@@ -1452,17 +1544,17 @@ mod tests {
         }
         let duration_edge = start_edge.elapsed();
 
-        println!("Storage - create_edge time: {:?}", duration_edge);
+        println!("Storage - create_edge time: {duration_edge:?}");
 
         let property_size = measure_memory_column(&storage.property_columns);
         println!();
-        println!("{}", property_size);
+        println!("{property_size}");
 
         storage.compress_property();
 
         let compressed_property_size =
             measure_memory_compressed_col(&storage.compressed_properties);
-        println!("{}", compressed_property_size);
+        println!("{compressed_property_size}");
     }
 
     #[test]
@@ -1490,17 +1582,17 @@ mod tests {
         }
         let duration_edge = start_edge.elapsed();
 
-        println!("Storage - create_edge time: {:?}", duration_edge);
+        println!("Storage - create_edge time: {duration_edge:?}");
 
         let property_size = measure_memory_column(&storage.property_columns);
         println!();
-        println!("{}", property_size);
+        println!("{property_size}");
 
         storage.compress_property();
 
         let compressed_property_size =
             measure_memory_compressed_col(&storage.compressed_properties);
-        println!("{}", compressed_property_size);
+        println!("{compressed_property_size}");
     }
 
     #[test]
@@ -1529,10 +1621,10 @@ mod tests {
         }
         let duration_edge = start_edge.elapsed();
 
-        println!("Storage - create_edge time: {:?}", duration_edge);
+        println!("Storage - create_edge time: {duration_edge:?}");
 
         // Mock row storage
-        let mut row_properties: Vec<Vec<Option<PropertyValue>>> = Vec::new();
+        let mut row_properties: Vec<Vec<Option<ScalarValue>>> = Vec::new();
         let edges_clone2 = edges.clone();
         for edge in edges_clone2 {
             row_properties.push(edge.properties.properties);
@@ -1541,8 +1633,8 @@ mod tests {
         let x = storage.property_columns.borrow();
 
         // Analysis 1 - Sum
-        let mut total1: f64 = 0.0;
-        let mut total2: f64 = 0.0;
+        let mut _total1: f64 = 0.0;
+        let mut _total2: f64 = 0.0;
 
         let start_col_analysis1 = Instant::now();
         for block in &x.get(2).unwrap().blocks {
@@ -1550,10 +1642,9 @@ mod tests {
                 if option.is_none() {
                     break;
                 }
-                total1 += <Option<PropertyValue> as Clone>::clone(option)
+                _total1 += <Option<ScalarValue> as Clone>::clone(option)
                     .unwrap()
-                    .as_double()
-                    .unwrap();
+                    .get_float64();
             }
         }
 
@@ -1563,16 +1654,15 @@ mod tests {
         let start_row_analysis1 = Instant::now();
         for vec in row_clone1 {
             let value = vec.get(2).unwrap();
-            total2 += <Option<PropertyValue> as Clone>::clone(value)
+            _total2 += <Option<ScalarValue> as Clone>::clone(value)
                 .unwrap()
-                .as_double()
-                .unwrap();
+                .get_float64();
         }
 
         let duration_row_analysis1 = start_row_analysis1.elapsed();
 
-        println!("Column analysis 1: {:?}", duration_col_analysis1);
-        println!("Row analysis 1: {:?}", duration_row_analysis1);
+        println!("Column analysis 1: {duration_col_analysis1:?}");
+        println!("Row analysis 1: {duration_row_analysis1:?}");
 
         // Analysis 2 - Max
         let mut max1: f64 = -10.0;
@@ -1584,12 +1674,7 @@ mod tests {
                 if option.is_none() {
                     break;
                 }
-                max1 = max1.max(
-                    *<Option<PropertyValue> as Clone>::clone(option)
-                        .unwrap()
-                        .as_double()
-                        .unwrap(),
-                );
+                max1 = max1.max(option.clone().map(|s| s.get_float64()).unwrap_or_default());
             }
         }
 
@@ -1599,18 +1684,13 @@ mod tests {
         let start_row_analysis2 = Instant::now();
         for vec in row_clone2 {
             let value = vec.get(3).unwrap();
-            max2 = max2.max(
-                *<Option<PropertyValue> as Clone>::clone(value)
-                    .unwrap()
-                    .as_double()
-                    .unwrap(),
-            );
+            max2 = max2.max(value.clone().map(|s| s.get_float64()).unwrap_or_default());
         }
 
         let duration_row_analysis2 = start_row_analysis2.elapsed();
 
-        println!("Column analysis 2: {:?}", duration_col_analysis2);
-        println!("Row analysis 2: {:?}", duration_row_analysis2);
+        println!("Column analysis 2: {duration_col_analysis2:?}");
+        println!("Row analysis 2: {duration_row_analysis2:?}");
 
         // Analysis 3 - Min
         let mut min1: f64 = -10.0;
@@ -1622,12 +1702,7 @@ mod tests {
                 if option.is_none() {
                     break;
                 }
-                min1 = min1.min(
-                    *<Option<PropertyValue> as Clone>::clone(option)
-                        .unwrap()
-                        .as_double()
-                        .unwrap(),
-                );
+                min1 = min1.min(option.clone().map(|s| s.get_float64()).unwrap_or_default());
             }
         }
 
@@ -1637,18 +1712,13 @@ mod tests {
         let start_row_analysis3 = Instant::now();
         for vec in row_clone3 {
             let value = vec.get(4).unwrap();
-            min2 = min2.min(
-                *<Option<PropertyValue> as Clone>::clone(value)
-                    .unwrap()
-                    .as_double()
-                    .unwrap(),
-            );
+            min2 = min2.min(value.clone().map(|s| s.get_float64()).unwrap_or_default());
         }
 
         let duration_row_analysis3 = start_row_analysis3.elapsed();
 
-        println!("Column analysis 3: {:?}", duration_col_analysis3);
-        println!("Row analysis 3: {:?}", duration_row_analysis3);
+        println!("Column analysis 3: {duration_col_analysis3:?}");
+        println!("Row analysis 3: {duration_row_analysis3:?}");
     }
 
     fn compress_storage_two_column_without_property(path: String, name: String) {
@@ -1675,17 +1745,17 @@ mod tests {
         }
         let duration_edge = start_edge.elapsed();
 
-        println!("Test for {} dataset", name);
+        println!("Test for {name} dataset");
         println!();
-        println!("Storage - create_edge time: {:?}", duration_edge);
+        println!("Storage - create_edge time: {duration_edge:?}");
 
         let edges_size = measure_edge_memory(&storage.edges);
-        println!("Bytes before compaction: {}b", edges_size);
+        println!("Bytes before compaction: {edges_size}b");
 
         storage.compress_edge();
 
         let compressed_edges_size = measure_compressed_edge_memory(&storage.compressed_edges);
-        println!("Bytes after compaction: {}b", compressed_edges_size);
+        println!("Bytes after compaction: {compressed_edges_size}b");
     }
 
     // CSR0 - Implemented by array (Not Vec)
@@ -1697,7 +1767,7 @@ mod tests {
         let mut edge_array: Box<[usize]> = vec![0; edge_array_capacity].into_boxed_slice();
         let mut value_array: Box<[f64]> = vec![0.0; edge_array_capacity].into_boxed_slice();
 
-        let mut edge_index: usize = 0;
+        let mut edge_index: usize = 1;
         let start = Instant::now();
 
         for (i, vertex) in vertices.iter().enumerate() {
@@ -1721,7 +1791,7 @@ mod tests {
                     }
                     edge_array[edge_index] = edge.dst_id as usize;
                     value_array[edge_index] = match edge.properties.get(0) {
-                        Some(prop) => *prop.as_double().unwrap_or(&0.0),
+                        Some(prop) => prop.get_float64(),
                         None => 0.0,
                     };
                     edge_index += 1;
@@ -1739,7 +1809,7 @@ mod tests {
         vertex_array[vertices.len()] = edge_index;
         let duration = start.elapsed();
 
-        println!("CSR0 - create_edge time: {:?}", duration);
+        println!("CSR0 - create_edge time: {duration:?}");
     }
 
     // CSR1 - Implemented by vec
@@ -1764,7 +1834,7 @@ mod tests {
         vertex_array[vertex_count] = edge_index;
 
         let duration = start.elapsed();
-        println!("CSR1 - create_edge time: {:?}", duration);
+        println!("CSR1 - create_edge time: {duration:?}");
     }
 
     fn create_edge_adjacency_list(vertices: Vec<OlapVertex>, edges: Vec<OlapEdge>) {
@@ -1785,7 +1855,7 @@ mod tests {
         }
 
         let duration = start.elapsed();
-        println!("Adjacency List - create_edge time: {:?}", duration);
+        println!("Adjacency List - create_edge time: {duration:?}");
     }
 
     fn measure_edge_memory(vec: &RefCell<Vec<EdgeBlock>>) -> usize {
@@ -1884,12 +1954,14 @@ mod tests {
                     } else {
                         let clone = value.clone();
                         let size = match clone.unwrap() {
-                            PropertyValue::Int(_) => size_of::<i32>(),
-                            PropertyValue::Long(_) => size_of::<i64>(),
-                            PropertyValue::Float(_) => size_of::<f32>(),
-                            PropertyValue::Double(_) => size_of::<f64>(),
-                            PropertyValue::String(s) => size_of::<String>() + s.capacity(),
-                            PropertyValue::Boolean(_) => size_of::<bool>(),
+                            ScalarValue::Int32(_) => size_of::<i32>(),
+                            ScalarValue::Int64(_) => size_of::<i64>(),
+                            ScalarValue::Float32(_) => size_of::<f32>(),
+                            ScalarValue::Float64(_) => size_of::<f64>(),
+                            ScalarValue::String(Some(s)) => {
+                                size_of::<String>() + s.len() * size_of::<u8>()
+                            }
+                            ScalarValue::Boolean(_) => size_of::<bool>(),
                             _ => 0,
                         };
                         total_size += size;
@@ -1913,12 +1985,14 @@ mod tests {
                 total_size += block.bitmap.len() / 8; // Convert bitmap size to bytes
                 for value in &block.values {
                     total_size += match value {
-                        PropertyValue::Int(_) => size_of::<i32>(),
-                        PropertyValue::Long(_) => size_of::<i64>(),
-                        PropertyValue::Float(_) => size_of::<f32>(),
-                        PropertyValue::Double(_) => size_of::<f64>(),
-                        PropertyValue::String(s) => size_of::<String>() + s.capacity(),
-                        PropertyValue::Boolean(_) => size_of::<bool>(),
+                        ScalarValue::Int32(_) => size_of::<i32>(),
+                        ScalarValue::Int64(_) => size_of::<i64>(),
+                        ScalarValue::Float32(_) => size_of::<f32>(),
+                        ScalarValue::Float64(_) => size_of::<f64>(),
+                        ScalarValue::String(Some(s)) => {
+                            size_of::<String>() + s.len() * size_of::<u8>()
+                        }
+                        ScalarValue::Boolean(_) => size_of::<bool>(),
                         _ => 0,
                     };
                 }
@@ -1959,7 +2033,7 @@ mod tests {
             }
 
             edges.push(OlapEdge {
-                label_id: 0,
+                label_id: NonZeroU32::new(1),
                 src_id: src_id as VertexId,
                 dst_id: dst_id as VertexId,
                 properties: OlapPropertyStore::default(),
@@ -2001,10 +2075,10 @@ mod tests {
             }
 
             edges.push(OlapEdge {
-                label_id: 0,
+                label_id: NonZeroU32::new(1),
                 src_id: src_id as VertexId,
                 dst_id: dst_id as VertexId,
-                properties: OlapPropertyStore::new(vec![Some(PropertyValue::Double(weight))]),
+                properties: OlapPropertyStore::new(vec![Some(ScalarValue::Float64(Some(weight)))]),
             })
         }
         (vertices, edges)
@@ -2030,13 +2104,13 @@ mod tests {
             let season_number = if parts[2] == r"\N" {
                 None
             } else {
-                Some(PropertyValue::Int(parts[2].parse::<i32>().unwrap()))
+                Some(ScalarValue::Int32(Some(parts[2].parse::<i32>().unwrap())))
             };
 
             let episode_number = if parts[3] == r"\N" {
                 None
             } else {
-                Some(PropertyValue::Int(parts[3].parse::<i32>().unwrap()))
+                Some(ScalarValue::Int32(Some(parts[3].parse::<i32>().unwrap())))
             };
 
             if src_id != current_vertex {
@@ -2049,7 +2123,7 @@ mod tests {
             }
 
             edges.push(OlapEdge {
-                label_id: 0,
+                label_id: NonZeroU32::new(1),
                 src_id: src_id as VertexId,
                 dst_id: dst_id as VertexId,
                 properties: OlapPropertyStore::new(vec![season_number, episode_number]),
@@ -2077,13 +2151,13 @@ mod tests {
             let property1 = if parts[1] == r"\N" {
                 None
             } else {
-                Some(PropertyValue::String(parts[1].to_string()))
+                Some(ScalarValue::String(Some(parts[1].to_string())))
             };
 
             let property2 = if parts[2] == r"\N" {
                 None
             } else {
-                Some(PropertyValue::String(parts[2].to_string()))
+                Some(ScalarValue::String(Some(parts[2].to_string())))
             };
 
             if src_id != current_vertex {
@@ -2096,7 +2170,7 @@ mod tests {
             }
 
             edges.push(OlapEdge {
-                label_id: 0,
+                label_id: NonZeroU32::new(1),
                 src_id: src_id as VertexId,
                 dst_id: dst_id as VertexId,
                 properties: OlapPropertyStore::new(vec![property1, property2]),
@@ -2132,20 +2206,24 @@ mod tests {
             let src_id: usize = edge_parts[1].parse().expect("Invalid src_id");
             let dst_id: usize = edge_parts[2].parse().expect("Invalid dst_id");
 
-            let property1 = Some(PropertyValue::Double(edge_parts[3].parse::<f64>().unwrap()));
-            let property2 = Some(PropertyValue::Int(edge_parts[0].parse::<i32>().unwrap()));
-            let property3 = Some(PropertyValue::Double(
+            let property1 = Some(ScalarValue::Float64(Some(
+                edge_parts[3].parse::<f64>().unwrap(),
+            )));
+            let property2 = Some(ScalarValue::Int32(Some(
+                edge_parts[0].parse::<i32>().unwrap(),
+            )));
+            let property3 = Some(ScalarValue::Float64(Some(
                 property_parts[1].parse::<f64>().unwrap(),
-            ));
-            let property4 = Some(PropertyValue::Double(
+            )));
+            let property4 = Some(ScalarValue::Float64(Some(
                 property_parts[2].parse::<f64>().unwrap(),
-            ));
-            let property5 = Some(PropertyValue::Double(
+            )));
+            let property5 = Some(ScalarValue::Float64(Some(
                 property_parts[3].parse::<f64>().unwrap(),
-            ));
-            let property6 = Some(PropertyValue::Double(
+            )));
+            let property6 = Some(ScalarValue::Float64(Some(
                 property_parts[4].parse::<f64>().unwrap(),
-            ));
+            )));
 
             if src_id != current_vertex {
                 vertices.push(OlapVertex {
@@ -2157,7 +2235,7 @@ mod tests {
             }
 
             edges.push(OlapEdge {
-                label_id: 0,
+                label_id: NonZeroU32::new(1),
                 src_id: src_id as VertexId,
                 dst_id: dst_id as VertexId,
                 properties: OlapPropertyStore::new(vec![
