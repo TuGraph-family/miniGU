@@ -2,7 +2,8 @@ use std::sync::Arc;
 
 use minigu_common::error::not_implemented;
 use minigu_ir::bound::{BoundCallProcedureStatement, BoundNamedProcedureCall, BoundProcedureCall};
-use minigu_ir::plan::{Call, PlanNode};
+use minigu_ir::plan::PlanNode;
+use minigu_ir::plan::call::Call;
 
 use crate::error::PlanResult;
 use crate::logical_planner::LogicalPlanner;

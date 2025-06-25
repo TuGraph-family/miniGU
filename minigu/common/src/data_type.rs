@@ -152,13 +152,25 @@ impl fmt::Display for LogicalType {
 
 pub type DataSchemaRef = Arc<DataSchema>;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DataSchema(Vec<DataField>);
 
 impl DataSchema {
     #[inline]
     pub fn new(fields: Vec<DataField>) -> Self {
         Self(fields)
+    }
+
+    pub fn append(&mut self, schema: &DataSchema) {
+        self.0.extend(schema.0.iter().cloned());
+    }
+
+    pub fn get_field_by_name(&self, name: &str) -> Option<&DataField> {
+        self.0.iter().find(|field| field.name() == name)
+    }
+
+    pub fn get_field_index_by_name(&self, name: &str) -> Option<usize> {
+        self.0.iter().position(|field| field.name() == name)
     }
 
     #[inline]

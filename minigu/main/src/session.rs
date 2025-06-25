@@ -7,6 +7,7 @@ use gql_parser::parse_gql;
 use itertools::Itertools;
 use minigu_binder::binder::Binder;
 use minigu_catalog::memory::MemoryCatalog;
+use minigu_catalog::memory::schema::MemorySchemaCatalog;
 use minigu_catalog::provider::SchemaRef;
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::data_type::{DataField, DataSchema, LogicalType};
@@ -15,6 +16,7 @@ use minigu_context::database::DatabaseContext;
 use minigu_context::session::SessionContext;
 use minigu_execution::builder::ExecutorBuilder;
 use minigu_execution::executor::Executor;
+use minigu_ir::plan::PlanData;
 use minigu_planner::logical_planner::LogicalPlanner;
 use minigu_planner::optimizer::Optimizer;
 
@@ -28,7 +30,10 @@ pub struct Session {
 }
 
 impl Session {
-    pub(crate) fn new(database: Arc<DatabaseContext>, default_schema: SchemaRef) -> Result<Self> {
+    pub(crate) fn new(
+        database: Arc<DatabaseContext>,
+        default_schema: Arc<MemorySchemaCatalog>,
+    ) -> Result<Self> {
         let mut context = SessionContext::new(database);
         context.home_schema = Some(default_schema.clone());
         context.current_schema = Some(default_schema);
@@ -90,8 +95,8 @@ impl Session {
         let start = Instant::now();
         let binder = Binder::new(
             self.context.database().catalog(),
-            self.context.current_schema.clone(),
-            self.context.home_schema.clone(),
+            self.context.current_schema.clone().map(|s| s as _),
+            self.context.home_schema.clone().map(|s| s as _),
             self.context.current_graph.clone(),
             self.context.home_graph.clone(),
         );

@@ -7,6 +7,7 @@ use minigu_common::value::ScalarValue;
 use minigu_context::procedure::Procedure;
 use minigu_context::session::SessionContext;
 
+/// Echo the input string.
 pub fn build_procedure() -> Procedure {
     let parameters = vec![LogicalType::String];
     let schema = Arc::new(DataSchema::new(vec![DataField::new(

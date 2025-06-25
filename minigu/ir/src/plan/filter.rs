@@ -1,8 +1,7 @@
-use minigu_common::data_type::DataSchemaRef;
 use serde::Serialize;
 
 use crate::bound::BoundExpr;
-use crate::plan::{PlanBase, PlanNode};
+use crate::plan::{PlanBase, PlanData, PlanNode};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Filter {
@@ -20,12 +19,10 @@ impl Filter {
         };
         Self { base, predicate }
     }
+}
 
-    pub fn schema(&self) -> Option<&DataSchemaRef> {
-        self.base.schema()
-    }
-
-    pub fn children(&self) -> &[PlanNode] {
-        &self.base.children
+impl PlanData for Filter {
+    fn base(&self) -> &PlanBase {
+        &self.base
     }
 }

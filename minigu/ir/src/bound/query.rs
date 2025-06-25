@@ -46,7 +46,7 @@ impl BoundLinearQueryStatement {
 pub enum BoundResultStatement {
     Return {
         statement: BoundReturnStatement,
-        order_by: Option<BoundOrderByAndPageStatement>,
+        order_by_and_page: Option<BoundOrderByAndPageStatement>,
     },
     Finish,
 }
@@ -63,15 +63,17 @@ impl BoundResultStatement {
 #[derive(Debug, Clone, Serialize)]
 pub struct BoundReturnStatement {
     pub quantifier: Option<BoundSetQuantifier>,
-    pub items: Vec<BoundExpr>,
-    // TODO: Implement GROUP BY
+    /// If this is `None`, the statement should return all columns from the current binding table.
+    pub items: Option<Vec<BoundExpr>>,
+    /// The output schema of the return statement.
     pub schema: DataSchemaRef,
 }
 
 #[derive(Debug, Clone, Serialize)]
 pub struct BoundOrderByAndPageStatement {
-    offset: Option<usize>,
-    limit: Option<usize>,
+    pub order_by: Vec<BoundSortSpec>,
+    pub offset: Option<usize>,
+    pub limit: Option<usize>,
 }
 
 #[derive(Debug, Clone, Serialize)]

@@ -2,6 +2,7 @@ use gql_parser::ast::{
     CatalogModifyingStatement, CreateGraphStatement, CreateGraphTypeStatement,
     CreateSchemaStatement, DropGraphStatement, DropGraphTypeStatement, DropSchemaStatement,
 };
+use minigu_common::error::not_implemented;
 use minigu_ir::bound::{
     BoundCatalogModifyingStatement, BoundCreateGraphStatement, BoundCreateGraphTypeStatement,
     BoundCreateSchemaStatement, BoundDropGraphStatement, BoundDropGraphTypeStatement,
@@ -9,7 +10,7 @@ use minigu_ir::bound::{
 };
 
 use super::Binder;
-use crate::error::BindResult;
+use crate::error::{BindError, BindResult};
 
 impl Binder<'_> {
     pub fn bind_catalog_modifying_statement(
@@ -17,9 +18,16 @@ impl Binder<'_> {
         statement: &CatalogModifyingStatement,
     ) -> BindResult<BoundCatalogModifyingStatement> {
         match statement {
-            CatalogModifyingStatement::Call(statement) => self
-                .bind_call_procedure_statement(statement)
-                .map(BoundCatalogModifyingStatement::Call),
+            CatalogModifyingStatement::Call(statement) => {
+                let statement = self.bind_call_procedure_statement(statement)?;
+                if statement.optional {
+                    return not_implemented("optional catalog modifying statements", None);
+                }
+                if statement.schema().is_some() {
+                    return Err(BindError::NotCatalogProcedure(statement.name()));
+                }
+                Ok(BoundCatalogModifyingStatement::Call(statement))
+            }
             CatalogModifyingStatement::CreateSchema(statement) => self
                 .bind_create_schema_statement(statement)
                 .map(BoundCatalogModifyingStatement::CreateSchema),
@@ -45,41 +53,41 @@ impl Binder<'_> {
         &mut self,
         statement: &CreateSchemaStatement,
     ) -> BindResult<BoundCreateSchemaStatement> {
-        todo!()
+        not_implemented("create schema statement", None)
     }
 
     pub fn bind_drop_schema_statement(
         &mut self,
         statement: &DropSchemaStatement,
     ) -> BindResult<BoundDropSchemaStatement> {
-        todo!()
+        not_implemented("drop schema statement", None)
     }
 
     pub fn bind_create_graph_statement(
         &mut self,
         statement: &CreateGraphStatement,
     ) -> BindResult<BoundCreateGraphStatement> {
-        todo!()
+        not_implemented("create graph statement", None)
     }
 
     pub fn bind_drop_graph_statement(
         &mut self,
         statement: &DropGraphStatement,
     ) -> BindResult<BoundDropGraphStatement> {
-        todo!()
+        not_implemented("drop graph statement", None)
     }
 
     pub fn bind_create_graph_type_statement(
         &mut self,
         statement: &CreateGraphTypeStatement,
     ) -> BindResult<BoundCreateGraphTypeStatement> {
-        todo!()
+        not_implemented("create graph type statement", None)
     }
 
     pub fn bind_drop_graph_type_statement(
         &mut self,
         statement: &DropGraphTypeStatement,
     ) -> BindResult<BoundDropGraphTypeStatement> {
-        todo!()
+        not_implemented("drop graph type statement", None)
     }
 }

@@ -2,22 +2,24 @@ use std::sync::Arc;
 
 use gql_parser::ast::{
     AmbientLinearQueryStatement, CompositeQueryStatement, FocusedLinearQueryStatement,
-    FocusedLinearQueryStatementPart, LinearQueryStatement,
-    MatchStatement, OrderByAndPageStatement, QueryConjunction, ResultStatement, Return,
-    ReturnStatement, SetOp, SetOpKind, SetQuantifier, SimpleQueryStatement,
+    FocusedLinearQueryStatementPart, LinearQueryStatement, MatchStatement,
+    NullOrdering as AstNullOrdering, OrderByAndPageStatement, Ordering, QueryConjunction,
+    ResultStatement, Return, ReturnStatement, SetOp, SetOpKind, SetQuantifier,
+    SimpleQueryStatement, SortSpec,
 };
 use itertools::Itertools;
-use minigu_common::data_type::{DataField, DataSchema};
+use minigu_common::data_type::{DataField, DataSchema, DataSchemaRef};
 use minigu_common::error::not_implemented;
+use minigu_common::ordering::{NullOrdering, SortOrdering};
 use minigu_ir::bound::{
     BoundCompositeQueryStatement, BoundExpr, BoundLinearQueryStatement,
     BoundOrderByAndPageStatement, BoundQueryConjunction, BoundResultStatement,
     BoundReturnStatement, BoundSetOp, BoundSetOpKind, BoundSetQuantifier,
-    BoundSimpleQueryStatement,
+    BoundSimpleQueryStatement, BoundSortSpec,
 };
 
 use super::Binder;
-use crate::error::BindResult;
+use crate::error::{BindError, BindResult};
 
 impl Binder<'_> {
     pub fn bind_composite_query_statement(
@@ -125,9 +127,19 @@ impl Binder<'_> {
             SimpleQueryStatement::Match(statement) => todo!(),
             SimpleQueryStatement::Call(statement) => {
                 let statement = self.bind_call_procedure_statement(statement)?;
+                let schema = statement
+                    .schema()
+                    .ok_or_else(|| BindError::DataSchemaNotProvided(statement.name()))?;
+                if let Some(active_schema) = &mut self.active_data_schema {
+                    todo!()
+                } else {
+                    self.active_data_schema = Some(schema.as_ref().clone());
+                }
                 Ok(BoundSimpleQueryStatement::Call(statement))
             }
-            SimpleQueryStatement::OrderByAndPage(statement) => todo!(),
+            SimpleQueryStatement::OrderByAndPage(_) => {
+                not_implemented("standalone order by and page statement", None)
+            }
         }
     }
 
@@ -149,33 +161,28 @@ impl Binder<'_> {
                 order_by,
             } => {
                 let statement = self.bind_return_statement(statement.value())?;
-                let order_by = order_by
+                self.active_data_schema = Some(statement.schema.as_ref().clone());
+                let order_by_and_page = order_by
                     .as_ref()
                     .map(|o| self.bind_order_by_and_page_statement(o.value()))
                     .transpose()?;
                 Ok(BoundResultStatement::Return {
                     statement,
-                    order_by,
+                    order_by_and_page,
                 })
             }
         }
     }
 
     pub fn bind_return_statement(
-        &mut self,
+        &self,
         statement: &ReturnStatement,
     ) -> BindResult<BoundReturnStatement> {
         let quantifier = statement
             .quantifier
             .as_ref()
             .map(|q| bind_set_quantifier(q.value()));
-        let items = self.bind_return(statement.items.value())?;
-        let fields = items
-            .iter()
-            .map(|e| DataField::new(e.name.clone(), e.logical_type.clone(), false))
-            .collect();
-        let schema = Arc::new(DataSchema::new(fields));
-        // TODO: Implement GROUP BY
+        let (items, schema) = self.bind_return(statement.items.value())?;
         Ok(BoundReturnStatement {
             quantifier,
             items,
@@ -183,27 +190,99 @@ impl Binder<'_> {
         })
     }
 
-    pub fn bind_return(&mut self, ret: &Return) -> BindResult<Vec<BoundExpr>> {
+    pub fn bind_return(&self, ret: &Return) -> BindResult<(Option<Vec<BoundExpr>>, DataSchemaRef)> {
         match ret {
             Return::Items(items) => {
+                let mut fields = Vec::new();
                 let mut exprs = Vec::new();
                 for item in items {
                     let item = item.value();
                     let expr = self.bind_value_expression(item.value.value())?;
-                    // TODO: Handle item alias
+                    let name = if let Some(alias) = &item.alias {
+                        alias.value().to_string()
+                    } else {
+                        expr.to_string()
+                    };
+                    fields.push(DataField::new(
+                        name,
+                        expr.logical_type.clone(),
+                        expr.nullable,
+                    ));
                     exprs.push(expr);
                 }
-                Ok(exprs)
+                let schema = Arc::new(DataSchema::new(fields));
+                Ok((Some(exprs), schema))
             }
-            Return::All => Ok(self.context.exprs().cloned().collect()),
+            Return::All => {
+                let schema = self
+                    .active_data_schema
+                    .as_ref()
+                    .ok_or_else(|| BindError::NoColumnInReturnStatement)?
+                    .clone();
+                Ok((None, Arc::new(schema)))
+            }
         }
     }
 
     pub fn bind_order_by_and_page_statement(
         &self,
-        order_by: &OrderByAndPageStatement,
+        order_by_and_page: &OrderByAndPageStatement,
     ) -> BindResult<BoundOrderByAndPageStatement> {
-        todo!()
+        let order_by = order_by_and_page
+            .order_by
+            .iter()
+            .map(|s| self.bind_sort_spec(s.value()))
+            .try_collect()?;
+        let offset = order_by_and_page
+            .offset
+            .as_ref()
+            .map(|o| self.bind_non_negative_integer(o.value()))
+            .transpose()?
+            .map(|o| o.to_usize());
+        let limit = order_by_and_page
+            .limit
+            .as_ref()
+            .map(|l| self.bind_non_negative_integer(l.value()))
+            .transpose()?
+            .map(|l| l.to_usize());
+        Ok(BoundOrderByAndPageStatement {
+            order_by,
+            offset,
+            limit,
+        })
+    }
+
+    pub fn bind_sort_spec(&self, sort_spec: &SortSpec) -> BindResult<BoundSortSpec> {
+        let key = self.bind_value_expression(sort_spec.key.value())?;
+        let ordering = sort_spec
+            .ordering
+            .as_ref()
+            .map(|o| bind_ordering(o.value()))
+            .unwrap_or_default();
+        let null_ordering = sort_spec
+            .null_ordering
+            .as_ref()
+            .map(|o| bind_null_ordering(o.value()))
+            .unwrap_or_default();
+        Ok(BoundSortSpec {
+            key,
+            ordering,
+            null_ordering,
+        })
+    }
+}
+
+pub fn bind_ordering(ordering: &Ordering) -> SortOrdering {
+    match ordering {
+        Ordering::Asc => SortOrdering::Ascending,
+        Ordering::Desc => SortOrdering::Descending,
+    }
+}
+
+pub fn bind_null_ordering(null_ordering: &AstNullOrdering) -> NullOrdering {
+    match null_ordering {
+        AstNullOrdering::First => NullOrdering::First,
+        AstNullOrdering::Last => NullOrdering::Last,
     }
 }
 

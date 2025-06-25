@@ -2,10 +2,14 @@ use std::sync::Arc;
 
 use minigu_common::error::not_implemented;
 use minigu_ir::bound::{
-    BoundCompositeQueryStatement, BoundLinearQueryStatement, BoundResultStatement,
-    BoundReturnStatement, BoundSimpleQueryStatement,
+    BoundCompositeQueryStatement, BoundLinearQueryStatement, BoundOrderByAndPageStatement,
+    BoundResultStatement, BoundReturnStatement, BoundSimpleQueryStatement,
 };
-use minigu_ir::plan::{PlanNode, Project};
+use minigu_ir::plan::PlanNode;
+use minigu_ir::plan::limit::Limit;
+use minigu_ir::plan::one_row::OneRow;
+use minigu_ir::plan::project::Project;
+use minigu_ir::plan::sort::Sort;
 
 use crate::error::PlanResult;
 use crate::logical_planner::LogicalPlanner;
@@ -37,13 +41,14 @@ impl LogicalPlanner {
                 if statements.len() > 1 {
                     return not_implemented("multiple statements", None);
                 }
-                if statements.is_empty() {
-                    return not_implemented("result-only query", None);
-                }
-                let statement = statements
-                    .pop()
-                    .expect("at least one statement should exist");
-                let plan = self.plan_simple_query_statement(statement)?;
+                let plan = if statements.is_empty() {
+                    PlanNode::LogicalOneRow(Arc::new(OneRow::new()))
+                } else {
+                    let statement = statements
+                        .pop()
+                        .expect("at least one statement should be present");
+                    self.plan_simple_query_statement(statement)?
+                };
                 self.plan_result_statement(result, plan)
             }
             BoundLinearQueryStatement::Nested(_) => not_implemented("nested query", None),
@@ -70,12 +75,13 @@ impl LogicalPlanner {
         match statement {
             BoundResultStatement::Return {
                 statement,
-                order_by,
+                order_by_and_page,
             } => {
-                if order_by.is_some() {
-                    return not_implemented("order by", None);
+                let mut plan = self.plan_return_statement(statement, plan)?;
+                if let Some(order_by_and_page) = order_by_and_page {
+                    plan = self.plan_order_by_and_page_statement(order_by_and_page, plan)?;
                 }
-                self.plan_return_statement(statement, plan)
+                Ok(plan)
             }
             BoundResultStatement::Finish => not_implemented("finish statement", None),
         }
@@ -84,12 +90,35 @@ impl LogicalPlanner {
     pub fn plan_return_statement(
         &self,
         statement: BoundReturnStatement,
-        plan: PlanNode,
+        mut plan: PlanNode,
     ) -> PlanResult<PlanNode> {
         if statement.quantifier.is_some() {
             return not_implemented("set quantifier in return statement", None);
         }
-        let project = Project::new(plan, statement.items);
-        Ok(PlanNode::LogicalProject(Arc::new(project)))
+        if let Some(items) = statement.items {
+            let project = Project::new(plan, items, statement.schema);
+            plan = PlanNode::LogicalProject(Arc::new(project));
+        }
+        Ok(plan)
+    }
+
+    pub fn plan_order_by_and_page_statement(
+        &self,
+        statement: BoundOrderByAndPageStatement,
+        mut plan: PlanNode,
+    ) -> PlanResult<PlanNode> {
+        let specs = statement.order_by;
+        if !specs.is_empty() {
+            let sort = Sort::new(plan, specs);
+            plan = PlanNode::LogicalSort(Arc::new(sort));
+        }
+        if statement.offset.is_some() {
+            return not_implemented("offset clause", None);
+        }
+        if let Some(limit) = statement.limit {
+            let limit = Limit::new(plan, limit);
+            plan = PlanNode::LogicalLimit(Arc::new(limit));
+        }
+        Ok(plan)
     }
 }

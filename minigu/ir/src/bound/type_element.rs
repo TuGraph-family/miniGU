@@ -1,7 +1,4 @@
-use minigu_catalog::label_set::LabelSet;
-use minigu_common::data_type::DataField;
 use serde::Serialize;
-use smol_str::SmolStr;
 
 #[derive(Debug, Clone, Serialize)]
 pub enum BoundGraphElementType {

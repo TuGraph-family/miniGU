@@ -3,7 +3,7 @@ use minigu_common::value::ScalarValue;
 use serde::Serialize;
 
 use crate::named_ref::NamedProcedureRef;
-use crate::plan::{PlanBase, PlanNode};
+use crate::plan::{PlanBase, PlanData};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Call {
@@ -28,12 +28,10 @@ impl Call {
             args,
         }
     }
+}
 
-    pub fn schema(&self) -> Option<&DataSchemaRef> {
-        self.base.schema()
-    }
-
-    pub fn children(&self) -> &[PlanNode] {
-        &self.base.children
+impl PlanData for Call {
+    fn base(&self) -> &PlanBase {
+        &self.base
     }
 }

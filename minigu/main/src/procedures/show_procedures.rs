@@ -2,15 +2,17 @@ use std::sync::Arc;
 
 use arrow::array::{ArrayRef, StringArray};
 use itertools::Itertools;
+use minigu_catalog::provider::SchemaProvider;
 use minigu_common::data_chunk;
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 use minigu_context::procedure::Procedure;
 
+/// Show all procedures in current schema.
 pub fn build_procedure() -> Procedure {
     let schema = Arc::new(DataSchema::new(vec![
         DataField::new("name".into(), LogicalType::String, false),
-        DataField::new("parameters".into(), LogicalType::String, false),
+        DataField::new("params".into(), LogicalType::String, false),
     ]));
     Procedure::new(vec![], Some(schema.clone()), move |context, args| {
         assert!(args.is_empty());

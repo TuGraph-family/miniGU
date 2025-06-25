@@ -1,5 +1,6 @@
 use minigu_common::data_type::DataSchemaRef;
 use serde::Serialize;
+use smol_str::SmolStr;
 
 use super::value_expr::BoundExpr;
 use crate::named_ref::NamedProcedureRef;
@@ -11,6 +12,13 @@ pub struct BoundCallProcedureStatement {
 }
 
 impl BoundCallProcedureStatement {
+    pub fn name(&self) -> SmolStr {
+        match &self.procedure {
+            BoundProcedureCall::Named(call) => call.procedure_ref.name().clone(),
+            _ => todo!(),
+        }
+    }
+
     #[inline]
     pub fn schema(&self) -> Option<&DataSchemaRef> {
         self.procedure.schema()
@@ -43,7 +51,7 @@ pub struct BoundNamedProcedureCall {
     pub procedure_ref: NamedProcedureRef,
     /// The arguments of the procedure call.
     pub args: Vec<BoundExpr>,
-    /// The actual schema of the procedure call (possibly with a yield clause). This is only
+    /// The actual schema of the procedure call (possibly after a yield clause). This is only
     /// available for query procedures.
     pub schema: Option<DataSchemaRef>,
 }

@@ -1,16 +1,23 @@
-mod call;
-mod filter;
-mod logical_match;
-mod project;
+pub mod call;
+pub mod filter;
+pub mod limit;
+pub mod logical_match;
+pub mod one_row;
+pub mod project;
+pub mod sort;
 
 use std::sync::Arc;
 
-pub use call::Call;
-pub use filter::Filter;
-pub use logical_match::LogicalMatch;
 use minigu_common::data_type::DataSchemaRef;
-pub use project::Project;
 use serde::Serialize;
+
+use crate::plan::call::Call;
+use crate::plan::filter::Filter;
+use crate::plan::limit::Limit;
+use crate::plan::logical_match::LogicalMatch;
+use crate::plan::one_row::OneRow;
+use crate::plan::project::Project;
+use crate::plan::sort::Sort;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct PlanBase {
@@ -32,42 +39,56 @@ impl PlanBase {
     }
 }
 
+pub trait PlanData {
+    fn base(&self) -> &PlanBase;
+
+    fn schema(&self) -> Option<&DataSchemaRef> {
+        self.base().schema()
+    }
+
+    fn children(&self) -> &[PlanNode] {
+        self.base().children()
+    }
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub enum PlanNode {
     LogicalMatch(Arc<LogicalMatch>),
     LogicalFilter(Arc<Filter>),
     LogicalProject(Arc<Project>),
     LogicalCall(Arc<Call>),
+    LogicalOneRow(Arc<OneRow>),
+    // TODO: Remove logical sort in the future.
+    // Ordering is a physical property of a plan node, and it should be enforced by the optimizer
+    // (by inserting PhysicalSort).
+    LogicalSort(Arc<Sort>),
+    LogicalLimit(Arc<Limit>),
 
     PhysicalFilter(Arc<Filter>),
     PhysicalProject(Arc<Project>),
     PhysicalCall(Arc<Call>),
+    PhysicalOneRow(Arc<OneRow>),
+    PhysicalSort(Arc<Sort>),
+    PhysicalLimit(Arc<Limit>),
 }
 
-impl PlanNode {
-    // TODO: Rewrite this with macro
-    pub fn schema(&self) -> Option<&DataSchemaRef> {
+impl PlanData for PlanNode {
+    fn base(&self) -> &PlanBase {
         match self {
-            PlanNode::LogicalMatch(node) => node.schema(),
-            PlanNode::LogicalFilter(node) => node.schema(),
-            PlanNode::LogicalProject(node) => node.schema(),
-            PlanNode::LogicalCall(node) => node.schema(),
-            PlanNode::PhysicalFilter(node) => node.schema(),
-            PlanNode::PhysicalProject(node) => node.schema(),
-            PlanNode::PhysicalCall(node) => node.schema(),
-        }
-    }
+            PlanNode::LogicalMatch(node) => node.base(),
+            PlanNode::LogicalFilter(node) => node.base(),
+            PlanNode::LogicalProject(node) => node.base(),
+            PlanNode::LogicalCall(node) => node.base(),
+            PlanNode::LogicalOneRow(node) => node.base(),
+            PlanNode::LogicalSort(node) => node.base(),
+            PlanNode::LogicalLimit(node) => node.base(),
 
-    // TODO: Rewrite this with macro
-    pub fn children(&self) -> &[PlanNode] {
-        match self {
-            PlanNode::LogicalMatch(node) => node.children(),
-            PlanNode::LogicalFilter(node) => node.children(),
-            PlanNode::LogicalProject(node) => node.children(),
-            PlanNode::LogicalCall(node) => node.children(),
-            PlanNode::PhysicalFilter(node) => node.children(),
-            PlanNode::PhysicalProject(node) => node.children(),
-            PlanNode::PhysicalCall(node) => node.children(),
+            PlanNode::PhysicalFilter(node) => node.base(),
+            PlanNode::PhysicalProject(node) => node.base(),
+            PlanNode::PhysicalCall(node) => node.base(),
+            PlanNode::PhysicalOneRow(node) => node.base(),
+            PlanNode::PhysicalSort(node) => node.base(),
+            PlanNode::PhysicalLimit(node) => node.base(),
         }
     }
 }

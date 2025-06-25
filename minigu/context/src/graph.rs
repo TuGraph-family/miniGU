@@ -7,7 +7,7 @@ use minigu_catalog::provider::{GraphProvider, GraphTypeRef};
 use minigu_storage::MemoryGraph;
 
 pub enum GraphStorage {
-    Memory(MemoryGraph),
+    Memory(Arc<MemoryGraph>),
 }
 
 pub struct GraphContainer {

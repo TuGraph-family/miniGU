@@ -1,42 +1,46 @@
-use std::sync::Arc;
+use std::fmt::Display;
 
 use minigu_common::data_type::LogicalType;
 use minigu_common::value::ScalarValue;
 use serde::Serialize;
 
-use crate::bound::{BoundEdgePattern, BoundPathPattern, BoundSubpathPattern, BoundVertexPattern};
-
 #[derive(Debug, Clone, Serialize)]
 pub enum BoundExprKind {
     Value(ScalarValue),
-    ColumnRef(usize),
-    Path(Arc<BoundPathPattern>),
-    Subpath(Arc<BoundSubpathPattern>),
-    Vertex(Arc<BoundVertexPattern>),
-    Edge(Arc<BoundEdgePattern>),
+    Variable(String),
+}
+
+impl Display for BoundExprKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            // TODO: Use `Display` rather than `Debug` representation for `value`.
+            BoundExprKind::Value(value) => write!(f, "{value:?}"),
+            BoundExprKind::Variable(variable) => write!(f, "{variable}"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
 pub struct BoundExpr {
-    pub name: String,
     pub kind: BoundExprKind,
     pub logical_type: LogicalType,
+    pub nullable: bool,
 }
 
 impl BoundExpr {
-    pub fn column_ref(index: usize, logical_type: LogicalType) -> Self {
+    pub fn value(value: ScalarValue, logical_type: LogicalType, nullable: bool) -> Self {
         Self {
-            name: format!("_col{0}", index),
-            kind: BoundExprKind::ColumnRef(index),
+            kind: BoundExprKind::Value(value),
             logical_type,
+            nullable,
         }
     }
 
-    pub fn value(value: ScalarValue, logical_type: LogicalType) -> Self {
+    pub fn variable(name: String, logical_type: LogicalType, nullable: bool) -> Self {
         Self {
-            name: format!("{value:?}"),
-            kind: BoundExprKind::Value(value),
+            kind: BoundExprKind::Variable(name),
             logical_type,
+            nullable,
         }
     }
 
@@ -45,6 +49,12 @@ impl BoundExpr {
             BoundExprKind::Value(value) => Some(value),
             _ => None,
         }
+    }
+}
+
+impl Display for BoundExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.kind)
     }
 }
 
@@ -78,5 +88,3 @@ pub enum BoundSetQuantifier {
     Distinct,
     All,
 }
-
-// where Vertex(v) + 1

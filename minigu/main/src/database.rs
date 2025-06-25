@@ -26,6 +26,7 @@ impl Default for DatabaseConfig {
 
 pub struct Database {
     context: Arc<DatabaseContext>,
+    default_schema: Arc<MemorySchemaCatalog>,
 }
 
 impl Database {
@@ -34,35 +35,27 @@ impl Database {
     }
 
     pub fn open_in_memory(config: &DatabaseConfig) -> Result<Self> {
-        let catalog = init_memory_catalog()?;
+        let (catalog, default_schema) = init_memory_catalog()?;
         let runtime = ThreadPoolBuilder::new()
             .num_threads(config.num_threads)
             .build()?;
         let context = Arc::new(DatabaseContext::new(catalog, runtime));
-        Ok(Self { context })
+        Ok(Self {
+            context,
+            default_schema,
+        })
     }
 
     pub fn session(&self) -> Result<Session> {
-        Session::new(self.context.clone(), self.get_default_schema()?)
+        Session::new(self.context.clone(), self.default_schema().clone())
     }
 
-    fn get_default_schema(&self) -> Result<SchemaRef> {
-        let root = self
-            .context
-            .catalog()
-            .get_root()?
-            .into_directory()
-            .expect("root must be a directory");
-        let default_schema = root
-            .get_child(DEFAULT_SCHEMA_NAME)?
-            .expect("default schema must exist")
-            .into_schema()
-            .unwrap();
-        Ok(default_schema)
+    fn default_schema(&self) -> &Arc<MemorySchemaCatalog> {
+        &self.default_schema
     }
 }
 
-fn init_memory_catalog() -> Result<MemoryCatalog> {
+fn init_memory_catalog() -> Result<(MemoryCatalog, Arc<MemorySchemaCatalog>)> {
     let root = Arc::new(MemoryDirectoryCatalog::new(None));
     let parent = Arc::downgrade(&root);
     let default_schema = Arc::new(MemorySchemaCatalog::new(Some(parent)));
@@ -71,8 +64,8 @@ fn init_memory_catalog() -> Result<MemoryCatalog> {
     }
     root.add_child(
         DEFAULT_SCHEMA_NAME.into(),
-        DirectoryOrSchema::Schema(default_schema),
+        DirectoryOrSchema::Schema(default_schema.clone()),
     );
     let catalog = MemoryCatalog::new(DirectoryOrSchema::Directory(root));
-    Ok(catalog)
+    Ok((catalog, default_schema))
 }

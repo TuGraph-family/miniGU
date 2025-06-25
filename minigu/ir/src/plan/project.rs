@@ -1,10 +1,8 @@
-use std::sync::Arc;
-
-use minigu_common::data_type::{DataField, DataSchema, DataSchemaRef};
+use minigu_common::data_type::DataSchemaRef;
 use serde::Serialize;
 
 use crate::bound::BoundExpr;
-use crate::plan::{PlanBase, PlanNode};
+use crate::plan::{PlanBase, PlanData, PlanNode};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Project {
@@ -13,25 +11,24 @@ pub struct Project {
 }
 
 impl Project {
-    pub fn new(child: PlanNode, exprs: Vec<BoundExpr>) -> Self {
-        let schema = Arc::new(DataSchema::new(
+    pub fn new(child: PlanNode, exprs: Vec<BoundExpr>, schema: DataSchemaRef) -> Self {
+        assert_eq!(exprs.len(), schema.fields().len());
+        assert!(
             exprs
                 .iter()
-                .map(|e| DataField::new(e.name.clone(), e.logical_type.clone(), false))
-                .collect(),
-        ));
+                .zip(schema.fields())
+                .all(|(e, f)| &e.logical_type == f.ty())
+        );
         let base = PlanBase {
             schema: Some(schema),
             children: vec![child],
         };
         Self { base, exprs }
     }
+}
 
-    pub fn schema(&self) -> Option<&DataSchemaRef> {
-        self.base.schema()
-    }
-
-    pub fn children(&self) -> &[PlanNode] {
-        &self.base.children
+impl PlanData for Project {
+    fn base(&self) -> &PlanBase {
+        &self.base
     }
 }

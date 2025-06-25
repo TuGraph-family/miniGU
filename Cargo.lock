@@ -112,6 +112,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.98"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e16d2d3311acee920a9eb8d33b8cbc1787ce4a264e85f964c2404b969bdcd487"
+
+[[package]]
 name = "arrow"
 version = "55.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -943,16 +949,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "indexmap"
-version = "2.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cea70ddb795996207ad57735b50c5982d8844f38ba9ee5f1aedcfb708a2aa11e"
-dependencies = [
- "equivalent",
- "hashbrown 0.15.3",
-]
-
-[[package]]
 name = "insta"
 version = "1.43.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1215,6 +1211,7 @@ dependencies = [
 name = "minigu"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "arrow",
  "gql-parser",
  "itertools",
@@ -1224,7 +1221,9 @@ dependencies = [
  "minigu-common",
  "minigu-context",
  "minigu-execution",
+ "minigu-ir",
  "minigu-planner",
+ "minigu-storage",
  "rayon",
  "thiserror",
 ]
@@ -1234,7 +1233,6 @@ name = "minigu-binder"
 version = "0.1.0"
 dependencies = [
  "gql-parser",
- "indexmap",
  "insta",
  "itertools",
  "miette",

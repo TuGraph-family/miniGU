@@ -1,3 +1,4 @@
+mod create_test_graph;
 mod echo;
 mod show_procedures;
 
@@ -9,6 +10,10 @@ pub fn build_predefined_procedures() -> Vec<(String, Procedure)> {
         (
             "show_procedures".to_string(),
             show_procedures::build_procedure(),
+        ),
+        (
+            "create_test_graph".to_string(),
+            create_test_graph::build_procedure(),
         ),
     ]
 }

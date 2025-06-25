@@ -1,7 +1,11 @@
 use std::sync::Arc;
 
 use itertools::Itertools;
-use minigu_ir::plan::{Filter, PlanNode, Project};
+use minigu_ir::plan::filter::Filter;
+use minigu_ir::plan::limit::Limit;
+use minigu_ir::plan::project::Project;
+use minigu_ir::plan::sort::Sort;
+use minigu_ir::plan::{PlanData, PlanNode};
 
 use crate::error::PlanResult;
 
@@ -39,12 +43,29 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
                 .try_into()
                 .expect("project should have exactly one child");
             let exprs = project.exprs.clone();
-            let project = Project::new(child, exprs);
+            let schema = project.schema().expect("project should have a schema");
+            let project = Project::new(child, exprs, schema.clone());
             Ok(PlanNode::PhysicalProject(Arc::new(project)))
         }
         PlanNode::LogicalCall(call) => {
             assert!(children.is_empty());
             Ok(PlanNode::PhysicalCall(call.clone()))
+        }
+        PlanNode::LogicalOneRow(one_row) => Ok(PlanNode::PhysicalOneRow(one_row.clone())),
+        PlanNode::LogicalSort(sort) => {
+            let [child] = children
+                .try_into()
+                .expect("sort should have exactly one child");
+            let specs = sort.specs.clone();
+            let sort = Sort::new(child, specs);
+            Ok(PlanNode::PhysicalSort(Arc::new(sort)))
+        }
+        PlanNode::LogicalLimit(limit) => {
+            let [child] = children
+                .try_into()
+                .expect("limit should have exactly one child");
+            let limit = Limit::new(child, limit.limit);
+            Ok(PlanNode::PhysicalLimit(Arc::new(limit)))
         }
         _ => unreachable!(),
     }
