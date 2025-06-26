@@ -1,15 +1,18 @@
 [package]
 edition.workspace = true
 name = "minigu-binder"
+repository.workspace = true
 version = "0.1.0"
 
 [dependencies]
 gql-parser = { workspace = true }
+itertools = { workspace = true }
+miette = { workspace = true }
 minigu-catalog = { workspace = true }
 minigu-common = { workspace = true }
-serde = { workspace = true, features = ["std", "derive"] }
-smol_str = { workspace = true, features = ["std"] }
-thiserror = { workspace = true, features = ["std"] }
+minigu-ir = { workspace = true }
+smol_str = { workspace = true }
+thiserror = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }

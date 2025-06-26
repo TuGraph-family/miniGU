@@ -67,10 +67,10 @@ pub fn binding_variable_definition(
 
 pub fn statement(input: &mut TokenStream) -> ModalResult<Spanned<Statement>> {
     alt((
+        composite_query_statement.map_inner(Statement::Query),
         linear_catalog_modifying_statement
             .map(Statement::Catalog)
             .spanned(),
-        composite_query_statement.map_inner(Statement::Query),
         linear_data_modifying_statement.map_inner(Statement::Data),
     ))
     .parse_next(input)

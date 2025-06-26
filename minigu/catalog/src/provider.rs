@@ -9,7 +9,6 @@ use crate::error::CatalogResult;
 use crate::label_set::LabelSet;
 use crate::property::Property;
 
-pub type CatalogRef = Arc<dyn CatalogProvider>;
 pub type DirectoryRef = Arc<dyn DirectoryProvider>;
 pub type SchemaRef = Arc<dyn SchemaProvider>;
 pub type GraphRef = Arc<dyn GraphProvider>;
@@ -66,6 +65,9 @@ pub trait SchemaProvider: Debug + Send + Sync {
 pub trait GraphProvider: Debug + Send + Sync + Any {
     /// Returns the graph type of the graph.
     fn graph_type(&self) -> GraphTypeRef;
+
+    /// Returns a reference to the underlying graph.
+    fn as_any(&self) -> &dyn Any;
 }
 
 /// Represents a graph type, which defines the structure of a graph.
@@ -117,12 +119,16 @@ pub trait PropertiesProvider: Debug + Send + Sync {
     fn properties(&self) -> Vec<(PropertyId, Property)>;
 }
 
+/// Represents the metadata of a procedure.
 pub trait ProcedureProvider: Debug + Send + Sync + Any {
     /// Returns the parameters of the procedure.
     fn parameters(&self) -> &[LogicalType];
 
     /// Returns the data schema of the procedure.
     fn schema(&self) -> Option<DataSchemaRef>;
+
+    /// Returns a reference to the underlying procedure.
+    fn as_any(&self) -> &dyn Any;
 }
 
 #[derive(Debug, Clone)]
@@ -133,6 +139,14 @@ pub enum DirectoryOrSchema {
 
 impl DirectoryOrSchema {
     #[inline]
+    pub fn parent(&self) -> Option<DirectoryRef> {
+        match self {
+            Self::Directory(dir) => dir.parent(),
+            Self::Schema(schema) => schema.parent(),
+        }
+    }
+
+    #[inline]
     pub fn is_directory(&self) -> bool {
         matches!(self, Self::Directory(_))
     }
@@ -140,6 +154,22 @@ impl DirectoryOrSchema {
     #[inline]
     pub fn is_schema(&self) -> bool {
         matches!(self, Self::Schema(_))
+    }
+
+    #[inline]
+    pub fn into_directory(self) -> Option<DirectoryRef> {
+        match self {
+            Self::Directory(dir) => Some(dir),
+            Self::Schema(_) => None,
+        }
+    }
+
+    #[inline]
+    pub fn into_schema(self) -> Option<SchemaRef> {
+        match self {
+            Self::Directory(_) => None,
+            Self::Schema(schema) => Some(schema),
+        }
     }
 
     #[inline]

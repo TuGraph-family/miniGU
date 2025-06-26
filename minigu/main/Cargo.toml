@@ -4,11 +4,20 @@ name = "minigu"
 version = "0.1.0"
 
 [dependencies]
+anyhow = { workspace = true }
 arrow = { workspace = true }
 gql-parser = { workspace = true }
+itertools = { workspace = true }
 miette = { workspace = true }
+minigu-binder = { workspace = true }
+minigu-catalog = { workspace = true }
 minigu-common = { workspace = true }
+minigu-context = { workspace = true }
 minigu-execution = { workspace = true }
+minigu-ir = { workspace = true }
+minigu-planner = { workspace = true }
+minigu-storage = { workspace = true }
+rayon = { workspace = true }
 thiserror = { workspace = true }
 
 [lints]
