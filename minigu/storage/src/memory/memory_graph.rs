@@ -6,13 +6,15 @@ use minigu_common::types::{EdgeId, VertexId};
 use minigu_common::value::ScalarValue;
 
 use super::checkpoint::{CheckpointManager, CheckpointManagerConfig};
-use super::transaction::{MemTransaction, MemTxnManager, TransactionHandle};
+use super::transaction::{
+    DeltaOp, IsolationLevel, MemTransaction, MemTxnManager, SetPropsOp, Timestamp,
+    TransactionHandle, UndoEntry, UndoPtr,
+};
 use crate::error::{
     EdgeNotFoundError, StorageError, StorageResult, TransactionError, VertexNotFoundError,
 };
 use crate::model::edge::{Edge, Neighbor};
 use crate::model::vertex::Vertex;
-use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
 use crate::wal::StorageWal;
 use crate::wal::graph_wal::{Operation, RedoEntry, WalManager, WalManagerConfig};
 
@@ -968,7 +970,6 @@ pub mod tests {
 
     use super::*;
     use crate::model::properties::PropertyRecord;
-    use crate::storage::StorageTransaction;
 
     const PERSON: LabelId = LabelId::new(1).unwrap();
     const FRIEND: LabelId = LabelId::new(1).unwrap();

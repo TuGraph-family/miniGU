@@ -21,9 +21,9 @@ use crate::error::{CheckpointError, StorageError, StorageResult};
 use crate::memory::memory_graph::{
     AdjacencyContainer, MemoryGraph, VersionedEdge, VersionedVertex,
 };
+use crate::memory::transaction::Timestamp;
 use crate::model::edge::{Edge, Neighbor};
 use crate::model::vertex::Vertex;
-use crate::transaction::Timestamp;
 use crate::wal::StorageWal;
 use crate::wal::graph_wal::WalManagerConfig;
 
@@ -840,7 +840,7 @@ mod tests {
     use super::*;
     use crate::error::CheckpointError;
     use crate::memory::memory_graph;
-    use crate::transaction::IsolationLevel;
+    use crate::memory::transaction::IsolationLevel;
 
     fn get_temp_file_path(prefix: &str) -> std::path::PathBuf {
         env::temp_dir().join(format!("{}_{}.bin", prefix, std::process::id()))

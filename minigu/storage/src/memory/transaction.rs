@@ -1,23 +1,132 @@
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, OnceLock, RwLock};
+use std::sync::{Arc, Mutex, OnceLock, RwLock, Weak};
 
 use crossbeam_skiplist::SkipMap;
 use dashmap::DashSet;
-use minigu_common::types::{EdgeId, VertexId};
+use minigu_common::types::{EdgeId, LabelId, VertexId};
+use minigu_common::value::ScalarValue;
+use serde::{Deserialize, Serialize};
 
 use super::memory_graph::MemoryGraph;
 use crate::error::{
     EdgeNotFoundError, StorageError, StorageResult, TransactionError, VertexNotFoundError,
 };
 use crate::model::edge::{Edge, Neighbor};
-use crate::storage::StorageTransaction;
-use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
+use crate::model::vertex::Vertex;
 use crate::wal::StorageWal;
 use crate::wal::graph_wal::{Operation, RedoEntry};
 
 const PERIODIC_GC_THRESHOLD: u64 = 50;
+
+/// Trait defining basic transaction operations.
+pub trait StorageTransaction {
+    type CommitTimestamp;
+
+    /// Commit the current transaction, returning a commit timestamp on success.
+    fn commit(&self) -> StorageResult<Self::CommitTimestamp>;
+
+    /// Abort (rollback) the current transaction, discarding all changes.
+    fn abort(&self) -> StorageResult<()>;
+}
+
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize,
+)]
+/// Represents a commit timestamp used for multi-version concurrency control (MVCC).
+/// It can either represent a transaction ID which starts from 1 << 63,
+/// or a commit timestamp which starts from 0. So, we can determine a timestamp is
+/// a transaction ID if the highest bit is set to 1, or a commit timestamp if the highest bit is 0.
+pub struct Timestamp(pub u64);
+
+impl Timestamp {
+    // The start of the transaction ID range.
+    pub(super) const TXN_ID_START: u64 = 1 << 63;
+
+    /// Create timestamp by a given commit ts
+    pub fn with_ts(timestamp: u64) -> Self {
+        Self(timestamp)
+    }
+
+    /// Returns the maximum possible commit timestamp.
+    pub fn max_commit_ts() -> Self {
+        Self(u64::MAX & !Self::TXN_ID_START)
+    }
+
+    /// Returns true if the timestamp is a transaction ID.
+    pub fn is_txn_id(&self) -> bool {
+        self.0 & Self::TXN_ID_START != 0
+    }
+
+    /// Returns true if the timestamp is a commit timestamp.
+    pub fn is_commit_ts(&self) -> bool {
+        self.0 & Self::TXN_ID_START == 0
+    }
+}
+
+pub type UndoPtr = Weak<UndoEntry>;
+
+#[derive(Debug, Clone)]
+/// Represents an undo log entry for multi-version concurrency control.
+pub struct UndoEntry {
+    /// The delta operation of the undo entry.
+    delta: DeltaOp,
+    /// The timestamp when this version is committed.
+    timestamp: Timestamp,
+    /// The next undo entry in the undo buffer.
+    next: UndoPtr,
+}
+
+impl UndoEntry {
+    /// Create a UndoEntry
+    pub(super) fn new(delta: DeltaOp, timestamp: Timestamp, next: UndoPtr) -> Self {
+        Self {
+            delta,
+            timestamp,
+            next,
+        }
+    }
+
+    /// Get the data of the undo entry.
+    pub(super) fn delta(&self) -> &DeltaOp {
+        &self.delta
+    }
+
+    /// Get the end timestamp of the undo entry.
+    pub(super) fn timestamp(&self) -> Timestamp {
+        self.timestamp
+    }
+
+    /// Get the next undo ptr of the undo entry.
+    pub(super) fn next(&self) -> UndoPtr {
+        self.next.clone()
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SetPropsOp {
+    pub indices: Vec<usize>,
+    pub props: Vec<ScalarValue>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum DeltaOp {
+    DelVertex(VertexId),
+    DelEdge(EdgeId),
+    CreateVertex(Vertex),
+    CreateEdge(Edge),
+    SetVertexProps(VertexId, SetPropsOp),
+    SetEdgeProps(EdgeId, SetPropsOp),
+    AddLabel(LabelId),
+    RemoveLabel(LabelId),
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum IsolationLevel {
+    Snapshot,
+    Serializable,
+}
 
 /// A manager for managing transactions.
 pub struct MemTxnManager {
@@ -420,22 +529,18 @@ impl MemTransaction {
     }
 }
 
-impl StorageTransaction for MemTransaction {
-    type CommitTimestamp = Timestamp;
-
+impl MemTransaction {
     /// Commits the transaction, applying all changes atomically.
     /// Ensures serializability, updates version chains, and manages adjacency lists.
-    fn commit(&self) -> StorageResult<Timestamp> {
+    pub fn commit(&self) -> StorageResult<Timestamp> {
         self.commit_at(None, false)
     }
 
     /// Aborts the transaction, rolling back all changes.
-    fn abort(&self) -> StorageResult<()> {
+    pub fn abort(&self) -> StorageResult<()> {
         self.abort_at(false)
     }
-}
 
-impl MemTransaction {
     /// Commits the transaction at a specific commit timestamp.
     pub fn commit_at(
         &self,
@@ -723,10 +828,9 @@ impl Drop for TransactionHandle {
     }
 }
 
-impl StorageTransaction for TransactionHandle {
-    type CommitTimestamp = Timestamp;
-
-    fn commit(&self) -> StorageResult<Self::CommitTimestamp> {
+impl TransactionHandle {
+    /// Commits the transaction through the underlying MemTransaction.
+    pub fn commit(&self) -> StorageResult<Timestamp> {
         let result = self.inner.commit();
         if result.is_ok() {
             self.mark_handled();
@@ -734,7 +838,8 @@ impl StorageTransaction for TransactionHandle {
         result
     }
 
-    fn abort(&self) -> StorageResult<()> {
+    /// Aborts the transaction through the underlying MemTransaction.
+    pub fn abort(&self) -> StorageResult<()> {
         let result = self.inner.abort();
         if result.is_ok() {
             self.mark_handled();
@@ -754,9 +859,8 @@ impl Clone for TransactionHandle {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{IsolationLevel, *};
     use crate::memory::memory_graph;
-    use crate::transaction::IsolationLevel;
 
     #[test]
     fn test_watermark_tracking() {
