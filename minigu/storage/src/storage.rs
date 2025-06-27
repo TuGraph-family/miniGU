@@ -1,43 +1,6 @@
-use std::fmt::Debug;
-
-use minigu_common::types::{EdgeId, VertexId};
 use minigu_common::value::ScalarValue;
 
 use crate::error::StorageResult;
-use crate::memory::transaction::TransactionHandle;
-use crate::model::edge::{Edge, Neighbor};
-use crate::model::vertex::Vertex;
-
-pub trait DynGraph:
-    Graph<
-        Transaction = TransactionHandle,
-        VertexID = VertexId,
-        EdgeID = EdgeId,
-        Vertex = Vertex,
-        Edge = Edge,
-        Adjacency = Neighbor,
-    > + Debug
-    + Send
-    + Sync
-{
-}
-
-impl<T> DynGraph for T where
-    T: Graph<
-            Transaction = TransactionHandle,
-            VertexID = u64,
-            EdgeID = u64,
-            Vertex = Vertex,
-            Edge = Edge,
-            Adjacency = Neighbor,
-        > + Debug
-        + Send
-        + Sync
-{
-}
-
-pub type BoxedGraph = Box<dyn DynGraph>;
-
 /// Trait defining a read-only graph interface
 pub trait Graph {
     type Transaction;
