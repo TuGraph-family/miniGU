@@ -3,10 +3,10 @@ use std::sync::Arc;
 
 use minigu_common::types::{EdgeId, LabelId, VertexId};
 use minigu_common::value::ScalarValue;
-use minigu_storage::memory::checkpoint::CheckpointManagerConfig;
 use minigu_storage::model::edge::Edge;
 use minigu_storage::model::properties::PropertyRecord;
 use minigu_storage::model::vertex::Vertex;
+use minigu_storage::tp::checkpoint::CheckpointManagerConfig;
 use minigu_storage::wal::graph_wal::WalManagerConfig;
 use minigu_storage::{IsolationLevel, MemoryGraph};
 

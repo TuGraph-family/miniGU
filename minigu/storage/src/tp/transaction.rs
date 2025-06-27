@@ -10,13 +10,13 @@ use minigu_common::value::ScalarValue;
 use serde::{Deserialize, Serialize};
 
 use super::memory_graph::MemoryGraph;
+use crate::common::model::edge::{Edge, Neighbor};
+use crate::common::model::vertex::Vertex;
+use crate::common::wal::StorageWal;
+use crate::common::wal::graph_wal::{Operation, RedoEntry};
 use crate::error::{
     EdgeNotFoundError, StorageError, StorageResult, TransactionError, VertexNotFoundError,
 };
-use crate::model::edge::{Edge, Neighbor};
-use crate::model::vertex::Vertex;
-use crate::wal::StorageWal;
-use crate::wal::graph_wal::{Operation, RedoEntry};
 
 const PERIODIC_GC_THRESHOLD: u64 = 50;
 
@@ -860,7 +860,7 @@ impl Clone for TransactionHandle {
 #[cfg(test)]
 mod tests {
     use super::{IsolationLevel, *};
-    use crate::memory::memory_graph;
+    use crate::tp::memory_graph;
 
     #[test]
     fn test_watermark_tracking() {

@@ -10,13 +10,13 @@ use super::transaction::{
     DeltaOp, IsolationLevel, MemTransaction, MemTxnManager, SetPropsOp, Timestamp,
     TransactionHandle, UndoEntry, UndoPtr,
 };
+use crate::common::model::edge::{Edge, Neighbor};
+use crate::common::model::vertex::Vertex;
+use crate::common::wal::StorageWal;
+use crate::common::wal::graph_wal::{Operation, RedoEntry, WalManager, WalManagerConfig};
 use crate::error::{
     EdgeNotFoundError, StorageError, StorageResult, TransactionError, VertexNotFoundError,
 };
-use crate::model::edge::{Edge, Neighbor};
-use crate::model::vertex::Vertex;
-use crate::wal::StorageWal;
-use crate::wal::graph_wal::{Operation, RedoEntry, WalManager, WalManagerConfig};
 
 // Perform the update properties operation
 macro_rules! update_properties {

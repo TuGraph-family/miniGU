@@ -17,15 +17,13 @@ use minigu_common::types::{EdgeId, VertexId};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use super::memory_graph::{AdjacencyContainer, MemoryGraph, VersionedEdge, VersionedVertex};
+use super::transaction::Timestamp;
+use crate::common::model::edge::{Edge, Neighbor};
+use crate::common::model::vertex::Vertex;
+use crate::common::wal::StorageWal;
+use crate::common::wal::graph_wal::WalManagerConfig;
 use crate::error::{CheckpointError, StorageError, StorageResult};
-use crate::memory::memory_graph::{
-    AdjacencyContainer, MemoryGraph, VersionedEdge, VersionedVertex,
-};
-use crate::memory::transaction::Timestamp;
-use crate::model::edge::{Edge, Neighbor};
-use crate::model::vertex::Vertex;
-use crate::wal::StorageWal;
-use crate::wal::graph_wal::WalManagerConfig;
 
 // @TODO: Consider making this configurable via
 // CheckpointManagerConfig instead of a hardcoded constant.
@@ -839,8 +837,8 @@ mod tests {
 
     use super::*;
     use crate::error::CheckpointError;
-    use crate::memory::memory_graph;
-    use crate::memory::transaction::IsolationLevel;
+    use crate::tp::memory_graph;
+    use crate::tp::transaction::IsolationLevel;
 
     fn get_temp_file_path(prefix: &str) -> std::path::PathBuf {
         env::temp_dir().join(format!("{}_{}.bin", prefix, std::process::id()))
