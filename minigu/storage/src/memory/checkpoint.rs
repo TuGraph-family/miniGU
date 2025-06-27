@@ -840,7 +840,6 @@ mod tests {
     use super::*;
     use crate::error::CheckpointError;
     use crate::memory::memory_graph;
-    use crate::storage::Graph;
     use crate::transaction::IsolationLevel;
 
     fn get_temp_file_path(prefix: &str) -> std::path::PathBuf {

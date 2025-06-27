@@ -6,7 +6,7 @@ use minigu_common::value::ScalarValue;
 use minigu_storage::model::edge::Edge;
 use minigu_storage::model::properties::PropertyRecord;
 use minigu_storage::model::vertex::Vertex;
-use minigu_storage::{Graph, IsolationLevel, MutGraph, StorageTransaction};
+use minigu_storage::{IsolationLevel, StorageTransaction};
 
 // ========== DIRTY READ TESTS ==========
 
