@@ -3,17 +3,17 @@
 #![feature(impl_trait_in_assoc_type)]
 
 // Core modules
-pub mod ap;
+pub mod ap_storage;
 pub mod common;
 pub mod error;
-pub mod tp;
+pub mod tp_storage;
 
 // Re-export commonly used types for backward compatibility
 // Common exports
 pub use common::{iterators, model, wal};
 pub use error::StorageResult;
 // OLTP-specific exports (backward compatible)
-pub use tp::{IsolationLevel, MemTransaction, MemoryGraph, TransactionHandle};
+pub use tp_storage::{IsolationLevel, MemTransaction, MemoryGraph, TransactionHandle};
 
 // Storage mode configuration
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
