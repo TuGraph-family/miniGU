@@ -6,12 +6,10 @@ use minigu_common::types::{EdgeId, VertexId};
 use minigu_common::value::ScalarValue;
 
 use super::checkpoint::{CheckpointManager, CheckpointManagerConfig};
-use super::transaction::{
-    DeltaOp, IsolationLevel, MemTransaction, MemTxnManager, SetPropsOp, Timestamp,
-    TransactionHandle, UndoEntry, UndoPtr,
-};
+use super::transaction::{MemTransaction, MemTxnManager, TransactionHandle, UndoEntry, UndoPtr};
 use crate::common::model::edge::{Edge, Neighbor};
 use crate::common::model::vertex::Vertex;
+use crate::common::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp};
 use crate::common::wal::StorageWal;
 use crate::common::wal::graph_wal::{Operation, RedoEntry, WalManager, WalManagerConfig};
 use crate::error::{

@@ -5,13 +5,11 @@ use std::sync::{Arc, Mutex, OnceLock, RwLock, Weak};
 
 use crossbeam_skiplist::SkipMap;
 use dashmap::DashSet;
-use minigu_common::types::{EdgeId, LabelId, VertexId};
-use minigu_common::value::ScalarValue;
-use serde::{Deserialize, Serialize};
+use minigu_common::types::{EdgeId, VertexId};
 
 use super::memory_graph::MemoryGraph;
 use crate::common::model::edge::{Edge, Neighbor};
-use crate::common::model::vertex::Vertex;
+pub use crate::common::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp};
 use crate::common::wal::StorageWal;
 use crate::common::wal::graph_wal::{Operation, RedoEntry};
 use crate::error::{
@@ -19,51 +17,6 @@ use crate::error::{
 };
 
 const PERIODIC_GC_THRESHOLD: u64 = 50;
-
-/// Trait defining basic transaction operations.
-pub trait StorageTransaction {
-    type CommitTimestamp;
-
-    /// Commit the current transaction, returning a commit timestamp on success.
-    fn commit(&self) -> StorageResult<Self::CommitTimestamp>;
-
-    /// Abort (rollback) the current transaction, discarding all changes.
-    fn abort(&self) -> StorageResult<()>;
-}
-
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize,
-)]
-/// Represents a commit timestamp used for multi-version concurrency control (MVCC).
-/// It can either represent a transaction ID which starts from 1 << 63,
-/// or a commit timestamp which starts from 0. So, we can determine a timestamp is
-/// a transaction ID if the highest bit is set to 1, or a commit timestamp if the highest bit is 0.
-pub struct Timestamp(pub u64);
-
-impl Timestamp {
-    // The start of the transaction ID range.
-    pub(super) const TXN_ID_START: u64 = 1 << 63;
-
-    /// Create timestamp by a given commit ts
-    pub fn with_ts(timestamp: u64) -> Self {
-        Self(timestamp)
-    }
-
-    /// Returns the maximum possible commit timestamp.
-    pub fn max_commit_ts() -> Self {
-        Self(u64::MAX & !Self::TXN_ID_START)
-    }
-
-    /// Returns true if the timestamp is a transaction ID.
-    pub fn is_txn_id(&self) -> bool {
-        self.0 & Self::TXN_ID_START != 0
-    }
-
-    /// Returns true if the timestamp is a commit timestamp.
-    pub fn is_commit_ts(&self) -> bool {
-        self.0 & Self::TXN_ID_START == 0
-    }
-}
 
 pub type UndoPtr = Weak<UndoEntry>;
 
@@ -102,30 +55,6 @@ impl UndoEntry {
     pub(super) fn next(&self) -> UndoPtr {
         self.next.clone()
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SetPropsOp {
-    pub indices: Vec<usize>,
-    pub props: Vec<ScalarValue>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum DeltaOp {
-    DelVertex(VertexId),
-    DelEdge(EdgeId),
-    CreateVertex(Vertex),
-    CreateEdge(Edge),
-    SetVertexProps(VertexId, SetPropsOp),
-    SetEdgeProps(EdgeId, SetPropsOp),
-    AddLabel(LabelId),
-    RemoveLabel(LabelId),
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub enum IsolationLevel {
-    Snapshot,
-    Serializable,
 }
 
 /// A manager for managing transactions.
