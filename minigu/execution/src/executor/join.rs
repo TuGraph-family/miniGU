@@ -1,14 +1,16 @@
 use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 
 use arrow::array::{ArrayRef, UInt32Array};
 use itertools::Itertools;
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::value::{ScalarValue, ScalarValueAccessor};
-
+use arrow::datatypes::Schema;
+use arrow::row::Row;
 use super::{Executor, IntoExecutor};
-use crate::evaluator::BoxedEvaluator;
 use crate::evaluator::datum::DatumRef;
+use crate::evaluator::BoxedEvaluator;
 use crate::executor::utils::gen_try;
 #[derive(Debug)]
 pub struct JoinBuilder<L, R> {
@@ -64,7 +66,8 @@ where
                 conds.into_iter().map(|c| (c.left_key, c.right_key)).unzip();
 
             // build
-            let mut hash_table: HashMap<JoinKey, Vec<(Arc<DataChunk>, usize)>> = HashMap::new();
+            let mut hash_table: HashMap<JoinKey, Vec<(u32, u32)>> = HashMap::new();
+            let mut data_chunk_vec = vec![];
 
             for chunk in left.into_iter() {
                 let chunk = Arc::new(gen_try!(chunk));
@@ -79,8 +82,9 @@ where
                     hash_table
                         .entry(key)
                         .or_default()
-                        .push((chunk.clone(), row));
+                        .push((data_chunk_vec.len() as u32, row as u32));
                 }
+                data_chunk_vec.push(chunk.clone());
             }
             // probe
             for chunk in right.into_iter() {
@@ -109,20 +113,17 @@ where
                     // SAFETY: all Arc<DataChunk> instances in left_chunks are clone()s from the
                     // same original Arc, so Arc::as_ptr() can be safely
                     // used as identity key for deduplication.
-                    let mut grouped: HashMap<*const DataChunk, (Arc<DataChunk>, Vec<u32>)> =
-                        HashMap::new();
+                    let mut grouped: HashMap<u32, Vec<u32>> = HashMap::new();
                     for (chunk, &row_index) in left_chunks.iter().zip(&left_indices) {
-                        let ptr = Arc::as_ptr(chunk);
                         grouped
-                            .entry(ptr)
-                            .or_insert_with(|| (chunk.clone(), vec![]))
-                            .1
+                            .entry(*chunk as u32)
+                            .or_insert_with(|| vec![])
                             .push(*row_index as u32);
                     }
 
                     let left_join_chunks: Vec<DataChunk> = grouped
-                        .into_values()
-                        .map(|(chunk, indices)| chunk.take(&UInt32Array::from(indices)))
+                        .into_iter()
+                        .map(|(chunk, indices)| data_chunk_vec[chunk as usize].take(&UInt32Array::from(indices)))
                         .collect();
 
                     let left_join_chunk = DataChunk::concat(left_join_chunks);
