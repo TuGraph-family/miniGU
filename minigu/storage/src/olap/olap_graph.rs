@@ -1,7 +1,7 @@
 use std::hash::{Hash, Hasher};
 use std::num::NonZeroU32;
 use std::sync::RwLock;
-use std::sync::atomic::AtomicU64;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 use bitvec::bitvec;
 use bitvec::prelude::Lsb0;
@@ -183,20 +183,20 @@ pub struct OlapMvccGraphStorage {
     // Property storage
     pub property_columns: RwLock<Vec<PropertyColumn>>,
     // Compaction related
-    pub is_edge_compressed: RwLock<bool>,
+    pub is_edge_compressed: AtomicBool,
     pub compressed_edges: RwLock<Vec<CompressedEdgeBlock>>,
-    pub is_property_compressed: RwLock<bool>,
+    pub is_property_compressed: AtomicBool,
     pub compressed_properties: RwLock<Vec<CompressedPropertyColumn>>,
 }
 
 #[allow(dead_code)]
 impl OlapMvccGraphStorage {
     pub fn compress_edge(&self) {
-        if *self.is_edge_compressed.read().unwrap() {
+        if self.is_edge_compressed.load(Ordering::SeqCst) {
             return;
         }
         // 1. Set flag to true
-        *self.is_edge_compressed.write().unwrap() = true;
+        self.is_edge_compressed.store(true, Ordering::SeqCst);
         let mut edges_borrow = self.edges.write().unwrap();
 
         // 2. Traverse every block
@@ -262,11 +262,11 @@ impl OlapMvccGraphStorage {
     }
 
     pub fn compress_property(&self) {
-        if *self.is_property_compressed.read().unwrap() {
+        if self.is_property_compressed.load(Ordering::SeqCst) {
             return;
         }
         // 1. Set flag to true
-        *self.is_property_compressed.write().unwrap() = true;
+        self.is_property_compressed.store(true, Ordering::SeqCst);
 
         // 2. Initial compressed storage
         let mut property_columns = self.property_columns.write().unwrap();
@@ -751,7 +751,7 @@ mod tests {
     use std::io::BufRead;
     use std::num::NonZeroU32;
     use std::sync::RwLock;
-    use std::sync::atomic::AtomicU64;
+    use std::sync::atomic::{AtomicBool, AtomicU64};
     use std::time::Instant;
 
     use bitvec::order::Lsb0;
@@ -777,9 +777,9 @@ mod tests {
             vertices: RwLock::new(Vec::new()),
             edges: RwLock::new(Vec::new()),
             property_columns: RwLock::new(Vec::new()),
-            is_edge_compressed: RwLock::from(false),
+            is_edge_compressed: AtomicBool::new(false),
             compressed_edges: RwLock::new(Vec::new()),
-            is_property_compressed: RwLock::new(false),
+            is_property_compressed: AtomicBool::new(false),
             compressed_properties: RwLock::new(vec![]),
         };
 
