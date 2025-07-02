@@ -492,7 +492,7 @@ impl CheckpointManager {
                 }
                 Err(e) => {
                     // Log error but continue with other checkpoints
-                    eprintln!("Failed to load checkpoint at {path:?}: {e:?}");
+                    eprintln!("Failed to load checkpoint at {:?}: {:?}", path, e);
                 }
             }
         }
@@ -1010,7 +1010,7 @@ mod tests {
         // Create 5 checkpoints
         let mut checkpoint_ids = Vec::new();
         for i in 0..5 {
-            let description = Some(format!("Test checkpoint {i}"));
+            let description = Some(format!("Test checkpoint {}", i));
             let id = manager.create_checkpoint(description).unwrap();
             // sleep for 1 second to make sure the created_at time is different
             std::thread::sleep(std::time::Duration::from_millis(1000));

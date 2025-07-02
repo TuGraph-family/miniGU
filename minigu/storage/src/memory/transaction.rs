@@ -459,7 +459,7 @@ impl MemTransaction {
         if let Err(e) = self.commit_ts.set(commit_ts) {
             self.abort()?;
             return Err(StorageError::Transaction(
-                TransactionError::TransactionAlreadyCommitted(format!("{e:?}")),
+                TransactionError::TransactionAlreadyCommitted(format!("{:?}", e)),
             ));
         }
 

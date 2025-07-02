@@ -85,7 +85,8 @@ impl Binder {
                     Some(index) => bound_yield_index.push(index),
                     None => {
                         return Err(BindError::NotSupported(format!(
-                            "field `{target_name}` not found in procedure fields"
+                            "field `{}` not found in procedure fields",
+                            target_name
                         )));
                     }
                 }

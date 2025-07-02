@@ -557,7 +557,7 @@ fn test_concurrent_transactions_stress() {
                 100 + i,
                 PERSON_LABEL_ID,
                 PropertyRecord::new(vec![
-                    ScalarValue::String(Some(format!("User{i}"))),
+                    ScalarValue::String(Some(format!("User{}", i))),
                     ScalarValue::Int32(Some(20 + i as i32)),
                 ]),
             );
@@ -669,7 +669,7 @@ fn test_read_only_transaction_consistency_under_concurrent_writes() {
                     10 + i as u64,
                     PERSON_LABEL_ID,
                     PropertyRecord::new(vec![
-                        ScalarValue::String(Some(format!("User{i}"))),
+                        ScalarValue::String(Some(format!("User{}", i))),
                         ScalarValue::Int32(Some(20 + i)),
                     ]),
                 );

@@ -89,13 +89,13 @@ impl ShellCommand {
                     );
                     let mut help = match e.get(ContextKind::ValidValue) {
                         Some(ContextValue::Strings(s)) => {
-                            let values = s.iter().map(|s| format!("\"{s}\"")).join(", ");
-                            format!("possible values: {values}")
+                            let values = s.iter().map(|s| format!("\"{}\"", s)).join(", ");
+                            format!("possible values: {}", values)
                         }
                         _ => String::new(),
                     };
                     if let Some(ContextValue::String(s)) = e.get(ContextKind::SuggestedValue) {
-                        help.push_str(&format!("\ndid you mean \"{s}\"?"));
+                        help.push_str(&format!("\ndid you mean \"{}\"?", s));
                     }
                     if help.is_empty() {
                         diag

@@ -99,7 +99,7 @@ impl Highlighter for ShellHighlighter {
                     // SAFETY: `cmd` is a substring of `line`.
                     let offset = unsafe { cmd.as_ptr().offset_from(line.as_ptr()) };
                     highlighted.push_str(&line[..offset as usize]);
-                    highlighted.push_str(&format!("\x1b[1;33m{cmd}\x1b[0m"));
+                    highlighted.push_str(&format!("\x1b[1;33m{}\x1b[0m", cmd));
                     highlighted.push_str(&line[offset as usize + cmd.len()..]);
                     highlighted
                 })

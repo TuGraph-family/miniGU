@@ -946,7 +946,8 @@ fn check_write_conflict(commit_ts: Timestamp, txn: &TransactionHandle) -> Storag
         // If the vertex is modified by other transactions, return write-write conflict
         ts if ts.is_txn_id() && ts != txn.txn_id() => Err(StorageError::Transaction(
             TransactionError::WriteWriteConflict(format!(
-                "Data is being modified by transaction {ts:?}"
+                "Data is being modified by transaction {:?}",
+                ts
             )),
         )),
         // If the vertex is committed by other transactions and its commit timestamp is greater

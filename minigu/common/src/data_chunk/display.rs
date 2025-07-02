@@ -273,8 +273,8 @@ pub enum Table {
 impl std::fmt::Display for Table {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Table::Tabled(t) => write!(f, "{t}"),
-            Table::Csv(s) | Table::Json(s) => write!(f, "{s}"),
+            Table::Tabled(t) => write!(f, "{}", t),
+            Table::Csv(s) | Table::Json(s) => write!(f, "{}", s),
         }
     }
 }
@@ -503,7 +503,7 @@ mod tests {
             .append_chunk(&build_test_data_chunk())
             .build();
 
-        println!("{table}");
+        println!("{}", table);
         assert_snapshot!(table, @r#"
 [
   {

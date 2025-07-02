@@ -24,7 +24,7 @@ pub struct ShellContext {
 
 impl ShellContext {
     pub fn run(mut self) -> Result<()> {
-        println!("{PROLOGUE}");
+        println!("{}", PROLOGUE);
         while !self.should_quit {
             let result = match self.editor.readline("minigu> ") {
                 Ok(line) => {
@@ -78,7 +78,7 @@ impl ShellContext {
         }
         let table = builder.build();
         println!("{table}");
-        println!("({num_rows} rows)");
+        println!("({} rows)", num_rows);
         Ok(())
     }
 
