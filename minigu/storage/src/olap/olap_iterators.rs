@@ -21,9 +21,9 @@ impl Iterator for EdgeIter<'_> {
 
     fn next(&mut self) -> Option<Self::Item> {
         // 1. Scan Block
-        while self.block_idx < self.storage.edges.borrow().len() {
+        while self.block_idx < self.storage.edges.read().unwrap().len() {
             // 1.1 If none,move to next block
-            let borrow = self.storage.edges.borrow();
+            let borrow = self.storage.edges.read().unwrap();
             let block = match borrow.get(self.block_idx) {
                 Some(block) => block,
                 None => {
@@ -60,8 +60,13 @@ impl Iterator for EdgeIter<'_> {
                     properties: {
                         let mut props = OlapPropertyStore::default();
 
-                        for (col_idx, column) in
-                            self.storage.property_columns.borrow().iter().enumerate()
+                        for (col_idx, column) in self
+                            .storage
+                            .property_columns
+                            .read()
+                            .unwrap()
+                            .iter()
+                            .enumerate()
                         {
                             if let Some(val) = column
                                 .blocks
@@ -94,15 +99,28 @@ impl Iterator for VertexIter<'_> {
     type Item = Result<OlapVertex, StorageError>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.idx >= self.storage.vertices.borrow().len() {
+        if self.idx >= self.storage.vertices.read().unwrap().len() {
             return None;
         }
 
-        while self.storage.vertices.borrow().get(self.idx).is_none() {
+        while self
+            .storage
+            .vertices
+            .read()
+            .unwrap()
+            .get(self.idx)
+            .is_none()
+        {
             self.idx += 1;
         }
 
-        let clone = self.storage.vertices.borrow().get(self.idx).cloned()?;
+        let clone = self
+            .storage
+            .vertices
+            .read()
+            .unwrap()
+            .get(self.idx)
+            .cloned()?;
         self.idx += 1;
         Some(Ok(clone))
     }
@@ -121,10 +139,10 @@ impl Iterator for AdjacencyIterator<'_> {
     type Item = Result<OlapEdge, StorageError>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let _borrow = self.storage.edges.borrow();
+        let _borrow = self.storage.edges.read().unwrap();
 
         while self.block_idx != usize::MAX {
-            let temporary = self.storage.edges.borrow();
+            let temporary = self.storage.edges.read().unwrap();
             let option = temporary.get(self.block_idx);
 
             // Return if none,should not happen
@@ -172,8 +190,13 @@ impl Iterator for AdjacencyIterator<'_> {
                     properties: {
                         let mut props = OlapPropertyStore::default();
 
-                        for (col_idx, column) in
-                            self.storage.property_columns.borrow().iter().enumerate()
+                        for (col_idx, column) in self
+                            .storage
+                            .property_columns
+                            .read()
+                            .unwrap()
+                            .iter()
+                            .enumerate()
                         {
                             if let Some(val) = column
                                 .blocks

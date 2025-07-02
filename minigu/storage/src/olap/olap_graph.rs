@@ -1,6 +1,6 @@
-use std::cell::RefCell;
 use std::hash::{Hash, Hasher};
 use std::num::NonZeroU32;
+use std::sync::RwLock;
 use std::sync::atomic::AtomicU64;
 
 use bitvec::bitvec;
@@ -177,27 +177,27 @@ pub struct OlapMvccGraphStorage {
     // Actual id to logical id mapping
     pub dense_id_map: DashMap<VertexId, VertexId>,
     // Vertex array (Use lock for without MVCC)
-    pub vertices: RefCell<Vec<OlapVertex>>,
+    pub vertices: RwLock<Vec<OlapVertex>>,
     // Edge array
-    pub edges: RefCell<Vec<EdgeBlock>>,
+    pub edges: RwLock<Vec<EdgeBlock>>,
     // Property storage
-    pub property_columns: RefCell<Vec<PropertyColumn>>,
+    pub property_columns: RwLock<Vec<PropertyColumn>>,
     // Compaction related
-    pub is_edge_compressed: RefCell<bool>,
-    pub compressed_edges: RefCell<Vec<CompressedEdgeBlock>>,
-    pub is_property_compressed: RefCell<bool>,
-    pub compressed_properties: RefCell<Vec<CompressedPropertyColumn>>,
+    pub is_edge_compressed: RwLock<bool>,
+    pub compressed_edges: RwLock<Vec<CompressedEdgeBlock>>,
+    pub is_property_compressed: RwLock<bool>,
+    pub compressed_properties: RwLock<Vec<CompressedPropertyColumn>>,
 }
 
 #[allow(dead_code)]
 impl OlapMvccGraphStorage {
     pub fn compress_edge(&self) {
-        if *self.is_edge_compressed.borrow() {
+        if *self.is_edge_compressed.read().unwrap() {
             return;
         }
         // 1. Set flag to true
-        *self.is_edge_compressed.borrow_mut() = true;
-        let mut edges_borrow = self.edges.borrow_mut();
+        *self.is_edge_compressed.write().unwrap() = true;
+        let mut edges_borrow = self.edges.write().unwrap();
 
         // 2. Traverse every block
         for (index, edge_block) in edges_borrow.iter().enumerate() {
@@ -241,7 +241,8 @@ impl OlapMvccGraphStorage {
             label_ids[0] = edges[0].label_id;
             // 3.3 Build compressed edge block
             self.compressed_edges
-                .borrow_mut()
+                .write()
+                .unwrap()
                 .insert(index, CompressedEdgeBlock {
                     pre_block_index: edge_block.pre_block_index,
                     cur_block_index: index,
@@ -261,16 +262,16 @@ impl OlapMvccGraphStorage {
     }
 
     pub fn compress_property(&self) {
-        if *self.is_property_compressed.borrow() {
+        if *self.is_property_compressed.read().unwrap() {
             return;
         }
         // 1. Set flag to true
-        *self.is_property_compressed.borrow_mut() = true;
+        *self.is_property_compressed.write().unwrap() = true;
 
         // 2. Initial compressed storage
-        let mut property_columns = self.property_columns.borrow_mut();
+        let mut property_columns = self.property_columns.write().unwrap();
 
-        let mut compressed_properties = self.compressed_properties.borrow_mut();
+        let mut compressed_properties = self.compressed_properties.write().unwrap();
         let _column_cnt = property_columns.len();
 
         // 3. Traverse property columns
@@ -346,7 +347,7 @@ impl OlapGraph for OlapMvccGraphStorage {
         };
 
         // 2. Directly access vertex data without lock
-        let borrow = self.vertices.borrow();
+        let borrow = self.vertices.read().unwrap();
         let vertex = borrow.get(logical_id).ok_or_else(|| {
             StorageError::EdgeNotFound(EdgeNotFound(format!("Edge {id} not found")))
         })?;
@@ -356,7 +357,7 @@ impl OlapGraph for OlapMvccGraphStorage {
     }
 
     fn get_edge(&self, _txn: &Self::Transaction, eid: Self::EdgeID) -> StorageResult<Self::Edge> {
-        for (block_idx, block) in self.edges.borrow().iter().enumerate() {
+        for (block_idx, block) in self.edges.read().unwrap().iter().enumerate() {
             if block.is_tombstone {
                 continue;
             }
@@ -381,7 +382,7 @@ impl OlapGraph for OlapMvccGraphStorage {
                                 properties: Vec::new(),
                             };
                             for (col_idx, column) in
-                                self.property_columns.borrow().iter().enumerate()
+                                self.property_columns.read().unwrap().iter().enumerate()
                             {
                                 if let Some(val) = column
                                     .blocks
@@ -463,7 +464,7 @@ impl MutOlapGraph for OlapMvccGraphStorage {
             self.dense_id_map.insert(vertex.vid, index);
             // 3. Insert vertex on index position
             let vid = clone.vid;
-            self.vertices.borrow_mut().insert(index as usize, clone);
+            self.vertices.write().unwrap().insert(index as usize, clone);
             Ok(vid)
         }
     }
@@ -480,7 +481,7 @@ impl MutOlapGraph for OlapMvccGraphStorage {
                 edge.src_id
             )))
         })?;
-        let mut binding = self.vertices.borrow_mut();
+        let mut binding = self.vertices.write().unwrap();
         let vertex = binding.get_mut(dense_id as usize).ok_or_else(|| {
             StorageError::VertexNotFound(VertexNotFound(format!(
                 "Source vertex {} not found",
@@ -491,8 +492,8 @@ impl MutOlapGraph for OlapMvccGraphStorage {
         // 2. Initial block (lazy load) if not exists
         if vertex.block_offset == usize::MAX {
             // Ignore currency problems temporarily
-            let index = self.edges.borrow().len();
-            self.edges.borrow_mut().push(EdgeBlock {
+            let index = self.edges.read().unwrap().len();
+            self.edges.write().unwrap().push(EdgeBlock {
                 pre_block_index: None,
                 cur_block_index: index,
                 is_tombstone: false,
@@ -509,7 +510,8 @@ impl MutOlapGraph for OlapMvccGraphStorage {
             // 3. Allocate new block if is full
             let edge_count = self
                 .edges
-                .borrow()
+                .read()
+                .unwrap()
                 .get(vertex.block_offset)
                 .ok_or_else(|| {
                     StorageError::EdgeNotFound(EdgeNotFound(format!(
@@ -519,8 +521,8 @@ impl MutOlapGraph for OlapMvccGraphStorage {
                 })?
                 .edge_counter;
             if edge_count >= BLOCK_CAPACITY {
-                let index = self.edges.borrow().len();
-                self.edges.borrow_mut().push(EdgeBlock {
+                let index = self.edges.read().unwrap().len();
+                self.edges.write().unwrap().push(EdgeBlock {
                     pre_block_index: Option::from(vertex.block_offset),
                     cur_block_index: index,
                     is_tombstone: false,
@@ -538,7 +540,7 @@ impl MutOlapGraph for OlapMvccGraphStorage {
 
         // 4. Insert edge
         // 4.1 Calculate position
-        let mut binding = self.edges.borrow_mut();
+        let mut binding = self.edges.write().unwrap();
         let block = binding.get_mut(vertex.block_offset).ok_or_else(|| {
             StorageError::EdgeNotFound(EdgeNotFound(format!(
                 "Edge block for vertex {} not found",
@@ -564,7 +566,13 @@ impl MutOlapGraph for OlapMvccGraphStorage {
         };
 
         // 5. Insert properties
-        for (i, column) in self.property_columns.borrow_mut().iter_mut().enumerate() {
+        for (i, column) in self
+            .property_columns
+            .write()
+            .unwrap()
+            .iter_mut()
+            .enumerate()
+        {
             // 5.1 Get property block or allocate one
             let property_block = if let Some(block) = column.blocks.get_mut(vertex.block_offset) {
                 block
@@ -615,11 +623,11 @@ impl MutOlapGraph for OlapMvccGraphStorage {
 
         let index = vertex_iter.idx - 1usize;
 
-        let vertex = self.vertices.borrow().get(index).cloned().unwrap();
-        self.vertices.borrow_mut().remove(index);
+        let vertex = self.vertices.read().unwrap().get(index).cloned().unwrap();
+        self.vertices.write().unwrap().remove(index);
 
         let mut current_block_index = Some(vertex.block_offset);
-        let mut edge_blocks = self.edges.borrow_mut();
+        let mut edge_blocks = self.edges.write().unwrap();
         while let Some(block_index) = current_block_index {
             // Set tombstone
             let edge_block = &mut edge_blocks[block_index];
@@ -652,7 +660,7 @@ impl MutOlapGraph for OlapMvccGraphStorage {
         let offset = edge_iter.offset - 1;
 
         // Remove edge
-        let mut edge_blocks = self.edges.borrow_mut();
+        let mut edge_blocks = self.edges.write().unwrap();
         let edge_block = &mut edge_blocks[block_idx];
         let edges = &mut edge_block.edges;
 
@@ -673,7 +681,7 @@ impl MutOlapGraph for OlapMvccGraphStorage {
         };
 
         // Remove property
-        let mut property_cols = self.property_columns.borrow_mut();
+        let mut property_cols = self.property_columns.write().unwrap();
         for property_col in property_cols.iter_mut() {
             let property_block = &mut property_col.blocks[block_idx];
             let values = &mut property_block.values;
@@ -699,7 +707,7 @@ impl MutOlapGraph for OlapMvccGraphStorage {
         }
         let logical_id = *logical_id.unwrap();
 
-        let mut vertices = self.vertices.borrow_mut();
+        let mut vertices = self.vertices.write().unwrap();
         let vertex = &mut vertices[logical_id as usize];
 
         for (index, prop) in indices.into_iter().zip(props.into_iter()) {
@@ -720,7 +728,7 @@ impl MutOlapGraph for OlapMvccGraphStorage {
         while let Some(edge) = iterator.next() {
             if edge?.label_id == eid {
                 for (index, prop) in indices.into_iter().zip(props.into_iter()) {
-                    let mut property_column = self.property_columns.borrow_mut();
+                    let mut property_column = self.property_columns.write().unwrap();
                     let column = &mut property_column[index];
                     let block = &mut column.blocks[iterator.block_idx];
                     block.values[iterator.offset - 1] = Some(prop);
@@ -737,12 +745,12 @@ impl MutOlapGraph for OlapMvccGraphStorage {
 
 #[cfg(test)]
 mod tests {
-    use std::cell::RefCell;
     use std::collections::HashMap;
     use std::fs::File;
     use std::io;
     use std::io::BufRead;
     use std::num::NonZeroU32;
+    use std::sync::RwLock;
     use std::sync::atomic::AtomicU64;
     use std::time::Instant;
 
@@ -766,17 +774,17 @@ mod tests {
         let storage = OlapMvccGraphStorage {
             logic_id_counter: AtomicU64::new(0),
             dense_id_map: DashMap::new(),
-            vertices: RefCell::new(Vec::new()),
-            edges: RefCell::new(Vec::new()),
-            property_columns: RefCell::new(Vec::new()),
-            is_edge_compressed: RefCell::from(false),
-            compressed_edges: RefCell::new(Vec::new()),
-            is_property_compressed: RefCell::new(false),
-            compressed_properties: RefCell::new(vec![]),
+            vertices: RwLock::new(Vec::new()),
+            edges: RwLock::new(Vec::new()),
+            property_columns: RwLock::new(Vec::new()),
+            is_edge_compressed: RwLock::from(false),
+            compressed_edges: RwLock::new(Vec::new()),
+            is_property_compressed: RwLock::new(false),
+            compressed_properties: RwLock::new(vec![]),
         };
 
         {
-            let mut ref_columns = storage.property_columns.borrow_mut();
+            let mut ref_columns = storage.property_columns.write().unwrap();
             for _i in 0..property_cnt {
                 ref_columns.push(PropertyColumn { blocks: Vec::new() })
             }
@@ -798,7 +806,7 @@ mod tests {
             });
         }
 
-        let vertices = storage.vertices.borrow();
+        let vertices = storage.vertices.read().unwrap();
 
         assert_eq!(vertices.get(128).unwrap().vid, 159);
         assert_eq!(
@@ -842,7 +850,7 @@ mod tests {
             }
         }
 
-        let edges = storage.edges.borrow();
+        let edges = storage.edges.read().unwrap();
         assert_eq!(edges.len(), 5 * 2);
         assert_eq!(edges.get(5).unwrap().edges[0].dst_id, 3 * 256);
         assert_eq!(
@@ -1052,7 +1060,8 @@ mod tests {
         assert_eq!(
             storage
                 .vertices
-                .borrow()
+                .read()
+                .unwrap()
                 .first()
                 .unwrap()
                 .properties
@@ -1064,7 +1073,8 @@ mod tests {
         assert_eq!(
             storage
                 .vertices
-                .borrow()
+                .read()
+                .unwrap()
                 .get(20)
                 .unwrap()
                 .properties
@@ -1146,15 +1156,15 @@ mod tests {
             }
         }
 
-        assert_eq!(storage.vertices.borrow().len(), 5);
+        assert_eq!(storage.vertices.read().unwrap().len(), 5);
 
         let _ = storage.delete_vertex(&(), 3);
-        assert_eq!(storage.vertices.borrow().len(), 4);
+        assert_eq!(storage.vertices.read().unwrap().len(), 4);
 
-        assert!(!storage.edges.borrow().get(5).unwrap().is_tombstone);
-        assert!(storage.edges.borrow().get(6).unwrap().is_tombstone);
-        assert!(storage.edges.borrow().get(7).unwrap().is_tombstone);
-        assert!(!storage.edges.borrow().get(8).unwrap().is_tombstone);
+        assert!(!storage.edges.read().unwrap().get(5).unwrap().is_tombstone);
+        assert!(storage.edges.read().unwrap().get(6).unwrap().is_tombstone);
+        assert!(storage.edges.read().unwrap().get(7).unwrap().is_tombstone);
+        assert!(!storage.edges.read().unwrap().get(8).unwrap().is_tombstone);
     }
 
     #[test]
@@ -1185,13 +1195,13 @@ mod tests {
         let _ = storage.delete_edge(&(), NonZeroU32::new(2));
 
         {
-            let binding = storage.edges.borrow();
+            let binding = storage.edges.read().unwrap();
             let edge_block = binding.first().unwrap();
             assert_eq!(edge_block.edge_counter, 4);
             assert_eq!(edge_block.edges[0].label_id, NonZeroU32::new(1));
             assert_eq!(edge_block.edges[1].label_id, NonZeroU32::new(3));
 
-            let binding = storage.property_columns.borrow();
+            let binding = storage.property_columns.read().unwrap();
             let property_block = binding.first().unwrap().blocks.first().unwrap();
             assert_eq!(
                 property_block.values[0],
@@ -1208,8 +1218,11 @@ mod tests {
         let _ = storage.delete_edge(&(), NonZeroU32::new(4));
         let _ = storage.delete_edge(&(), NonZeroU32::new(5));
 
-        assert_eq!(storage.edges.borrow().first().unwrap().edge_counter, 0);
-        assert!(storage.edges.borrow().first().unwrap().is_tombstone);
+        assert_eq!(
+            storage.edges.read().unwrap().first().unwrap().edge_counter,
+            0
+        );
+        assert!(storage.edges.read().unwrap().first().unwrap().is_tombstone);
     }
 
     #[test]
@@ -1235,7 +1248,7 @@ mod tests {
 
         storage.compress_edge();
 
-        let compaction_borrow = storage.compressed_edges.borrow();
+        let compaction_borrow = storage.compressed_edges.read().unwrap();
         assert_eq!(compaction_borrow.len(), 10);
 
         assert_eq!(compaction_borrow.first().unwrap().src_id, 1);
@@ -1290,7 +1303,7 @@ mod tests {
 
         storage.compress_property();
 
-        let compaction_borrow = storage.compressed_properties.borrow();
+        let compaction_borrow = storage.compressed_properties.read().unwrap();
         assert_eq!(compaction_borrow.len(), 2);
         assert_eq!(compaction_borrow.first().unwrap().blocks.len(), 20);
         let block = compaction_borrow.first().unwrap().blocks.first().unwrap();
@@ -1545,7 +1558,7 @@ mod tests {
             row_properties.push(edge.properties.properties);
         }
 
-        let x = storage.property_columns.borrow();
+        let x = storage.property_columns.read().unwrap();
 
         // Analysis 1 - Sum
         let mut _total1: f64 = 0.0;
@@ -1773,8 +1786,8 @@ mod tests {
         println!("Adjacency List - create_edge time: {duration:?}");
     }
 
-    fn measure_edge_memory(vec: &RefCell<Vec<EdgeBlock>>) -> usize {
-        let vec_ref = vec.borrow();
+    fn measure_edge_memory(vec: &RwLock<Vec<EdgeBlock>>) -> usize {
+        let vec_ref = vec.read().unwrap();
 
         let vec_metadata_size = size_of_val(&*vec_ref);
         let static_block_size = {
@@ -1804,8 +1817,8 @@ mod tests {
         vec_metadata_size + total_static_memory
     }
 
-    fn measure_compressed_edge_memory(vec: &RefCell<Vec<CompressedEdgeBlock>>) -> usize {
-        let vec_ref = vec.borrow();
+    fn measure_compressed_edge_memory(vec: &RwLock<Vec<CompressedEdgeBlock>>) -> usize {
+        let vec_ref = vec.read().unwrap();
         let vec_metadata_size = size_of_val(&*vec_ref);
 
         let static_block_size = {
@@ -1854,9 +1867,9 @@ mod tests {
         vec_metadata_size + total_static_memory + dynamic_memory
     }
 
-    fn measure_memory_column(vec: &RefCell<Vec<PropertyColumn>>) -> usize {
+    fn measure_memory_column(vec: &RwLock<Vec<PropertyColumn>>) -> usize {
         let mut total_size = 0;
-        let vec_borrow = vec.borrow();
+        let vec_borrow = vec.read().unwrap();
         for column in vec_borrow.iter() {
             total_size += size_of::<PropertyColumn>();
             total_size += column.blocks.len() * size_of::<PropertyBlock>();
@@ -1890,9 +1903,9 @@ mod tests {
         total_size
     }
 
-    fn measure_memory_compressed_col(vec: &RefCell<Vec<CompressedPropertyColumn>>) -> usize {
+    fn measure_memory_compressed_col(vec: &RwLock<Vec<CompressedPropertyColumn>>) -> usize {
         let mut total_size = 0;
-        let vec_borrow = vec.borrow();
+        let vec_borrow = vec.read().unwrap();
         for column in vec_borrow.iter() {
             total_size += size_of::<CompressedPropertyColumn>();
             total_size += column.blocks.len() * size_of::<CompressedPropertyBlock>();
