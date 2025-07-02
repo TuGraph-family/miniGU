@@ -768,7 +768,7 @@ mod tests {
     };
     use crate::storage::{MutOlapGraph, OlapGraph};
 
-    const PATH: &str = "E:/Workspace/miniGU/miniGU/datasets/";
+    const PATH: &str = "";
 
     fn mock_olap_graph(property_cnt: u64) -> OlapMvccGraphStorage {
         let storage = OlapMvccGraphStorage {
