@@ -28,8 +28,8 @@ use crc32fast::Hasher;
 use serde::{Deserialize, Serialize};
 
 use super::{LogRecord, StorageWal};
+use crate::common::transaction::{DeltaOp, IsolationLevel, Timestamp};
 use crate::error::{StorageError, StorageResult, WalError};
-use crate::transaction::{DeltaOp, IsolationLevel, Timestamp};
 
 const HEADER_SIZE: usize = 8; // 4 bytes length + 4 bytes crc32
 const WAL_PATH: &str = "/tmp/wal.log";
@@ -370,7 +370,7 @@ mod tests {
     use serial_test::serial;
 
     use super::*;
-    use crate::transaction::{DeltaOp, SetPropsOp, Timestamp};
+    use crate::common::transaction::{DeltaOp, SetPropsOp, Timestamp};
 
     fn temp_wal_path() -> PathBuf {
         let mut path = std::env::temp_dir();

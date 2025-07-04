@@ -1,14 +1,11 @@
-use std::sync::Arc;
-
 use dashmap::iter::Iter;
 use minigu_common::types::VertexId;
 
-use super::transaction::MemTransaction;
+use crate::common::iterators::VertexIteratorTrait;
+use crate::common::model::vertex::Vertex;
 use crate::error::StorageResult;
-use crate::iterators::{ChunkData, VertexIteratorTrait};
-use crate::memory::adjacency_iterator::AdjacencyIterator;
-use crate::memory::memory_graph::VersionedVertex;
-use crate::model::vertex::Vertex;
+use crate::tp_storage::memory_graph::VersionedVertex;
+use crate::tp_storage::transaction::MemTransaction;
 
 type VertexFilter<'a> = Box<dyn Fn(&Vertex) -> bool + 'a>;
 
@@ -50,8 +47,6 @@ impl Iterator for VertexIterator<'_> {
 }
 
 impl<'a> VertexIteratorTrait<'a> for VertexIterator<'a> {
-    type AdjacencyIterator = AdjacencyIterator<'a>;
-
     /// Adds a filtering predicate to the iterator (supports method chaining).
     fn filter<F>(mut self, predicate: F) -> Self
     where
@@ -75,17 +70,8 @@ impl<'a> VertexIteratorTrait<'a> for VertexIterator<'a> {
     }
 
     /// Returns a reference to the currently iterated vertex.
-    fn vertex(&self) -> Option<&Vertex> {
+    fn current_vertex(&self) -> Option<&Vertex> {
         self.current_vertex.as_ref()
-    }
-
-    /// Retrieves the properties of the currently iterated vertex.
-    fn properties(&self) -> ChunkData {
-        if let Some(vertex) = &self.current_vertex {
-            vec![Arc::new(vertex.properties().clone())]
-        } else {
-            ChunkData::new()
-        }
     }
 }
 

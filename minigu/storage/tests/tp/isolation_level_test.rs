@@ -3,10 +3,10 @@ use std::thread;
 
 use common::*;
 use minigu_common::value::ScalarValue;
+use minigu_storage::IsolationLevel;
 use minigu_storage::model::edge::Edge;
 use minigu_storage::model::properties::PropertyRecord;
 use minigu_storage::model::vertex::Vertex;
-use minigu_storage::{Graph, IsolationLevel, MutGraph, StorageTransaction};
 
 // ========== DIRTY READ TESTS ==========
 

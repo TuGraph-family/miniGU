@@ -6,16 +6,16 @@ use minigu_common::types::{EdgeId, VertexId};
 use minigu_common::value::ScalarValue;
 
 use super::checkpoint::{CheckpointManager, CheckpointManagerConfig};
-use super::transaction::{MemTransaction, MemTxnManager, TransactionHandle};
+use super::transaction::{MemTransaction, MemTxnManager, TransactionHandle, UndoEntry, UndoPtr};
+use crate::common::model::edge::{Edge, Neighbor};
+use crate::common::model::vertex::Vertex;
+use crate::common::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp};
+use crate::common::wal::StorageWal;
+use crate::common::wal::graph_wal::{Operation, RedoEntry, WalManager, WalManagerConfig};
 use crate::error::{
     EdgeNotFoundError, StorageError, StorageResult, TransactionError, VertexNotFoundError,
 };
-use crate::model::edge::{Edge, Neighbor};
-use crate::model::vertex::Vertex;
-use crate::storage::{Graph, MutGraph};
-use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
-use crate::wal::StorageWal;
-use crate::wal::graph_wal::{Operation, RedoEntry, WalManager, WalManagerConfig};
+use crate::tp_storage::iterators::{AdjacencyIterator, EdgeIterator, VertexIterator};
 
 // Perform the update properties operation
 macro_rules! update_properties {
@@ -557,17 +557,10 @@ impl MemoryGraph {
     }
 }
 
-// Immutable graph methods
-impl Graph for MemoryGraph {
-    type Adjacency = Neighbor;
-    type Edge = Edge;
-    type EdgeID = EdgeId;
-    type Transaction = TransactionHandle;
-    type Vertex = Vertex;
-    type VertexID = VertexId;
-
+/// Read-only graph methods
+impl MemoryGraph {
     /// Retrieves a vertex by its ID within the context of a transaction.
-    fn get_vertex(&self, txn: &TransactionHandle, vid: VertexId) -> StorageResult<Vertex> {
+    pub fn get_vertex(&self, txn: &TransactionHandle, vid: VertexId) -> StorageResult<Vertex> {
         // Step 1: Atomically retrieve the versioned vertex (check existence).
         let versioned_vertex = self.vertices.get(&vid).ok_or(StorageError::VertexNotFound(
             VertexNotFoundError::VertexNotFound(vid.to_string()),
@@ -616,7 +609,7 @@ impl Graph for MemoryGraph {
     }
 
     /// Retrieves an edge by its ID within the context of a transaction.
-    fn get_edge(&self, txn: &TransactionHandle, eid: EdgeId) -> StorageResult<Edge> {
+    pub fn get_edge(&self, txn: &TransactionHandle, eid: EdgeId) -> StorageResult<Edge> {
         // Step 1: Atomically retrieve the versioned edge (check existence).
         let versioned_edge = self.edges.get(&eid).ok_or(StorageError::EdgeNotFound(
             EdgeNotFoundError::EdgeNotFound(eid.to_string()),
@@ -665,35 +658,36 @@ impl Graph for MemoryGraph {
     }
 
     /// Returns an iterator over all vertices within a transaction.
-    fn iter_vertices<'a>(
+    pub fn iter_vertices<'a>(
         &'a self,
-        txn: &'a Self::Transaction,
-    ) -> StorageResult<Box<dyn Iterator<Item = StorageResult<Self::Vertex>> + 'a>> {
-        Ok(Box::new(txn.iter_vertices()))
+        txn: &'a TransactionHandle,
+    ) -> StorageResult<VertexIterator<'a>> {
+        Ok(txn.iter_vertices())
     }
 
     /// Returns an iterator over all edges within a transaction.
-    fn iter_edges<'a>(
-        &'a self,
-        txn: &'a Self::Transaction,
-    ) -> StorageResult<Box<dyn Iterator<Item = StorageResult<Self::Edge>> + 'a>> {
-        Ok(Box::new(txn.iter_edges()))
+    pub fn iter_edges<'a>(&'a self, txn: &'a TransactionHandle) -> StorageResult<EdgeIterator<'a>> {
+        Ok(txn.iter_edges())
     }
 
     /// Returns an iterator over the adjacency list of a vertex in a given direction.
-    fn iter_adjacency<'a>(
+    pub fn iter_adjacency<'a>(
         &'a self,
-        txn: &'a Self::Transaction,
-        vid: Self::VertexID,
-    ) -> StorageResult<Box<dyn Iterator<Item = StorageResult<Self::Adjacency>> + 'a>> {
-        Ok(Box::new(txn.iter_adjacency(vid)))
+        txn: &'a TransactionHandle,
+        vid: VertexId,
+    ) -> StorageResult<AdjacencyIterator<'a>> {
+        Ok(txn.iter_adjacency(vid))
     }
 }
 
-// Mutable graph methods
-impl MutGraph for MemoryGraph {
+/// Mutable graph methods
+impl MemoryGraph {
     /// Inserts a new vertex into the graph within a transaction.
-    fn create_vertex(&self, txn: &TransactionHandle, vertex: Vertex) -> StorageResult<VertexId> {
+    pub fn create_vertex(
+        &self,
+        txn: &TransactionHandle,
+        vertex: Vertex,
+    ) -> StorageResult<VertexId> {
         let vid = vertex.vid();
         let entry = self
             .vertices
@@ -729,7 +723,7 @@ impl MutGraph for MemoryGraph {
     }
 
     /// Inserts a new edge into the graph within a transaction.
-    fn create_edge(&self, txn: &TransactionHandle, edge: Edge) -> StorageResult<EdgeId> {
+    pub fn create_edge(&self, txn: &TransactionHandle, edge: Edge) -> StorageResult<EdgeId> {
         let eid = edge.eid();
         let src_id = edge.src_id();
         let dst_id = edge.dst_id();
@@ -783,7 +777,7 @@ impl MutGraph for MemoryGraph {
     }
 
     /// Deletes a vertex from the graph within a transaction.
-    fn delete_vertex(&self, txn: &TransactionHandle, vid: VertexId) -> StorageResult<()> {
+    pub fn delete_vertex(&self, txn: &TransactionHandle, vid: VertexId) -> StorageResult<()> {
         // Atomically retrieve the versioned vertex (check existence).
         let entry = self.vertices.get(&vid).ok_or(StorageError::VertexNotFound(
             VertexNotFoundError::VertexNotFound(vid.to_string()),
@@ -832,7 +826,7 @@ impl MutGraph for MemoryGraph {
     }
 
     /// Deletes an edge from the graph within a transaction.
-    fn delete_edge(&self, txn: &TransactionHandle, eid: EdgeId) -> StorageResult<()> {
+    pub fn delete_edge(&self, txn: &TransactionHandle, eid: EdgeId) -> StorageResult<()> {
         // Atomically retrieve the versioned edge (check existence).
         let entry = self.edges.get(&eid).ok_or(StorageError::EdgeNotFound(
             EdgeNotFoundError::EdgeNotFound(eid.to_string()),
@@ -867,7 +861,7 @@ impl MutGraph for MemoryGraph {
     }
 
     /// Updates the properties of a vertex within a transaction.
-    fn set_vertex_property(
+    pub fn set_vertex_property(
         &self,
         txn: &TransactionHandle,
         vid: VertexId,
@@ -902,7 +896,7 @@ impl MutGraph for MemoryGraph {
     }
 
     /// Updates the properties of an edge within a transaction.
-    fn set_edge_property(
+    pub fn set_edge_property(
         &self,
         txn: &TransactionHandle,
         eid: EdgeId,
@@ -972,7 +966,6 @@ pub mod tests {
 
     use super::*;
     use crate::model::properties::PropertyRecord;
-    use crate::storage::StorageTransaction;
 
     const PERSON: LabelId = LabelId::new(1).unwrap();
     const FRIEND: LabelId = LabelId::new(1).unwrap();

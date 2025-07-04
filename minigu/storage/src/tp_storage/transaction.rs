@@ -1,23 +1,61 @@
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, OnceLock, RwLock};
+use std::sync::{Arc, Mutex, OnceLock, RwLock, Weak};
 
 use crossbeam_skiplist::SkipMap;
 use dashmap::DashSet;
 use minigu_common::types::{EdgeId, VertexId};
 
 use super::memory_graph::MemoryGraph;
+use crate::common::model::edge::{Edge, Neighbor};
+pub use crate::common::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp};
+use crate::common::wal::StorageWal;
+use crate::common::wal::graph_wal::{Operation, RedoEntry};
 use crate::error::{
     EdgeNotFoundError, StorageError, StorageResult, TransactionError, VertexNotFoundError,
 };
-use crate::model::edge::{Edge, Neighbor};
-use crate::storage::StorageTransaction;
-use crate::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp, UndoEntry, UndoPtr};
-use crate::wal::StorageWal;
-use crate::wal::graph_wal::{Operation, RedoEntry};
 
 const PERIODIC_GC_THRESHOLD: u64 = 50;
+
+pub type UndoPtr = Weak<UndoEntry>;
+
+#[derive(Debug, Clone)]
+/// Represents an undo log entry for multi-version concurrency control.
+pub struct UndoEntry {
+    /// The delta operation of the undo entry.
+    delta: DeltaOp,
+    /// The timestamp when this version is committed.
+    timestamp: Timestamp,
+    /// The next undo entry in the undo buffer.
+    next: UndoPtr,
+}
+
+impl UndoEntry {
+    /// Create a UndoEntry
+    pub(super) fn new(delta: DeltaOp, timestamp: Timestamp, next: UndoPtr) -> Self {
+        Self {
+            delta,
+            timestamp,
+            next,
+        }
+    }
+
+    /// Get the data of the undo entry.
+    pub(super) fn delta(&self) -> &DeltaOp {
+        &self.delta
+    }
+
+    /// Get the end timestamp of the undo entry.
+    pub(super) fn timestamp(&self) -> Timestamp {
+        self.timestamp
+    }
+
+    /// Get the next undo ptr of the undo entry.
+    pub(super) fn next(&self) -> UndoPtr {
+        self.next.clone()
+    }
+}
 
 /// A manager for managing transactions.
 pub struct MemTxnManager {
@@ -420,22 +458,18 @@ impl MemTransaction {
     }
 }
 
-impl StorageTransaction for MemTransaction {
-    type CommitTimestamp = Timestamp;
-
+impl MemTransaction {
     /// Commits the transaction, applying all changes atomically.
     /// Ensures serializability, updates version chains, and manages adjacency lists.
-    fn commit(&self) -> StorageResult<Timestamp> {
+    pub fn commit(&self) -> StorageResult<Timestamp> {
         self.commit_at(None, false)
     }
 
     /// Aborts the transaction, rolling back all changes.
-    fn abort(&self) -> StorageResult<()> {
+    pub fn abort(&self) -> StorageResult<()> {
         self.abort_at(false)
     }
-}
 
-impl MemTransaction {
     /// Commits the transaction at a specific commit timestamp.
     pub fn commit_at(
         &self,
@@ -723,10 +757,9 @@ impl Drop for TransactionHandle {
     }
 }
 
-impl StorageTransaction for TransactionHandle {
-    type CommitTimestamp = Timestamp;
-
-    fn commit(&self) -> StorageResult<Self::CommitTimestamp> {
+impl TransactionHandle {
+    /// Commits the transaction through the underlying MemTransaction.
+    pub fn commit(&self) -> StorageResult<Timestamp> {
         let result = self.inner.commit();
         if result.is_ok() {
             self.mark_handled();
@@ -734,7 +767,8 @@ impl StorageTransaction for TransactionHandle {
         result
     }
 
-    fn abort(&self) -> StorageResult<()> {
+    /// Aborts the transaction through the underlying MemTransaction.
+    pub fn abort(&self) -> StorageResult<()> {
         let result = self.inner.abort();
         if result.is_ok() {
             self.mark_handled();
@@ -754,9 +788,8 @@ impl Clone for TransactionHandle {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::memory::memory_graph;
-    use crate::transaction::IsolationLevel;
+    use super::{IsolationLevel, *};
+    use crate::tp_storage::memory_graph;
 
     #[test]
     fn test_watermark_tracking() {
