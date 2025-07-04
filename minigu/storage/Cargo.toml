@@ -20,5 +20,7 @@ serde = { version = "1.0", features = ["derive"] }
 thiserror = "2.0.0"
 uuid = { version = "1.7.0", features = ["v4", "serde"] }
 
+bitvec = "1.0.1"
+
 [lints]
 workspace = true
