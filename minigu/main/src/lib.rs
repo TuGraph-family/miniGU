@@ -4,8 +4,7 @@
 pub mod database;
 pub mod error;
 pub mod metrics;
-pub mod options;
-pub mod procedure;
+mod procedures;
 pub mod result;
 pub mod session;
 

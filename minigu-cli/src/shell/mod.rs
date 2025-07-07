@@ -10,7 +10,7 @@ use command::build_command;
 use context::ShellContext;
 use editor::build_editor;
 use miette::Result;
-use minigu::database::Database;
+use minigu::database::{Database, DatabaseConfig};
 use output::OutputMode;
 
 /// Start local interactive shell.
@@ -44,9 +44,9 @@ pub struct ShellArgs {
 impl ShellArgs {
     pub fn run(self) -> Result<()> {
         let db = if let Some(path) = self.path {
-            Database::open(path)?
+            Database::open(path, &DatabaseConfig::default())?
         } else {
-            Database::open_in_memory()?
+            Database::open_in_memory(&DatabaseConfig::default())?
         };
         let session = db.session()?;
         let editor = build_editor()?;

@@ -2,6 +2,7 @@ pub mod aggregate;
 pub mod expand;
 pub mod filter;
 pub mod flatten;
+pub mod procedure_call;
 
 // TODO: Implement join executor.
 pub mod join;
@@ -34,6 +35,8 @@ use crate::error::ExecutionResult;
 use crate::evaluator::BoxedEvaluator;
 use crate::executor::limit::LimitBuilder;
 use crate::source::{ExpandSource, VertexPropertySource};
+
+pub type BoxedExecutor = Box<dyn Executor>;
 
 /// A trait for pull-based vectorized volcano executors.
 ///

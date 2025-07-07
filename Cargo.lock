@@ -112,6 +112,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.98"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e16d2d3311acee920a9eb8d33b8cbc1787ce4a264e85f964c2404b969bdcd487"
+
+[[package]]
 name = "arrow"
 version = "55.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -539,6 +545,16 @@ name = "critical-section"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "790eea4361631c5e7d22598ecd5723ff611904e3344ce8720784c93e3d83d40b"
+
+[[package]]
+name = "crossbeam-deque"
+version = "0.8.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9dd111b7b7f7d55b72c0a6ae361660ee5853c9af73f70c3c2ef6858b950e2e51"
+dependencies = [
+ "crossbeam-epoch",
+ "crossbeam-utils",
+]
 
 [[package]]
 name = "crossbeam-epoch"
@@ -1195,11 +1211,20 @@ dependencies = [
 name = "minigu"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "arrow",
  "gql-parser",
+ "itertools",
  "miette",
+ "minigu-binder",
+ "minigu-catalog",
  "minigu-common",
+ "minigu-context",
  "minigu-execution",
+ "minigu-ir",
+ "minigu-planner",
+ "minigu-storage",
+ "rayon",
  "thiserror",
 ]
 
@@ -1209,9 +1234,11 @@ version = "0.1.0"
 dependencies = [
  "gql-parser",
  "insta",
+ "itertools",
+ "miette",
  "minigu-catalog",
  "minigu-common",
- "serde",
+ "minigu-ir",
  "smol_str",
  "thiserror",
 ]
@@ -1251,6 +1278,7 @@ dependencies = [
  "enum-as-inner",
  "insta",
  "itertools",
+ "miette",
  "ordered-float",
  "paste",
  "serde",
@@ -1260,13 +1288,50 @@ dependencies = [
 ]
 
 [[package]]
+name = "minigu-context"
+version = "0.1.0"
+dependencies = [
+ "minigu-catalog",
+ "minigu-common",
+ "minigu-ir",
+ "minigu-storage",
+ "rayon",
+]
+
+[[package]]
 name = "minigu-execution"
 version = "0.1.0"
 dependencies = [
  "arrow",
  "auto_impl",
  "itertools",
+ "miette",
+ "minigu-catalog",
  "minigu-common",
+ "minigu-context",
+ "minigu-ir",
+ "rayon",
+ "thiserror",
+]
+
+[[package]]
+name = "minigu-ir"
+version = "0.1.0"
+dependencies = [
+ "minigu-catalog",
+ "minigu-common",
+ "serde",
+ "smol_str",
+]
+
+[[package]]
+name = "minigu-planner"
+version = "0.1.0"
+dependencies = [
+ "itertools",
+ "miette",
+ "minigu-common",
+ "minigu-ir",
  "thiserror",
 ]
 
@@ -1593,6 +1658,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "99d9a13982dcf210057a8a78572b2217b667c3beacbf3a0d8b454f6f82837d38"
 dependencies = [
  "getrandom 0.3.3",
+]
+
+[[package]]
+name = "rayon"
+version = "1.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b418a60154510ca1a002a752ca9714984e21e4241e804d32555251faf8b78ffa"
+dependencies = [
+ "either",
+ "rayon-core",
+]
+
+[[package]]
+name = "rayon-core"
+version = "1.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1465873a3dfdaa8ae7cb14b4383657caab0b3e8a0aa9ae8e04b044854c8dfce2"
+dependencies = [
+ "crossbeam-deque",
+ "crossbeam-utils",
 ]
 
 [[package]]
