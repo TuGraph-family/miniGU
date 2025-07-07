@@ -6,8 +6,7 @@ use arrow::array::{ArrayRef, UInt32Array};
 use itertools::Itertools;
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::value::{ScalarValue, ScalarValueAccessor};
-use arrow::datatypes::Schema;
-use arrow::row::Row;
+
 use super::{Executor, IntoExecutor};
 use crate::evaluator::datum::DatumRef;
 use crate::evaluator::BoxedEvaluator;
@@ -95,42 +94,38 @@ where
                         .map(|e| e.evaluate(&chunk).map(DatumRef::into_array))
                         .try_collect()
                 );
-                let mut left_chunks = vec![];
-                let mut left_indices = vec![];
-                let mut right_indices = vec![];
+                let mut triples = vec![]; // (chunk_id, left_row, right_row)
                 for row in 0..chunk.len() {
                     let key = make_join_key(&key_cols, row);
                     if let Some(match_rows) = hash_table.get(&key) {
                         for (left_chunk, left_index) in match_rows {
-                            left_chunks.push(left_chunk.clone());
-                            left_indices.push(left_index);
-                            right_indices.push(row as u32);
+                            triples.push((*left_chunk, *left_index, row as u32));
                         }
                     }
                 }
                 // yield
-                if !left_chunks.is_empty() {
-                    // SAFETY: all Arc<DataChunk> instances in left_chunks are clone()s from the
-                    // same original Arc, so Arc::as_ptr() can be safely
-                    // used as identity key for deduplication.
-                    let mut grouped: HashMap<u32, Vec<u32>> = HashMap::new();
-                    for (chunk, &row_index) in left_chunks.iter().zip(&left_indices) {
+                if !triples.is_empty() {
+                    let mut grouped: HashMap<u32, Vec<(u32, u32)>> = HashMap::new();
+                    for (chunk_id, left_row, right_row) in triples {
                         grouped
-                            .entry(*chunk as u32)
-                            .or_insert_with(|| vec![])
-                            .push(*row_index as u32);
+                            .entry(chunk_id)
+                            .or_default()
+                            .push((left_row, right_row));
                     }
 
-                    let left_join_chunks: Vec<DataChunk> = grouped
-                        .into_iter()
-                        .map(|(chunk, indices)| data_chunk_vec[chunk as usize].take(&UInt32Array::from(indices)))
-                        .collect();
+                    let mut joined_chunks: Vec<DataChunk> = Vec::new();
+                    for (chunk_id, pairs) in grouped {
+                        let (left_rows, right_rows): (Vec<u32>, Vec<u32>) =
+                            pairs.into_iter().unzip();
 
-                    let left_join_chunk = DataChunk::concat(left_join_chunks);
-                    let right_join_chunk = chunk.take(&UInt32Array::from(right_indices));
-                    let mut joined_chunk = left_join_chunk;
-                    joined_chunk.append_columns(right_join_chunk.columns().iter().cloned());
-                    yield Ok(joined_chunk)
+                        let mut left_chunk =
+                            data_chunk_vec[chunk_id as usize].take(&UInt32Array::from(left_rows));
+                        let mut right_chunk = chunk.take(&UInt32Array::from(right_rows));
+                        left_chunk.append_columns(right_chunk.columns().iter().cloned());
+                        joined_chunks.push(left_chunk);
+                    }
+                    let joined_chunk = DataChunk::concat(joined_chunks);
+                    yield Ok(joined_chunk);
                 }
             }
         }
