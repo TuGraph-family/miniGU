@@ -31,8 +31,8 @@ use vertex_property_scan::VertexPropertyScanBuilder;
 
 use crate::error::ExecutionResult;
 use crate::evaluator::BoxedEvaluator;
-use crate::executor::limit::LimitBuilder;
 use crate::executor::join::{JoinBuilder, JoinCond};
+use crate::executor::limit::LimitBuilder;
 use crate::source::{ExpandSource, VertexPropertySource};
 
 pub type BoxedExecutor = Box<dyn Executor>;
