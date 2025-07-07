@@ -25,6 +25,9 @@ pub struct JoinCond {
     right_key: BoxedEvaluator,
 }
 
+// TODO(ColinLee): Replace per-row join key construction with a batched approach
+// using Arrow RowConverter or StructArray to improve performance.
+// This will require changing JoinKey to a more efficient representation.
 #[derive(Debug, PartialEq, Hash, Eq)]
 struct JoinKey(Vec<ScalarValue>);
 
