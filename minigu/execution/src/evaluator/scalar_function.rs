@@ -57,7 +57,7 @@ mod tests {
         let chunk = data_chunk!((Int32, [1, 2, 3]), (Int32, [4, 5, 6]));
         let add = |args: Vec<DatumRef>| -> ExecutionResult<DatumRef> {
             if args.len() != 2 {
-                return Err(ExecutionError::External(Box::new(SimpleError(
+                return Err(ExecutionError::Custom(Box::new(SimpleError(
                     "expected 2 arguments".to_string(),
                 ))));
             }

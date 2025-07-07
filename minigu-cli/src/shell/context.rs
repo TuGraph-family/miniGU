@@ -49,7 +49,7 @@ impl ShellContext {
         Ok(())
     }
 
-    fn execute_query(&self, input: &str) -> Result<()> {
+    fn execute_query(&mut self, input: &str) -> Result<()> {
         let segments = split_query(input);
         for segment in segments {
             // Print error for each segment
@@ -60,7 +60,7 @@ impl ShellContext {
         Ok(())
     }
 
-    fn execute_query_segment(&self, segment: &str) -> Result<()> {
+    fn execute_query_segment(&mut self, segment: &str) -> Result<()> {
         let result = self.session.query(segment)?;
         let options = TableOptions::new()
             .with_style(self.mode.into())
