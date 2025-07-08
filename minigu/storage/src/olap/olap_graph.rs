@@ -19,12 +19,14 @@ use crate::olap::olap_iterators::{AdjacencyIterator, EdgeIter, VertexIter};
 use crate::{MutOlapGraph, OlapGraph};
 
 const BLOCK_CAPACITY: usize = 256;
+const TOMBSTONE_LABEL_ID: u32 = 1;
+const TOMBSTONE_DST_ID: u64 = 1;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(dead_code)]
 struct TxnId(u64);
 
-// Olap-Vertex (without MVCC)
+// TODO：Olap-Vertex (without MVCC)
 #[derive(Clone, Debug)]
 pub struct OlapVertex {
     // Vertex id (actual id)
@@ -61,8 +63,8 @@ impl OlapStorageEdge {
     // (Temporarily) Stands for null
     fn default() -> OlapStorageEdge {
         OlapStorageEdge {
-            label_id: NonZeroU32::new(1),
-            dst_id: 1,
+            label_id: NonZeroU32::new(TOMBSTONE_LABEL_ID),
+            dst_id: TOMBSTONE_DST_ID,
         }
     }
 }
@@ -83,7 +85,6 @@ pub struct OlapPropertyStore {
     properties: Vec<Option<ScalarValue>>,
 }
 
-#[allow(dead_code)]
 impl OlapPropertyStore {
     pub fn set_prop(&mut self, index: usize, prop: Option<ScalarValue>) {
         self.properties.insert(index, prop);
@@ -93,6 +94,7 @@ impl OlapPropertyStore {
         self.properties.get(index).cloned().flatten()
     }
 
+    #[allow(dead_code)]
     pub(crate) fn new(properties: Vec<Option<ScalarValue>>) -> OlapPropertyStore {
         OlapPropertyStore { properties }
     }
@@ -100,10 +102,10 @@ impl OlapPropertyStore {
 
 // Block of edge array (Header + Actual Storage + MVCC)
 #[derive(Clone, Debug)]
-#[allow(dead_code)]
 pub struct EdgeBlock {
     // Locate the previous block of the same vertex
     pub pre_block_index: Option<usize>,
+    #[allow(dead_code)]
     pub cur_block_index: usize,
     pub is_tombstone: bool,
     // Min and max edge id (Eid)
@@ -170,8 +172,7 @@ pub struct CompressedPropertyColumn {
 }
 
 // Graph storage for Olap (CSR)
-#[allow(dead_code)]
-pub struct OlapMvccGraphStorage {
+pub struct OlapStorage {
     // For allocating vertex logical id
     pub logic_id_counter: AtomicU64,
     // Actual id to logical id mapping
@@ -183,14 +184,18 @@ pub struct OlapMvccGraphStorage {
     // Property storage
     pub property_columns: RwLock<Vec<PropertyColumn>>,
     // Compaction related
+    #[allow(dead_code)]
     pub is_edge_compressed: AtomicBool,
+    #[allow(dead_code)]
     pub compressed_edges: RwLock<Vec<CompressedEdgeBlock>>,
+    #[allow(dead_code)]
     pub is_property_compressed: AtomicBool,
+    #[allow(dead_code)]
     pub compressed_properties: RwLock<Vec<CompressedPropertyColumn>>,
 }
 
 #[allow(dead_code)]
-impl OlapMvccGraphStorage {
+impl OlapStorage {
     pub fn compress_edge(&self) {
         if self.is_edge_compressed.load(Ordering::SeqCst) {
             return;
@@ -319,7 +324,7 @@ impl OlapMvccGraphStorage {
     }
 }
 
-impl OlapGraph for OlapMvccGraphStorage {
+impl OlapGraph for OlapStorage {
     type Adjacency = OlapEdge;
     type AdjacencyIter<'a> = AdjacencyIterator<'a>;
     type Edge = OlapEdge;
@@ -440,7 +445,7 @@ impl OlapGraph for OlapMvccGraphStorage {
     }
 }
 
-impl MutOlapGraph for OlapMvccGraphStorage {
+impl MutOlapGraph for OlapStorage {
     fn create_vertex(
         &self,
         _txn: &Self::Transaction,
@@ -763,15 +768,15 @@ mod tests {
     use crate::model::properties::PropertyRecord;
     use crate::olap::olap_graph::{
         BLOCK_CAPACITY, CompressedEdgeBlock, CompressedPropertyBlock, CompressedPropertyColumn,
-        EdgeBlock, OlapEdge, OlapMvccGraphStorage, OlapPropertyStore, OlapStorageEdge, OlapVertex,
+        EdgeBlock, OlapEdge, OlapPropertyStore, OlapStorage, OlapStorageEdge, OlapVertex,
         PropertyBlock, PropertyColumn,
     };
     use crate::storage::{MutOlapGraph, OlapGraph};
 
     const PATH: &str = "";
 
-    fn mock_olap_graph(property_cnt: u64) -> OlapMvccGraphStorage {
-        let storage = OlapMvccGraphStorage {
+    fn mock_olap_graph(property_cnt: u64) -> OlapStorage {
+        let storage = OlapStorage {
             logic_id_counter: AtomicU64::new(0),
             dense_id_map: DashMap::new(),
             vertices: RwLock::new(Vec::new()),
@@ -883,7 +888,16 @@ mod tests {
 
         let result2 = storage.get_vertex(&(), 63);
         assert!(result2.is_ok());
-        assert_eq!(result2.unwrap().properties.get(0).unwrap().get_int32(), 133);
+        assert_eq!(
+            result2
+                .unwrap()
+                .properties
+                .get(0)
+                .unwrap()
+                .get_int32()
+                .unwrap(),
+            133
+        );
     }
 
     #[test]
@@ -974,7 +988,7 @@ mod tests {
             // unwrap unwrap unwrap unwrap ??
             let edge = next.unwrap();
             assert_eq!(
-                edge.properties.get(0).unwrap().get_string(),
+                edge.properties.get(0).unwrap().get_string().unwrap(),
                 "hello".to_string()
             );
             cnt += 1;
@@ -1067,7 +1081,8 @@ mod tests {
                 .properties
                 .get(0)
                 .unwrap()
-                .get_int32(),
+                .get_int32()
+                .unwrap(),
             1
         );
         assert_eq!(
@@ -1080,7 +1095,8 @@ mod tests {
                 .properties
                 .get(1)
                 .unwrap()
-                .get_string(),
+                .get_string()
+                .unwrap(),
             "No hello".to_string()
         );
     }
@@ -1308,8 +1324,8 @@ mod tests {
         assert_eq!(compaction_borrow.first().unwrap().blocks.len(), 20);
         let block = compaction_borrow.first().unwrap().blocks.first().unwrap();
         assert_eq!(block.offsets[0], 16);
-        assert_eq!(block.values[10].get_uint32(), 11);
-        assert_eq!(block.values[100].get_uint32(), 101);
+        assert_eq!(block.values[10].get_uint32().unwrap(), 11);
+        assert_eq!(block.values[100].get_uint32().unwrap(), 101);
         println!("{}", block.bitmap);
     }
 
@@ -1572,7 +1588,8 @@ mod tests {
                 }
                 _total1 += <Option<ScalarValue> as Clone>::clone(option)
                     .unwrap()
-                    .get_float64();
+                    .get_float64()
+                    .unwrap();
             }
         }
 
@@ -1584,7 +1601,8 @@ mod tests {
             let value = vec.get(2).unwrap();
             _total2 += <Option<ScalarValue> as Clone>::clone(value)
                 .unwrap()
-                .get_float64();
+                .get_float64()
+                .unwrap();
         }
 
         let duration_row_analysis1 = start_row_analysis1.elapsed();
@@ -1602,7 +1620,12 @@ mod tests {
                 if option.is_none() {
                     break;
                 }
-                max1 = max1.max(option.clone().map(|s| s.get_float64()).unwrap_or_default());
+                max1 = max1.max(
+                    option
+                        .clone()
+                        .map(|s| s.get_float64().unwrap())
+                        .unwrap_or_default(),
+                );
             }
         }
 
@@ -1612,7 +1635,12 @@ mod tests {
         let start_row_analysis2 = Instant::now();
         for vec in row_clone2 {
             let value = vec.get(3).unwrap();
-            max2 = max2.max(value.clone().map(|s| s.get_float64()).unwrap_or_default());
+            max2 = max2.max(
+                value
+                    .clone()
+                    .map(|s| s.get_float64().unwrap())
+                    .unwrap_or_default(),
+            );
         }
 
         let duration_row_analysis2 = start_row_analysis2.elapsed();
@@ -1630,7 +1658,12 @@ mod tests {
                 if option.is_none() {
                     break;
                 }
-                min1 = min1.min(option.clone().map(|s| s.get_float64()).unwrap_or_default());
+                min1 = min1.min(
+                    option
+                        .clone()
+                        .map(|s| s.get_float64().unwrap())
+                        .unwrap_or_default(),
+                );
             }
         }
 
@@ -1640,7 +1673,12 @@ mod tests {
         let start_row_analysis3 = Instant::now();
         for vec in row_clone3 {
             let value = vec.get(4).unwrap();
-            min2 = min2.min(value.clone().map(|s| s.get_float64()).unwrap_or_default());
+            min2 = min2.min(
+                value
+                    .clone()
+                    .map(|s| s.get_float64().unwrap())
+                    .unwrap_or_default(),
+            );
         }
 
         let duration_row_analysis3 = start_row_analysis3.elapsed();
@@ -1719,7 +1757,7 @@ mod tests {
                     }
                     edge_array[edge_index] = edge.dst_id as usize;
                     value_array[edge_index] = match edge.properties.get(0) {
-                        Some(prop) => prop.get_float64(),
+                        Some(prop) => prop.get_float64().unwrap(),
                         None => 0.0,
                     };
                     edge_index += 1;

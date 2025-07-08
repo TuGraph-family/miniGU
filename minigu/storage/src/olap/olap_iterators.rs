@@ -4,13 +4,13 @@ use minigu_common::types::VertexId;
 
 use crate::error::StorageError;
 use crate::olap::olap_graph::{
-    OlapEdge, OlapMvccGraphStorage, OlapPropertyStore, OlapStorageEdge, OlapVertex,
+    OlapEdge, OlapPropertyStore, OlapStorage, OlapStorageEdge, OlapVertex,
 };
 
 const BLOCK_CAPACITY: usize = 256;
 
 pub struct EdgeIter<'a> {
-    pub storage: &'a OlapMvccGraphStorage,
+    pub storage: &'a OlapStorage,
     // Index of the current block
     pub block_idx: usize,
     // Offset within block
@@ -21,7 +21,8 @@ impl Iterator for EdgeIter<'_> {
 
     fn next(&mut self) -> Option<Self::Item> {
         // 1. Scan Block
-        while self.block_idx < self.storage.edges.read().unwrap().len() {
+        let edges = self.storage.edges.read().unwrap();
+        while self.block_idx < edges.len() {
             // 1.1 If none,move to next block
             let borrow = self.storage.edges.read().unwrap();
             let block = match borrow.get(self.block_idx) {
@@ -90,7 +91,7 @@ impl Iterator for EdgeIter<'_> {
 }
 
 pub struct VertexIter<'a> {
-    pub storage: &'a OlapMvccGraphStorage,
+    pub storage: &'a OlapStorage,
     // Vertex index
     pub idx: usize,
 }
@@ -127,7 +128,7 @@ impl Iterator for VertexIter<'_> {
 }
 #[allow(dead_code)]
 pub struct AdjacencyIterator<'a> {
-    pub storage: &'a OlapMvccGraphStorage,
+    pub storage: &'a OlapStorage,
     // Vertex ID
     pub vertex_id: VertexId,
     // Index of the current block
@@ -139,7 +140,6 @@ impl Iterator for AdjacencyIterator<'_> {
     type Item = Result<OlapEdge, StorageError>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let _borrow = self.storage.edges.read().unwrap();
 
         while self.block_idx != usize::MAX {
             let temporary = self.storage.edges.read().unwrap();
