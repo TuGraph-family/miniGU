@@ -3,10 +3,10 @@ use std::sync::Arc;
 use crossbeam_skiplist::SkipSet;
 use minigu_common::types::{EdgeId, VertexId};
 
-use super::transaction::MemTransaction;
+use crate::common::iterators::{AdjacencyIteratorTrait, Direction};
+use crate::common::model::edge::Neighbor;
 use crate::error::StorageResult;
-use crate::iterators::{AdjacencyIteratorTrait, Direction};
-use crate::model::edge::Neighbor;
+use crate::tp_storage::transaction::MemTransaction;
 
 type AdjFilter<'a> = Box<dyn Fn(&Neighbor) -> bool + 'a>;
 
