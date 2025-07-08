@@ -140,7 +140,6 @@ impl Iterator for AdjacencyIterator<'_> {
     type Item = Result<OlapEdge, StorageError>;
 
     fn next(&mut self) -> Option<Self::Item> {
-
         while self.block_idx != usize::MAX {
             let temporary = self.storage.edges.read().unwrap();
             let option = temporary.get(self.block_idx);
