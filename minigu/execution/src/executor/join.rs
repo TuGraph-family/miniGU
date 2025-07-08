@@ -152,7 +152,7 @@ mod tests {
         )];
         let left_executor = [Ok(left_chunk)].into_executor();
         let right_executor = [Ok(right_chunk)].into_executor();
-        let join_executor = left_executor.join_with(right_executor, conds);
+        let join_executor = left_executor.join(right_executor, conds);
 
         let results: Vec<DataChunk> = join_executor.into_iter().try_collect().unwrap();
         let expected = data_chunk!((Int32, [2, 3]), (Int32, [2, 3]));
@@ -172,7 +172,7 @@ mod tests {
         let left_executor = [Ok(left_chunk)].into_executor();
         let right_executor = [Ok(right_chunk)].into_executor();
 
-        let join_executor = left_executor.join_with(right_executor, conds);
+        let join_executor = left_executor.join(right_executor, conds);
         let results: Vec<DataChunk> = join_executor.into_iter().try_collect().unwrap();
 
         let expected = data_chunk!((Int32, [1, 1]), (Int32, [1, 1]));
@@ -192,7 +192,7 @@ mod tests {
         let left_executor = [Ok(left_chunk)].into_executor();
         let right_executor = [Ok(right_chunk)].into_executor();
 
-        let join_executor = left_executor.join_with(right_executor, conds);
+        let join_executor = left_executor.join(right_executor, conds);
         let results: Vec<DataChunk> = join_executor.into_iter().try_collect().unwrap();
 
         assert!(results.is_empty());
@@ -211,7 +211,7 @@ mod tests {
         let left_executor = [Ok(left_chunk)].into_executor();
         let right_executor = [Ok(right_chunk)].into_executor();
 
-        let join_executor = left_executor.join_with(right_executor, conds);
+        let join_executor = left_executor.join(right_executor, conds);
         let results: Vec<DataChunk> = join_executor.into_iter().try_collect().unwrap();
 
         assert!(results.is_empty());
@@ -230,7 +230,7 @@ mod tests {
         let left_executor = [Ok(left_chunk)].into_executor();
         let right_executor = [Ok(right_chunk)].into_executor();
 
-        let join_executor = left_executor.join_with(right_executor, conds);
+        let join_executor = left_executor.join(right_executor, conds);
         let results: Vec<DataChunk> = join_executor.into_iter().try_collect().unwrap();
 
         let expected = data_chunk!(
@@ -255,7 +255,7 @@ mod tests {
         let left_executor = [Ok(left_chunk)].into_executor();
         let right_executor = [Ok(right_chunk)].into_executor();
 
-        let join_executor = left_executor.join_with(right_executor, conds);
+        let join_executor = left_executor.join(right_executor, conds);
         let results: Vec<DataChunk> = join_executor.into_iter().try_collect().unwrap();
 
         let expected = data_chunk!((Int32, [1]), (Utf8, ["a"]), (Int32, [1]), (Utf8, ["a"]));
@@ -286,7 +286,7 @@ mod tests {
         let left_executor = left_chunks.into_iter().map(Ok).into_executor();
         let right_executor = right_chunks.into_iter().map(Ok).into_executor();
 
-        let join_executor = left_executor.join_with(right_executor, conds);
+        let join_executor = left_executor.join(right_executor, conds);
         let results: Vec<DataChunk> = join_executor.into_iter().try_collect().unwrap();
         let all_rows = results.iter().map(|c| c.len()).sum::<usize>();
         assert_eq!(all_rows, 20); // (2 + 2) * 5 = 20

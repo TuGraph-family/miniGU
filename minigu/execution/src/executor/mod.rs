@@ -98,7 +98,7 @@ pub trait Executor {
         SortBuilder::new(self, specs, max_chunk_size).into_executor()
     }
 
-    fn join_with<R>(self, right: R, conds: Vec<JoinCond>) -> impl Executor
+    fn join<R>(self, right: R, conds: Vec<JoinCond>) -> impl Executor
     where
         Self: Sized,
         R: Executor,
