@@ -3,12 +3,12 @@ use std::sync::Arc;
 use dashmap::iter::Iter;
 use minigu_common::types::VertexId;
 
-use super::transaction::MemTransaction;
+use crate::common::iterators::{ChunkData, VertexIteratorTrait};
+use crate::common::model::vertex::Vertex;
 use crate::error::StorageResult;
-use crate::iterators::{ChunkData, VertexIteratorTrait};
-use crate::memory::adjacency_iterator::AdjacencyIterator;
-use crate::memory::memory_graph::VersionedVertex;
-use crate::model::vertex::Vertex;
+use crate::tp_storage::iterators::adjacency_iterator::AdjacencyIterator;
+use crate::tp_storage::memory_graph::VersionedVertex;
+use crate::tp_storage::transaction::MemTransaction;
 
 type VertexFilter<'a> = Box<dyn Fn(&Vertex) -> bool + 'a>;
 

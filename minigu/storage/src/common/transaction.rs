@@ -1,24 +1,22 @@
-use std::sync::Weak;
-
 use minigu_common::types::{EdgeId, LabelId, VertexId};
 use minigu_common::value::ScalarValue;
 use serde::{Deserialize, Serialize};
 
-use crate::model::edge::Edge;
-use crate::model::vertex::Vertex;
+use crate::common::model::edge::Edge;
+use crate::common::model::vertex::Vertex;
 
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize,
-)]
 /// Represents a commit timestamp used for multi-version concurrency control (MVCC).
 /// It can either represent a transaction ID which starts from 1 << 63,
 /// or a commit timestamp which starts from 0. So, we can determine a timestamp is
 /// a transaction ID if the highest bit is set to 1, or a commit timestamp if the highest bit is 0.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize,
+)]
 pub struct Timestamp(pub u64);
 
 impl Timestamp {
-    // The start of the transaction ID range.
-    pub(super) const TXN_ID_START: u64 = 1 << 63;
+    /// The start of the transaction ID range.
+    pub const TXN_ID_START: u64 = 1 << 63;
 
     /// Create timestamp by a given commit ts
     pub fn with_ts(timestamp: u64) -> Self {
@@ -41,51 +39,21 @@ impl Timestamp {
     }
 }
 
-pub type UndoPtr = Weak<UndoEntry>;
-
-#[derive(Debug, Clone)]
-/// Represents an undo log entry for multi-version concurrency control.
-pub struct UndoEntry {
-    /// The delta operation of the undo entry.
-    delta: DeltaOp,
-    /// The timestamp when this version is committed.
-    timestamp: Timestamp,
-    /// The next undo entry in the undo buffer.
-    next: UndoPtr,
+/// Isolation level for transactions
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum IsolationLevel {
+    Snapshot,
+    Serializable,
 }
 
-impl UndoEntry {
-    /// Create a UndoEntry
-    pub(super) fn new(delta: DeltaOp, timestamp: Timestamp, next: UndoPtr) -> Self {
-        Self {
-            delta,
-            timestamp,
-            next,
-        }
-    }
-
-    /// Get the data of the undo entry.
-    pub(super) fn delta(&self) -> &DeltaOp {
-        &self.delta
-    }
-
-    /// Get the end timestamp of the undo entry.
-    pub(super) fn timestamp(&self) -> Timestamp {
-        self.timestamp
-    }
-
-    /// Get the next undo ptr of the undo entry.
-    pub(super) fn next(&self) -> UndoPtr {
-        self.next.clone()
-    }
-}
-
+/// Properties operation for setting vertex or edge properties
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetPropsOp {
     pub indices: Vec<usize>,
     pub props: Vec<ScalarValue>,
 }
 
+/// Delta operations that can be performed in a transaction
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DeltaOp {
     DelVertex(VertexId),
@@ -96,10 +64,4 @@ pub enum DeltaOp {
     SetEdgeProps(EdgeId, SetPropsOp),
     AddLabel(LabelId),
     RemoveLabel(LabelId),
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub enum IsolationLevel {
-    Snapshot,
-    Serializable,
 }
