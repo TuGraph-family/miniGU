@@ -3,11 +3,11 @@ use std::sync::Arc;
 use dashmap::iter::Iter;
 use minigu_common::types::EdgeId;
 
-use super::transaction::MemTransaction;
+use crate::common::iterators::{ChunkData, EdgeIteratorTrait};
+use crate::common::model::edge::Edge;
 use crate::error::StorageResult;
-use crate::iterators::{ChunkData, EdgeIteratorTrait};
-use crate::memory::memory_graph::VersionedEdge;
-use crate::model::edge::Edge;
+use crate::tp_storage::memory_graph::VersionedEdge;
+use crate::tp_storage::transaction::MemTransaction;
 
 type EdgeFilter<'a> = Box<dyn Fn(&Edge) -> bool + 'a>;
 

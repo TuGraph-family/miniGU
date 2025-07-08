@@ -1,7 +1,7 @@
 mod common;
 
 use common::*;
-use minigu_storage::{Graph, IsolationLevel, MutGraph, StorageResult, StorageTransaction};
+use minigu_storage::{IsolationLevel, StorageResult};
 
 #[test]
 fn test_graph_basic_operations() -> StorageResult<()> {

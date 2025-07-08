@@ -8,7 +8,7 @@ use minigu_common::data_chunk::DataChunk;
 use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::procedure::Procedure;
-use minigu_storage::MemoryGraph;
+use minigu_storage::tp_storage::MemoryGraph;
 
 /// Create a test graph with the given name in the current schema.
 pub fn build_procedure() -> Procedure {
