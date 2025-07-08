@@ -354,8 +354,8 @@ pub struct MemoryGraph {
 }
 
 #[allow(dead_code)]
-// Basic methods for MemoryGraph
 impl MemoryGraph {
+    // ===== Basic methods =====
     /// Creates a new [`MemoryGraph`] instance using default configurations,
     /// and recovers its state from the latest checkpoint and WAL.
     ///
@@ -554,10 +554,8 @@ impl MemoryGraph {
     pub(super) fn edges(&self) -> &DashMap<EdgeId, VersionedEdge> {
         &self.edges
     }
-}
 
-/// Read-only graph methods
-impl MemoryGraph {
+    // ===== Read-only graph methods =====
     /// Retrieves a vertex by its ID within the context of a transaction.
     pub fn get_vertex(&self, txn: &TransactionHandle, vid: VertexId) -> StorageResult<Vertex> {
         // Step 1: Atomically retrieve the versioned vertex (check existence).
@@ -680,10 +678,8 @@ impl MemoryGraph {
     ) -> StorageResult<Box<dyn Iterator<Item = StorageResult<Neighbor>> + 'a>> {
         Ok(Box::new(txn.iter_adjacency(vid)))
     }
-}
 
-/// Mutable graph methods
-impl MemoryGraph {
+    // ===== Mutable graph methods =====
     /// Inserts a new vertex into the graph within a transaction.
     pub fn create_vertex(
         &self,
