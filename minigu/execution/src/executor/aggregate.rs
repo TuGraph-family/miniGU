@@ -92,68 +92,130 @@ impl AggregateSpec {
 
 /// Aggregate state for storing intermediate results during aggregation
 #[derive(Debug)]
-struct AggregateState {
-    count: i64,
-    sum_i64: Option<i64>,
-    sum_f64: Option<f64>,
-    min_i64: Option<i64>,
-    max_i64: Option<i64>,
-    min_f64: Option<f64>,
-    max_f64: Option<f64>,
-    min_string: Option<String>,
-    max_string: Option<String>,
-    distinct_values: Option<HashMap<String, bool>>,
+enum AggregateState {
+    Count {
+        count: i64,
+    },
+    CountExpression {
+        count: i64,
+        distinct_values: Option<HashMap<String, bool>>,
+    },
+    Sum {
+        sum_i64: Option<i64>,
+        sum_f64: Option<f64>,
+        distinct_values: Option<HashMap<String, bool>>,
+    },
+    Avg {
+        sum_i64: Option<i64>,
+        sum_f64: Option<f64>,
+        count: i64,
+        distinct_values: Option<HashMap<String, bool>>,
+    },
+    Min {
+        min_i64: Option<i64>,
+        min_f64: Option<f64>,
+        min_string: Option<String>,
+    },
+    Max {
+        max_i64: Option<i64>,
+        max_f64: Option<f64>,
+        max_string: Option<String>,
+    },
 }
 
 impl AggregateState {
     /// Create a new aggregate state
-    fn new(distinct: bool) -> Self {
-        Self {
-            count: 0,
-            sum_i64: None,
-            sum_f64: None,
-            min_i64: None,
-            max_i64: None,
-            min_f64: None,
-            max_f64: None,
-            min_string: None,
-            max_string: None,
-            distinct_values: if distinct { Some(HashMap::new()) } else { None },
+    fn new(func: &AggregateFunction, distinct: bool) -> Self {
+        match func {
+            AggregateFunction::Count => Self::Count { count: 0 },
+            AggregateFunction::CountExpression => Self::CountExpression {
+                count: 0,
+                distinct_values: if distinct { Some(HashMap::new()) } else { None },
+            },
+            AggregateFunction::Sum => Self::Sum {
+                sum_i64: None,
+                sum_f64: None,
+                distinct_values: if distinct { Some(HashMap::new()) } else { None },
+            },
+            AggregateFunction::Avg => Self::Avg {
+                sum_i64: None,
+                sum_f64: None,
+                count: 0,
+                distinct_values: if distinct { Some(HashMap::new()) } else { None },
+            },
+            AggregateFunction::Min => Self::Min {
+                min_i64: None,
+                min_f64: None,
+                min_string: None,
+            },
+            AggregateFunction::Max => Self::Max {
+                max_i64: None,
+                max_f64: None,
+                max_string: None,
+            },
         }
     }
 
     /// Update the aggregate state with a new value
-    fn update(
-        &mut self,
-        value: Option<ScalarValue>,
-        func: &AggregateFunction,
-    ) -> ExecutionResult<()> {
-        match func {
-            AggregateFunction::Count => {
-                self.count += 1;
+    fn update(&mut self, value: Option<ScalarValue>) -> ExecutionResult<()> {
+        match self {
+            AggregateState::Count { count } => {
+                *count += 1;
             }
-            AggregateFunction::CountExpression => {
+            AggregateState::CountExpression {
+                count,
+                distinct_values,
+            } => {
                 if let Some(val) = value {
                     if !is_null_value(&val) {
-                        // If distinct is true, we need to track the distinct values
-                        if let Some(ref mut distinct_set) = self.distinct_values {
+                        if let Some(distinct_set) = distinct_values {
                             let key = format!("{:?}", val);
                             distinct_set.insert(key, true);
                         } else {
-                            self.count += 1;
+                            *count += 1;
                         }
                     }
                 }
             }
-            _ => {
+            AggregateState::Sum {
+                distinct_values, ..
+            } => {
                 if let Some(val) = value {
                     if !is_null_value(&val) {
-                        if let Some(ref mut distinct_set) = self.distinct_values {
+                        if let Some(distinct_set) = distinct_values {
                             let key = format!("{:?}", val);
                             distinct_set.insert(key, true);
                         } else {
-                            self.update_aggregates(&val, func)?;
+                            self.update_sum_aggregate(&val)?;
                         }
+                    }
+                }
+            }
+            AggregateState::Avg {
+                distinct_values, ..
+            } => {
+                if let Some(val) = value {
+                    if !is_null_value(&val) {
+                        if let Some(distinct_set) = distinct_values {
+                            let key = format!("{:?}", val);
+                            distinct_set.insert(key, true);
+                        } else {
+                            self.update_sum_aggregate(&val)?;
+                        }
+                    }
+                }
+            }
+            AggregateState::Min { .. } => {
+                if let Some(val) = value {
+                    if !is_null_value(&val) {
+                        self.update_min_aggregate(&val)?;
+                    }
+                }
+            }
+            AggregateState::Max { .. } => {
+                if let Some(val) = value {
+                    if !is_null_value(&val) {
+                        self.update_max_aggregate(&val)?;
                     }
                 }
             }
@@ -161,197 +223,494 @@ impl AggregateState {
         Ok(())
     }
 
-    fn update_aggregates(
-        &mut self,
-        val: &ScalarValue,
-        func: &AggregateFunction,
-    ) -> ExecutionResult<()> {
-        // Handle Sum/Avg using macro
-        macro_rules! handle_sum_avg {
-            ($(($variant:pat, $field:ident, $convert:expr)),* $(,)?) => {
+    fn update_sum_aggregate(&mut self, val: &ScalarValue) -> ExecutionResult<()> {
+        match self {
+            AggregateState::Sum {
+                sum_i64, sum_f64, ..
+            } => {
                 match val {
-                    $(
-                        $variant => {
-                            let v = $convert;
-                            if let Some(current) = self.$field {
-                                self.$field = Some(current + v);
-                            } else {
-                                self.$field = Some(v);
-                            }
-                            self.count += 1;
-                        }
-                    )*
-                    _ => todo!(), // TODO: handle other types
-                }
-            };
-        }
-
-        // Handle Min using macro
-        macro_rules! handle_min {
-            ($(($variant:pat, $field:ident, $convert:expr)),* $(,)?) => {
-                match val {
-                    $(
-                        $variant => {
-                            let v = $convert;
-                            if let Some(current) = self.$field {
-                                self.$field = Some(current.min(v));
-                            } else {
-                                self.$field = Some(v);
-                            }
-                        }
-                    )*
-                    ScalarValue::String(Some(s)) => {
-                        if let Some(ref current) = self.min_string {
-                            if s < current {
-                                self.min_string = Some(s.clone());
-                            }
+                    ScalarValue::Int8(Some(v)) => {
+                        let v = *v as i64;
+                        if let Some(current) = sum_i64 {
+                            *sum_i64 = Some(*current + v);
                         } else {
-                            self.min_string = Some(s.clone());
+                            *sum_i64 = Some(v);
+                        }
+                    }
+                    ScalarValue::Int16(Some(v)) => {
+                        let v = *v as i64;
+                        if let Some(current) = sum_i64 {
+                            *sum_i64 = Some(*current + v);
+                        } else {
+                            *sum_i64 = Some(v);
+                        }
+                    }
+                    ScalarValue::Int32(Some(v)) => {
+                        let v = *v as i64;
+                        if let Some(current) = sum_i64 {
+                            *sum_i64 = Some(*current + v);
+                        } else {
+                            *sum_i64 = Some(v);
+                        }
+                    }
+                    ScalarValue::Int64(Some(v)) => {
+                        let v = *v;
+                        if let Some(current) = sum_i64 {
+                            *sum_i64 = Some(*current + v);
+                        } else {
+                            *sum_i64 = Some(v);
+                        }
+                    }
+                    ScalarValue::UInt8(Some(v)) => {
+                        let v = *v as i64;
+                        if let Some(current) = sum_i64 {
+                            *sum_i64 = Some(*current + v);
+                        } else {
+                            *sum_i64 = Some(v);
+                        }
+                    }
+                    ScalarValue::UInt16(Some(v)) => {
+                        let v = *v as i64;
+                        if let Some(current) = sum_i64 {
+                            *sum_i64 = Some(*current + v);
+                        } else {
+                            *sum_i64 = Some(v);
+                        }
+                    }
+                    ScalarValue::UInt32(Some(v)) => {
+                        let v = *v as i64;
+                        if let Some(current) = sum_i64 {
+                            *sum_i64 = Some(*current + v);
+                        } else {
+                            *sum_i64 = Some(v);
+                        }
+                    }
+                    ScalarValue::UInt64(Some(v)) => {
+                        let v = *v as i64;
+                        if let Some(current) = sum_i64 {
+                            *sum_i64 = Some(*current + v);
+                        } else {
+                            *sum_i64 = Some(v);
+                        }
+                    }
+                    ScalarValue::Float32(Some(v)) => {
+                        let v = *v as f64;
+                        if let Some(current) = sum_f64 {
+                            *sum_f64 = Some(*current + v);
+                        } else {
+                            *sum_f64 = Some(v);
+                        }
+                    }
+                    ScalarValue::Float64(Some(v)) => {
+                        let v = *v;
+                        if let Some(current) = sum_f64 {
+                            *sum_f64 = Some(*current + v);
+                        } else {
+                            *sum_f64 = Some(v);
                         }
                     }
                     _ => todo!(), // TODO: handle other types
                 }
-            };
-        }
-
-        // Handle Max using macro
-        macro_rules! handle_max {
-            ($(($variant:pat, $field:ident, $convert:expr)),* $(,)?) => {
+            }
+            AggregateState::Avg {
+                sum_i64,
+                sum_f64,
+                count,
+                ..
+            } => {
                 match val {
-                    $(
-                        $variant => {
-                            let v = $convert;
-                            if let Some(current) = self.$field {
-                                self.$field = Some(current.max(v));
-                            } else {
-                                self.$field = Some(v);
-                            }
-                        }
-                    )*
-                    ScalarValue::String(Some(s)) => {
-                        if let Some(ref current) = self.max_string {
-                            if s > current {
-                                self.max_string = Some(s.clone());
-                            }
+                    ScalarValue::Int8(Some(v)) => {
+                        let v = *v as i64;
+                        if let Some(current) = sum_i64 {
+                            *sum_i64 = Some(*current + v);
                         } else {
-                            self.max_string = Some(s.clone());
+                            *sum_i64 = Some(v);
                         }
+                        *count += 1;
+                    }
+                    ScalarValue::Int16(Some(v)) => {
+                        let v = *v as i64;
+                        if let Some(current) = sum_i64 {
+                            *sum_i64 = Some(*current + v);
+                        } else {
+                            *sum_i64 = Some(v);
+                        }
+                        *count += 1;
+                    }
+                    ScalarValue::Int32(Some(v)) => {
+                        let v = *v as i64;
+                        if let Some(current) = sum_i64 {
+                            *sum_i64 = Some(*current + v);
+                        } else {
+                            *sum_i64 = Some(v);
+                        }
+                        *count += 1;
+                    }
+                    ScalarValue::Int64(Some(v)) => {
+                        let v = *v;
+                        if let Some(current) = sum_i64 {
+                            *sum_i64 = Some(*current + v);
+                        } else {
+                            *sum_i64 = Some(v);
+                        }
+                        *count += 1;
+                    }
+                    ScalarValue::UInt8(Some(v)) => {
+                        let v = *v as i64;
+                        if let Some(current) = sum_i64 {
+                            *sum_i64 = Some(*current + v);
+                        } else {
+                            *sum_i64 = Some(v);
+                        }
+                        *count += 1;
+                    }
+                    ScalarValue::UInt16(Some(v)) => {
+                        let v = *v as i64;
+                        if let Some(current) = sum_i64 {
+                            *sum_i64 = Some(*current + v);
+                        } else {
+                            *sum_i64 = Some(v);
+                        }
+                        *count += 1;
+                    }
+                    ScalarValue::UInt32(Some(v)) => {
+                        let v = *v as i64;
+                        if let Some(current) = sum_i64 {
+                            *sum_i64 = Some(*current + v);
+                        } else {
+                            *sum_i64 = Some(v);
+                        }
+                        *count += 1;
+                    }
+                    ScalarValue::UInt64(Some(v)) => {
+                        let v = *v as i64;
+                        if let Some(current) = sum_i64 {
+                            *sum_i64 = Some(*current + v);
+                        } else {
+                            *sum_i64 = Some(v);
+                        }
+                        *count += 1;
+                    }
+                    ScalarValue::Float32(Some(v)) => {
+                        let v = *v as f64;
+                        if let Some(current) = sum_f64 {
+                            *sum_f64 = Some(*current + v);
+                        } else {
+                            *sum_f64 = Some(v);
+                        }
+                        *count += 1;
+                    }
+                    ScalarValue::Float64(Some(v)) => {
+                        let v = *v;
+                        if let Some(current) = sum_f64 {
+                            *sum_f64 = Some(*current + v);
+                        } else {
+                            *sum_f64 = Some(v);
+                        }
+                        *count += 1;
                     }
                     _ => todo!(), // TODO: handle other types
                 }
-            };
+            }
+            _ => unreachable!(),
         }
+        Ok(())
+    }
 
-        match func {
-            AggregateFunction::Sum | AggregateFunction::Avg => {
-                handle_sum_avg!(
-                    (ScalarValue::Int8(Some(v)), sum_i64, *v as i64),
-                    (ScalarValue::Int16(Some(v)), sum_i64, *v as i64),
-                    (ScalarValue::Int32(Some(v)), sum_i64, *v as i64),
-                    (ScalarValue::Int64(Some(v)), sum_i64, *v),
-                    (ScalarValue::UInt8(Some(v)), sum_i64, *v as i64),
-                    (ScalarValue::UInt16(Some(v)), sum_i64, *v as i64),
-                    (ScalarValue::UInt32(Some(v)), sum_i64, *v as i64),
-                    (ScalarValue::UInt64(Some(v)), sum_i64, *v as i64),
-                    (ScalarValue::Float32(Some(v)), sum_f64, *v as f64),
-                    (ScalarValue::Float64(Some(v)), sum_f64, *v),
-                );
+    fn update_min_aggregate(&mut self, val: &ScalarValue) -> ExecutionResult<()> {
+        if let AggregateState::Min {
+            min_i64,
+            min_f64,
+            min_string,
+        } = self
+        {
+            match val {
+                ScalarValue::Int8(Some(v)) => {
+                    let v = *v as i64;
+                    if let Some(current) = min_i64 {
+                        *min_i64 = Some((*current).min(v));
+                    } else {
+                        *min_i64 = Some(v);
+                    }
+                }
+                ScalarValue::Int16(Some(v)) => {
+                    let v = *v as i64;
+                    if let Some(current) = min_i64 {
+                        *min_i64 = Some((*current).min(v));
+                    } else {
+                        *min_i64 = Some(v);
+                    }
+                }
+                ScalarValue::Int32(Some(v)) => {
+                    let v = *v as i64;
+                    if let Some(current) = min_i64 {
+                        *min_i64 = Some((*current).min(v));
+                    } else {
+                        *min_i64 = Some(v);
+                    }
+                }
+                ScalarValue::Int64(Some(v)) => {
+                    let v = *v;
+                    if let Some(current) = min_i64 {
+                        *min_i64 = Some((*current).min(v));
+                    } else {
+                        *min_i64 = Some(v);
+                    }
+                }
+                ScalarValue::UInt8(Some(v)) => {
+                    let v = *v as i64;
+                    if let Some(current) = min_i64 {
+                        *min_i64 = Some((*current).min(v));
+                    } else {
+                        *min_i64 = Some(v);
+                    }
+                }
+                ScalarValue::UInt16(Some(v)) => {
+                    let v = *v as i64;
+                    if let Some(current) = min_i64 {
+                        *min_i64 = Some((*current).min(v));
+                    } else {
+                        *min_i64 = Some(v);
+                    }
+                }
+                ScalarValue::UInt32(Some(v)) => {
+                    let v = *v as i64;
+                    if let Some(current) = min_i64 {
+                        *min_i64 = Some((*current).min(v));
+                    } else {
+                        *min_i64 = Some(v);
+                    }
+                }
+                ScalarValue::UInt64(Some(v)) => {
+                    let v = *v as i64;
+                    if let Some(current) = min_i64 {
+                        *min_i64 = Some((*current).min(v));
+                    } else {
+                        *min_i64 = Some(v);
+                    }
+                }
+                ScalarValue::Float32(Some(v)) => {
+                    let v = *v as f64;
+                    if let Some(current) = min_f64 {
+                        *min_f64 = Some(current.min(v));
+                    } else {
+                        *min_f64 = Some(v);
+                    }
+                }
+                ScalarValue::Float64(Some(v)) => {
+                    let v = *v;
+                    if let Some(current) = min_f64 {
+                        *min_f64 = Some(current.min(v));
+                    } else {
+                        *min_f64 = Some(v);
+                    }
+                }
+                ScalarValue::String(Some(s)) => {
+                    if let Some(current) = min_string {
+                        if s < current {
+                            *min_string = Some(s.clone());
+                        }
+                    } else {
+                        *min_string = Some(s.clone());
+                    }
+                }
+                _ => todo!(), // TODO: handle other types
             }
-            AggregateFunction::Min => {
-                handle_min!(
-                    (ScalarValue::Int8(Some(v)), min_i64, *v as i64),
-                    (ScalarValue::Int16(Some(v)), min_i64, *v as i64),
-                    (ScalarValue::Int32(Some(v)), min_i64, *v as i64),
-                    (ScalarValue::Int64(Some(v)), min_i64, *v),
-                    (ScalarValue::UInt8(Some(v)), min_i64, *v as i64),
-                    (ScalarValue::UInt16(Some(v)), min_i64, *v as i64),
-                    (ScalarValue::UInt32(Some(v)), min_i64, *v as i64),
-                    (ScalarValue::UInt64(Some(v)), min_i64, *v as i64),
-                    (ScalarValue::Float32(Some(v)), min_f64, *v as f64),
-                    (ScalarValue::Float64(Some(v)), min_f64, *v),
-                );
+        }
+        Ok(())
+    }
+
+    fn update_max_aggregate(&mut self, val: &ScalarValue) -> ExecutionResult<()> {
+        if let AggregateState::Max {
+            max_i64,
+            max_f64,
+            max_string,
+        } = self
+        {
+            match val {
+                ScalarValue::Int8(Some(v)) => {
+                    let v = *v as i64;
+                    if let Some(current) = max_i64 {
+                        *max_i64 = Some((*current).max(v));
+                    } else {
+                        *max_i64 = Some(v);
+                    }
+                }
+                ScalarValue::Int16(Some(v)) => {
+                    let v = *v as i64;
+                    if let Some(current) = max_i64 {
+                        *max_i64 = Some((*current).max(v));
+                    } else {
+                        *max_i64 = Some(v);
+                    }
+                }
+                ScalarValue::Int32(Some(v)) => {
+                    let v = *v as i64;
+                    if let Some(current) = max_i64 {
+                        *max_i64 = Some((*current).max(v));
+                    } else {
+                        *max_i64 = Some(v);
+                    }
+                }
+                ScalarValue::Int64(Some(v)) => {
+                    let v = *v;
+                    if let Some(current) = max_i64 {
+                        *max_i64 = Some((*current).max(v));
+                    } else {
+                        *max_i64 = Some(v);
+                    }
+                }
+                ScalarValue::UInt8(Some(v)) => {
+                    let v = *v as i64;
+                    if let Some(current) = max_i64 {
+                        *max_i64 = Some((*current).max(v));
+                    } else {
+                        *max_i64 = Some(v);
+                    }
+                }
+                ScalarValue::UInt16(Some(v)) => {
+                    let v = *v as i64;
+                    if let Some(current) = max_i64 {
+                        *max_i64 = Some((*current).max(v));
+                    } else {
+                        *max_i64 = Some(v);
+                    }
+                }
+                ScalarValue::UInt32(Some(v)) => {
+                    let v = *v as i64;
+                    if let Some(current) = max_i64 {
+                        *max_i64 = Some((*current).max(v));
+                    } else {
+                        *max_i64 = Some(v);
+                    }
+                }
+                ScalarValue::UInt64(Some(v)) => {
+                    let v = *v as i64;
+                    if let Some(current) = max_i64 {
+                        *max_i64 = Some((*current).max(v));
+                    } else {
+                        *max_i64 = Some(v);
+                    }
+                }
+                ScalarValue::Float32(Some(v)) => {
+                    let v = *v as f64;
+                    if let Some(current) = max_f64 {
+                        *max_f64 = Some(current.max(v));
+                    } else {
+                        *max_f64 = Some(v);
+                    }
+                }
+                ScalarValue::Float64(Some(v)) => {
+                    let v = *v;
+                    if let Some(current) = max_f64 {
+                        *max_f64 = Some(current.max(v));
+                    } else {
+                        *max_f64 = Some(v);
+                    }
+                }
+                ScalarValue::String(Some(s)) => {
+                    if let Some(current) = max_string {
+                        if s > current {
+                            *max_string = Some(s.clone());
+                        }
+                    } else {
+                        *max_string = Some(s.clone());
+                    }
+                }
+                _ => todo!(), // TODO: handle other types
             }
-            AggregateFunction::Max => {
-                handle_max!(
-                    (ScalarValue::Int8(Some(v)), max_i64, *v as i64),
-                    (ScalarValue::Int16(Some(v)), max_i64, *v as i64),
-                    (ScalarValue::Int32(Some(v)), max_i64, *v as i64),
-                    (ScalarValue::Int64(Some(v)), max_i64, *v),
-                    (ScalarValue::UInt8(Some(v)), max_i64, *v as i64),
-                    (ScalarValue::UInt16(Some(v)), max_i64, *v as i64),
-                    (ScalarValue::UInt32(Some(v)), max_i64, *v as i64),
-                    (ScalarValue::UInt64(Some(v)), max_i64, *v as i64),
-                    (ScalarValue::Float32(Some(v)), max_f64, *v as f64),
-                    (ScalarValue::Float64(Some(v)), max_f64, *v),
-                );
-            }
-            _ => todo!(),
         }
         Ok(())
     }
 
     /// Finalize the aggregate state and return the result
-    fn finalize(&self, func: &AggregateFunction) -> ExecutionResult<ScalarValue> {
-        match func {
-            AggregateFunction::Count => Ok(ScalarValue::Int64(Some(self.count))),
+    fn finalize(&self) -> ExecutionResult<ScalarValue> {
+        match self {
+            AggregateState::Count { count } => Ok(ScalarValue::Int64(Some(*count))),
 
-            AggregateFunction::CountExpression => {
-                let count = if let Some(ref distinct_set) = self.distinct_values {
+            AggregateState::CountExpression {
+                count,
+                distinct_values,
+            } => {
+                let count = if let Some(distinct_set) = distinct_values {
                     distinct_set.len() as i64
                 } else {
-                    self.count
+                    *count
                 };
                 Ok(ScalarValue::Int64(Some(count)))
             }
 
-            AggregateFunction::Sum => {
+            AggregateState::Sum {
+                sum_i64, sum_f64, ..
+            } => {
                 // Check sum_i64 first, then sum_f64
-                if let Some(value) = self.sum_i64 {
-                    return Ok(ScalarValue::Int64(Some(value)));
+                if let Some(value) = sum_i64 {
+                    return Ok(ScalarValue::Int64(Some(*value)));
                 }
-                if let Some(value) = self.sum_f64 {
-                    return Ok(ScalarValue::Float64(Some(value)));
-                }
-                Ok(ScalarValue::Null)
-            }
-
-            AggregateFunction::Avg => {
-                if self.count > 0 {
-                    if let Some(sum) = self.sum_i64 {
-                        return Ok(ScalarValue::Float64(Some(sum as f64 / self.count as f64)));
-                    }
-                    if let Some(sum) = self.sum_f64 {
-                        return Ok(ScalarValue::Float64(Some(sum / self.count as f64)));
-                    }
+                if let Some(value) = sum_f64 {
+                    return Ok(ScalarValue::Float64(Some(*value)));
                 }
                 Ok(ScalarValue::Null)
             }
 
-            AggregateFunction::Min => {
+            AggregateState::Avg {
+                sum_i64,
+                sum_f64,
+                count,
+                distinct_values,
+            } => {
+                let effective_count = if let Some(distinct_set) = distinct_values {
+                    distinct_set.len() as i64
+                } else {
+                    *count
+                };
+
+                if effective_count > 0 {
+                    if let Some(sum) = sum_i64 {
+                        return Ok(ScalarValue::Float64(Some(
+                            *sum as f64 / effective_count as f64,
+                        )));
+                    }
+                    if let Some(sum) = sum_f64 {
+                        return Ok(ScalarValue::Float64(Some(*sum / effective_count as f64)));
+                    }
+                }
+                Ok(ScalarValue::Null)
+            }
+
+            AggregateState::Min {
+                min_i64,
+                min_f64,
+                min_string,
+            } => {
                 // Check numeric minimums first
-                if let Some(value) = self.min_i64 {
-                    return Ok(ScalarValue::Int64(Some(value)));
+                if let Some(value) = min_i64 {
+                    return Ok(ScalarValue::Int64(Some(*value)));
                 }
-                if let Some(value) = self.min_f64 {
-                    return Ok(ScalarValue::Float64(Some(value)));
+                if let Some(value) = min_f64 {
+                    return Ok(ScalarValue::Float64(Some(*value)));
                 }
                 // Check string minimum
-                if let Some(ref value) = self.min_string {
+                if let Some(value) = min_string {
                     return Ok(ScalarValue::String(Some(value.clone())));
                 }
                 Ok(ScalarValue::Null)
             }
 
-            AggregateFunction::Max => {
+            AggregateState::Max {
+                max_i64,
+                max_f64,
+                max_string,
+            } => {
                 // Check numeric maximums first
-                if let Some(value) = self.max_i64 {
-                    return Ok(ScalarValue::Int64(Some(value)));
+                if let Some(value) = max_i64 {
+                    return Ok(ScalarValue::Int64(Some(*value)));
                 }
-                if let Some(value) = self.max_f64 {
-                    return Ok(ScalarValue::Float64(Some(value)));
+                if let Some(value) = max_f64 {
+                    return Ok(ScalarValue::Float64(Some(*value)));
                 }
                 // Check string maximum
-                if let Some(ref value) = self.max_string {
+                if let Some(value) = max_string {
                     return Ok(ScalarValue::String(Some(value.clone())));
                 }
                 Ok(ScalarValue::Null)
@@ -490,7 +849,7 @@ where
                 // Create aggregate states for each aggregate spec
                 let mut states: Vec<AggregateState> = aggregate_specs
                     .iter()
-                    .map(|spec| AggregateState::new(spec.distinct))
+                    .map(|spec| AggregateState::new(&spec.function, spec.distinct))
                     .collect();
 
                 let mut has_data = false;
@@ -524,7 +883,7 @@ where
                                 Some(ScalarValue::Int64(Some(1))) // COUNT(*)
                             };
                             // Update the aggregate state for the current row
-                            gen_try!(states[i].update(value, &spec.function));
+                            gen_try!(states[i].update(value));
                         }
                     }
                 }
@@ -551,8 +910,8 @@ where
 
                 // Generate the final result
                 let mut result_columns = Vec::new();
-                for (i, spec) in aggregate_specs.iter().enumerate() {
-                    let final_value = gen_try!(states[i].finalize(&spec.function));
+                for (i, _spec) in aggregate_specs.iter().enumerate() {
+                    let final_value = gen_try!(states[i].finalize());
                     result_columns.push(final_value.to_scalar_array());
                 }
 
@@ -605,7 +964,7 @@ where
                         let states = groups.entry(group_key).or_insert_with(|| {
                             aggregate_specs
                                 .iter()
-                                .map(|spec| AggregateState::new(spec.distinct))
+                                .map(|spec| AggregateState::new(&spec.function, spec.distinct))
                                 .collect()
                         });
 
@@ -626,7 +985,7 @@ where
                                 Some(ScalarValue::Int64(Some(1))) // COUNT(*)
                             };
 
-                            gen_try!(states[i].update(value, &spec.function));
+                            gen_try!(states[i].update(value));
                         }
                     }
                 }
@@ -646,8 +1005,8 @@ where
                         }
 
                         // Add aggregate results
-                        for (i, spec) in aggregate_specs.iter().enumerate() {
-                            let final_value = gen_try!(states[i].finalize(&spec.function));
+                        for (i, _spec) in aggregate_specs.iter().enumerate() {
+                            let final_value = gen_try!(states[i].finalize());
                             result_columns[group_by_expressions.len() + i].push(final_value);
                         }
                     }
