@@ -1,7 +1,6 @@
 use crate::ap_storage::olap_graph::{OlapStorage, OlapVertex};
 use crate::error::StorageError;
 
-const BLOCK_CAPACITY: usize = 256;
 pub struct VertexIter<'a> {
     pub storage: &'a OlapStorage,
     // Vertex index
