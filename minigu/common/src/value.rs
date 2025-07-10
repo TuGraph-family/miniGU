@@ -18,7 +18,7 @@ pub type Nullable<T> = Option<T>;
 pub type F32 = OrderedFloat<f32>;
 pub type F64 = OrderedFloat<f64>;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ScalarValue {
     Null,
     Boolean(Nullable<bool>),

@@ -294,7 +294,7 @@ impl AggregateState {
                         }
                     }
                     ScalarValue::Float32(Some(v)) => {
-                        let v = *v as f64;
+                        let v = v.into_inner() as f64;
                         if let Some(current) = sum_f64 {
                             *sum_f64 = Some(*current + v);
                         } else {
@@ -302,7 +302,7 @@ impl AggregateState {
                         }
                     }
                     ScalarValue::Float64(Some(v)) => {
-                        let v = *v;
+                        let v = v.into_inner();
                         if let Some(current) = sum_f64 {
                             *sum_f64 = Some(*current + v);
                         } else {
@@ -392,7 +392,7 @@ impl AggregateState {
                         *count += 1;
                     }
                     ScalarValue::Float32(Some(v)) => {
-                        let v = *v as f64;
+                        let v = v.into_inner() as f64;
                         if let Some(current) = sum_f64 {
                             *sum_f64 = Some(*current + v);
                         } else {
@@ -401,7 +401,7 @@ impl AggregateState {
                         *count += 1;
                     }
                     ScalarValue::Float64(Some(v)) => {
-                        let v = *v;
+                        let v = v.into_inner();
                         if let Some(current) = sum_f64 {
                             *sum_f64 = Some(*current + v);
                         } else {
@@ -490,7 +490,7 @@ impl AggregateState {
                     }
                 }
                 ScalarValue::Float32(Some(v)) => {
-                    let v = *v as f64;
+                    let v = v.into_inner() as f64;
                     if let Some(current) = min_f64 {
                         *min_f64 = Some(current.min(v));
                     } else {
@@ -498,7 +498,7 @@ impl AggregateState {
                     }
                 }
                 ScalarValue::Float64(Some(v)) => {
-                    let v = *v;
+                    let v = v.into_inner();
                     if let Some(current) = min_f64 {
                         *min_f64 = Some(current.min(v));
                     } else {
@@ -593,7 +593,7 @@ impl AggregateState {
                     }
                 }
                 ScalarValue::Float32(Some(v)) => {
-                    let v = *v as f64;
+                    let v = v.into_inner() as f64;
                     if let Some(current) = max_f64 {
                         *max_f64 = Some(current.max(v));
                     } else {
@@ -601,7 +601,7 @@ impl AggregateState {
                     }
                 }
                 ScalarValue::Float64(Some(v)) => {
-                    let v = *v;
+                    let v = v.into_inner();
                     if let Some(current) = max_f64 {
                         *max_f64 = Some(current.max(v));
                     } else {
@@ -648,7 +648,9 @@ impl AggregateState {
                     return Ok(ScalarValue::Int64(Some(*value)));
                 }
                 if let Some(value) = sum_f64 {
-                    return Ok(ScalarValue::Float64(Some(*value)));
+                    return Ok(ScalarValue::Float64(Some(minigu_common::value::F64::from(
+                        *value,
+                    ))));
                 }
                 Ok(ScalarValue::Null)
             }
@@ -667,12 +669,14 @@ impl AggregateState {
 
                 if effective_count > 0 {
                     if let Some(sum) = sum_i64 {
-                        return Ok(ScalarValue::Float64(Some(
+                        return Ok(ScalarValue::Float64(Some(minigu_common::value::F64::from(
                             *sum as f64 / effective_count as f64,
-                        )));
+                        ))));
                     }
                     if let Some(sum) = sum_f64 {
-                        return Ok(ScalarValue::Float64(Some(*sum / effective_count as f64)));
+                        return Ok(ScalarValue::Float64(Some(minigu_common::value::F64::from(
+                            *sum / effective_count as f64,
+                        ))));
                     }
                 }
                 Ok(ScalarValue::Null)
@@ -688,7 +692,9 @@ impl AggregateState {
                     return Ok(ScalarValue::Int64(Some(*value)));
                 }
                 if let Some(value) = min_f64 {
-                    return Ok(ScalarValue::Float64(Some(*value)));
+                    return Ok(ScalarValue::Float64(Some(minigu_common::value::F64::from(
+                        *value,
+                    ))));
                 }
                 // Check string minimum
                 if let Some(value) = min_string {
@@ -707,7 +713,9 @@ impl AggregateState {
                     return Ok(ScalarValue::Int64(Some(*value)));
                 }
                 if let Some(value) = max_f64 {
-                    return Ok(ScalarValue::Float64(Some(*value)));
+                    return Ok(ScalarValue::Float64(Some(minigu_common::value::F64::from(
+                        *value,
+                    ))));
                 }
                 // Check string maximum
                 if let Some(value) = max_string {
@@ -770,6 +778,28 @@ fn scalar_values_to_array(values: Vec<ScalarValue>) -> ArrayRef {
                         Arc::new(<$array_type>::from(typed_values)) as ArrayRef
                     }
                 )*
+                ScalarValue::Float32(_) => {
+                    let typed_values: Vec<Option<f32>> = values
+                        .into_iter()
+                        .map(|v| match v {
+                            ScalarValue::Float32(val) => val.map(|f| f.into_inner()),
+                            ScalarValue::Null => None,
+                            _ => None, // Type mismatch, treat as NULL
+                        })
+                        .collect();
+                    Arc::new(Float32Array::from(typed_values)) as ArrayRef
+                }
+                ScalarValue::Float64(_) => {
+                    let typed_values: Vec<Option<f64>> = values
+                        .into_iter()
+                        .map(|v| match v {
+                            ScalarValue::Float64(val) => val.map(|f| f.into_inner()),
+                            ScalarValue::Null => None,
+                            _ => None, // Type mismatch, treat as NULL
+                        })
+                        .collect();
+                    Arc::new(Float64Array::from(typed_values)) as ArrayRef
+                }
                 ScalarValue::Null => {
                     // All values are NULL, default to Int64Array with NULLs
                     Arc::new(Int64Array::from(vec![None::<i64>; values.len()])) as ArrayRef
@@ -793,8 +823,6 @@ fn scalar_values_to_array(values: Vec<ScalarValue>) -> ArrayRef {
         (UInt16, u16, arrow::array::UInt16Array),
         (UInt32, u32, arrow::array::UInt32Array),
         (UInt64, u64, arrow::array::UInt64Array),
-        (Float32, f32, Float32Array),
-        (Float64, f64, Float64Array),
         (String, String, StringArray),
     )
 }
