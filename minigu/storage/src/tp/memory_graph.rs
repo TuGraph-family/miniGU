@@ -1812,7 +1812,7 @@ pub mod tests {
     }
 
     mod import_and_export {
-        use std::collections::HashMap;
+        use std::collections::{BTreeMap, HashMap};
         use std::path::Path;
 
         use csv::{ReaderBuilder, WriterBuilder};
@@ -1824,6 +1824,7 @@ pub mod tests {
         use minigu_catalog::provider::GraphTypeProvider;
         use minigu_common::data_type::*;
         use serde::{Deserialize, Serialize};
+        use walkdir::WalkDir;
 
         use super::*;
 
@@ -1880,14 +1881,6 @@ pub mod tests {
                     edge_config_list,
                 }
             }
-
-            pub fn add_vertex_config(&mut self, config: VertexConfig) {
-                self.vertex_config_list.push(config);
-            }
-
-            pub fn add_edge_config(&mut self, config: EdgeConfig) {
-                self.edge_config_list.push(config);
-            }
         }
 
         // label_id -> label_set
@@ -1916,18 +1909,6 @@ pub mod tests {
             }
         }
 
-        // fn find_name_by_label_id(
-        //     schema: &MemoryGraphTypeCatalog,
-        //     label_id: LabelId,
-        // ) -> Option<String> {
-        //     // schema
-        //     //     .label_map
-        //     //     .iter()
-        //     //     .find(|&(_, &v)| v == label_id)
-        //     //     .map(|(k, _)| k)
-        //     None
-        // }
-
         fn scalar_value_to_string(scalar_value: &ScalarValue) -> String {
             match scalar_value {
                 ScalarValue::Int8(x) => x.unwrap().to_string(),
@@ -1945,6 +1926,8 @@ pub mod tests {
                 _ => todo!(),
             }
         }
+
+        type RecordType = Vec<String>;
 
         impl MemoryGraph {
             // TODO: return `Result`
@@ -2071,11 +2054,11 @@ pub mod tests {
                     })
                     .unzip();
 
-                let mut vertex_config_map = HashMap::new();
                 // 2. export vertices
+                let mut vertex_config_map = HashMap::new();
+                let mut vertice: HashMap<LabelId, BTreeMap<VertexId, RecordType>> = HashMap::new();
                 for v in txn.iter_vertices() {
                     let v = v.unwrap();
-                    let w = file_map.get_mut(&v.label_id).unwrap();
 
                     // Insert vertex config
                     vertex_config_map.entry(v.label_id).or_insert_with(|| {
@@ -2090,7 +2073,17 @@ pub mod tests {
                         .chain(v.properties().iter().map(scalar_value_to_string))
                         .collect::<Vec<_>>();
 
-                    w.write_record(record).unwrap();
+                    vertice
+                        .entry(v.label_id)
+                        .or_default()
+                        .insert(v.vid(), record);
+                }
+                for (label_id, records) in vertice {
+                    let w = file_map.get_mut(&label_id).unwrap();
+
+                    for (_, record) in records {
+                        w.write_record(record).unwrap();
+                    }
                 }
                 let vertex_config_list = vertex_config_map
                     .into_iter()
@@ -2099,9 +2092,9 @@ pub mod tests {
 
                 // 3. export edge
                 let mut edge_config_map = HashMap::new();
+                let mut edges: HashMap<LabelId, BTreeMap<EdgeId, RecordType>> = Default::default();
                 for e in txn.iter_edges() {
                     let e = e.unwrap();
-                    let w = file_map.get_mut(&e.label_id).unwrap();
 
                     // Insert edge config
                     edge_config_map.entry(e.label_id).or_insert_with(|| {
@@ -2122,9 +2115,18 @@ pub mod tests {
                         .chain(e.properties().iter().map(scalar_value_to_string))
                         .collect::<Vec<_>>();
 
-                    println!("{:?}", record);
-                    w.write_record(record).unwrap();
+                    edges.entry(e.label_id).or_default().insert(e.eid(), record);
                 }
+
+                // Dump
+                for (label_id, records) in edges {
+                    let w = file_map.get_mut(&label_id).unwrap();
+
+                    for (_, record) in records {
+                        w.write_record(record).unwrap();
+                    }
+                }
+
                 let edge_config_list = edge_config_map
                     .into_iter()
                     .map(|(_, config)| config)
@@ -2189,30 +2191,95 @@ pub mod tests {
             schema
         }
 
+        fn export_dirs_equal_semantically<P: AsRef<Path>>(dir1: P, dir2: P) -> bool {
+            let dir1 = dir1.as_ref();
+            let dir2 = dir2.as_ref();
+
+            assert!(dir1.exists());
+            assert!(dir2.exists());
+            assert!(dir1.is_dir());
+            assert!(dir2.is_dir());
+
+            let index = |root: &Path| {
+                WalkDir::new(root)
+                    .follow_links(true)
+                    .min_depth(1)
+                    .into_iter()
+                    .map(|entry| {
+                        let entry = entry.unwrap();
+                        (entry.file_name().to_str().unwrap().to_string(), entry)
+                    })
+                    .collect::<BTreeMap<_, _>>()
+            };
+
+            let index1 = index(dir1);
+            let index2 = index(dir2);
+
+            if index1.len() != index2.len() {
+                return false;
+            }
+
+            index1
+                .iter()
+                .zip(index2.iter())
+                .all(|((filename1, entry1), (filename2, entry2))| {
+                    // Check if the filename is the same and the file type is the same
+                    if filename1 != filename2 || entry1.file_type() != entry2.file_type() {
+                        return false;
+                    }
+
+                    // If file type is dir, call `dirs_identical`
+                    assert!(entry1.file_type().is_file());
+
+                    let filename1 = dir1.join(filename1);
+                    let filename2 = dir1.join(filename2);
+
+                    // Make sure the config file name is ended with ".json"
+                    if filename1.extension().and_then(|e| e.to_str()) == Some("json") {
+                        let v1: serde_json::Value =
+                            serde_json::from_slice(&fs::read(filename1).unwrap()).unwrap();
+                        let v2: serde_json::Value =
+                            serde_json::from_slice(&fs::read(filename2).unwrap()).unwrap();
+                        return v1 == v2;
+                    }
+
+                    // Check if the file size is the same
+                    if entry1.metadata().unwrap().len() != entry2.metadata().unwrap().len() {
+                        return false;
+                    }
+
+                    fs::read(filename1).unwrap() == fs::read(filename2).unwrap()
+                })
+        }
+
         #[test]
-        fn import_and_export() {
+        fn test_import_and_export() {
+            let export_dir1 = tempfile::tempdir().unwrap();
+            let export_dir2 = tempfile::tempdir().unwrap();
+
+            let export_dir1 = export_dir1.path();
+            let export_dir2 = export_dir2.path();
+
+            let config_filename = "config.json";
+
             let schema = mock_schema();
             {
                 let (graph, _cleaner) = mock_graph();
                 let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-                println!("==================== export start ====================");
-                graph.export(&txn, "/tmp/minigu", &schema, "config.json".to_string());
-                println!("==================== export done ====================");
+                graph.export(&txn, &export_dir1, &schema, config_filename.to_string());
             }
 
             {
                 let (graph, _) = mock_empty_graph();
                 let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-                println!("==================== import start ====================");
-                graph.import(&txn, "/tmp/minigu/config.json", &schema);
-                println!("==================== import done ====================");
+                graph.import(&txn, export_dir1.join(config_filename), &schema);
 
-                println!("==================== export start ====================");
-                graph.export(&txn, "/tmp/minigu-test", &schema, "config.json".to_string());
-                println!("==================== export done ====================");
+                graph.export(&txn, export_dir2, &schema, config_filename.to_string());
             }
+
+            assert!(export_dirs_equal_semantically(export_dir1, export_dir2))
         }
     }
 }
