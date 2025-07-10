@@ -106,8 +106,7 @@ enum AggregateState {
         distinct_values: Option<HashMap<String, bool>>,
     },
     Avg {
-        sum_i64: Option<i64>,
-        sum_f64: Option<f64>,
+        sum_f64: f64,
         count: i64,
         distinct_values: Option<HashMap<String, bool>>,
     },
@@ -138,8 +137,7 @@ impl AggregateState {
                 distinct_values: if distinct { Some(HashMap::new()) } else { None },
             },
             AggregateFunction::Avg => Self::Avg {
-                sum_i64: None,
-                sum_f64: None,
+                sum_f64: 0.0,
                 count: 0,
                 distinct_values: if distinct { Some(HashMap::new()) } else { None },
             },
@@ -312,101 +310,56 @@ impl AggregateState {
                     _ => todo!(), // TODO: handle other types
                 }
             }
-            AggregateState::Avg {
-                sum_i64,
-                sum_f64,
-                count,
-                ..
-            } => {
+            AggregateState::Avg { sum_f64, count, .. } => {
                 match val {
                     ScalarValue::Int8(Some(v)) => {
-                        let v = *v as i64;
-                        if let Some(current) = sum_i64 {
-                            *sum_i64 = Some(*current + v);
-                        } else {
-                            *sum_i64 = Some(v);
-                        }
+                        let v = *v as f64;
+                        *sum_f64 += v;
                         *count += 1;
                     }
                     ScalarValue::Int16(Some(v)) => {
-                        let v = *v as i64;
-                        if let Some(current) = sum_i64 {
-                            *sum_i64 = Some(*current + v);
-                        } else {
-                            *sum_i64 = Some(v);
-                        }
+                        let v = *v as f64;
+                        *sum_f64 += v;
                         *count += 1;
                     }
                     ScalarValue::Int32(Some(v)) => {
-                        let v = *v as i64;
-                        if let Some(current) = sum_i64 {
-                            *sum_i64 = Some(*current + v);
-                        } else {
-                            *sum_i64 = Some(v);
-                        }
+                        let v = *v as f64;
+                        *sum_f64 += v;
                         *count += 1;
                     }
                     ScalarValue::Int64(Some(v)) => {
-                        let v = *v;
-                        if let Some(current) = sum_i64 {
-                            *sum_i64 = Some(*current + v);
-                        } else {
-                            *sum_i64 = Some(v);
-                        }
+                        let v = *v as f64;
+                        *sum_f64 += v;
                         *count += 1;
                     }
                     ScalarValue::UInt8(Some(v)) => {
-                        let v = *v as i64;
-                        if let Some(current) = sum_i64 {
-                            *sum_i64 = Some(*current + v);
-                        } else {
-                            *sum_i64 = Some(v);
-                        }
+                        let v = *v as f64;
+                        *sum_f64 += v;
                         *count += 1;
                     }
                     ScalarValue::UInt16(Some(v)) => {
-                        let v = *v as i64;
-                        if let Some(current) = sum_i64 {
-                            *sum_i64 = Some(*current + v);
-                        } else {
-                            *sum_i64 = Some(v);
-                        }
+                        let v = *v as f64;
+                        *sum_f64 += v;
                         *count += 1;
                     }
                     ScalarValue::UInt32(Some(v)) => {
-                        let v = *v as i64;
-                        if let Some(current) = sum_i64 {
-                            *sum_i64 = Some(*current + v);
-                        } else {
-                            *sum_i64 = Some(v);
-                        }
+                        let v = *v as f64;
+                        *sum_f64 += v;
                         *count += 1;
                     }
                     ScalarValue::UInt64(Some(v)) => {
-                        let v = *v as i64;
-                        if let Some(current) = sum_i64 {
-                            *sum_i64 = Some(*current + v);
-                        } else {
-                            *sum_i64 = Some(v);
-                        }
+                        let v = *v as f64;
+                        *sum_f64 += v;
                         *count += 1;
                     }
                     ScalarValue::Float32(Some(v)) => {
                         let v = v.into_inner() as f64;
-                        if let Some(current) = sum_f64 {
-                            *sum_f64 = Some(*current + v);
-                        } else {
-                            *sum_f64 = Some(v);
-                        }
+                        *sum_f64 += v;
                         *count += 1;
                     }
                     ScalarValue::Float64(Some(v)) => {
                         let v = v.into_inner();
-                        if let Some(current) = sum_f64 {
-                            *sum_f64 = Some(*current + v);
-                        } else {
-                            *sum_f64 = Some(v);
-                        }
+                        *sum_f64 += v;
                         *count += 1;
                     }
                     _ => todo!(), // TODO: handle other types
@@ -656,7 +609,6 @@ impl AggregateState {
             }
 
             AggregateState::Avg {
-                sum_i64,
                 sum_f64,
                 count,
                 distinct_values,
@@ -668,16 +620,9 @@ impl AggregateState {
                 };
 
                 if effective_count > 0 {
-                    if let Some(sum) = sum_i64 {
-                        return Ok(ScalarValue::Float64(Some(minigu_common::value::F64::from(
-                            *sum as f64 / effective_count as f64,
-                        ))));
-                    }
-                    if let Some(sum) = sum_f64 {
-                        return Ok(ScalarValue::Float64(Some(minigu_common::value::F64::from(
-                            *sum / effective_count as f64,
-                        ))));
-                    }
+                    return Ok(ScalarValue::Float64(Some(minigu_common::value::F64::from(
+                        *sum_f64 / effective_count as f64,
+                    ))));
                 }
                 Ok(ScalarValue::Null)
             }
@@ -1633,22 +1578,15 @@ mod tests {
     }
 
     #[test]
-    fn test_aggregate_operators_combination() {
-        // Test the combination of two aggregate operators: COUNT(*) + SUM(salary) / 1000
+    fn test_output_expressions_with_multiple_aggregates() {
+        // Test output expressions combining multiple aggregates (SUM + COUNT)
         let chunk = data_chunk!(
             (Int32, [1, 1, 2, 2, 1]),                // department
             (Int32, [5000, 6000, 4000, 4500, 5500])  // salary
         );
 
-        // Create expression: COUNT(*) + SUM(salary) / 1000
-        // We need to reference the aggregate result columns:
-        // - The first column: department (group key)
-        // - The second column: COUNT(*)
-        // - The third column: SUM(salary)
-
-        // To be noted that the type of `SUM(salary)` is `i64`
-        let sum_div_1000 = ColumnRef::new(2).div(Constant::new(ScalarValue::Int64(Some(1000))));
-        let count_plus_sum_div_1000 = ColumnRef::new(1).add(sum_div_1000);
+        // Create expression: SUM(salary) + COUNT(*)
+        let sum_plus_count = ColumnRef::new(2).add(ColumnRef::new(1));
 
         let result: DataChunk = [Ok(chunk)]
             .into_executor()
@@ -1659,29 +1597,28 @@ mod tests {
                 ],
                 vec![Box::new(ColumnRef::new(0))], // GROUP BY department
                 vec![
-                    Box::new(ColumnRef::new(0)),       // Keep department as-is
-                    Box::new(count_plus_sum_div_1000), // COUNT(*) + SUM(salary) / 1000
+                    Box::new(ColumnRef::new(0)), // Keep department as-is
+                    Box::new(sum_plus_count),    // SUM(salary) + COUNT(*)
                 ],
             )
             .into_iter()
             .try_collect()
             .unwrap();
 
-        // Expected result:
-        // department 1: COUNT(*) + SUM(salary) / 1000 = 3 + 16500 / 1000 = 3 + 16 = 19
-        // department 2: COUNT(*) + SUM(salary) / 1000 = 2 + 8500 / 1000 = 2 + 8 = 10
-
-        // The reason why 16500 / 1000 = 16 here is because the value after the decimal point will
-        // be truncated in the case of `numeric::div(i32, i32)`.
-        // See `test_sum_float_values_with_div_int_panic` and
-        // `test_sum_float_values_with_div_float` for more examples.
+        // The result should be:
+        // - The first column: department (group key)
+        // - The second column: SUM(salary) + COUNT(*)
+        //
+        // The expected result:
+        // department 1: COUNT=3, SUM=16500, so SUM+COUNT=16503
+        // department 2: COUNT=2, SUM=8500, so SUM+COUNT=8502
 
         assert_eq!(result.len(), 2);
         assert_eq!(result.columns().len(), 2);
 
         // Get the result data for verification
         let dept_column = &result.columns()[0];
-        let combined_column = &result.columns()[1];
+        let sum_plus_count_column = &result.columns()[1];
 
         let dept_values: Vec<i32> = dept_column
             .as_any()
@@ -1691,7 +1628,7 @@ mod tests {
             .map(|v| v.unwrap())
             .collect();
 
-        let combined_values: Vec<i64> = combined_column
+        let sum_plus_count_values: Vec<i64> = sum_plus_count_column
             .as_any()
             .downcast_ref::<arrow::array::Int64Array>()
             .unwrap()
@@ -1699,26 +1636,74 @@ mod tests {
             .map(|v| v.unwrap())
             .collect();
 
-        // Check if the result contains the correct combined data
+        // Check if the result contains the correct group data
         for i in 0..2 {
             let dept = dept_values[i];
-            let combined = combined_values[i];
+            let sum_plus_count = sum_plus_count_values[i];
 
             match dept {
                 1 => {
                     assert_eq!(
-                        combined, 19,
-                        "department 1 should have COUNT(*) + SUM(salary) / 1000 = 3 + 16 = 19"
+                        sum_plus_count, 16503,
+                        "department 1 should have SUM(salary) + COUNT(*) = 16500 + 3 = 16503"
                     );
                 }
                 2 => {
                     assert_eq!(
-                        combined, 10,
-                        "department 2 should have COUNT(*) + SUM(salary) / 1000 = 2 + 8 = 10"
+                        sum_plus_count, 8502,
+                        "department 2 should have SUM(salary) + COUNT(*) = 8500 + 2 = 8502"
                     );
                 }
                 _ => panic!("unexpected department value: {}", dept),
             }
         }
+    }
+
+    #[test]
+    fn test_avg_unified_f64_precision() {
+        // Test that AVG always uses f64 precision for all numeric types
+        let chunk = data_chunk!(
+            (Int32, [1, 2, 3]), // These values when averaged should be 2.0 exactly
+            (Int64, [1000000000001, 1000000000002, 1000000000003])  /* Large integers that test
+                                 * f64 precision */
+        );
+
+        // Test AVG with Int32 values
+        let result_int32: DataChunk = [Ok(chunk.clone())]
+            .into_executor()
+            .aggregate(
+                vec![AggregateSpec::avg(Box::new(ColumnRef::new(0)), false)],
+                vec![],
+                vec![],
+            )
+            .into_iter()
+            .try_collect()
+            .unwrap();
+
+        // Expected AVG: (1+2+3)/3 = 6/3 = 2.0
+        let expected_int32 = data_chunk!((Float64, [2.0]));
+        assert_eq!(result_int32, expected_int32);
+
+        // Test AVG with Int64 values (large integers)
+        let result_int64: DataChunk = [Ok(chunk)]
+            .into_executor()
+            .aggregate(
+                vec![AggregateSpec::avg(Box::new(ColumnRef::new(1)), false)],
+                vec![],
+                vec![],
+            )
+            .into_iter()
+            .try_collect()
+            .unwrap();
+
+        // Expected AVG: (1000000000001+1000000000002+1000000000003)/3 = 3000000000006/3 =
+        // 1000000000002.0
+        let expected_int64 = data_chunk!((Float64, [1000000000002.0]));
+        assert_eq!(result_int64, expected_int64);
+
+        // Verify that the result type is consistently Float64
+        let result_columns = result_int32.columns();
+        assert_eq!(result_columns.len(), 1);
+        assert!(result_columns[0].as_any().is::<Float64Array>());
     }
 }
