@@ -1077,6 +1077,7 @@ mod tests {
     use itertools::Itertools;
     use minigu_common::data_chunk;
     use minigu_common::data_chunk::DataChunk;
+    use minigu_common::value::F64;
 
     use super::*;
     use crate::evaluator::Evaluator;
@@ -1245,6 +1246,51 @@ mod tests {
         // Expected AVG: (1.5+2.5+3.5+4.5)/4 = 12.0/4 = 3.0
         let expected = data_chunk!((Float64, [3.0]));
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_sum_float_values_with_div_float() {
+        // Test AVG with floating point values
+        let chunk = data_chunk!((Float64, [1.5, 2.5, 3.5, 4.5]));
+
+        let sum_div_f64_5 =
+            ColumnRef::new(0).div(Constant::new(ScalarValue::Float64(Some(F64::from(5.0)))));
+
+        let result: DataChunk = [Ok(chunk)]
+            .into_executor()
+            .aggregate(
+                vec![AggregateSpec::sum(Box::new(ColumnRef::new(0)), false)],
+                vec![],
+                vec![Box::new(sum_div_f64_5)],
+            )
+            .into_iter()
+            .try_collect()
+            .unwrap();
+
+        // Expect: (1.5+2.5+3.5+4.5)/5.0 = 12.0/5.0 = 2.4
+        let expected = data_chunk!((Float64, [2.4]));
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    #[should_panic(expected = "chunks must not be empty")]
+    fn test_sum_float_values_with_div_int_panic() {
+        // Test AVG with floating point values
+        let chunk = data_chunk!((Float64, [1.5, 2.5, 3.5, 4.5]));
+
+        // inconsistent type (Float64 / Int64), will panic
+        let sum_div_i64_5 = ColumnRef::new(0).div(Constant::new(ScalarValue::Int64(Some(10))));
+
+        let _: DataChunk = [Ok(chunk)]
+            .into_executor()
+            .aggregate(
+                vec![AggregateSpec::sum(Box::new(ColumnRef::new(0)), false)],
+                vec![],
+                vec![Box::new(sum_div_i64_5)],
+            )
+            .into_iter()
+            .try_collect()
+            .unwrap();
     }
 
     #[test]
@@ -1599,6 +1645,8 @@ mod tests {
         // - The first column: department (group key)
         // - The second column: COUNT(*)
         // - The third column: SUM(salary)
+
+        // To be noted that the type of `SUM(salary)` is `i64`
         let sum_div_1000 = ColumnRef::new(2).div(Constant::new(ScalarValue::Int64(Some(1000))));
         let count_plus_sum_div_1000 = ColumnRef::new(1).add(sum_div_1000);
 
@@ -1622,6 +1670,11 @@ mod tests {
         // Expected result:
         // department 1: COUNT(*) + SUM(salary) / 1000 = 3 + 16500 / 1000 = 3 + 16 = 19
         // department 2: COUNT(*) + SUM(salary) / 1000 = 2 + 8500 / 1000 = 2 + 8 = 10
+
+        // The reason why 16500 / 1000 = 16 here is because the value after the decimal point will
+        // be truncated in the case of `numeric::div(i32, i32)`.
+        // See `test_sum_float_values_with_div_int_panic` and
+        // `test_sum_float_values_with_div_float` for more examples.
 
         assert_eq!(result.len(), 2);
         assert_eq!(result.columns().len(), 2);
