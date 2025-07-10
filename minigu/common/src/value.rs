@@ -1,4 +1,4 @@
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
 use std::sync::Arc;
 
 use arrow::array::{
@@ -18,7 +18,7 @@ pub type Nullable<T> = Option<T>;
 pub type F32 = OrderedFloat<f32>;
 pub type F64 = OrderedFloat<f64>;
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ScalarValue {
     Null,
     Boolean(Nullable<bool>),
@@ -35,90 +35,6 @@ pub enum ScalarValue {
     String(Nullable<String>),
     Vertex(Nullable<VertexValue>),
     Edge(Nullable<EdgeValue>),
-}
-
-impl Eq for ScalarValue {}
-
-impl Hash for ScalarValue {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        match self {
-            ScalarValue::Null => 0u8.hash(state),
-            ScalarValue::Boolean(v) => {
-                1u8.hash(state);
-                v.hash(state);
-            }
-            ScalarValue::Int8(v) => {
-                2u8.hash(state);
-                v.hash(state);
-            }
-            ScalarValue::Int16(v) => {
-                3u8.hash(state);
-                v.hash(state);
-            }
-            ScalarValue::Int32(v) => {
-                4u8.hash(state);
-                v.hash(state);
-            }
-            ScalarValue::Int64(v) => {
-                5u8.hash(state);
-                v.hash(state);
-            }
-            ScalarValue::UInt8(v) => {
-                6u8.hash(state);
-                v.hash(state);
-            }
-            ScalarValue::UInt16(v) => {
-                7u8.hash(state);
-                v.hash(state);
-            }
-            ScalarValue::UInt32(v) => {
-                8u8.hash(state);
-                v.hash(state);
-            }
-            ScalarValue::UInt64(v) => {
-                9u8.hash(state);
-                v.hash(state);
-            }
-            ScalarValue::Float32(v) => {
-                10u8.hash(state);
-                match v {
-                    Some(f) => {
-                        if f.is_nan() {
-                            "NaN".hash(state);
-                        } else {
-                            f.to_bits().hash(state);
-                        }
-                    }
-                    None => None::<u32>.hash(state),
-                }
-            }
-            ScalarValue::Float64(v) => {
-                11u8.hash(state);
-                match v {
-                    Some(f) => {
-                        if f.is_nan() {
-                            "NaN".hash(state);
-                        } else {
-                            f.to_bits().hash(state);
-                        }
-                    }
-                    None => None::<u64>.hash(state),
-                }
-            }
-            ScalarValue::String(v) => {
-                12u8.hash(state);
-                v.hash(state);
-            }
-            ScalarValue::Vertex(v) => {
-                13u8.hash(state);
-                v.hash(state);
-            }
-            ScalarValue::Edge(v) => {
-                14u8.hash(state);
-                v.hash(state);
-            }
-        }
-    }
 }
 
 impl ScalarValue {
