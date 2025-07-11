@@ -837,8 +837,8 @@ mod tests {
 
     use super::*;
     use crate::error::CheckpointError;
-    use crate::tp_storage::memory_graph;
-    use crate::tp_storage::transaction::IsolationLevel;
+    use crate::tp::memory_graph;
+    use crate::tp::transaction::IsolationLevel;
 
     fn get_temp_file_path(prefix: &str) -> std::path::PathBuf {
         env::temp_dir().join(format!("{}_{}.bin", prefix, std::process::id()))

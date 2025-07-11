@@ -11,8 +11,8 @@ use minigu_common::types::{LabelId, VertexId};
 use minigu_common::value::ScalarValue;
 use serde::{Deserialize, Serialize};
 
-use crate::ap_storage::iterators::{AdjacencyIterator, EdgeIter, VertexIter};
-use crate::ap_storage::olap_storege::{MutOlapGraph, OlapGraph};
+use crate::ap::iterators::{AdjacencyIterator, EdgeIter, VertexIter};
+use crate::ap::olap_storage::{MutOlapGraph, OlapGraph};
 use crate::error::EdgeNotFoundError::EdgeNotFound;
 use crate::error::VertexNotFoundError::VertexNotFound;
 use crate::error::{StorageError, StorageResult};

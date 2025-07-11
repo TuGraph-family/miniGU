@@ -2,7 +2,7 @@ use std::num::NonZeroU32;
 
 use minigu_common::types::VertexId;
 
-use crate::ap_storage::olap_graph::{OlapEdge, OlapPropertyStore, OlapStorage, OlapStorageEdge};
+use crate::ap::olap_graph::{OlapEdge, OlapPropertyStore, OlapStorage, OlapStorageEdge};
 use crate::error::StorageError;
 
 const BLOCK_CAPACITY: usize = 256;

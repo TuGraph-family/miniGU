@@ -789,7 +789,7 @@ impl Clone for TransactionHandle {
 #[cfg(test)]
 mod tests {
     use super::{IsolationLevel, *};
-    use crate::tp_storage::memory_graph;
+    use crate::tp::memory_graph;
 
     #[test]
     fn test_watermark_tracking() {

@@ -6,7 +6,7 @@ use minigu_common::types::{EdgeId, VertexId};
 use crate::common::iterators::{AdjacencyIteratorTrait, Direction};
 use crate::common::model::edge::Neighbor;
 use crate::error::StorageResult;
-use crate::tp_storage::transaction::MemTransaction;
+use crate::tp::transaction::MemTransaction;
 
 type AdjFilter<'a> = Box<dyn Fn(&Neighbor) -> bool + 'a>;
 

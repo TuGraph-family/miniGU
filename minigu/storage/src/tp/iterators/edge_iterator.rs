@@ -6,8 +6,8 @@ use minigu_common::types::EdgeId;
 use crate::common::iterators::{ChunkData, EdgeIteratorTrait};
 use crate::common::model::edge::Edge;
 use crate::error::StorageResult;
-use crate::tp_storage::memory_graph::VersionedEdge;
-use crate::tp_storage::transaction::MemTransaction;
+use crate::tp::memory_graph::VersionedEdge;
+use crate::tp::transaction::MemTransaction;
 
 type EdgeFilter<'a> = Box<dyn Fn(&Edge) -> bool + 'a>;
 

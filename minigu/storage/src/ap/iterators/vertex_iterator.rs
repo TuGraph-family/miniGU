@@ -1,4 +1,4 @@
-use crate::ap_storage::olap_graph::{OlapStorage, OlapVertex};
+use crate::ap::olap_graph::{OlapStorage, OlapVertex};
 use crate::error::StorageError;
 
 pub struct VertexIter<'a> {

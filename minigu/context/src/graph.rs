@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use minigu_catalog::memory::graph_type::MemoryGraphTypeCatalog;
 use minigu_catalog::provider::{GraphProvider, GraphTypeRef};
-use minigu_storage::tp_storage::MemoryGraph;
+use minigu_storage::tp::MemoryGraph;
 
 pub enum GraphStorage {
     Memory(Arc<MemoryGraph>),
