@@ -1,3 +1,4 @@
+pub mod aggregate;
 pub mod expand;
 pub mod filter;
 pub mod flatten;
@@ -20,6 +21,7 @@ pub mod vertex_scan;
 
 use std::fmt::Debug;
 
+use aggregate::{AggregateBuilder, AggregateSpec};
 use arrow::array::BooleanArray;
 use expand::ExpandBuilder;
 use filter::FilterBuilder;
@@ -118,6 +120,24 @@ pub trait Executor {
         Self: Sized,
     {
         ProjectBuilder::new(self, evaluators).into_executor()
+    }
+
+    fn aggregate(
+        self,
+        aggregate_specs: Vec<AggregateSpec>,
+        group_by_expressions: Vec<BoxedEvaluator>,
+        output_expressions: Vec<BoxedEvaluator>,
+    ) -> impl Executor
+    where
+        Self: Sized,
+    {
+        AggregateBuilder::new(
+            self,
+            aggregate_specs,
+            group_by_expressions,
+            output_expressions,
+        )
+        .into_executor()
     }
 
     fn limit(self, limit: usize) -> impl Executor
