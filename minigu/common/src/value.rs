@@ -137,7 +137,7 @@ impl ScalarValue {
 
     pub fn get_float32(&self) -> Result<f32, String> {
         match self {
-            ScalarValue::Float32(Some(val)) => Ok(*val),
+            ScalarValue::Float32(Some(val)) => Ok(val.into_inner()),
             ScalarValue::Float32(None) => Err("Null value".to_string()),
             _ => Err("Not a Float32 value".to_string()),
         }
@@ -145,7 +145,7 @@ impl ScalarValue {
 
     pub fn get_float64(&self) -> Result<f64, String> {
         match self {
-            ScalarValue::Float64(Some(val)) => Ok(*val),
+            ScalarValue::Float64(Some(val)) => Ok(val.into_inner()),
             ScalarValue::Float64(None) => Err("Null value".to_string()),
             _ => Err("Not a Float64 value".to_string()),
         }
