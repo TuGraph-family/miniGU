@@ -1,5 +1,7 @@
 mod create_test_graph;
 mod echo;
+mod export;
+mod import;
 mod show_procedures;
 
 use minigu_context::procedure::Procedure;
@@ -15,5 +17,7 @@ pub fn build_predefined_procedures() -> Vec<(String, Procedure)> {
             "create_test_graph".to_string(),
             create_test_graph::build_procedure(),
         ),
+        ("import".to_string(), import::build_procedure()),
+        ("export".to_string(), export::build_procedure()),
     ]
 }

@@ -1,4 +1,5 @@
 pub mod checkpoint;
+pub mod export_import;
 pub mod iterators;
 pub mod memory_graph;
 pub mod transaction;
