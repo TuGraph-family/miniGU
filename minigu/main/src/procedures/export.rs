@@ -62,6 +62,7 @@ pub fn build_procedure() -> Procedure {
 
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
         graph.export_graph(&txn, dir_path, config_rel_path, graph_type);
+        txn.commit()?;
 
         Ok(vec![])
     })
