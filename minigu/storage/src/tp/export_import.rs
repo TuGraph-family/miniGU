@@ -30,28 +30,25 @@ impl FileConfig {
 }
 
 #[derive(Deserialize, Serialize)]
-struct VertexConfig {
+struct VertexOrEdgeConfig {
     label: String,
     file: FileConfig,
+    // TODO
+    properties: Vec<Property>,
 }
 
-impl VertexConfig {
-    pub fn new(label: String, file: FileConfig) -> Self {
-        Self { label, file }
+impl VertexOrEdgeConfig {
+    pub fn new(label: String, file: FileConfig, properties: Vec<Property>) -> Self {
+        Self {
+            label,
+            file,
+            properties,
+        }
     }
 }
 
-#[derive(Deserialize, Serialize)]
-struct EdgeConfig {
-    label: String,
-    file: FileConfig,
-}
-
-impl EdgeConfig {
-    pub fn new(label: String, file: FileConfig) -> Self {
-        Self { label, file }
-    }
-}
+type VertexConfig = VertexOrEdgeConfig;
+type EdgeConfig = VertexOrEdgeConfig;
 
 #[derive(Deserialize, Serialize, Default)]
 struct Config {
@@ -70,17 +67,17 @@ impl Config {
 
 fn property_to_scalar_value(property: &Property, value: &str) -> ScalarValue {
     match property.logical_type() {
-        LogicalType::Int8 => ScalarValue::Int8(Some(value.parse().unwrap())),
-        LogicalType::Int16 => ScalarValue::Int16(Some(value.parse().unwrap())),
-        LogicalType::Int32 => ScalarValue::Int32(Some(value.parse().unwrap())),
-        LogicalType::Int64 => ScalarValue::Int64(Some(value.parse().unwrap())),
-        LogicalType::UInt8 => ScalarValue::UInt8(Some(value.parse().unwrap())),
-        LogicalType::UInt16 => ScalarValue::UInt16(Some(value.parse().unwrap())),
-        LogicalType::UInt32 => ScalarValue::UInt32(Some(value.parse().unwrap())),
-        LogicalType::UInt64 => ScalarValue::UInt64(Some(value.parse().unwrap())),
-        LogicalType::Boolean => ScalarValue::Boolean(Some(value.parse().unwrap())),
-        LogicalType::Float32 => ScalarValue::Float32(Some(value.parse().unwrap())),
-        LogicalType::Float64 => ScalarValue::Float64(Some(value.parse().unwrap())),
+        LogicalType::Int8 => ScalarValue::Int8(value.parse().ok()),
+        LogicalType::Int16 => ScalarValue::Int16(value.parse().ok()),
+        LogicalType::Int32 => ScalarValue::Int32(value.parse().ok()),
+        LogicalType::Int64 => ScalarValue::Int64(value.parse().ok()),
+        LogicalType::UInt8 => ScalarValue::UInt8(value.parse().ok()),
+        LogicalType::UInt16 => ScalarValue::UInt16(value.parse().ok()),
+        LogicalType::UInt32 => ScalarValue::UInt32(value.parse().ok()),
+        LogicalType::UInt64 => ScalarValue::UInt64(value.parse().ok()),
+        LogicalType::Boolean => ScalarValue::Boolean(value.parse().ok()),
+        LogicalType::Float32 => ScalarValue::Float32(value.parse().ok()),
+        LogicalType::Float64 => ScalarValue::Float64(value.parse().ok()),
         LogicalType::String => ScalarValue::String(Some(value.to_string())),
         _ => todo!(),
     }
@@ -88,24 +85,23 @@ fn property_to_scalar_value(property: &Property, value: &str) -> ScalarValue {
 
 fn scalar_value_to_string(scalar_value: &ScalarValue) -> String {
     match scalar_value {
-        ScalarValue::Int8(x) => x.unwrap().to_string(),
-        ScalarValue::Int16(x) => x.unwrap().to_string(),
-        ScalarValue::Int32(x) => x.unwrap().to_string(),
-        ScalarValue::Int64(x) => x.unwrap().to_string(),
-        ScalarValue::UInt8(x) => x.unwrap().to_string(),
-        ScalarValue::UInt16(x) => x.unwrap().to_string(),
-        ScalarValue::UInt32(x) => x.unwrap().to_string(),
-        ScalarValue::UInt64(x) => x.unwrap().to_string(),
-        ScalarValue::Boolean(x) => x.unwrap().to_string(),
-        ScalarValue::Float32(x) => x.unwrap().to_string(),
-        ScalarValue::Float64(x) => x.unwrap().to_string(),
-        ScalarValue::String(x) => x.as_ref().unwrap().clone(),
+        ScalarValue::Int8(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::Int16(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::Int32(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::Int64(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::UInt8(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::UInt16(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::UInt32(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::UInt64(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::Boolean(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::Float32(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::Float64(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::String(value) => value.as_ref().map_or(String::new(), |inner| inner.clone()),
         _ => todo!(),
     }
 }
 
 impl MemoryGraph {
-    // TODO: return `Result`
     pub fn import_graph<P: AsRef<Path>>(
         &self,
         txn: &TransactionHandle,
@@ -116,6 +112,7 @@ impl MemoryGraph {
         let config: Config = serde_json::from_str(&config_str).unwrap();
 
         // Import vertex, format: "<vid>,<property-1>,<property-2>,"
+        let mut vid = 1;
         for vertex_config in config.vertex_config_list.iter() {
             let mut rdr = ReaderBuilder::new()
                 .has_headers(false)
@@ -145,8 +142,6 @@ impl MemoryGraph {
 
                 assert_eq!(props.len() + 1, record.len());
 
-                let vid = record.get(0).unwrap().parse().unwrap();
-
                 let props = props
                     .iter()
                     .zip(record.iter().skip(1))
@@ -155,10 +150,12 @@ impl MemoryGraph {
                 let vertex = Vertex::new(vid, label_id, PropertyRecord::new(props));
 
                 self.create_vertex(txn, vertex).unwrap();
+                vid += 1;
             }
         }
 
-        // Import edge, format: "<eid>,<src>,<dst>,<property-1>,<property-2>"
+        // Import edge, format: "<eid>,<src>,<dst>,<property-1>,<property-2>..."
+        let mut eid = 1;
         for edge_config in config.edge_config_list.iter() {
             let label_id = graph_type
                 .get_label_id(&edge_config.label)
@@ -188,7 +185,6 @@ impl MemoryGraph {
                 let record = record.unwrap();
 
                 assert_eq!(record.len() - 3, props.len());
-                let eid = record.get(0).unwrap().parse().unwrap();
                 let src_id = record.get(1).unwrap().parse().unwrap();
                 let dst_id = record.get(2).unwrap().parse().unwrap();
 
@@ -200,6 +196,7 @@ impl MemoryGraph {
 
                 let edge = Edge::new(eid, src_id, dst_id, label_id, PropertyRecord::new(props));
                 self.create_edge(txn, edge).unwrap();
+                eid += 1;
             }
         }
     }
@@ -211,7 +208,7 @@ impl MemoryGraph {
         config_file_name: String,
         graph_type: Arc<dyn GraphTypeProvider>,
     ) {
-        // 1. prepare output paths
+        // 1. Prepare output paths
         let dir = dir.as_ref();
         std::fs::create_dir_all(dir).unwrap();
 
@@ -230,7 +227,7 @@ impl MemoryGraph {
             })
             .unzip();
 
-        // 2. export vertices
+        // 2. Export vertices
         let mut vertex_config_map = HashMap::new();
         let mut vertice: HashMap<LabelId, BTreeMap<VertexId, RecordType>> = HashMap::new();
         for v in txn.iter_vertices() {
@@ -239,9 +236,19 @@ impl MemoryGraph {
             // Insert vertex config
             vertex_config_map.entry(v.label_id).or_insert_with(|| {
                 let label = label_id_to_label.get(&v.label_id).unwrap();
+                let vertex_type = graph_type
+                    .get_vertex_type(&LabelSet::from_iter(vec![v.label_id]))
+                    .unwrap()
+                    .unwrap()
+                    .properties()
+                    .iter()
+                    .map(|item| item.1.clone())
+                    .collect();
+
                 VertexConfig::new(
                     label.clone(),
                     FileConfig::new(format!("{}.csv", label), "csv".to_string()),
+                    vertex_type,
                 )
             });
 
@@ -263,7 +270,7 @@ impl MemoryGraph {
         }
         let vertex_config_list = vertex_config_map.into_values().collect();
 
-        // 3. export edge
+        // 3. Export edge
         let mut edge_config_map = HashMap::new();
         let mut edges: HashMap<LabelId, BTreeMap<EdgeId, RecordType>> = Default::default();
         for e in txn.iter_edges() {
@@ -272,9 +279,19 @@ impl MemoryGraph {
             // Insert edge config
             edge_config_map.entry(e.label_id).or_insert_with(|| {
                 let label = label_id_to_label.get(&e.label_id).unwrap();
+                let edge_type = graph_type
+                    .get_edge_type(&LabelSet::from_iter(vec![e.label_id]))
+                    .unwrap()
+                    .unwrap()
+                    .properties()
+                    .iter()
+                    .map(|item| item.1.clone())
+                    .collect();
+
                 EdgeConfig::new(
                     label.clone(),
                     FileConfig::new(format!("{}.csv", label), "csv".to_string()),
+                    edge_type,
                 )
             });
 

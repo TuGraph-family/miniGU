@@ -2,8 +2,9 @@ use std::borrow::Borrow;
 use std::hash::{Hash, Hasher};
 
 use minigu_common::data_type::LogicalType;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Property {
     name: String,
     logical_type: LogicalType,
