@@ -1,3 +1,5 @@
+//! call export(<graph_name>, <dir_path>, <manifest_relative_path>) return *;
+
 use std::error::Error;
 use std::sync::Arc;
 
@@ -22,7 +24,7 @@ fn get_graph_from_graph_container(
 }
 
 pub fn build_procedure() -> Procedure {
-    // Name, directory path, config relative path
+    // Name, directory path, manifest relative path
     let parameters = vec![
         LogicalType::String,
         LogicalType::String,
