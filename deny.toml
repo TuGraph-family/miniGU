@@ -1,8 +1,12 @@
+[graph]
+all-features = true
+
 [output]
 feature-depth = 1
 
 [advisories]
 git-fetch-with-cli = true
+unmaintained = "workspace"
 
 [licenses]
 allow = [
@@ -23,6 +27,10 @@ ignore = false
 highlight = "all"
 multiple-versions = "warn"
 wildcards = "deny"
+
+[bans.workspace-dependencies]
+duplicates = "deny"
+unused = "deny"
 
 [sources]
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
