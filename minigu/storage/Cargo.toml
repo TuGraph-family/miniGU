@@ -10,10 +10,8 @@ rand = { workspace = true }
 serial_test = { workspace = true }
 
 [dependencies]
-bytes = { workspace = true }
 chrono = { workspace = true }
 crc32fast = { workspace = true }
-crossbeam-epoch = { workspace = true }
 crossbeam-skiplist = { workspace = true }
 dashmap = { workspace = true }
 minigu-common = { workspace = true }

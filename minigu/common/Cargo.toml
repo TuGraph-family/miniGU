@@ -8,7 +8,6 @@ version.workspace = true
 [dependencies]
 arrow = { workspace = true }
 csv = { workspace = true }
-enum-as-inner = { workspace = true }
 itertools = { workspace = true }
 miette = { workspace = true }
 ordered-float = { workspace = true }
