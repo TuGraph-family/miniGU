@@ -7,13 +7,13 @@ version.workspace = true
 
 [dependencies]
 itertools = { workspace = true }
-logos = { workspace = true, features = ["export_derive"] }
+logos = { workspace = true }
 macro_rules_attribute = { workspace = true }
 miette = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 smol_str = { workspace = true }
 thiserror = { workspace = true }
-winnow = { workspace = true, features = ["alloc"] }
+winnow = { workspace = true }
 
 [dev-dependencies]
 divan = { workspace = true }

@@ -36,16 +36,20 @@ style = "warn"
 suspicious = "warn"
 
 [workspace.dependencies]
-gql-parser = { path = "minigu/parser", features = ["std", "serde", "miette"] }
-minigu = { path = "minigu/main" }
-minigu-binder = { path = "minigu/binder" }
-minigu-catalog = { path = "minigu/catalog" }
-minigu-common = { path = "minigu/common" }
-minigu-context = { path = "minigu/context" }
-minigu-execution = { path = "minigu/execution" }
-minigu-ir = { path = "minigu/ir" }
-minigu-planner = { path = "minigu/planner" }
-minigu-storage = { path = "minigu/storage" }
+gql-parser = { path = "minigu/parser", version = "0.1.0", features = [
+    "std",
+    "serde",
+    "miette",
+] }
+minigu = { path = "minigu/main", version = "0.1.0" }
+minigu-binder = { path = "minigu/binder", version = "0.1.0" }
+minigu-catalog = { path = "minigu/catalog", version = "0.1.0" }
+minigu-common = { path = "minigu/common", version = "0.1.0" }
+minigu-context = { path = "minigu/context", version = "0.1.0" }
+minigu-execution = { path = "minigu/execution", version = "0.1.0" }
+minigu-ir = { path = "minigu/ir", version = "0.1.0" }
+minigu-planner = { path = "minigu/planner", version = "0.1.0" }
+minigu-storage = { path = "minigu/storage", version = "0.1.0" }
 
 anyhow = "1.0.98"
 arrow = { version = "55.2.0", default-features = false }
@@ -68,11 +72,13 @@ insta-cmd = "0.6.0"
 itertools = { version = "0.14.0", default-features = false, features = [
     "use_alloc",
 ] }
-logos = { version = "0.15.0", default-features = false }
+logos = { version = "0.15.0", default-features = false, features = [
+    "export_derive",
+] }
 lru = "0.16.0"
 macro_rules_attribute = "0.2.2"
 miette = { version = "7.6.0" }
-ordered-float = "5.0.0"
+ordered-float = { version = "5.0.0", features = ["serde"] }
 paste = "1.0.15"
 postcard = "1.1.2"
 rand = "0.9.1"
@@ -91,7 +97,7 @@ strum = "0.27.1"
 tabled = { version = "0.20.0", default-features = false, features = ["std"] }
 thiserror = { version = "2.0.12", default-features = false }
 uuid = "1.17.0"
-winnow = { version = "0.7.12", default-features = false }
+winnow = { version = "0.7.12", default-features = false, features = ["alloc"] }
 
 [profile.dev.package]
 insta.opt-level = 3
