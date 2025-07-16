@@ -108,7 +108,7 @@ impl Session {
         let physical_plan = Optimizer::new().create_physical_plan(&logical_plan)?;
         metrics.planning_time = start.elapsed();
 
-        let data_schema = physical_plan.schema().cloned();
+        let schema = physical_plan.schema().cloned();
         let start = Instant::now();
         let chunks: Vec<_> = self.context.database().runtime().scope(|_| {
             let mut executor = ExecutorBuilder::new(self.context.clone()).build(&physical_plan);
@@ -116,6 +116,10 @@ impl Session {
         })?;
         metrics.execution_time = start.elapsed();
 
-        Ok(QueryResult::new(data_schema, metrics, chunks))
+        Ok(QueryResult {
+            schema,
+            metrics,
+            chunks,
+        })
     }
 }

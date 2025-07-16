@@ -11,10 +11,10 @@ path = "src/main.rs"
 clap = { version = "4.5.34", features = ["derive", "wrap_help"] }
 gql-parser = { workspace = true }
 itertools = { workspace = true }
-lru = "0.14.0"
+lru = "0.16.0"
 miette = { workspace = true, features = ["fancy"] }
 minigu = { workspace = true }
-rustyline = { version = "15.0.0", features = ["derive"] }
+rustyline = { version = "16.0.0", features = ["derive"] }
 strum = { version = "0.27.1", features = ["derive"] }
 
 [dev-dependencies]
