@@ -59,6 +59,14 @@ jobs:
     - uses: actions-rust-lang/setup-rust-toolchain@v1
     - run: cargo clippy --tests --features ${{ env.DEFAULT_FEATURES }} --no-deps
 
+  machete:
+    name: Detect Unused Dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v4
+    - uses: bnjbvr/cargo-machete@main
+
   build:
     needs: [ typos, toml, fmt, clippy ]
     # strategy:
