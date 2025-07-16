@@ -9,6 +9,9 @@ sqllogictest = "0.28"
 async-trait = "0.1"
 tokio = { version = "1.0", features = ["full"] }
 thiserror = "1.0"
+libtest-mimic = "0.8.1"
+glob = "0.3"
+tracing-subscriber = "0.3"
 
 [dev-dependencies]
 insta.workspace = true

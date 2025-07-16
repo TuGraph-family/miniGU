@@ -1,0 +1,19 @@
+# FinBench TSR6 - Simple Read 6
+# Test case: MATCH with path pattern and DISTINCT
+
+# This is a query with path pattern, DISTINCT and ordering
+query T
+MATCH
+    (src:Account{id:12})<-[e1:transfer]-(m:Account)
+    -[e2:transfer]->(dst:Account)
+WHERE
+    dst.isBlocked = true
+    AND src.id <> dst.id
+    AND e1.ts > 20
+    AND e1.ts < 40
+    AND e2.ts > 30
+    AND e2.ts < 70
+RETURN
+    DISTINCT dst.id as dstId
+ORDER BY dstId ASC
+---- 
