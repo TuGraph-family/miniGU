@@ -18,7 +18,7 @@ winnow = { workspace = true }
 [dev-dependencies]
 divan = { workspace = true }
 insta = { workspace = true }
-paste = { workspace = true }
+pastey = { workspace = true }
 
 [build-dependencies]
 cmake = { workspace = true, optional = true }
