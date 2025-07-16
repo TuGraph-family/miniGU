@@ -3,9 +3,17 @@ edition.workspace = true
 name = "minigu-test"
 version = "0.1.0"
 
+[dependencies]
+minigu = { path = "../minigu/main" }
+sqllogictest = "0.28"
+async-trait = "0.1"
+tokio = { version = "1.0", features = ["full"] }
+thiserror = "1.0"
+
 [dev-dependencies]
 insta.workspace = true
 paste.workspace = true
+tempfile = "3.0"
 
 [lints]
 workspace = true

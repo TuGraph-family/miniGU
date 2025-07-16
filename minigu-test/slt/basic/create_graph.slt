@@ -1,0 +1,18 @@
+# 测试图创建功能
+# 验证 MiniGU 中的图创建和管理
+
+# 创建一个测试图
+statement ok
+CALL create_test_graph('test_graph_1')
+
+# 创建另一个测试图
+statement ok
+CALL create_test_graph('test_graph_2')
+
+# 尝试重复创建应该失败
+statement error
+CALL create_test_graph('test_graph_1')
+
+# 测试带特殊字符的图名
+statement ok
+CALL create_test_graph('test_graph_special_123') 

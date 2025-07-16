@@ -1,0 +1,34 @@
+# 综合测试文件
+# 测试 MiniGU 的多种功能
+
+# 首先测试基本的 echo 功能
+statement ok
+CALL echo('Starting comprehensive test')
+
+# 显示所有可用的过程
+query TT
+CALL show_procedures()
+----
+create_test_graph string
+echo string
+show_procedures (empty)
+
+# 创建多个测试图
+statement ok
+CALL create_test_graph('graph_1')
+
+statement ok
+CALL create_test_graph('graph_2')
+
+statement ok
+CALL create_test_graph('graph_3')
+
+# 测试重复创建错误
+statement error
+CALL create_test_graph('graph_1')
+
+# 测试完成确认
+query T
+CALL echo('Comprehensive test completed')
+----
+Comprehensive test completed 

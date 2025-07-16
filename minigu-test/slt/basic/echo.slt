@@ -1,0 +1,24 @@
+# 基本的 echo 功能测试
+# 测试 MiniGU 的基本 echo 过程调用
+
+# 简单的 echo 调用（无结果）
+statement ok
+CALL echo('Hello World')
+
+# 带结果的 echo 调用
+query T
+CALL echo('Test String')
+----
+Test String
+
+# 测试空字符串
+query T
+CALL echo('')
+----
+(empty)
+
+# 测试特殊字符
+query T
+CALL echo('Special: !@#$%^&*()')
+----
+Special: !@#$%^&*() 

@@ -1,0 +1,10 @@
+# 测试 show_procedures 功能
+# 验证 MiniGU 中预定义的过程列表
+
+# 显示所有过程
+query TT
+CALL show_procedures()
+----
+create_test_graph string
+echo string
+show_procedures (empty) 
