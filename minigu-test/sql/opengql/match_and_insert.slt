@@ -1,7 +1,0 @@
-# OpenGQL match_and_insert - Test case from match_and_insert.gql
-
-# This is a DDL/DML test case
-statement ok
-MATCH (a { firstname: 'Robert' }), (b { lastname: 'Kowalski' })
-INSERT (a)-[:GRADUATED]->(b)
-

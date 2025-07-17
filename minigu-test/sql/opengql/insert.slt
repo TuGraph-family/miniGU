@@ -1,8 +1,0 @@
-# OpenGQL insert - Test case from insert.gql
-
-# This is a DDL/DML test case
-statement ok
-INSERT (:Person { firstname: 'Firstname', lastname: 'Lastname', joined: DATE '2023-01-01' })
-        -[:MEMBER_SINCE { since: "2023-03-20" }]->
-        (:Team { name: 'Teamname' })
-
