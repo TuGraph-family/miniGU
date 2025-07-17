@@ -1,13 +1,9 @@
 //! Sqllogictest for MiniGU.
 
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 
 use libtest_mimic::{Arguments, Trial};
 use minigu_test::slt_adapter::MiniGuDb;
-use sqllogictest::{DBOutput, DefaultColumnType};
-use tokio::runtime::Runtime;
-use tokio::sync::Mutex;
 
 type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -48,29 +44,29 @@ fn discover_tests() -> Vec<PathBuf> {
 /// # Usage
 ///     
 /// Run `cargo test --test sqllogictest -- --nocapture` to run all tests.
-#[tokio::test]
-async fn run_sqllogictest() {
+#[test]
+fn run_sqllogictest() {
     let files = discover_tests();
     if files.is_empty() {
         panic!("No sql logic test files found by pattern `{PATTERN}`");
     }
 
     if std::env::var("CI").is_ok() {
-        run_ci(&files).await;
+        run_ci(&files);
     } else {
-        run_locally(&files).await;
+        run_locally(&files);
     }
 }
 
 /// CI mode: run tests sequentially.
-async fn run_ci(files: &[PathBuf]) {
+fn run_ci(files: &[PathBuf]) {
     let mut failures = Vec::new();
     println!("Running {} SQL Logic Test files (CI mode)", files.len());
 
     for f in files {
         let name = f.strip_prefix("sql").unwrap().display();
         print!("→ {name} ... ");
-        match run_one(f).await {
+        match run_one(f) {
             Ok(_) => println!("ok"),
             Err(e) => {
                 println!("FAILED");
@@ -89,21 +85,14 @@ async fn run_ci(files: &[PathBuf]) {
 }
 
 /// Local mode: libtest-mimic runs tests in parallel.
-async fn run_locally(files: &[PathBuf]) {
-    fn rt() -> Runtime {
-        tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .unwrap()
-    }
-
+fn run_locally(files: &[PathBuf]) {
     let trials: Vec<_> = files
         .iter()
         .map(|p| {
             let name = p.strip_prefix("sql").unwrap().display().to_string();
             let p = p.clone();
             Trial::test(format!("minigu::{name}"), move || {
-                Ok(rt().block_on(run_one(&p))?)
+                run_one(&p).map_err(|e| libtest_mimic::Failed::from(e.to_string()))
             })
         })
         .collect();
@@ -116,32 +105,14 @@ async fn run_locally(files: &[PathBuf]) {
 }
 
 /// Run a single .slt file.
-async fn run_one(path: impl AsRef<Path>) -> Result<()> {
+fn run_one(path: impl AsRef<Path>) -> Result<()> {
     let db = MiniGuDb::new()?;
-    let db = Arc::new(Mutex::new(db));
+    let records = sqllogictest::parse_file(path.as_ref())?;
 
-    sqllogictest::Runner::new(|| async { Ok(Db { db: db.clone() }) })
-        .run_file_async(path.as_ref())
-        .await
-        .map_err(|e| format!("{} -> {e}", path.as_ref().display()).into())
-}
-
-/// sqllogictest driver wrapper.
-struct Db {
-    db: Arc<Mutex<MiniGuDb>>,
-}
-
-#[async_trait::async_trait]
-impl sqllogictest::AsyncDB for Db {
-    type ColumnType = DefaultColumnType;
-    type Error = minigu_test::slt_adapter::SqlLogicTestError;
-
-    async fn run(
-        &mut self,
-        sql: &str,
-    ) -> core::result::Result<DBOutput<Self::ColumnType>, Self::Error> {
-        self.db.lock().await.run(sql).await
+    for record in records {
+        let mut runner = sqllogictest::Runner::new(|| async { Ok(db.clone()) });
+        runner.run(record)?;
     }
 
-    async fn shutdown(&mut self) {}
+    Ok(())
 }

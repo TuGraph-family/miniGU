@@ -1,12 +1,12 @@
 use std::fmt;
 use std::sync::Arc;
 
-use async_trait::async_trait;
 use minigu::database::{Database, DatabaseConfig};
 use minigu::error::Error as MiniGuError;
-use sqllogictest::{AsyncDB, DBOutput, DefaultColumnType};
+use sqllogictest::{DB, DBOutput, DefaultColumnType};
 
 /// MiniGU database adapter for SQLLogicTest
+#[derive(Clone)]
 pub struct MiniGuDb {
     database: Arc<Database>,
 }
@@ -48,12 +48,11 @@ impl From<MiniGuError> for SqlLogicTestError {
     }
 }
 
-#[async_trait]
-impl AsyncDB for MiniGuDb {
+impl DB for MiniGuDb {
     type ColumnType = DefaultColumnType;
     type Error = SqlLogicTestError;
 
-    async fn run(&mut self, sql: &str) -> Result<DBOutput<Self::ColumnType>, Self::Error> {
+    fn run(&mut self, sql: &str) -> Result<DBOutput<Self::ColumnType>, Self::Error> {
         // Create new session
         let mut session = self.database.session().map_err(SqlLogicTestError::from)?;
 
@@ -94,8 +93,6 @@ impl AsyncDB for MiniGuDb {
             Ok(DBOutput::StatementComplete(0))
         }
     }
-
-    async fn shutdown(&mut self) {}
 }
 
 fn opt_to_string<T, F>(opt: &Option<T>, f: F) -> String
