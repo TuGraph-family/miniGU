@@ -1,0 +1,235 @@
+//! call export(<graph_name>, <dir_path>, <manifest_relative_path>) return *;
+
+use std::collections::{BTreeMap, HashMap};
+use std::error::Error;
+use std::fs::File;
+use std::path::Path;
+use std::sync::Arc;
+
+use csv::{Writer, WriterBuilder};
+use minigu_catalog::provider::{GraphProvider, GraphTypeProvider, SchemaProvider};
+use minigu_common::data_type::{DataSchema, LogicalType};
+use minigu_common::types::{EdgeId, LabelId, VertexId};
+use minigu_common::value::ScalarValue;
+use minigu_context::graph::{GraphContainer, GraphStorage};
+use minigu_context::procedure::Procedure;
+use minigu_storage::common::{Edge, Vertex};
+use minigu_storage::tp::{IsolationLevel, MemoryGraph};
+
+use crate::procedures::export_import::{Manifest, RecordType, SchemaMetadata};
+
+/// Convert a [`ScalarValue`] back into a *CSV‑ready* string. `NULL` becomes an
+/// empty string.
+fn scalar_value_to_string(scalar_value: &ScalarValue) -> String {
+    match scalar_value {
+        ScalarValue::Int8(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::Int16(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::Int32(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::Int64(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::UInt8(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::UInt16(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::UInt32(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::UInt64(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::Boolean(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::Float32(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::Float64(value) => value.map_or(String::new(), |inner| inner.to_string()),
+        ScalarValue::String(value) => value.clone().unwrap_or_default(),
+        ScalarValue::Null => String::new(),
+        _ => todo!(),
+    }
+}
+
+fn get_graph_from_graph_container(
+    container: Arc<dyn GraphProvider>,
+) -> Result<Arc<MemoryGraph>, Box<dyn Error + Send + Sync + 'static>> {
+    let container = container
+        .as_any()
+        .downcast_ref::<GraphContainer>()
+        .ok_or_else(|| anyhow::anyhow!("downcast failed"))?;
+
+    match container.graph_storage() {
+        GraphStorage::Memory(graph) => Ok(Arc::clone(graph)),
+    }
+}
+
+#[derive(Debug)]
+struct VerticesBuilder {
+    records: HashMap<LabelId, BTreeMap<VertexId, RecordType>>,
+    writers: HashMap<LabelId, Writer<File>>,
+}
+
+impl VerticesBuilder {
+    fn new<P: AsRef<Path>>(dir: P, map: &HashMap<LabelId, String>) -> Self {
+        let writers = map
+            .iter()
+            .map(|(id, label)| {
+                let filename = format!("{}.csv", label);
+                let path = dir.as_ref().join(filename);
+
+                (*id, WriterBuilder::new().from_path(path).unwrap())
+            })
+            .collect();
+        Self {
+            records: HashMap::new(),
+            writers,
+        }
+    }
+
+    fn add_vertex(&mut self, v: &Vertex) {
+        let record = std::iter::once(v.vid().to_string())
+            .chain(v.properties().iter().map(scalar_value_to_string))
+            .collect::<Vec<_>>();
+
+        self.records
+            .entry(v.label_id)
+            .or_default()
+            .insert(v.vid(), record);
+    }
+
+    fn dump(&mut self) {
+        for (label_id, records) in self.records.iter() {
+            let w = self.writers.get_mut(label_id).unwrap();
+
+            for (_, record) in records.iter() {
+                w.write_record(record).unwrap();
+            }
+        }
+    }
+}
+
+#[derive(Debug)]
+struct EdgesBuilder {
+    records: HashMap<LabelId, BTreeMap<EdgeId, RecordType>>,
+    writers: HashMap<LabelId, Writer<File>>,
+}
+
+impl EdgesBuilder {
+    fn new<P: AsRef<Path>>(dir: P, map: &HashMap<LabelId, String>) -> Self {
+        let writers = map
+            .iter()
+            .map(|(id, label)| {
+                let filename = format!("{}.csv", label);
+                let path = dir.as_ref().join(filename);
+
+                (*id, WriterBuilder::new().from_path(path).unwrap())
+            })
+            .collect();
+
+        Self {
+            records: HashMap::new(),
+            writers,
+        }
+    }
+
+    fn add_edge(&mut self, e: &Edge) {
+        let prefix = [
+            e.eid().to_string(),
+            e.src_id().to_string(),
+            e.dst_id().to_string(),
+        ];
+        let record = prefix
+            .into_iter()
+            .chain(e.properties().iter().map(scalar_value_to_string))
+            .collect::<Vec<_>>();
+
+        self.records
+            .entry(e.label_id)
+            .or_default()
+            .insert(e.eid(), record);
+    }
+
+    fn dump(&mut self) {
+        for (label_id, records) in self.records.iter() {
+            let w = self.writers.get_mut(label_id).unwrap();
+
+            for (_, record) in records.iter() {
+                w.write_record(record).unwrap();
+            }
+        }
+    }
+}
+
+pub(crate) fn export<P: AsRef<Path>>(
+    graph: Arc<MemoryGraph>,
+    dir: P,
+    manifest_rel_path: P, // relative path
+    graph_type: Arc<dyn GraphTypeProvider>,
+) {
+    let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+    // 1. Prepare output paths
+    let dir = dir.as_ref();
+    std::fs::create_dir_all(dir).unwrap();
+
+    let metadata = SchemaMetadata::from_schema(Arc::clone(&graph_type));
+
+    let mut vertice_builder = VerticesBuilder::new(dir, &metadata.label_map);
+    let mut edges_builder = EdgesBuilder::new(dir, &metadata.label_map);
+
+    // 2. Dump vertices
+    for v in txn.iter_vertices() {
+        vertice_builder.add_vertex(&v.unwrap());
+    }
+    vertice_builder.dump();
+
+    // 3. Dump edge
+    for e in txn.iter_edges() {
+        edges_builder.add_edge(&e.unwrap());
+    }
+    edges_builder.dump();
+
+    // 4. Dump manifest
+    let manifest = Manifest::from_schema(metadata);
+    std::fs::write(
+        dir.join(manifest_rel_path),
+        serde_json::to_string(&manifest).unwrap(),
+    )
+    .unwrap();
+
+    txn.commit().unwrap();
+}
+
+pub fn build_procedure() -> Procedure {
+    // Name, directory path, manifest relative path
+    let parameters = vec![
+        LogicalType::String,
+        LogicalType::String,
+        LogicalType::String,
+    ];
+
+    let schema = Arc::new(DataSchema::new(vec![]));
+
+    Procedure::new(parameters, Some(schema), |context, args| {
+        assert_eq!(args.len(), 3);
+        let graph_name = args[0]
+            .try_as_string()
+            .expect("arg[0] must be a string")
+            .clone()
+            .expect("arg[1] can't be empty");
+        let dir_path = args[1]
+            .try_as_string()
+            .expect("arg[1] must be a string")
+            .clone()
+            .expect("arg[1] can't be empty");
+        let config_rel_path = args[2]
+            .try_as_string()
+            .expect("arg[2] must be a string")
+            .clone()
+            .expect("arg[2] can't be empty");
+
+        let schema = context
+            .current_schema
+            .ok_or_else(|| anyhow::anyhow!("current schema not set"))?;
+        let graph_container = schema
+            .get_graph(&graph_name)?
+            .ok_or_else(|| anyhow::anyhow!("graph type named with {} not found", graph_name))?;
+        let graph_type = graph_container.graph_type();
+        let graph = get_graph_from_graph_container(graph_container)?;
+
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+        export(graph, dir_path, config_rel_path, graph_type);
+        txn.commit()?;
+
+        Ok(vec![])
+    })
+}
