@@ -115,14 +115,14 @@ impl From<MiniGuError> for SqlLogicTestError {
 
 impl DB for MiniGuDb {
     type ColumnType = MiniGuColumnType;
-    type Error = SqlLogicTestError;
+    type Error = MiniGuError;
 
     fn run(&mut self, sql: &str) -> Result<DBOutput<Self::ColumnType>, Self::Error> {
         // Create new session
-        let mut session = self.database.session().map_err(SqlLogicTestError::from)?;
+        let mut session = self.database.session()?;
 
         // Execute query
-        let result = session.query(sql).map_err(SqlLogicTestError::from)?;
+        let result = session.query(sql)?;
 
         // Check if there is a result set
         if let Some(schema) = result.schema() {
