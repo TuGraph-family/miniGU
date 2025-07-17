@@ -1,5 +1,5 @@
 *          text=auto
-*.snap     text eol=lf
+*.gql      text eol=lf
 *.rs       text diff=rust
 *.toml     text diff=toml
 Cargo.lock text
