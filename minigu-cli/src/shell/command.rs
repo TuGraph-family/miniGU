@@ -51,26 +51,30 @@ pub enum ShellCommand {
     Metrics {
         /// The status to change to.
         /// If not provided, the current status will be printed.
-        status: Option<Status>,
+        status: Option<CliStatus>,
     },
 }
 
 #[derive(Debug, Clone, ValueEnum, Display)]
 #[strum(serialize_all = "kebab-case")]
-pub enum Status {
+pub enum CliStatus {
     On,
     Off,
 }
 
-impl From<Status> for bool {
-    fn from(status: Status) -> Self {
-        matches!(status, Status::On)
+impl From<CliStatus> for bool {
+    fn from(status: CliStatus) -> Self {
+        matches!(status, CliStatus::On)
     }
 }
 
-impl From<bool> for Status {
+impl From<bool> for CliStatus {
     fn from(status: bool) -> Self {
-        if status { Status::On } else { Status::Off }
+        if status {
+            CliStatus::On
+        } else {
+            CliStatus::Off
+        }
     }
 }
 
@@ -179,11 +183,11 @@ fn mode(ctx: &mut ShellContext, mode_to_change: Option<OutputMode>) -> Result<()
     Ok(())
 }
 
-fn metrics(ctx: &mut ShellContext, status: Option<Status>) -> Result<()> {
+fn metrics(ctx: &mut ShellContext, status: Option<CliStatus>) -> Result<()> {
     if let Some(status) = status {
         ctx.show_metrics = status.into()
     } else {
-        let status = Status::from(ctx.show_metrics);
+        let status = CliStatus::from(ctx.show_metrics);
         println!("show query metrics: {status}");
     }
     Ok(())
