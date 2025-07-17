@@ -16,7 +16,7 @@ cargo build --features "${DEFAULT_FEATURES:-std,serde,miette}"
 # 测试
 cargo nextest run \
   --features "${DEFAULT_FEATURES:-std,serde,miette}" \
-  --exclude-test sqllogictest::run_sqllogictest
+  --exclude sqllogictest::run_sqllogictest
 
 cargo test --features "${DEFAULT_FEATURES:-std,serde,miette}" --doc
 
