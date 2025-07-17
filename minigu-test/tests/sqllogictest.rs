@@ -120,19 +120,19 @@ async fn run_one(path: impl AsRef<Path>) -> Result<()> {
     let db = MiniGuDb::new()?;
     let db = Arc::new(Mutex::new(db));
 
-    sqllogictest::Runner::new(|| async { Ok(DB { db: db.clone() }) })
+    sqllogictest::Runner::new(|| async { Ok(Db { db: db.clone() }) })
         .run_file_async(path.as_ref())
         .await
         .map_err(|e| format!("{} -> {e}", path.as_ref().display()).into())
 }
 
 /// sqllogictest driver wrapper.
-struct DB {
+struct Db {
     db: Arc<Mutex<MiniGuDb>>,
 }
 
 #[async_trait::async_trait]
-impl sqllogictest::AsyncDB for DB {
+impl sqllogictest::AsyncDB for Db {
     type ColumnType = DefaultColumnType;
     type Error = minigu_test::slt_adapter::SqlLogicTestError;
 

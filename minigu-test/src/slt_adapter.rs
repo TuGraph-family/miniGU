@@ -98,39 +98,31 @@ impl AsyncDB for MiniGuDb {
     async fn shutdown(&mut self) {}
 }
 
+fn opt_to_string<T, F>(opt: &Option<T>, f: F) -> String
+where
+    F: Fn(&T) -> String,
+{
+    opt.as_ref().map_or_else(|| "NULL".to_string(), f)
+}
+
 /// Convert ScalarValue to string
 fn convert_scalar_value_to_string(value: &minigu::common::value::ScalarValue) -> String {
     use minigu::common::value::ScalarValue;
-
     match value {
         ScalarValue::Null => "NULL".to_string(),
-        ScalarValue::Boolean(Some(b)) => b.to_string(),
-        ScalarValue::Boolean(None) => "NULL".to_string(),
-        ScalarValue::Int8(Some(i)) => i.to_string(),
-        ScalarValue::Int8(None) => "NULL".to_string(),
-        ScalarValue::Int16(Some(i)) => i.to_string(),
-        ScalarValue::Int16(None) => "NULL".to_string(),
-        ScalarValue::Int32(Some(i)) => i.to_string(),
-        ScalarValue::Int32(None) => "NULL".to_string(),
-        ScalarValue::Int64(Some(i)) => i.to_string(),
-        ScalarValue::Int64(None) => "NULL".to_string(),
-        ScalarValue::UInt8(Some(i)) => i.to_string(),
-        ScalarValue::UInt8(None) => "NULL".to_string(),
-        ScalarValue::UInt16(Some(i)) => i.to_string(),
-        ScalarValue::UInt16(None) => "NULL".to_string(),
-        ScalarValue::UInt32(Some(i)) => i.to_string(),
-        ScalarValue::UInt32(None) => "NULL".to_string(),
-        ScalarValue::UInt64(Some(i)) => i.to_string(),
-        ScalarValue::UInt64(None) => "NULL".to_string(),
-        ScalarValue::Float32(Some(f)) => f.to_string(),
-        ScalarValue::Float32(None) => "NULL".to_string(),
-        ScalarValue::Float64(Some(f)) => f.to_string(),
-        ScalarValue::Float64(None) => "NULL".to_string(),
-        ScalarValue::String(Some(s)) => s.clone(),
-        ScalarValue::String(None) => "NULL".to_string(),
-        ScalarValue::Vertex(Some(v)) => format!("{:?}", v),
-        ScalarValue::Vertex(None) => "NULL".to_string(),
-        ScalarValue::Edge(Some(e)) => format!("{:?}", e),
-        ScalarValue::Edge(None) => "NULL".to_string(),
+        ScalarValue::Boolean(opt) => opt_to_string(opt, |v| v.to_string()),
+        ScalarValue::Int8(opt) => opt_to_string(opt, |v| v.to_string()),
+        ScalarValue::Int16(opt) => opt_to_string(opt, |v| v.to_string()),
+        ScalarValue::Int32(opt) => opt_to_string(opt, |v| v.to_string()),
+        ScalarValue::Int64(opt) => opt_to_string(opt, |v| v.to_string()),
+        ScalarValue::UInt8(opt) => opt_to_string(opt, |v| v.to_string()),
+        ScalarValue::UInt16(opt) => opt_to_string(opt, |v| v.to_string()),
+        ScalarValue::UInt32(opt) => opt_to_string(opt, |v| v.to_string()),
+        ScalarValue::UInt64(opt) => opt_to_string(opt, |v| v.to_string()),
+        ScalarValue::Float32(opt) => opt_to_string(opt, |v| v.to_string()),
+        ScalarValue::Float64(opt) => opt_to_string(opt, |v| v.to_string()),
+        ScalarValue::String(opt) => opt_to_string(opt, |v| v.clone()),
+        ScalarValue::Vertex(opt) => opt_to_string(opt, |v| format!("{:?}", v)),
+        ScalarValue::Edge(opt) => opt_to_string(opt, |v| format!("{:?}", v)),
     }
 }
