@@ -23,7 +23,7 @@ pub struct ShellArgs {
     path: Option<PathBuf>,
 
     /// Set output mode.
-    #[arg(short, long, default_value = "sharp")]
+    #[arg(long, default_value = "sharp")]
     mode: OutputMode,
 
     /// If set, the column header will not be printed.
@@ -39,6 +39,10 @@ pub struct ShellArgs {
     /// Ignored if an in-memory database is opened.
     #[arg(short, long)]
     read_only: bool,
+
+    /// If set, query metrics will be printed.
+    #[arg(long)]
+    show_metrics: bool,
 }
 
 impl ShellArgs {
@@ -59,6 +63,7 @@ impl ShellArgs {
             mode: self.mode,
             header: !self.no_header,
             column_type: !self.no_column_type,
+            show_metrics: self.show_metrics,
         };
         context.run()
     }
