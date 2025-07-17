@@ -38,7 +38,6 @@ pub enum ScalarValue {
 }
 
 impl ScalarValue {
-    #[allow(unused)]
     pub fn to_scalar_array(&self) -> ArrayRef {
         match self {
             ScalarValue::Null => Arc::new(NullArray::new(1)),
@@ -58,120 +57,8 @@ impl ScalarValue {
                 Arc::new(Float64Array::from_iter([value.map(|f| f.into_inner())]))
             }
             ScalarValue::String(value) => Arc::new(StringArray::from_iter([value])),
-            ScalarValue::Vertex(value) => todo!(),
+            ScalarValue::Vertex(_value) => todo!(),
             ScalarValue::Edge(_value) => todo!(),
-        }
-    }
-
-    pub fn get_bool(&self) -> Result<bool, String> {
-        match self {
-            ScalarValue::Boolean(Some(val)) => Ok(*val),
-            ScalarValue::Boolean(None) => Err("Null value".to_string()),
-            _ => Err("Not a Boolean value".to_string()),
-        }
-    }
-
-    pub fn get_int8(&self) -> Result<i8, String> {
-        match self {
-            ScalarValue::Int8(Some(val)) => Ok(*val),
-            ScalarValue::Int8(None) => Err("Null value".to_string()),
-            _ => Err("Not an Int8 value".to_string()),
-        }
-    }
-
-    pub fn get_int16(&self) -> Result<i16, String> {
-        match self {
-            ScalarValue::Int16(Some(val)) => Ok(*val),
-            ScalarValue::Int16(None) => Err("Null value".to_string()),
-            _ => Err("Not an Int16 value".to_string()),
-        }
-    }
-
-    pub fn get_int32(&self) -> Result<i32, String> {
-        match self {
-            ScalarValue::Int32(Some(val)) => Ok(*val),
-            ScalarValue::Int32(None) => Err("Null value".to_string()),
-            _ => Err("Not an Int32 value".to_string()),
-        }
-    }
-
-    pub fn get_int64(&self) -> Result<i64, String> {
-        match self {
-            ScalarValue::Int64(Some(val)) => Ok(*val),
-            ScalarValue::Int64(None) => Err("Null value".to_string()),
-            _ => Err("Not an Int64 value".to_string()),
-        }
-    }
-
-    pub fn get_uint8(&self) -> Result<u8, String> {
-        match self {
-            ScalarValue::UInt8(Some(val)) => Ok(*val),
-            ScalarValue::UInt8(None) => Err("Null value".to_string()),
-            _ => Err("Not a UInt8 value".to_string()),
-        }
-    }
-
-    pub fn get_uint16(&self) -> Result<u16, String> {
-        match self {
-            ScalarValue::UInt16(Some(val)) => Ok(*val),
-            ScalarValue::UInt16(None) => Err("Null value".to_string()),
-            _ => Err("Not a UInt16 value".to_string()),
-        }
-    }
-
-    pub fn get_uint32(&self) -> Result<u32, String> {
-        match self {
-            ScalarValue::UInt32(Some(val)) => Ok(*val),
-            ScalarValue::UInt32(None) => Err("Null value".to_string()),
-            _ => Err("Not a UInt32 value".to_string()),
-        }
-    }
-
-    pub fn get_uint64(&self) -> Result<u64, String> {
-        match self {
-            ScalarValue::UInt64(Some(val)) => Ok(*val),
-            ScalarValue::UInt64(None) => Err("Null value".to_string()),
-            _ => Err("Not a UInt64 value".to_string()),
-        }
-    }
-
-    pub fn get_float32(&self) -> Result<f32, String> {
-        match self {
-            ScalarValue::Float32(Some(val)) => Ok(val.into_inner()),
-            ScalarValue::Float32(None) => Err("Null value".to_string()),
-            _ => Err("Not a Float32 value".to_string()),
-        }
-    }
-
-    pub fn get_float64(&self) -> Result<f64, String> {
-        match self {
-            ScalarValue::Float64(Some(val)) => Ok(val.into_inner()),
-            ScalarValue::Float64(None) => Err("Null value".to_string()),
-            _ => Err("Not a Float64 value".to_string()),
-        }
-    }
-
-    pub fn get_string(&self) -> Result<String, String> {
-        match self {
-            ScalarValue::String(Some(val)) => Ok(val.clone()),
-            ScalarValue::String(None) => Err("Null value".to_string()),
-            _ => Err("Not a String value".to_string()),
-        }
-    }
-
-    pub fn get_vertex(&self) -> Result<VertexValue, String> {
-        match self {
-            ScalarValue::Vertex(Some(val)) => Ok(val.clone()),
-            ScalarValue::Vertex(None) => Err("Null value".to_string()),
-            _ => Err("Not a Vertex value".to_string()),
-        }
-    }
-
-    pub fn get_edge(&self) -> Result<EdgeValue, String> {
-        match self {
-            ScalarValue::Edge(Some(val)) => Ok(val.clone()),
-            ScalarValue::Edge(None) => Err("Null value".to_string()),
-            _ => Err("Not an Edge value".to_string()),
         }
     }
 }
