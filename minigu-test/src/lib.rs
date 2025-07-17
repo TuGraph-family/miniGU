@@ -1,1 +1,1 @@
-pub mod sqllogictest_adapter;
+pub mod slt_adapter;

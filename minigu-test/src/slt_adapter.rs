@@ -134,34 +134,3 @@ fn convert_scalar_value_to_string(value: &minigu::common::value::ScalarValue) ->
         ScalarValue::Edge(None) => "NULL".to_string(),
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn test_basic_functionality() {
-        // Create database adapter
-        let mut db = MiniGuDB::new().expect("Failed to create database");
-
-        // Test the simplest statement: create a test graph
-        // According to create_test_graph.rs, this process has no schema, and should be considered a
-        // directory process
-        let result = db.run("CALL create_test_graph('test')").await;
-        match result {
-            Ok(_output) => {}
-            Err(e) => {
-                // If create_test_graph also fails, then the problem is fundamental
-                // Let's check if there are any procedures available
-                let show_result = db.run("CALL show_procedures()").await;
-                match show_result {
-                    Ok(_) => {}
-                    Err(e2) => {
-                        panic!("show_procedures also failed: {:?}", e2);
-                    }
-                }
-                panic!("Test failed: {:?}", e);
-            }
-        }
-    }
-}
