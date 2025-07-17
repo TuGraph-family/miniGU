@@ -10,14 +10,14 @@ name = "minigu"
 path = "src/main.rs"
 
 [dependencies]
-clap = { workspace = true, features = ["derive", "wrap_help"] }
+clap = { workspace = true }
 gql-parser = { workspace = true }
 itertools = { workspace = true }
 lru = { workspace = true }
 miette = { workspace = true, features = ["fancy"] }
 minigu = { workspace = true }
-rustyline = { workspace = true, features = ["derive"] }
-strum = { workspace = true, features = ["derive"] }
+rustyline = { workspace = true }
+strum = { workspace = true }
 
 [dev-dependencies]
 insta-cmd = { workspace = true }
