@@ -1,15 +1,32 @@
 //! Sqllogictest for MiniGU.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use libtest_mimic::{Arguments, Trial};
-use minigu_test::slt_adapter::MiniGuDB;
+use minigu_test::slt_adapter::MiniGuDb;
 use sqllogictest::{DBOutput, DefaultColumnType};
 use tokio::runtime::Runtime;
 use tokio::sync::Mutex;
 
 type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
+
+/// Glob pattern to find all test files
+const PATTERN: &str = "sql/**/[!_]*.slt";
+/// Blocklist of directories to skip
+const BLOCKLIST: &[&str] = &["finbench/", "gql_on_one_page/", "misc/", "opengql/", "snb/"];
+// const BLOCKLIST: &[&str] = &[];
+
+fn discover_tests() -> Vec<PathBuf> {
+    glob::glob(PATTERN)
+        .expect("failed to read glob pattern")
+        .filter_map(|p| p.ok())
+        .filter(|p| {
+            let sub = p.strip_prefix("sql").unwrap().to_string_lossy();
+            !BLOCKLIST.iter().any(|b| sub.contains(b))
+        })
+        .collect()
+}
 
 /// Run all sqllogictest files in the `sql` directory.
 ///
@@ -17,8 +34,8 @@ type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 /// - Recursively finds all `.slt` files in the `sql` directory
 /// - Skips files that start with '_'
 /// - Skips directories listed in `BLOCKLIST`
-/// - Creates a test runner for each file
-/// - Runs all tests in parallel using `libtest-mimic`
+/// - Runs all tests in parallel using `libtest-mimic` (local mode)
+/// - Runs all tests sequentially (CI mode)
 /// - Reports test results and fails if any test fails
 ///
 /// # Panics
@@ -32,98 +49,98 @@ type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 ///     
 /// Run `cargo test --test sqllogictest -- --nocapture` to run all tests.
 #[tokio::test]
-async fn run_all_sqllogictest_files() {
-    // Ignore files starting with '_'
-    const PATTERN: &str = "sql/**/[!_]*.slt";
-    // Skip specific tests
-    const BLOCKLIST: &[&str] = &["finbench/", "gql_on_one_page/", "misc/", "opengql/", "snb/"];
+async fn run_sqllogictest() {
+    let files = discover_tests();
+    if files.is_empty() {
+        panic!("No sql logic test files found by pattern `{PATTERN}`");
+    }
 
-    let mut tests = vec![];
+    if std::env::var("CI").is_ok() {
+        run_ci(&files).await;
+    } else {
+        run_locally(&files).await;
+    }
+}
 
-    // Use glob pattern to find all test files
-    let paths = glob::glob(PATTERN).expect("failed to find test files");
+/// CI mode: run tests sequentially.
+async fn run_ci(files: &[PathBuf]) {
+    let mut failures = Vec::new();
+    println!("Running {} SQL Logic Test files (CI mode)", files.len());
 
-    for entry in paths {
-        let path = entry.expect("failed to read glob entry");
-        let subpath = path.strip_prefix("sql").unwrap().to_str().unwrap();
-
-        // Check if in blacklist
-        if !BLOCKLIST.iter().any(|p| subpath.contains(p)) {
-            let path_clone = path.clone();
-            tests.push(Trial::test(format!("minigu::{}", subpath), move || {
-                Ok(build_runtime().block_on(test(&path_clone))?)
-            }));
+    for f in files {
+        let name = f.strip_prefix("sql").unwrap().display();
+        print!("→ {name} ... ");
+        match run_one(f).await {
+            Ok(_) => println!("ok"),
+            Err(e) => {
+                println!("FAILED");
+                eprintln!("{name}: {e}");
+                failures.push((name.to_string(), e));
+            }
         }
     }
 
-    if tests.is_empty() {
-        panic!(
-            "no test found for sqllogictest! pwd: {:?}",
-            std::env::current_dir().unwrap()
-        );
+    if !failures.is_empty() {
+        for (n, e) in &failures {
+            eprintln!("{n}: {e}");
+        }
+        panic!("{} SQL Logic Test(s) failed", failures.len());
     }
+}
 
-    fn build_runtime() -> Runtime {
+/// Local mode: libtest-mimic runs tests in parallel.
+async fn run_locally(files: &[PathBuf]) {
+    fn rt() -> Runtime {
         tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()
             .unwrap()
     }
 
-    // Use libtest-mimic to run tests
-    let args = Arguments::from_args();
-    let conclusion = libtest_mimic::run(&args, tests);
+    let trials: Vec<_> = files
+        .iter()
+        .map(|p| {
+            let name = p.strip_prefix("sql").unwrap().display().to_string();
+            let p = p.clone();
+            Trial::test(format!("minigu::{name}"), move || {
+                Ok(rt().block_on(run_one(&p))?)
+            })
+        })
+        .collect();
 
-    // Check if any test failed
-    let exit_code = conclusion.exit_code();
-    if exit_code != std::process::ExitCode::SUCCESS {
-        panic!("Some tests failed with exit code: {:?}", exit_code);
+    if libtest_mimic::run(&Arguments::from_args(), trials).exit_code()
+        != std::process::ExitCode::SUCCESS
+    {
+        panic!("Some SQL Logic Test cases failed");
     }
 }
 
-/// Run a test file
-async fn test(filename: impl AsRef<Path>) -> Result<()> {
-    let db = MiniGuDB::new().map_err(|e| format!("Failed to create database: {}", e))?;
+/// Run a single .slt file.
+async fn run_one(path: impl AsRef<Path>) -> Result<()> {
+    let db = MiniGuDb::new()?;
     let db = Arc::new(Mutex::new(db));
-    let mut tester = sqllogictest::Runner::new(|| async { Ok(DatabaseWrapper { db: db.clone() }) });
 
-    // Run test file and check result
-    match tester.run_file_async(filename.as_ref()).await {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            // Provide more detailed error information
-            eprintln!(
-                "\nTest failed for file: {}\nError: {}\n",
-                filename.as_ref().display(),
-                e
-            );
-            Err(format!(
-                "Test failed for file: {}\nError: {}",
-                filename.as_ref().display(),
-                e
-            )
-            .into())
-        }
-    }
+    sqllogictest::Runner::new(|| async { Ok(DB { db: db.clone() }) })
+        .run_file_async(path.as_ref())
+        .await
+        .map_err(|e| format!("{} -> {e}", path.as_ref().display()).into())
 }
 
-/// Wrapper type, for implementing sqllogictest driver trait
-struct DatabaseWrapper {
-    db: Arc<Mutex<MiniGuDB>>,
+/// sqllogictest driver wrapper.
+struct DB {
+    db: Arc<Mutex<MiniGuDb>>,
 }
 
 #[async_trait::async_trait]
-impl sqllogictest::AsyncDB for DatabaseWrapper {
+impl sqllogictest::AsyncDB for DB {
     type ColumnType = DefaultColumnType;
     type Error = minigu_test::slt_adapter::SqlLogicTestError;
 
     async fn run(
         &mut self,
         sql: &str,
-    ) -> core::result::Result<DBOutput<DefaultColumnType>, Self::Error> {
-        // Get database instance lock and execute query
-        let mut db = self.db.lock().await;
-        db.run(sql).await
+    ) -> core::result::Result<DBOutput<Self::ColumnType>, Self::Error> {
+        self.db.lock().await.run(sql).await
     }
 
     async fn shutdown(&mut self) {}

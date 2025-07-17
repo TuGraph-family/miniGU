@@ -7,11 +7,11 @@ use minigu::error::Error as MiniGuError;
 use sqllogictest::{AsyncDB, DBOutput, DefaultColumnType};
 
 /// MiniGU database adapter for SQLLogicTest
-pub struct MiniGuDB {
+pub struct MiniGuDb {
     database: Arc<Database>,
 }
 
-impl MiniGuDB {
+impl MiniGuDb {
     /// Create new MiniGU database adapter
     pub fn new() -> Result<Self, MiniGuError> {
         let config = DatabaseConfig::default();
@@ -20,7 +20,7 @@ impl MiniGuDB {
     }
 }
 
-impl Default for MiniGuDB {
+impl Default for MiniGuDb {
     fn default() -> Self {
         Self::new().expect("Failed to create MiniGU database")
     }
@@ -49,7 +49,7 @@ impl From<MiniGuError> for SqlLogicTestError {
 }
 
 #[async_trait]
-impl AsyncDB for MiniGuDB {
+impl AsyncDB for MiniGuDb {
     type ColumnType = DefaultColumnType;
     type Error = SqlLogicTestError;
 

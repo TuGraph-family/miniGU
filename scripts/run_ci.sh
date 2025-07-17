@@ -14,8 +14,15 @@ cargo clippy --tests --features "${DEFAULT_FEATURES:-std,serde,miette}" --no-dep
 cargo build --features "${DEFAULT_FEATURES:-std,serde,miette}"
 
 # 测试
-cargo nextest run --features "${DEFAULT_FEATURES:-std,serde,miette}"
+cargo nextest run \
+  --features "${DEFAULT_FEATURES:-std,serde,miette}" \
+  --exclude-test sqllogictest::run_sqllogictest
+
 cargo test --features "${DEFAULT_FEATURES:-std,serde,miette}" --doc
+
+# 运行 SQL Logic Tests
+cargo test -p minigu-test --test sqllogictest \
+  --features "${DEFAULT_FEATURES:-std,serde,miette}" -- run_sqllogictest
 
 # 文档构建
 cargo doc --lib --no-deps --features "${DEFAULT_FEATURES:-std,serde,miette}"
