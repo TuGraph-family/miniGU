@@ -225,9 +225,7 @@ pub fn build_procedure() -> Procedure {
         LogicalType::String,
     ];
 
-    let schema = Arc::new(DataSchema::new(vec![]));
-
-    Procedure::new(parameters, Some(schema), |context, args| {
+    Procedure::new(parameters, None, |context, args| {
         assert_eq!(args.len(), 3);
         let graph_name = args[0]
             .try_as_string()
