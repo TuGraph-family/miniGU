@@ -24,7 +24,9 @@ resolver = "3"
 
 [workspace.package]
 edition = "2024"
+license = "Apache-2.0"
 repository = "https://github.com/TuGraph-family/miniGU"
+version = "0.1.0"
 
 [workspace.lints.clippy]
 complexity = "warn"
@@ -34,36 +36,65 @@ style = "warn"
 suspicious = "warn"
 
 [workspace.dependencies]
+gql-parser = { path = "minigu/parser", version = "0.1.0", features = [
+    "std",
+    "serde",
+    "miette",
+] }
+minigu = { path = "minigu/main", version = "0.1.0" }
+minigu-binder = { path = "minigu/binder", version = "0.1.0" }
+minigu-catalog = { path = "minigu/catalog", version = "0.1.0" }
+minigu-common = { path = "minigu/common", version = "0.1.0" }
+minigu-context = { path = "minigu/context", version = "0.1.0" }
+minigu-execution = { path = "minigu/execution", version = "0.1.0" }
+minigu-ir = { path = "minigu/ir", version = "0.1.0" }
+minigu-planner = { path = "minigu/planner", version = "0.1.0" }
+minigu-storage = { path = "minigu/storage", version = "0.1.0" }
+
 anyhow = "1.0.98"
-arrow = { version = "55.1.0", default-features = false }
+arrow = { version = "55.2.0", default-features = false }
 auto_impl = "1.3.0"
+bitvec = "1.0.1"
+bytes = "1.10.1"
+chrono = "0.4.41"
+clap = { version = "4.5.41", features = ["derive", "wrap_help"] }
+cmake = "0.1.54"
+crc32fast = "1.5.0"
+crossbeam-skiplist = "0.1.3"
+csv = "1.3.1"
+dashmap = "6.1.0"
 divan = "0.1.21"
-gql-parser = { path = "minigu/parser", features = ["std", "serde", "miette"] }
-indexmap = "2.9.0"
 insta = { version = "1.43.1", features = ["yaml"] }
+insta-cmd = "0.6.0"
 itertools = { version = "0.14.0", default-features = false, features = [
     "use_alloc",
 ] }
+logos = { version = "0.15.0", default-features = false, features = [
+    "export_derive",
+] }
+lru = "0.16.0"
+macro_rules_attribute = "0.2.2"
 miette = { version = "7.6.0" }
-minigu = { path = "minigu/main" }
-minigu-binder = { path = "minigu/binder" }
-minigu-catalog = { path = "minigu/catalog" }
-minigu-common = { path = "minigu/common" }
-minigu-context = { path = "minigu/context" }
-minigu-execution = { path = "minigu/execution" }
-minigu-ir = { path = "minigu/ir" }
-minigu-planner = { path = "minigu/planner" }
-minigu-storage = { path = "minigu/storage" }
-paste = "1.0.15"
+ordered-float = { version = "5.0.0", features = ["serde"] }
+pastey = "0.1.0"
+postcard = "1.1.2"
+rand = "0.9.1"
 rayon = "1.10.0"
+rustyline = { version = "16.0.0", features = ["derive"] }
 serde = { version = "1.0.219", default-features = false, features = [
     "alloc",
     "derive",
     "rc",
 ] }
+serde_json = "1.0.140"
+serial_test = "3.2.0"
+smallvec = "1.15.1"
 smol_str = { version = "0.3.2", default-features = false }
-tabled = { version = "0.19.0", default-features = false, features = ["std"] }
+strum = { version = "0.27.1", features = ["derive"] }
+tabled = { version = "0.20.0", default-features = false, features = ["std"] }
 thiserror = { version = "2.0.12", default-features = false }
+uuid = "1.17.0"
+winnow = { version = "0.7.12", default-features = false, features = ["alloc"] }
 
 [profile.dev.package]
 insta.opt-level = 3

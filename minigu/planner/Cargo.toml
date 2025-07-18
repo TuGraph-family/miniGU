@@ -1,8 +1,9 @@
 [package]
 edition.workspace = true
+license.workspace = true
 name = "minigu-planner"
 repository.workspace = true
-version = "0.1.0"
+version.workspace = true
 
 [dependencies]
 itertools = { workspace = true }

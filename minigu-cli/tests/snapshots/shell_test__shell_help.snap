@@ -21,7 +21,7 @@ Arguments:
           If not provided, an in-memory database will be opened.
 
 Options:
-  -m, --mode <MODE>
+      --mode <MODE>
           Set output mode
           
           [default: sharp]
@@ -37,6 +37,9 @@ Options:
           If set, the database will be opened in read-only mode.
           
           Ignored if an in-memory database is opened.
+
+      --show-metrics
+          If set, query metrics will be printed
 
   -h, --help
           Print help (see a summary with '-h')

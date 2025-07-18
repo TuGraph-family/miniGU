@@ -1,6 +1,11 @@
+#![feature(duration_millis_float)]
+
+mod cli;
+mod script_executor;
+mod shell;
+
 use clap::Parser;
-use minigu_cli::Cli;
 
 fn main() -> miette::Result<()> {
-    Cli::parse().run()
+    cli::Cli::parse().run()
 }

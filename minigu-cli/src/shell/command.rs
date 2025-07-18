@@ -1,8 +1,8 @@
 use clap::error::{ContextKind, ContextValue, ErrorKind};
-use clap::{ColorChoice, Command, CommandFactory, FromArgMatches, Parser};
+use clap::{ColorChoice, Command, CommandFactory, FromArgMatches, Parser, ValueEnum};
 use itertools::Itertools;
 use miette::{IntoDiagnostic, Result};
-use strum::VariantNames;
+use strum::{Display, VariantNames};
 
 use super::context::ShellContext;
 use crate::shell::output::OutputMode;
@@ -45,6 +45,37 @@ pub enum ShellCommand {
         /// If not provided, the current output mode will be printed.
         mode_to_change: Option<OutputMode>,
     },
+
+    /// Set if query metrics should be printed.
+    #[command(name = ":metrics")]
+    Metrics {
+        /// The status to change to.
+        /// If not provided, the current status will be printed.
+        status: Option<CliStatus>,
+    },
+}
+
+#[derive(Debug, Clone, ValueEnum, Display)]
+#[strum(serialize_all = "kebab-case")]
+pub enum CliStatus {
+    On,
+    Off,
+}
+
+impl From<CliStatus> for bool {
+    fn from(status: CliStatus) -> Self {
+        matches!(status, CliStatus::On)
+    }
+}
+
+impl From<bool> for CliStatus {
+    fn from(status: bool) -> Self {
+        if status {
+            CliStatus::On
+        } else {
+            CliStatus::Off
+        }
+    }
 }
 
 impl ShellCommand {
@@ -113,6 +144,7 @@ impl ShellCommand {
             ShellCommand::Quit => quit(ctx),
             ShellCommand::History => history(ctx),
             Self::Mode { mode_to_change } => mode(ctx, mode_to_change),
+            Self::Metrics { status } => metrics(ctx, status),
         }
     }
 }
@@ -147,6 +179,16 @@ fn mode(ctx: &mut ShellContext, mode_to_change: Option<OutputMode>) -> Result<()
         ctx.mode = mode_to_change;
     } else {
         println!("current output mode: {}", ctx.mode);
+    }
+    Ok(())
+}
+
+fn metrics(ctx: &mut ShellContext, status: Option<CliStatus>) -> Result<()> {
+    if let Some(status) = status {
+        ctx.show_metrics = status.into()
+    } else {
+        let status = CliStatus::from(ctx.show_metrics);
+        println!("show query metrics: {status}");
     }
     Ok(())
 }

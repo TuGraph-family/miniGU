@@ -2,7 +2,7 @@ use std::hint::black_box;
 
 use gql_parser::ast::Program;
 use gql_parser::span::Spanned;
-use paste::paste;
+use pastey::paste;
 
 fn main() {
     divan::main();
