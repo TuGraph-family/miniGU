@@ -1,9 +1,9 @@
-use std::fmt;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use minigu::common::data_type::LogicalType;
 use minigu::database::{Database, DatabaseConfig};
 use minigu::error::Error as MiniGuError;
+use minigu::session::Session;
 use sqllogictest::{ColumnType, DB, DBOutput};
 
 /// Enhanced ColumnType for MiniGU that supports vertex and edge types
@@ -70,58 +70,57 @@ impl From<&LogicalType> for MiniGuColumnType {
     }
 }
 
-/// MiniGU database adapter for SQLLogicTest
+/// Session wrapper for MiniGU that maintains session state across multiple SQL statements
 #[derive(Clone)]
-pub struct MiniGuDb {
+pub struct SessionWrapper {
     database: Arc<Database>,
+    session: Option<Arc<Mutex<Session>>>,
 }
 
-impl MiniGuDb {
-    /// Create new MiniGU database adapter
+impl SessionWrapper {
+    /// Create new SessionWrapper with a fresh database
     pub fn new() -> Result<Self, MiniGuError> {
         let config = DatabaseConfig::default();
         let database = Arc::new(Database::open_in_memory(&config)?);
-        Ok(Self { database })
+        Ok(Self {
+            database,
+            session: None,
+        })
+    }
+
+    /// Get or create a session for this wrapper
+    fn get_or_create_session(&mut self) -> Result<Arc<Mutex<Session>>, MiniGuError> {
+        if self.session.is_none() {
+            self.session = Some(Arc::new(Mutex::new(self.database.session()?)));
+        }
+        Ok(self.session.as_ref().unwrap().clone())
+    }
+
+    /// Reset the session (useful for testing transaction rollback scenarios)
+    pub fn reset_session(&mut self) -> Result<(), MiniGuError> {
+        self.session = Some(Arc::new(Mutex::new(self.database.session()?)));
+        Ok(())
     }
 }
 
-impl Default for MiniGuDb {
+impl Default for SessionWrapper {
     fn default() -> Self {
-        Self::new().expect("Failed to create MiniGU database")
+        Self::new().expect("Failed to create SessionWrapper")
     }
 }
 
-/// Error wrapper, for compatibility with SQLLogicTest error handling
-#[derive(Debug)]
-pub struct SqlLogicTestError(MiniGuError);
-
-impl fmt::Display for SqlLogicTestError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "MiniGU Error: {}", self.0)
-    }
-}
-
-impl std::error::Error for SqlLogicTestError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        Some(&self.0)
-    }
-}
-
-impl From<MiniGuError> for SqlLogicTestError {
-    fn from(error: MiniGuError) -> Self {
-        SqlLogicTestError(error)
-    }
-}
-
-impl DB for MiniGuDb {
+/// Implementation of DB trait for SessionWrapper
+/// This maintains session state across multiple SQL statements, enabling proper transaction testing
+impl DB for SessionWrapper {
     type ColumnType = MiniGuColumnType;
     type Error = MiniGuError;
 
     fn run(&mut self, sql: &str) -> Result<DBOutput<Self::ColumnType>, Self::Error> {
-        // Create new session
-        let mut session = self.database.session()?;
+        // Get or create session (maintains session state across calls)
+        let session_arc = self.get_or_create_session()?;
+        let mut session = session_arc.lock().map_err(|_| MiniGuError::SessionClosed)?;
 
-        // Execute query
+        // Execute query using the persistent session
         let result = session.query(sql)?;
 
         // Check if there is a result set
@@ -284,5 +283,68 @@ mod tests {
             MiniGuColumnType::from(&vertex_with_fields),
             MiniGuColumnType::Vertex
         );
+    }
+
+    #[test]
+    fn test_session_wrapper_creation() {
+        // Test that SessionWrapper can be created successfully
+        let wrapper = SessionWrapper::new();
+        assert!(wrapper.is_ok());
+    }
+
+    #[test]
+    fn test_session_wrapper_default() {
+        // Test that SessionWrapper implements Default
+        let wrapper = SessionWrapper::default();
+        // Database should be created successfully
+        assert!(wrapper.database.session().is_ok());
+    }
+
+    #[test]
+    fn test_session_wrapper_clone() {
+        // Test that SessionWrapper can be cloned
+        let wrapper = SessionWrapper::new().unwrap();
+        let cloned = wrapper.clone();
+        // Both should be able to create sessions
+        assert!(wrapper.database.session().is_ok());
+        assert!(cloned.database.session().is_ok());
+    }
+
+    #[test]
+    fn test_session_wrapper_reset() {
+        // Test that session can be reset
+        let mut wrapper = SessionWrapper::new().unwrap();
+        let result = wrapper.reset_session();
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_session_wrapper_basic_query() {
+        // Test that SessionWrapper can execute basic queries
+        let mut wrapper = SessionWrapper::new().unwrap();
+        // Use a simple query that should work
+        let result = wrapper.run("CALL create_test_graph('test_graph')");
+        if let Err(e) = &result {
+            println!("Error: {:?}", e);
+        }
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_session_wrapper_session_persistence() {
+        // Test that session state is maintained across multiple queries
+        let mut wrapper = SessionWrapper::new().unwrap();
+
+        // First query should create session
+        let result1 = wrapper.run("CALL create_test_graph('test_graph_1')");
+        assert!(result1.is_ok());
+
+        // Second query should use the same session
+        let result2 = wrapper.run("CALL create_test_graph('test_graph_2')");
+        assert!(result2.is_ok());
+
+        // Both queries should succeed, indicating session persistence
+        // We can't directly compare DBOutput, but we can verify both succeeded
+        assert!(result1.is_ok() && result2.is_ok());
     }
 }

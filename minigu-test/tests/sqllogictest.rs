@@ -3,7 +3,7 @@
 use std::path::{Path, PathBuf};
 
 use libtest_mimic::{Arguments, Trial};
-use minigu_test::slt_adapter::MiniGuDb;
+use minigu_test::slt_adapter::SessionWrapper;
 
 type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -106,7 +106,7 @@ fn run_locally(files: &[PathBuf]) {
 
 /// Run a single .slt file.
 fn run_one(path: impl AsRef<Path>) -> Result<()> {
-    let db = MiniGuDb::new()?;
+    let db = SessionWrapper::new()?;
     let records = sqllogictest::parse_file(path.as_ref())?;
 
     for record in records {
