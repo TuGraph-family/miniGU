@@ -1,7 +1,6 @@
 use std::sync::{Arc, Mutex};
 
 use minigu::common::data_type::LogicalType;
-use minigu::database::{Database, DatabaseConfig};
 use minigu::error::Error as MiniGuError;
 use minigu::session::Session;
 use sqllogictest::{ColumnType, DB, DBOutput};
@@ -77,39 +76,15 @@ impl From<&LogicalType> for MiniGuColumnType {
 /// Session wrapper for MiniGU that maintains session state across multiple SQL statements
 #[derive(Clone)]
 pub struct SessionWrapper {
-    database: Arc<Database>,
-    session: Option<Arc<Mutex<Session>>>,
+    session: Arc<Mutex<Session>>,
 }
 
 impl SessionWrapper {
-    /// Create new SessionWrapper with a fresh database
-    pub fn new() -> Result<Self, MiniGuError> {
-        let config = DatabaseConfig::default();
-        let database = Arc::new(Database::open_in_memory(&config)?);
-        Ok(Self {
-            database,
-            session: None,
-        })
-    }
-
-    /// Get or create a session for this wrapper
-    fn get_or_create_session(&mut self) -> Result<Arc<Mutex<Session>>, MiniGuError> {
-        if self.session.is_none() {
-            self.session = Some(Arc::new(Mutex::new(self.database.session()?)));
+    /// Create a new SessionWrapper from a given Session
+    pub fn new(session: Session) -> Self {
+        Self {
+            session: Arc::new(Mutex::new(session)),
         }
-        Ok(self.session.as_ref().unwrap().clone())
-    }
-
-    /// Reset the session (useful for testing transaction rollback scenarios)
-    pub fn reset_session(&mut self) -> Result<(), MiniGuError> {
-        self.session = Some(Arc::new(Mutex::new(self.database.session()?)));
-        Ok(())
-    }
-}
-
-impl Default for SessionWrapper {
-    fn default() -> Self {
-        Self::new().expect("Failed to create SessionWrapper")
     }
 }
 
@@ -120,12 +95,8 @@ impl DB for SessionWrapper {
     type Error = MiniGuError;
 
     fn run(&mut self, sql: &str) -> Result<DBOutput<Self::ColumnType>, Self::Error> {
-        // Get or create session (maintains session state across calls)
-        let session_arc = self.get_or_create_session()?;
-        let mut session = session_arc.lock().map_err(|_| MiniGuError::SessionClosed)?;
-
         // Execute query using the persistent session
-        let result = session.query(sql)?;
+        let result = self.session.lock().unwrap().query(sql)?;
 
         // Check if there is a result set
         if let Some(schema) = result.schema() {
@@ -292,40 +263,20 @@ mod tests {
     #[test]
     fn test_session_wrapper_creation() {
         // Test that SessionWrapper can be created successfully
-        let wrapper = SessionWrapper::new();
-        assert!(wrapper.is_ok());
-    }
-
-    #[test]
-    fn test_session_wrapper_default() {
-        // Test that SessionWrapper implements Default
-        let wrapper = SessionWrapper::default();
-        // Database should be created successfully
-        assert!(wrapper.database.session().is_ok());
-    }
-
-    #[test]
-    fn test_session_wrapper_clone() {
-        // Test that SessionWrapper can be cloned
-        let wrapper = SessionWrapper::new().unwrap();
-        let cloned = wrapper.clone();
-        // Both should be able to create sessions
-        assert!(wrapper.database.session().is_ok());
-        assert!(cloned.database.session().is_ok());
-    }
-
-    #[test]
-    fn test_session_wrapper_reset() {
-        // Test that session can be reset
-        let mut wrapper = SessionWrapper::new().unwrap();
-        let result = wrapper.reset_session();
-        assert!(result.is_ok());
+        let config = minigu::database::DatabaseConfig::default();
+        let database = minigu::database::Database::open_in_memory(&config).unwrap();
+        let session = database.session().unwrap();
+        let _wrapper = SessionWrapper::new(session);
+        assert!(true);
     }
 
     #[test]
     fn test_session_wrapper_basic_query() {
         // Test that SessionWrapper can execute basic queries
-        let mut wrapper = SessionWrapper::new().unwrap();
+        let config = minigu::database::DatabaseConfig::default();
+        let database = minigu::database::Database::open_in_memory(&config).unwrap();
+        let session = database.session().unwrap();
+        let mut wrapper = SessionWrapper::new(session);
         // Use a simple query that should work
         let result = wrapper.run("CALL create_test_graph('test_graph')");
         if let Err(e) = &result {
@@ -337,7 +288,10 @@ mod tests {
     #[test]
     fn test_session_wrapper_session_persistence() {
         // Test that session state is maintained across multiple queries
-        let mut wrapper = SessionWrapper::new().unwrap();
+        let config = minigu::database::DatabaseConfig::default();
+        let database = minigu::database::Database::open_in_memory(&config).unwrap();
+        let session = database.session().unwrap();
+        let mut wrapper = SessionWrapper::new(session);
 
         // First query should create session
         let result1 = wrapper.run("CALL create_test_graph('test_graph_1')");
@@ -348,7 +302,6 @@ mod tests {
         assert!(result2.is_ok());
 
         // Both queries should succeed, indicating session persistence
-        // We can't directly compare DBOutput, but we can verify both succeeded
         assert!(result1.is_ok() && result2.is_ok());
     }
 }
