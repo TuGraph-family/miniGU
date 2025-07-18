@@ -56,9 +56,7 @@ impl SchemaMetadata {
         let label_names = graph_type.label_names();
         let mut label_map = HashMap::with_capacity(label_names.len());
         for name in label_names {
-            let label_id = graph_type
-                .get_label_id(&name)?
-                .expect("labeld id not found");
+            let label_id = graph_type.get_label_id(&name)?.expect("label id not found");
             label_map.insert(label_id, name);
         }
 
