@@ -1,14 +1,15 @@
 [package]
 edition.workspace = true
+license.workspace = true
 name = "minigu-catalog"
-version = "0.1.0"
+repository.workspace = true
+version.workspace = true
 
 [dependencies]
 minigu-common = { workspace = true }
 serde = { workspace = true }
-smallvec = { version = "1.14.0", features = ["union", "serde"] }
-smol_str = { workspace = true, features = ["std"] }
-thiserror = { workspace = true, features = ["std"] }
+smallvec = { workspace = true, features = ["union", "serde"] }
+thiserror = { workspace = true }
 
 [lints]
 workspace = true
