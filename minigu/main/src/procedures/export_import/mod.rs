@@ -22,6 +22,7 @@
 //! ```
 
 use std::collections::{HashMap, HashSet};
+use std::env;
 use std::error::Error;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -30,6 +31,8 @@ use minigu_catalog::label_set::LabelSet;
 use minigu_catalog::property::Property;
 use minigu_catalog::provider::GraphTypeProvider;
 use minigu_common::types::LabelId;
+use minigu_storage::tp::checkpoint::CheckpointManagerConfig;
+use minigu_storage::wal::graph_wal::WalManagerConfig;
 use serde::{Deserialize, Serialize};
 
 pub mod export;
@@ -259,11 +262,29 @@ impl FromStr for Manifest {
         Ok(serde_json::from_str(s)?)
     }
 }
+fn make_checkpoint_config() -> CheckpointManagerConfig {
+    let checkpoint_dir = env::temp_dir().join(format!(
+        "checkpoint_{}_{}",
+        chrono::Utc::now(),
+        rand::random::<u32>()
+    ));
+    CheckpointManagerConfig {
+        checkpoint_dir,
+        ..Default::default()
+    }
+}
+
+fn make_wal_config() -> WalManagerConfig {
+    let filename = format!("wal_{}_{}.log", chrono::Utc::now(), rand::random::<u32>());
+    let wal_path = env::temp_dir().join(filename);
+
+    WalManagerConfig { wal_path }
+}
 
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
-    use std::path::{Path, PathBuf};
+    use std::path::Path;
 
     use minigu_catalog::memory::graph_type::{
         MemoryEdgeTypeCatalog, MemoryGraphTypeCatalog, MemoryVertexTypeCatalog,
@@ -272,8 +293,6 @@ mod tests {
     use minigu_common::types::{EdgeId, VertexId};
     use minigu_common::value::ScalarValue;
     use minigu_storage::common::{Edge, PropertyRecord, Vertex};
-    use minigu_storage::tp::checkpoint::CheckpointManagerConfig;
-    use minigu_storage::tp::memory_graph::{self};
     use minigu_storage::tp::{IsolationLevel, MemoryGraph};
     use walkdir::WalkDir;
 
@@ -305,20 +324,8 @@ mod tests {
         )
     }
 
-    fn mock_checkpoint_config() -> CheckpointManagerConfig {
-        CheckpointManagerConfig {
-            checkpoint_dir: PathBuf::from("/tmp/checkpoints"),
-            ..Default::default()
-        }
-    }
-
-    fn mock_empty_graph() -> Arc<MemoryGraph> {
-        MemoryGraph::with_config_recovered(mock_checkpoint_config(), Default::default())
-    }
-
     fn mock_graph() -> Arc<MemoryGraph> {
-        let graph =
-            MemoryGraph::with_config_recovered(mock_checkpoint_config(), Default::default());
+        let graph = MemoryGraph::with_config_fresh(make_checkpoint_config(), make_wal_config());
 
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
@@ -506,16 +513,23 @@ mod tests {
                 export_dir1,
                 manifest_rel_path.as_ref(),
                 Arc::clone(&graph_type),
-            );
+            )
+            .unwrap();
         }
 
         {
             let manifest_path = export_dir1.join(manifest_rel_path);
             let (graph, graph_type) = import(manifest_path).unwrap();
 
-            export(graph, export_dir2, manifest_rel_path.as_ref(), graph_type);
+            export(
+                graph,
+                export_dir2,
+                manifest_rel_path.as_ref(),
+                graph_type.clone(),
+            )
+            .unwrap();
         }
 
-        assert!(export_dirs_equal_semantically(export_dir1, export_dir2))
+        assert!(export_dirs_equal_semantically(export_dir1, export_dir2));
     }
 }

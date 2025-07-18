@@ -4,12 +4,13 @@ name = "minigu"
 version = "0.1.0"
 
 [dev-dependencies]
-tempfile = "3.20.0"
-walkdir = "2.5.0"
+tempfile = { workspace = true }
+walkdir = { workspace = true }
 
 [dependencies]
 anyhow = { workspace = true }
 arrow = { workspace = true }
+chrono = { workspace = true }
 csv = { workspace = true }
 gql-parser = { workspace = true }
 itertools = { workspace = true }
@@ -22,6 +23,7 @@ minigu-execution = { workspace = true }
 minigu-ir = { workspace = true }
 minigu-planner = { workspace = true }
 minigu-storage = { workspace = true }
+rand = { workspace = true }
 rayon = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

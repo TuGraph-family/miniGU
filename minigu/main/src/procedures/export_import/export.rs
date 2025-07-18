@@ -1,7 +1,6 @@
 //! call export(<graph_name>, <dir_path>, <manifest_relative_path>) return *;
 
 use std::collections::{BTreeMap, HashMap};
-use std::error::Error;
 use std::fs::File;
 use std::path::Path;
 use std::sync::Arc;
@@ -182,7 +181,7 @@ pub(crate) fn export<P: AsRef<Path>>(
     for v in txn.iter_vertices() {
         vertice_builder.add_vertex(&v?)?;
     }
-    vertice_builder.dump();
+    vertice_builder.dump()?;
 
     // 3. Dump edge
     for e in txn.iter_edges() {
@@ -197,7 +196,7 @@ pub(crate) fn export<P: AsRef<Path>>(
         serde_json::to_string(&manifest)?,
     )?;
 
-    let _ = txn.commit()?;
+    txn.commit()?;
 
     Ok(())
 }
@@ -239,9 +238,7 @@ pub fn build_procedure() -> Procedure {
         let graph_type = graph_container.graph_type();
         let graph = get_graph_from_graph_container(graph_container)?;
 
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-        export(graph, dir_path, config_rel_path, graph_type);
-        txn.commit()?;
+        export(graph, dir_path, config_rel_path, graph_type)?;
 
         Ok(vec![])
     })

@@ -1,12 +1,11 @@
 //! call import(<graph_name>, <dir_path>, <manifest_relative_path>) return *;
 
 use std::collections::HashMap;
-use std::error::Error;
 use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use csv::{ReaderBuilder, StringRecord};
+use csv::ReaderBuilder;
 use minigu_catalog::label_set::LabelSet;
 use minigu_catalog::memory::graph_type::{
     MemoryEdgeTypeCatalog, MemoryGraphTypeCatalog, MemoryVertexTypeCatalog,
@@ -22,10 +21,11 @@ use minigu_context::procedure::Procedure;
 use minigu_storage::common::{Edge, PropertyRecord, Vertex};
 use minigu_storage::tp::{IsolationLevel, MemoryGraph};
 
-use crate::procedures::export_import::{Manifest, Result};
+use crate::procedures::export_import::{Manifest, Result, make_checkpoint_config, make_wal_config};
 
 fn build_manifest<P: AsRef<Path>>(manifest_path: P) -> Result<Manifest> {
     let data = std::fs::read(manifest_path)?;
+
     let data_str = std::str::from_utf8(&data)?;
     Manifest::from_str(data_str)
 }
@@ -76,7 +76,7 @@ fn build_properties<'a>(
 ) -> Result<Vec<ScalarValue>> {
     let mut props = Vec::with_capacity(props_schema.len());
 
-    for (((_, property), value)) in props_schema.iter().zip(record_iter) {
+    for ((_, property), value) in props_schema.iter().zip(record_iter) {
         props.push(property_to_scalar_value(property, value)?);
     }
 
@@ -91,7 +91,7 @@ pub(crate) fn import<P: AsRef<Path>>(
     let graph_type = get_graph_type_from_manifest(&manifest)?;
 
     // Graph
-    let graph = MemoryGraph::new();
+    let graph = MemoryGraph::with_config_fresh(make_checkpoint_config(), make_wal_config());
     let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
     let manifest_parent_dir = manifest_path.as_ref().parent().ok_or_else(|| {
