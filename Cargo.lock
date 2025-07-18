@@ -1240,6 +1240,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "arrow",
+ "csv",
  "gql-parser",
  "itertools",
  "miette",
@@ -1252,7 +1253,11 @@ dependencies = [
  "minigu-planner",
  "minigu-storage",
  "rayon",
+ "serde",
+ "serde_json",
+ "tempfile",
  "thiserror",
+ "walkdir",
 ]
 
 [[package]]
@@ -1372,19 +1377,14 @@ dependencies = [
  "crc32fast",
  "crossbeam-epoch",
  "crossbeam-skiplist",
- "csv",
  "dashmap",
- "minigu-catalog",
  "minigu-common",
  "postcard",
  "rand 0.9.1",
  "serde",
- "serde_json",
  "serial_test",
- "tempfile",
  "thiserror",
  "uuid",
- "walkdir",
 ]
 
 [[package]]

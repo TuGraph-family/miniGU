@@ -48,15 +48,16 @@ struct SchemaMetadata {
 }
 
 impl SchemaMetadata {
-    fn from_schema(graph_type: Arc<dyn GraphTypeProvider>) -> Self {
-        let label_map = graph_type
-            .label_names()
-            .iter()
-            .map(|label| {
-                let label_id = graph_type.get_label_id(label).unwrap().unwrap();
-                (label_id, label.clone())
-            })
-            .collect::<HashMap<_, _>>();
+    fn from_schema(graph_type: Arc<dyn GraphTypeProvider>) -> Result<Self> {
+        // Build a label map LabelId -> String
+        let label_names = graph_type.label_names();
+        let mut label_map = HashMap::with_capacity(label_names.len());
+        for name in label_names {
+            let label_id = graph_type
+                .get_label_id(&name)?
+                .expect("labeld id not found");
+            label_map.insert(label_id, name);
+        }
 
         let mut vertex_labels = HashSet::new();
         let mut v_lset_to_label = HashMap::new();
@@ -64,7 +65,10 @@ impl SchemaMetadata {
         for (&id, _) in label_map.iter() {
             let label_set = LabelSet::from_iter(vec![id]);
 
-            if let Some(edge_type) = graph_type.get_edge_type(&label_set).unwrap() {
+            if let Some(edge_type) = graph_type
+                .get_edge_type(&label_set)
+                .expect("edge type not found")
+            {
                 let src_label_set = edge_type.src().label_set();
                 let dst_label_set = edge_type.dst().label_set();
 
@@ -78,19 +82,19 @@ impl SchemaMetadata {
         let edge_infos = edge_infos
             .iter()
             .map(|(&id, (src, dst))| {
-                let src_id = *v_lset_to_label.get(src).unwrap();
-                let dst_id = *v_lset_to_label.get(dst).unwrap();
+                let src_id = *v_lset_to_label.get(src).expect("label set not found");
+                let dst_id = *v_lset_to_label.get(dst).expect("label set not found");
 
                 (id, (src_id, dst_id))
             })
             .collect();
 
-        Self {
+        Ok(Self {
             label_map,
             vertex_labels,
             edge_infos,
             schema: Arc::clone(&graph_type),
-        }
+        })
     }
 }
 
@@ -183,72 +187,60 @@ struct Manifest {
 }
 
 impl Manifest {
-    fn from_schema(metadata: SchemaMetadata) -> Self {
-        let props_for_vertex = |id: LabelId| {
-            let label_set = LabelSet::from_iter(vec![id]);
-            metadata
+    fn from_schema(metadata: SchemaMetadata) -> Result<Self> {
+        let vertex_labels = &metadata.vertex_labels;
+        let mut vertex_specs = Vec::with_capacity(vertex_labels.len());
+
+        for &id in vertex_labels {
+            let name = metadata.label_map.get(&id).expect("label id not found");
+            let path = format!("{}.csv", name);
+            let props_schema = metadata
                 .schema
-                .get_vertex_type(&label_set) // will return None for vertex (inverse call later)
-                .unwrap()
-                .unwrap()
+                .get_vertex_type(&LabelSet::from_iter(vec![id]))? // will return None for vertex (inverse call later)
+                .expect("vertex type not found")
                 .properties()
                 .into_iter()
                 .map(|prop| prop.1) // drop index key
-                .collect::<Vec<_>>()
-        };
-        let props_for_edge = |id: LabelId| {
-            let label_set = LabelSet::from_iter(vec![id]);
-            metadata
+                .collect::<Vec<_>>();
+
+            vertex_specs.push(VertexSpec::new(
+                name.clone(),
+                FileSpec::new(path, "csv".to_string()),
+                props_schema,
+            ))
+        }
+
+        let edge_infos = &metadata.edge_infos;
+        let mut edge_specs = Vec::with_capacity(edge_infos.len());
+
+        for (&id, (src_id, dst_id)) in edge_infos {
+            let name = metadata.label_map.get(&id).expect("label id not found");
+            let path = format!("{}.csv", name);
+            let props_schema = metadata
                 .schema
-                .get_edge_type(&label_set) // will return None for edges (inverse call later)
-                .unwrap()
-                .unwrap()
+                .get_edge_type(&LabelSet::from_iter(vec![id]))? // will return None for vertex (inverse call later)
+                .expect("edge type not found")
                 .properties()
                 .into_iter()
                 .map(|prop| prop.1) // drop index key
-                .collect::<Vec<_>>()
-        };
+                .collect::<Vec<_>>();
 
-        let vertex_specs = metadata
-            .vertex_labels
-            .iter()
-            .map(|&id| {
-                let name = metadata.label_map.get(&id).unwrap();
-                let path = format!("{}.csv", name);
-                let props_schema = props_for_vertex(id);
+            let src_label = metadata.label_map.get(src_id).unwrap().clone();
+            let dst_label = metadata.label_map.get(dst_id).unwrap().clone();
 
-                VertexSpec::new(
-                    name.clone(),
-                    FileSpec::new(path, "csv".to_string()),
-                    props_schema,
-                )
-            })
-            .collect();
+            edge_specs.push(EdgeSpec::new(
+                name.clone(),
+                src_label,
+                dst_label,
+                FileSpec::new(path, "csv".to_string()),
+                props_schema,
+            ));
+        }
 
-        let edge_specs = metadata
-            .edge_infos
-            .iter()
-            .map(|(&id, (src_id, dst_id))| {
-                let name = metadata.label_map.get(&id).unwrap();
-                let path = format!("{}.csv", name);
-                let props_schema = props_for_edge(id);
-                let src_label = metadata.label_map.get(src_id).unwrap().clone();
-                let dst_label = metadata.label_map.get(dst_id).unwrap().clone();
-
-                EdgeSpec::new(
-                    name.clone(),
-                    src_label,
-                    dst_label,
-                    FileSpec::new(path, "csv".to_string()),
-                    props_schema,
-                )
-            })
-            .collect();
-
-        Self {
+        Ok(Self {
             vertices: vertex_specs,
             edges: edge_specs,
-        }
+        })
     }
 
     pub fn vertices_spec(&self) -> &Vec<VertexSpec> {
@@ -269,9 +261,9 @@ impl FromStr for Manifest {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use std::collections::BTreeMap;
-    use std::path::Path;
+    use std::path::{Path, PathBuf};
 
     use minigu_catalog::memory::graph_type::{
         MemoryEdgeTypeCatalog, MemoryGraphTypeCatalog, MemoryVertexTypeCatalog,
@@ -280,6 +272,7 @@ mod test {
     use minigu_common::types::{EdgeId, VertexId};
     use minigu_common::value::ScalarValue;
     use minigu_storage::common::{Edge, PropertyRecord, Vertex};
+    use minigu_storage::tp::checkpoint::CheckpointManagerConfig;
     use minigu_storage::tp::memory_graph::{self};
     use minigu_storage::tp::{IsolationLevel, MemoryGraph};
     use walkdir::WalkDir;
@@ -312,8 +305,20 @@ mod test {
         )
     }
 
+    fn mock_checkpoint_config() -> CheckpointManagerConfig {
+        CheckpointManagerConfig {
+            checkpoint_dir: PathBuf::from("/tmp/checkpoints"),
+            ..Default::default()
+        }
+    }
+
+    fn mock_empty_graph() -> Arc<MemoryGraph> {
+        MemoryGraph::with_config_recovered(mock_checkpoint_config(), Default::default())
+    }
+
     fn mock_graph() -> Arc<MemoryGraph> {
-        let graph = MemoryGraph::new();
+        let graph =
+            MemoryGraph::with_config_recovered(mock_checkpoint_config(), Default::default());
 
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
