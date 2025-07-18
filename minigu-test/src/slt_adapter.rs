@@ -15,6 +15,8 @@ pub enum MiniGuColumnType {
     Integer,
     /// Floating point numbers
     FloatingPoint,
+    /// Boolean results
+    Boolean,
     /// Vertex type (graph-specific)
     Vertex,
     /// Edge type (graph-specific)
@@ -31,6 +33,7 @@ impl ColumnType for MiniGuColumnType {
             'R' => Some(Self::FloatingPoint),
             'V' => Some(Self::Vertex),
             'E' => Some(Self::Edge),
+            'B' => Some(Self::Boolean),
             _ => Some(Self::Any),
         }
     }
@@ -40,6 +43,7 @@ impl ColumnType for MiniGuColumnType {
             Self::Text => 'T',
             Self::Integer => 'I',
             Self::FloatingPoint => 'R',
+            Self::Boolean => 'B',
             Self::Vertex => 'V',
             Self::Edge => 'E',
             Self::Any => '?',
@@ -61,9 +65,9 @@ impl From<&LogicalType> for MiniGuColumnType {
             | LogicalType::UInt32
             | LogicalType::UInt64 => Self::Integer,
             LogicalType::Float32 | LogicalType::Float64 => Self::FloatingPoint,
+            LogicalType::Boolean => Self::Boolean,
             LogicalType::Vertex(_) => Self::Vertex,
             LogicalType::Edge(_) => Self::Edge,
-            LogicalType::Boolean => Self::Any,
             LogicalType::Record(_) => Self::Any,
             LogicalType::Null => Self::Any,
         }
@@ -260,7 +264,7 @@ mod tests {
         );
         assert_eq!(
             MiniGuColumnType::from(&LogicalType::Boolean),
-            MiniGuColumnType::Any
+            MiniGuColumnType::Boolean
         );
 
         // Test graph-specific types
