@@ -1,27 +1,27 @@
 [package]
 edition.workspace = true
+license.workspace = true
 name = "gql-parser"
-version = "0.1.0"
+repository.workspace = true
+version.workspace = true
 
 [dependencies]
 itertools = { workspace = true }
-logos = { version = "0.15.0", default-features = false, features = [
-    "export_derive",
-] }
-macro_rules_attribute = "0.2.0"
+logos = { workspace = true }
+macro_rules_attribute = { workspace = true }
 miette = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 smol_str = { workspace = true }
 thiserror = { workspace = true }
-winnow = { version = "0.7.10", default-features = false, features = ["alloc"] }
+winnow = { workspace = true }
 
 [dev-dependencies]
 divan = { workspace = true }
 insta = { workspace = true }
-paste = { workspace = true }
+pastey = { workspace = true }
 
 [build-dependencies]
-cmake = { version = "0.1.54", optional = true }
+cmake = { workspace = true, optional = true }
 
 [features]
 bench-antlr4 = ["std", "dep:cmake"]

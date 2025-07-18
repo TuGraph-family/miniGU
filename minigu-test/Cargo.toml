@@ -1,7 +1,9 @@
 [package]
 edition.workspace = true
+license.workspace = true
 name = "minigu-test"
-version = "0.1.0"
+repository.workspace = true
+version.workspace = true
 
 [dependencies]
 async-trait = "0.1"
@@ -15,7 +17,7 @@ tracing-subscriber = "0.3"
 
 [dev-dependencies]
 insta.workspace = true
-paste.workspace = true
+pastey.workspace = true
 tempfile = "3.0"
 
 [lints]
