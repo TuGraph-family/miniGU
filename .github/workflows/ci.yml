@@ -59,8 +59,25 @@ jobs:
     - uses: actions-rust-lang/setup-rust-toolchain@v1
     - run: cargo clippy --tests --features ${{ env.DEFAULT_FEATURES }} --no-deps
 
+  machete:
+    name: Machete Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
+    - uses: bnjbvr/cargo-machete@main
+
+  deny:
+    name: Deny Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v4
+    - uses: EmbarkStudios/cargo-deny-action@v2
+
   build:
-    needs: [ typos, toml, fmt, clippy ]
+    needs: [ typos, toml, fmt, clippy, machete, deny ]
     # strategy:
     #   matrix:
     #     os: [ ubuntu-latest, macos-latest, windows-latest ]
@@ -76,7 +93,7 @@ jobs:
     - run: cargo build --features ${{ env.DEFAULT_FEATURES }}
 
   build_no_std:
-    needs: [ typos, toml, fmt, clippy ]
+    needs: [ typos, toml, fmt, clippy, machete, deny ]
     name: Build gql-parser in no_std mode
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -88,7 +105,7 @@ jobs:
     - run: cargo build -p gql-parser --target aarch64-unknown-none --no-default-features
 
   test:
-    needs: [ typos, toml, fmt, clippy ]
+    needs: [ typos, toml, fmt, clippy, machete, deny ]
     # strategy:
     #   matrix:
     #     os: [ ubuntu-latest, macos-latest, windows-latest ]
@@ -109,7 +126,7 @@ jobs:
 
   docs:
     name: Build Docs
-    needs: [ typos, toml, fmt, clippy ]
+    needs: [ typos, toml, fmt, clippy, machete, deny ]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
