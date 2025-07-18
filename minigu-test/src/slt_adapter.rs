@@ -1,5 +1,3 @@
-use std::sync::{Arc, Mutex};
-
 use minigu::common::data_type::LogicalType;
 use minigu::error::Error as MiniGuError;
 use minigu::session::Session;
@@ -74,17 +72,12 @@ impl From<&LogicalType> for MiniGuColumnType {
 }
 
 /// Session wrapper for MiniGU that maintains session state across multiple SQL statements
-#[derive(Clone)]
-pub struct SessionWrapper {
-    session: Arc<Mutex<Session>>,
-}
+pub struct SessionWrapper(Session);
 
 impl SessionWrapper {
     /// Create a new SessionWrapper from a given Session
     pub fn new(session: Session) -> Self {
-        Self {
-            session: Arc::new(Mutex::new(session)),
-        }
+        Self(session)
     }
 }
 
@@ -96,7 +89,7 @@ impl DB for SessionWrapper {
 
     fn run(&mut self, sql: &str) -> Result<DBOutput<Self::ColumnType>, Self::Error> {
         // Execute query using the persistent session
-        let result = self.session.lock().unwrap().query(sql)?;
+        let result = self.0.query(sql)?;
 
         // Check if there is a result set
         if let Some(schema) = result.schema() {
