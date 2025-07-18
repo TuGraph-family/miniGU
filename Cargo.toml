@@ -92,6 +92,8 @@ smallvec = "1.15.1"
 smol_str = { version = "0.3.2", default-features = false }
 strum = { version = "0.27.1", features = ["derive"] }
 tabled = { version = "0.20.0", default-features = false, features = ["std"] }
+temp-dir = "0.1.16"
+temp-file = "0.1.9"
 thiserror = { version = "2.0.12", default-features = false }
 uuid = "1.17.0"
 winnow = { version = "0.7.12", default-features = false, features = ["alloc"] }

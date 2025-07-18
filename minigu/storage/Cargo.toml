@@ -8,6 +8,8 @@ version.workspace = true
 [dev-dependencies]
 rand = { workspace = true }
 serial_test = { workspace = true }
+temp-dir = { workspace = true }
+temp-file = { workspace = true }
 
 [dependencies]
 chrono = { workspace = true }
