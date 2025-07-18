@@ -11,7 +11,6 @@ type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 const PATTERN: &str = "sql/**/[!_]*.slt";
 /// Blocklist of directories to skip
 const BLOCKLIST: &[&str] = &["finbench/", "gql_on_one_page/", "misc/", "opengql/", "snb/"];
-// const BLOCKLIST: &[&str] = &[];
 
 fn discover_tests() -> Vec<PathBuf> {
     glob::glob(PATTERN)
@@ -51,40 +50,10 @@ fn run_sqllogictest() {
         panic!("No sql logic test files found by pattern `{PATTERN}`");
     }
 
-    if std::env::var("CI").is_ok() {
-        run_ci(&files);
-    } else {
-        run_locally(&files);
-    }
+    run_locally(&files);
 }
 
-/// CI mode: run tests sequentially.
-fn run_ci(files: &[PathBuf]) {
-    let mut failures = Vec::new();
-    println!("Running {} SQL Logic Test files (CI mode)", files.len());
-
-    for f in files {
-        let name = f.strip_prefix("sql").unwrap().display();
-        print!("→ {name} ... ");
-        match run_one(f) {
-            Ok(_) => println!("ok"),
-            Err(e) => {
-                println!("FAILED");
-                eprintln!("{name}: {e}");
-                failures.push((name.to_string(), e));
-            }
-        }
-    }
-
-    if !failures.is_empty() {
-        for (n, e) in &failures {
-            eprintln!("{n}: {e}");
-        }
-        panic!("{} SQL Logic Test(s) failed", failures.len());
-    }
-}
-
-/// Local mode: libtest-mimic runs tests in parallel.
+/// Use libtest-mimic to run tests in parallel.
 fn run_locally(files: &[PathBuf]) {
     let trials: Vec<_> = files
         .iter()

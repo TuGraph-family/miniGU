@@ -260,7 +260,6 @@ mod tests {
         let database = minigu::database::Database::open_in_memory(&config).unwrap();
         let session = database.session().unwrap();
         let _wrapper = SessionWrapper::new(session);
-        assert!(true);
     }
 
     #[test]
