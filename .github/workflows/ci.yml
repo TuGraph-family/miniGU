@@ -78,13 +78,11 @@ jobs:
 
   build:
     needs: [ typos, toml, fmt, clippy, machete, deny ]
-    # strategy:
-    #   matrix:
-    #     os: [ ubuntu-latest, macos-latest, windows-latest ]
-    # name: Build on ${{ matrix.os }}
-    # runs-on: ${{ matrix.os }}
-    name: Build
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
@@ -106,13 +104,11 @@ jobs:
 
   test:
     needs: [ typos, toml, fmt, clippy, machete, deny ]
-    # strategy:
-    #   matrix:
-    #     os: [ ubuntu-latest, macos-latest, windows-latest ]
-    # name: Test on ${{ matrix.os }}
-    # runs-on: ${{ matrix.os }}
-    name: Test
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
