@@ -1,0 +1,17 @@
+# Test graph creation functionality
+
+# Create a test graph
+statement ok
+CALL create_test_graph('test_graph_1')
+
+# Create another test graph
+statement ok
+CALL create_test_graph('test_graph_2')
+
+# Attempting to create a duplicate graph should fail
+statement error
+CALL create_test_graph('test_graph_1')
+
+# Test graph names with special characters
+statement ok
+CALL create_test_graph('test_graph_special_123') 
