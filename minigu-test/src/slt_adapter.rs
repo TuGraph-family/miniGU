@@ -1,3 +1,26 @@
+//! SQL Logic Test (SLT) adapter for MiniGU graph database
+//!
+//! This module provides integration between MiniGU and the SQL Logic Test framework(here we use it
+//! to test GQL queries), enabling comprehensive testing of graph database functionality through
+//! standardized test cases. The adapter maintains session state across multiple GQL statements,
+//! allowing for proper transaction testing and complex query sequences.
+//!
+//! ## Core Components
+//!
+//! - **ColumnTypeSltWrapper**: Enhanced column type system that extends standard column types with
+//!   graph-specific types (Vertex, Edge) for MiniGU's graph database capabilities
+//! - **SessionWrapper**: Wrapper around MiniGU's Session that implements the DB trait from
+//!   sqllogictest, maintaining persistent session state across test statements
+//! - **Type Conversion**: Comprehensive mapping between MiniGU's LogicalType system and
+//!   SLT-compatible column types
+//!
+//! ## Usage
+//!
+//! The adapter is primarily used by the test framework to execute MiniGU queries
+//! and validate results against expected outputs in SLT test files. It enables
+//! comprehensive testing of graph database operations including DDL, DML, and DQL
+//! statements with proper transaction semantics.
+
 use minigu::common::data_type::LogicalType;
 use minigu::error::Error as MiniGuError;
 use minigu::session::Session;
@@ -5,7 +28,7 @@ use sqllogictest::{ColumnType, DB, DBOutput};
 
 /// Enhanced ColumnType for MiniGU that supports vertex and edge types
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub enum MiniGuColumnType {
+pub enum ColumnTypeSltWrapper {
     /// Text, varchar results
     Text,
     /// Integer results
@@ -22,7 +45,7 @@ pub enum MiniGuColumnType {
     Any,
 }
 
-impl ColumnType for MiniGuColumnType {
+impl ColumnType for ColumnTypeSltWrapper {
     fn from_char(value: char) -> Option<Self> {
         match value {
             'T' => Some(Self::Text),
@@ -49,7 +72,7 @@ impl ColumnType for MiniGuColumnType {
 }
 
 /// Convert LogicalType to MiniGuColumnType
-impl From<&LogicalType> for MiniGuColumnType {
+impl From<&LogicalType> for ColumnTypeSltWrapper {
     fn from(logical_type: &LogicalType) -> Self {
         match logical_type {
             LogicalType::String => Self::Text,
@@ -84,7 +107,7 @@ impl SessionWrapper {
 /// Implementation of DB trait for SessionWrapper
 /// This maintains session state across multiple SQL statements, enabling proper transaction testing
 impl DB for SessionWrapper {
-    type ColumnType = MiniGuColumnType;
+    type ColumnType = ColumnTypeSltWrapper;
     type Error = MiniGuError;
 
     fn run(&mut self, sql: &str) -> Result<DBOutput<Self::ColumnType>, Self::Error> {
@@ -98,7 +121,7 @@ impl DB for SessionWrapper {
 
             // Create column type for each field based on its logical type
             for field in schema.fields() {
-                let column_type = MiniGuColumnType::from(field.ty());
+                let column_type = ColumnTypeSltWrapper::from(field.ty());
                 types.push(column_type);
             }
 
@@ -165,48 +188,48 @@ mod tests {
     fn test_mini_gu_column_type_basic() {
         // Test basic types
         assert_eq!(
-            MiniGuColumnType::from_char('T'),
-            Some(MiniGuColumnType::Text)
+            ColumnTypeSltWrapper::from_char('T'),
+            Some(ColumnTypeSltWrapper::Text)
         );
         assert_eq!(
-            MiniGuColumnType::from_char('I'),
-            Some(MiniGuColumnType::Integer)
+            ColumnTypeSltWrapper::from_char('I'),
+            Some(ColumnTypeSltWrapper::Integer)
         );
         assert_eq!(
-            MiniGuColumnType::from_char('R'),
-            Some(MiniGuColumnType::FloatingPoint)
+            ColumnTypeSltWrapper::from_char('R'),
+            Some(ColumnTypeSltWrapper::FloatingPoint)
         );
         assert_eq!(
-            MiniGuColumnType::from_char('?'),
-            Some(MiniGuColumnType::Any)
+            ColumnTypeSltWrapper::from_char('?'),
+            Some(ColumnTypeSltWrapper::Any)
         );
 
         // Test graph-specific types
         assert_eq!(
-            MiniGuColumnType::from_char('V'),
-            Some(MiniGuColumnType::Vertex)
+            ColumnTypeSltWrapper::from_char('V'),
+            Some(ColumnTypeSltWrapper::Vertex)
         );
         assert_eq!(
-            MiniGuColumnType::from_char('E'),
-            Some(MiniGuColumnType::Edge)
+            ColumnTypeSltWrapper::from_char('E'),
+            Some(ColumnTypeSltWrapper::Edge)
         );
 
         // Test unknown character
         assert_eq!(
-            MiniGuColumnType::from_char('X'),
-            Some(MiniGuColumnType::Any)
+            ColumnTypeSltWrapper::from_char('X'),
+            Some(ColumnTypeSltWrapper::Any)
         );
     }
 
     #[test]
     fn test_mini_gu_column_type_to_char() {
         // Test conversion to char
-        assert_eq!(MiniGuColumnType::Text.to_char(), 'T');
-        assert_eq!(MiniGuColumnType::Integer.to_char(), 'I');
-        assert_eq!(MiniGuColumnType::FloatingPoint.to_char(), 'R');
-        assert_eq!(MiniGuColumnType::Vertex.to_char(), 'V');
-        assert_eq!(MiniGuColumnType::Edge.to_char(), 'E');
-        assert_eq!(MiniGuColumnType::Any.to_char(), '?');
+        assert_eq!(ColumnTypeSltWrapper::Text.to_char(), 'T');
+        assert_eq!(ColumnTypeSltWrapper::Integer.to_char(), 'I');
+        assert_eq!(ColumnTypeSltWrapper::FloatingPoint.to_char(), 'R');
+        assert_eq!(ColumnTypeSltWrapper::Vertex.to_char(), 'V');
+        assert_eq!(ColumnTypeSltWrapper::Edge.to_char(), 'E');
+        assert_eq!(ColumnTypeSltWrapper::Any.to_char(), '?');
     }
 
     #[test]
@@ -215,30 +238,30 @@ mod tests {
 
         // Test basic types
         assert_eq!(
-            MiniGuColumnType::from(&LogicalType::String),
-            MiniGuColumnType::Text
+            ColumnTypeSltWrapper::from(&LogicalType::String),
+            ColumnTypeSltWrapper::Text
         );
         assert_eq!(
-            MiniGuColumnType::from(&LogicalType::Int32),
-            MiniGuColumnType::Integer
+            ColumnTypeSltWrapper::from(&LogicalType::Int32),
+            ColumnTypeSltWrapper::Integer
         );
         assert_eq!(
-            MiniGuColumnType::from(&LogicalType::Float64),
-            MiniGuColumnType::FloatingPoint
+            ColumnTypeSltWrapper::from(&LogicalType::Float64),
+            ColumnTypeSltWrapper::FloatingPoint
         );
         assert_eq!(
-            MiniGuColumnType::from(&LogicalType::Boolean),
-            MiniGuColumnType::Boolean
+            ColumnTypeSltWrapper::from(&LogicalType::Boolean),
+            ColumnTypeSltWrapper::Boolean
         );
 
         // Test graph-specific types
         assert_eq!(
-            MiniGuColumnType::from(&LogicalType::Vertex(vec![])),
-            MiniGuColumnType::Vertex
+            ColumnTypeSltWrapper::from(&LogicalType::Vertex(vec![])),
+            ColumnTypeSltWrapper::Vertex
         );
         assert_eq!(
-            MiniGuColumnType::from(&LogicalType::Edge(vec![])),
-            MiniGuColumnType::Edge
+            ColumnTypeSltWrapper::from(&LogicalType::Edge(vec![])),
+            ColumnTypeSltWrapper::Edge
         );
 
         // Test with fields
@@ -248,8 +271,8 @@ mod tests {
             false,
         )]);
         assert_eq!(
-            MiniGuColumnType::from(&vertex_with_fields),
-            MiniGuColumnType::Vertex
+            ColumnTypeSltWrapper::from(&vertex_with_fields),
+            ColumnTypeSltWrapper::Vertex
         );
     }
 

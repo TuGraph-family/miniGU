@@ -119,7 +119,7 @@ jobs:
     - uses: Swatinem/rust-cache@v2
     - run: cargo nextest run --features ${{ env.DEFAULT_FEATURES }}
     - run: cargo test --features ${{ env.DEFAULT_FEATURES }} --doc
-    
+
   docs:
     name: Build Docs
     needs: [ typos, toml, fmt, clippy, machete, deny ]

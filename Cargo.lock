@@ -1530,7 +1530,6 @@ dependencies = [
  "minigu",
  "pastey",
  "sqllogictest",
- "tempfile",
 ]
 
 [[package]]

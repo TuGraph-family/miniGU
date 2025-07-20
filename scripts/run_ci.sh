@@ -15,7 +15,6 @@ cargo build --features "${DEFAULT_FEATURES:-std,serde,miette}"
 
 # 测试
 cargo nextest run --features "${DEFAULT_FEATURES:-std,serde,miette}"
-
 cargo test --features "${DEFAULT_FEATURES:-std,serde,miette}" --doc
 
 # 文档构建

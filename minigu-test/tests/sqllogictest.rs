@@ -8,7 +8,8 @@ use minigu_test::slt_adapter::SessionWrapper;
 type Result<T> = core::result::Result<T, Box<dyn std::error::Error>>;
 
 /// Glob pattern to find all test files
-const PATTERN: &str = "sql/**/[!_]*.slt";
+const PATTERN: &str = "gql/**/[!_]*.slt";
+const PREFIX: &str = "gql";
 /// Blocklist of directories to skip
 const BLOCKLIST: &[&str] = &["finbench/", "gql_on_one_page/", "misc/", "opengql/", "snb/"];
 
@@ -17,7 +18,7 @@ fn discover_tests() -> Vec<PathBuf> {
         .expect("failed to read glob pattern")
         .filter_map(|p| p.ok())
         .filter(|p| {
-            let sub = p.strip_prefix("sql").unwrap().to_string_lossy();
+            let sub = p.strip_prefix(PREFIX).unwrap().to_string_lossy();
             !BLOCKLIST.iter().any(|b| sub.contains(b))
         })
         .collect()
@@ -58,7 +59,7 @@ fn run_locally(files: &[PathBuf]) {
     let trials: Vec<_> = files
         .iter()
         .map(|p| {
-            let name = p.strip_prefix("sql").unwrap().display().to_string();
+            let name = p.strip_prefix(PREFIX).unwrap().display().to_string();
             let p = p.clone();
             Trial::test(format!("minigu::{name}"), move || {
                 run_one(&p).map_err(|e| libtest_mimic::Failed::from(e.to_string()))

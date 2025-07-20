@@ -321,9 +321,8 @@ pub struct WalManagerConfig {
 }
 
 fn default_wal_path() -> PathBuf {
-    let mut tmp = std::env::temp_dir();
-    tmp.push("wal.log");
-    tmp
+    let tmp_dir = temp_dir::TempDir::new().unwrap();
+    tmp_dir.path().join("minigu-wal.log")
 }
 
 impl Default for WalManagerConfig {
