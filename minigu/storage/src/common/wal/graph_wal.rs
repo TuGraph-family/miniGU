@@ -322,7 +322,9 @@ pub struct WalManagerConfig {
 
 fn default_wal_path() -> PathBuf {
     let tmp_dir = temp_dir::TempDir::new().unwrap();
-    tmp_dir.path().join("minigu-wal.log")
+    let path = tmp_dir.path().join("minigu-wal.log");
+    tmp_dir.leak();
+    path
 }
 
 impl Default for WalManagerConfig {

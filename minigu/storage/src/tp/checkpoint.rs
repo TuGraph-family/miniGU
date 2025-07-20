@@ -398,9 +398,12 @@ pub struct CheckpointManagerConfig {
     pub transaction_timeout_secs: u64,
 }
 
+// TODO: Return `temp_dir::TempDir` to avoid using `leak()`
 fn default_checkpoint_dir() -> PathBuf {
     let tmp = temp_dir::TempDir::new().unwrap();
-    tmp.path().join("minigu-checkpoint")
+    let path = tmp.path().join("minigu-checkpoint");
+    tmp.leak();
+    path
 }
 
 impl Default for CheckpointManagerConfig {
