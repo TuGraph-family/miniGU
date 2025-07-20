@@ -7,8 +7,8 @@ use minigu_storage::model::edge::Edge;
 use minigu_storage::model::properties::PropertyRecord;
 use minigu_storage::model::vertex::Vertex;
 use minigu_storage::tp::checkpoint::CheckpointManagerConfig;
+use minigu_storage::tp::{IsolationLevel, MemoryGraph};
 use minigu_storage::wal::graph_wal::WalManagerConfig;
-use minigu_storage::{IsolationLevel, MemoryGraph};
 
 pub const PERSON_LABEL_ID: LabelId = LabelId::new(1).unwrap();
 pub const FRIEND_LABEL_ID: LabelId = LabelId::new(1).unwrap();

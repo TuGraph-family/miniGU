@@ -1,8 +1,3 @@
-mod common;
-
-use common::*;
-use minigu_storage::{IsolationLevel, StorageResult};
-
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
@@ -18,15 +13,14 @@ mod tests {
     use bitvec::prelude::BitVec;
     use dashmap::DashMap;
     use minigu_common::types::{LabelId, VertexId};
-    use minigu_common::value::ScalarValue;
-
-    use crate::model::properties::PropertyRecord;
-    use crate::olap::olap_graph::{
+    use minigu_common::value::{F32, F64, ScalarValue};
+    use minigu_storage::ap::olap_graph::{
         BLOCK_CAPACITY, CompressedEdgeBlock, CompressedPropertyBlock, CompressedPropertyColumn,
         EdgeBlock, OlapEdge, OlapPropertyStore, OlapStorage, OlapStorageEdge, OlapVertex,
         PropertyBlock, PropertyColumn,
     };
-    use crate::storage::{MutOlapGraph, OlapGraph};
+    use minigu_storage::ap::{MutOlapGraph, OlapGraph};
+    use minigu_storage::model::properties::PropertyRecord;
 
     const PATH: &str = "";
 
@@ -457,7 +451,7 @@ mod tests {
                     Some(ScalarValue::UInt32(Some(i * 10))),
                     Some(ScalarValue::String(Some("hello".to_string()))),
                     Some(ScalarValue::Boolean(Some(true))),
-                    Some(ScalarValue::Float32(Some(0.5 + i as f32))),
+                    Some(ScalarValue::Float32(Some(F32::from(0.5) + i as f32))),
                     Some(ScalarValue::String(Some("another hello".to_string()))),
                 ]),
             });
@@ -1299,7 +1293,9 @@ mod tests {
                 label_id: NonZeroU32::new(1),
                 src_id: src_id as VertexId,
                 dst_id: dst_id as VertexId,
-                properties: OlapPropertyStore::new(vec![Some(ScalarValue::Float64(Some(weight)))]),
+                properties: OlapPropertyStore::new(vec![Some(ScalarValue::Float64(Some(
+                    F64::from(weight),
+                )))]),
             })
         }
         (vertices, edges)
@@ -1427,24 +1423,24 @@ mod tests {
             let src_id: usize = edge_parts[1].parse().expect("Invalid src_id");
             let dst_id: usize = edge_parts[2].parse().expect("Invalid dst_id");
 
-            let property1 = Some(ScalarValue::Float64(Some(
+            let property1 = Some(ScalarValue::Float64(Some(F64::from(
                 edge_parts[3].parse::<f64>().unwrap(),
-            )));
+            ))));
             let property2 = Some(ScalarValue::Int32(Some(
                 edge_parts[0].parse::<i32>().unwrap(),
             )));
-            let property3 = Some(ScalarValue::Float64(Some(
+            let property3 = Some(ScalarValue::Float64(Some(F64::from(
                 property_parts[1].parse::<f64>().unwrap(),
-            )));
-            let property4 = Some(ScalarValue::Float64(Some(
+            ))));
+            let property4 = Some(ScalarValue::Float64(Some(F64::from(F64::from(
                 property_parts[2].parse::<f64>().unwrap(),
-            )));
-            let property5 = Some(ScalarValue::Float64(Some(
+            )))));
+            let property5 = Some(ScalarValue::Float64(Some(F64::from(
                 property_parts[3].parse::<f64>().unwrap(),
-            )));
-            let property6 = Some(ScalarValue::Float64(Some(
+            ))));
+            let property6 = Some(ScalarValue::Float64(Some(F64::from(
                 property_parts[4].parse::<f64>().unwrap(),
-            )));
+            ))));
 
             if src_id != current_vertex {
                 vertices.push(OlapVertex {
