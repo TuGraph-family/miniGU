@@ -1432,9 +1432,9 @@ mod tests {
             let property3 = Some(ScalarValue::Float64(Some(F64::from(
                 property_parts[1].parse::<f64>().unwrap(),
             ))));
-            let property4 = Some(ScalarValue::Float64(Some(F64::from(F64::from(
+            let property4 = Some(ScalarValue::Float64(Some(F64::from(
                 property_parts[2].parse::<f64>().unwrap(),
-            )))));
+            ))));
             let property5 = Some(ScalarValue::Float64(Some(F64::from(
                 property_parts[3].parse::<f64>().unwrap(),
             ))));
