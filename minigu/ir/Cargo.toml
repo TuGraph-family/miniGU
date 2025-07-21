@@ -1,8 +1,9 @@
 [package]
 edition.workspace = true
+license.workspace = true
 name = "minigu-ir"
 repository.workspace = true
-version = "0.1.0"
+version.workspace = true
 
 [dependencies]
 minigu-catalog = { workspace = true }

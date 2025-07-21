@@ -27,7 +27,6 @@ use crate::error::{CheckpointError, StorageError, StorageResult};
 
 // @TODO: Consider making this configurable via
 // CheckpointManagerConfig instead of a hardcoded constant.
-const DEFAULT_CHECKPOINT_DIR: &str = "checkpoints";
 const DEFAULT_CHECKPOINT_PREFIX: &str = "checkpoint";
 const MAX_CHECKPOINTS: usize = 5;
 const AUTO_CHECKPOINT_INTERVAL_SECS: u64 = 30;
@@ -399,10 +398,18 @@ pub struct CheckpointManagerConfig {
     pub transaction_timeout_secs: u64,
 }
 
+// TODO: Return `temp_dir::TempDir` to avoid using `leak()`
+fn default_checkpoint_dir() -> PathBuf {
+    let tmp = temp_dir::TempDir::new().unwrap();
+    let path = tmp.path().join("minigu-checkpoint");
+    tmp.leak();
+    path
+}
+
 impl Default for CheckpointManagerConfig {
     fn default() -> Self {
         Self {
-            checkpoint_dir: PathBuf::from(DEFAULT_CHECKPOINT_DIR),
+            checkpoint_dir: default_checkpoint_dir(),
             max_checkpoints: MAX_CHECKPOINTS,
             auto_checkpoint_interval_secs: AUTO_CHECKPOINT_INTERVAL_SECS,
             checkpoint_prefix: DEFAULT_CHECKPOINT_PREFIX.to_string(),

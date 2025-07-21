@@ -1,7 +1,7 @@
-mod common;
+use minigu_storage::error::StorageResult;
+use minigu_storage::tp::IsolationLevel;
 
-use common::*;
-use minigu_storage::{IsolationLevel, StorageResult};
+use crate::common::*;
 
 #[test]
 fn test_graph_basic_operations() -> StorageResult<()> {

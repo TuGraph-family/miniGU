@@ -260,7 +260,7 @@ impl From<Nullable<&str>> for ScalarValue {
 macro_rules! impl_as_for_variant {
     ($name:ident, $ty:ty, $variant:ident) => {
         impl ScalarValue {
-            paste::paste! {
+            pastey::paste! {
                 #[doc = concat!(" Attempts to downcast `self` to borrowed `Nullable<", stringify!($ty), ">`, returning `None` if not possible.")]
                 #[inline]
                 pub fn [<try_as_$name>](&self) -> Option<&Nullable<$ty>> {
@@ -279,7 +279,7 @@ for_each_non_null_variant!(impl_as_for_variant);
 macro_rules! impl_into_for_variant {
     ($name:ident, $ty:ty, $variant:ident) => {
         impl ScalarValue {
-            paste::paste! {
+            pastey::paste! {
                 #[doc = concat!(" Attempts to downcast `self` to owned `Nullable<", stringify!($ty), ">`, returning `None` if not possible.")]
                 #[inline]
                 pub fn [<into_$name>](self) -> Option<Nullable<$ty>> {

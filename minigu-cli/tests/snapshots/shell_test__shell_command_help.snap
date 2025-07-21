@@ -16,6 +16,7 @@ Usage hints:
   :quit     Exit the shell
   :history  Show command history
   :mode     Set output mode
+  :metrics  Set if query metrics should be printed
 
 Enter ":help <COMMAND>" for more information about a command.
 

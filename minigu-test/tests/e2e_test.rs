@@ -4,7 +4,7 @@
 //! `snapshots`.
 use insta::internals::SettingsBindDropGuard;
 use insta::{Settings, assert_yaml_snapshot};
-use paste::paste;
+use pastey::paste;
 
 fn setup(snapshot_path: &str) -> SettingsBindDropGuard {
     let mut settings = Settings::clone_current();

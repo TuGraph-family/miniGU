@@ -1,11 +1,19 @@
 [package]
 edition.workspace = true
+license.workspace = true
 name = "minigu-test"
-version = "0.1.0"
+repository.workspace = true
+version.workspace = true
+
+[dependencies]
+glob = { workspace = true }
+libtest-mimic = { workspace = true }
+minigu = { workspace = true }
+sqllogictest = { workspace = true }
 
 [dev-dependencies]
-insta.workspace = true
-paste.workspace = true
+insta = { workspace = true }
+pastey = { workspace = true }
 
 [lints]
 workspace = true

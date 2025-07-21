@@ -9,24 +9,12 @@ use crate::metrics::QueryMetrics;
 
 #[derive(Debug, Default)]
 pub struct QueryResult {
-    schema: Option<DataSchemaRef>,
+    pub(crate) schema: Option<DataSchemaRef>,
     pub(crate) metrics: QueryMetrics,
-    chunks: Vec<DataChunk>,
+    pub(crate) chunks: Vec<DataChunk>,
 }
 
 impl QueryResult {
-    pub(crate) fn new(
-        schema: Option<DataSchemaRef>,
-        metrics: QueryMetrics,
-        chunks: Vec<DataChunk>,
-    ) -> Self {
-        Self {
-            schema,
-            metrics,
-            chunks,
-        }
-    }
-
     #[inline]
     pub fn schema(&self) -> Option<&DataSchemaRef> {
         self.schema.as_ref()
