@@ -19,6 +19,10 @@ members = [
     "minigu/ir",
     "minigu/planner",
     "minigu/context",
+
+    # Third party
+    "third_party/diskann-rs/DiskANN",
+    "third_party/diskann-rs/vector",
 ]
 resolver = "3"
 
@@ -50,6 +54,8 @@ minigu-execution = { path = "minigu/execution", version = "0.1.0" }
 minigu-ir = { path = "minigu/ir", version = "0.1.0" }
 minigu-planner = { path = "minigu/planner", version = "0.1.0" }
 minigu-storage = { path = "minigu/storage", version = "0.1.0" }
+diskann = { path = "third_party/diskann-rs/DiskANN", version = "0.1.0" }
+vector = { path = "third_party/diskann-rs/vector", version = "0.1.0" }
 
 anyhow = "1.0.98"
 arrow = { version = "55.2.0", default-features = false }
