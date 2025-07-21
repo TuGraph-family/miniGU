@@ -33,6 +33,7 @@ pub enum ScalarValue {
     Float32(Nullable<F32>),
     Float64(Nullable<F64>),
     String(Nullable<String>),
+    Vector(Nullable<Vec<F32>>),
     Vertex(Nullable<VertexValue>),
     Edge(Nullable<EdgeValue>),
 }
@@ -58,6 +59,7 @@ impl ScalarValue {
                 Arc::new(Float64Array::from_iter([value.map(|f| f.into_inner())]))
             }
             ScalarValue::String(value) => Arc::new(StringArray::from_iter([value])),
+            ScalarValue::Vector(value) => todo!(),
             ScalarValue::Vertex(value) => todo!(),
             ScalarValue::Edge(_value) => todo!(),
         }
@@ -212,6 +214,7 @@ macro_rules! for_each_non_null_variant {
         $m!(float32, F32, Float32);
         $m!(float64, F64, Float64);
         $m!(string, String, String);
+        $m!(vector, Vec<F32>, Vector);
         $m!(vertex_value, VertexValue, Vertex);
         $m!(edge_value, EdgeValue, Edge);
     };

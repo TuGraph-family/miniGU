@@ -17,6 +17,8 @@ pub enum StorageError {
     Wal(#[from] WalError),
     #[error("Checkpoint error: {0}")]
     Checkpoint(#[from] CheckpointError),
+    #[error("Vector index error: {0}")]
+    VectorIndex(#[from] VectorIndexError),
 }
 
 #[derive(Error, Debug)]
@@ -96,3 +98,46 @@ pub enum CheckpointError {
     #[error("Timeout waiting for active transactions to complete")]
     Timeout,
 }
+
+#[derive(Error, Debug)]
+pub enum VectorIndexError {
+    #[error("DiskANN error: {0}")]
+    DiskANN(#[from] diskann::common::ANNError),
+    #[error("Index not found: {0}")]
+    IndexNotFound(String),
+    #[error("Invalid vector dimension: expected {expected}, got {actual}")]
+    InvalidDimension { expected: usize, actual: usize },
+    #[error("Data conversion error: {0}")]
+    DataConversion(String),
+    #[error("Unsupported operation: {0}")]
+    UnsupportedOperation(String),
+    #[error("Invalid index type: {0}")]
+    InvalidIndexType(String),
+    #[error("Index configuration error: {0}")]
+    Configuration(String),
+    #[error("Index build error: {0}")]
+    BuildError(String),
+    #[error("Search error: {0}")]
+    SearchError(String),
+    #[error("ID mapping error: {0}")]
+    IdMappingError(String),
+    #[error("Vector ID {vector_id} not found in mapping")]
+    VectorIdNotFound { vector_id: u32 },
+    #[error("Node ID {node_id} not found in mapping")]
+    NodeIdNotFound { node_id: u32 },
+    #[error("Duplicate node ID {node_id} in input vectors")]
+    DuplicateNodeId { node_id: u32 },
+    #[error("Empty vector dataset provided")]
+    EmptyDataset,
+    #[error("Temporary file error: {0}")]
+    TempFileError(String),
+    #[error("Index not built yet")]
+    IndexNotBuilt,
+    #[error("Invalid search parameters: {0}")]
+    InvalidSearchParams(String),
+    #[error("Invalid build parameters: {0}")]
+    InvalidBuildParams(String),
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
+}
+
