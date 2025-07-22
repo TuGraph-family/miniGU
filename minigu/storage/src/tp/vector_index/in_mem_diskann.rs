@@ -6,7 +6,8 @@ use diskann::{
 };
 use dashmap::DashMap;
 use std::time::Instant;
-use tempfile::NamedTempFile;
+use temp_dir::TempDir;
+use std::fs::File;
 
 /// Index statistics and performance metrics
 #[derive(Debug, Clone, Default)]
@@ -78,10 +79,13 @@ impl InMemDiskANNAdapter {
     }
     
     /// Write vectors to diskann binary format using a temporary file
-    fn write_vectors_to_temp_file(&self, vectors: &[Vec<f32>]) -> StorageResult<NamedTempFile> {
+    fn write_vectors_to_temp_file(&self, vectors: &[Vec<f32>]) -> StorageResult<(TempDir, std::path::PathBuf)> {
         use std::io::Write;
         
-        let mut temp_file = NamedTempFile::new()
+        let temp_dir = TempDir::new()
+            .map_err(|e| StorageError::VectorIndex(VectorIndexError::InvalidInput(format!("Failed to create temp dir: {}", e))))?;
+        let temp_file_path = temp_dir.path().join("vectors.bin");
+        let mut temp_file = File::create(&temp_file_path)
             .map_err(|e| StorageError::VectorIndex(VectorIndexError::InvalidInput(format!("Failed to create temp file: {}", e))))?;
         
         // Write number of vectors and dimension
@@ -104,7 +108,7 @@ impl InMemDiskANNAdapter {
         temp_file.flush()
             .map_err(|e| StorageError::VectorIndex(VectorIndexError::InvalidInput(format!("Flush error: {}", e))))?;
         
-        Ok(temp_file)
+        Ok((temp_dir, temp_file_path))
     }
 }
 
@@ -176,11 +180,11 @@ impl VectorIndex for InMemDiskANNAdapter {
         }
         
         // Write vectors to temporary file
-        let temp_file = self.write_vectors_to_temp_file(&vector_data)
+        let (_temp_dir, temp_file_path) = self.write_vectors_to_temp_file(&vector_data)
             .map_err(|e| StorageError::VectorIndex(VectorIndexError::TempFileError(e.to_string())))?;
         
         // Build the index
-        self.inner.build(&temp_file.path().to_string_lossy(), vectors.len())
+        self.inner.build(&temp_file_path.to_string_lossy(), vectors.len())
             .map_err(|e| StorageError::VectorIndex(VectorIndexError::BuildError(e.to_string())))?;
         
         // Update statistics

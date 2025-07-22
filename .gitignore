@@ -5,6 +5,7 @@ target/
 
 # some notes or draft
 *.draft
+*-draft.md
 CLAUDE.md
 .env
 .mcp.json
