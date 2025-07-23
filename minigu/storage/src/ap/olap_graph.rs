@@ -18,7 +18,7 @@ use crate::error::VertexNotFoundError::VertexNotFound;
 use crate::error::{StorageError, StorageResult};
 use crate::model::properties::PropertyRecord;
 
-const BLOCK_CAPACITY: usize = 256;
+pub const BLOCK_CAPACITY: usize = 256;
 const TOMBSTONE_LABEL_ID: u32 = 1;
 const TOMBSTONE_DST_ID: u64 = 1;
 
@@ -82,7 +82,7 @@ pub struct OlapEdge {
 // Olap-Property (Add 'Option' for compaction)
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Default)]
 pub struct OlapPropertyStore {
-    properties: Vec<Option<ScalarValue>>,
+    pub properties: Vec<Option<ScalarValue>>,
 }
 
 impl OlapPropertyStore {
@@ -95,7 +95,7 @@ impl OlapPropertyStore {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn new(properties: Vec<Option<ScalarValue>>) -> OlapPropertyStore {
+    pub fn new(properties: Vec<Option<ScalarValue>>) -> OlapPropertyStore {
         OlapPropertyStore { properties }
     }
 }

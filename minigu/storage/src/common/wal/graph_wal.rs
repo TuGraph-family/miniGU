@@ -32,7 +32,6 @@ use crate::common::transaction::{DeltaOp, IsolationLevel, Timestamp};
 use crate::error::{StorageError, StorageResult, WalError};
 
 const HEADER_SIZE: usize = 8; // 4 bytes length + 4 bytes crc32
-const WAL_PATH: &str = "/tmp/wal.log";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RedoEntry {
@@ -75,6 +74,11 @@ impl StorageWal for GraphWal {
 
     /// Open existing log or create a new one at `path`.
     fn open<P: AsRef<Path>>(path: P) -> StorageResult<Self> {
+        // Create parent directory if it doesn't exist
+        if let Some(parent) = path.as_ref().parent() {
+            std::fs::create_dir_all(parent).map_err(|e| StorageError::Wal(WalError::Io(e)))?;
+        }
+
         let mut file = OpenOptions::new()
             .create(true)
             .write(true)
@@ -316,10 +320,17 @@ pub struct WalManagerConfig {
     pub wal_path: PathBuf,
 }
 
+fn default_wal_path() -> PathBuf {
+    let tmp_dir = temp_dir::TempDir::new().unwrap();
+    let path = tmp_dir.path().join("minigu-wal.log");
+    tmp_dir.leak();
+    path
+}
+
 impl Default for WalManagerConfig {
     fn default() -> Self {
         Self {
-            wal_path: PathBuf::from(WAL_PATH),
+            wal_path: default_wal_path(),
         }
     }
 }

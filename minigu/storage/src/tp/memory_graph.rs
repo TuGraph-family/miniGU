@@ -956,7 +956,7 @@ fn check_write_conflict(commit_ts: Timestamp, txn: &TransactionHandle) -> Storag
 
 #[cfg(test)]
 pub mod tests {
-    use std::{env, fs};
+    use std::fs;
 
     use minigu_common::types::LabelId;
     use minigu_common::value::ScalarValue;
@@ -990,12 +990,10 @@ pub mod tests {
     }
 
     pub fn mock_checkpoint_config() -> CheckpointManagerConfig {
-        let dir = env::temp_dir().join(format!(
-            "test_checkpoint_{}_{}",
-            chrono::Utc::now(),
-            rand::random::<u32>()
-        ));
-        fs::create_dir_all(&dir).unwrap();
+        let temp_dir = temp_dir::TempDir::with_prefix("test_checkpoint_").unwrap();
+        let dir = temp_dir.path().to_owned();
+        // TODO: Pass the temp dir to the caller so that it can be cleaned up.
+        temp_dir.leak();
         CheckpointManagerConfig {
             checkpoint_dir: dir,
             max_checkpoints: 3,
@@ -1006,12 +1004,14 @@ pub mod tests {
     }
 
     pub fn mock_wal_config() -> WalManagerConfig {
-        let file_name = format!(
-            "test_wal_{}_{}.log",
-            chrono::Utc::now(),
-            rand::random::<u32>()
-        );
-        let path = env::temp_dir().join(file_name);
+        let temp_file = temp_file::TempFileBuilder::new()
+            .prefix("test_wal_")
+            .suffix(".log")
+            .build()
+            .unwrap();
+        let path = temp_file.path().to_owned();
+        // TODO: Pass the temp file to the caller so that it can be cleaned up.
+        temp_file.leak();
         WalManagerConfig { wal_path: path }
     }
 

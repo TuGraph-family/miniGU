@@ -5,9 +5,15 @@ name = "minigu-test"
 repository.workspace = true
 version.workspace = true
 
+[dependencies]
+glob = { workspace = true }
+libtest-mimic = { workspace = true }
+minigu = { workspace = true }
+sqllogictest = { workspace = true }
+
 [dev-dependencies]
-insta.workspace = true
-pastey.workspace = true
+insta = { workspace = true }
+pastey = { workspace = true }
 
 [lints]
 workspace = true

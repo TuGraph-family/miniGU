@@ -8,6 +8,7 @@ version.workspace = true
 [dev-dependencies]
 rand = { workspace = true }
 serial_test = { workspace = true }
+temp-file = { workspace = true }
 
 [dependencies]
 chrono = { workspace = true }
@@ -17,6 +18,7 @@ dashmap = { workspace = true }
 minigu-common = { workspace = true }
 postcard = { workspace = true, features = ["alloc"] }
 serde = { workspace = true, features = ["derive"] }
+temp-dir = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"] }
 
