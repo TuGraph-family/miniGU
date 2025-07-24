@@ -22,7 +22,6 @@
 //! ```
 
 use std::collections::{HashMap, HashSet};
-use std::env;
 use std::error::Error;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -31,8 +30,6 @@ use minigu_catalog::label_set::LabelSet;
 use minigu_catalog::property::Property;
 use minigu_catalog::provider::GraphTypeProvider;
 use minigu_common::types::LabelId;
-use minigu_storage::tp::checkpoint::CheckpointManagerConfig;
-use minigu_storage::wal::graph_wal::WalManagerConfig;
 use serde::{Deserialize, Serialize};
 
 pub mod export;
@@ -260,24 +257,6 @@ impl FromStr for Manifest {
         Ok(serde_json::from_str(s)?)
     }
 }
-fn make_checkpoint_config() -> CheckpointManagerConfig {
-    let checkpoint_dir = env::temp_dir().join(format!(
-        "checkpoint_{}_{}",
-        chrono::Utc::now(),
-        rand::random::<u32>()
-    ));
-    CheckpointManagerConfig {
-        checkpoint_dir,
-        ..Default::default()
-    }
-}
-
-fn make_wal_config() -> WalManagerConfig {
-    let filename = format!("wal_{}_{}.log", chrono::Utc::now(), rand::random::<u32>());
-    let wal_path = env::temp_dir().join(filename);
-
-    WalManagerConfig { wal_path }
-}
 
 #[cfg(test)]
 mod tests {
@@ -291,7 +270,9 @@ mod tests {
     use minigu_common::types::{EdgeId, VertexId};
     use minigu_common::value::ScalarValue;
     use minigu_storage::common::{Edge, PropertyRecord, Vertex};
+    use minigu_storage::tp::checkpoint::CheckpointManagerConfig;
     use minigu_storage::tp::{IsolationLevel, MemoryGraph};
+    use minigu_storage::wal::graph_wal::WalManagerConfig;
     use walkdir::WalkDir;
 
     use super::*;
@@ -322,8 +303,29 @@ mod tests {
         )
     }
 
+    fn mock_checkpoint_config() -> CheckpointManagerConfig {
+        let dir = tempfile::tempdir().unwrap();
+        let checkpoint_dir = dir.as_ref().join(format!(
+            "checkpoint_{}",
+            chrono::Utc::now().format("%Y%m%d%H%M")
+        ));
+
+        CheckpointManagerConfig {
+            checkpoint_dir,
+            ..Default::default()
+        }
+    }
+
+    fn mock_wal_config() -> WalManagerConfig {
+        let dir = tempfile::tempdir().unwrap();
+        let filename = format!("wal_{}.log", chrono::Utc::now().format("%Y%m%d%H%M"));
+        let wal_path = dir.as_ref().join(filename);
+
+        WalManagerConfig { wal_path }
+    }
+
     fn mock_graph() -> Arc<MemoryGraph> {
-        let graph = MemoryGraph::with_config_fresh(make_checkpoint_config(), make_wal_config());
+        let graph = MemoryGraph::with_config_fresh(mock_checkpoint_config(), mock_wal_config());
 
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
 

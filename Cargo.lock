@@ -1393,7 +1393,6 @@ dependencies = [
  "minigu-ir",
  "minigu-planner",
  "minigu-storage",
- "rand 0.9.1",
  "rayon",
  "serde",
  "serde_json",

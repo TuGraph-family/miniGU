@@ -1,4 +1,17 @@
-//! call import(<graph_name>, <dir_path>, <manifest_relative_path>) return *;
+//! call import(<graph_name>, <dir_path>, <manifest_relative_path>);
+//!
+//! Import a graph from CSV files plus a JSON `manifest.json` on disk into an in-memory graph,
+//! then register it in the current schema under `<graph_name>`.
+//!
+//! ## Inputs
+//! * `<graph_name>` – Name to register the imported graph under in the current schema.
+//! * `<dir_path>` – Directory that contains the CSV files and the manifest.
+//! * `<manifest_relative_path>` – File name or relative path (inside `dir_path`) to
+//!   `manifest.json`.
+//!
+//! ## Output
+//! * Returns nothing. On success the graph is added to the current schema. Errors (missing files,
+//!   schema mismatch, duplicate graph name, etc.) are surfaced via `Result`.
 
 use std::collections::HashMap;
 use std::path::Path;
@@ -21,7 +34,7 @@ use minigu_context::procedure::Procedure;
 use minigu_storage::common::{Edge, PropertyRecord, Vertex};
 use minigu_storage::tp::{IsolationLevel, MemoryGraph};
 
-use crate::procedures::export_import::{Manifest, Result, make_checkpoint_config, make_wal_config};
+use crate::procedures::export_import::{Manifest, Result};
 
 fn build_manifest<P: AsRef<Path>>(manifest_path: P) -> Result<Manifest> {
     let data = std::fs::read(manifest_path)?;
@@ -91,7 +104,7 @@ pub(crate) fn import<P: AsRef<Path>>(
     let graph_type = get_graph_type_from_manifest(&manifest)?;
 
     // Graph
-    let graph = MemoryGraph::with_config_fresh(make_checkpoint_config(), make_wal_config());
+    let graph = MemoryGraph::with_config_fresh(Default::default(), Default::default());
     let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
     let manifest_parent_dir = manifest_path.as_ref().parent().ok_or_else(|| {
@@ -229,19 +242,19 @@ pub fn build_procedure() -> Procedure {
         assert_eq!(args.len(), 3);
         let graph_name = args[0]
             .try_as_string()
-            .expect("arg[0] must be a string")
+            .expect("graph name must be a string")
             .clone()
-            .expect("arg[0] can't be empty");
+            .expect("graph name can't be empty");
         let dir_path = args[1]
             .try_as_string()
-            .expect("arg[1] must be a string")
+            .expect("directory path must be a string")
             .clone()
-            .expect("arg[1] can't be empty");
+            .expect("directory path can't be empty");
         let manifest_rel_path = args[2]
             .try_as_string()
-            .expect("arg[2] must be a string")
+            .expect("manifest relative path must be a string")
             .clone()
-            .expect("arg[2] can't be empty");
+            .expect("manifest can't be empty");
 
         let manifest_path = (dir_path.as_ref() as &Path).join(manifest_rel_path);
         let schema = context

@@ -1,4 +1,16 @@
-//! call export(<graph_name>, <dir_path>, <manifest_relative_path>) return *;
+//! call export(<graph_name>, <dir_path>, <manifest_relative_path>);
+//!
+//! Export the in-memory graph `<graph_name>` to CSV files plus a JSON `manifest.json` on disk.
+//!
+//! ## Inputs
+//! * `<graph_name>` – Name of the graph in the current schema to export.
+//! * `<dir_path>` – Target directory for all output files; it will be created if it doesn't exist.
+//! * `<manifest_relative_path>` – Relative path (under `dir_path`) of the manifest file (e.g.
+//!   `manifest.json`).
+//!
+//! ## Output
+//! * Returns nothing. On success the files are written; errors (I/O failure, unknown graph, etc.)
+//!   are returned via `Result`.
 
 use std::collections::{BTreeMap, HashMap};
 use std::fs::File;
@@ -7,7 +19,7 @@ use std::sync::Arc;
 
 use csv::{Writer, WriterBuilder};
 use minigu_catalog::provider::{GraphProvider, GraphTypeProvider, SchemaProvider};
-use minigu_common::data_type::{DataSchema, LogicalType};
+use minigu_common::data_type::LogicalType;
 use minigu_common::error::not_implemented;
 use minigu_common::types::{EdgeId, LabelId, VertexId};
 use minigu_common::value::ScalarValue;
@@ -213,19 +225,19 @@ pub fn build_procedure() -> Procedure {
         assert_eq!(args.len(), 3);
         let graph_name = args[0]
             .try_as_string()
-            .expect("arg[0] must be a string")
+            .expect("graph name must be a string")
             .clone()
-            .expect("arg[0] can't be empty");
+            .expect("graph name can't be empty");
         let dir_path = args[1]
             .try_as_string()
-            .expect("arg[1] must be a string")
+            .expect("directory path must be a string")
             .clone()
-            .expect("arg[1] can't be empty");
-        let config_rel_path = args[2]
+            .expect("directory can't be empty");
+        let manifest_rel_path = args[2]
             .try_as_string()
-            .expect("arg[2] must be a string")
+            .expect("manifest relative path must be a string")
             .clone()
-            .expect("arg[2] can't be empty");
+            .expect("manifest relative path can't be empty");
 
         let schema = context
             .current_schema
@@ -236,7 +248,7 @@ pub fn build_procedure() -> Procedure {
         let graph_type = graph_container.graph_type();
         let graph = get_graph_from_graph_container(graph_container)?;
 
-        export(graph, dir_path, config_rel_path, graph_type)?;
+        export(graph, dir_path, manifest_rel_path, graph_type)?;
 
         Ok(vec![])
     })

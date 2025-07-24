@@ -6,6 +6,7 @@
 // It can be used for backup, recovery, or state transfer purposes.
 
 use std::collections::HashMap;
+use std::env;
 use std::fs::{self, File};
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::{Path, PathBuf};
@@ -31,6 +32,7 @@ const DEFAULT_CHECKPOINT_PREFIX: &str = "checkpoint";
 const MAX_CHECKPOINTS: usize = 5;
 const AUTO_CHECKPOINT_INTERVAL_SECS: u64 = 30;
 const DEFAULT_CHECKPOINT_TIMEOUT_SECS: u64 = 30;
+const DEFAULT_CHECKPOINT_DIR_NAME: &str = ".checkpoint";
 
 /// Represents a checkpoint of a MemoryGraph at a specific point in time.
 ///
@@ -398,11 +400,11 @@ pub struct CheckpointManagerConfig {
     pub transaction_timeout_secs: u64,
 }
 
-// TODO: Return `temp_dir::TempDir` to avoid using `leak()`
 fn default_checkpoint_dir() -> PathBuf {
-    let tmp = temp_dir::TempDir::new().unwrap();
-    let path = tmp.path().join("minigu-checkpoint");
-    tmp.leak();
+    let dir = env::current_dir().unwrap();
+    let path = dir
+        .join(DEFAULT_CHECKPOINT_DIR_NAME)
+        .join(chrono::Utc::now().format("%Y%m%d%H%M").to_string());
     path
 }
 

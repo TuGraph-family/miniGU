@@ -25,7 +25,6 @@ minigu-execution = { workspace = true }
 minigu-ir = { workspace = true }
 minigu-planner = { workspace = true }
 minigu-storage = { workspace = true }
-rand = { workspace = true }
 rayon = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
