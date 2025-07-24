@@ -323,10 +323,7 @@ pub struct WalManagerConfig {
 
 fn default_wal_path() -> PathBuf {
     let dir = env::current_dir().unwrap();
-    let path = dir
-        .join(DEFAULT_WAL_DIR_NAME)
-        .join(chrono::Utc::now().format("%Y%m%d%H%M").to_string());
-    path
+    dir.join(DEFAULT_WAL_DIR_NAME)
 }
 
 impl Default for WalManagerConfig {

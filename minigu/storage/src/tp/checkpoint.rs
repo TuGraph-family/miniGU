@@ -402,10 +402,7 @@ pub struct CheckpointManagerConfig {
 
 fn default_checkpoint_dir() -> PathBuf {
     let dir = env::current_dir().unwrap();
-    let path = dir
-        .join(DEFAULT_CHECKPOINT_DIR_NAME)
-        .join(chrono::Utc::now().format("%Y%m%d%H%M").to_string());
-    path
+    dir.join(DEFAULT_CHECKPOINT_DIR_NAME)
 }
 
 impl Default for CheckpointManagerConfig {

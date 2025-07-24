@@ -254,7 +254,7 @@ pub fn build_procedure() -> Procedure {
             .try_as_string()
             .expect("manifest relative path must be a string")
             .clone()
-            .expect("manifest can't be empty");
+            .expect("manifest relative path can't be empty");
 
         let manifest_path = (dir_path.as_ref() as &Path).join(manifest_rel_path);
         let schema = context
