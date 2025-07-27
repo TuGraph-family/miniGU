@@ -86,10 +86,10 @@ mod tests {
         // 1, [1]         true
         // 2, [2, 3, 4]   false
         // 3, [5, 6, 7]   true
-        // after project(e1 = c1 * c1, e2 = c2 * c2, e3 = c1 + c2 + 1):
-        // c1, c2, c3
-        // 1, [1], [3]
-        // 9, [25, 36, 49], [9, 10, 11]
+        // after project(e1 = c1 * c1, e2 = c2 * c2, e3 = c1 + c2 + 1, e4 = -c2):
+        // e1, e2, e3, e4
+        // 1, [1], [3], [-1]
+        // 9, [25, 36, 49], [9, 10, 11], [-5, -6, -7]
         let c1 = create_array!(Int32, [1, 2, 3]);
         let c2 = {
             let field = Field::new_list_field(DataType::Int32, false);
@@ -106,9 +106,10 @@ mod tests {
         let e3 = ColumnRef::new(0)
             .add(ColumnRef::new(1))
             .add(Constant::new(1i32.into()));
+        let e4 = ColumnRef::new(1).neg(); // Test unary operation on unflat column: -c2
         let chunk: DataChunk = [Ok(chunk)]
             .into_executor()
-            .project(vec![Box::new(e1), Box::new(e2), Box::new(e3)])
+            .project(vec![Box::new(e1), Box::new(e2), Box::new(e3), Box::new(e4)])
             .into_iter()
             .try_collect()
             .unwrap();
@@ -127,7 +128,14 @@ mod tests {
             builder.append_value([Some(9), Some(10), Some(11)]);
             Arc::new(builder.finish())
         };
-        let expected = DataChunk::new(vec![expected_c1, expected_c2, expected_c3]);
+        let expected_c4 = {
+            let field = Field::new_list_field(DataType::Int32, false);
+            let mut builder = ListBuilder::new(Int32Builder::new()).with_field(Arc::new(field));
+            builder.append_value([Some(-1)]);
+            builder.append_value([Some(-5), Some(-6), Some(-7)]);
+            Arc::new(builder.finish())
+        };
+        let expected = DataChunk::new(vec![expected_c1, expected_c2, expected_c3, expected_c4]);
         assert_eq!(chunk, expected);
     }
 }
