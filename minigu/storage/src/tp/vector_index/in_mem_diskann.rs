@@ -11,15 +11,10 @@ use std::time::Instant;
 /// Index statistics and performance metrics
 #[derive(Debug, Clone, Default)]
 pub struct IndexStats {
-    /// Number of vectors in the index
     pub vector_count: usize,
-    /// Index size in bytes
     pub memory_usage: usize,
-    /// Build time in milliseconds
     pub build_time_ms: Option<u64>,
-    /// Average search time in microseconds
     pub avg_search_time_us: Option<f64>,
-    /// Number of searches performed
     pub search_count: u64,
 }
 
@@ -37,8 +32,8 @@ impl IndexStats {
 
 
 pub struct InMemDiskANNAdapter {
-    inner: Box<dyn ANNInmemIndex<f32>>,
-    configuration: IndexConfiguration,
+    inner: Box<dyn ANNInmemIndex<f32> + 'static>,
+    dimension: usize,
 
     node_to_vector: DashMap<u32, u32>,
     /// Mapping from vector ID to (is_deleted, node_id)
@@ -49,12 +44,13 @@ pub struct InMemDiskANNAdapter {
 
 impl InMemDiskANNAdapter {
     pub fn new(config: IndexConfiguration) -> StorageResult<Self> {
-        let inner = create_inmem_index::<f32>(config.clone())
+        let dimension = config.dim;
+        let inner = create_inmem_index::<f32>(config)
             .map_err(|e| StorageError::VectorIndex(VectorIndexError::DiskANN(e)))?;
         
         Ok(Self {
             inner,
-            configuration: config,
+            dimension,
             node_to_vector: DashMap::new(),
             vector_to_node: DashMap::new(),
             next_vector_id: AtomicU32::new(0),
@@ -68,26 +64,6 @@ impl InMemDiskANNAdapter {
 
     pub fn mapping_count(&self) -> usize {
         self.node_to_vector.len()
-    }
-
-    /// Get the index configuration
-    pub fn get_configuration(&self) -> &IndexConfiguration {
-        &self.configuration
-    }
-
-    /// Get the maximum degree parameter
-    pub fn get_max_degree(&self) -> u32 {
-        self.configuration.index_write_parameter.max_degree
-    }
-
-    /// Get the alpha parameter  
-    pub fn get_alpha(&self) -> f32 {
-        self.configuration.index_write_parameter.alpha
-    }
-
-    /// Get the search list size parameter
-    pub fn get_search_list_size(&self) -> u32 {
-        self.configuration.index_write_parameter.search_list_size
     }
 
     fn clear_mappings(&mut self) {
@@ -112,32 +88,15 @@ impl VectorIndex for InMemDiskANNAdapter {
         let mut sorted_vectors = vectors.to_vec();
         sorted_vectors.sort_by_key(|(node_id, _)| *node_id);
 
-        // Validate input data and establish ID mappings BEFORE calling DiskANN
-        let expected_dim = self.configuration.dim;
+        // Validate node IDs and establish ID mappings BEFORE calling DiskANN
         let mut vector_data = Vec::with_capacity(sorted_vectors.len());
         let mut seen_nodes = std::collections::HashSet::new();
 
         for (array_index, (node_id, vector)) in sorted_vectors.iter().enumerate() {
+            // Check for duplicate node IDs (miniGU-specific validation)
             if !seen_nodes.insert(*node_id) {
                 self.clear_mappings();
                 return Err(StorageError::VectorIndex(VectorIndexError::DuplicateNodeId { node_id: *node_id }));
-            }
-
-            if vector.len() != expected_dim {
-                self.clear_mappings();
-                return Err(StorageError::VectorIndex(VectorIndexError::InvalidDimension {
-                    expected: expected_dim,
-                    actual: vector.len()
-                }));
-            }
-
-            for (i, &value) in vector.iter().enumerate() {
-                if !value.is_finite() {
-                    self.clear_mappings();
-                    return Err(StorageError::VectorIndex(VectorIndexError::DataConversion(
-                        format!("Vector for node {} contains non-finite value at index {}: {}", node_id, i, value)
-                    )));
-                }
             }
 
             // Establish ID mapping - DiskANN will assign vector_id = array_index
@@ -170,33 +129,7 @@ impl VectorIndex for InMemDiskANNAdapter {
     }
     
     fn search(&self, query: &[f32], k: usize, l_value: u32) -> StorageResult<Vec<u32>> {
-        if k <= 0 {
-            return Err(StorageError::VectorIndex(VectorIndexError::InvalidSearchParams(
-                "k must be greater than 0".to_string()
-            )));
-        }
-
-        if l_value <= 0 {
-            return Err(StorageError::VectorIndex(VectorIndexError::InvalidSearchParams(
-                "l_value must be greater than 0".to_string()
-            )));
-        }
-        
-        if query.len() != self.configuration.dim {
-            return Err(StorageError::VectorIndex(VectorIndexError::InvalidDimension {
-                expected: self.configuration.dim,
-                actual: query.len()
-            }));
-        }
-
-        for (i, &value) in query.iter().enumerate() {
-            if !value.is_finite() {
-                return Err(StorageError::VectorIndex(VectorIndexError::DataConversion(
-                    format!("Query vector contains non-finite value at index {}: {}", i, value)
-                )));
-            }
-        }
-
+        // Check if index is built
         if self.vector_to_node.is_empty() {
             return Err(StorageError::VectorIndex(VectorIndexError::IndexNotBuilt));
         }
@@ -237,7 +170,7 @@ impl VectorIndex for InMemDiskANNAdapter {
     }
     
     fn get_dimension(&self) -> usize {
-        self.configuration.dim
+        self.dimension
     }
     
     fn size(&self) -> usize {
@@ -254,27 +187,12 @@ impl VectorIndex for InMemDiskANNAdapter {
             return Err(StorageError::VectorIndex(VectorIndexError::IndexNotBuilt));
         }
 
-        let expected_dim = self.configuration.dim;
-        for (node_id, vector) in vectors {
+        // Check for duplicate node IDs
+        for (node_id, _) in vectors {
             if self.node_to_vector.contains_key(node_id) {
                 return Err(StorageError::VectorIndex(VectorIndexError::DuplicateNodeId { 
                     node_id: *node_id 
                 }));
-            }
-
-            if vector.len() != expected_dim {
-                return Err(StorageError::VectorIndex(VectorIndexError::InvalidDimension {
-                    expected: expected_dim,
-                    actual: vector.len()
-                }));
-            }
-
-            for (i, &value) in vector.iter().enumerate() {
-                if !value.is_finite() {
-                    return Err(StorageError::VectorIndex(VectorIndexError::DataConversion(
-                        format!("Vector for node {} contains non-finite value at index {}: {}", node_id, i, value)
-                    )));
-                }
             }
         }
 
@@ -322,12 +240,11 @@ impl VectorIndex for InMemDiskANNAdapter {
             return Ok(());
         }
 
-        // 1. Check if index is built
         if self.node_to_vector.is_empty() {
             return Err(StorageError::VectorIndex(VectorIndexError::IndexNotBuilt));
         }
 
-        // 2. Validate all node_ids exist before making any changes
+        // Validate all node_ids exist before making any changes
         let mut vector_ids_to_delete = Vec::with_capacity(node_ids.len());
         for &node_id in node_ids {
             if let Some(vector_id) = self.node_to_vector.get(&node_id) {
@@ -346,7 +263,7 @@ impl VectorIndex for InMemDiskANNAdapter {
             }
         }
 
-        // 3. Perform soft deletion
+        // Perform soft deletion
         for &node_id in node_ids {
             if let Some(vector_id) = self.node_to_vector.get(&node_id) {
                 let vector_id = *vector_id;

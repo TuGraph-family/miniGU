@@ -1,16 +1,13 @@
 use crate::error::StorageResult;
 
 /// Vector index trait for approximate nearest neighbor search
-/// 
-/// This trait is designed to closely match the diskann-rs interface while providing
-/// the necessary abstraction for miniGU's graph node to vector ID mapping.
 pub trait VectorIndex: Send + Sync {
     /// Build the index from vectors with their associated node IDs
     /// Configuration is provided during adapter creation
     fn build(&mut self, vectors: &[(u32, Vec<f32>)]) -> StorageResult<()>;
     
     /// Search for k nearest neighbors using diskann-rs l_value parameter
-    /// l_value corresponds to the search list size (ef_search in HNSW terminology)
+    /// l_value corresponds to the search list size
     fn search(&self, query: &[f32], k: usize, l_value: u32) -> StorageResult<Vec<u32>>;
     
     /// Insert vectors with their node IDs (for dynamic updates)

@@ -1037,7 +1037,7 @@ impl MemoryGraph {
     pub fn create_vector_index_config(
         dimension: usize,
         max_points: usize,
-        search_list_size: u32,  // corresponds to ef_construction in HNSW terminology
+        search_list_size: u32,
         max_degree: u32,
         alpha: f32,
     ) -> IndexConfiguration {
