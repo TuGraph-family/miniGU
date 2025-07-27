@@ -1,13 +1,12 @@
 use crate::error::{StorageResult, StorageError, VectorIndexError};
-use super::index::{VectorIndex, BuildParams, SearchParams, LoadParams};
+use super::index::VectorIndex;
 use diskann::{
-    index::{ANNInmemIndex, create_inmem_index},
+    index::{create_inmem_index, ANNInmemIndex},
     model::IndexConfiguration,
 };
 use dashmap::DashMap;
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::Instant;
-use temp_dir::TempDir;
-use std::fs::File;
 
 /// Index statistics and performance metrics
 #[derive(Debug, Clone, Default)]
@@ -39,26 +38,26 @@ impl IndexStats {
 
 pub struct InMemDiskANNAdapter {
     inner: Box<dyn ANNInmemIndex<f32>>,
-    dimension: usize,
-    /// Mapping from node ID to vector ID (assigned by DiskANN)
-    node_to_vector_id: DashMap<u32, u32>,
-    /// Mapping from vector ID to node ID
-    vector_to_node_id: DashMap<u32, u32>,
-    /// Index statistics and performance metrics
+    configuration: IndexConfiguration,
+
+    node_to_vector: DashMap<u32, u32>,
+    /// Mapping from vector ID to (is_deleted, node_id)
+    vector_to_node: DashMap<u32, (bool, u32)>,
+    next_vector_id: AtomicU32,                   // Next vector ID to be allocated
     stats: std::sync::RwLock<IndexStats>,
 }
 
 impl InMemDiskANNAdapter {
     pub fn new(config: IndexConfiguration) -> StorageResult<Self> {
-        let dimension = config.dim;
-        let inner = create_inmem_index::<f32>(config)
+        let inner = create_inmem_index::<f32>(config.clone())
             .map_err(|e| StorageError::VectorIndex(VectorIndexError::DiskANN(e)))?;
         
         Ok(Self {
             inner,
-            dimension,
-            node_to_vector_id: DashMap::new(),
-            vector_to_node_id: DashMap::new(),
+            configuration: config,
+            node_to_vector: DashMap::new(),
+            vector_to_node: DashMap::new(),
+            next_vector_id: AtomicU32::new(0),
             stats: std::sync::RwLock::new(IndexStats::new()),
         })
     }
@@ -66,160 +65,130 @@ impl InMemDiskANNAdapter {
     pub fn stats(&self) -> IndexStats {
         self.stats.read().unwrap().clone()
     }
-    
-    /// Get the number of ID mappings currently stored
+
     pub fn mapping_count(&self) -> usize {
-        self.node_to_vector_id.len()
+        self.node_to_vector.len()
+    }
+
+    /// Get the index configuration
+    pub fn get_configuration(&self) -> &IndexConfiguration {
+        &self.configuration
+    }
+
+    /// Get the maximum degree parameter
+    pub fn get_max_degree(&self) -> u32 {
+        self.configuration.index_write_parameter.max_degree
+    }
+
+    /// Get the alpha parameter  
+    pub fn get_alpha(&self) -> f32 {
+        self.configuration.index_write_parameter.alpha
+    }
+
+    /// Get the search list size parameter
+    pub fn get_search_list_size(&self) -> u32 {
+        self.configuration.index_write_parameter.search_list_size
+    }
+
+    fn clear_mappings(&mut self) {
+        self.node_to_vector.clear();
+        self.vector_to_node.clear();
+        self.next_vector_id.store(0, Ordering::Relaxed);
+        // *self.stats.write().unwrap() = IndexStats::new();
     }
     
-    /// Clear all ID mappings (useful for rebuilding)
-    pub fn clear_mappings(&mut self) {
-        self.node_to_vector_id.clear();
-        self.vector_to_node_id.clear();
-    }
-    
-    /// Write vectors to diskann binary format using a temporary file
-    fn write_vectors_to_temp_file(&self, vectors: &[Vec<f32>]) -> StorageResult<(TempDir, std::path::PathBuf)> {
-        use std::io::Write;
-        
-        let temp_dir = TempDir::new()
-            .map_err(|e| StorageError::VectorIndex(VectorIndexError::InvalidInput(format!("Failed to create temp dir: {}", e))))?;
-        let temp_file_path = temp_dir.path().join("vectors.bin");
-        let mut temp_file = File::create(&temp_file_path)
-            .map_err(|e| StorageError::VectorIndex(VectorIndexError::InvalidInput(format!("Failed to create temp file: {}", e))))?;
-        
-        // Write number of vectors and dimension
-        let num_vectors = vectors.len() as u32;
-        let dimension = self.dimension as u32;
-        
-        temp_file.write_all(&num_vectors.to_le_bytes())
-            .map_err(|e| StorageError::VectorIndex(VectorIndexError::InvalidInput(format!("Write error: {}", e))))?;
-        temp_file.write_all(&dimension.to_le_bytes())
-            .map_err(|e| StorageError::VectorIndex(VectorIndexError::InvalidInput(format!("Write error: {}", e))))?;
-        
-        // Write vector data
-        for vector in vectors {
-            for &value in vector {
-                temp_file.write_all(&value.to_le_bytes())
-                    .map_err(|e| StorageError::VectorIndex(VectorIndexError::InvalidInput(format!("Write error: {}", e))))?;
-            }
-        }
-        
-        temp_file.flush()
-            .map_err(|e| StorageError::VectorIndex(VectorIndexError::InvalidInput(format!("Flush error: {}", e))))?;
-        
-        Ok((temp_dir, temp_file_path))
-    }
 }
 
 impl VectorIndex for InMemDiskANNAdapter {
-    fn build(&mut self, vectors: &[(u32, Vec<f32>)], params: BuildParams) -> StorageResult<()> {
+    fn build(&mut self, vectors: &[(u32, Vec<f32>)]) -> StorageResult<()> {
         let start = Instant::now();
-        
-        // Validate input
+
         if vectors.is_empty() {
             return Err(StorageError::VectorIndex(VectorIndexError::EmptyDataset));
         }
-        
-        // Validate build parameters
-        if params.ef_construction == 0 {
-            return Err(StorageError::VectorIndex(VectorIndexError::InvalidBuildParams(
-                "ef_construction must be greater than 0".to_string()
-            )));
-        }
-        if params.max_degree == 0 {
-            return Err(StorageError::VectorIndex(VectorIndexError::InvalidBuildParams(
-                "max_degree must be greater than 0".to_string()
-            )));
-        }
-        if params.alpha <= 0.0 {
-            return Err(StorageError::VectorIndex(VectorIndexError::InvalidBuildParams(
-                "alpha must be greater than 0".to_string()
-            )));
-        }
-        
-        // Clear existing mappings
+
         self.clear_mappings();
-        
-        // Validate dimension consistency and build ID mappings
-        let expected_dim = self.dimension;
-        let mut vector_data = Vec::with_capacity(vectors.len());
+
+        let mut sorted_vectors = vectors.to_vec();
+        sorted_vectors.sort_by_key(|(node_id, _)| *node_id);
+
+        // Validate input data and establish ID mappings BEFORE calling DiskANN
+        let expected_dim = self.configuration.dim;
+        let mut vector_data = Vec::with_capacity(sorted_vectors.len());
         let mut seen_nodes = std::collections::HashSet::new();
-        
-        for (vector_id, (node_id, vector)) in vectors.iter().enumerate() {
-            // Check for duplicate node IDs
+
+        for (array_index, (node_id, vector)) in sorted_vectors.iter().enumerate() {
             if !seen_nodes.insert(*node_id) {
+                self.clear_mappings();
                 return Err(StorageError::VectorIndex(VectorIndexError::DuplicateNodeId { node_id: *node_id }));
             }
-            
-            // Validate vector dimension
+
             if vector.len() != expected_dim {
+                self.clear_mappings();
                 return Err(StorageError::VectorIndex(VectorIndexError::InvalidDimension {
                     expected: expected_dim,
                     actual: vector.len()
                 }));
             }
-            
-            // Validate vector values (no NaN or infinity)
+
             for (i, &value) in vector.iter().enumerate() {
                 if !value.is_finite() {
+                    self.clear_mappings();
                     return Err(StorageError::VectorIndex(VectorIndexError::DataConversion(
                         format!("Vector for node {} contains non-finite value at index {}: {}", node_id, i, value)
                     )));
                 }
             }
+
+            // Establish ID mapping - DiskANN will assign vector_id = array_index
+            let vector_id = array_index as u32;
+
+            self.node_to_vector.insert(*node_id, vector_id);
+            self.vector_to_node.insert(vector_id, (false, *node_id)); // false = not deleted
             
-            let vector_id = vector_id as u32;
-            
-            // Build bidirectional ID mapping
-            self.node_to_vector_id.insert(*node_id, vector_id);
-            self.vector_to_node_id.insert(vector_id, *node_id);
-            
-            // Collect vector data for DiskANN
-            vector_data.push(vector.clone());
+            vector_data.push(vector.as_slice());
         }
-        
-        // Write vectors to temporary file
-        let (_temp_dir, temp_file_path) = self.write_vectors_to_temp_file(&vector_data)
-            .map_err(|e| StorageError::VectorIndex(VectorIndexError::TempFileError(e.to_string())))?;
-        
-        // Build the index
-        self.inner.build(&temp_file_path.to_string_lossy(), vectors.len())
-            .map_err(|e| StorageError::VectorIndex(VectorIndexError::BuildError(e.to_string())))?;
-        
-        // Update statistics
-        let build_time = start.elapsed().as_millis() as u64;
-        {
-            let mut stats = self.stats.write().unwrap();
-            stats.update_after_build(vectors.len(), build_time, 0); // Memory usage estimation would need diskann API
+
+        // Call DiskANN to build the index 
+        match self.inner.build_from_memory(&vector_data) {
+            Ok(()) => {
+                self.next_vector_id.store(sorted_vectors.len() as u32, Ordering::Relaxed);
+                
+                let build_time = start.elapsed().as_millis() as u64;
+                {
+                    let mut stats = self.stats.write().unwrap();
+                    stats.update_after_build(sorted_vectors.len(), build_time, 0);
+                }
+                
+                Ok(())
+            },
+            Err(e) => {
+                self.clear_mappings();
+                Err(StorageError::VectorIndex(VectorIndexError::BuildError(e.to_string())))
+            }
         }
-        
-        // temp_file is automatically cleaned up when dropped
-        Ok(())
     }
     
-    fn search(&self, query: &[f32], k: usize, params: SearchParams) -> StorageResult<Vec<u32>> {
-        // Validate search parameters
-        if k == 0 {
+    fn search(&self, query: &[f32], k: usize, l_value: u32) -> StorageResult<Vec<u32>> {
+        if k <= 0 {
             return Err(StorageError::VectorIndex(VectorIndexError::InvalidSearchParams(
                 "k must be greater than 0".to_string()
             )));
         }
-        if params.ef_search == 0 {
+
+        if l_value <= 0 {
             return Err(StorageError::VectorIndex(VectorIndexError::InvalidSearchParams(
-                "ef_search must be greater than 0".to_string()
+                "l_value must be greater than 0".to_string()
             )));
         }
         
-        // Validate query vector
-        if query.len() != self.dimension {
+        if query.len() != self.configuration.dim {
             return Err(StorageError::VectorIndex(VectorIndexError::InvalidDimension {
-                expected: self.dimension,
+                expected: self.configuration.dim,
                 actual: query.len()
             }));
         }
-        
-        // Validate query values (no NaN or infinity)
+
         for (i, &value) in query.iter().enumerate() {
             if !value.is_finite() {
                 return Err(StorageError::VectorIndex(VectorIndexError::DataConversion(
@@ -227,30 +196,38 @@ impl VectorIndex for InMemDiskANNAdapter {
                 )));
             }
         }
-        
-        // Check if index is built
-        if self.vector_to_node_id.is_empty() {
+
+        if self.vector_to_node.is_empty() {
             return Err(StorageError::VectorIndex(VectorIndexError::IndexNotBuilt));
         }
         
-        // Prepare result buffers
+        // Perform DiskANN search
         let effective_k = std::cmp::min(k, self.size());
+        if effective_k == 0 {
+            return Ok(Vec::new()); // No active vectors
+        }
+        
         let mut vector_ids = vec![0u32; effective_k];
-        
-        let actual_count = self.inner.search(query, effective_k, params.ef_search, &mut vector_ids)
+        let actual_count = self.inner.search(query, effective_k, l_value, &mut vector_ids)
             .map_err(|e| StorageError::VectorIndex(VectorIndexError::SearchError(e.to_string())))?;
-        
-        // Convert vector IDs to node IDs using the mapping
+
+        // Filter deleted vectors and convert to node_ids
         let mut node_ids = Vec::with_capacity(actual_count as usize);
+        
         for &vector_id in vector_ids.iter().take(actual_count as usize) {
-            if let Some(node_id) = self.vector_to_node_id.get(&vector_id) {
-                node_ids.push(*node_id);
+            if let Some(entry) = self.vector_to_node.get(&vector_id) {
+                let (is_deleted, node_id) = *entry;
+                if !is_deleted {
+                    // Only include non-deleted vectors
+                    node_ids.push(node_id);
+                }
+                // Skip deleted vectors silently
             } else {
+                // This should not happen if our mapping is consistent
                 return Err(StorageError::VectorIndex(VectorIndexError::VectorIdNotFound { vector_id }));
             }
         }
-        
-        // Update search statistics
+
         {
             let mut stats = self.stats.write().unwrap();
             stats.search_count += 1;
@@ -260,53 +237,139 @@ impl VectorIndex for InMemDiskANNAdapter {
     }
     
     fn get_dimension(&self) -> usize {
-        self.dimension
+        self.configuration.dim
     }
     
     fn size(&self) -> usize {
-        // Return the number of vectors in the index
-        self.mapping_count()
+        // Return the number of active vectors from DiskANN's internal count
+        self.inner.get_num_active_pts()
     }
     
-    fn insert(&mut self, _node_id: u32, _vector: Vec<f32>) -> StorageResult<()> {
-        // DiskANN doesn't support dynamic insertion in current implementation
-        Err(StorageError::VectorIndex(VectorIndexError::InvalidInput("Dynamic insertion not supported by DiskANN".to_string())))
+    fn insert(&mut self, vectors: &[(u32, Vec<f32>)]) -> StorageResult<()> {
+        if vectors.is_empty() {
+            return Ok(());
+        }
+
+        if self.node_to_vector.is_empty() {
+            return Err(StorageError::VectorIndex(VectorIndexError::IndexNotBuilt));
+        }
+
+        let expected_dim = self.configuration.dim;
+        for (node_id, vector) in vectors {
+            if self.node_to_vector.contains_key(node_id) {
+                return Err(StorageError::VectorIndex(VectorIndexError::DuplicateNodeId { 
+                    node_id: *node_id 
+                }));
+            }
+
+            if vector.len() != expected_dim {
+                return Err(StorageError::VectorIndex(VectorIndexError::InvalidDimension {
+                    expected: expected_dim,
+                    actual: vector.len()
+                }));
+            }
+
+            for (i, &value) in vector.iter().enumerate() {
+                if !value.is_finite() {
+                    return Err(StorageError::VectorIndex(VectorIndexError::DataConversion(
+                        format!("Vector for node {} contains non-finite value at index {}: {}", node_id, i, value)
+                    )));
+                }
+            }
+        }
+
+        // atomic ID allocation
+        let base_vector_id = self.next_vector_id.fetch_add(
+            vectors.len() as u32, 
+            Ordering::Relaxed
+        );
+
+        let mut inserted_mappings = Vec::new();
+        for (array_index, (node_id, _)) in vectors.iter().enumerate() {
+            let vector_id = base_vector_id + array_index as u32;
+
+            self.node_to_vector.insert(*node_id, vector_id);
+            self.vector_to_node.insert(vector_id, (false, *node_id)); // false = not deleted
+            
+            // Track for potential rollback
+            inserted_mappings.push((*node_id, vector_id));
+        }
+
+        let vector_data: Vec<&[f32]> = vectors.iter()
+            .map(|(_, vector)| vector.as_slice())
+            .collect();
+
+        // Call DiskANN insert
+        match self.inner.insert_from_memory(&vector_data) {
+            Ok(()) => {
+                Ok(())
+            },
+            Err(e) => {
+                for (node_id, vector_id) in inserted_mappings {
+                    self.node_to_vector.remove(&node_id);
+                    self.vector_to_node.remove(&vector_id);
+                }
+
+                self.next_vector_id.fetch_sub(vectors.len() as u32, Ordering::Relaxed);
+                
+                Err(StorageError::VectorIndex(VectorIndexError::BuildError(e.to_string())))
+            }
+        }
     }
     
     fn delete(&mut self, node_ids: &[u32]) -> StorageResult<()> {
         if node_ids.is_empty() {
             return Ok(());
         }
-        
-        // Check if index is built
-        if self.node_to_vector_id.is_empty() {
+
+        // 1. Check if index is built
+        if self.node_to_vector.is_empty() {
             return Err(StorageError::VectorIndex(VectorIndexError::IndexNotBuilt));
         }
-        
-        // Convert node IDs to vector IDs and validate they exist
-        let mut vector_ids = Vec::with_capacity(node_ids.len());
+
+        // 2. Validate all node_ids exist before making any changes
+        let mut vector_ids_to_delete = Vec::with_capacity(node_ids.len());
         for &node_id in node_ids {
-            if let Some(vector_id) = self.node_to_vector_id.get(&node_id) {
-                vector_ids.push(*vector_id);
+            if let Some(vector_id) = self.node_to_vector.get(&node_id) {
+                // Check if already deleted
+                if let Some(entry) = self.vector_to_node.get(&*vector_id) {
+                    let (is_deleted, _) = *entry;
+                    if is_deleted {
+                        return Err(StorageError::VectorIndex(VectorIndexError::NodeIdNotFound { node_id }));
+                    }
+                    vector_ids_to_delete.push(*vector_id);
+                } else {
+                    return Err(StorageError::VectorIndex(VectorIndexError::NodeIdNotFound { node_id }));
+                }
             } else {
                 return Err(StorageError::VectorIndex(VectorIndexError::NodeIdNotFound { node_id }));
             }
         }
-        
-        // TODO: Implement soft deletion when diskann-rs supports it
-        // self.inner.soft_delete(&vector_ids, vector_ids.len())
+
+        // 3. Perform soft deletion
+        for &node_id in node_ids {
+            if let Some(vector_id) = self.node_to_vector.get(&node_id) {
+                let vector_id = *vector_id;
+                
+                // Mark as deleted in vector_to_node mapping
+                if let Some(mut entry) = self.vector_to_node.get_mut(&vector_id) {
+                    entry.0 = true; // Set deletion flag to true
+                }
+                
+                // Remove from node_to_vector mapping (one-way removal)
+                self.node_to_vector.remove(&node_id);
+            }
+        }
+
+        // TODO: Call DiskANN soft deletion when available
+        // When DiskANN supports soft deletion, uncomment the following:
+        // self.inner.soft_delete(&vector_ids_to_delete)
         //     .map_err(|e| StorageError::VectorIndex(VectorIndexError::DiskANN(e)))?;
-        // 
-        // // Remove from mappings
-        // for &node_id in node_ids {
-        //     if let Some(vector_id) = self.node_to_vector_id.remove(&node_id) {
-        //         self.vector_to_node_id.remove(&vector_id.1);
-        //     }
-        // }
         
-        Err(StorageError::VectorIndex(VectorIndexError::UnsupportedOperation(
-            "Deletion not yet implemented in DiskANN".to_string()
-        )))
+        // For now, we rely on our own soft deletion mechanism
+        // The search method will filter out deleted vectors
+        
+        Ok(())
     }
     
     fn save(&mut self, path: &str) -> StorageResult<()> {
@@ -315,18 +378,18 @@ impl VectorIndex for InMemDiskANNAdapter {
         Ok(())
     }
     
-    fn load(&mut self, path: &str, params: LoadParams) -> StorageResult<()> {
+    fn load(&mut self, path: &str, expected_num_points: usize) -> StorageResult<()> {
         // For now, loading requires recreating the index
         // In the future, we could implement proper loading by:
         // 1. Loading the index from file
         // 2. Reconstructing the ID mappings from metadata
         
         // TODO: Implement proper loading when diskann-rs supports it
-        // self.inner.load(path, params.expected_num_points)
+        // self.inner.load(path, expected_num_points)
         //     .map_err(|e| StorageError::VectorIndex(VectorIndexError::DiskANN(e)))?;
         
         Err(StorageError::VectorIndex(VectorIndexError::InvalidInput(
-            format!("Loading not yet implemented. Expected {} points from {}", params.expected_num_points, path)
+            format!("Loading not yet implemented. Expected {} points from {}", expected_num_points, path)
         )))
     }
 }

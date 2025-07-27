@@ -2,3 +2,4 @@
 
 pub mod isolation_level_test;
 pub mod tp_graph_test;
+pub mod vector_index;

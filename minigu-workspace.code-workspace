@@ -1,0 +1,93 @@
+{
+    "folders": [
+        {
+            "name": "miniGU (main)",
+            "path": "."
+        },
+        {
+            "name": "diskann-rs",
+            "path": "./third_party/diskann-rs"
+        }
+    ],
+    "settings": {
+        "git.enabled": true,
+        "git.autoRepositoryDetection": "subFolders",
+        "git.detectSubmodules": true,
+        "explorer.fileNesting.enabled": true,
+        "explorer.fileNesting.patterns": {
+            "Cargo.toml": "Cargo.lock",
+            "*.rs": "${capture}.md"
+        }
+    },
+    "extensions": {
+        "recommendations": [
+            "rust-lang.rust-analyzer",
+            "vadimcn.vscode-lldb",
+            "serayuzgur.crates",
+            "tamasfe.even-better-toml"
+        ]
+    },
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "Debug miniGU",
+                "type": "lldb",
+                "request": "launch",
+                "program": "${workspaceFolder:miniGU (main)}/target/debug/minigu-cli",
+                "args": ["shell"],
+                "cwd": "${workspaceFolder:miniGU (main)}",
+                "sourceLanguages": ["rust"]
+            },
+            {
+                "name": "Test diskann-rs",
+                "type": "lldb", 
+                "request": "launch",
+                "program": "${workspaceFolder:diskann-rs}/target/debug/deps/diskann-*",
+                "cwd": "${workspaceFolder:diskann-rs}",
+                "sourceLanguages": ["rust"]
+            }
+        ]
+    },
+    "tasks": {
+        "version": "2.0.0",
+        "tasks": [
+            {
+                "label": "Build miniGU",
+                "type": "cargo",
+                "command": "build",
+                "group": "build",
+                "options": {
+                    "cwd": "${workspaceFolder:miniGU (main)}"
+                }
+            },
+            {
+                "label": "Test miniGU",
+                "type": "cargo", 
+                "command": "test",
+                "group": "test",
+                "options": {
+                    "cwd": "${workspaceFolder:miniGU (main)}"
+                }
+            },
+            {
+                "label": "Build diskann-rs",
+                "type": "cargo",
+                "command": "build", 
+                "group": "build",
+                "options": {
+                    "cwd": "${workspaceFolder:diskann-rs}"
+                }
+            },
+            {
+                "label": "Test diskann-rs",
+                "type": "cargo",
+                "command": "test",
+                "group": "test", 
+                "options": {
+                    "cwd": "${workspaceFolder:diskann-rs}"
+                }
+            }
+        ]
+    }
+}
