@@ -103,8 +103,10 @@ strum = { version = "0.27.1", features = ["derive"] }
 tabled = { version = "0.20.0", default-features = false, features = ["std"] }
 temp-dir = "0.1.16"
 temp-file = "0.1.9"
+tempfile = "3.20.0"
 thiserror = { version = "2.0.12", default-features = false }
 uuid = "1.17.0"
+walkdir = "2.5.0"
 winnow = { version = "0.7.12", default-features = false, features = ["alloc"] }
 
 [profile.dev.package]

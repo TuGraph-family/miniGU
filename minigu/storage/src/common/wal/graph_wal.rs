@@ -1,3 +1,4 @@
+use std::env;
 // graph_wal.rs
 // Minimal standalone Write‑Ahead Log (WAL) implementation for an **in‑memory graph database**.
 //
@@ -17,7 +18,6 @@
 //       let bytes = rec?;
 //       ... // apply to in‑memory state
 //   }
-//
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, BufWriter, Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
@@ -32,6 +32,7 @@ use crate::common::transaction::{DeltaOp, IsolationLevel, Timestamp};
 use crate::error::{StorageError, StorageResult, WalError};
 
 const HEADER_SIZE: usize = 8; // 4 bytes length + 4 bytes crc32
+const DEFAULT_WAL_DIR_NAME: &str = ".wal";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RedoEntry {
@@ -321,10 +322,8 @@ pub struct WalManagerConfig {
 }
 
 fn default_wal_path() -> PathBuf {
-    let tmp_dir = temp_dir::TempDir::new().unwrap();
-    let path = tmp_dir.path().join("minigu-wal.log");
-    tmp_dir.leak();
-    path
+    let dir = env::current_dir().unwrap();
+    dir.join(DEFAULT_WAL_DIR_NAME)
 }
 
 impl Default for WalManagerConfig {
