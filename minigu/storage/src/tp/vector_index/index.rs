@@ -14,7 +14,7 @@ pub trait VectorIndex: Send + Sync {
     fn insert(&mut self, vectors: &[(u32, Vec<f32>)]) -> StorageResult<()>;
     
     /// Delete vectors by their node IDs
-    fn delete(&mut self, node_ids: &[u32]) -> StorageResult<()>;
+    fn soft_delete(&mut self, node_ids: &[u32]) -> StorageResult<()>;
     
     /// Save the index to a file
     fn save(&mut self, path: &str) -> StorageResult<()>;

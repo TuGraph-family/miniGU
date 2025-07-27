@@ -36,8 +36,8 @@ pub struct InMemDiskANNAdapter {
     dimension: usize,
 
     node_to_vector: DashMap<u32, u32>,
-    /// Mapping from vector ID to (is_deleted, node_id)
-    vector_to_node: DashMap<u32, (bool, u32)>,
+    /// Mapping from vector ID to node_id
+    vector_to_node: DashMap<u32, u32>,
     next_vector_id: AtomicU32,                   // Next vector ID to be allocated
     stats: std::sync::RwLock<IndexStats>,
 }
@@ -103,7 +103,7 @@ impl VectorIndex for InMemDiskANNAdapter {
             let vector_id = array_index as u32;
 
             self.node_to_vector.insert(*node_id, vector_id);
-            self.vector_to_node.insert(vector_id, (false, *node_id)); // false = not deleted
+            self.vector_to_node.insert(vector_id, *node_id);
             
             vector_data.push(vector.as_slice());
         }
@@ -149,12 +149,10 @@ impl VectorIndex for InMemDiskANNAdapter {
         
         for &vector_id in vector_ids.iter().take(actual_count as usize) {
             if let Some(entry) = self.vector_to_node.get(&vector_id) {
-                let (is_deleted, node_id) = *entry;
-                if !is_deleted {
-                    // Only include non-deleted vectors
-                    node_ids.push(node_id);
-                }
-                // Skip deleted vectors silently
+                let node_id = *entry;
+                // DiskANN-rs already filters deleted vectors in its search method
+                // No need for additional filtering here
+                node_ids.push(node_id);
             } else {
                 // This should not happen if our mapping is consistent
                 return Err(StorageError::VectorIndex(VectorIndexError::VectorIdNotFound { vector_id }));
@@ -174,8 +172,9 @@ impl VectorIndex for InMemDiskANNAdapter {
     }
     
     fn size(&self) -> usize {
-        // Return the number of active vectors from DiskANN's internal count
-        self.inner.get_num_active_pts()
+        // Return the actual number of active vectors based on our mappings
+        // This correctly excludes deleted vectors, unlike get_num_active_pts()
+        self.node_to_vector.len()
     }
     
     fn insert(&mut self, vectors: &[(u32, Vec<f32>)]) -> StorageResult<()> {
@@ -207,7 +206,7 @@ impl VectorIndex for InMemDiskANNAdapter {
             let vector_id = base_vector_id + array_index as u32;
 
             self.node_to_vector.insert(*node_id, vector_id);
-            self.vector_to_node.insert(vector_id, (false, *node_id)); // false = not deleted
+            self.vector_to_node.insert(vector_id, *node_id);
             
             // Track for potential rollback
             inserted_mappings.push((*node_id, vector_id));
@@ -235,7 +234,7 @@ impl VectorIndex for InMemDiskANNAdapter {
         }
     }
     
-    fn delete(&mut self, node_ids: &[u32]) -> StorageResult<()> {
+    fn soft_delete(&mut self, node_ids: &[u32]) -> StorageResult<()> {
         if node_ids.is_empty() {
             return Ok(());
         }
@@ -244,16 +243,12 @@ impl VectorIndex for InMemDiskANNAdapter {
             return Err(StorageError::VectorIndex(VectorIndexError::IndexNotBuilt));
         }
 
-        // Validate all node_ids exist before making any changes
+        // Validate all node_ids exist and collect vector_ids to delete
         let mut vector_ids_to_delete = Vec::with_capacity(node_ids.len());
         for &node_id in node_ids {
             if let Some(vector_id) = self.node_to_vector.get(&node_id) {
-                // Check if already deleted
-                if let Some(entry) = self.vector_to_node.get(&*vector_id) {
-                    let (is_deleted, _) = *entry;
-                    if is_deleted {
-                        return Err(StorageError::VectorIndex(VectorIndexError::NodeIdNotFound { node_id }));
-                    }
+                // Check if mapping exists in vector_to_node (should always exist if node_to_vector exists)
+                if self.vector_to_node.contains_key(&*vector_id) {
                     vector_ids_to_delete.push(*vector_id);
                 } else {
                     return Err(StorageError::VectorIndex(VectorIndexError::NodeIdNotFound { node_id }));
@@ -263,28 +258,22 @@ impl VectorIndex for InMemDiskANNAdapter {
             }
         }
 
-        // Perform soft deletion
-        for &node_id in node_ids {
-            if let Some(vector_id) = self.node_to_vector.get(&node_id) {
-                let vector_id = *vector_id;
-                
-                // Mark as deleted in vector_to_node mapping
-                if let Some(mut entry) = self.vector_to_node.get_mut(&vector_id) {
-                    entry.0 = true; // Set deletion flag to true
+        // Call DiskANN soft deletion
+        match self.inner.soft_delete(vector_ids_to_delete.clone(), vector_ids_to_delete.len()) {
+            Ok(()) => {
+                // DiskANN soft deletion successful, now clean up our mappings
+                for &node_id in node_ids {
+                    if let Some((_, vector_id)) = self.node_to_vector.remove(&node_id) {
+                        // Remove both directions of the mapping
+                        self.vector_to_node.remove(&vector_id);
+                    }
                 }
-                
-                // Remove from node_to_vector mapping (one-way removal)
-                self.node_to_vector.remove(&node_id);
+            },
+            Err(e) => {
+                // DiskANN soft deletion failed, don't modify our mappings
+                return Err(StorageError::VectorIndex(VectorIndexError::DiskANN(e)));
             }
         }
-
-        // TODO: Call DiskANN soft deletion when available
-        // When DiskANN supports soft deletion, uncomment the following:
-        // self.inner.soft_delete(&vector_ids_to_delete)
-        //     .map_err(|e| StorageError::VectorIndex(VectorIndexError::DiskANN(e)))?;
-        
-        // For now, we rely on our own soft deletion mechanism
-        // The search method will filter out deleted vectors
         
         Ok(())
     }

@@ -986,8 +986,6 @@ impl MemoryGraph {
     /// # Arguments
     /// * `property_id` - The PropertyId of the vector property to index
     ///                   (resolved from property name by higher layers)
-    /// * `dimension` - Expected dimension of all vectors for this property
-    /// * `params` - DiskANN build parameters
     pub fn build_vector_index(
         &self,
         txn: &TransactionHandle,
