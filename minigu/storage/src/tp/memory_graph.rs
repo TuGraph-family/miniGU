@@ -1027,10 +1027,6 @@ impl MemoryGraph {
     }
 
     /// Create a vector index configuration with commonly used parameters
-    ///
-    /// This is a convenience method for creating IndexConfiguration with reasonable defaults.
-    /// For advanced configurations, create IndexConfiguration directly using
-    /// IndexWriteParametersBuilder.
     pub fn create_vector_index_config(
         dimension: usize,
         max_points: usize,
@@ -1046,7 +1042,7 @@ impl MemoryGraph {
             index_write_parameter: write_params,
             dist_metric: Metric::L2,
             dim: dimension,
-            aligned_dim: round_up(dimension, 8), // Align to 8-byte boundary
+            aligned_dim: round_up(dimension, 8),
             max_points,
             num_frozen_pts: 0,
             use_pq_dist: false,
@@ -1070,7 +1066,7 @@ impl MemoryGraph {
     /// * `property_id` - The PropertyId of the vector property to search
     /// * `query` - Query vector for similarity search
     /// * `k` - Number of nearest neighbors to return
-    /// * `l_value` - Search list size parameter (corresponds to ef_search in HNSW terminology)
+    /// * `l_value` - Search list size parameter
     /// * `_filter` - Optional filter (to be implemented)
     pub fn vector_search(
         &self,
@@ -1078,7 +1074,7 @@ impl MemoryGraph {
         query: &[f32],
         k: usize,
         l_value: u32,
-        _filter: Option<()>, // TODO: Implement VectorSearchFilter
+        _filter: Option<()>, // TODO: Implement VectorSearch with Filter
     ) -> StorageResult<Vec<u64>> {
         // Get the vector index for the specified property
         let index_ref = self.get_vector_index(property_id).ok_or_else(|| {
@@ -1088,9 +1084,63 @@ impl MemoryGraph {
         })?;
 
         // Perform the search
-        let results = index_ref.search(query, k, l_value)?;
+        let results = index_ref.search(query, k, l_value)?;     // node_ids
 
         Ok(results)
+    }
+
+    /// Get mutable vector index for the specified property
+    fn get_mutable_vector_index(
+        &self,
+        property_id: PropertyId,
+    ) -> Option<dashmap::mapref::one::RefMut<PropertyId, Box<dyn VectorIndex>>> {
+        self.vector_indices.get_mut(&property_id)
+    }
+
+    /// Insert vectors into the specified vector index
+    pub fn insert_into_vector_index(
+        &self,
+        property_id: PropertyId,
+        vectors: &[(u64, Vec<f32>)],
+    ) -> StorageResult<()> {
+        if vectors.is_empty() {
+            return Ok(());
+        }
+
+        // Get mutable reference to the vector index
+        let mut index_ref = self.get_mutable_vector_index(property_id).ok_or_else(|| {
+            StorageError::VectorIndex(crate::error::VectorIndexError::IndexNotFound(
+                property_id.to_string(),
+            ))
+        })?;
+
+        // Perform the insertion
+        index_ref.insert(vectors)?;
+
+        Ok(())
+    }
+
+    /// Delete vectors from the specified vector index
+    pub fn delete_from_vector_index(
+        &self,
+        property_id: PropertyId,
+        node_ids: &[u64],
+    ) -> StorageResult<()> {
+        if node_ids.is_empty() {
+            return Ok(());
+        }
+
+        // Get mutable reference to the vector index
+        let mut index_ref = self.get_mutable_vector_index(property_id).ok_or_else(|| {
+            StorageError::VectorIndex(crate::error::VectorIndexError::IndexNotFound(
+                property_id.to_string(),
+            ))
+        })?;
+
+        // Perform the soft deletion
+        index_ref.soft_delete(node_ids)?;
+
+        Ok(())
     }
 }
 
@@ -1123,8 +1173,12 @@ fn check_write_conflict(commit_ts: Timestamp, txn: &TransactionHandle) -> Storag
 pub mod tests {
     use std::fs;
 
+    use diskann::model::IndexConfiguration;
+    use diskann::model::configuration::index_write_parameters::IndexWriteParametersBuilder;
+    use diskann::utils::round_up;
     use minigu_common::types::LabelId;
-    use minigu_common::value::ScalarValue;
+    use minigu_common::value::{F32, ScalarValue};
+    use vector::Metric;
     use {Edge, Vertex};
 
     use super::*;
@@ -1133,6 +1187,11 @@ pub mod tests {
     const PERSON: LabelId = LabelId::new(1).unwrap();
     const FRIEND: LabelId = LabelId::new(2).unwrap();
     const FOLLOW: LabelId = LabelId::new(3).unwrap();
+
+    // Vector index test constants
+    const _NAME_PROPERTY_ID: PropertyId = 0;
+    const EMBEDDING_PROPERTY_ID: PropertyId = 1;
+    const TEST_DIMENSION: usize = 104; // DiskANN dimension support 104, 128, 256
 
     fn create_vertex(id: VertexId, label_id: LabelId, properties: Vec<ScalarValue>) -> Vertex {
         Vertex::new(id, label_id, PropertyRecord::new(properties))
@@ -1152,6 +1211,94 @@ pub mod tests {
             label_id,
             PropertyRecord::new(properties),
         )
+    }
+
+    // ===== VECTOR INDEX TEST UTILITIES =====
+
+    /// Creates a test vertex with vector embedding
+    fn create_vertex_with_vector(id: VertexId, name: &str, embedding: Vec<f32>) -> Vertex {
+        let vector_value = ScalarValue::Vector(Some(embedding.into_iter().map(F32::from).collect()));
+
+        Vertex::new(
+            id,
+            PERSON,
+            PropertyRecord::new(vec![
+                ScalarValue::String(Some(name.to_string())), // Property 0: name
+                vector_value,                                // Property 1: embedding
+            ]),
+        )
+    }
+
+    /// Creates optimized test index configuration for large-scale datasets (200+ points)
+    fn create_large_scale_index_config(dimension: usize) -> IndexConfiguration {
+        let write_params = IndexWriteParametersBuilder::new(100, 64) // Larger search list and degree
+            .with_alpha(1.0) // Lower alpha to avoid over-pruning
+            .with_num_threads(1) // Single thread for deterministic results
+            .build();
+
+        IndexConfiguration {
+            index_write_parameter: write_params,
+            dist_metric: Metric::L2,
+            dim: dimension,
+            aligned_dim: round_up(dimension, 8),
+            max_points: 500, // Increased capacity
+            num_frozen_pts: 0,
+            use_pq_dist: false,
+            num_pq_chunks: 0,
+            use_opq: false,
+            growth_potential: 1.2,
+        }
+    }
+
+    /// Generates 200 small-scale test vectors with big coordinates to ensure DiskANN graph connectivity
+    fn create_small_scale_test_vectors() -> Vec<(VertexId, String, Vec<f32>)> {
+        let count = 200;
+        let _clusters = 8; // 8 clusters for diversity
+        let points_per_cluster = 25; // 25 points per cluster
+        
+        (0..count).map(|i| {
+            let cluster_id = i / points_per_cluster;
+            let point_in_cluster = i % points_per_cluster;
+            
+            let mut vector = vec![0.0f32; TEST_DIMENSION];
+            
+            // Large coordinate cluster centers (avoid small value precision issues)
+            let center_x = (cluster_id as f32) * 20.0 + 30.0; // [30, 50, 70, 90, 110, 130, 150, 170]
+            let center_y = (cluster_id as f32) * 15.0 + 25.0; // [25, 40, 55, 70, 85, 100, 115, 130]
+            let center_z = (cluster_id as f32) * 12.0 + 20.0; // [20, 32, 44, 56, 68, 80, 92, 104]
+            
+            // Intra-cluster distribution (ensure overlapping connectivity)
+            let spread = 12.0; // cluster spread range
+            let offset_x = ((point_in_cluster as f32) * 2.1).sin() * spread;
+            let offset_y = ((point_in_cluster as f32) * 1.8).cos() * spread;
+            let offset_z = ((point_in_cluster as f32) * 2.5).sin() * spread;
+            
+            vector[0] = center_x + offset_x;
+            vector[1] = center_y + offset_y;
+            vector[2] = center_z + offset_z;
+            
+            // Other dimensions: add unique identifiers
+            for j in 3..std::cmp::min(10, TEST_DIMENSION) {
+                vector[j] = (i as f32) * 0.1 + (j as f32) * 0.2 + 5.0;
+            }
+            
+            ((i + 1) as VertexId, format!("small_scale_{}", i), vector)
+        }).collect()
+    }
+
+    /// Creates large-scale boundary test vectors with connectivity for u32::MAX testing
+    fn create_large_scale_boundary_vectors() -> Vec<(VertexId, String, Vec<f32>)> {
+        let mut vectors = create_small_scale_test_vectors();
+
+        // Add boundary ID vertex with large coordinates near existing clusters
+        let max_id = u32::MAX as u64;
+        let mut boundary_vec = vec![0.0f32; TEST_DIMENSION];
+        boundary_vec[0] = 100.0f32; // Place it near cluster center coordinates
+        boundary_vec[1] = 85.0f32;
+        boundary_vec[2] = 68.0f32;
+
+        vectors.push((max_id, "boundary_max".to_string(), boundary_vec));
+        vectors
     }
 
     pub fn mock_checkpoint_config() -> CheckpointManagerConfig {
@@ -1974,5 +2121,317 @@ pub mod tests {
             recovered_vertex2.properties()[0],
             ScalarValue::String(Some("After Checkpoint".to_string()))
         );
+    }
+
+    // ===== VECTOR INDEX TESTS =====
+
+    #[test]
+    fn test_vector_index_build_and_verify() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        // Create 200 test vertices with large-scale vectors
+        let test_vectors = create_small_scale_test_vectors();
+        for (id, name, embedding) in &test_vectors {
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+        }
+
+        // Build vector index with large-scale configuration
+        let config = create_large_scale_index_config(TEST_DIMENSION);
+        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+
+        // Verify index creation and properties
+        let index = graph
+            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .expect("Index should exist after build");
+        assert_eq!(index.size(), 200);
+        assert_eq!(index.get_dimension(), TEST_DIMENSION);
+
+        txn.commit()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_vector_search_accuracy() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        // Create large-scale test dataset
+        let test_vectors = create_small_scale_test_vectors();
+        for (id, name, embedding) in &test_vectors {
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+        }
+
+        // Build index with large-scale configuration
+        let config = create_large_scale_index_config(TEST_DIMENSION);
+        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+
+        // Test 1: Search in cluster 1 area (coordinates around 30-42)
+        let mut cluster1_query = vec![0.0f32; TEST_DIMENSION];
+        cluster1_query[0] = 35.0f32;
+        cluster1_query[1] = 30.0f32;
+        cluster1_query[2] = 25.0f32;
+        let results = graph.vector_search(EMBEDDING_PROPERTY_ID, &cluster1_query, 10, 50, None)?;
+        assert!(!results.is_empty(), "Should find vectors in cluster 1");
+        assert!(results.len() <= 10, "Results should not exceed k");
+
+        // Test 2: Search in cluster 2 area (coordinates around 50-62)
+        let mut cluster2_query = vec![0.0f32; TEST_DIMENSION];
+        cluster2_query[0] = 55.0f32;
+        cluster2_query[1] = 45.0f32;
+        cluster2_query[2] = 37.0f32;
+        let results = graph.vector_search(EMBEDDING_PROPERTY_ID, &cluster2_query, 5, 30, None)?;
+        assert!(!results.is_empty(), "Should find vectors in cluster 2");
+        assert!(results.len() <= 5, "Results should not exceed k");
+
+        txn.commit()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_vector_error_index_not_found() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        // Try to search without building index
+        let query = vec![1.0f32; TEST_DIMENSION];
+        let result = graph.vector_search(EMBEDDING_PROPERTY_ID, &query, 1, 20, None);
+
+        // Should fail with IndexNotFound error
+        assert!(result.is_err());
+
+        txn.commit()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_vector_error_empty_dataset() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        // Try to build index on empty dataset
+        let config = create_large_scale_index_config(TEST_DIMENSION);
+        let result = graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config);
+
+        // Should fail with appropriate error
+        assert!(result.is_err());
+
+        txn.commit()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_vector_error_dimension_mismatch() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        // Create index with valid large-scale vectors
+        let test_vectors = create_small_scale_test_vectors();
+        for (id, name, embedding) in &test_vectors {
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+        }
+
+        let config = create_large_scale_index_config(TEST_DIMENSION);
+        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+
+        // Try to search with wrong dimension query
+        let wrong_dim_query = vec![0.0f32; 50]; // Wrong dimension
+        let result = graph.vector_search(EMBEDDING_PROPERTY_ID, &wrong_dim_query, 1, 50, None);
+
+        // Should fail due to dimension mismatch
+        assert!(result.is_err());
+
+        txn.commit()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_vertex_id_mapping_correctness() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        // Create large-scale vertices with specific IDs to test mapping
+        let mut test_vectors = create_small_scale_test_vectors();
+        // Replace some IDs with specific values for testing
+        test_vectors[0].0 = 10u64;
+        test_vectors[1].0 = 42u64;
+        test_vectors[2].0 = 100u64;
+        test_vectors[3].0 = 999u64;
+        test_vectors[4].0 = 50000u64;
+
+        for (id, name, embedding) in &test_vectors {
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+        }
+
+        let config = create_large_scale_index_config(TEST_DIMENSION);
+        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+
+        // Search should return correct vertex IDs for modified vectors
+        for i in 0..5 {
+            let (expected_id, _, embedding) = &test_vectors[i];
+            let results = graph.vector_search(EMBEDDING_PROPERTY_ID, embedding, 1, 50, None)?;
+            assert_eq!(results.len(), 1);
+            assert_eq!(
+                results[0], *expected_id,
+                "ID mapping failed for vertex {}",
+                expected_id
+            );
+        }
+
+        txn.commit()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_vector_vertex_id_boundary_values() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        // Create large-scale test vectors with one boundary ID vertex
+        let test_vectors = create_large_scale_boundary_vectors();
+        for (id, name, embedding) in &test_vectors {
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+        }
+
+        // Building index should succeed with large-scale connected data
+        let config = create_large_scale_index_config(TEST_DIMENSION);
+        let result = graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config);
+        assert!(
+            result.is_ok(),
+            "Index build should succeed with large-scale connected vectors"
+        );
+
+        // Search should return results including the boundary ID
+        let max_valid_id = u32::MAX as u64;
+        let mut query = vec![0.0f32; TEST_DIMENSION];
+        query[0] = 98.0f32; // Query near the boundary vertex coordinates
+        query[1] = 83.0f32;
+        query[2] = 66.0f32;
+        let results = graph.vector_search(EMBEDDING_PROPERTY_ID, &query, 5, 50, None)?;
+
+        assert!(!results.is_empty(), "Should find nearby vectors");
+        assert!(
+            results.contains(&max_valid_id),
+            "Should find the boundary ID vertex"
+        );
+
+        txn.commit()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_vector_small_scale_dataset() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        // Use the standard large-scale dataset (200 points)
+        let test_vectors = create_small_scale_test_vectors();
+
+        for (id, name, embedding) in &test_vectors {
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+        }
+
+        // Build index with large-scale configuration
+        let config = create_large_scale_index_config(TEST_DIMENSION);
+        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+
+        // Verify index properties
+        let index = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap();
+        assert_eq!(index.size(), 200);
+
+        // Test search with various k values
+        let mut query = vec![0.0f32; TEST_DIMENSION];
+        query[0] = 75.0f32;  // Search in middle area
+        query[1] = 60.0f32;
+        query[2] = 45.0f32;
+        let results = graph.vector_search(EMBEDDING_PROPERTY_ID, &query, 15, 50, None)?;
+        assert!(!results.is_empty());
+        assert!(results.len() <= 15);
+
+        txn.commit()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_vector_transaction_isolation() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+
+        // Transaction 1: Build index with large-scale data
+        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+        let test_vectors = create_small_scale_test_vectors();
+        for (id, name, embedding) in &test_vectors {
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn1, vertex)?;
+        }
+
+        let config = create_large_scale_index_config(TEST_DIMENSION);
+        graph.build_vector_index(&txn1, EMBEDDING_PROPERTY_ID, config)?;
+        txn1.commit()?;
+
+        // Transaction 2: Use index with different isolation levels
+        for &isolation in &[IsolationLevel::Snapshot, IsolationLevel::Serializable] {
+            let txn2 = graph.begin_transaction(isolation);
+            let mut query = vec![0.0f32; TEST_DIMENSION];
+            query[0] = 65.0f32;  // Search in cluster area
+            query[1] = 55.0f32;
+            query[2] = 40.0f32;
+            let results = graph.vector_search(EMBEDDING_PROPERTY_ID, &query, 5, 30, None)?;
+            assert!(!results.is_empty());
+            txn2.commit()?;
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_vector_multiple_indices_per_graph() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        // Create vertices with vectors on different properties using large-scale data
+        let test_vectors = create_small_scale_test_vectors();
+        for (id, name, embedding) in &test_vectors {
+            // Create property with different embeddings for property 1 and 2
+            let embedding_1 = embedding.clone();
+            let mut embedding_2 = embedding.clone();
+            embedding_2[0] += 15.0; // Larger variation for large coordinates
+            embedding_2[1] += 10.0;
+
+            let vertex = Vertex::new(
+                *id,
+                PERSON,
+                PropertyRecord::new(vec![
+                    ScalarValue::String(Some(name.clone())),
+                    ScalarValue::Vector(Some(embedding_1.into_iter().map(F32::from).collect())),
+                    ScalarValue::Vector(Some(embedding_2.into_iter().map(F32::from).collect())),
+                ]),
+            );
+            graph.create_vertex(&txn, vertex)?;
+        }
+
+        // Build indices on different properties
+        let config = create_large_scale_index_config(TEST_DIMENSION);
+        graph.build_vector_index(&txn, 1, config.clone())?; // Property 1
+        graph.build_vector_index(&txn, 2, config)?; // Property 2
+
+        // Verify both indices work independently
+        let mut query = vec![0.0f32; TEST_DIMENSION];
+        query[0] = 80.0f32;  // Query in large coordinate space
+        query[1] = 70.0f32;
+        query[2] = 50.0f32;
+        let results_1 = graph.vector_search(1, &query, 3, 30, None)?;
+        let results_2 = graph.vector_search(2, &query, 3, 30, None)?;
+
+        assert!(!results_1.is_empty());
+        assert!(!results_2.is_empty());
+
+        txn.commit()?;
+        Ok(())
     }
 }
