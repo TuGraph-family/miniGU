@@ -2,12 +2,16 @@ use std::sync::{Arc, RwLock, Weak};
 
 use crossbeam_skiplist::SkipSet;
 use dashmap::DashMap;
-use minigu_common::types::{EdgeId, VertexId, PropertyId};
+use diskann::model::IndexConfiguration;
+use diskann::model::configuration::index_write_parameters::IndexWriteParametersBuilder;
+use diskann::utils::round_up;
+use minigu_common::types::{EdgeId, PropertyId, VertexId};
 use minigu_common::value::ScalarValue;
+use vector::Metric;
 
 use super::checkpoint::{CheckpointManager, CheckpointManagerConfig};
 use super::transaction::{MemTransaction, MemTxnManager, TransactionHandle, UndoEntry, UndoPtr};
-use super::vector_index::{VectorIndex, InMemDiskANNAdapter};
+use super::vector_index::{InMemDiskANNAdapter, VectorIndex};
 use crate::common::model::edge::{Edge, Neighbor};
 use crate::common::model::vertex::Vertex;
 use crate::common::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp};
@@ -16,11 +20,6 @@ use crate::common::wal::graph_wal::{Operation, RedoEntry, WalManager, WalManager
 use crate::error::{
     EdgeNotFoundError, StorageError, StorageResult, TransactionError, VertexNotFoundError,
 };
-use diskann::model::{
-    IndexConfiguration,
-    configuration::index_write_parameters::IndexWriteParametersBuilder,
-};
-use vector::Metric;
 
 // Perform the update properties operation
 macro_rules! update_properties {
@@ -938,30 +937,31 @@ impl MemoryGraph {
         Ok(())
     }
 
-        // ===== Vector Index Methods =====
-    
+    // ===== Vector Index Methods =====
+
     /// Collect vectors from graph nodes for the specified property (private helper method)
     fn collect_vectors_for_property(
         &self,
         txn: &TransactionHandle,
         property_id: PropertyId,
-    ) -> StorageResult<Vec<(u32, Vec<f32>)>> {
+    ) -> StorageResult<Vec<(u64, Vec<f32>)>> {
         let mut vectors = Vec::new();
-        
+
         // Iterate through all vertices in the graph
         let vertex_iter = self.iter_vertices(txn)?;
-        
+
         for vertex_result in vertex_iter {
             let vertex = vertex_result?;
-            let node_id = vertex.vid() as u32;
-            
+            let node_id = vertex.vid();
+
             // Check if vertex has the specified property at the given index
             if let Some(property_value) = vertex.properties().get(property_id as usize) {
                 // Check if the property is a vector type
                 match property_value {
                     ScalarValue::Vector(Some(vector_data)) => {
                         // Convert F32 wrapper to f32
-                        let vector: Vec<f32> = vector_data.iter()
+                        let vector: Vec<f32> = vector_data
+                            .iter()
                             .map(|f32_val| f32_val.into_inner())
                             .collect();
                         vectors.push((node_id, vector));
@@ -977,15 +977,15 @@ impl MemoryGraph {
                 }
             }
         }
-        
+
         Ok(vectors)
     }
-    
+
     /// Build a vector index for the specified property
-    /// 
+    ///
     /// # Arguments
-    /// * `property_id` - The PropertyId of the vector property to index
-    ///                   (resolved from property name by higher layers)
+    /// * `property_id` - The PropertyId of the vector property to index (resolved from property
+    ///   name by higher layers)
     pub fn build_vector_index(
         &self,
         txn: &TransactionHandle,
@@ -994,13 +994,13 @@ impl MemoryGraph {
     ) -> StorageResult<()> {
         // Collect vectors from graph nodes
         let vectors = self.collect_vectors_for_property(txn, property_id)?;
-        
+
         if vectors.is_empty() {
             return Err(StorageError::VectorIndex(
-                crate::error::VectorIndexError::EmptyDataset
+                crate::error::VectorIndexError::EmptyDataset,
             ));
         }
-        
+
         // Validate dimension consistency
         for (_node_id, vector) in &vectors {
             if vector.len() != index_config.dim {
@@ -1008,30 +1008,29 @@ impl MemoryGraph {
                     crate::error::VectorIndexError::InvalidDimension {
                         expected: index_config.dim,
                         actual: vector.len(),
-                    }
+                    },
                 ));
             }
         }
-        
+
         // Create DiskANN adapter using provided configuration
         let mut adapter = InMemDiskANNAdapter::new(index_config)?;
-        
+
         // Build the index
         adapter.build(&vectors)?;
-        
+
         // Store the index in the hash map (using PropertyId as key)
-        self.vector_indices.insert(
-            property_id,
-            Box::new(adapter) as Box<dyn VectorIndex>
-        );
-        
+        self.vector_indices
+            .insert(property_id, Box::new(adapter) as Box<dyn VectorIndex>);
+
         Ok(())
     }
 
     /// Create a vector index configuration with commonly used parameters
-    /// 
+    ///
     /// This is a convenience method for creating IndexConfiguration with reasonable defaults.
-    /// For advanced configurations, create IndexConfiguration directly using IndexWriteParametersBuilder.
+    /// For advanced configurations, create IndexConfiguration directly using
+    /// IndexWriteParametersBuilder.
     pub fn create_vector_index_config(
         dimension: usize,
         max_points: usize,
@@ -1042,12 +1041,12 @@ impl MemoryGraph {
         let write_params = IndexWriteParametersBuilder::new(search_list_size, max_degree)
             .with_alpha(alpha)
             .build();
-            
+
         IndexConfiguration {
             index_write_parameter: write_params,
             dist_metric: Metric::L2,
             dim: dimension,
-            aligned_dim: ((dimension + 7) / 8) * 8, // Align to 8-byte boundary
+            aligned_dim: round_up(dimension, 8), // Align to 8-byte boundary
             max_points,
             num_frozen_pts: 0,
             use_pq_dist: false,
@@ -1056,14 +1055,17 @@ impl MemoryGraph {
             growth_potential: 1.2,
         }
     }
-    
+
     /// Get vector index for the specified property  
-    pub fn get_vector_index(&self, property_id: PropertyId) -> Option<dashmap::mapref::one::Ref<PropertyId, Box<dyn VectorIndex>>> {
+    pub fn get_vector_index(
+        &self,
+        property_id: PropertyId,
+    ) -> Option<dashmap::mapref::one::Ref<PropertyId, Box<dyn VectorIndex>>> {
         self.vector_indices.get(&property_id)
     }
-    
+
     /// Perform vector similarity search
-    /// 
+    ///
     /// # Arguments
     /// * `property_id` - The PropertyId of the vector property to search
     /// * `query` - Query vector for similarity search
@@ -1077,16 +1079,17 @@ impl MemoryGraph {
         k: usize,
         l_value: u32,
         _filter: Option<()>, // TODO: Implement VectorSearchFilter
-    ) -> StorageResult<Vec<u32>> {
+    ) -> StorageResult<Vec<u64>> {
         // Get the vector index for the specified property
-        let index_ref = self.get_vector_index(property_id)
-            .ok_or_else(|| StorageError::VectorIndex(
-                crate::error::VectorIndexError::IndexNotFound(property_id.to_string())
-            ))?;
-        
+        let index_ref = self.get_vector_index(property_id).ok_or_else(|| {
+            StorageError::VectorIndex(crate::error::VectorIndexError::IndexNotFound(
+                property_id.to_string(),
+            ))
+        })?;
+
         // Perform the search
         let results = index_ref.search(query, k, l_value)?;
-        
+
         Ok(results)
     }
 }

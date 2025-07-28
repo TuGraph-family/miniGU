@@ -1,2 +1,6 @@
 [build]
-rustflags = ["-C", "target-feature=+avx2"]
+rustflags = [
+  "-C", "target-feature=+avx2",
+  "-L", "native=/usr/lib/x86_64-linux-gnu",  # 根据系统上 libopenblas.so 所在路径调整
+  "-l", "openblas",                          # 链接 OpenBLAS 库
+]

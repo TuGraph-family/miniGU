@@ -124,9 +124,9 @@ pub enum VectorIndexError {
     #[error("Vector ID {vector_id} not found in mapping")]
     VectorIdNotFound { vector_id: u32 },
     #[error("Node ID {node_id} not found in mapping")]
-    NodeIdNotFound { node_id: u32 },
+    NodeIdNotFound { node_id: u64 },
     #[error("Duplicate node ID {node_id} in input vectors")]
-    DuplicateNodeId { node_id: u32 },
+    DuplicateNodeId { node_id: u64 },
     #[error("Empty vector dataset provided")]
     EmptyDataset,
     #[error("Temporary file error: {0}")]
@@ -139,5 +139,8 @@ pub enum VectorIndexError {
     InvalidBuildParams(String),
     #[error("Invalid input: {0}")]
     InvalidInput(String),
+    #[error(
+        "VertexId {vertex_id} exceeds u32::MAX, cannot be used with DiskANN which requires u32 vector IDs"
+    )]
+    VertexIdOverflow { vertex_id: u64 },
 }
-
