@@ -1084,7 +1084,7 @@ impl MemoryGraph {
         })?;
 
         // Perform the search
-        let results = index_ref.search(query, k, l_value)?;     // node_ids
+        let results = index_ref.search(query, k, l_value)?; // node_ids
 
         Ok(results)
     }
@@ -1217,7 +1217,8 @@ pub mod tests {
 
     /// Creates a test vertex with vector embedding
     fn create_vertex_with_vector(id: VertexId, name: &str, embedding: Vec<f32>) -> Vertex {
-        let vector_value = ScalarValue::Vector(Some(embedding.into_iter().map(F32::from).collect()));
+        let vector_value =
+            ScalarValue::Vector(Some(embedding.into_iter().map(F32::from).collect()));
 
         Vertex::new(
             id,
@@ -1250,40 +1251,43 @@ pub mod tests {
         }
     }
 
-    /// Generates 200 small-scale test vectors with big coordinates to ensure DiskANN graph connectivity
+    /// Generates 200 small-scale test vectors with big coordinates to ensure DiskANN graph
+    /// connectivity
     fn create_small_scale_test_vectors() -> Vec<(VertexId, String, Vec<f32>)> {
         let count = 200;
         let _clusters = 8; // 8 clusters for diversity
         let points_per_cluster = 25; // 25 points per cluster
-        
-        (0..count).map(|i| {
-            let cluster_id = i / points_per_cluster;
-            let point_in_cluster = i % points_per_cluster;
-            
-            let mut vector = vec![0.0f32; TEST_DIMENSION];
-            
-            // Large coordinate cluster centers (avoid small value precision issues)
-            let center_x = (cluster_id as f32) * 20.0 + 30.0; // [30, 50, 70, 90, 110, 130, 150, 170]
-            let center_y = (cluster_id as f32) * 15.0 + 25.0; // [25, 40, 55, 70, 85, 100, 115, 130]
-            let center_z = (cluster_id as f32) * 12.0 + 20.0; // [20, 32, 44, 56, 68, 80, 92, 104]
-            
-            // Intra-cluster distribution (ensure overlapping connectivity)
-            let spread = 12.0; // cluster spread range
-            let offset_x = ((point_in_cluster as f32) * 2.1).sin() * spread;
-            let offset_y = ((point_in_cluster as f32) * 1.8).cos() * spread;
-            let offset_z = ((point_in_cluster as f32) * 2.5).sin() * spread;
-            
-            vector[0] = center_x + offset_x;
-            vector[1] = center_y + offset_y;
-            vector[2] = center_z + offset_z;
-            
-            // Other dimensions: add unique identifiers
-            for j in 3..std::cmp::min(10, TEST_DIMENSION) {
-                vector[j] = (i as f32) * 0.1 + (j as f32) * 0.2 + 5.0;
-            }
-            
-            ((i + 1) as VertexId, format!("small_scale_{}", i), vector)
-        }).collect()
+
+        (0..count)
+            .map(|i| {
+                let cluster_id = i / points_per_cluster;
+                let point_in_cluster = i % points_per_cluster;
+
+                let mut vector = vec![0.0f32; TEST_DIMENSION];
+
+                // Large coordinate cluster centers (avoid small value precision issues)
+                let center_x = (cluster_id as f32) * 20.0 + 30.0; // [30, 50, 70, 90, 110, 130, 150, 170]
+                let center_y = (cluster_id as f32) * 15.0 + 25.0; // [25, 40, 55, 70, 85, 100, 115, 130]
+                let center_z = (cluster_id as f32) * 12.0 + 20.0; // [20, 32, 44, 56, 68, 80, 92, 104]
+
+                // Intra-cluster distribution (ensure overlapping connectivity)
+                let spread = 12.0; // cluster spread range
+                let offset_x = ((point_in_cluster as f32) * 2.1).sin() * spread;
+                let offset_y = ((point_in_cluster as f32) * 1.8).cos() * spread;
+                let offset_z = ((point_in_cluster as f32) * 2.5).sin() * spread;
+
+                vector[0] = center_x + offset_x;
+                vector[1] = center_y + offset_y;
+                vector[2] = center_z + offset_z;
+
+                // Other dimensions: add unique identifiers
+                for j in 3..std::cmp::min(10, TEST_DIMENSION) {
+                    vector[j] = (i as f32) * 0.1 + (j as f32) * 0.2 + 5.0;
+                }
+
+                ((i + 1) as VertexId, format!("small_scale_{}", i), vector)
+            })
+            .collect()
     }
 
     /// Creates small-scale boundary test vectors with connectivity for u32::MAX testing
@@ -2347,7 +2351,7 @@ pub mod tests {
 
         // Test search with various k values
         let mut query = vec![0.0f32; TEST_DIMENSION];
-        query[0] = 75.0f32;  // Search in middle area
+        query[0] = 75.0f32; // Search in middle area
         query[1] = 60.0f32;
         query[2] = 45.0f32;
         let results = graph.vector_search(EMBEDDING_PROPERTY_ID, &query, 15, 50, None)?;
@@ -2378,7 +2382,7 @@ pub mod tests {
         for &isolation in &[IsolationLevel::Snapshot, IsolationLevel::Serializable] {
             let txn2 = graph.begin_transaction(isolation);
             let mut query = vec![0.0f32; TEST_DIMENSION];
-            query[0] = 65.0f32;  // Search in cluster area
+            query[0] = 65.0f32; // Search in cluster area
             query[1] = 55.0f32;
             query[2] = 40.0f32;
             let results = graph.vector_search(EMBEDDING_PROPERTY_ID, &query, 5, 30, None)?;
@@ -2422,7 +2426,7 @@ pub mod tests {
 
         // Verify both indices work independently
         let mut query = vec![0.0f32; TEST_DIMENSION];
-        query[0] = 80.0f32;  // Query in large coordinate space
+        query[0] = 80.0f32; // Query in large coordinate space
         query[1] = 70.0f32;
         query[2] = 50.0f32;
         let results_1 = graph.vector_search(1, &query, 3, 30, None)?;
@@ -2438,24 +2442,29 @@ pub mod tests {
     // ===== VECTOR INDEX INSERT/DELETE TESTS =====
 
     /// Creates additional test vectors for insert operations
-    fn create_additional_test_vectors(start_id: VertexId, count: usize) -> Vec<(VertexId, String, Vec<f32>)> {
-        (0..count).map(|i| {
-            let id = start_id + i as u64;
-            let name = format!("additional_vertex_{}", id);
-            
-            // Create vectors in a new cluster area to avoid conflicts with existing test data
-            let mut vector = vec![0.0f32; TEST_DIMENSION];
-            vector[0] = 200.0 + (i as f32) * 2.0; // New cluster starting at x=200
-            vector[1] = 180.0 + (i as f32) * 1.5; // New cluster starting at y=180
-            vector[2] = 160.0 + (i as f32) * 1.8; // New cluster starting at z=160
-            
-            // Add some variation to other dimensions
-            for j in 3..std::cmp::min(10, TEST_DIMENSION) {
-                vector[j] = (id as f32) * 0.1 + (j as f32) * 0.3 + 10.0;
-            }
-            
-            (id, name, vector)
-        }).collect()
+    fn create_additional_test_vectors(
+        start_id: VertexId,
+        count: usize,
+    ) -> Vec<(VertexId, String, Vec<f32>)> {
+        (0..count)
+            .map(|i| {
+                let id = start_id + i as u64;
+                let name = format!("additional_vertex_{}", id);
+
+                // Create vectors in a new cluster area to avoid conflicts with existing test data
+                let mut vector = vec![0.0f32; TEST_DIMENSION];
+                vector[0] = 200.0 + (i as f32) * 2.0; // New cluster starting at x=200
+                vector[1] = 180.0 + (i as f32) * 1.5; // New cluster starting at y=180
+                vector[2] = 160.0 + (i as f32) * 1.8; // New cluster starting at z=160
+
+                // Add some variation to other dimensions
+                for j in 3..std::cmp::min(10, TEST_DIMENSION) {
+                    vector[j] = (id as f32) * 0.1 + (j as f32) * 0.3 + 10.0;
+                }
+
+                (id, name, vector)
+            })
+            .collect()
     }
 
     /// Verify that a specific vector can be found in search results
@@ -2496,27 +2505,38 @@ pub mod tests {
         graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
 
         // Verify initial index size
-        let initial_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        let initial_size = graph
+            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .unwrap()
+            .size();
         assert_eq!(initial_size, 200);
 
         // Insert a single new vector
         let new_vectors = create_additional_test_vectors(1000, 1);
         let (new_id, new_name, new_embedding) = &new_vectors[0];
-        
+
         // Create the vertex in the graph first
         let new_vertex = create_vertex_with_vector(*new_id, new_name, new_embedding.clone());
         graph.create_vertex(&txn, new_vertex)?;
-        
+
         // Insert into vector index
         let insert_data = vec![(*new_id, new_embedding.clone())];
         graph.insert_into_vector_index(EMBEDDING_PROPERTY_ID, &insert_data)?;
 
         // Verify index size increased
-        let new_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        let new_size = graph
+            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .unwrap()
+            .size();
         assert_eq!(new_size, initial_size + 1);
 
         // Verify the inserted vector can be found
-        assert!(verify_vector_in_search_results(&graph, EMBEDDING_PROPERTY_ID, new_embedding, *new_id)?);
+        assert!(verify_vector_in_search_results(
+            &graph,
+            EMBEDDING_PROPERTY_ID,
+            new_embedding,
+            *new_id
+        )?);
 
         txn.commit()?;
         Ok(())
@@ -2537,12 +2557,15 @@ pub mod tests {
         let config = create_small_scale_index_config(TEST_DIMENSION);
         graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
 
-        let initial_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        let initial_size = graph
+            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .unwrap()
+            .size();
 
         // Insert multiple vectors
         let new_vectors = create_additional_test_vectors(2000, 5);
         let mut insert_data = Vec::new();
-        
+
         for (id, name, embedding) in &new_vectors {
             // Create vertices first
             let vertex = create_vertex_with_vector(*id, name, embedding.clone());
@@ -2554,12 +2577,20 @@ pub mod tests {
         graph.insert_into_vector_index(EMBEDDING_PROPERTY_ID, &insert_data)?;
 
         // Verify index size
-        let new_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        let new_size = graph
+            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .unwrap()
+            .size();
         assert_eq!(new_size, initial_size + 5);
 
         // Verify all inserted vectors can be found
         for (id, _, embedding) in &new_vectors {
-            assert!(verify_vector_in_search_results(&graph, EMBEDDING_PROPERTY_ID, embedding, *id)?);
+            assert!(verify_vector_in_search_results(
+                &graph,
+                EMBEDDING_PROPERTY_ID,
+                embedding,
+                *id
+            )?);
         }
 
         txn.commit()?;
@@ -2581,7 +2612,10 @@ pub mod tests {
         let config = create_small_scale_index_config(TEST_DIMENSION);
         graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
 
-        let initial_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        let initial_size = graph
+            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .unwrap()
+            .size();
 
         // Insert empty vector list - should succeed but do nothing
         let empty_vectors: Vec<(u64, Vec<f32>)> = vec![];
@@ -2589,7 +2623,10 @@ pub mod tests {
         assert!(result.is_ok());
 
         // Verify size unchanged
-        let new_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        let new_size = graph
+            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .unwrap()
+            .size();
         assert_eq!(new_size, initial_size);
 
         txn.commit()?;
@@ -2628,23 +2665,39 @@ pub mod tests {
         let config = create_small_scale_index_config(TEST_DIMENSION);
         graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
 
-        let initial_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        let initial_size = graph
+            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .unwrap()
+            .size();
 
         // Select a vector to delete (use first vector from test data)
         let (target_id, _, target_embedding) = &test_vectors[0];
-        
+
         // Verify vector can be found before deletion
-        assert!(verify_vector_in_search_results(&graph, EMBEDDING_PROPERTY_ID, target_embedding, *target_id)?);
+        assert!(verify_vector_in_search_results(
+            &graph,
+            EMBEDDING_PROPERTY_ID,
+            target_embedding,
+            *target_id
+        )?);
 
         // Delete the vector
         graph.delete_from_vector_index(EMBEDDING_PROPERTY_ID, &[*target_id])?;
 
         // Verify index size decreased (soft delete should reduce active count)
-        let new_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        let new_size = graph
+            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .unwrap()
+            .size();
         assert_eq!(new_size, initial_size - 1);
 
         // Verify deleted vector is not found in search results
-        assert!(verify_vector_not_in_search_results(&graph, EMBEDDING_PROPERTY_ID, target_embedding, *target_id)?);
+        assert!(verify_vector_not_in_search_results(
+            &graph,
+            EMBEDDING_PROPERTY_ID,
+            target_embedding,
+            *target_id
+        )?);
 
         txn.commit()?;
         Ok(())
@@ -2665,27 +2718,44 @@ pub mod tests {
         let config = create_small_scale_index_config(TEST_DIMENSION);
         graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
 
-        let initial_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        let initial_size = graph
+            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .unwrap()
+            .size();
 
         // Select multiple vectors to delete (first 3 vectors)
         let delete_ids: Vec<u64> = test_vectors.iter().take(3).map(|(id, _, _)| *id).collect();
-        let delete_embeddings: Vec<&Vec<f32>> = test_vectors.iter().take(3).map(|(_, _, emb)| emb).collect();
+        let delete_embeddings: Vec<&Vec<f32>> =
+            test_vectors.iter().take(3).map(|(_, _, emb)| emb).collect();
 
         // Verify vectors can be found before deletion
         for (i, &id) in delete_ids.iter().enumerate() {
-            assert!(verify_vector_in_search_results(&graph, EMBEDDING_PROPERTY_ID, delete_embeddings[i], id)?);
+            assert!(verify_vector_in_search_results(
+                &graph,
+                EMBEDDING_PROPERTY_ID,
+                delete_embeddings[i],
+                id
+            )?);
         }
 
         // Delete multiple vectors
         graph.delete_from_vector_index(EMBEDDING_PROPERTY_ID, &delete_ids)?;
 
         // Verify index size decreased
-        let new_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        let new_size = graph
+            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .unwrap()
+            .size();
         assert_eq!(new_size, initial_size - 3);
 
         // Verify deleted vectors are not found in search results
         for (i, &id) in delete_ids.iter().enumerate() {
-            assert!(verify_vector_not_in_search_results(&graph, EMBEDDING_PROPERTY_ID, delete_embeddings[i], id)?);
+            assert!(verify_vector_not_in_search_results(
+                &graph,
+                EMBEDDING_PROPERTY_ID,
+                delete_embeddings[i],
+                id
+            )?);
         }
 
         txn.commit()?;
@@ -2707,7 +2777,10 @@ pub mod tests {
         let config = create_small_scale_index_config(TEST_DIMENSION);
         graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
 
-        let initial_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        let initial_size = graph
+            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .unwrap()
+            .size();
 
         // Delete empty list - should succeed but do nothing
         let empty_ids: Vec<u64> = vec![];
@@ -2715,7 +2788,10 @@ pub mod tests {
         assert!(result.is_ok());
 
         // Verify size unchanged
-        let new_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        let new_size = graph
+            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .unwrap()
+            .size();
         assert_eq!(new_size, initial_size);
 
         txn.commit()?;
@@ -2756,7 +2832,7 @@ pub mod tests {
         // Try to delete non-existent node ID
         let nonexistent_ids = vec![9999u64];
         let result = graph.delete_from_vector_index(EMBEDDING_PROPERTY_ID, &nonexistent_ids);
-        
+
         // Should fail with appropriate error
         assert!(result.is_err());
 
@@ -2779,12 +2855,15 @@ pub mod tests {
         let config = create_small_scale_index_config(TEST_DIMENSION);
         graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
 
-        let initial_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        let initial_size = graph
+            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .unwrap()
+            .size();
 
         // Phase 1: Insert new vectors
         let new_vectors = create_additional_test_vectors(4000, 3);
         let mut insert_data = Vec::new();
-        
+
         for (id, name, embedding) in &new_vectors {
             let vertex = create_vertex_with_vector(*id, name, embedding.clone());
             graph.create_vertex(&txn, vertex)?;
@@ -2794,7 +2873,10 @@ pub mod tests {
         graph.insert_into_vector_index(EMBEDDING_PROPERTY_ID, &insert_data)?;
 
         // Verify size after insertion
-        let after_insert_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        let after_insert_size = graph
+            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .unwrap()
+            .size();
         assert_eq!(after_insert_size, initial_size + 3);
 
         // Phase 2: Delete some original vectors
@@ -2802,18 +2884,35 @@ pub mod tests {
         graph.delete_from_vector_index(EMBEDDING_PROPERTY_ID, &delete_ids)?;
 
         // Verify final size
-        let final_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        let final_size = graph
+            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .unwrap()
+            .size();
         assert_eq!(final_size, initial_size + 3 - 2); // +3 inserts, -2 deletes
 
         // Verify inserted vectors are still findable
         for (id, _, embedding) in &new_vectors {
-            assert!(verify_vector_in_search_results(&graph, EMBEDDING_PROPERTY_ID, embedding, *id)?);
+            assert!(verify_vector_in_search_results(
+                &graph,
+                EMBEDDING_PROPERTY_ID,
+                embedding,
+                *id
+            )?);
         }
 
         // Verify deleted vectors are not findable
         for &id in &delete_ids {
-            let deleted_embedding = &test_vectors.iter().find(|(vid, _, _)| *vid == id).unwrap().2;
-            assert!(verify_vector_not_in_search_results(&graph, EMBEDDING_PROPERTY_ID, deleted_embedding, id)?);
+            let deleted_embedding = &test_vectors
+                .iter()
+                .find(|(vid, _, _)| *vid == id)
+                .unwrap()
+                .2;
+            assert!(verify_vector_not_in_search_results(
+                &graph,
+                EMBEDDING_PROPERTY_ID,
+                deleted_embedding,
+                id
+            )?);
         }
 
         txn.commit()?;
@@ -2836,28 +2935,40 @@ pub mod tests {
         graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
 
         // Mixed operations: insert, search, delete, search again
-        
+
         // 1. Insert new vector
         let new_vectors = create_additional_test_vectors(5000, 1);
         let (new_id, new_name, new_embedding) = &new_vectors[0];
         let vertex = create_vertex_with_vector(*new_id, new_name, new_embedding.clone());
         graph.create_vertex(&txn, vertex)?;
-        graph.insert_into_vector_index(EMBEDDING_PROPERTY_ID, &[(*new_id, new_embedding.clone())])?;
+        graph
+            .insert_into_vector_index(EMBEDDING_PROPERTY_ID, &[(*new_id, new_embedding.clone())])?;
 
         // 2. Search for inserted vector
-        let search_results = graph.vector_search(EMBEDDING_PROPERTY_ID, new_embedding, 5, 50, None)?;
+        let search_results =
+            graph.vector_search(EMBEDDING_PROPERTY_ID, new_embedding, 5, 50, None)?;
         assert!(search_results.contains(new_id));
 
         // 3. Delete the inserted vector
         graph.delete_from_vector_index(EMBEDDING_PROPERTY_ID, &[*new_id])?;
 
         // 4. Search again - should not find deleted vector
-        assert!(verify_vector_not_in_search_results(&graph, EMBEDDING_PROPERTY_ID, new_embedding, *new_id)?);
+        assert!(verify_vector_not_in_search_results(
+            &graph,
+            EMBEDDING_PROPERTY_ID,
+            new_embedding,
+            *new_id
+        )?);
 
         // 5. Verify original vectors are still accessible
         let original_embedding = &test_vectors[10].2;
         let original_id = test_vectors[10].0;
-        assert!(verify_vector_in_search_results(&graph, EMBEDDING_PROPERTY_ID, original_embedding, original_id)?);
+        assert!(verify_vector_in_search_results(
+            &graph,
+            EMBEDDING_PROPERTY_ID,
+            original_embedding,
+            original_id
+        )?);
 
         txn.commit()?;
         Ok(())

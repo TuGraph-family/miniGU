@@ -2,9 +2,9 @@ use std::hash::Hash;
 use std::sync::Arc;
 
 use arrow::array::{
-    Array, ArrayRef, AsArray, BooleanArray, Float32Array, Float64Array, Int8Array, Int16Array,
-    Int32Array, Int64Array, NullArray, StringArray, UInt8Array, UInt16Array, UInt32Array,
-    UInt64Array, FixedSizeListArray,
+    Array, ArrayRef, AsArray, BooleanArray, FixedSizeListArray, Float32Array, Float64Array,
+    Int8Array, Int16Array, Int32Array, Int64Array, NullArray, StringArray, UInt8Array, UInt16Array,
+    UInt32Array, UInt64Array,
 };
 use arrow::datatypes::DataType;
 use ordered_float::OrderedFloat;
@@ -64,14 +64,32 @@ impl ScalarValue {
                     Some(vec) => {
                         let float_values: Vec<f32> = vec.iter().map(|f| f.into_inner()).collect();
                         let float_array = Arc::new(Float32Array::from(float_values));
-                        let field = Arc::new(arrow::datatypes::Field::new("item", arrow::datatypes::DataType::Float32, false));
-                        Arc::new(FixedSizeListArray::new(field, vec.len() as i32, float_array, None))
+                        let field = Arc::new(arrow::datatypes::Field::new(
+                            "item",
+                            arrow::datatypes::DataType::Float32,
+                            false,
+                        ));
+                        Arc::new(FixedSizeListArray::new(
+                            field,
+                            vec.len() as i32,
+                            float_array,
+                            None,
+                        ))
                     }
                     None => {
                         // For null vector, create an empty FixedSizeListArray
-                        let field = Arc::new(arrow::datatypes::Field::new("item", arrow::datatypes::DataType::Float32, false));
+                        let field = Arc::new(arrow::datatypes::Field::new(
+                            "item",
+                            arrow::datatypes::DataType::Float32,
+                            false,
+                        ));
                         let empty_array = Arc::new(Float32Array::from(Vec::<f32>::new()));
-                        Arc::new(FixedSizeListArray::new(field, 0, empty_array, Some(arrow::buffer::NullBuffer::new_null(1))))
+                        Arc::new(FixedSizeListArray::new(
+                            field,
+                            0,
+                            empty_array,
+                            Some(arrow::buffer::NullBuffer::new_null(1)),
+                        ))
                     }
                 }
             }
@@ -409,9 +427,11 @@ impl ScalarValueAccessor for dyn Array + '_ {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use ordered_float::OrderedFloat;
     use std::sync::Arc;
+
+    use ordered_float::OrderedFloat;
+
+    use super::*;
 
     #[test]
     fn test_get_vector() {
@@ -437,7 +457,7 @@ mod tests {
         let vector = vec![OrderedFloat(1.0), OrderedFloat(2.0)];
         let scalar = ScalarValue::Vector(Some(vector));
         let array = scalar.to_scalar_array();
-        
+
         // Verify it's a FixedSizeListArray with correct type
         use arrow::datatypes::{DataType, Field};
         let expected_field = Arc::new(Field::new("item", DataType::Float32, false));

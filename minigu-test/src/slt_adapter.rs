@@ -344,7 +344,7 @@ mod tests {
 
     #[test]
     fn test_convert_scalar_value_to_string() {
-        use minigu::common::value::{ScalarValue, F32};
+        use minigu::common::value::{F32, ScalarValue};
 
         // Test vector formatting
         let vector = vec![F32::from(1.0), F32::from(2.5), F32::from(3.14)];
