@@ -1229,8 +1229,8 @@ pub mod tests {
         )
     }
 
-    /// Creates optimized test index configuration for large-scale datasets (200+ points)
-    fn create_large_scale_index_config(dimension: usize) -> IndexConfiguration {
+    /// Creates optimized test index configuration for small-scale datasets (200+ points)
+    fn create_small_scale_index_config(dimension: usize) -> IndexConfiguration {
         let write_params = IndexWriteParametersBuilder::new(100, 64) // Larger search list and degree
             .with_alpha(1.0) // Lower alpha to avoid over-pruning
             .with_num_threads(1) // Single thread for deterministic results
@@ -1286,7 +1286,7 @@ pub mod tests {
         }).collect()
     }
 
-    /// Creates large-scale boundary test vectors with connectivity for u32::MAX testing
+    /// Creates small-scale boundary test vectors with connectivity for u32::MAX testing
     fn create_large_scale_boundary_vectors() -> Vec<(VertexId, String, Vec<f32>)> {
         let mut vectors = create_small_scale_test_vectors();
 
@@ -2130,15 +2130,15 @@ pub mod tests {
         let (graph, _cleaner) = mock_empty_graph();
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-        // Create 200 test vertices with large-scale vectors
+        // Create 200 test vertices with small-scale vectors
         let test_vectors = create_small_scale_test_vectors();
         for (id, name, embedding) in &test_vectors {
             let vertex = create_vertex_with_vector(*id, name, embedding.clone());
             graph.create_vertex(&txn, vertex)?;
         }
 
-        // Build vector index with large-scale configuration
-        let config = create_large_scale_index_config(TEST_DIMENSION);
+        // Build vector index with small-scale configuration
+        let config = create_small_scale_index_config(TEST_DIMENSION);
         graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
 
         // Verify index creation and properties
@@ -2157,15 +2157,15 @@ pub mod tests {
         let (graph, _cleaner) = mock_empty_graph();
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-        // Create large-scale test dataset
+        // Create small-scale test dataset
         let test_vectors = create_small_scale_test_vectors();
         for (id, name, embedding) in &test_vectors {
             let vertex = create_vertex_with_vector(*id, name, embedding.clone());
             graph.create_vertex(&txn, vertex)?;
         }
 
-        // Build index with large-scale configuration
-        let config = create_large_scale_index_config(TEST_DIMENSION);
+        // Build index with small-scale configuration
+        let config = create_small_scale_index_config(TEST_DIMENSION);
         graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
 
         // Test 1: Search in cluster 1 area (coordinates around 30-42)
@@ -2212,7 +2212,7 @@ pub mod tests {
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
         // Try to build index on empty dataset
-        let config = create_large_scale_index_config(TEST_DIMENSION);
+        let config = create_small_scale_index_config(TEST_DIMENSION);
         let result = graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config);
 
         // Should fail with appropriate error
@@ -2227,14 +2227,14 @@ pub mod tests {
         let (graph, _cleaner) = mock_empty_graph();
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-        // Create index with valid large-scale vectors
+        // Create index with valid small-scale vectors
         let test_vectors = create_small_scale_test_vectors();
         for (id, name, embedding) in &test_vectors {
             let vertex = create_vertex_with_vector(*id, name, embedding.clone());
             graph.create_vertex(&txn, vertex)?;
         }
 
-        let config = create_large_scale_index_config(TEST_DIMENSION);
+        let config = create_small_scale_index_config(TEST_DIMENSION);
         graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
 
         // Try to search with wrong dimension query
@@ -2253,7 +2253,7 @@ pub mod tests {
         let (graph, _cleaner) = mock_empty_graph();
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-        // Create large-scale vertices with specific IDs to test mapping
+        // Create small-scale vertices with specific IDs to test mapping
         let mut test_vectors = create_small_scale_test_vectors();
         // Replace some IDs with specific values for testing
         test_vectors[0].0 = 10u64;
@@ -2267,7 +2267,7 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        let config = create_large_scale_index_config(TEST_DIMENSION);
+        let config = create_small_scale_index_config(TEST_DIMENSION);
         graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
 
         // Search should return correct vertex IDs for modified vectors
@@ -2291,19 +2291,19 @@ pub mod tests {
         let (graph, _cleaner) = mock_empty_graph();
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-        // Create large-scale test vectors with one boundary ID vertex
+        // Create small-scale test vectors with one boundary ID vertex
         let test_vectors = create_large_scale_boundary_vectors();
         for (id, name, embedding) in &test_vectors {
             let vertex = create_vertex_with_vector(*id, name, embedding.clone());
             graph.create_vertex(&txn, vertex)?;
         }
 
-        // Building index should succeed with large-scale connected data
-        let config = create_large_scale_index_config(TEST_DIMENSION);
+        // Building index should succeed with small-scale connected data
+        let config = create_small_scale_index_config(TEST_DIMENSION);
         let result = graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config);
         assert!(
             result.is_ok(),
-            "Index build should succeed with large-scale connected vectors"
+            "Index build should succeed with small-scale connected vectors"
         );
 
         // Search should return results including the boundary ID
@@ -2329,7 +2329,7 @@ pub mod tests {
         let (graph, _cleaner) = mock_empty_graph();
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-        // Use the standard large-scale dataset (200 points)
+        // Use the standard small-scale dataset (200 points)
         let test_vectors = create_small_scale_test_vectors();
 
         for (id, name, embedding) in &test_vectors {
@@ -2337,8 +2337,8 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        // Build index with large-scale configuration
-        let config = create_large_scale_index_config(TEST_DIMENSION);
+        // Build index with small-scale configuration
+        let config = create_small_scale_index_config(TEST_DIMENSION);
         graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
 
         // Verify index properties
@@ -2362,7 +2362,7 @@ pub mod tests {
     fn test_vector_transaction_isolation() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
 
-        // Transaction 1: Build index with large-scale data
+        // Transaction 1: Build index with small-scale data
         let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
         let test_vectors = create_small_scale_test_vectors();
         for (id, name, embedding) in &test_vectors {
@@ -2370,7 +2370,7 @@ pub mod tests {
             graph.create_vertex(&txn1, vertex)?;
         }
 
-        let config = create_large_scale_index_config(TEST_DIMENSION);
+        let config = create_small_scale_index_config(TEST_DIMENSION);
         graph.build_vector_index(&txn1, EMBEDDING_PROPERTY_ID, config)?;
         txn1.commit()?;
 
@@ -2394,7 +2394,7 @@ pub mod tests {
         let (graph, _cleaner) = mock_empty_graph();
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-        // Create vertices with vectors on different properties using large-scale data
+        // Create vertices with vectors on different properties using small-scale data
         let test_vectors = create_small_scale_test_vectors();
         for (id, name, embedding) in &test_vectors {
             // Create property with different embeddings for property 1 and 2
@@ -2416,7 +2416,7 @@ pub mod tests {
         }
 
         // Build indices on different properties
-        let config = create_large_scale_index_config(TEST_DIMENSION);
+        let config = create_small_scale_index_config(TEST_DIMENSION);
         graph.build_vector_index(&txn, 1, config.clone())?; // Property 1
         graph.build_vector_index(&txn, 2, config)?; // Property 2
 
@@ -2430,6 +2430,434 @@ pub mod tests {
 
         assert!(!results_1.is_empty());
         assert!(!results_2.is_empty());
+
+        txn.commit()?;
+        Ok(())
+    }
+
+    // ===== VECTOR INDEX INSERT/DELETE TESTS =====
+
+    /// Creates additional test vectors for insert operations
+    fn create_additional_test_vectors(start_id: VertexId, count: usize) -> Vec<(VertexId, String, Vec<f32>)> {
+        (0..count).map(|i| {
+            let id = start_id + i as u64;
+            let name = format!("additional_vertex_{}", id);
+            
+            // Create vectors in a new cluster area to avoid conflicts with existing test data
+            let mut vector = vec![0.0f32; TEST_DIMENSION];
+            vector[0] = 200.0 + (i as f32) * 2.0; // New cluster starting at x=200
+            vector[1] = 180.0 + (i as f32) * 1.5; // New cluster starting at y=180
+            vector[2] = 160.0 + (i as f32) * 1.8; // New cluster starting at z=160
+            
+            // Add some variation to other dimensions
+            for j in 3..std::cmp::min(10, TEST_DIMENSION) {
+                vector[j] = (id as f32) * 0.1 + (j as f32) * 0.3 + 10.0;
+            }
+            
+            (id, name, vector)
+        }).collect()
+    }
+
+    /// Verify that a specific vector can be found in search results
+    fn verify_vector_in_search_results(
+        graph: &MemoryGraph,
+        property_id: PropertyId,
+        target_vector: &[f32],
+        expected_node_id: VertexId,
+    ) -> StorageResult<bool> {
+        let results = graph.vector_search(property_id, target_vector, 5, 50, None)?;
+        Ok(results.contains(&expected_node_id))
+    }
+
+    /// Verify that a specific vector cannot be found in search results
+    fn verify_vector_not_in_search_results(
+        graph: &MemoryGraph,
+        property_id: PropertyId,
+        query_vector: &[f32],
+        excluded_node_id: VertexId,
+    ) -> StorageResult<bool> {
+        let results = graph.vector_search(property_id, query_vector, 20, 100, None)?; // Use larger k to be thorough
+        Ok(!results.contains(&excluded_node_id))
+    }
+
+    #[test]
+    fn test_vector_insert_basic() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        // Create initial dataset and build index
+        let test_vectors = create_small_scale_test_vectors();
+        for (id, name, embedding) in &test_vectors {
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+        }
+
+        let config = create_small_scale_index_config(TEST_DIMENSION);
+        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+
+        // Verify initial index size
+        let initial_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        assert_eq!(initial_size, 200);
+
+        // Insert a single new vector
+        let new_vectors = create_additional_test_vectors(1000, 1);
+        let (new_id, new_name, new_embedding) = &new_vectors[0];
+        
+        // Create the vertex in the graph first
+        let new_vertex = create_vertex_with_vector(*new_id, new_name, new_embedding.clone());
+        graph.create_vertex(&txn, new_vertex)?;
+        
+        // Insert into vector index
+        let insert_data = vec![(*new_id, new_embedding.clone())];
+        graph.insert_into_vector_index(EMBEDDING_PROPERTY_ID, &insert_data)?;
+
+        // Verify index size increased
+        let new_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        assert_eq!(new_size, initial_size + 1);
+
+        // Verify the inserted vector can be found
+        assert!(verify_vector_in_search_results(&graph, EMBEDDING_PROPERTY_ID, new_embedding, *new_id)?);
+
+        txn.commit()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_vector_insert_multiple() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        // Create initial dataset
+        let test_vectors = create_small_scale_test_vectors();
+        for (id, name, embedding) in &test_vectors {
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+        }
+
+        let config = create_small_scale_index_config(TEST_DIMENSION);
+        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+
+        let initial_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+
+        // Insert multiple vectors
+        let new_vectors = create_additional_test_vectors(2000, 5);
+        let mut insert_data = Vec::new();
+        
+        for (id, name, embedding) in &new_vectors {
+            // Create vertices first
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+            insert_data.push((*id, embedding.clone()));
+        }
+
+        // Batch insert
+        graph.insert_into_vector_index(EMBEDDING_PROPERTY_ID, &insert_data)?;
+
+        // Verify index size
+        let new_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        assert_eq!(new_size, initial_size + 5);
+
+        // Verify all inserted vectors can be found
+        for (id, _, embedding) in &new_vectors {
+            assert!(verify_vector_in_search_results(&graph, EMBEDDING_PROPERTY_ID, embedding, *id)?);
+        }
+
+        txn.commit()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_vector_insert_empty_list() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        // Create initial dataset
+        let test_vectors = create_small_scale_test_vectors();
+        for (id, name, embedding) in &test_vectors {
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+        }
+
+        let config = create_small_scale_index_config(TEST_DIMENSION);
+        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+
+        let initial_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+
+        // Insert empty vector list - should succeed but do nothing
+        let empty_vectors: Vec<(u64, Vec<f32>)> = vec![];
+        let result = graph.insert_into_vector_index(EMBEDDING_PROPERTY_ID, &empty_vectors);
+        assert!(result.is_ok());
+
+        // Verify size unchanged
+        let new_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        assert_eq!(new_size, initial_size);
+
+        txn.commit()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_vector_insert_index_not_found() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        // Don't build any index
+        let new_vectors = create_additional_test_vectors(3000, 1);
+        let insert_data = vec![(new_vectors[0].0, new_vectors[0].2.clone())];
+
+        // Should fail with index not found error
+        let result = graph.insert_into_vector_index(999, &insert_data);
+        assert!(result.is_err());
+
+        txn.commit()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_vector_delete_basic() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        // Create initial dataset
+        let test_vectors = create_small_scale_test_vectors();
+        for (id, name, embedding) in &test_vectors {
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+        }
+
+        let config = create_small_scale_index_config(TEST_DIMENSION);
+        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+
+        let initial_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+
+        // Select a vector to delete (use first vector from test data)
+        let (target_id, _, target_embedding) = &test_vectors[0];
+        
+        // Verify vector can be found before deletion
+        assert!(verify_vector_in_search_results(&graph, EMBEDDING_PROPERTY_ID, target_embedding, *target_id)?);
+
+        // Delete the vector
+        graph.delete_from_vector_index(EMBEDDING_PROPERTY_ID, &[*target_id])?;
+
+        // Verify index size decreased (soft delete should reduce active count)
+        let new_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        assert_eq!(new_size, initial_size - 1);
+
+        // Verify deleted vector is not found in search results
+        assert!(verify_vector_not_in_search_results(&graph, EMBEDDING_PROPERTY_ID, target_embedding, *target_id)?);
+
+        txn.commit()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_vector_delete_multiple() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        // Create initial dataset
+        let test_vectors = create_small_scale_test_vectors();
+        for (id, name, embedding) in &test_vectors {
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+        }
+
+        let config = create_small_scale_index_config(TEST_DIMENSION);
+        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+
+        let initial_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+
+        // Select multiple vectors to delete (first 3 vectors)
+        let delete_ids: Vec<u64> = test_vectors.iter().take(3).map(|(id, _, _)| *id).collect();
+        let delete_embeddings: Vec<&Vec<f32>> = test_vectors.iter().take(3).map(|(_, _, emb)| emb).collect();
+
+        // Verify vectors can be found before deletion
+        for (i, &id) in delete_ids.iter().enumerate() {
+            assert!(verify_vector_in_search_results(&graph, EMBEDDING_PROPERTY_ID, delete_embeddings[i], id)?);
+        }
+
+        // Delete multiple vectors
+        graph.delete_from_vector_index(EMBEDDING_PROPERTY_ID, &delete_ids)?;
+
+        // Verify index size decreased
+        let new_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        assert_eq!(new_size, initial_size - 3);
+
+        // Verify deleted vectors are not found in search results
+        for (i, &id) in delete_ids.iter().enumerate() {
+            assert!(verify_vector_not_in_search_results(&graph, EMBEDDING_PROPERTY_ID, delete_embeddings[i], id)?);
+        }
+
+        txn.commit()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_vector_delete_empty_list() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        // Create initial dataset
+        let test_vectors = create_small_scale_test_vectors();
+        for (id, name, embedding) in &test_vectors {
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+        }
+
+        let config = create_small_scale_index_config(TEST_DIMENSION);
+        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+
+        let initial_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+
+        // Delete empty list - should succeed but do nothing
+        let empty_ids: Vec<u64> = vec![];
+        let result = graph.delete_from_vector_index(EMBEDDING_PROPERTY_ID, &empty_ids);
+        assert!(result.is_ok());
+
+        // Verify size unchanged
+        let new_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        assert_eq!(new_size, initial_size);
+
+        txn.commit()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_vector_delete_index_not_found() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        // Don't build any index
+        let delete_ids = vec![1u64, 2u64];
+
+        // Should fail with index not found error
+        let result = graph.delete_from_vector_index(999, &delete_ids);
+        assert!(result.is_err());
+
+        txn.commit()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_vector_delete_nonexistent_node() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        // Create initial dataset
+        let test_vectors = create_small_scale_test_vectors();
+        for (id, name, embedding) in &test_vectors {
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+        }
+
+        let config = create_small_scale_index_config(TEST_DIMENSION);
+        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+
+        // Try to delete non-existent node ID
+        let nonexistent_ids = vec![9999u64];
+        let result = graph.delete_from_vector_index(EMBEDDING_PROPERTY_ID, &nonexistent_ids);
+        
+        // Should fail with appropriate error
+        assert!(result.is_err());
+
+        txn.commit()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_vector_insert_delete_combined() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        // Create initial dataset
+        let test_vectors = create_small_scale_test_vectors();
+        for (id, name, embedding) in &test_vectors {
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+        }
+
+        let config = create_small_scale_index_config(TEST_DIMENSION);
+        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+
+        let initial_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+
+        // Phase 1: Insert new vectors
+        let new_vectors = create_additional_test_vectors(4000, 3);
+        let mut insert_data = Vec::new();
+        
+        for (id, name, embedding) in &new_vectors {
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+            insert_data.push((*id, embedding.clone()));
+        }
+
+        graph.insert_into_vector_index(EMBEDDING_PROPERTY_ID, &insert_data)?;
+
+        // Verify size after insertion
+        let after_insert_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        assert_eq!(after_insert_size, initial_size + 3);
+
+        // Phase 2: Delete some original vectors
+        let delete_ids: Vec<u64> = test_vectors.iter().take(2).map(|(id, _, _)| *id).collect();
+        graph.delete_from_vector_index(EMBEDDING_PROPERTY_ID, &delete_ids)?;
+
+        // Verify final size
+        let final_size = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap().size();
+        assert_eq!(final_size, initial_size + 3 - 2); // +3 inserts, -2 deletes
+
+        // Verify inserted vectors are still findable
+        for (id, _, embedding) in &new_vectors {
+            assert!(verify_vector_in_search_results(&graph, EMBEDDING_PROPERTY_ID, embedding, *id)?);
+        }
+
+        // Verify deleted vectors are not findable
+        for &id in &delete_ids {
+            let deleted_embedding = &test_vectors.iter().find(|(vid, _, _)| *vid == id).unwrap().2;
+            assert!(verify_vector_not_in_search_results(&graph, EMBEDDING_PROPERTY_ID, deleted_embedding, id)?);
+        }
+
+        txn.commit()?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_vector_operations_mixed() -> StorageResult<()> {
+        let (graph, _cleaner) = mock_empty_graph();
+        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+        // Create initial dataset
+        let test_vectors = create_small_scale_test_vectors();
+        for (id, name, embedding) in &test_vectors {
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+        }
+
+        let config = create_small_scale_index_config(TEST_DIMENSION);
+        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+
+        // Mixed operations: insert, search, delete, search again
+        
+        // 1. Insert new vector
+        let new_vectors = create_additional_test_vectors(5000, 1);
+        let (new_id, new_name, new_embedding) = &new_vectors[0];
+        let vertex = create_vertex_with_vector(*new_id, new_name, new_embedding.clone());
+        graph.create_vertex(&txn, vertex)?;
+        graph.insert_into_vector_index(EMBEDDING_PROPERTY_ID, &[(*new_id, new_embedding.clone())])?;
+
+        // 2. Search for inserted vector
+        let search_results = graph.vector_search(EMBEDDING_PROPERTY_ID, new_embedding, 5, 50, None)?;
+        assert!(search_results.contains(new_id));
+
+        // 3. Delete the inserted vector
+        graph.delete_from_vector_index(EMBEDDING_PROPERTY_ID, &[*new_id])?;
+
+        // 4. Search again - should not find deleted vector
+        assert!(verify_vector_not_in_search_results(&graph, EMBEDDING_PROPERTY_ID, new_embedding, *new_id)?);
+
+        // 5. Verify original vectors are still accessible
+        let original_embedding = &test_vectors[10].2;
+        let original_id = test_vectors[10].0;
+        assert!(verify_vector_in_search_results(&graph, EMBEDDING_PROPERTY_ID, original_embedding, original_id)?);
 
         txn.commit()?;
         Ok(())

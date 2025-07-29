@@ -4,7 +4,7 @@ use std::sync::Arc;
 use arrow::array::{
     Array, ArrayRef, AsArray, BooleanArray, Float32Array, Float64Array, Int8Array, Int16Array,
     Int32Array, Int64Array, NullArray, StringArray, UInt8Array, UInt16Array, UInt32Array,
-    UInt64Array,
+    UInt64Array, FixedSizeListArray,
 };
 use arrow::datatypes::DataType;
 use ordered_float::OrderedFloat;
@@ -65,13 +65,13 @@ impl ScalarValue {
                         let float_values: Vec<f32> = vec.iter().map(|f| f.into_inner()).collect();
                         let float_array = Arc::new(Float32Array::from(float_values));
                         let field = Arc::new(arrow::datatypes::Field::new("item", arrow::datatypes::DataType::Float32, false));
-                        Arc::new(arrow::array::FixedSizeListArray::new(field, vec.len() as i32, float_array, None))
+                        Arc::new(FixedSizeListArray::new(field, vec.len() as i32, float_array, None))
                     }
                     None => {
                         // For null vector, create an empty FixedSizeListArray
                         let field = Arc::new(arrow::datatypes::Field::new("item", arrow::datatypes::DataType::Float32, false));
                         let empty_array = Arc::new(Float32Array::from(Vec::<f32>::new()));
-                        Arc::new(arrow::array::FixedSizeListArray::new(field, 0, empty_array, Some(arrow::buffer::NullBuffer::new_null(1))))
+                        Arc::new(FixedSizeListArray::new(field, 0, empty_array, Some(arrow::buffer::NullBuffer::new_null(1))))
                     }
                 }
             }
@@ -390,7 +390,6 @@ impl ScalarValueAccessor for dyn Array + '_ {
                     .into()
             }
             DataType::FixedSizeList(field, _size) if field.data_type() == &DataType::Float32 => {
-                use arrow::array::{FixedSizeListArray, AsArray};
                 let array = self.as_fixed_size_list();
                 if array.is_valid(index) {
                     let values = array.value(index);
