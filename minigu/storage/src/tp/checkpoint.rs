@@ -6,6 +6,7 @@
 // It can be used for backup, recovery, or state transfer purposes.
 
 use std::collections::HashMap;
+use std::env;
 use std::fs::{self, File};
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::{Path, PathBuf};
@@ -27,11 +28,11 @@ use crate::error::{CheckpointError, StorageError, StorageResult};
 
 // @TODO: Consider making this configurable via
 // CheckpointManagerConfig instead of a hardcoded constant.
-const DEFAULT_CHECKPOINT_DIR: &str = "checkpoints";
 const DEFAULT_CHECKPOINT_PREFIX: &str = "checkpoint";
 const MAX_CHECKPOINTS: usize = 5;
 const AUTO_CHECKPOINT_INTERVAL_SECS: u64 = 30;
 const DEFAULT_CHECKPOINT_TIMEOUT_SECS: u64 = 30;
+const DEFAULT_CHECKPOINT_DIR_NAME: &str = ".checkpoint";
 
 /// Represents a checkpoint of a MemoryGraph at a specific point in time.
 ///
@@ -399,10 +400,15 @@ pub struct CheckpointManagerConfig {
     pub transaction_timeout_secs: u64,
 }
 
+fn default_checkpoint_dir() -> PathBuf {
+    let dir = env::current_dir().unwrap();
+    dir.join(DEFAULT_CHECKPOINT_DIR_NAME)
+}
+
 impl Default for CheckpointManagerConfig {
     fn default() -> Self {
         Self {
-            checkpoint_dir: PathBuf::from(DEFAULT_CHECKPOINT_DIR),
+            checkpoint_dir: default_checkpoint_dir(),
             max_checkpoints: MAX_CHECKPOINTS,
             auto_checkpoint_interval_secs: AUTO_CHECKPOINT_INTERVAL_SECS,
             checkpoint_prefix: DEFAULT_CHECKPOINT_PREFIX.to_string(),

@@ -966,8 +966,8 @@ pub mod tests {
     use crate::model::properties::PropertyRecord;
 
     const PERSON: LabelId = LabelId::new(1).unwrap();
-    const FRIEND: LabelId = LabelId::new(1).unwrap();
-    const FOLLOW: LabelId = LabelId::new(2).unwrap();
+    const FRIEND: LabelId = LabelId::new(2).unwrap();
+    const FOLLOW: LabelId = LabelId::new(3).unwrap();
 
     fn create_vertex(id: VertexId, label_id: LabelId, properties: Vec<ScalarValue>) -> Vertex {
         Vertex::new(id, label_id, PropertyRecord::new(properties))

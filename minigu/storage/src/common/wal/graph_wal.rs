@@ -1,3 +1,4 @@
+use std::env;
 // graph_wal.rs
 // Minimal standalone Write‑Ahead Log (WAL) implementation for an **in‑memory graph database**.
 //
@@ -17,7 +18,6 @@
 //       let bytes = rec?;
 //       ... // apply to in‑memory state
 //   }
-//
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, BufWriter, Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
@@ -32,7 +32,7 @@ use crate::common::transaction::{DeltaOp, IsolationLevel, Timestamp};
 use crate::error::{StorageError, StorageResult, WalError};
 
 const HEADER_SIZE: usize = 8; // 4 bytes length + 4 bytes crc32
-const WAL_PATH: &str = "/tmp/wal.log";
+const DEFAULT_WAL_DIR_NAME: &str = ".wal";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RedoEntry {
@@ -75,6 +75,11 @@ impl StorageWal for GraphWal {
 
     /// Open existing log or create a new one at `path`.
     fn open<P: AsRef<Path>>(path: P) -> StorageResult<Self> {
+        // Create parent directory if it doesn't exist
+        if let Some(parent) = path.as_ref().parent() {
+            std::fs::create_dir_all(parent).map_err(|e| StorageError::Wal(WalError::Io(e)))?;
+        }
+
         let mut file = OpenOptions::new()
             .create(true)
             .write(true)
@@ -316,10 +321,15 @@ pub struct WalManagerConfig {
     pub wal_path: PathBuf,
 }
 
+fn default_wal_path() -> PathBuf {
+    let dir = env::current_dir().unwrap();
+    dir.join(DEFAULT_WAL_DIR_NAME)
+}
+
 impl Default for WalManagerConfig {
     fn default() -> Self {
         Self {
-            wal_path: PathBuf::from(WAL_PATH),
+            wal_path: default_wal_path(),
         }
     }
 }
