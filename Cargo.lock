@@ -1225,30 +1225,13 @@ dependencies = [
  "gql-parser",
  "itertools",
  "miette",
- "minigu-binder",
  "minigu-catalog",
  "minigu-common",
  "minigu-context",
  "minigu-execution",
- "minigu-ir",
  "minigu-planner",
  "minigu-storage",
  "rayon",
- "thiserror",
-]
-
-[[package]]
-name = "minigu-binder"
-version = "0.1.0"
-dependencies = [
- "gql-parser",
- "insta",
- "itertools",
- "miette",
- "minigu-catalog",
- "minigu-common",
- "minigu-ir",
- "smol_str",
  "thiserror",
 ]
 
@@ -1259,6 +1242,7 @@ dependencies = [
  "minigu-common",
  "serde",
  "smallvec",
+ "smol_str",
  "thiserror",
 ]
 
@@ -1300,7 +1284,6 @@ version = "0.1.0"
 dependencies = [
  "minigu-catalog",
  "minigu-common",
- "minigu-ir",
  "minigu-storage",
  "rayon",
 ]
@@ -1316,29 +1299,23 @@ dependencies = [
  "minigu-catalog",
  "minigu-common",
  "minigu-context",
- "minigu-ir",
+ "minigu-planner",
  "rayon",
  "thiserror",
-]
-
-[[package]]
-name = "minigu-ir"
-version = "0.1.0"
-dependencies = [
- "minigu-catalog",
- "minigu-common",
- "serde",
- "smol_str",
 ]
 
 [[package]]
 name = "minigu-planner"
 version = "0.1.0"
 dependencies = [
+ "gql-parser",
  "itertools",
  "miette",
+ "minigu-catalog",
  "minigu-common",
- "minigu-ir",
+ "minigu-context",
+ "serde",
+ "smol_str",
  "thiserror",
 ]
 

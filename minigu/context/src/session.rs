@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use minigu_catalog::memory::schema::MemorySchemaCatalog;
-use minigu_ir::named_ref::NamedGraphRef;
+use minigu_catalog::named_ref::NamedGraphRef;
 
 use crate::database::DatabaseContext;
 

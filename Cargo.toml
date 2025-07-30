@@ -1,23 +1,21 @@
 [workspace]
 members = [
-    # Public API
-    "minigu/main",
+    # Library API
+    "minigu/core",
 
-    # The all-in-one CLI client
+    # CLI client
     "minigu-cli",
 
-    # System-level tests
+    # End-to-end tests
     "minigu-test",
 
     # Internal
-    "minigu/binder",
     "minigu/catalog",
     "minigu/common",
-    "minigu/parser",
+    "minigu/gql/parser",
+    "minigu/gql/planner",
+    "minigu/gql/execution",
     "minigu/storage",
-    "minigu/execution",
-    "minigu/ir",
-    "minigu/planner",
     "minigu/context",
 ]
 resolver = "3"
@@ -36,19 +34,17 @@ style = "warn"
 suspicious = "warn"
 
 [workspace.dependencies]
-gql-parser = { path = "minigu/parser", version = "0.1.0", features = [
+gql-parser = { path = "minigu/gql/parser", version = "0.1.0", features = [
     "std",
     "serde",
     "miette",
 ] }
-minigu = { path = "minigu/main", version = "0.1.0" }
-minigu-binder = { path = "minigu/binder", version = "0.1.0" }
+minigu = { path = "minigu/core", version = "0.1.0" }
 minigu-catalog = { path = "minigu/catalog", version = "0.1.0" }
 minigu-common = { path = "minigu/common", version = "0.1.0" }
 minigu-context = { path = "minigu/context", version = "0.1.0" }
-minigu-execution = { path = "minigu/execution", version = "0.1.0" }
-minigu-ir = { path = "minigu/ir", version = "0.1.0" }
-minigu-planner = { path = "minigu/planner", version = "0.1.0" }
+minigu-execution = { path = "minigu/gql/execution", version = "0.1.0" }
+minigu-planner = { path = "minigu/gql/planner", version = "0.1.0" }
 minigu-storage = { path = "minigu/storage", version = "0.1.0" }
 
 anyhow = "1.0.98"
