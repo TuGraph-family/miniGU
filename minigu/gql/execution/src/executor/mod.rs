@@ -1,5 +1,6 @@
 pub mod aggregate;
 pub mod expand;
+pub mod factorized_aggregate;
 pub mod filter;
 pub mod flatten;
 pub mod procedure_call;
@@ -24,6 +25,7 @@ use std::fmt::Debug;
 use aggregate::{AggregateBuilder, AggregateSpec};
 use arrow::array::BooleanArray;
 use expand::ExpandBuilder;
+use factorized_aggregate::{FactorizedAggregateBuilder, FactorizedAggregateSpec};
 use filter::FilterBuilder;
 use flatten::FlattenBuilder;
 use minigu_common::data_chunk::DataChunk;
@@ -136,6 +138,26 @@ pub trait Executor {
             aggregate_specs,
             group_by_expressions,
             output_expressions,
+        )
+        .into_executor()
+    }
+
+    fn factorized_aggregate(
+        self,
+        aggregate_specs: Vec<FactorizedAggregateSpec>,
+        group_by_expressions: Vec<BoxedEvaluator>,
+        output_expressions: Vec<BoxedEvaluator>,
+        unflat_col_idx: Option<usize>,
+    ) -> impl Executor
+    where
+        Self: Sized,
+    {
+        FactorizedAggregateBuilder::new(
+            self,
+            aggregate_specs,
+            group_by_expressions,
+            output_expressions,
+            unflat_col_idx,
         )
         .into_executor()
     }
