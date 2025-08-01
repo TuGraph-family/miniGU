@@ -11,7 +11,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  RUSTFLAGS: -Dwarnings
+  env:
+  RUSTFLAGS: -Dwarnings -C target-feature=+avx2
   RUST_BACKTRACE: 1
   CI: true
   DEFAULT_FEATURES: "std,serde,miette"
