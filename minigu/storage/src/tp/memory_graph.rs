@@ -955,24 +955,26 @@ impl MemoryGraph {
             let node_id = vertex.vid();
 
             // Check if vertex has the specified property at the given index
-            if let Some(property_value) = vertex.properties().get(property_id as usize) {
-                // Check if the property is a vector type
-                match property_value {
-                    ScalarValue::Vector(Some(vector_data)) => {
-                        // Convert F32 wrapper to f32
-                        let vector: Vec<f32> = vector_data
-                            .iter()
-                            .map(|f32_val| f32_val.into_inner())
-                            .collect();
-                        vectors.push((node_id, vector));
-                    }
-                    ScalarValue::Vector(None) => {
-                        // Skip null vector values
-                        continue;
-                    }
-                    _ => {
-                        // Property exists but is not a vector - skip
-                        continue;
+            if let Some(idx) = usize::try_from(property_id).ok() {
+                if let Some(property_value) = vertex.properties().get(property_id as usize) {
+                    // Check if the property is a vector type
+                    match property_value {
+                        ScalarValue::Vector(Some(vector_data)) => {
+                            // Convert F32 wrapper to f32
+                            let vector: Vec<f32> = vector_data
+                                .iter()
+                                .map(|f32_val| f32_val.into_inner())
+                                .collect();
+                            vectors.push((node_id, vector));
+                        }
+                        ScalarValue::Vector(None) => {
+                            // Skip null vector values
+                            continue;
+                        }
+                        _ => {
+                            // Property exists but is not a vector - skip
+                            continue;
+                        }
                     }
                 }
             }
@@ -1052,7 +1054,7 @@ impl MemoryGraph {
         }
     }
 
-    /// Get vector index for the specified property  
+    /// Get vector index for the specified property
     pub fn get_vector_index(
         &self,
         property_id: PropertyId,
