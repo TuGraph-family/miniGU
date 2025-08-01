@@ -955,8 +955,8 @@ impl MemoryGraph {
             let node_id = vertex.vid();
 
             // Check if vertex has the specified property at the given index
-            if let Some(idx) = usize::try_from(property_id).ok() {
-                if let Some(property_value) = vertex.properties().get(property_id as usize) {
+            if let Ok(idx) = usize::try_from(property_id) {
+                if let Some(property_value) = vertex.properties().get(idx) {
                     // Check if the property is a vector type
                     match property_value {
                         ScalarValue::Vector(Some(vector_data)) => {
