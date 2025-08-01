@@ -347,10 +347,15 @@ mod tests {
         use minigu::common::value::{F32, ScalarValue};
 
         // Test vector formatting
-        let vector = vec![F32::from(1.0), F32::from(2.5), F32::from(3.14)];
+        let vector = vec![
+            F32::from(1.0),
+            F32::from(2.5),
+            F32::from(std::f32::consts::PI),
+        ];
         let scalar = ScalarValue::Vector(Some(vector));
         let formatted = convert_scalar_value_to_string(&scalar);
-        assert_eq!(formatted, "[1, 2.5, 3.14]");
+        let expected = format!("[1, 2.5, {}]", std::f32::consts::PI);
+        assert_eq!(formatted, expected);
 
         // Test null vector
         let scalar = ScalarValue::Vector(None);

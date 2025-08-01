@@ -73,7 +73,7 @@ impl InMemDiskANNAdapter {
         self.node_to_vector.clear();
         self.vector_to_node.clear();
         self.next_vector_id.store(0, Ordering::Relaxed);
-        // *self.stats.write().unwrap() = IndexStats::new();
+        *self.stats.write().unwrap() = IndexStats::new();
     }
 }
 
@@ -317,28 +317,11 @@ impl VectorIndex for InMemDiskANNAdapter {
         Ok(())
     }
 
-    fn save(&mut self, path: &str) -> StorageResult<()> {
-        self.inner
-            .save(path)
-            .map_err(|e| StorageError::VectorIndex(VectorIndexError::DiskANN(e)))?;
-        Ok(())
+    fn save(&mut self, _path: &str) -> StorageResult<()> {
+        unimplemented!("save() is not yet implemented");
     }
 
-    fn load(&mut self, path: &str, expected_num_points: usize) -> StorageResult<()> {
-        // For now, loading requires recreating the index
-        // In the future, we could implement proper loading by:
-        // 1. Loading the index from file
-        // 2. Reconstructing the ID mappings from metadata
-
-        // TODO: Implement proper loading when diskann-rs supports it
-        // self.inner.load(path, expected_num_points)
-        //     .map_err(|e| StorageError::VectorIndex(VectorIndexError::DiskANN(e)))?;
-
-        Err(StorageError::VectorIndex(VectorIndexError::InvalidInput(
-            format!(
-                "Loading not yet implemented. Expected {} points from {}",
-                expected_num_points, path
-            ),
-        )))
+    fn load(&mut self, _path: &str, _expected_num_points: usize) -> StorageResult<()> {
+        unimplemented!("load() is not yet implemented");
     }
 }
