@@ -1,0 +1,32 @@
+[package]
+edition.workspace = true
+license.workspace = true
+name = "minigu"
+repository.workspace = true
+version.workspace = true
+
+[dev-dependencies]
+tempfile = { workspace = true }
+walkdir = { workspace = true }
+
+[dependencies]
+anyhow = { workspace = true }
+arrow = { workspace = true }
+chrono = { workspace = true }
+csv = { workspace = true }
+gql-parser = { workspace = true }
+itertools = { workspace = true }
+miette = { workspace = true }
+minigu-catalog = { workspace = true }
+minigu-common = { workspace = true }
+minigu-context = { workspace = true }
+minigu-execution = { workspace = true }
+minigu-planner = { workspace = true }
+minigu-storage = { workspace = true }
+rayon = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[lints]
+workspace = true

@@ -8,7 +8,6 @@ version.workspace = true
 [dependencies]
 minigu-catalog = { workspace = true }
 minigu-common = { workspace = true }
-minigu-ir = { workspace = true }
 minigu-storage = { workspace = true }
 rayon = { workspace = true }
 
