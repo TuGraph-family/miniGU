@@ -17,6 +17,10 @@ members = [
     "minigu/gql/execution",
     "minigu/storage",
     "minigu/context",
+
+    # Submodule
+    "DiskANN-rs/DiskANN",
+    "DiskANN-rs/vector",
 ]
 resolver = "3"
 
@@ -34,6 +38,7 @@ style = "warn"
 suspicious = "warn"
 
 [workspace.dependencies]
+diskann = { path = "DiskANN-rs/DiskANN", version = "0.1.0" }
 gql-parser = { path = "minigu/gql/parser", version = "0.1.0", features = [
     "std",
     "serde",
@@ -46,12 +51,16 @@ minigu-context = { path = "minigu/context", version = "0.1.0" }
 minigu-execution = { path = "minigu/gql/execution", version = "0.1.0" }
 minigu-planner = { path = "minigu/gql/planner", version = "0.1.0" }
 minigu-storage = { path = "minigu/storage", version = "0.1.0" }
+vector = { path = "DiskANN-rs/vector", version = "0.1.0" }
 
 anyhow = "1.0.98"
+approx = "0.5.1"
 arrow = { version = "55.2.0", default-features = false }
 auto_impl = "1.3.0"
+bincode = "1.3.3"
 bitvec = "1.0.1"
 bytes = "1.10.1"
+cc = "1.2.30"
 chrono = "0.4.41"
 clap = { version = "4.5.42", features = ["derive", "wrap_help"] }
 cmake = "0.1.54"
@@ -61,6 +70,7 @@ csv = "1.3.1"
 dashmap = "6.1.0"
 divan = "0.1.21"
 glob = "0.3"
+half = "2.2.1"
 insta = { version = "1.43.1", features = ["yaml"] }
 insta-cmd = "0.6.0"
 itertools = { version = "0.14.0", default-features = false, features = [

@@ -1,0 +1,3 @@
+[build]
+rustdocflags = ["-Ctarget-feature=+avx2"]
+rustflags = ["-Ctarget-feature=+avx2", "-lopenblas"]
