@@ -2,9 +2,9 @@ use std::hash::Hash;
 use std::sync::Arc;
 
 use arrow::array::{
-    Array, ArrayRef, AsArray, BooleanArray, Float32Array, Float64Array, Int8Array, Int16Array,
-    Int32Array, Int64Array, NullArray, StringArray, UInt8Array, UInt16Array, UInt32Array,
-    UInt64Array,
+    Array, ArrayRef, AsArray, BooleanArray, FixedSizeListArray, Float32Array, Float64Array,
+    Int8Array, Int16Array, Int32Array, Int64Array, NullArray, StringArray, UInt8Array, UInt16Array,
+    UInt32Array, UInt64Array,
 };
 use arrow::datatypes::DataType;
 use ordered_float::OrderedFloat;
@@ -33,6 +33,7 @@ pub enum ScalarValue {
     Float32(Nullable<F32>),
     Float64(Nullable<F64>),
     String(Nullable<String>),
+    Vector(Nullable<Vec<F32>>),
     Vertex(Nullable<VertexValue>),
     Edge(Nullable<EdgeValue>),
 }
@@ -58,6 +59,40 @@ impl ScalarValue {
                 Arc::new(Float64Array::from_iter([value.map(|f| f.into_inner())]))
             }
             ScalarValue::String(value) => Arc::new(StringArray::from_iter([value])),
+            ScalarValue::Vector(value) => {
+                match value {
+                    Some(vec) => {
+                        let float_values: Vec<f32> = vec.iter().map(|f| f.into_inner()).collect();
+                        let float_array = Arc::new(Float32Array::from(float_values));
+                        let field = Arc::new(arrow::datatypes::Field::new(
+                            "item",
+                            arrow::datatypes::DataType::Float32,
+                            false,
+                        ));
+                        Arc::new(FixedSizeListArray::new(
+                            field,
+                            vec.len() as i32,
+                            float_array,
+                            None,
+                        ))
+                    }
+                    None => {
+                        // For null vector, create an empty FixedSizeListArray
+                        let field = Arc::new(arrow::datatypes::Field::new(
+                            "item",
+                            arrow::datatypes::DataType::Float32,
+                            false,
+                        ));
+                        let empty_array = Arc::new(Float32Array::from(Vec::<f32>::new()));
+                        Arc::new(FixedSizeListArray::new(
+                            field,
+                            0,
+                            empty_array,
+                            Some(arrow::buffer::NullBuffer::new_null(1)),
+                        ))
+                    }
+                }
+            }
             ScalarValue::Vertex(value) => todo!(),
             ScalarValue::Edge(_value) => todo!(),
         }
@@ -159,6 +194,14 @@ impl ScalarValue {
         }
     }
 
+    pub fn get_vector(&self) -> Result<Vec<F32>, String> {
+        match self {
+            ScalarValue::Vector(Some(val)) => Ok(val.clone()),
+            ScalarValue::Vector(None) => Err("Null value".to_string()),
+            _ => Err("Not a Vector value".to_string()),
+        }
+    }
+
     pub fn get_vertex(&self) -> Result<VertexValue, String> {
         match self {
             ScalarValue::Vertex(Some(val)) => Ok(val.clone()),
@@ -212,6 +255,7 @@ macro_rules! for_each_non_null_variant {
         $m!(float32, F32, Float32);
         $m!(float64, F64, Float64);
         $m!(string, String, String);
+        $m!(vector, Vec<F32>, Vector);
         $m!(vertex_value, VertexValue, Vertex);
         $m!(edge_value, EdgeValue, Edge);
     };
@@ -363,7 +407,79 @@ impl ScalarValueAccessor for dyn Array + '_ {
                     .then(|| array.value(index).to_string())
                     .into()
             }
+            DataType::FixedSizeList(field, _size) if field.data_type() == &DataType::Float32 => {
+                let array = self.as_fixed_size_list();
+                if array.is_valid(index) {
+                    let values = array.value(index);
+                    let float_array = values.as_primitive::<arrow::datatypes::Float32Type>();
+                    let vec_f32: Vec<F32> = (0..float_array.len())
+                        .map(|i| OrderedFloat(float_array.value(i)))
+                        .collect();
+                    ScalarValue::Vector(Some(vec_f32))
+                } else {
+                    ScalarValue::Vector(None)
+                }
+            }
             _ => todo!(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use ordered_float::OrderedFloat;
+
+    use super::*;
+
+    #[test]
+    fn test_get_vector() {
+        // Test successful vector retrieval
+        let vector = vec![OrderedFloat(1.0), OrderedFloat(2.0)];
+        let scalar = ScalarValue::Vector(Some(vector.clone()));
+        assert_eq!(scalar.get_vector().unwrap(), vector);
+
+        // Test null vector
+        let scalar = ScalarValue::Vector(None);
+        assert!(scalar.get_vector().is_err());
+        assert_eq!(scalar.get_vector().unwrap_err(), "Null value");
+
+        // Test wrong type
+        let scalar = ScalarValue::String(Some("test".to_string()));
+        assert!(scalar.get_vector().is_err());
+        assert_eq!(scalar.get_vector().unwrap_err(), "Not a Vector value");
+    }
+
+    #[test]
+    fn test_vector_to_scalar_array() {
+        // Test vector to Arrow array conversion
+        let vector = vec![OrderedFloat(1.0), OrderedFloat(2.0)];
+        let scalar = ScalarValue::Vector(Some(vector));
+        let array = scalar.to_scalar_array();
+
+        // Verify it's a FixedSizeListArray with correct type
+        use arrow::datatypes::{DataType, Field};
+        let expected_field = Arc::new(Field::new("item", DataType::Float32, false));
+        let expected_type = DataType::FixedSizeList(expected_field, 2);
+        assert_eq!(array.data_type(), &expected_type);
+    }
+
+    #[test]
+    fn test_vector_from_conversion() {
+        // Test From trait for Vec<F32>
+        let vector = vec![OrderedFloat(1.0), OrderedFloat(2.0), OrderedFloat(3.0)];
+        let scalar: ScalarValue = vector.clone().into();
+        assert_eq!(scalar, ScalarValue::Vector(Some(vector)));
+
+        // Test From trait for Option<Vec<F32>>
+        let vector_opt = Some(vec![OrderedFloat(1.0)]);
+        let scalar: ScalarValue = vector_opt.clone().into();
+        assert_eq!(scalar, ScalarValue::Vector(vector_opt));
+
+        // Test None case
+        let none_vector: Option<Vec<F32>> = None;
+        let scalar: ScalarValue = none_vector.into();
+        assert_eq!(scalar, ScalarValue::Vector(None));
     }
 }

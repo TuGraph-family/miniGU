@@ -1,0 +1,9 @@
+[build]
+rustflags = [
+    "-C",
+    "target-feature=+avx2",
+    "-L",
+    "native=${LIB_OPENBLAS_PATH}",
+    "-l",
+    "openblas",
+]
