@@ -1281,8 +1281,11 @@ pub mod tests {
                 vector[2] = center_z + offset_z;
 
                 // Other dimensions: add unique identifiers
-                for j in 3..std::cmp::min(10, TEST_DIMENSION) {
-                    vector[j] = (i as f32) * 0.1 + (j as f32) * 0.2 + 5.0;
+                let start = 3;
+                let end = std::cmp::min(10, TEST_DIMENSION);
+
+                for (j, item) in vector.iter_mut().enumerate().skip(start).take(end - start) {
+                    *item = (i as f32) * 0.1 + (j as f32) * 0.2 + 5.0;
                 }
 
                 ((i + 1) as VertexId, format!("small_scale_{}", i), vector)
@@ -2275,8 +2278,7 @@ pub mod tests {
         graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
 
         // Search should return correct vertex IDs for modified vectors
-        for i in 0..5 {
-            let (expected_id, _, embedding) = &test_vectors[i];
+        for (expected_id, _, embedding) in test_vectors.iter().take(5) {
             let results = graph.vector_search(EMBEDDING_PROPERTY_ID, embedding, 1, 50)?;
             assert_eq!(results.len(), 1);
             assert_eq!(
@@ -2458,8 +2460,10 @@ pub mod tests {
                 vector[2] = 160.0 + (i as f32) * 1.8; // New cluster starting at z=160
 
                 // Add some variation to other dimensions
-                for j in 3..std::cmp::min(10, TEST_DIMENSION) {
-                    vector[j] = (id as f32) * 0.1 + (j as f32) * 0.3 + 10.0;
+                let start = 3;
+                let end = std::cmp::min(10, TEST_DIMENSION);
+                for (j, item) in vector.iter_mut().enumerate().skip(start).take(end - start) {
+                    *item = (id as f32) * 0.1 + (j as f32) * 0.3 + 10.0;
                 }
 
                 (id, name, vector)

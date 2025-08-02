@@ -100,6 +100,7 @@ pub enum CheckpointError {
 }
 
 #[derive(Error, Debug)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum VectorIndexError {
     #[error("DiskANN error: {0}")]
     DiskANN(#[from] diskann::common::ANNError),
