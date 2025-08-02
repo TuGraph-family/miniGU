@@ -11,7 +11,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  env:
   RUSTFLAGS: -Dwarnings -C target-feature=+avx2
   RUST_BACKTRACE: 1
   CI: true
@@ -101,6 +100,11 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
+    - name: Install OpenBLAS
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update -yq || true 
+        sudo apt-get install -y libopenblas-dev || (echo "Failed to install OpenBLAS" && exit 1)
     - uses: actions-rust-lang/setup-rust-toolchain@v1
     - uses: Swatinem/rust-cache@v2
     - run: cargo build --features ${{ env.DEFAULT_FEATURES }}
@@ -131,6 +135,11 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
+    - name: Install OpenBLAS
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update -yq || true 
+        sudo apt-get install -y libopenblas-dev || (echo "Failed to install OpenBLAS" && exit 1)
     - uses: actions-rust-lang/setup-rust-toolchain@v1
     - uses: taiki-e/install-action@v2
       with:
