@@ -35,6 +35,7 @@ impl IndexStats {
     }
 }
 
+#[allow(clippy::upper_case_acronyms)]
 pub struct InMemDiskANNAdapter {
     inner: Box<dyn ANNInmemIndex<f32> + 'static>,
     dimension: usize,
