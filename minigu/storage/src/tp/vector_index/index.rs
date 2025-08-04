@@ -20,7 +20,7 @@ pub trait VectorIndex: Send + Sync {
     fn save(&mut self, path: &str) -> StorageResult<()>;
 
     /// Load the index from a file
-    fn load(&mut self, path: &str, expected_num_points: usize) -> StorageResult<()>;
+    fn load(&mut self, path: &str) -> StorageResult<()>;
 
     /// Get the dimension of vectors in this index
     fn get_dimension(&self) -> usize;

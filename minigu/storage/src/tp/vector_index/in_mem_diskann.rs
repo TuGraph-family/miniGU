@@ -63,7 +63,10 @@ impl InMemDiskANNAdapter {
     }
 
     pub fn stats(&self) -> IndexStats {
-        self.stats.read().unwrap().clone()
+        self.stats
+            .read()
+            .expect("RwLock poisoned while reading index stats")
+            .clone()
     }
 
     pub fn mapping_count(&self) -> usize {
@@ -74,7 +77,9 @@ impl InMemDiskANNAdapter {
         self.node_to_vector.clear();
         self.vector_to_node.clear();
         self.next_vector_id.store(0, Ordering::Relaxed);
-        *self.stats.write().unwrap() = IndexStats::new();
+        *self.stats.write().expect(
+            "Failed to acquire write lock on stats in clear_mappings (lock may be poisoned)",
+        ) = IndexStats::new();
     }
 }
 
@@ -131,7 +136,7 @@ impl VectorIndex for InMemDiskANNAdapter {
 
                 let build_time = start.elapsed().as_millis() as u64;
                 {
-                    let mut stats = self.stats.write().unwrap();
+                    let mut stats = self.stats.write().expect("Failed to acquire write lock on stats (lock poisoned) while updating build stats");
                     stats.update_after_build(sorted_vectors.len(), build_time, 0);
                 }
 
@@ -182,7 +187,9 @@ impl VectorIndex for InMemDiskANNAdapter {
         }
 
         {
-            let mut stats = self.stats.write().unwrap();
+            let mut stats = self.stats.write().expect(
+                "Failed to acquire write lock on stats (lock poisoned) while updating search stats",
+            );
             stats.search_count += 1;
         }
 
@@ -319,10 +326,14 @@ impl VectorIndex for InMemDiskANNAdapter {
     }
 
     fn save(&mut self, _path: &str) -> StorageResult<()> {
-        unimplemented!("save() is not yet implemented");
+        Err(StorageError::VectorIndex(VectorIndexError::NotSupported(
+            "save() is not yet implemented".to_string(),
+        )))
     }
 
-    fn load(&mut self, _path: &str, _expected_num_points: usize) -> StorageResult<()> {
-        unimplemented!("load() is not yet implemented");
+    fn load(&mut self, _path: &str) -> StorageResult<()> {
+        Err(StorageError::VectorIndex(VectorIndexError::NotSupported(
+            "load() is not yet implemented for InMemDiskANNAdapter".to_string(),
+        )))
     }
 }

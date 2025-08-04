@@ -1038,6 +1038,7 @@ impl MemoryGraph {
     ) -> IndexConfiguration {
         let write_params = IndexWriteParametersBuilder::new(search_list_size, max_degree)
             .with_alpha(alpha)
+            .with_num_threads(1)
             .build();
 
         IndexConfiguration {
@@ -1192,7 +1193,7 @@ pub mod tests {
     // Vector index test constants
     const _NAME_PROPERTY_ID: PropertyId = 0;
     const EMBEDDING_PROPERTY_ID: PropertyId = 1;
-    const TEST_DIMENSION: usize = 104; // DiskANN dimension support 104, 128, 256
+    const TEST_DIMENSION: usize = 104; // DiskANN supports dimensions 104, 128, 256
 
     fn create_vertex(id: VertexId, label_id: LabelId, properties: Vec<ScalarValue>) -> Vertex {
         Vertex::new(id, label_id, PropertyRecord::new(properties))

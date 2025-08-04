@@ -144,4 +144,6 @@ pub enum VectorIndexError {
         "VertexId {vertex_id} exceeds u32::MAX, cannot be used with DiskANN which requires u32 vector IDs"
     )]
     VertexIdOverflow { vertex_id: u64 },
+    #[error("NotSupported: {0}")]
+    NotSupported(String),
 }

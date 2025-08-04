@@ -86,7 +86,7 @@ impl ScalarValue {
                         let empty_array = Arc::new(Float32Array::from(Vec::<f32>::new()));
                         Arc::new(FixedSizeListArray::new(
                             field,
-                            0,
+                            1,
                             empty_array,
                             Some(arrow::buffer::NullBuffer::new_null(1)),
                         ))
