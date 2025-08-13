@@ -7,13 +7,13 @@ use pyo3::types::{PyAny, PyDict, PyList};
 
 /// A Python wrapper around the miniGU Session
 #[pyclass]
-pub struct PyMiniGU {
+pub struct PyMiniGu {
     // We'll keep it simple for now and not actually store complex state
     is_open: bool,
 }
 
 #[pymethods]
-impl PyMiniGU {
+impl PyMiniGu {
     /// Create a new miniGU session
     #[new]
     fn new() -> PyResult<Self> {
@@ -52,7 +52,7 @@ impl PyMiniGU {
     /// Load data from a Python object
     fn load_data(&mut self, data: &Bound<'_, PyAny>) -> PyResult<()> {
         if !self.is_open {
-            return Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
+            return Err(pyo3::exceptions::PyRuntimeError::new_err(
                 "Session is closed",
             ));
         }
@@ -71,7 +71,7 @@ impl PyMiniGU {
     /// Load data from a file
     fn load_from_file(&mut self, path: &str) -> PyResult<()> {
         if !self.is_open {
-            return Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
+            return Err(pyo3::exceptions::PyRuntimeError::new_err(
                 "Session is closed",
             ));
         }
@@ -83,7 +83,7 @@ impl PyMiniGU {
     /// Save database to a file
     fn save_to_file(&self, path: &str) -> PyResult<()> {
         if !self.is_open {
-            return Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
+            return Err(pyo3::exceptions::PyRuntimeError::new_err(
                 "Session is closed",
             ));
         }
@@ -110,6 +110,6 @@ impl PyMiniGU {
 /// Python module definition
 #[pymodule]
 fn minigu_python(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<PyMiniGU>()?;
+    m.add_class::<PyMiniGu>()?;
     Ok(())
 }
