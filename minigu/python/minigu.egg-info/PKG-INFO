@@ -1,0 +1,6 @@
+Metadata-Version: 2.1
+Name: minigu
+Version: 0.1.0
+Summary: A graph database for learning purposes
+Author: miniGU Team
+Requires-Python: >=3.6

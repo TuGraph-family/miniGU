@@ -186,14 +186,14 @@ pub(crate) fn export<P: AsRef<Path>>(
 
     let metadata = SchemaMetadata::from_schema(Arc::clone(&graph_type))?;
 
-    let mut vertice_builder = VerticesBuilder::new(dir, &metadata.label_map)?;
+    let mut vertex_builder = VerticesBuilder::new(dir, &metadata.label_map)?;
     let mut edges_builder = EdgesBuilder::new(dir, &metadata.label_map)?;
 
     // 2. Dump vertices
     for v in txn.iter_vertices() {
-        vertice_builder.add_vertex(&v?)?;
+        vertex_builder.add_vertex(&v?)?;
     }
-    vertice_builder.dump()?;
+    vertex_builder.dump()?;
 
     // 3. Dump edge
     for e in txn.iter_edges() {

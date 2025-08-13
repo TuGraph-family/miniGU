@@ -71,7 +71,7 @@ pub trait MutOlapGraph: OlapGraph {
     -> StorageResult<Self::EdgeID>;
 
     /// Delete a vertex from the graph within a transaction.
-    fn delete_vertex(&self, txn: &Self::Transaction, vertice: Self::VertexID) -> StorageResult<()>;
+    fn delete_vertex(&self, txn: &Self::Transaction, vertex: Self::VertexID) -> StorageResult<()>;
 
     /// Delete an edge from the graph within a transaction.
     fn delete_edge(&self, txn: &Self::Transaction, edge: Self::EdgeID) -> StorageResult<()>;
