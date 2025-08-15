@@ -11,12 +11,14 @@ serial_test = { workspace = true }
 temp-file = { workspace = true }
 
 [dependencies]
+arrow = { workspace = true }
 chrono = { workspace = true }
 crc32fast = { workspace = true }
 crossbeam-skiplist = { workspace = true }
 dashmap = { workspace = true }
 diskann = { workspace = true }
 minigu-common = { workspace = true }
+ordered-float = { workspace = true }
 postcard = { workspace = true, features = ["alloc"] }
 serde = { workspace = true, features = ["derive"] }
 temp-dir = { workspace = true }

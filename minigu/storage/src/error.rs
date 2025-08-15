@@ -19,6 +19,8 @@ pub enum StorageError {
     Checkpoint(#[from] CheckpointError),
     #[error("Vector index error: {0}")]
     VectorIndex(#[from] VectorIndexError),
+    #[error("Feature not supported: {0}")]
+    NotSupported(String),
 }
 
 #[derive(Error, Debug)]
@@ -146,4 +148,8 @@ pub enum VectorIndexError {
     VertexIdOverflow { vertex_id: u64 },
     #[error("NotSupported: {0}")]
     NotSupported(String),
+    #[error("Invalid bitmap length: expected {expected}, got {got}")]
+    InvalidBitmapLength { expected: usize, got: usize },
+    #[error("Filter error: {0}")]
+    FilterError(String),
 }

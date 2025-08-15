@@ -1,37 +1,30 @@
+use std::collections::BinaryHeap;
 use std::sync::atomic::{AtomicU32, Ordering};
-use std::time::Instant;
 
 use dashmap::DashMap;
+use diskann::common::{AlignedBoxWithSlice, FilterIndex as DiskANNFilterMask};
 use diskann::index::{ANNInmemIndex, create_inmem_index};
 use diskann::model::IndexConfiguration;
+use diskann::model::vertex::{DIM_104, DIM_128, DIM_256};
+use ordered_float::OrderedFloat;
+use vector::distance_l2_vector_f32;
 
+use super::filter::{DenseFilterMask, FilterMask};
 use super::index::VectorIndex;
 use crate::error::{StorageError, StorageResult, VectorIndexError};
 
-/// Index statistics and performance metrics
-#[derive(Debug, Clone, Default)]
-pub struct IndexStats {
-    pub vector_count: usize,
-    pub memory_usage: usize,
-    pub build_time_ms: Option<u64>,
-    pub avg_search_time_us: Option<f64>,
-    pub search_count: u64,
+/// Aligned query buffer that maintains 64-byte alignment guarantee
+enum AlignedQueryBuffer<'a> {
+    Borrowed(&'a [f32]),
+    Owned(AlignedBoxWithSlice<f32>),
 }
 
-impl IndexStats {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn update_after_build(
-        &mut self,
-        vector_count: usize,
-        build_time_ms: u64,
-        memory_usage: usize,
-    ) {
-        self.vector_count = vector_count;
-        self.build_time_ms = Some(build_time_ms);
-        self.memory_usage = memory_usage;
+impl AlignedQueryBuffer<'_> {
+    fn as_slice(&self) -> &[f32] {
+        match self {
+            Self::Borrowed(slice) => slice,
+            Self::Owned(aligned) => aligned.as_slice(),
+        }
     }
 }
 
@@ -43,7 +36,6 @@ pub struct InMemDiskANNAdapter {
     node_to_vector: DashMap<u64, u32>,
     vector_to_node: DashMap<u32, u64>,
     next_vector_id: AtomicU32, // Next vector ID to be allocated
-    stats: std::sync::RwLock<IndexStats>,
 }
 
 impl InMemDiskANNAdapter {
@@ -54,39 +46,158 @@ impl InMemDiskANNAdapter {
 
         Ok(Self {
             inner,
-            dimension,
+            dimension, // raw dimension not aligned
             node_to_vector: DashMap::new(),
             vector_to_node: DashMap::new(),
             next_vector_id: AtomicU32::new(0),
-            stats: std::sync::RwLock::new(IndexStats::new()),
         })
-    }
-
-    pub fn stats(&self) -> IndexStats {
-        self.stats
-            .read()
-            .expect("RwLock poisoned while reading index stats")
-            .clone()
     }
 
     pub fn mapping_count(&self) -> usize {
         self.node_to_vector.len()
     }
 
+    // Private implementation methods for InMemDiskANNAdapter
     fn clear_mappings(&mut self) {
         self.node_to_vector.clear();
         self.vector_to_node.clear();
         self.next_vector_id.store(0, Ordering::Relaxed);
-        *self.stats.write().expect(
-            "Failed to acquire write lock on stats in clear_mappings (lock may be poisoned)",
-        ) = IndexStats::new();
+    }
+
+    /// Create aligned query vector for optimal SIMD performance
+    /// Uses DiskANN-rs AlignedBoxWithSlice for memory-safe 64-byte alignment
+    /// Returns AlignedQueryBuffer to maintain alignment guarantee
+    fn ensure_query_aligned(query: &[f32]) -> StorageResult<AlignedQueryBuffer<'_>> {
+        if query.as_ptr().align_offset(64) == 0 {
+            Ok(AlignedQueryBuffer::Borrowed(query))
+        } else {
+            let mut aligned = AlignedBoxWithSlice::<f32>::new(query.len(), 64)
+                .map_err(|e| StorageError::VectorIndex(VectorIndexError::DiskANN(e)))?;
+            aligned.as_mut_slice().copy_from_slice(query);
+            Ok(AlignedQueryBuffer::Owned(aligned))
+        }
+    }
+
+    /// Brute force search with SIMD-optimized distance computation
+    /// Direct iteration over candidate vectors for optimal low selectivity performance
+    fn brute_force_search(
+        &self,
+        query: &[f32],
+        k: usize,
+        filter_mask: &dyn FilterMask,
+    ) -> StorageResult<Vec<u64>> {
+        if k == 0 {
+            return Ok(Vec::new());
+        }
+
+        // Ensure query vector is 64-byte aligned for SIMD requirements
+        let aligned_query = Self::ensure_query_aligned(query)?;
+
+        let mut heap = BinaryHeap::<(OrderedFloat<f32>, u32)>::with_capacity(k);
+
+        for vector_id in filter_mask.iter_candidates() {
+            // Get 64-byte aligned vector data from DiskANN (zero-copy access)
+            let stored_vector = self
+                .inner
+                .get_aligned_vector_data(vector_id)
+                .map_err(|e| StorageError::VectorIndex(VectorIndexError::DiskANN(e)))?;
+            let distance = Self::compute_l2_distance(aligned_query.as_slice(), stored_vector)?;
+
+            if heap.len() < k {
+                heap.push((OrderedFloat(distance), vector_id));
+            } else if let Some((max_distance, _)) = heap.peek() {
+                if OrderedFloat(distance) < *max_distance {
+                    heap.pop();
+                    heap.push((OrderedFloat(distance), vector_id));
+                }
+            }
+        }
+        let results: Vec<_> = heap.into_sorted_vec();
+
+        let node_ids: Vec<u64> = results
+            .into_iter()
+            .filter_map(|(_, vector_id)| {
+                self.vector_to_node.get(&vector_id).map(|node_id| *node_id)
+            })
+            .collect();
+
+        Ok(node_ids)
+    }
+
+    /// filter search: DiskANN search with FilterMask filtering
+    /// Used for larger candidate sets where diskann index search is more efficient
+    fn filter_search(
+        &self,
+        query: &[f32],
+        k: usize,
+        l_value: u32,
+        filter_mask: &dyn FilterMask,
+        should_pre: bool,
+    ) -> StorageResult<Vec<u64>> {
+        // Convert miniGU FilterMask to DiskANN FilterMask for pre-filtering
+        let diskann_filter = {
+            if let Some(dense) = filter_mask.as_any().downcast_ref::<DenseFilterMask>() {
+                dense as &dyn DiskANNFilterMask
+            } else {
+                return Err(StorageError::VectorIndex(VectorIndexError::FilterError(
+                    "Unsupported FilterMask type".to_string(),
+                )));
+            }
+        };
+        let filtered_results =
+            self.ann_search(query, k, l_value, Some(diskann_filter), should_pre)?;
+
+        Ok(filtered_results)
+    }
+
+    /// Compute L2 squared distance between query vector and stored vector
+    /// Returns squared distance (without sqrt) for consistency with DiskANN SIMD implementation
+    #[inline]
+    fn compute_l2_distance(query: &[f32], stored: &[f32]) -> StorageResult<f32> {
+        if query.len() != stored.len() {
+            return Err(StorageError::VectorIndex(
+                VectorIndexError::InvalidDimension {
+                    expected: stored.len(),
+                    actual: query.len(),
+                },
+            ));
+        }
+
+        let dimension = query.len();
+
+        // Helper macro to safely compute SIMD distance for supported dimensions
+        macro_rules! simd_distance {
+            ($const_dim:expr) => {{
+                // Check 64-byte alignment (Vector crate requirement)
+                if query.as_ptr().align_offset(64) != 0 {
+                    panic!("query must be 64-byte aligned");
+                }
+                if stored.as_ptr().align_offset(64) != 0 {
+                    panic!("vectors must be 64-byte aligned");
+                }
+
+                // Safety: We've verified dimension match and 64-byte alignment
+                unsafe {
+                    let query_array = &*(query.as_ptr() as *const [f32; $const_dim]);
+                    let stored_array = &*(stored.as_ptr() as *const [f32; $const_dim]);
+                    distance_l2_vector_f32::<$const_dim>(query_array, stored_array)
+                }
+            }};
+        }
+
+        let distance = match dimension {
+            DIM_104 => simd_distance!(DIM_104),
+            DIM_128 => simd_distance!(DIM_128),
+            DIM_256 => simd_distance!(DIM_256),
+            _ => unreachable!(),
+        };
+
+        Ok(distance)
     }
 }
 
 impl VectorIndex for InMemDiskANNAdapter {
     fn build(&mut self, vectors: &[(u64, Vec<f32>)]) -> StorageResult<()> {
-        let start = Instant::now();
-
         if vectors.is_empty() {
             return Err(StorageError::VectorIndex(VectorIndexError::EmptyDataset));
         }
@@ -111,7 +222,6 @@ impl VectorIndex for InMemDiskANNAdapter {
                 ));
             }
 
-            // Check for duplicate node IDs
             if !seen_nodes.insert(*node_id) {
                 self.clear_mappings();
                 return Err(StorageError::VectorIndex(
@@ -121,24 +231,16 @@ impl VectorIndex for InMemDiskANNAdapter {
 
             // Establish ID mapping - DiskANN will assign vector_id = array_index
             let vector_id = array_index as u32;
-
             self.node_to_vector.insert(*node_id, vector_id);
             self.vector_to_node.insert(vector_id, *node_id);
 
             vector_data.push(vector.as_slice());
         }
 
-        // Call DiskANN to build the index
         match self.inner.build_from_memory(&vector_data) {
             Ok(()) => {
                 self.next_vector_id
                     .store(sorted_vectors.len() as u32, Ordering::Relaxed);
-
-                let build_time = start.elapsed().as_millis() as u64;
-                {
-                    let mut stats = self.stats.write().expect("Failed to acquire write lock on stats (lock poisoned) while updating build stats");
-                    stats.update_after_build(sorted_vectors.len(), build_time, 0);
-                }
 
                 Ok(())
             }
@@ -151,7 +253,14 @@ impl VectorIndex for InMemDiskANNAdapter {
         }
     }
 
-    fn search(&self, query: &[f32], k: usize, l_value: u32) -> StorageResult<Vec<u64>> {
+    fn ann_search(
+        &self,
+        query: &[f32],
+        k: usize,
+        l_value: u32,
+        filter_mask: Option<&dyn DiskANNFilterMask>,
+        should_pre: bool,
+    ) -> StorageResult<Vec<u64>> {
         // Check if index is built
         if self.vector_to_node.is_empty() {
             return Err(StorageError::VectorIndex(VectorIndexError::IndexNotBuilt));
@@ -162,38 +271,60 @@ impl VectorIndex for InMemDiskANNAdapter {
         if effective_k == 0 {
             return Ok(Vec::new()); // No active vectors
         }
-
         let mut vector_ids = vec![0u32; effective_k];
         let actual_count = self
             .inner
-            .search(query, effective_k, l_value, &mut vector_ids)
+            .search(
+                query,
+                effective_k,
+                l_value,
+                &mut vector_ids,
+                filter_mask,
+                should_pre,
+            )
             .map_err(|e| StorageError::VectorIndex(VectorIndexError::SearchError(e.to_string())))?;
-
-        // Filter deleted vectors and convert to node_ids
         let mut node_ids = Vec::with_capacity(actual_count as usize);
-
         for &vector_id in vector_ids.iter().take(actual_count as usize) {
             if let Some(entry) = self.vector_to_node.get(&vector_id) {
                 let node_id = *entry;
                 // DiskANN-rs already filters deleted vectors in its search method
-                // No need for additional filtering here
                 node_ids.push(node_id);
             } else {
-                // This should not happen if our mapping is consistent
                 return Err(StorageError::VectorIndex(
                     VectorIndexError::VectorIdNotFound { vector_id },
                 ));
             }
         }
 
-        {
-            let mut stats = self.stats.write().expect(
-                "Failed to acquire write lock on stats (lock poisoned) while updating search stats",
-            );
-            stats.search_count += 1;
+        Ok(node_ids)
+    }
+
+    fn search(
+        &self,
+        query: &[f32],
+        k: usize,
+        l_value: u32,
+        filter_mask: Option<&dyn FilterMask>,
+        should_pre: bool,
+    ) -> StorageResult<Vec<u64>> {
+        // No filter provided, DiskANN search without filter
+        let Some(mask) = filter_mask else {
+            return self.ann_search(query, k, l_value, None, false);
+        };
+
+        if self.vector_to_node.is_empty() {
+            return Err(StorageError::VectorIndex(VectorIndexError::IndexNotBuilt));
+        }
+        if mask.candidate_count() == 0 {
+            return Ok(Vec::new());
         }
 
-        Ok(node_ids)
+        let selectivity = mask.selectivity();
+        if selectivity < 0.1 {
+            self.brute_force_search(query, k, mask)
+        } else {
+            self.filter_search(query, k, l_value, mask, should_pre)
+        }
     }
 
     fn get_dimension(&self) -> usize {
@@ -204,6 +335,10 @@ impl VectorIndex for InMemDiskANNAdapter {
         // Return the actual number of active vectors based on our mappings
         // This correctly excludes deleted vectors, unlike get_num_active_pts()
         self.node_to_vector.len()
+    }
+
+    fn node_to_vector_id(&self, node_id: u64) -> Option<u32> {
+        self.node_to_vector.get(&node_id).map(|entry| *entry)
     }
 
     fn insert(&mut self, vectors: &[(u64, Vec<f32>)]) -> StorageResult<()> {
@@ -254,7 +389,6 @@ impl VectorIndex for InMemDiskANNAdapter {
             .map(|(_, vector)| vector.as_slice())
             .collect();
 
-        // Call DiskANN insert
         match self.inner.insert_from_memory(&vector_data) {
             Ok(()) => Ok(()),
             Err(e) => {
@@ -302,7 +436,6 @@ impl VectorIndex for InMemDiskANNAdapter {
             }
         }
 
-        // Call DiskANN soft deletion
         match self
             .inner
             .soft_delete(vector_ids_to_delete.clone(), vector_ids_to_delete.len())

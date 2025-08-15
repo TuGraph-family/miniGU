@@ -1,3 +1,4 @@
+pub mod filter;
 pub mod in_mem_diskann;
 pub mod index;
 
