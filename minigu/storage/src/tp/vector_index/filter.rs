@@ -186,3 +186,271 @@ pub fn create_filter_mask(candidates: Vec<u32>, total_vectors: usize) -> Box<dyn
         Box::new(DenseFilterMask::new(selectivity, candidates, total_vectors))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use diskann::common::FilterIndex as DiskANNFilterMask;
+
+    use super::*;
+
+    #[test]
+    fn test_sparse_filter_mask_creation() {
+        let candidates = vec![1, 3, 5, 7, 9];
+        let total_vectors = 100;
+        let selectivity = 0.05;
+
+        let mask = SparseFilterMask::new(selectivity, candidates.clone(), total_vectors);
+
+        assert_eq!(mask.selectivity(), selectivity);
+        assert_eq!(mask.candidate_count(), 5);
+        assert_eq!(mask.total_vectors(), total_vectors);
+        assert_eq!(mask.candidates(), &[1, 3, 5, 7, 9]);
+    }
+
+    #[test]
+    fn test_sparse_filter_mask_deduplication_and_sorting() {
+        // Test with unsorted candidates and duplicates
+        let candidates = vec![9, 1, 5, 3, 7, 1, 5];
+        let total_vectors = 100;
+        let selectivity = 0.05;
+
+        let mask = SparseFilterMask::new(selectivity, candidates, total_vectors);
+
+        // Should be deduplicated and sorted
+        assert_eq!(mask.candidates(), &[1, 3, 5, 7, 9]);
+        assert_eq!(mask.candidate_count(), 5);
+    }
+
+    #[test]
+    fn test_sparse_filter_mask_contains() {
+        let candidates = vec![1, 3, 5, 7, 9];
+        let mask = SparseFilterMask::new(0.05, candidates, 100);
+
+        // Test positive cases
+        assert!(FilterMask::contains_vector(&mask, 1));
+        assert!(FilterMask::contains_vector(&mask, 3));
+        assert!(FilterMask::contains_vector(&mask, 5));
+        assert!(FilterMask::contains_vector(&mask, 7));
+        assert!(FilterMask::contains_vector(&mask, 9));
+
+        // Test negative cases
+        assert!(!FilterMask::contains_vector(&mask, 0));
+        assert!(!FilterMask::contains_vector(&mask, 2));
+        assert!(!FilterMask::contains_vector(&mask, 4));
+        assert!(!FilterMask::contains_vector(&mask, 10));
+        assert!(!FilterMask::contains_vector(&mask, 99));
+    }
+
+    #[test]
+    fn test_sparse_filter_mask_iteration() {
+        let candidates = vec![1, 3, 5, 7, 9];
+        let mask = SparseFilterMask::new(0.05, candidates, 100);
+
+        let iterated: Vec<u32> = mask.iter_candidates().collect();
+        assert_eq!(iterated, vec![1, 3, 5, 7, 9]);
+    }
+
+    #[test]
+    fn test_sparse_filter_mask_diskann_compatibility() {
+        let candidates = vec![1, 3, 5];
+        let mask = SparseFilterMask::new(0.03, candidates, 100);
+
+        // Test DiskANN FilterMask trait implementation
+        assert!(DiskANNFilterMask::contains_vector(&mask, 1));
+        assert!(DiskANNFilterMask::contains_vector(&mask, 3));
+        assert!(!DiskANNFilterMask::contains_vector(&mask, 2));
+    }
+
+    #[test]
+    fn test_dense_filter_mask_creation_from_candidates() {
+        let candidates = vec![1, 3, 5, 7, 9];
+        let total_vectors = 10;
+        let selectivity = 0.5;
+
+        let mask = DenseFilterMask::new(selectivity, candidates, total_vectors);
+
+        assert_eq!(mask.selectivity(), selectivity);
+        assert_eq!(mask.candidate_count(), 5);
+        assert_eq!(mask.total_vectors(), total_vectors);
+    }
+
+    #[test]
+    fn test_dense_filter_mask_creation_from_bitmap() {
+        let mut bitmap = bitvec![0; 10];
+        bitmap.set(1, true);
+        bitmap.set(3, true);
+        bitmap.set(5, true);
+
+        let mask = DenseFilterMask::from_bitmap(bitmap);
+
+        assert_eq!(mask.candidate_count(), 3);
+        assert_eq!(mask.total_vectors(), 10);
+        assert_eq!(mask.selectivity(), 0.3);
+    }
+
+    #[test]
+    fn test_dense_filter_mask_contains() {
+        let candidates = vec![1, 3, 5, 7, 9];
+        let mask = DenseFilterMask::new(0.5, candidates, 10);
+
+        // Test positive cases
+        assert!(FilterMask::contains_vector(&mask, 1));
+        assert!(FilterMask::contains_vector(&mask, 3));
+        assert!(FilterMask::contains_vector(&mask, 5));
+        assert!(FilterMask::contains_vector(&mask, 7));
+        assert!(FilterMask::contains_vector(&mask, 9));
+
+        // Test negative cases
+        assert!(!FilterMask::contains_vector(&mask, 0));
+        assert!(!FilterMask::contains_vector(&mask, 2));
+        assert!(!FilterMask::contains_vector(&mask, 4));
+        assert!(!FilterMask::contains_vector(&mask, 6));
+        assert!(!FilterMask::contains_vector(&mask, 8));
+    }
+
+    #[test]
+    fn test_dense_filter_mask_iteration() {
+        let candidates = vec![1, 3, 5, 7, 9];
+        let mask = DenseFilterMask::new(0.5, candidates, 10);
+
+        let iterated: Vec<u32> = mask.iter_candidates().collect();
+        assert_eq!(iterated, vec![1, 3, 5, 7, 9]);
+    }
+
+    #[test]
+    fn test_dense_filter_mask_deduplication() {
+        // Test with duplicate candidates
+        let candidates = vec![1, 3, 5, 3, 1];
+        let mask = DenseFilterMask::new(0.3, candidates, 10);
+
+        // Should only count unique candidates
+        assert_eq!(mask.candidate_count(), 3);
+
+        let iterated: Vec<u32> = mask.iter_candidates().collect();
+        assert_eq!(iterated, vec![1, 3, 5]);
+    }
+
+    #[test]
+    fn test_dense_filter_mask_out_of_bounds() {
+        let candidates = vec![1, 3, 15]; // 15 is out of bounds for size 10
+        let mask = DenseFilterMask::new(0.3, candidates, 10);
+
+        // Should only count valid candidates
+        assert_eq!(mask.candidate_count(), 2);
+        assert!(FilterMask::contains_vector(&mask, 1));
+        assert!(FilterMask::contains_vector(&mask, 3));
+        assert!(!FilterMask::contains_vector(&mask, 15));
+    }
+
+    #[test]
+    fn test_dense_filter_mask_diskann_compatibility() {
+        let candidates = vec![1, 3, 5];
+        let mask = DenseFilterMask::new(0.3, candidates, 10);
+
+        // Test DiskANN FilterMask trait implementation
+        assert!(DiskANNFilterMask::contains_vector(&mask, 1));
+        assert!(DiskANNFilterMask::contains_vector(&mask, 3));
+        assert!(!DiskANNFilterMask::contains_vector(&mask, 2));
+    }
+
+    #[test]
+    fn test_create_filter_mask_low_selectivity() {
+        let candidates = vec![1, 3, 5]; // 3/100 = 0.03 < 0.1
+        let total_vectors = 100;
+
+        let mask = create_filter_mask(candidates, total_vectors);
+
+        // Should create SparseFilterMask for low selectivity
+        assert!(mask.as_any().downcast_ref::<SparseFilterMask>().is_some());
+        assert_eq!(mask.selectivity(), 0.03);
+        assert_eq!(mask.candidate_count(), 3);
+    }
+
+    #[test]
+    fn test_create_filter_mask_high_selectivity() {
+        let candidates = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; // 10/50 = 0.2 > 0.1
+        let total_vectors = 50;
+
+        let mask = create_filter_mask(candidates, total_vectors);
+
+        // Should create DenseFilterMask for high selectivity
+        assert!(mask.as_any().downcast_ref::<DenseFilterMask>().is_some());
+        assert_eq!(mask.selectivity(), 0.2);
+        assert_eq!(mask.candidate_count(), 10);
+    }
+
+    #[test]
+    fn test_create_filter_mask_boundary_case() {
+        let candidates = vec![1, 2, 3, 4, 5]; // 5/50 = 0.1 (exactly at threshold)
+        let total_vectors = 50;
+
+        let mask = create_filter_mask(candidates, total_vectors);
+
+        // At exactly 0.1, should use DenseFilterMask (>= 0.1)
+        assert!(mask.as_any().downcast_ref::<DenseFilterMask>().is_some());
+        assert_eq!(mask.selectivity(), 0.1);
+    }
+
+    #[test]
+    fn test_empty_candidates() {
+        let candidates = vec![];
+        let total_vectors = 100;
+
+        let mask = create_filter_mask(candidates, total_vectors);
+
+        assert_eq!(mask.candidate_count(), 0);
+        assert_eq!(mask.selectivity(), 0.0);
+        assert!(!FilterMask::contains_vector(mask.as_ref(), 0));
+        assert!(!FilterMask::contains_vector(mask.as_ref(), 50));
+
+        let iterated: Vec<u32> = mask.iter_candidates().collect();
+        assert!(iterated.is_empty());
+    }
+
+    #[test]
+    fn test_zero_total_vectors() {
+        let candidates = vec![];
+        let total_vectors = 0;
+
+        let mask = create_filter_mask(candidates, total_vectors);
+
+        assert_eq!(mask.candidate_count(), 0);
+        assert_eq!(mask.total_vectors(), 0);
+        // Should handle division by zero gracefully
+        assert_eq!(mask.selectivity(), 0.0);
+    }
+
+    #[test]
+    fn test_all_vectors_selected() {
+        let candidates = (0..10).collect::<Vec<u32>>();
+        let total_vectors = 10;
+
+        let mask = create_filter_mask(candidates, total_vectors);
+
+        assert_eq!(mask.candidate_count(), 10);
+        assert_eq!(mask.selectivity(), 1.0);
+
+        // All vectors should be included
+        for i in 0..10 {
+            assert!(FilterMask::contains_vector(mask.as_ref(), i));
+        }
+    }
+
+    #[test]
+    fn test_filter_mask_trait_object_behavior() {
+        let sparse_mask: Box<dyn FilterMask> =
+            Box::new(SparseFilterMask::new(0.05, vec![1, 3, 5], 100));
+
+        let dense_mask: Box<dyn FilterMask> =
+            Box::new(DenseFilterMask::new(0.3, vec![1, 3, 5], 10));
+
+        // Both should work through trait object
+        assert!(FilterMask::contains_vector(sparse_mask.as_ref(), 1));
+        assert!(!FilterMask::contains_vector(sparse_mask.as_ref(), 2));
+        assert_eq!(sparse_mask.candidate_count(), 3);
+
+        assert!(FilterMask::contains_vector(dense_mask.as_ref(), 1));
+        assert!(!FilterMask::contains_vector(dense_mask.as_ref(), 2));
+        assert_eq!(dense_mask.candidate_count(), 3);
+    }
+}

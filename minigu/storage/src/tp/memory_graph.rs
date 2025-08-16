@@ -6,7 +6,7 @@ use dashmap::DashMap;
 use diskann::model::IndexConfiguration;
 use diskann::model::configuration::index_write_parameters::IndexWriteParametersBuilder;
 use diskann::utils::round_up;
-use minigu_common::types::{EdgeId, PropertyId, VertexId};
+use minigu_common::types::{EdgeId, LabelId, PropertyId, VectorIndexKey, VertexId};
 use minigu_common::value::ScalarValue;
 use vector::Metric;
 
@@ -361,7 +361,7 @@ pub struct MemoryGraph {
     pub(super) checkpoint_manager: Option<CheckpointManager>,
 
     // ---- Vector indices ----
-    pub(super) vector_indices: DashMap<PropertyId, Box<dyn VectorIndex>>,
+    pub(super) vector_indices: DashMap<VectorIndexKey, Box<dyn VectorIndex>>,
 }
 
 #[allow(dead_code)]
@@ -940,10 +940,12 @@ impl MemoryGraph {
         Ok(())
     }
 
-    /// Collect vectors from graph nodes for the specified property
-    fn collect_vectors_for_property(
+    // ===== Vector index methods =====
+    /// Collect vectors from graph nodes for the specified label and property
+    fn collect_vectors_for_index(
         &self,
         txn: &TransactionHandle,
+        label_id: LabelId,
         property_id: PropertyId,
     ) -> StorageResult<Vec<(u64, Vec<f32>)>> {
         let mut vectors = Vec::new();
@@ -953,6 +955,12 @@ impl MemoryGraph {
 
         for vertex_result in vertex_iter {
             let vertex = vertex_result?;
+
+            // Skip vertices that don't match the specified label
+            if vertex.label_id != label_id {
+                continue;
+            }
+
             let node_id = vertex.vid();
 
             // Check if vertex has the specified property at the given index
@@ -984,30 +992,44 @@ impl MemoryGraph {
         Ok(vectors)
     }
 
-    /// Build a vector index for the specified property
+    /// Build a vector index for the specified property within a specific label
     ///
     /// # Arguments
+    /// * `label_id` - The LabelId of the vertex/edge type containing the property
     /// * `property_id` - The PropertyId of the vector property to index (resolved from property
     ///   name by higher layers)
     pub fn build_vector_index(
         &self,
         txn: &TransactionHandle,
-        property_id: PropertyId,
+        index_key: VectorIndexKey,
         index_config: IndexConfiguration,
     ) -> StorageResult<()> {
-        // Collect vectors from graph nodes
-        let vectors = self.collect_vectors_for_property(txn, property_id)?;
+        let label_id = index_key.label_id;
+        let property_id = index_key.property_id;
+
+        // Collect vectors from graph nodes with the specified label and property
+        let vectors = self.collect_vectors_for_index(txn, label_id, property_id)?;
 
         if vectors.is_empty() {
             return Err(StorageError::VectorIndex(VectorIndexError::EmptyDataset));
         }
 
-        // Validate dimension consistency
+        // Validate dimension consistency - all vectors must have the same dimension
+        let expected_dim = vectors[0].1.len();
+        if expected_dim != index_config.dim {
+            return Err(StorageError::VectorIndex(
+                VectorIndexError::InvalidDimension {
+                    expected: index_config.dim,
+                    actual: expected_dim,
+                },
+            ));
+        }
+
         for (_node_id, vector) in &vectors {
-            if vector.len() != index_config.dim {
+            if vector.len() != expected_dim {
                 return Err(StorageError::VectorIndex(
                     VectorIndexError::InvalidDimension {
-                        expected: index_config.dim,
+                        expected: expected_dim,
                         actual: vector.len(),
                     },
                 ));
@@ -1017,9 +1039,9 @@ impl MemoryGraph {
         let mut adapter = InMemDiskANNAdapter::new(index_config)?;
         adapter.build(&vectors)?;
 
-        // Store the index in the hash map (using PropertyId as key)
+        // Store the index in the hash map using the provided composite key
         self.vector_indices
-            .insert(property_id, Box::new(adapter) as Box<dyn VectorIndex>);
+            .insert(index_key, Box::new(adapter) as Box<dyn VectorIndex>);
 
         Ok(())
     }
@@ -1051,18 +1073,18 @@ impl MemoryGraph {
         }
     }
 
-    /// Get vector index for the specified property
+    /// Get vector index for the specified label and property
     pub fn get_vector_index(
         &self,
-        property_id: PropertyId,
-    ) -> Option<dashmap::mapref::one::Ref<PropertyId, Box<dyn VectorIndex>>> {
-        self.vector_indices.get(&property_id)
+        index_key: VectorIndexKey,
+    ) -> Option<dashmap::mapref::one::Ref<VectorIndexKey, Box<dyn VectorIndex>>> {
+        self.vector_indices.get(&index_key)
     }
 
     /// Perform vector similarity search (returns node IDs)
     ///
     /// # Arguments
-    /// * `property_id` - The PropertyId of the vector property to search
+    /// * `index_key` - The VectorIndexKey identifying the vector index (label + property)
     /// * `query` - Query vector for similarity search
     /// * `k` - Number of nearest neighbors to return
     /// * `l_value` - Search list size parameter
@@ -1070,15 +1092,18 @@ impl MemoryGraph {
     /// * `should_pre` - should pre-filter
     pub fn vector_search(
         &self,
-        property_id: PropertyId,
+        index_key: VectorIndexKey,
         query: &[f32],
         k: usize,
         l_value: u32,
         filter_bitmap: Option<&BooleanArray>,
         should_pre: bool,
     ) -> StorageResult<Vec<u64>> {
-        let index_ref = self.get_vector_index(property_id).ok_or_else(|| {
-            StorageError::VectorIndex(VectorIndexError::IndexNotFound(property_id.to_string()))
+        let index_ref = self.get_vector_index(index_key).ok_or_else(|| {
+            StorageError::VectorIndex(VectorIndexError::IndexNotFound(format!(
+                "index_key: {:?}",
+                index_key
+            )))
         })?;
 
         // Convert BooleanArray to optimal FilterMask if provided
@@ -1114,27 +1139,43 @@ impl MemoryGraph {
             .collect()
     }
 
-    /// Get mutable vector index for the specified property
+    /// Get mutable vector index for the specified label and property
     fn get_mutable_vector_index(
         &self,
-        property_id: PropertyId,
-    ) -> Option<dashmap::mapref::one::RefMut<PropertyId, Box<dyn VectorIndex>>> {
-        self.vector_indices.get_mut(&property_id)
+        index_key: VectorIndexKey,
+    ) -> Option<dashmap::mapref::one::RefMut<VectorIndexKey, Box<dyn VectorIndex>>> {
+        self.vector_indices.get_mut(&index_key)
     }
 
     /// Insert vectors into the specified vector index
     pub fn insert_into_vector_index(
         &self,
-        property_id: PropertyId,
+        index_key: VectorIndexKey,
         vectors: &[(u64, Vec<f32>)],
     ) -> StorageResult<()> {
         if vectors.is_empty() {
             return Ok(());
         }
 
-        let mut index_ref = self.get_mutable_vector_index(property_id).ok_or_else(|| {
-            StorageError::VectorIndex(VectorIndexError::IndexNotFound(property_id.to_string()))
+        let mut index_ref = self.get_mutable_vector_index(index_key).ok_or_else(|| {
+            StorageError::VectorIndex(VectorIndexError::IndexNotFound(format!(
+                "label_id: {}, property_id: {}",
+                index_key.label_id, index_key.property_id
+            )))
         })?;
+
+        // Validate dimension consistency for all vectors
+        let expected_dim = index_ref.get_dimension();
+        for (_node_id, vector) in vectors {
+            if vector.len() != expected_dim {
+                return Err(StorageError::VectorIndex(
+                    VectorIndexError::InvalidDimension {
+                        expected: expected_dim,
+                        actual: vector.len(),
+                    },
+                ));
+            }
+        }
 
         index_ref.insert(vectors)?;
 
@@ -1144,15 +1185,18 @@ impl MemoryGraph {
     /// Delete vectors from the specified vector index
     pub fn delete_from_vector_index(
         &self,
-        property_id: PropertyId,
+        index_key: VectorIndexKey,
         node_ids: &[u64],
     ) -> StorageResult<()> {
         if node_ids.is_empty() {
             return Ok(());
         }
 
-        let mut index_ref = self.get_mutable_vector_index(property_id).ok_or_else(|| {
-            StorageError::VectorIndex(VectorIndexError::IndexNotFound(property_id.to_string()))
+        let mut index_ref = self.get_mutable_vector_index(index_key).ok_or_else(|| {
+            StorageError::VectorIndex(VectorIndexError::IndexNotFound(format!(
+                "label_id: {}, property_id: {}",
+                index_key.label_id, index_key.property_id
+            )))
         })?;
 
         index_ref.soft_delete(node_ids)?;
@@ -2162,11 +2206,16 @@ pub mod tests {
 
         // Build vector index with small-scale configuration
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
 
         // Verify index creation and properties
+        let index_key = VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID);
         let index = graph
-            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .get_vector_index(index_key)
             .expect("Index should exist after build");
         assert_eq!(index.size(), 200);
         assert_eq!(index.get_dimension(), TEST_DIMENSION);
@@ -2189,15 +2238,25 @@ pub mod tests {
 
         // Build index with small-scale configuration
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
 
         // Test 1: Search in cluster 1 area (coordinates around 30-42)
         let mut cluster1_query = vec![0.0f32; TEST_DIMENSION];
         cluster1_query[0] = 35.0f32;
         cluster1_query[1] = 30.0f32;
         cluster1_query[2] = 25.0f32;
-        let results =
-            graph.vector_search(EMBEDDING_PROPERTY_ID, &cluster1_query, 10, 50, None, false)?;
+        let results = graph.vector_search(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            &cluster1_query,
+            10,
+            50,
+            None,
+            false,
+        )?;
         assert!(!results.is_empty(), "Should find vectors in cluster 1");
         assert!(results.len() <= 10, "Results should not exceed k");
 
@@ -2206,8 +2265,14 @@ pub mod tests {
         cluster2_query[0] = 55.0f32;
         cluster2_query[1] = 45.0f32;
         cluster2_query[2] = 37.0f32;
-        let results =
-            graph.vector_search(EMBEDDING_PROPERTY_ID, &cluster2_query, 5, 30, None, false)?;
+        let results = graph.vector_search(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            &cluster2_query,
+            5,
+            30,
+            None,
+            false,
+        )?;
         assert!(!results.is_empty(), "Should find vectors in cluster 2");
         assert!(results.len() <= 5, "Results should not exceed k");
 
@@ -2222,7 +2287,14 @@ pub mod tests {
 
         // Try to search without building index
         let query = vec![1.0f32; TEST_DIMENSION];
-        let result = graph.vector_search(EMBEDDING_PROPERTY_ID, &query, 1, 20, None, false);
+        let result = graph.vector_search(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            &query,
+            1,
+            20,
+            None,
+            false,
+        );
 
         // Should fail with IndexNotFound error
         assert!(result.is_err());
@@ -2238,7 +2310,11 @@ pub mod tests {
 
         // Try to build index on empty dataset
         let config = create_test_index_config(TEST_DIMENSION);
-        let result = graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config);
+        let result = graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        );
 
         // Should fail with appropriate error
         assert!(result.is_err());
@@ -2260,12 +2336,22 @@ pub mod tests {
         }
 
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
 
         // Try to search with wrong dimension query
         let wrong_dim_query = vec![0.0f32; 50]; // Wrong dimension
-        let result =
-            graph.vector_search(EMBEDDING_PROPERTY_ID, &wrong_dim_query, 1, 50, None, false);
+        let result = graph.vector_search(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            &wrong_dim_query,
+            1,
+            50,
+            None,
+            false,
+        );
 
         // Should fail due to dimension mismatch
         assert!(result.is_err());
@@ -2294,12 +2380,22 @@ pub mod tests {
         }
 
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
 
         // Search should return correct vertex IDs for modified vectors
         for (expected_id, _, embedding) in test_vectors.iter().take(5) {
-            let results =
-                graph.vector_search(EMBEDDING_PROPERTY_ID, embedding, 1, 50, None, false)?;
+            let results = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                embedding,
+                1,
+                50,
+                None,
+                false,
+            )?;
             assert_eq!(results.len(), 1);
             assert_eq!(
                 results[0], *expected_id,
@@ -2326,7 +2422,11 @@ pub mod tests {
 
         // Building index should succeed with small-scale connected data
         let config = create_test_index_config(TEST_DIMENSION);
-        let result = graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config);
+        let result = graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        );
         assert!(
             result.is_ok(),
             "Index build should succeed with small-scale connected vectors"
@@ -2338,7 +2438,14 @@ pub mod tests {
         query[0] = 98.0f32; // Query near the boundary vertex coordinates
         query[1] = 83.0f32;
         query[2] = 66.0f32;
-        let results = graph.vector_search(EMBEDDING_PROPERTY_ID, &query, 5, 50, None, false)?;
+        let results = graph.vector_search(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            &query,
+            5,
+            50,
+            None,
+            false,
+        )?;
 
         assert!(!results.is_empty(), "Should find nearby vectors");
         assert!(
@@ -2365,10 +2472,16 @@ pub mod tests {
 
         // Build index with small-scale configuration
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
 
         // Verify index properties
-        let index = graph.get_vector_index(EMBEDDING_PROPERTY_ID).unwrap();
+        let index = graph
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .unwrap();
         assert_eq!(index.size(), 200);
 
         // Test search with various k values
@@ -2376,7 +2489,14 @@ pub mod tests {
         query[0] = 75.0f32; // Search in middle area
         query[1] = 60.0f32;
         query[2] = 45.0f32;
-        let results = graph.vector_search(EMBEDDING_PROPERTY_ID, &query, 15, 50, None, false)?;
+        let results = graph.vector_search(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            &query,
+            15,
+            50,
+            None,
+            false,
+        )?;
         assert!(!results.is_empty());
         assert!(results.len() <= 15);
 
@@ -2397,7 +2517,11 @@ pub mod tests {
         }
 
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn1, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn1,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
         txn1.commit()?;
 
         // Transaction 2: Use index with different isolation levels
@@ -2407,7 +2531,14 @@ pub mod tests {
             query[0] = 65.0f32; // Search in cluster area
             query[1] = 55.0f32;
             query[2] = 40.0f32;
-            let results = graph.vector_search(EMBEDDING_PROPERTY_ID, &query, 5, 30, None, false)?;
+            let results = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &query,
+                5,
+                30,
+                None,
+                false,
+            )?;
             assert!(!results.is_empty());
             txn2.commit()?;
         }
@@ -2443,16 +2574,18 @@ pub mod tests {
 
         // Build indices on different properties
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, 1, config.clone())?; // Property 1
-        graph.build_vector_index(&txn, 2, config)?; // Property 2
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, 1), config.clone())?; // Property 1
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, 2), config)?; // Property 2
 
         // Verify both indices work independently
         let mut query = vec![0.0f32; TEST_DIMENSION];
         query[0] = 80.0f32; // Query in large coordinate space
         query[1] = 70.0f32;
         query[2] = 50.0f32;
-        let results_1 = graph.vector_search(1, &query, 3, 30, None, false)?;
-        let results_2 = graph.vector_search(2, &query, 3, 30, None, false)?;
+        let results_1 =
+            graph.vector_search(VectorIndexKey::new(PERSON, 1), &query, 3, 30, None, false)?;
+        let results_2 =
+            graph.vector_search(VectorIndexKey::new(PERSON, 2), &query, 3, 30, None, false)?;
 
         assert!(!results_1.is_empty());
         assert!(!results_2.is_empty());
@@ -2496,7 +2629,14 @@ pub mod tests {
         target_vector: &[f32],
         expected_node_id: VertexId,
     ) -> StorageResult<bool> {
-        let results = graph.vector_search(property_id, target_vector, 5, 50, None, false)?;
+        let results = graph.vector_search(
+            VectorIndexKey::new(PERSON, property_id),
+            target_vector,
+            5,
+            50,
+            None,
+            false,
+        )?;
         Ok(results.contains(&expected_node_id))
     }
 
@@ -2507,7 +2647,14 @@ pub mod tests {
         query_vector: &[f32],
         excluded_node_id: VertexId,
     ) -> StorageResult<bool> {
-        let results = graph.vector_search(property_id, query_vector, 20, 100, None, false)?; // Use larger k to be thorough
+        let results = graph.vector_search(
+            VectorIndexKey::new(PERSON, property_id),
+            query_vector,
+            20,
+            100,
+            None,
+            false,
+        )?; // Use larger k to be thorough
         Ok(!results.contains(&excluded_node_id))
     }
 
@@ -2524,11 +2671,15 @@ pub mod tests {
         }
 
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
 
         // Verify initial index size
         let initial_size = graph
-            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
             .unwrap()
             .size();
         assert_eq!(initial_size, 200);
@@ -2543,11 +2694,14 @@ pub mod tests {
 
         // Insert into vector index
         let insert_data = vec![(*new_id, new_embedding.clone())];
-        graph.insert_into_vector_index(EMBEDDING_PROPERTY_ID, &insert_data)?;
+        graph.insert_into_vector_index(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            &insert_data,
+        )?;
 
         // Verify index size increased
         let new_size = graph
-            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
             .unwrap()
             .size();
         assert_eq!(new_size, initial_size + 1);
@@ -2577,10 +2731,14 @@ pub mod tests {
         }
 
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
 
         let initial_size = graph
-            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
             .unwrap()
             .size();
 
@@ -2596,11 +2754,14 @@ pub mod tests {
         }
 
         // Batch insert
-        graph.insert_into_vector_index(EMBEDDING_PROPERTY_ID, &insert_data)?;
+        graph.insert_into_vector_index(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            &insert_data,
+        )?;
 
         // Verify index size
         let new_size = graph
-            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
             .unwrap()
             .size();
         assert_eq!(new_size, initial_size + 5);
@@ -2632,21 +2793,28 @@ pub mod tests {
         }
 
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
 
         let initial_size = graph
-            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
             .unwrap()
             .size();
 
         // Insert empty vector list - should succeed but do nothing
         let empty_vectors: Vec<(u64, Vec<f32>)> = vec![];
-        let result = graph.insert_into_vector_index(EMBEDDING_PROPERTY_ID, &empty_vectors);
+        let result = graph.insert_into_vector_index(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            &empty_vectors,
+        );
         assert!(result.is_ok());
 
         // Verify size unchanged
         let new_size = graph
-            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
             .unwrap()
             .size();
         assert_eq!(new_size, initial_size);
@@ -2665,7 +2833,7 @@ pub mod tests {
         let insert_data = vec![(new_vectors[0].0, new_vectors[0].2.clone())];
 
         // Should fail with index not found error
-        let result = graph.insert_into_vector_index(999, &insert_data);
+        let result = graph.insert_into_vector_index(VectorIndexKey::new(PERSON, 999), &insert_data);
         assert!(result.is_err());
 
         txn.commit()?;
@@ -2685,10 +2853,14 @@ pub mod tests {
         }
 
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
 
         let initial_size = graph
-            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
             .unwrap()
             .size();
 
@@ -2704,11 +2876,13 @@ pub mod tests {
         )?);
 
         // Delete the vector
-        graph.delete_from_vector_index(EMBEDDING_PROPERTY_ID, &[*target_id])?;
+        graph.delete_from_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID), &[
+            *target_id,
+        ])?;
 
         // Verify index size decreased (soft delete should reduce active count)
         let new_size = graph
-            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
             .unwrap()
             .size();
         assert_eq!(new_size, initial_size - 1);
@@ -2738,10 +2912,14 @@ pub mod tests {
         }
 
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
 
         let initial_size = graph
-            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
             .unwrap()
             .size();
 
@@ -2761,11 +2939,14 @@ pub mod tests {
         }
 
         // Delete multiple vectors
-        graph.delete_from_vector_index(EMBEDDING_PROPERTY_ID, &delete_ids)?;
+        graph.delete_from_vector_index(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            &delete_ids,
+        )?;
 
         // Verify index size decreased
         let new_size = graph
-            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
             .unwrap()
             .size();
         assert_eq!(new_size, initial_size - 3);
@@ -2797,21 +2978,28 @@ pub mod tests {
         }
 
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
 
         let initial_size = graph
-            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
             .unwrap()
             .size();
 
         // Delete empty list - should succeed but do nothing
         let empty_ids: Vec<u64> = vec![];
-        let result = graph.delete_from_vector_index(EMBEDDING_PROPERTY_ID, &empty_ids);
+        let result = graph.delete_from_vector_index(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            &empty_ids,
+        );
         assert!(result.is_ok());
 
         // Verify size unchanged
         let new_size = graph
-            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
             .unwrap()
             .size();
         assert_eq!(new_size, initial_size);
@@ -2829,7 +3017,7 @@ pub mod tests {
         let delete_ids = vec![1u64, 2u64];
 
         // Should fail with index not found error
-        let result = graph.delete_from_vector_index(999, &delete_ids);
+        let result = graph.delete_from_vector_index(VectorIndexKey::new(PERSON, 999), &delete_ids);
         assert!(result.is_err());
 
         txn.commit()?;
@@ -2849,11 +3037,18 @@ pub mod tests {
         }
 
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
 
         // Try to delete non-existent node ID
         let nonexistent_ids = vec![9999u64];
-        let result = graph.delete_from_vector_index(EMBEDDING_PROPERTY_ID, &nonexistent_ids);
+        let result = graph.delete_from_vector_index(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            &nonexistent_ids,
+        );
 
         // Should fail with appropriate error
         assert!(result.is_err());
@@ -2875,10 +3070,14 @@ pub mod tests {
         }
 
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
 
         let initial_size = graph
-            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
             .unwrap()
             .size();
 
@@ -2892,22 +3091,28 @@ pub mod tests {
             insert_data.push((*id, embedding.clone()));
         }
 
-        graph.insert_into_vector_index(EMBEDDING_PROPERTY_ID, &insert_data)?;
+        graph.insert_into_vector_index(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            &insert_data,
+        )?;
 
         // Verify size after insertion
         let after_insert_size = graph
-            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
             .unwrap()
             .size();
         assert_eq!(after_insert_size, initial_size + 3);
 
         // Phase 2: Delete some original vectors
         let delete_ids: Vec<u64> = test_vectors.iter().take(2).map(|(id, _, _)| *id).collect();
-        graph.delete_from_vector_index(EMBEDDING_PROPERTY_ID, &delete_ids)?;
+        graph.delete_from_vector_index(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            &delete_ids,
+        )?;
 
         // Verify final size
         let final_size = graph
-            .get_vector_index(EMBEDDING_PROPERTY_ID)
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
             .unwrap()
             .size();
         assert_eq!(final_size, initial_size + 3 - 2); // +3 inserts, -2 deletes
@@ -2954,7 +3159,11 @@ pub mod tests {
         }
 
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
 
         // Mixed operations: insert, search, delete, search again
 
@@ -2963,16 +3172,26 @@ pub mod tests {
         let (new_id, new_name, new_embedding) = &new_vectors[0];
         let vertex = create_vertex_with_vector(*new_id, new_name, new_embedding.clone());
         graph.create_vertex(&txn, vertex)?;
-        graph
-            .insert_into_vector_index(EMBEDDING_PROPERTY_ID, &[(*new_id, new_embedding.clone())])?;
+        graph.insert_into_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID), &[(
+            *new_id,
+            new_embedding.clone(),
+        )])?;
 
         // 2. Search for inserted vector
-        let search_results =
-            graph.vector_search(EMBEDDING_PROPERTY_ID, new_embedding, 5, 50, None, false)?;
+        let search_results = graph.vector_search(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            new_embedding,
+            5,
+            50,
+            None,
+            false,
+        )?;
         assert!(search_results.contains(new_id));
 
         // 3. Delete the inserted vector
-        graph.delete_from_vector_index(EMBEDDING_PROPERTY_ID, &[*new_id])?;
+        graph.delete_from_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID), &[
+            *new_id,
+        ])?;
 
         // 4. Search again - should not find deleted vector
         assert!(verify_vector_not_in_search_results(
@@ -3009,7 +3228,11 @@ pub mod tests {
         }
 
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
 
         // Create BooleanArray filter with low selectivity (5% = ~10 out of 200) to trigger brute
         // force Need to create bitmap that maps to actual node IDs, not array indices
@@ -3028,7 +3251,7 @@ pub mod tests {
         // Perform brute force search
         let query = &test_vectors[0].2; // Use first vector as query
         let results = graph.vector_search(
-            EMBEDDING_PROPERTY_ID,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
             query,
             5,
             50,
@@ -3067,7 +3290,11 @@ pub mod tests {
         }
 
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
 
         // Create BooleanArray filter with high selectivity (50% = ~100 out of 200) to trigger
         // post-filter
@@ -3092,7 +3319,7 @@ pub mod tests {
         // Perform filtered search
         let query = &test_vectors[49].2; // Use middle vector as query
         let results = graph.vector_search(
-            EMBEDDING_PROPERTY_ID,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
             query,
             10,
             100,
@@ -3116,7 +3343,7 @@ pub mod tests {
 
         // pre-filter search should return the same result as query when k is one
         let result_k1 = graph.vector_search(
-            EMBEDDING_PROPERTY_ID,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
             query,
             1,
             100,
@@ -3145,7 +3372,11 @@ pub mod tests {
         }
 
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
 
         // Create BooleanArray filter with high selectivity (50% = 100 out of 200) to trigger
         // pre-filter
@@ -3170,7 +3401,7 @@ pub mod tests {
         // Perform filtered search
         let query = &test_vectors[49].2; // Use middle vector as query
         let results = graph.vector_search(
-            EMBEDDING_PROPERTY_ID,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
             query,
             5,
             100,
@@ -3194,7 +3425,7 @@ pub mod tests {
 
         // pre-filter search should return the same result as query when k is one
         let result_k1 = graph.vector_search(
-            EMBEDDING_PROPERTY_ID,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
             query,
             1,
             100,
@@ -3223,7 +3454,11 @@ pub mod tests {
         }
 
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
         let query = &test_vectors[0].2;
 
         // Test 1: Empty filter (all false)
@@ -3231,7 +3466,7 @@ pub mod tests {
         let empty_filter =
             arrow::array::BooleanArray::from(vec![false; (max_node_id + 1) as usize]);
         let results = graph.vector_search(
-            EMBEDDING_PROPERTY_ID,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
             query,
             5,
             50,
@@ -3249,7 +3484,7 @@ pub mod tests {
         single_filter_bits[single_node_id as usize] = true;
         let single_filter = arrow::array::BooleanArray::from(single_filter_bits);
         let results = graph.vector_search(
-            EMBEDDING_PROPERTY_ID,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
             query,
             5,
             50,
@@ -3268,15 +3503,21 @@ pub mod tests {
         }
         let full_filter = arrow::array::BooleanArray::from(full_filter_bits);
         let results_filtered = graph.vector_search(
-            EMBEDDING_PROPERTY_ID,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
             query,
             5,
             50,
             Some(&full_filter),
             true,
         )?; // pre-filter
-        let results_unfiltered =
-            graph.vector_search(EMBEDDING_PROPERTY_ID, query, 5, 50, None, false)?;
+        let results_unfiltered = graph.vector_search(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            query,
+            5,
+            50,
+            None,
+            false,
+        )?;
         assert_eq!(
             results_filtered.len(),
             results_unfiltered.len(),
@@ -3299,7 +3540,11 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
 
         // Create a filter that selects only the first cluster (first 25 vectors, pre-filter search)
         let max_node_id = test_vectors.iter().map(|(id, _, _)| *id).max().unwrap_or(0);
@@ -3313,7 +3558,7 @@ pub mod tests {
         // Pre-filter Search within first cluster using a query from that cluster
         let cluster_query = &test_vectors[10].2; // 10th vector is in first cluster
         let results = graph.vector_search(
-            EMBEDDING_PROPERTY_ID,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
             cluster_query,
             5,
             50,
@@ -3337,7 +3582,7 @@ pub mod tests {
 
         // pre-filter search should return the same result as query when k is one
         let result_k1 = graph.vector_search(
-            EMBEDDING_PROPERTY_ID,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
             cluster_query,
             1,
             50,
@@ -3401,7 +3646,11 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
         let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, EMBEDDING_PROPERTY_ID, config)?;
+        graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            config,
+        )?;
 
         // Query vector: [1.0, 0.0, 0.0, ...]
         let mut query = vec![0.0f32; TEST_DIMENSION];
@@ -3413,8 +3662,14 @@ pub mod tests {
         filter_bits[103] = true; // medium  
         filter_bits[104] = true; // far
         let filter = arrow::array::BooleanArray::from(filter_bits);
-        let filtered_results =
-            graph.vector_search(EMBEDDING_PROPERTY_ID, &query, 2, 50, Some(&filter), false)?;
+        let filtered_results = graph.vector_search(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            &query,
+            2,
+            50,
+            Some(&filter),
+            false,
+        )?;
         assert_eq!(
             filtered_results.len(),
             2,
