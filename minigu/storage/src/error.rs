@@ -143,9 +143,13 @@ pub enum VectorIndexError {
     #[error("Invalid input: {0}")]
     InvalidInput(String),
     #[error(
-        "VertexId {vertex_id} exceeds u32::MAX, cannot be used with DiskANN which requires u32 vector IDs"
+        "VectorId {vector_id} exceeds u32::MAX, cannot be used with DiskANN which requires u32 vector IDs"
     )]
-    VertexIdOverflow { vertex_id: u64 },
+    VectorIdOverflow { vector_id: u64 },
+    #[error(
+        "Capacity exceeded: current {current} + new vectors would exceed max capacity {max_capacity}"
+    )]
+    CapacityExceeded { current: usize, max_capacity: usize },
     #[error("NotSupported: {0}")]
     NotSupported(String),
     #[error("Invalid bitmap length: expected {expected}, got {got}")]

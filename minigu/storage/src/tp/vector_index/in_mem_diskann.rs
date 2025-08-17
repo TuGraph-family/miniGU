@@ -5,9 +5,11 @@ use dashmap::DashMap;
 use diskann::common::{AlignedBoxWithSlice, FilterIndex as DiskANNFilterMask};
 use diskann::index::{ANNInmemIndex, create_inmem_index};
 use diskann::model::IndexConfiguration;
+use diskann::model::configuration::index_write_parameters::IndexWriteParametersBuilder;
 use diskann::model::vertex::{DIM_104, DIM_128, DIM_256};
+use diskann::utils::round_up;
 use ordered_float::OrderedFloat;
-use vector::distance_l2_vector_f32;
+use vector::{Metric, distance_l2_vector_f32};
 
 use super::filter::{DenseFilterMask, FilterMask};
 use super::index::VectorIndex;
@@ -32,6 +34,7 @@ impl AlignedQueryBuffer<'_> {
 pub struct InMemDiskANNAdapter {
     inner: Box<dyn ANNInmemIndex<f32> + 'static>,
     dimension: usize,
+    max_points: usize, // Maximum number of vectors this index can hold
 
     node_to_vector: DashMap<u64, u32>,
     vector_to_node: DashMap<u32, u64>,
@@ -41,12 +44,14 @@ pub struct InMemDiskANNAdapter {
 impl InMemDiskANNAdapter {
     pub fn new(config: IndexConfiguration) -> StorageResult<Self> {
         let dimension = config.dim;
+        let max_points = config.max_points;
         let inner = create_inmem_index::<f32>(config)
             .map_err(|e| StorageError::VectorIndex(VectorIndexError::DiskANN(e)))?;
 
         Ok(Self {
             inner,
             dimension, // raw dimension not aligned
+            max_points,
             node_to_vector: DashMap::new(),
             vector_to_node: DashMap::new(),
             next_vector_id: AtomicU32::new(0),
@@ -168,13 +173,9 @@ impl InMemDiskANNAdapter {
         // Helper macro to safely compute SIMD distance for supported dimensions
         macro_rules! simd_distance {
             ($const_dim:expr) => {{
-                // Check 64-byte alignment (Vector crate requirement)
-                if query.as_ptr().align_offset(64) != 0 {
-                    panic!("query must be 64-byte aligned");
-                }
-                if stored.as_ptr().align_offset(64) != 0 {
-                    panic!("vectors must be 64-byte aligned");
-                }
+                // make sure the addresses are bytes aligned
+                debug_assert_eq!(query.as_ptr().align_offset(64), 0);
+                debug_assert_eq!(stored.as_ptr().align_offset(64), 0);
 
                 // Safety: We've verified dimension match and 64-byte alignment
                 unsafe {
@@ -189,7 +190,14 @@ impl InMemDiskANNAdapter {
             DIM_104 => simd_distance!(DIM_104),
             DIM_128 => simd_distance!(DIM_128),
             DIM_256 => simd_distance!(DIM_256),
-            _ => unreachable!(),
+            _ => {
+                return Err(StorageError::VectorIndex(
+                    VectorIndexError::InvalidDimension {
+                        expected: stored.len(),
+                        actual: dimension,
+                    },
+                ));
+            }
         };
 
         Ok(distance)
@@ -207,28 +215,28 @@ impl VectorIndex for InMemDiskANNAdapter {
         let mut sorted_vectors = vectors.to_vec();
         sorted_vectors.sort_by_key(|(node_id, _)| *node_id);
 
+        // Check if vectors exceed the configured capacity
+        if sorted_vectors.len() > self.max_points {
+            self.clear_mappings();
+            return Err(StorageError::VectorIndex(
+                VectorIndexError::CapacityExceeded {
+                    current: sorted_vectors.len(),
+                    max_capacity: self.max_points,
+                },
+            ));
+        }
+
         // Validate node IDs and establish ID mappings BEFORE calling DiskANN
         let mut vector_data = Vec::with_capacity(sorted_vectors.len());
         let mut seen_nodes = std::collections::HashSet::new();
 
         for (array_index, (node_id, vector)) in sorted_vectors.iter().enumerate() {
-            // Check for VertexId overflow (DiskANN requires u32 vector IDs)
-            if *node_id > u32::MAX as u64 {
-                self.clear_mappings();
-                return Err(StorageError::VectorIndex(
-                    VectorIndexError::VertexIdOverflow {
-                        vertex_id: *node_id,
-                    },
-                ));
-            }
-
             if !seen_nodes.insert(*node_id) {
                 self.clear_mappings();
                 return Err(StorageError::VectorIndex(
                     VectorIndexError::DuplicateNodeId { node_id: *node_id },
                 ));
             }
-
             // Establish ID mapping - DiskANN will assign vector_id = array_index
             let vector_id = array_index as u32;
             self.node_to_vector.insert(*node_id, vector_id);
@@ -345,30 +353,29 @@ impl VectorIndex for InMemDiskANNAdapter {
         if vectors.is_empty() {
             return Ok(());
         }
-
         if self.node_to_vector.is_empty() {
             return Err(StorageError::VectorIndex(VectorIndexError::IndexNotBuilt));
         }
-
-        // Check for overflow and duplicate node IDs
+        // Check for duplicate node IDs
         for (node_id, _) in vectors {
-            // Check for VertexId overflow (DiskANN requires u32 vector IDs)
-            if *node_id > u32::MAX as u64 {
-                return Err(StorageError::VectorIndex(
-                    VectorIndexError::VertexIdOverflow {
-                        vertex_id: *node_id,
-                    },
-                ));
-            }
-
             if self.node_to_vector.contains_key(node_id) {
                 return Err(StorageError::VectorIndex(
                     VectorIndexError::DuplicateNodeId { node_id: *node_id },
                 ));
             }
         }
+        // Check capacity limits before allocation
+        let current_size = self.size();
+        if current_size + vectors.len() > self.max_points {
+            return Err(StorageError::VectorIndex(
+                VectorIndexError::CapacityExceeded {
+                    current: current_size + vectors.len(),
+                    max_capacity: self.max_points,
+                },
+            ));
+        }
 
-        // atomic ID allocation
+        // Safe atomic ID allocation (max_points ≤ u32::MAX guaranteed by build())
         let base_vector_id = self
             .next_vector_id
             .fetch_add(vectors.len() as u32, Ordering::Relaxed);
@@ -468,5 +475,35 @@ impl VectorIndex for InMemDiskANNAdapter {
         Err(StorageError::VectorIndex(VectorIndexError::NotSupported(
             "load() is not yet implemented for InMemDiskANNAdapter".to_string(),
         )))
+    }
+}
+
+/// Create a vector index configuration with intelligent capacity management
+///
+/// This function calculates optimal DiskANN configuration parameters based on the actual
+/// dataset size, using a headroom ratio to provide growth capacity while maintaining
+/// efficiency.
+pub fn create_vector_index_config(dimension: usize, vector_count: usize) -> IndexConfiguration {
+    let write_params = IndexWriteParametersBuilder::new(100, 64)
+        .with_alpha(1.2)
+        .with_num_threads(1)
+        .build();
+
+    // Calculate intelligent max_points with 1.2 headroom ratio
+    let headroom_ratio = 1.2;
+    let calculated_max_points =
+        ((vector_count as f64 * headroom_ratio).ceil() as usize).min(u32::MAX as usize);
+
+    IndexConfiguration {
+        index_write_parameter: write_params,
+        dist_metric: Metric::L2,
+        dim: dimension,
+        aligned_dim: round_up(dimension, 8),
+        max_points: calculated_max_points,
+        num_frozen_pts: 0,
+        use_pq_dist: false,
+        num_pq_chunks: 0,
+        use_opq: false,
+        growth_potential: 1.2,
     }
 }

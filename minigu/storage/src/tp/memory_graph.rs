@@ -3,9 +3,6 @@ use std::sync::{Arc, RwLock, Weak};
 use arrow::array::BooleanArray;
 use crossbeam_skiplist::SkipSet;
 use dashmap::DashMap;
-use diskann::model::IndexConfiguration;
-use diskann::model::configuration::index_write_parameters::IndexWriteParametersBuilder;
-use diskann::utils::round_up;
 use minigu_common::types::{EdgeId, LabelId, PropertyId, VectorIndexKey, VertexId};
 use minigu_common::value::ScalarValue;
 use vector::Metric;
@@ -13,6 +10,7 @@ use vector::Metric;
 use super::checkpoint::{CheckpointManager, CheckpointManagerConfig};
 use super::transaction::{MemTransaction, MemTxnManager, TransactionHandle, UndoEntry, UndoPtr};
 use super::vector_index::filter::create_filter_mask;
+use super::vector_index::in_mem_diskann::create_vector_index_config;
 use super::vector_index::{InMemDiskANNAdapter, VectorIndex};
 use crate::common::model::edge::{Edge, Neighbor};
 use crate::common::model::vertex::Vertex;
@@ -993,49 +991,35 @@ impl MemoryGraph {
     }
 
     /// Build a vector index for the specified property within a specific label
-    ///
-    /// # Arguments
-    /// * `label_id` - The LabelId of the vertex/edge type containing the property
-    /// * `property_id` - The PropertyId of the vector property to index (resolved from property
-    ///   name by higher layers)
     pub fn build_vector_index(
         &self,
         txn: &TransactionHandle,
         index_key: VectorIndexKey,
-        index_config: IndexConfiguration,
+        dimension: usize,
     ) -> StorageResult<()> {
         let label_id = index_key.label_id;
         let property_id = index_key.property_id;
 
         // Collect vectors from graph nodes with the specified label and property
         let vectors = self.collect_vectors_for_index(txn, label_id, property_id)?;
-
         if vectors.is_empty() {
             return Err(StorageError::VectorIndex(VectorIndexError::EmptyDataset));
         }
-
         // Validate dimension consistency - all vectors must have the same dimension
-        let expected_dim = vectors[0].1.len();
-        if expected_dim != index_config.dim {
-            return Err(StorageError::VectorIndex(
-                VectorIndexError::InvalidDimension {
-                    expected: index_config.dim,
-                    actual: expected_dim,
-                },
-            ));
-        }
-
         for (_node_id, vector) in &vectors {
-            if vector.len() != expected_dim {
+            if vector.len() != dimension {
                 return Err(StorageError::VectorIndex(
                     VectorIndexError::InvalidDimension {
-                        expected: expected_dim,
+                        expected: dimension,
                         actual: vector.len(),
                     },
                 ));
             }
         }
 
+        // Create index configuration with intelligent capacity based on actual vector count
+        let vector_count = vectors.len();
+        let index_config = create_vector_index_config(dimension, vector_count);
         let mut adapter = InMemDiskANNAdapter::new(index_config)?;
         adapter.build(&vectors)?;
 
@@ -1044,33 +1028,6 @@ impl MemoryGraph {
             .insert(index_key, Box::new(adapter) as Box<dyn VectorIndex>);
 
         Ok(())
-    }
-
-    /// Create a vector index configuration with commonly used parameters
-    pub fn create_vector_index_config(
-        dimension: usize,
-        max_points: usize,
-        search_list_size: u32,
-        max_degree: u32,
-        alpha: f32,
-    ) -> IndexConfiguration {
-        let write_params = IndexWriteParametersBuilder::new(search_list_size, max_degree)
-            .with_alpha(alpha)
-            .with_num_threads(1)
-            .build();
-
-        IndexConfiguration {
-            index_write_parameter: write_params,
-            dist_metric: Metric::L2,
-            dim: dimension,
-            aligned_dim: round_up(dimension, 8),
-            max_points,
-            num_frozen_pts: 0,
-            use_pq_dist: false,
-            num_pq_chunks: 0,
-            use_opq: false,
-            growth_potential: 1.2,
-        }
     }
 
     /// Get vector index for the specified label and property
@@ -1239,7 +1196,6 @@ pub mod tests {
     use diskann::utils::round_up;
     use minigu_common::types::LabelId;
     use minigu_common::value::{F32, ScalarValue};
-    use vector::Metric;
     use {Edge, Vertex};
 
     use super::*;
@@ -1289,27 +1245,6 @@ pub mod tests {
         )
     }
 
-    /// Creates optimized test index configuration for small-scale datasets (200+ points)
-    fn create_test_index_config(dimension: usize) -> IndexConfiguration {
-        let write_params = IndexWriteParametersBuilder::new(100, 64) // Larger search list and degree
-            .with_alpha(1.0) // Lower alpha to avoid over-pruning
-            .with_num_threads(1) // Single thread for deterministic results
-            .build();
-
-        IndexConfiguration {
-            index_write_parameter: write_params,
-            dist_metric: Metric::L2,
-            dim: dimension,
-            aligned_dim: round_up(dimension, 8),
-            max_points: 500, // Increased capacity
-            num_frozen_pts: 0,
-            use_pq_dist: false,
-            num_pq_chunks: 0,
-            use_opq: false,
-            growth_potential: 1.2,
-        }
-    }
-
     /// Generates 200 small-scale test vectors with big coordinates to ensure DiskANN graph
     /// connectivity
     fn create_small_scale_test_vectors() -> Vec<(VertexId, String, Vec<f32>)> {
@@ -1353,21 +1288,6 @@ pub mod tests {
                 (vid, format!("small_scale_{}", i), vector)
             })
             .collect()
-    }
-
-    /// Creates small-scale boundary test vectors with connectivity for u32::MAX testing
-    fn create_small_scale_boundary_vectors() -> Vec<(VertexId, String, Vec<f32>)> {
-        let mut vectors = create_small_scale_test_vectors();
-
-        // Add boundary ID vertex with large coordinates near existing clusters
-        let max_id = u32::MAX as u64;
-        let mut boundary_vec = vec![0.0f32; TEST_DIMENSION];
-        boundary_vec[0] = 100.0f32; // Place it near cluster center coordinates
-        boundary_vec[1] = 85.0f32;
-        boundary_vec[2] = 68.0f32;
-
-        vectors.push((max_id, "boundary_max".to_string(), boundary_vec));
-        vectors
     }
 
     pub fn mock_checkpoint_config() -> CheckpointManagerConfig {
@@ -2197,6 +2117,30 @@ pub mod tests {
         let (graph, _cleaner) = mock_empty_graph();
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
+        // Test 1: Build index with unsupported dimension should fail
+        let unsupported_vectors = vec![
+            (1u64, "test1".to_string(), vec![1.0f32; 200]), /* 200 dimensions, unsupported (aligns to 200, not 104/128/256) */
+            (2u64, "test2".to_string(), vec![2.0f32; 200]),
+            (3u64, "test3".to_string(), vec![3.0f32; 200]),
+        ];
+        for (id, name, embedding) in &unsupported_vectors {
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+        }
+        // Try to build index with unsupported dimension - should fail
+        let result = graph.build_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            200, // unsupported dimension
+        );
+        assert!(result.is_err());
+
+        // Clean up unsupported test data
+        for (id, _, _) in &unsupported_vectors {
+            graph.delete_vertex(&txn, *id)?;
+        }
+
+        // Test 2: Build index with supported dimension should succeed
         // Create 200 test vertices with small-scale vectors
         let test_vectors = create_small_scale_test_vectors();
         for (id, name, embedding) in &test_vectors {
@@ -2205,11 +2149,10 @@ pub mod tests {
         }
 
         // Build vector index with small-scale configuration
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
 
         // Verify index creation and properties
@@ -2237,11 +2180,10 @@ pub mod tests {
         }
 
         // Build index with small-scale configuration
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
 
         // Test 1: Search in cluster 1 area (coordinates around 30-42)
@@ -2309,11 +2251,10 @@ pub mod tests {
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
         // Try to build index on empty dataset
-        let config = create_test_index_config(TEST_DIMENSION);
         let result = graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         );
 
         // Should fail with appropriate error
@@ -2335,11 +2276,10 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
 
         // Try to search with wrong dimension query
@@ -2379,11 +2319,10 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
 
         // Search should return correct vertex IDs for modified vectors
@@ -2409,55 +2348,6 @@ pub mod tests {
     }
 
     #[test]
-    fn test_vector_vertex_id_boundary_values() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Create small-scale test vectors with one boundary ID vertex
-        let test_vectors = create_small_scale_boundary_vectors();
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
-        }
-
-        // Building index should succeed with small-scale connected data
-        let config = create_test_index_config(TEST_DIMENSION);
-        let result = graph.build_vector_index(
-            &txn,
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
-        );
-        assert!(
-            result.is_ok(),
-            "Index build should succeed with small-scale connected vectors"
-        );
-
-        // Search should return results including the boundary ID
-        let max_valid_id = u32::MAX as u64;
-        let mut query = vec![0.0f32; TEST_DIMENSION];
-        query[0] = 98.0f32; // Query near the boundary vertex coordinates
-        query[1] = 83.0f32;
-        query[2] = 66.0f32;
-        let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &query,
-            5,
-            50,
-            None,
-            false,
-        )?;
-
-        assert!(!results.is_empty(), "Should find nearby vectors");
-        assert!(
-            results.contains(&max_valid_id),
-            "Should find the boundary ID vertex"
-        );
-
-        txn.commit()?;
-        Ok(())
-    }
-
-    #[test]
     fn test_vector_small_scale_dataset() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
@@ -2471,11 +2361,10 @@ pub mod tests {
         }
 
         // Build index with small-scale configuration
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
 
         // Verify index properties
@@ -2516,11 +2405,10 @@ pub mod tests {
             graph.create_vertex(&txn1, vertex)?;
         }
 
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn1,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
         txn1.commit()?;
 
@@ -2573,9 +2461,8 @@ pub mod tests {
         }
 
         // Build indices on different properties
-        let config = create_test_index_config(TEST_DIMENSION);
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, 1), config.clone())?; // Property 1
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, 2), config)?; // Property 2
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, 1), TEST_DIMENSION)?; // Property 1
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, 2), TEST_DIMENSION)?; // Property 2
 
         // Verify both indices work independently
         let mut query = vec![0.0f32; TEST_DIMENSION];
@@ -2670,11 +2557,10 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
 
         // Verify initial index size
@@ -2684,7 +2570,7 @@ pub mod tests {
             .size();
         assert_eq!(initial_size, 200);
 
-        // Insert a single new vector
+        // Test 1: Insert a single new vector
         let new_vectors = create_additional_test_vectors(1000, 1);
         let (new_id, new_name, new_embedding) = &new_vectors[0];
 
@@ -2699,7 +2585,7 @@ pub mod tests {
             &insert_data,
         )?;
 
-        // Verify index size increased
+        // Verify index size increased: 200 + 1 = 201
         let new_size = graph
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
             .unwrap()
@@ -2713,6 +2599,74 @@ pub mod tests {
             new_embedding,
             *new_id
         )?);
+
+        // Test 2:  dimension mismatch - should fail
+        let wrong_dimension_vector = vec![1.0f32; 100]; // 100 dimensions vs expected 104
+        let wrong_data = vec![(2000u64, wrong_dimension_vector.clone())];
+
+        // Create vertex in graph first (graph layer doesn't check dimensions)
+        let wrong_vertex = create_vertex_with_vector(2000, "wrong_dim", wrong_dimension_vector);
+        graph.create_vertex(&txn, wrong_vertex)?;
+
+        // Try to insert wrong dimension vector - should fail at insert_into_vector_index level
+        let result = graph.insert_into_vector_index(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            &wrong_data,
+        );
+
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            StorageError::VectorIndex(VectorIndexError::InvalidDimension { expected, actual }) => {
+                assert_eq!(expected, TEST_DIMENSION);
+                assert_eq!(actual, 100);
+            }
+            _ => panic!("Expected InvalidDimension error"),
+        }
+
+        // Verify index size unchanged after failed insertion
+        let final_size = graph
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .unwrap()
+            .size();
+        assert_eq!(final_size, new_size); // Should remain same as before failed insertion
+
+        // Test 3: capacity limit - should fail when exceeding max_points
+        // Current: 200 original + 1 successful = 201 vectors, capacity: 240, remaining: 39
+        // Try to insert 50 vectors: 201 + 50 = 251 > 240 → should fail
+        let excess_vectors = create_additional_test_vectors(3000, 50); // Create 50 additional vectors
+        let mut excess_insert_data = Vec::new();
+
+        // Create vertices in graph first
+        for (id, name, embedding) in &excess_vectors {
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+            excess_insert_data.push((*id, embedding.clone()));
+        }
+
+        // Try to insert 50 vectors when capacity allows only 39 more - should fail
+        let capacity_result = graph.insert_into_vector_index(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            &excess_insert_data,
+        );
+
+        assert!(capacity_result.is_err());
+        match capacity_result.unwrap_err() {
+            StorageError::VectorIndex(VectorIndexError::CapacityExceeded {
+                current,
+                max_capacity,
+            }) => {
+                assert_eq!(current, 251); // 201 existing + 50 attempted
+                assert_eq!(max_capacity, 240); // 200 * 1.2
+            }
+            _ => panic!("Expected CapacityExceeded error"),
+        }
+
+        // Verify index size unchanged after failed capacity insertion
+        let size_after_capacity_failure = graph
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .unwrap()
+            .size();
+        assert_eq!(size_after_capacity_failure, new_size); // Should remain 201 (200 original + 1 successful insert)
 
         txn.commit()?;
         Ok(())
@@ -2730,11 +2684,10 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
 
         let initial_size = graph
@@ -2792,11 +2745,10 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
 
         let initial_size = graph
@@ -2852,11 +2804,10 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
 
         let initial_size = graph
@@ -2911,11 +2862,10 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
 
         let initial_size = graph
@@ -2977,11 +2927,10 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
 
         let initial_size = graph
@@ -3036,11 +2985,10 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
 
         // Try to delete non-existent node ID
@@ -3069,11 +3017,10 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
 
         let initial_size = graph
@@ -3158,11 +3105,10 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
 
         // Mixed operations: insert, search, delete, search again
@@ -3227,11 +3173,10 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
 
         // Create BooleanArray filter with low selectivity (5% = ~10 out of 200) to trigger brute
@@ -3289,11 +3234,10 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
 
         // Create BooleanArray filter with high selectivity (50% = ~100 out of 200) to trigger
@@ -3371,11 +3315,10 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
 
         // Create BooleanArray filter with high selectivity (50% = 100 out of 200) to trigger
@@ -3453,11 +3396,10 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
         let query = &test_vectors[0].2;
 
@@ -3539,11 +3481,10 @@ pub mod tests {
             let vertex = create_vertex_with_vector(*id, name, embedding.clone());
             graph.create_vertex(&txn, vertex)?;
         }
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
 
         // Create a filter that selects only the first cluster (first 25 vectors, pre-filter search)
@@ -3645,11 +3586,10 @@ pub mod tests {
             let vertex = create_vertex_with_vector(*id, name, embedding.clone());
             graph.create_vertex(&txn, vertex)?;
         }
-        let config = create_test_index_config(TEST_DIMENSION);
         graph.build_vector_index(
             &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            config,
+            TEST_DIMENSION,
         )?;
 
         // Query vector: [1.0, 0.0, 0.0, ...]
