@@ -3,6 +3,11 @@ use std::any::Any;
 use bitvec::prelude::*;
 use diskann::common::FilterIndex as DiskANNFilterMask;
 
+/// Selectivity threshold for choosing between sparse/dense representations and search strategies.
+/// Below this threshold (< 10% selectivity), use sparse representation and brute force search.
+/// Above this threshold (>= 10% selectivity), use dense representation and index-based search.
+pub const SELECTIVITY_THRESHOLD: f32 = 0.1;
+
 /// Filter mask trait for vector index filtering
 /// Provides a unified interface for different filtering strategies
 /// Works in vector_id domain (0..N-1) where N is the number of vectors in the index
@@ -176,7 +181,7 @@ pub fn create_filter_mask(candidates: Vec<u32>, total_vectors: usize) -> Box<dyn
     let selectivity = candidates.len() as f32 / total_vectors.max(1) as f32;
 
     // Adaptive threshold: use sparse representation for low selectivity
-    if selectivity < 0.1 {
+    if selectivity < SELECTIVITY_THRESHOLD {
         Box::new(SparseFilterMask::new(
             selectivity,
             candidates,
@@ -381,14 +386,14 @@ mod tests {
 
     #[test]
     fn test_create_filter_mask_boundary_case() {
-        let candidates = vec![1, 2, 3, 4, 5]; // 5/50 = 0.1 (exactly at threshold)
+        let candidates = vec![1, 2, 3, 4, 5]; // 5/50 = SELECTIVITY_THRESHOLD (exactly at threshold)
         let total_vectors = 50;
 
         let mask = create_filter_mask(candidates, total_vectors);
 
-        // At exactly 0.1, should use DenseFilterMask (>= 0.1)
+        // At exactly SELECTIVITY_THRESHOLD, should use DenseFilterMask (>= SELECTIVITY_THRESHOLD)
         assert!(mask.as_any().downcast_ref::<DenseFilterMask>().is_some());
-        assert_eq!(mask.selectivity(), 0.1);
+        assert_eq!(mask.selectivity(), SELECTIVITY_THRESHOLD);
     }
 
     #[test]

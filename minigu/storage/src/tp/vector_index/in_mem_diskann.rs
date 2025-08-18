@@ -7,11 +7,10 @@ use diskann::index::{ANNInmemIndex, create_inmem_index};
 use diskann::model::IndexConfiguration;
 use diskann::model::configuration::index_write_parameters::IndexWriteParametersBuilder;
 use diskann::model::vertex::{DIM_104, DIM_128, DIM_256};
-use diskann::utils::round_up;
 use ordered_float::OrderedFloat;
 use vector::{Metric, distance_l2_vector_f32};
 
-use super::filter::{DenseFilterMask, FilterMask};
+use super::filter::{DenseFilterMask, FilterMask, SELECTIVITY_THRESHOLD};
 use super::index::VectorIndex;
 use crate::error::{StorageError, StorageResult, VectorIndexError};
 
@@ -69,9 +68,11 @@ impl InMemDiskANNAdapter {
         self.next_vector_id.store(0, Ordering::Relaxed);
     }
 
-    /// Create aligned query vector for optimal SIMD performance
-    /// Uses DiskANN-rs AlignedBoxWithSlice for memory-safe 64-byte alignment
-    /// Returns AlignedQueryBuffer to maintain alignment guarantee
+    /// Create aligned query vector for optimal SIMD performance.
+    /// DiskANN uses AVX-512 SIMD instructions, which require 64-byte alignment for optimal
+    /// performance and to avoid undefined behavior. Uses DiskANN-rs AlignedBoxWithSlice for
+    /// memory-safe 64-byte alignment.
+    /// Returns AlignedQueryBuffer to maintain alignment guarantee.
     fn ensure_query_aligned(query: &[f32]) -> StorageResult<AlignedQueryBuffer<'_>> {
         if query.as_ptr().align_offset(64) == 0 {
             Ok(AlignedQueryBuffer::Borrowed(query))
@@ -170,14 +171,37 @@ impl InMemDiskANNAdapter {
 
         let dimension = query.len();
 
-        // Helper macro to safely compute SIMD distance for supported dimensions
         macro_rules! simd_distance {
             ($const_dim:expr) => {{
-                // make sure the addresses are bytes aligned
-                debug_assert_eq!(query.as_ptr().align_offset(64), 0);
-                debug_assert_eq!(stored.as_ptr().align_offset(64), 0);
+                // Verify exact dimension match at runtime
+                if query.len() != $const_dim || stored.len() != $const_dim {
+                    return Err(StorageError::VectorIndex(
+                        VectorIndexError::InvalidDimension {
+                            expected: $const_dim,
+                            actual: query.len(),
+                        },
+                    ));
+                }
 
-                // Safety: We've verified dimension match and 64-byte alignment
+                // Enforce 64-byte alignment for AVX-512 optimizations (matches DiskANN standard)
+                if query.as_ptr().align_offset(64) != 0 {
+                    return Err(StorageError::VectorIndex(
+                        VectorIndexError::UnsupportedOperation(
+                            "Query vector not 64-byte aligned for optimal SIMD performance"
+                                .to_string(),
+                        ),
+                    ));
+                }
+                if stored.as_ptr().align_offset(64) != 0 {
+                    return Err(StorageError::VectorIndex(
+                        VectorIndexError::UnsupportedOperation(
+                            "Stored vector not 64-byte aligned for optimal SIMD performance"
+                                .to_string(),
+                        ),
+                    ));
+                }
+
+                // Safety: Verified exact length and 64-byte alignment
                 unsafe {
                     let query_array = &*(query.as_ptr() as *const [f32; $const_dim]);
                     let stored_array = &*(stored.as_ptr() as *const [f32; $const_dim]);
@@ -328,7 +352,7 @@ impl VectorIndex for InMemDiskANNAdapter {
         }
 
         let selectivity = mask.selectivity();
-        if selectivity < 0.1 {
+        if selectivity < SELECTIVITY_THRESHOLD {
             self.brute_force_search(query, k, mask)
         } else {
             self.filter_search(query, k, l_value, mask, should_pre)
@@ -498,7 +522,7 @@ pub fn create_vector_index_config(dimension: usize, vector_count: usize) -> Inde
         index_write_parameter: write_params,
         dist_metric: Metric::L2,
         dim: dimension,
-        aligned_dim: round_up(dimension, 8),
+        aligned_dim: dimension, // keeps the raw dimension. No round_up(dim, 8)
         max_points: calculated_max_points,
         num_frozen_pts: 0,
         use_pq_dist: false,
