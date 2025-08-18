@@ -5,7 +5,6 @@ use crossbeam_skiplist::SkipSet;
 use dashmap::DashMap;
 use minigu_common::types::{EdgeId, LabelId, PropertyId, VectorIndexKey, VertexId};
 use minigu_common::value::ScalarValue;
-use vector::Metric;
 
 use super::checkpoint::{CheckpointManager, CheckpointManagerConfig};
 use super::transaction::{MemTransaction, MemTxnManager, TransactionHandle, UndoEntry, UndoPtr};
@@ -1218,9 +1217,6 @@ fn check_write_conflict(commit_ts: Timestamp, txn: &TransactionHandle) -> Storag
 pub mod tests {
     use std::fs;
 
-    use diskann::model::IndexConfiguration;
-    use diskann::model::configuration::index_write_parameters::IndexWriteParametersBuilder;
-    use diskann::utils::round_up;
     use minigu_common::types::LabelId;
     use minigu_common::value::{F32, ScalarValue};
     use {Edge, Vertex};
