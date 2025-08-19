@@ -33,7 +33,6 @@ impl AlignedQueryBuffer<'_> {
 pub struct InMemDiskANNAdapter {
     inner: Box<dyn ANNInmemIndex<f32> + 'static>,
     dimension: usize,
-    max_points: usize, // Maximum number of vectors this index can hold
 
     node_to_vector: DashMap<u64, u32>,
     vector_to_node: DashMap<u32, u64>,
@@ -43,14 +42,12 @@ pub struct InMemDiskANNAdapter {
 impl InMemDiskANNAdapter {
     pub fn new(config: IndexConfiguration) -> StorageResult<Self> {
         let dimension = config.dim;
-        let max_points = config.max_points;
         let inner = create_inmem_index::<f32>(config)
             .map_err(|e| StorageError::VectorIndex(VectorIndexError::DiskANN(e)))?;
 
         Ok(Self {
             inner,
             dimension, // raw dimension not aligned
-            max_points,
             node_to_vector: DashMap::new(),
             vector_to_node: DashMap::new(),
             next_vector_id: AtomicU32::new(0),
@@ -239,16 +236,24 @@ impl VectorIndex for InMemDiskANNAdapter {
         let mut sorted_vectors = vectors.to_vec();
         sorted_vectors.sort_by_key(|(node_id, _)| *node_id);
 
-        // Check if vectors exceed the configured capacity
-        if sorted_vectors.len() > self.max_points {
+        // Basic boundary check: ensure vector count fits in u32 for DiskANN compatibility
+        if sorted_vectors.len() > u32::MAX as usize {
             self.clear_mappings();
             return Err(StorageError::VectorIndex(
-                VectorIndexError::CapacityExceeded {
-                    current: sorted_vectors.len(),
-                    max_capacity: self.max_points,
-                },
+                VectorIndexError::UnsupportedOperation(format!(
+                    "Vector count {} exceeds u32::MAX limit for DiskANN",
+                    sorted_vectors.len()
+                )),
             ));
         }
+
+        // Note: Removed max_points capacity check to rely on DiskANN's internal capacity management
+        //
+        // DiskANN Capacity Management:
+        // - growth_potential is a PRE-ALLOCATION multiplier, not dynamic expansion
+        // - Physical capacity = max_points × growth_potential (set at initialization)
+        // - Once physical capacity is reached, no more vectors can be inserted
+        // - This is the correct behavior - DiskANN has fixed pre-allocated memory
 
         // Validate node IDs and establish ID mappings BEFORE calling DiskANN
         let mut vector_data = Vec::with_capacity(sorted_vectors.len());
@@ -388,16 +393,14 @@ impl VectorIndex for InMemDiskANNAdapter {
                 ));
             }
         }
-        // Check capacity limits before allocation
-        let current_size = self.size();
-        if current_size + vectors.len() > self.max_points {
-            return Err(StorageError::VectorIndex(
-                VectorIndexError::CapacityExceeded {
-                    current: current_size + vectors.len(),
-                    max_capacity: self.max_points,
-                },
-            ));
-        }
+
+        // Note: Removed capacity check to rely on DiskANN's internal capacity management
+        //
+        // DiskANN Insert Capacity:
+        // - Uses the same pre-allocated memory pool as build()
+        // - Physical capacity = max_points × growth_potential (fixed at initialization)
+        // - DiskANN will return error if insertion would exceed pre-allocated capacity
+        // - This is expected behavior for memory-based indices with fixed allocation
 
         // Safe atomic ID allocation (max_points ≤ u32::MAX guaranteed by build())
         let base_vector_id = self
@@ -513,10 +516,9 @@ pub fn create_vector_index_config(dimension: usize, vector_count: usize) -> Inde
         .with_num_threads(1)
         .build();
 
-    // Calculate intelligent max_points with 1.2 headroom ratio
-    let headroom_ratio = 1.2;
-    let calculated_max_points =
-        ((vector_count as f64 * headroom_ratio).ceil() as usize).min(u32::MAX as usize);
+    // Set max_points to actual vector count (DiskANN semantic: max_points = current data size)
+    // No headroom needed as miniGU uses static building (no incremental insertion)
+    let calculated_max_points = vector_count.min(u32::MAX as usize);
 
     IndexConfiguration {
         index_write_parameter: write_params,
@@ -528,6 +530,6 @@ pub fn create_vector_index_config(dimension: usize, vector_count: usize) -> Inde
         use_pq_dist: false,
         num_pq_chunks: 0,
         use_opq: false,
-        growth_potential: 1.2,
+        growth_potential: 2.0, // Pre-allocation capacity in InmemDataset of DiskANN
     }
 }

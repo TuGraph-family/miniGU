@@ -1,4 +1,5 @@
 use std::io;
+use std::num::NonZeroU32;
 
 use thiserror::Error;
 pub type StorageResult<T> = Result<T, StorageError>;
@@ -156,4 +157,9 @@ pub enum VectorIndexError {
     InvalidBitmapLength { expected: usize, got: usize },
     #[error("Filter error: {0}")]
     FilterError(String),
+    #[error("Vector index already exists for label {label_id} and property {property_id}")]
+    IndexAlreadyExists {
+        label_id: NonZeroU32,
+        property_id: u32,
+    },
 }

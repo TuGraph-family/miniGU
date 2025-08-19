@@ -4,8 +4,9 @@ use bitvec::prelude::*;
 use diskann::common::FilterIndex as DiskANNFilterMask;
 
 /// Selectivity threshold for choosing between sparse/dense representations and search strategies.
-/// Below this threshold (< 10% selectivity), use sparse representation and brute force search.
-/// Above this threshold (>= 10% selectivity), use dense representation and index-based search.
+/// Below this threshold (e.g., < 10% selectivity), use sparse representation and brute force
+/// search. Above this threshold (e.g. >= 10% selectivity), use dense representation and index-based
+/// search.
 pub const SELECTIVITY_THRESHOLD: f32 = 0.1;
 
 /// Filter mask trait for vector index filtering

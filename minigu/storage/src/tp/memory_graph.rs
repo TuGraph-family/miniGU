@@ -2598,34 +2598,41 @@ pub mod tests {
             .size();
         assert_eq!(initial_size, 200);
 
-        // Test 1: Insert a single new vector
-        let new_vectors = create_additional_test_vectors(1000, 1);
-        let (new_id, new_name, new_embedding) = &new_vectors[0];
+        // Test 1: Insert 200 new vectors to reach maximum capacity
+        //
+        // Capacity Analysis:
+        // - Initial build: 200 vectors
+        // - Total capacity: 200 × 2.0 (growth_potential) = 400 vectors
+        // - Test 1: Insert 200 more vectors → 200 + 200 = 400 (exactly at capacity limit)
+        let new_vectors = create_additional_test_vectors(1000, 200);
+        let mut insert_data = Vec::new();
 
-        // Create the vertex in the graph first
-        let new_vertex = create_vertex_with_vector(*new_id, new_name, new_embedding.clone());
-        graph.create_vertex(&txn, new_vertex)?;
+        for (id, name, embedding) in &new_vectors {
+            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+            insert_data.push((*id, embedding.clone()));
+        }
 
-        // Insert into vector index
-        let insert_data = vec![(*new_id, new_embedding.clone())];
+        // Insert 200 vectors into vector index - should succeed (reaching capacity limit)
         graph.insert_into_vector_index(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
             &insert_data,
         )?;
 
-        // Verify index size increased: 200 + 1 = 201
+        // Verify index size increased: 200 + 200 = 400 (exactly at capacity)
         let new_size = graph
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
             .unwrap()
             .size();
-        assert_eq!(new_size, initial_size + 1);
+        assert_eq!(new_size, initial_size + 200);
 
-        // Verify the inserted vector can be found
+        // Verify one of the inserted vectors can be found
+        let (sample_id, _, sample_embedding) = &new_vectors[0];
         assert!(verify_vector_in_search_results(
             &graph,
             EMBEDDING_PROPERTY_ID,
-            new_embedding,
-            *new_id
+            sample_embedding,
+            *sample_id
         )?);
 
         // Test 2:  dimension mismatch - should fail
@@ -2658,10 +2665,17 @@ pub mod tests {
             .size();
         assert_eq!(final_size, new_size); // Should remain same as before failed insertion
 
-        // Test 3: capacity limit - should fail when exceeding max_points
-        // Current: 200 original + 1 successful = 201 vectors, capacity: 240, remaining: 39
-        // Try to insert 50 vectors: 201 + 50 = 251 > 240 → should fail
-        let excess_vectors = create_additional_test_vectors(3000, 50); // Create 50 additional vectors
+        // Test 3: Capacity limit validation - should fail when exceeding pre-allocated capacity
+        //
+        // growth_potential is a PRE-ALLOCATION strategy
+        //
+        // How DiskANN capacity works:
+        // 1. Initial build: max_points = 200, growth_potential = 2.0
+        // 2. Pre-allocated capacity = 200 × 2.0 = 400 vectors maximum
+        // 3. Current state: 200 original + 200 Test 1 inserts = 400 vectors (exactly at capacity)
+        // 4. Remaining capacity: 400 - 400 = 0 vectors
+        // 5. Attempt to insert 1 more vector: 400 + 1 = 401 > 400 → SHOULD FAIL
+        let excess_vectors = create_additional_test_vectors(3000, 1); // Create 1 additional vector
         let mut excess_insert_data = Vec::new();
 
         // Create vertices in graph first
@@ -2671,22 +2685,29 @@ pub mod tests {
             excess_insert_data.push((*id, embedding.clone()));
         }
 
-        // Try to insert 50 vectors when capacity allows only 39 more - should fail
+        // Try to insert 1 vector when capacity is already at maximum - should fail with capacity
+        // error
         let capacity_result = graph.insert_into_vector_index(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
             &excess_insert_data,
         );
 
-        assert!(capacity_result.is_err());
+        // Verify that insertion fails due to capacity limit (this is expected and correct)
+        assert!(
+            capacity_result.is_err(),
+            "Should fail when exceeding pre-allocated capacity"
+        );
         match capacity_result.unwrap_err() {
-            StorageError::VectorIndex(VectorIndexError::CapacityExceeded {
-                current,
-                max_capacity,
-            }) => {
-                assert_eq!(current, 251); // 201 existing + 50 attempted
-                assert_eq!(max_capacity, 240); // 200 * 1.2
+            StorageError::VectorIndex(VectorIndexError::BuildError(ref msg)) => {
+                // DiskANN returns BuildError with capacity message from InmemDataset
+                assert!(msg.contains("Cannot append 1 points to dataset of capacity 400"));
             }
-            _ => panic!("Expected CapacityExceeded error"),
+            other_err => {
+                panic!(
+                    "Expected BuildError with capacity message, got: {:?}",
+                    other_err
+                );
+            }
         }
 
         // Verify index size unchanged after failed capacity insertion
@@ -2694,7 +2715,7 @@ pub mod tests {
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
             .unwrap()
             .size();
-        assert_eq!(size_after_capacity_failure, new_size); // Should remain 201 (200 original + 1 successful insert)
+        assert_eq!(size_after_capacity_failure, new_size); // Should remain 400 (200 original + 200 Test 1 inserts)
 
         txn.commit()?;
         Ok(())
