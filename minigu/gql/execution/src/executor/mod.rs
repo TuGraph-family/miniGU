@@ -1,5 +1,6 @@
 pub mod aggregate;
 pub mod expand;
+pub mod factorized_filter;
 pub mod filter;
 pub mod flatten;
 pub mod procedure_call;
@@ -22,8 +23,9 @@ pub mod vertex_scan;
 use std::fmt::Debug;
 
 use aggregate::{AggregateBuilder, AggregateSpec};
-use arrow::array::BooleanArray;
+use arrow::array::{BooleanArray, ListArray};
 use expand::ExpandBuilder;
+use factorized_filter::FactorizedFilterBuilder;
 use filter::FilterBuilder;
 use flatten::FlattenBuilder;
 use minigu_common::data_chunk::DataChunk;
@@ -75,6 +77,14 @@ pub trait Executor {
         P: FnMut(&DataChunk) -> ExecutionResult<BooleanArray>,
     {
         FilterBuilder::new(self, predicate).into_executor()
+    }
+
+    fn factorized_filter<P>(self, predicate: P, unflat_column_indices: Vec<usize>) -> impl Executor
+    where
+        Self: Sized,
+        P: FnMut(&DataChunk) -> ExecutionResult<ListArray>,
+    {
+        FactorizedFilterBuilder::new(self, predicate, unflat_column_indices).into_executor()
     }
 
     fn expand<S>(self, input_column_index: usize, source: S) -> impl Executor
