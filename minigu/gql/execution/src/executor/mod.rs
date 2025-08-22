@@ -1,5 +1,6 @@
 pub mod aggregate;
 pub mod expand;
+pub mod factorized_aggregate;
 pub mod factorized_filter;
 pub mod filter;
 pub mod flatten;
@@ -25,6 +26,7 @@ use std::fmt::Debug;
 use aggregate::{AggregateBuilder, AggregateSpec};
 use arrow::array::{BooleanArray, ListArray};
 use expand::ExpandBuilder;
+use factorized_aggregate::{FactorizedAggregateBuilder, FactorizedAggregateSpec};
 use factorized_filter::FactorizedFilterBuilder;
 use filter::FilterBuilder;
 use flatten::FlattenBuilder;
@@ -146,6 +148,26 @@ pub trait Executor {
             aggregate_specs,
             group_by_expressions,
             output_expressions,
+        )
+        .into_executor()
+    }
+
+    fn factorized_aggregate(
+        self,
+        aggregate_specs: Vec<FactorizedAggregateSpec>,
+        group_by_expressions: Vec<BoxedEvaluator>,
+        output_expressions: Vec<BoxedEvaluator>,
+        unflat_col_idx: Option<usize>,
+    ) -> impl Executor
+    where
+        Self: Sized,
+    {
+        FactorizedAggregateBuilder::new(
+            self,
+            aggregate_specs,
+            group_by_expressions,
+            output_expressions,
+            unflat_col_idx,
         )
         .into_executor()
     }
