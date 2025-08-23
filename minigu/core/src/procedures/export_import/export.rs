@@ -27,6 +27,7 @@ use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::procedure::Procedure;
 use minigu_storage::common::{Edge, Vertex};
 use minigu_storage::tp::{IsolationLevel, MemoryGraph};
+use minigu_transaction::{GraphTxnManager, Transaction};
 
 use crate::procedures::export_import::{Manifest, RecordType, Result, SchemaMetadata};
 
@@ -178,7 +179,7 @@ pub(crate) fn export<P: AsRef<Path>>(
     manifest_rel_path: P, // relative path
     graph_type: Arc<dyn GraphTypeProvider>,
 ) -> Result<()> {
-    let txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn = graph.txn_manager().begin_transaction().unwrap();
 
     // 1. Prepare output paths
     let dir = dir.as_ref();

@@ -16,6 +16,7 @@ crc32fast = { workspace = true }
 crossbeam-skiplist = { workspace = true }
 dashmap = { workspace = true }
 minigu-common = { workspace = true }
+minigu-transaction = { workspace = true }
 postcard = { workspace = true, features = ["alloc"] }
 serde = { workspace = true, features = ["derive"] }
 temp-dir = { workspace = true }

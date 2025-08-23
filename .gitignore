@@ -28,3 +28,6 @@ target/
 
 # antlr
 .antlr/
+
+**/.checkpoint/
+*.wal

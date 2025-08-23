@@ -47,6 +47,8 @@ pub enum TransactionError {
     TransactionNotFound(String),
     #[error("Transaction already committed: {0}")]
     TransactionAlreadyCommitted(String),
+    #[error("Invalid state: {0}")]
+    InvalidState(String),
 }
 
 #[derive(Error, Debug)]
