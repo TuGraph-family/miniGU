@@ -1,0 +1,48 @@
+[package]
+edition.workspace = true
+license.workspace = true
+name = "minigu-python"
+repository.workspace = true
+version.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+name = "minigu_python"
+
+[dependencies]
+arrow = { workspace = true }
+minigu = { workspace = true }
+minigu-catalog = { workspace = true }
+minigu-common = { workspace = true }
+minigu-context = { workspace = true }
+minigu-storage = { workspace = true }
+pyo3 = { workspace = true }
+serde_json = { workspace = true }
+
+[features]
+auto-initialize = []
+default = []
+
+[lints]
+workspace = true
+
+[package.metadata.cargo-machete]
+ignored = [
+    "minigu",
+    "minigu-common",
+    "minigu-context",
+    "minigu-catalog",
+    "minigu-storage",
+    "serde_json",
+]
+
+# Platform-specific features for pyo3
+[target.'cfg(target_os = "macos")'.dependencies]
+pyo3 = { workspace = true, features = [
+    "auto-initialize",
+    "generate-import-lib",
+] }
+
+# Link Python framework on macOS
+[target.'cfg(target_os = "macos")'.build-dependencies]
+pyo3-build-config = { version = "0.24.2", features = ["resolve-config"] }
