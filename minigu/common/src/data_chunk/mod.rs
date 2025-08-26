@@ -3,8 +3,12 @@ pub mod row;
 
 use std::sync::Arc;
 
-use arrow::array::{Array, ArrayRef, AsArray, BooleanArray, RecordBatch, new_empty_array};
+use arrow::array::{
+    Array, ArrayRef, AsArray, BooleanArray, ListArray, RecordBatch, new_empty_array,
+};
+use arrow::buffer::OffsetBuffer;
 use arrow::compute;
+use arrow::datatypes::DataType;
 use itertools::Itertools;
 use row::{RowIndexIter, Rows};
 
@@ -92,6 +96,65 @@ impl DataChunk {
     #[inline]
     pub fn columns(&self) -> &[ArrayRef] {
         &self.columns
+    }
+
+    pub fn factorized_compact(&mut self, filter_list: &ListArray, unflat_column_indices: &[usize]) {
+        // Ensure the filter list has the same number of lists as the chunk has rows.
+        assert_eq!(
+            self.len(),
+            filter_list.len(),
+            "Filter list must have the same length as the chunk"
+        );
+
+        // Flatten the 2D boolean filter list into a 1D boolean array.
+        let flat_filter: &BooleanArray = filter_list.values().as_boolean();
+
+        for &col_idx in unflat_column_indices {
+            let column = &self.columns[col_idx];
+            let list_array: &ListArray = column.as_list();
+            let DataType::List(field) = column.data_type() else {
+                unreachable!()
+            };
+
+            // Flatten the unflat data column into a 1D data array.
+            let flat_values = list_array.values();
+
+            // Ensure the flattened data and filter have the same length.
+            assert_eq!(
+                flat_values.len(),
+                flat_filter.len(),
+                "Flattened data and filter must have the same length"
+            );
+
+            // Apply the 1D filter to the 1D data array.
+            let new_flat_values = compute::kernels::filter::filter(flat_values, flat_filter)
+                .expect("Vectorized filter kernel failed");
+
+            // Reconstruct the ListArray structure using the original offsets.
+            let mut new_offsets = Vec::with_capacity(self.len() + 1);
+            new_offsets.push(0);
+            let mut current_offset = 0;
+
+            for i in 0..filter_list.len() {
+                // Get the boolean sub-list for the current row.
+                let sub_filter_array_ref = filter_list.value(i);
+                let sub_filter: &BooleanArray = sub_filter_array_ref.as_boolean();
+
+                // The length of the new sub-list is the number of `true` values.
+                let true_count = sub_filter.true_count();
+                current_offset += true_count;
+                new_offsets.push(current_offset as i32);
+            }
+
+            let new_list_array = ListArray::new(
+                field.clone(),
+                OffsetBuffer::new(new_offsets.into()),
+                new_flat_values,
+                None,
+            );
+
+            self.columns[col_idx] = Arc::new(new_list_array);
+        }
     }
 
     /// Compacts the data chunk by eagerly applying the filter to each column.
