@@ -118,13 +118,10 @@ pub(super) type TokenStream<'a, 'b> = Stateful<TokenSlice<'b, Token<'a>>, State>
 /// # use gql_parser::{tokenize_full, Token, TokenKind};
 /// # use gql_parser::error::{TokenizeError, TokenErrorKind};
 /// let tokens = tokenize_full("COMMIT;");
-/// assert_eq!(
-///     tokens,
-///     vec![
-///         Ok(Token::new(TokenKind::Commit, "COMMIT", 0..6)),
-///         Err(TokenizeError::new(TokenErrorKind::InvalidToken, ";", 6..7))
-///     ]
-/// );
+/// assert_eq!(tokens, vec![
+///     Ok(Token::new(TokenKind::Commit, "COMMIT", 0..6)),
+///     Err(TokenizeError::new(TokenErrorKind::InvalidToken, ";", 6..7))
+/// ]);
 /// ```
 pub fn tokenize_full(input: &str) -> Vec<Result<Token<'_>, TokenizeError<'_>>> {
     let mut lexer = TokenKind::lexer(input).spanned();

@@ -27,13 +27,10 @@ macro_rules! update_properties {
             .iter()
             .map(|i| current.data.properties.get(*i).unwrap().clone())
             .collect();
-        let delta = DeltaOp::$op(
-            $id,
-            SetPropsOp {
-                indices: $indices,
-                props: delta_props,
-            },
-        );
+        let delta = DeltaOp::$op($id, SetPropsOp {
+            indices: $indices,
+            props: delta_props,
+        });
 
         let undo_ptr = $entry.chain.undo_ptr.read().unwrap().clone();
         let mut undo_buffer = $txn.undo_buffer.write().unwrap();
@@ -1066,41 +1063,25 @@ pub mod tests {
 
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-        let alice = create_vertex(
-            1,
-            PERSON,
-            vec![
-                ScalarValue::String(Some("Alice".to_string())),
-                ScalarValue::Int32(Some(25)),
-            ],
-        );
+        let alice = create_vertex(1, PERSON, vec![
+            ScalarValue::String(Some("Alice".to_string())),
+            ScalarValue::Int32(Some(25)),
+        ]);
 
-        let bob = create_vertex(
-            2,
-            PERSON,
-            vec![
-                ScalarValue::String(Some("Bob".to_string())),
-                ScalarValue::Int32(Some(28)),
-            ],
-        );
+        let bob = create_vertex(2, PERSON, vec![
+            ScalarValue::String(Some("Bob".to_string())),
+            ScalarValue::Int32(Some(28)),
+        ]);
 
-        let carol = create_vertex(
-            3,
-            PERSON,
-            vec![
-                ScalarValue::String(Some("Carol".to_string())),
-                ScalarValue::Int32(Some(24)),
-            ],
-        );
+        let carol = create_vertex(3, PERSON, vec![
+            ScalarValue::String(Some("Carol".to_string())),
+            ScalarValue::Int32(Some(24)),
+        ]);
 
-        let david = create_vertex(
-            4,
-            PERSON,
-            vec![
-                ScalarValue::String(Some("David".to_string())),
-                ScalarValue::Int32(Some(27)),
-            ],
-        );
+        let david = create_vertex(4, PERSON, vec![
+            ScalarValue::String(Some("David".to_string())),
+            ScalarValue::Int32(Some(27)),
+        ]);
 
         // Add vertices to the graph
         graph.create_vertex(&txn, alice).unwrap();
@@ -1109,38 +1090,22 @@ pub mod tests {
         graph.create_vertex(&txn, david).unwrap();
 
         // Create friend edges
-        let friend1 = create_edge(
-            1,
-            1,
-            2,
-            FRIEND,
-            vec![ScalarValue::String(Some("2020-01-01".to_string()))],
-        );
+        let friend1 = create_edge(1, 1, 2, FRIEND, vec![ScalarValue::String(Some(
+            "2020-01-01".to_string(),
+        ))]);
 
-        let friend2 = create_edge(
-            2,
-            2,
-            3,
-            FRIEND,
-            vec![ScalarValue::String(Some("2021-03-15".to_string()))],
-        );
+        let friend2 = create_edge(2, 2, 3, FRIEND, vec![ScalarValue::String(Some(
+            "2021-03-15".to_string(),
+        ))]);
 
         // Create follow edges
-        let follow1 = create_edge(
-            3,
-            1,
-            3,
-            FOLLOW,
-            vec![ScalarValue::String(Some("2022-06-01".to_string()))],
-        );
+        let follow1 = create_edge(3, 1, 3, FOLLOW, vec![ScalarValue::String(Some(
+            "2022-06-01".to_string(),
+        ))]);
 
-        let follow2 = create_edge(
-            4,
-            4,
-            1,
-            FOLLOW,
-            vec![ScalarValue::String(Some("2022-07-15".to_string()))],
-        );
+        let follow2 = create_edge(4, 4, 1, FOLLOW, vec![ScalarValue::String(Some(
+            "2022-07-15".to_string(),
+        ))]);
 
         // Add edges to the graph
         graph.create_edge(&txn, friend1).unwrap();
@@ -1153,35 +1118,23 @@ pub mod tests {
     }
 
     fn create_vertex_eve() -> Vertex {
-        create_vertex(
-            5,
-            PERSON,
-            vec![
-                ScalarValue::String(Some("Eve".to_string())),
-                ScalarValue::Int32(Some(24)),
-            ],
-        )
+        create_vertex(5, PERSON, vec![
+            ScalarValue::String(Some("Eve".to_string())),
+            ScalarValue::Int32(Some(24)),
+        ])
     }
 
     fn create_vertex_frank() -> Vertex {
-        create_vertex(
-            6,
-            PERSON,
-            vec![
-                ScalarValue::String(Some("Frank".to_string())),
-                ScalarValue::Int32(Some(25)),
-            ],
-        )
+        create_vertex(6, PERSON, vec![
+            ScalarValue::String(Some("Frank".to_string())),
+            ScalarValue::Int32(Some(25)),
+        ])
     }
 
     fn create_edge_alice_to_eve() -> Edge {
-        create_edge(
-            5,
-            1,
-            5,
-            FRIEND,
-            vec![ScalarValue::String(Some("2025-03-31".to_string()))],
-        )
+        create_edge(5, 1, 5, FRIEND, vec![ScalarValue::String(Some(
+            "2025-03-31".to_string(),
+        ))])
     }
 
     #[test]

@@ -152,13 +152,10 @@ impl GraphCheckpoint {
             let versioned_vertex = entry.value();
             let current = versioned_vertex.chain.current.read().unwrap();
 
-            vertices.insert(
-                *entry.key(),
-                SerializedVertex {
-                    data: current.data.clone(),
-                    commit_ts: current.commit_ts,
-                },
-            );
+            vertices.insert(*entry.key(), SerializedVertex {
+                data: current.data.clone(),
+                commit_ts: current.commit_ts,
+            });
         }
 
         // Serialize edges
@@ -167,13 +164,10 @@ impl GraphCheckpoint {
             let versioned_edge = entry.value();
             let current = versioned_edge.chain.current.read().unwrap();
 
-            edges.insert(
-                *entry.key(),
-                SerializedEdge {
-                    data: current.data.clone(),
-                    commit_ts: current.commit_ts,
-                },
-            );
+            edges.insert(*entry.key(), SerializedEdge {
+                data: current.data.clone(),
+                commit_ts: current.commit_ts,
+            });
         }
 
         // Serialize adjacency list

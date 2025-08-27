@@ -35,19 +35,18 @@ macro_rules! add_e2e_tests {
 
 add_e2e_tests!("finbench", ["tsr1", "tsr2", "tsr3", "tsr4", "tsr5", "tsr6"]);
 add_e2e_tests!("snb", ["is1", "is2", "is3", "is4", "is5", "is6", "is7"]);
-add_e2e_tests!(
-    "opengql",
-    [
-        "create_graph",
-        "create_schema",
-        "insert",
-        "match_and_insert",
-        "match",
-        "session_set"
-    ]
-);
+add_e2e_tests!("opengql", [
+    "create_graph",
+    "create_schema",
+    "insert",
+    "match_and_insert",
+    "match",
+    "session_set"
+]);
 add_e2e_tests!("gql_on_one_page", ["gql_on_one_page"]);
-add_e2e_tests!(
-    "misc",
-    ["ddl_drop", "ddl_truncate", "dml_dql", "vector_index"]
-);
+add_e2e_tests!("misc", [
+    "ddl_drop",
+    "ddl_truncate",
+    "dml_dql",
+    "vector_index"
+]);

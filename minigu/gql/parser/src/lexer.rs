@@ -1467,65 +1467,50 @@ mod tests {
     fn test_quoted() {
         let lexer = TokenKind::lexer(r#"'ab\ncd'"#);
         let tokens: Vec<_> = lexer.collect();
-        assert_eq!(
-            tokens,
-            vec![Ok(TokenKind::SingleQuoted(Quoted::Single(r"ab\ncd")))]
-        );
+        assert_eq!(tokens, vec![Ok(TokenKind::SingleQuoted(Quoted::Single(
+            r"ab\ncd"
+        )))]);
 
         let lexer = TokenKind::lexer(r#""ab\ncd""#);
         let tokens: Vec<_> = lexer.collect();
-        assert_eq!(
-            tokens,
-            vec![Ok(TokenKind::DoubleQuoted(Quoted::Double(r"ab\ncd")))]
-        );
+        assert_eq!(tokens, vec![Ok(TokenKind::DoubleQuoted(Quoted::Double(
+            r"ab\ncd"
+        )))]);
 
         let lexer = TokenKind::lexer(r#"`ab\ncd`"#);
         let tokens: Vec<_> = lexer.collect();
-        assert_eq!(
-            tokens,
-            vec![Ok(TokenKind::AccentQuoted(Quoted::Accent(r"ab\ncd")))]
-        );
+        assert_eq!(tokens, vec![Ok(TokenKind::AccentQuoted(Quoted::Accent(
+            r"ab\ncd"
+        )))]);
     }
 
     #[test]
     fn test_parameter_name() {
         let lexer = TokenKind::lexer(r#"$_abc"#);
         let tokens: Vec<_> = lexer.collect();
-        assert_eq!(
-            tokens,
-            vec![Ok(TokenKind::GeneralParameterReference(
-                ParameterName::Extended("_abc")
-            ))]
-        );
+        assert_eq!(tokens, vec![Ok(TokenKind::GeneralParameterReference(
+            ParameterName::Extended("_abc")
+        ))]);
 
         let lexer = TokenKind::lexer(r#"$$_abc"#);
         let tokens: Vec<_> = lexer.collect();
-        assert_eq!(
-            tokens,
-            vec![Ok(TokenKind::SubstitutedParameterReference(
-                ParameterName::Extended("_abc")
-            ))]
-        );
+        assert_eq!(tokens, vec![Ok(TokenKind::SubstitutedParameterReference(
+            ParameterName::Extended("_abc")
+        ))]);
 
         let lexer = TokenKind::lexer(r#"$@"a""bc""#);
         let tokens: Vec<_> = lexer.collect();
-        assert_eq!(
-            tokens,
-            vec![Ok(TokenKind::GeneralParameterReference(
-                ParameterName::Delimited(Quoted::UnescapedDouble("a\"\"bc"))
-            ))]
-        );
+        assert_eq!(tokens, vec![Ok(TokenKind::GeneralParameterReference(
+            ParameterName::Delimited(Quoted::UnescapedDouble("a\"\"bc"))
+        ))]);
 
         let lexer = TokenKind::lexer(r#"$'abc'"#);
         let tokens: Vec<_> = lexer.collect();
         // Single quoted sequence is not allowed in parameter reference.
-        assert_eq!(
-            tokens,
-            vec![
-                Err(TokenErrorKind::InvalidToken),
-                Ok(TokenKind::RegularIdentifier("abc")),
-                Err(TokenErrorKind::InvalidToken)
-            ]
-        );
+        assert_eq!(tokens, vec![
+            Err(TokenErrorKind::InvalidToken),
+            Ok(TokenKind::RegularIdentifier("abc")),
+            Err(TokenErrorKind::InvalidToken)
+        ]);
     }
 }
