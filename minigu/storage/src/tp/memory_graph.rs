@@ -3,22 +3,28 @@ use std::sync::{Arc, RwLock, Weak};
 use arrow::array::BooleanArray;
 use crossbeam_skiplist::SkipSet;
 use dashmap::DashMap;
-use minigu_common::types::{EdgeId, LabelId, PropertyId, VectorIndexKey, VertexId};
+use minigu_common::types::{EdgeId, VectorIndexKey, VertexId};
+#[cfg(all(target_os = "linux", feature = "vector-support"))]
+use minigu_common::types::{LabelId, PropertyId};
 use minigu_common::value::ScalarValue;
 
 use super::checkpoint::{CheckpointManager, CheckpointManagerConfig};
 use super::transaction::{MemTransaction, MemTxnManager, TransactionHandle, UndoEntry, UndoPtr};
+#[cfg(all(target_os = "linux", feature = "vector-support"))]
 use super::vector_index::filter::create_filter_mask;
+#[cfg(all(target_os = "linux", feature = "vector-support"))]
 use super::vector_index::in_mem_diskann::create_vector_index_config;
-use super::vector_index::{InMemDiskANNAdapter, VectorIndex};
+#[cfg(all(target_os = "linux", feature = "vector-support"))]
+use super::vector_index::{InMemANNAdapter, VectorIndex};
 use crate::common::model::edge::{Edge, Neighbor};
 use crate::common::model::vertex::Vertex;
 use crate::common::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp};
 use crate::common::wal::StorageWal;
 use crate::common::wal::graph_wal::{Operation, RedoEntry, WalManager, WalManagerConfig};
+#[cfg(all(target_os = "linux", feature = "vector-support"))]
+use crate::error::VectorIndexError;
 use crate::error::{
-    EdgeNotFoundError, StorageError, StorageResult, TransactionError, VectorIndexError,
-    VertexNotFoundError,
+    EdgeNotFoundError, StorageError, StorageResult, TransactionError, VertexNotFoundError,
 };
 
 // Perform the update properties operation
@@ -358,6 +364,7 @@ pub struct MemoryGraph {
     pub(super) checkpoint_manager: Option<CheckpointManager>,
 
     // ---- Vector indices ----
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     pub(super) vector_indices: DashMap<VectorIndexKey, Box<dyn VectorIndex>>,
 }
 
@@ -412,6 +419,7 @@ impl MemoryGraph {
             txn_manager: MemTxnManager::new(),
             wal_manager: WalManager::new(wal_config),
             checkpoint_manager: None,
+            #[cfg(all(target_os = "linux", feature = "vector-support"))]
             vector_indices: DashMap::new(),
         });
 
@@ -936,7 +944,11 @@ impl MemoryGraph {
 
         Ok(())
     }
+}
 
+// ===== Vector Index Methods - Linux Platform =====
+#[cfg(all(target_os = "linux", feature = "vector-support"))]
+impl MemoryGraph {
     // ===== Vector index methods =====
     /// Collect vectors from graph nodes for the specified label and property
     fn collect_vectors_for_index(
@@ -1036,7 +1048,7 @@ impl MemoryGraph {
         // Create index configuration with intelligent capacity based on actual vector count
         let vector_count = vectors.len();
         let index_config = create_vector_index_config(inferred_dimension, vector_count);
-        let mut adapter = InMemDiskANNAdapter::new(index_config)?;
+        let mut adapter = InMemANNAdapter::new(index_config)?;
         adapter.build(&vectors)?;
 
         // Store the index in the hash map using the provided composite key
@@ -1188,6 +1200,63 @@ impl MemoryGraph {
     }
 }
 
+// ===== Vector Index Methods - Non-Linux Platforms =====
+#[cfg(not(all(target_os = "linux", feature = "vector-support")))]
+impl MemoryGraph {
+    /// Build a vector index - not supported on non-Linux platforms
+    pub fn build_vector_index(
+        &self,
+        _txn: &TransactionHandle,
+        _index_key: VectorIndexKey,
+    ) -> StorageResult<()> {
+        Err(StorageError::NotSupported(
+            "Vector indexing is only supported on Linux with DiskANN".to_string(),
+        ))
+    }
+
+    /// Get vector index - not supported on non-Linux platforms
+    pub fn get_vector_index(&self, _index_key: VectorIndexKey) -> Option<()> {
+        None
+    }
+
+    /// Perform vector similarity search - not supported on non-Linux platforms
+    pub fn vector_search(
+        &self,
+        _index_key: VectorIndexKey,
+        _query: &[f32],
+        _k: usize,
+        _l_value: u32,
+        _filter_bitmap: Option<&BooleanArray>,
+        _should_pre: bool,
+    ) -> StorageResult<Vec<u64>> {
+        Err(StorageError::NotSupported(
+            "Vector search is only supported on Linux with DiskANN".to_string(),
+        ))
+    }
+
+    /// Insert vectors into vector index - not supported on non-Linux platforms
+    pub fn insert_into_vector_index(
+        &self,
+        _index_key: VectorIndexKey,
+        _vectors: &[(u64, Vec<f32>)],
+    ) -> StorageResult<()> {
+        Err(StorageError::NotSupported(
+            "Vector index operations are only supported on Linux with DiskANN".to_string(),
+        ))
+    }
+
+    /// Delete vectors from vector index - not supported on non-Linux platforms
+    pub fn delete_from_vector_index(
+        &self,
+        _index_key: VectorIndexKey,
+        _node_ids: &[u64],
+    ) -> StorageResult<()> {
+        Err(StorageError::NotSupported(
+            "Vector index operations are only supported on Linux with DiskANN".to_string(),
+        ))
+    }
+}
+
 /// Checks if the vertex is modified by other transactions or has a greater commit timestamp than
 /// the current transaction.
 /// Current check applies to both Snapshot Isolation and Serializable isolation levels.
@@ -1218,7 +1287,9 @@ pub mod tests {
     use std::fs;
 
     use minigu_common::types::LabelId;
-    use minigu_common::value::{F32, ScalarValue};
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
+    use minigu_common::value::F32;
+    use minigu_common::value::ScalarValue;
     use {Edge, Vertex};
 
     use super::*;
@@ -1229,8 +1300,11 @@ pub mod tests {
     const FOLLOW: LabelId = LabelId::new(3).unwrap();
 
     // Vector index test constants
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     const _NAME_PROPERTY_ID: PropertyId = 0;
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     const EMBEDDING_PROPERTY_ID: PropertyId = 1;
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     const TEST_DIMENSION: usize = 104; // Supported dimensions: 104, 128, 256
 
     fn create_vertex(id: VertexId, label_id: LabelId, properties: Vec<ScalarValue>) -> Vertex {
@@ -1254,6 +1328,7 @@ pub mod tests {
     }
 
     /// Creates a test vertex with vector embedding
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     fn create_vertex_with_vector(id: VertexId, name: &str, embedding: Vec<f32>) -> Vertex {
         let vector_value =
             ScalarValue::Vector(Some(embedding.into_iter().map(F32::from).collect()));
@@ -1270,6 +1345,7 @@ pub mod tests {
 
     /// Generates 200 small-scale test vectors with big coordinates to ensure DiskANN graph
     /// connectivity
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     fn create_small_scale_test_vectors() -> Vec<(VertexId, String, Vec<f32>)> {
         let count = 200;
         let points_per_cluster = 25; // 25 points per cluster, 8 clusters
@@ -2135,6 +2211,7 @@ pub mod tests {
         );
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_vector_index_build_and_verify() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2184,6 +2261,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_vector_search_accuracy() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2273,6 +2351,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_vector_error_index_not_found() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2296,6 +2375,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_vector_error_empty_dataset() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2312,6 +2392,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_vector_error_dimension_mismatch() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2344,6 +2425,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_vertex_id_mapping_correctness() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2387,6 +2469,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_vector_small_scale_dataset() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2429,6 +2512,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_vector_transaction_isolation() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2466,6 +2550,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_vector_multiple_indices_per_graph() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2514,6 +2599,7 @@ pub mod tests {
     }
 
     /// Creates additional test vectors for insert operations
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     fn create_additional_test_vectors(
         start_id: VertexId,
         count: usize,
@@ -2541,6 +2627,7 @@ pub mod tests {
             .collect()
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     /// Verify that a specific vector can be found in search results
     fn verify_vector_in_search_results(
         graph: &MemoryGraph,
@@ -2559,6 +2646,7 @@ pub mod tests {
         Ok(results.contains(&expected_node_id))
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     /// Verify that a specific vector cannot be found in search results
     fn verify_vector_not_in_search_results(
         graph: &MemoryGraph,
@@ -2577,6 +2665,7 @@ pub mod tests {
         Ok(!results.contains(&excluded_node_id))
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_vector_insert_basic() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2721,6 +2810,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_vector_insert_multiple() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2778,6 +2868,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_vector_insert_empty_list() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2816,6 +2907,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_vector_insert_index_not_found() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2833,6 +2925,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_vector_delete_basic() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2887,6 +2980,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_vector_delete_multiple() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2948,6 +3042,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_vector_delete_empty_list() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2986,6 +3081,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_vector_delete_index_not_found() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3002,6 +3098,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_vector_delete_nonexistent_node() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3030,6 +3127,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_vector_insert_delete_combined() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3114,6 +3212,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_vector_operations_mixed() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3178,6 +3277,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_adaptive_filter_brute_force_search() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3235,6 +3335,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_adaptive_filter_post_filter_search() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3312,6 +3413,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_adaptive_filter_pre_filter_search() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3389,6 +3491,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_filter_search_boundary_cases() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3471,6 +3574,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_pre_filter_search_in_cluster() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3536,6 +3640,7 @@ pub mod tests {
         Ok(())
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     /// Create predictable test vectors with known distance relationships for accuracy testing
     fn create_predictable_test_vectors() -> Vec<(VertexId, String, Vec<f32>)> {
         let mut vectors = Vec::new();
@@ -3572,6 +3677,7 @@ pub mod tests {
         vectors
     }
 
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[test]
     fn test_brute_force_search_accuracy() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();

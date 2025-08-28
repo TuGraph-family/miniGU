@@ -17,10 +17,6 @@ members = [
     "minigu/gql/execution",
     "minigu/storage",
     "minigu/context",
-
-    # Submodule
-    "DiskANN-rs/DiskANN",
-    "DiskANN-rs/vector",
 ]
 resolver = "3"
 

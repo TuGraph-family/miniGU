@@ -15,6 +15,7 @@ env:
   RUST_BACKTRACE: 1
   CI: true
   DEFAULT_FEATURES: "std,serde,miette"
+  LINUX_FEATURES: "std,serde,miette,vector-support"
 
 defaults:
   run:
@@ -64,8 +65,12 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
+    - name: Install OpenBLAS
+      run: |
+        sudo apt-get update -yq || true 
+        sudo apt-get install -y libopenblas-dev || (echo "Failed to install OpenBLAS" && exit 1)
     - uses: actions-rust-lang/setup-rust-toolchain@v1
-    - run: cargo clippy --tests --features ${{ env.DEFAULT_FEATURES }} --no-deps
+    - run: cargo clippy --tests --features ${{ env.LINUX_FEATURES }} --no-deps
 
   machete:
     name: Machete Check
@@ -107,7 +112,12 @@ jobs:
         sudo apt-get install -y libopenblas-dev || (echo "Failed to install OpenBLAS" && exit 1)
     - uses: actions-rust-lang/setup-rust-toolchain@v1
     - uses: Swatinem/rust-cache@v2
-    - run: cargo build --features ${{ env.DEFAULT_FEATURES }}
+    - name: Build with vector support on Linux
+      if: matrix.os == 'ubuntu-latest'
+      run: cargo build --features ${{ env.LINUX_FEATURES }}
+    - name: Build without vector support on non-Linux
+      if: matrix.os != 'ubuntu-latest'  
+      run: cargo build --features ${{ env.DEFAULT_FEATURES }}
 
   build_no_std:
     needs: [ typos, toml, fmt, clippy, machete, deny ]
@@ -145,8 +155,16 @@ jobs:
       with:
         tool: cargo-nextest@0.9.88
     - uses: Swatinem/rust-cache@v2
-    - run: cargo nextest run --features ${{ env.DEFAULT_FEATURES }}
-    - run: cargo test --features ${{ env.DEFAULT_FEATURES }} --doc
+    - name: Test with vector support on Linux
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        cargo nextest run --features ${{ env.LINUX_FEATURES }}
+        cargo test --features ${{ env.LINUX_FEATURES }} --doc
+    - name: Test without vector support on non-Linux
+      if: matrix.os != 'ubuntu-latest'
+      run: |
+        cargo nextest run --features ${{ env.DEFAULT_FEATURES }}
+        cargo test --features ${{ env.DEFAULT_FEATURES }} --doc
 
   docs:
     name: Build Docs
@@ -157,5 +175,9 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
+    - name: Install OpenBLAS
+      run: |
+        sudo apt-get update -yq || true 
+        sudo apt-get install -y libopenblas-dev || (echo "Failed to install OpenBLAS" && exit 1)
     - uses: actions-rust-lang/setup-rust-toolchain@v1
-    - run: cargo doc --lib --no-deps --features ${{ env.DEFAULT_FEATURES }}
+    - run: cargo doc --lib --no-deps --features ${{ env.LINUX_FEATURES }}

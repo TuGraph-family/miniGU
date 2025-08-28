@@ -30,7 +30,7 @@ impl AlignedQueryBuffer<'_> {
 }
 
 #[allow(clippy::upper_case_acronyms)]
-pub struct InMemDiskANNAdapter {
+pub struct InMemANNAdapter {
     inner: Box<dyn ANNInmemIndex<f32> + 'static>,
     dimension: usize,
 
@@ -39,8 +39,18 @@ pub struct InMemDiskANNAdapter {
     next_vector_id: AtomicU32, // Next vector ID to be allocated
 }
 
-impl InMemDiskANNAdapter {
+impl InMemANNAdapter {
     pub fn new(config: IndexConfiguration) -> StorageResult<Self> {
+        // Validate distance metric type: only L2 distance is supported
+        if config.dist_metric != Metric::L2 {
+            return Err(StorageError::VectorIndex(
+                VectorIndexError::UnsupportedOperation(format!(
+                    "Unsupported metric type: {:?}. Only L2 distance is supported.",
+                    config.dist_metric
+                )),
+            ));
+        }
+
         let dimension = config.dim;
         let inner = create_inmem_index::<f32>(config)
             .map_err(|e| StorageError::VectorIndex(VectorIndexError::DiskANN(e)))?;
@@ -58,7 +68,7 @@ impl InMemDiskANNAdapter {
         self.node_to_vector.len()
     }
 
-    // Private implementation methods for InMemDiskANNAdapter
+    // Private implementation methods for InMemANNAdapter
     fn clear_mappings(&mut self) {
         self.node_to_vector.clear();
         self.vector_to_node.clear();
@@ -225,7 +235,7 @@ impl InMemDiskANNAdapter {
     }
 }
 
-impl VectorIndex for InMemDiskANNAdapter {
+impl VectorIndex for InMemANNAdapter {
     fn build(&mut self, vectors: &[(u64, Vec<f32>)]) -> StorageResult<()> {
         if vectors.is_empty() {
             return Err(StorageError::VectorIndex(VectorIndexError::EmptyDataset));
@@ -500,7 +510,7 @@ impl VectorIndex for InMemDiskANNAdapter {
 
     fn load(&mut self, _path: &str) -> StorageResult<()> {
         Err(StorageError::VectorIndex(VectorIndexError::NotSupported(
-            "load() is not yet implemented for InMemDiskANNAdapter".to_string(),
+            "load() is not yet implemented for InMemANNAdapter".to_string(),
         )))
     }
 }
@@ -516,8 +526,7 @@ pub fn create_vector_index_config(dimension: usize, vector_count: usize) -> Inde
         .with_num_threads(1)
         .build();
 
-    // Set max_points to actual vector count (DiskANN semantic: max_points = current data size)
-    // No headroom needed as miniGU uses static building (no incremental insertion)
+    // Set max_points to actual vector count
     let calculated_max_points = vector_count.min(u32::MAX as usize);
 
     IndexConfiguration {
@@ -530,6 +539,6 @@ pub fn create_vector_index_config(dimension: usize, vector_count: usize) -> Inde
         use_pq_dist: false,
         num_pq_chunks: 0,
         use_opq: false,
-        growth_potential: 2.0, // Pre-allocation capacity in InmemDataset of DiskANN
+        growth_potential: 2.0, // Pre-allocation capacity in InmemDataset of DiskANN to insert
     }
 }
