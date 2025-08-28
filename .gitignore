@@ -28,3 +28,23 @@ target/
 
 # antlr
 .antlr/
+
+# Python cache and temporary files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.coverage
+.pytest_cache/
+.pytest_cache
+
+# Temporary files and directories
+*.tmp
+*.temp
+*.log
+
+# WAL and checkpoint files
+*.wal
+.checkpoint/
