@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  RUSTFLAGS: -Dwarnings -C target-feature=+avx2
+  RUSTFLAGS: -Dwarnings
   RUST_BACKTRACE: 1
   CI: true
   DEFAULT_FEATURES: "std,serde,miette"
@@ -163,8 +163,8 @@ jobs:
     - name: Test without vector support on non-Linux
       if: matrix.os != 'ubuntu-latest'
       run: |
-        cargo nextest run --features ${{ env.DEFAULT_FEATURES }}
-        cargo test --features ${{ env.DEFAULT_FEATURES }} --doc
+        cargo nextest run --features ${{ env.DEFAULT_FEATURES }} --workspace --exclude diskann --exclude vector
+        cargo test --features ${{ env.DEFAULT_FEATURES }} --doc --workspace --exclude diskann --exclude vector
 
   docs:
     name: Build Docs

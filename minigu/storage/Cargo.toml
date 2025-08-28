@@ -15,6 +15,7 @@ temp-file = { workspace = true }
 
 [dependencies]
 arrow = { workspace = true }
+bitvec = { workspace = true }
 chrono = { workspace = true }
 crc32fast = { workspace = true }
 crossbeam-skiplist = { workspace = true }
@@ -27,12 +28,9 @@ temp-dir = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"] }
 
-# Linux-only vector dependencies
 [target.'cfg(target_os = "linux")'.dependencies]
 diskann = { workspace = true, optional = true }
 vector = { workspace = true, optional = true }
-
-bitvec = { workspace = true }
 
 [lints]
 workspace = true
