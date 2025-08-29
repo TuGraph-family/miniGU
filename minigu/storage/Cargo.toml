@@ -20,6 +20,7 @@ chrono = { workspace = true }
 crc32fast = { workspace = true }
 crossbeam-skiplist = { workspace = true }
 dashmap = { workspace = true }
+diskann = { workspace = true, optional = true }
 minigu-common = { workspace = true }
 ordered-float = { workspace = true }
 postcard = { workspace = true, features = ["alloc"] }
@@ -27,9 +28,6 @@ serde = { workspace = true, features = ["derive"] }
 temp-dir = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"] }
-
-[target.'cfg(target_os = "linux")'.dependencies]
-diskann = { workspace = true, optional = true }
 vector = { workspace = true, optional = true }
 
 [lints]
