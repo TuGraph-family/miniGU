@@ -840,11 +840,11 @@ mod tests {
     use std::{env, fs};
 
     use minigu_common::value::ScalarValue;
+    use minigu_transaction::GraphTxnManager;
 
     use super::*;
     use crate::error::CheckpointError;
     use crate::tp::memory_graph;
-    use crate::tp::transaction::IsolationLevel;
 
     fn get_temp_file_path(prefix: &str) -> std::path::PathBuf {
         env::temp_dir().join(format!("{}_{}.bin", prefix, std::process::id()))
@@ -918,8 +918,8 @@ mod tests {
         // Restore graph from checkpoint
         let restored_graph = checkpoint.restore(checkpoint_config, wal_config).unwrap();
 
-        let origin_txn = original_graph.begin_transaction(IsolationLevel::Serializable);
-        let restore_txn = restored_graph.begin_transaction(IsolationLevel::Serializable);
+        let origin_txn = original_graph.txn_manager().begin_transaction().unwrap();
+        let restore_txn = restored_graph.txn_manager().begin_transaction().unwrap();
 
         // Check vertices
         let original_alice = original_graph.get_vertex(&origin_txn, 1).unwrap();
@@ -1043,8 +1043,8 @@ mod tests {
             .unwrap();
 
         // Verify the restored graph has the same data
-        let original_txn = graph.begin_transaction(IsolationLevel::Serializable);
-        let restored_txn = restored_graph.begin_transaction(IsolationLevel::Serializable);
+        let original_txn = graph.txn_manager().begin_transaction().unwrap();
+        let restored_txn = restored_graph.txn_manager().begin_transaction().unwrap();
 
         // Check vertices
         let original_alice = graph.get_vertex(&original_txn, 1).unwrap();

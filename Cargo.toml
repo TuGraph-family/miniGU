@@ -17,6 +17,7 @@ members = [
     "minigu/gql/execution",
     "minigu/storage",
     "minigu/context",
+    "minigu/transaction",
 ]
 resolver = "3"
 
@@ -46,6 +47,7 @@ minigu-context = { path = "minigu/context", version = "0.1.0" }
 minigu-execution = { path = "minigu/gql/execution", version = "0.1.0" }
 minigu-planner = { path = "minigu/gql/planner", version = "0.1.0" }
 minigu-storage = { path = "minigu/storage", version = "0.1.0" }
+minigu-transaction = { path = "minigu/transaction", version = "0.1.0" }
 
 anyhow = "1.0.98"
 arrow = { version = "55.2.0", default-features = false }

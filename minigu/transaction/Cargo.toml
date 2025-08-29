@@ -1,0 +1,13 @@
+[package]
+edition = { workspace = true }
+license = { workspace = true }
+name = "minigu-transaction"
+repository = { workspace = true }
+version = { workspace = true }
+
+[dependencies]
+serde = { workspace = true }
+thiserror = { workspace = true }
+
+[lints]
+workspace = true
