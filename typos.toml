@@ -1,2 +1,2 @@
 [files]
-extend-exclude = ["*.gql", "DiskANN-rs/vector/build.rs"]
+extend-exclude = ["*.gql"]

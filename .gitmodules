@@ -1,4 +1,0 @@
-[submodule "DiskANN-rs"]
-	path = DiskANN-rs
-	url = https://github.com/Boat2U/DiskANN-rs.git
-	branch = filter-search-diskann
