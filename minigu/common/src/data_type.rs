@@ -12,7 +12,6 @@ use crate::constants::{
     DST_FIELD_NAME, EID_FIELD_NAME, LABEL_FIELD_NAME, SRC_FIELD_NAME, VID_FIELD_NAME,
 };
 
-// 定义一个小的 EPSILON 用于浮点数比较
 const EPSILON: f64 = 1e-10;
 
 pub(crate) struct PredefinedFields;
