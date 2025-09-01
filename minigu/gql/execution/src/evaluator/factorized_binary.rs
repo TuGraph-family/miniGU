@@ -62,7 +62,7 @@ fn apply_kernel(op: BinaryOp, left: &DatumRef, right: &DatumRef) -> ExecutionRes
 /// The result is constructed by computing the result per list element,
 /// then concat the computed values and reconstructing a new `ListArray`
 /// using the original structure.
-/// 
+///
 /// Optimized version that reduces memory allocations and improves vectorization.
 fn compute_flat_op_unflat(
     op: BinaryOp,
@@ -73,7 +73,7 @@ fn compute_flat_op_unflat(
     let flat_array = flat_datum.as_array();
     let unflat_lists: &ListArray = unflat_datum.as_array().as_list();
     let offsets = unflat_lists.offsets().clone();
-    
+
     // Pre-calculate total result size to avoid multiple allocations (future optimization)
     let _total_values_len = unflat_lists.values().len();
     let mut result_values = Vec::with_capacity(unflat_lists.len());
@@ -134,7 +134,7 @@ fn compute(
         UnflatSide::Both => {
             let left_lists: &ListArray = left.as_array().as_list();
             let right_lists: &ListArray = right.as_array().as_list();
-            
+
             // Validate that both lists have compatible structure
             if left_lists.len() != right_lists.len() {
                 return Err(crate::error::ExecutionError::Custom(
@@ -146,14 +146,14 @@ fn compute(
                     .into(),
                 ));
             }
-            
+
             // For safety, ensure offsets are compatible
             if left_lists.offsets() != right_lists.offsets() {
                 return Err(crate::error::ExecutionError::Custom(
                     "Incompatible list structures: offsets do not match".into(),
                 ));
             }
-            
+
             let left_values_datum = DatumRef::new(left_lists.values().clone(), false);
             let right_values_datum = DatumRef::new(right_lists.values().clone(), false);
             let result_values_datum = apply_kernel(op, &left_values_datum, &right_values_datum)?;

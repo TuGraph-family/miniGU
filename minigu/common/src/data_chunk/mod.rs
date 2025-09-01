@@ -30,7 +30,7 @@ impl DataChunk {
             columns.iter().map(|c| c.len()).all_equal(),
             "all columns must have the same length"
         );
-        
+
         // Automatically detect unflat columns
         let unflat_column_indices: Vec<usize> = columns
             .iter()
@@ -43,13 +43,13 @@ impl DataChunk {
                 }
             })
             .collect();
-        
+
         let unflat_column_indices = if unflat_column_indices.is_empty() {
             None
         } else {
             Some(unflat_column_indices)
         };
-        
+
         Self {
             columns,
             filter: None,
@@ -153,7 +153,7 @@ impl DataChunk {
             for &idx in unflat_column_indices {
                 if !tracked_indices.contains(&idx) {
                     panic!(
-                        "Column {} is not tracked as unflat, tracked indices: {:?}", 
+                        "Column {} is not tracked as unflat, tracked indices: {:?}",
                         idx, tracked_indices
                     );
                 }
@@ -243,7 +243,11 @@ impl DataChunk {
             .collect();
         let filter = self.filter.as_ref().map(|f| f.slice(offset, length));
         let unflat_column_indices = self.unflat_column_indices.clone();
-        Self { columns, filter, unflat_column_indices }
+        Self {
+            columns,
+            filter,
+            unflat_column_indices,
+        }
     }
 
     #[inline]
@@ -278,7 +282,7 @@ impl DataChunk {
             self.columns.iter().all(|c| c.len() == self.len()),
             "all columns must have the same length"
         );
-        
+
         // Update unflat column indices for newly added columns
         for (i, column) in self.columns[start_idx..].iter().enumerate() {
             if matches!(column.data_type(), DataType::List(_)) {
@@ -339,7 +343,11 @@ impl DataChunk {
             .map(|f| compute::take(f, indices, None).expect("`take` should be successful"))
             .map(|f| f.as_boolean().clone());
         let unflat_column_indices = self.unflat_column_indices.clone();
-        Self { columns, filter, unflat_column_indices }
+        Self {
+            columns,
+            filter,
+            unflat_column_indices,
+        }
     }
 
     /// Converts the data chunk to an arrow [`RecordBatch`].
