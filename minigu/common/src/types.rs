@@ -36,3 +36,20 @@ pub type PropertyId = u32;
 
 /// Internal identifier associated with a procedure (database-wide unique).
 pub type ProcedureId = u32;
+
+/// Uses (LabelId, PropertyId) to uniquely identify vector indices
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct VectorIndexKey {
+    pub label_id: LabelId,
+    pub property_id: PropertyId,
+}
+
+impl VectorIndexKey {
+    #[inline]
+    pub fn new(label_id: LabelId, property_id: PropertyId) -> Self {
+        Self {
+            label_id,
+            property_id,
+        }
+    }
+}
