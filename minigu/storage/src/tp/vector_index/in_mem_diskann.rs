@@ -731,10 +731,6 @@ pub fn create_vector_index_config(dimension: usize, vector_count: usize) -> Inde
 
 #[cfg(test)]
 mod sharded_vector_map_tests {
-    use std::collections::HashMap;
-    use std::sync::Arc;
-    use std::thread;
-
     use super::*;
 
     #[test]
@@ -776,7 +772,7 @@ mod sharded_vector_map_tests {
         for vector_id in 0..64u32 {
             map.set(vector_id, vector_id as u64 + 1000)?;
         }
-        let mut shard_counts = vec![0; 16];
+        let mut shard_counts = [0; 16];
         for vector_id in 0..64u32 {
             let (shard_idx, _) = map.get_shard_and_index(vector_id);
             shard_counts[shard_idx] += 1;
