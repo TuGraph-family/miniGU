@@ -18,6 +18,8 @@ use crate::data_type::DataSchema;
 pub struct DataChunk {
     columns: Vec<ArrayRef>,
     filter: Option<BooleanArray>,
+    // Track which columns are unflat (ListArray) for better optimization
+    unflat_column_indices: Option<Vec<usize>>,
 }
 
 impl DataChunk {
@@ -28,9 +30,30 @@ impl DataChunk {
             columns.iter().map(|c| c.len()).all_equal(),
             "all columns must have the same length"
         );
+        
+        // Automatically detect unflat columns
+        let unflat_column_indices: Vec<usize> = columns
+            .iter()
+            .enumerate()
+            .filter_map(|(i, col)| {
+                if matches!(col.data_type(), DataType::List(_)) {
+                    Some(i)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        
+        let unflat_column_indices = if unflat_column_indices.is_empty() {
+            None
+        } else {
+            Some(unflat_column_indices)
+        };
+        
         Self {
             columns,
             filter: None,
+            unflat_column_indices,
         }
     }
 
@@ -60,10 +83,29 @@ impl DataChunk {
         }
     }
 
+    /// Get the indices of unflat columns (columns with ListArray type)
+    #[inline]
+    pub fn unflat_column_indices(&self) -> &[usize] {
+        self.unflat_column_indices.as_deref().unwrap_or(&[])
+    }
+
+    /// Check if this chunk contains any unflat columns
+    #[inline]
+    pub fn has_unflat_columns(&self) -> bool {
+        self.unflat_column_indices.is_some()
+    }
+
+    /// Check if this chunk is purely flat (no ListArray columns)
+    #[inline]
+    pub fn is_flat(&self) -> bool {
+        !self.has_unflat_columns()
+    }
+
     #[inline]
     pub fn unfiltered(self) -> Self {
         Self {
             filter: None,
+            unflat_column_indices: None,
             ..self
         }
     }
@@ -105,6 +147,18 @@ impl DataChunk {
             filter_list.len(),
             "Filter list must have the same length as the chunk"
         );
+
+        // Validate that provided indices match our tracked unflat columns
+        if let Some(ref tracked_indices) = self.unflat_column_indices {
+            for &idx in unflat_column_indices {
+                if !tracked_indices.contains(&idx) {
+                    panic!(
+                        "Column {} is not tracked as unflat, tracked indices: {:?}", 
+                        idx, tracked_indices
+                    );
+                }
+            }
+        }
 
         // Flatten the 2D boolean filter list into a 1D boolean array.
         let flat_filter: &BooleanArray = filter_list.values().as_boolean();
@@ -188,7 +242,8 @@ impl DataChunk {
             .map(|c| c.slice(offset, length))
             .collect();
         let filter = self.filter.as_ref().map(|f| f.slice(offset, length));
-        Self { columns, filter }
+        let unflat_column_indices = self.unflat_column_indices.clone();
+        Self { columns, filter, unflat_column_indices }
     }
 
     #[inline]
@@ -217,11 +272,21 @@ impl DataChunk {
     where
         I: IntoIterator<Item = ArrayRef>,
     {
+        let start_idx = self.columns.len();
         self.columns.extend(columns);
         assert!(
             self.columns.iter().all(|c| c.len() == self.len()),
             "all columns must have the same length"
         );
+        
+        // Update unflat column indices for newly added columns
+        for (i, column) in self.columns[start_idx..].iter().enumerate() {
+            if matches!(column.data_type(), DataType::List(_)) {
+                self.unflat_column_indices
+                    .get_or_insert_with(Vec::new)
+                    .push(start_idx + i);
+            }
+        }
     }
 
     /// Concatenates multiple data chunks vertically into a single data chunk.
@@ -255,6 +320,7 @@ impl DataChunk {
         Self {
             columns,
             filter: None,
+            unflat_column_indices: chunks.first().and_then(|c| c.unflat_column_indices.clone()),
         }
     }
 
@@ -272,7 +338,8 @@ impl DataChunk {
             .as_ref()
             .map(|f| compute::take(f, indices, None).expect("`take` should be successful"))
             .map(|f| f.as_boolean().clone());
-        Self { columns, filter }
+        let unflat_column_indices = self.unflat_column_indices.clone();
+        Self { columns, filter, unflat_column_indices }
     }
 
     /// Converts the data chunk to an arrow [`RecordBatch`].
