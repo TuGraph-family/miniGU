@@ -22,6 +22,7 @@ crossbeam-skiplist = { workspace = true }
 dashmap = { workspace = true }
 minigu-common = { workspace = true }
 ordered-float = { workspace = true }
+parking_lot = { workspace = true }
 postcard = { workspace = true, features = ["alloc"] }
 serde = { workspace = true, features = ["derive"] }
 temp-dir = { workspace = true }
