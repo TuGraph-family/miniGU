@@ -47,6 +47,3 @@ MiniGU 开放了一些[新功能的开发](https://github.com/tugraph-family/min
 
 通过钉钉群、微信群、微信公众号、邮箱和电话联系我们:
 ![contacts](./docs/images/contact.jpeg)
-
-
-
