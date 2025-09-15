@@ -26,6 +26,8 @@ pub enum TokenKind<'a> {
     And,
     #[token("any", ignore(case))]
     Any,
+    #[token("approximate", ignore(case))]
+    Approximate,
     #[token("array", ignore(case))]
     Array,
     #[token("as", ignore(case))]

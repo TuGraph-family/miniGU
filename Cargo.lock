@@ -1535,8 +1535,10 @@ dependencies = [
  "minigu-common",
  "minigu-context",
  "minigu-planner",
+ "minigu-storage",
  "rayon",
  "thiserror",
+ "vector",
 ]
 
 [[package]]

@@ -5,6 +5,7 @@ pub mod logical_match;
 pub mod one_row;
 pub mod project;
 pub mod sort;
+pub mod vector_search;
 
 use std::sync::Arc;
 
@@ -18,6 +19,7 @@ use crate::plan::logical_match::LogicalMatch;
 use crate::plan::one_row::OneRow;
 use crate::plan::project::Project;
 use crate::plan::sort::Sort;
+use crate::plan::vector_search::VectorSearch;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct PlanBase {
@@ -70,6 +72,7 @@ pub enum PlanNode {
     PhysicalOneRow(Arc<OneRow>),
     PhysicalSort(Arc<Sort>),
     PhysicalLimit(Arc<Limit>),
+    PhysicalVectorSearch(Arc<VectorSearch>),
 }
 
 impl PlanData for PlanNode {
@@ -89,6 +92,7 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalOneRow(node) => node.base(),
             PlanNode::PhysicalSort(node) => node.base(),
             PlanNode::PhysicalLimit(node) => node.base(),
+            PlanNode::PhysicalVectorSearch(node) => node.base(),
         }
     }
 }

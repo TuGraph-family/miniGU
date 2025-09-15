@@ -6,6 +6,7 @@ pub mod factorized_binary;
 pub mod factorized_unary;
 pub mod scalar_function;
 pub mod unary;
+pub mod vector_distance;
 
 use std::fmt::Debug;
 

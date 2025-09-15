@@ -70,10 +70,16 @@ pub struct BoundReturnStatement {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub struct BoundLimitClause {
+    pub count: usize,
+    pub approximate: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct BoundOrderByAndPageStatement {
     pub order_by: Vec<BoundSortSpec>,
     pub offset: Option<usize>,
-    pub limit: Option<usize>,
+    pub limit: Option<BoundLimitClause>,
 }
 
 #[derive(Debug, Clone, Serialize)]

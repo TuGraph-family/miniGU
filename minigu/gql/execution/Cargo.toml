@@ -14,8 +14,12 @@ minigu-catalog = { workspace = true }
 minigu-common = { workspace = true }
 minigu-context = { workspace = true }
 minigu-planner = { workspace = true }
+minigu-storage = { workspace = true }
 rayon = { workspace = true }
 thiserror = { workspace = true }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+vector = { git = "https://github.com/Boat2U/DiskANN-rs.git", rev = "5cac50510d49782d774a55e45ec21211bce69174" }
 
 [lints]
 workspace = true

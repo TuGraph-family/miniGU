@@ -1,6 +1,7 @@
 use gql_parser::ast::{
-    BinaryOp, BooleanLiteral, Expr, Literal, NonNegativeInteger, StringLiteral, StringLiteralKind,
-    UnsignedInteger, UnsignedIntegerKind, UnsignedNumericLiteral, Value,
+    BinaryOp, BooleanLiteral, Expr, Function, GenericFunction, Literal, NonNegativeInteger,
+    StringLiteral, StringLiteralKind, UnsignedInteger, UnsignedIntegerKind, UnsignedNumericLiteral,
+    Value,
 };
 use minigu_common::constants::SESSION_USER;
 use minigu_common::data_type::LogicalType;
@@ -19,7 +20,7 @@ impl Binder<'_> {
             Expr::DurationBetween { .. } => not_implemented("duration between expression", None),
             Expr::Is { .. } => not_implemented("is expression", None),
             Expr::IsNot { .. } => not_implemented("is not expression", None),
-            Expr::Function(_) => not_implemented("function expression", None),
+            Expr::Function(function) => self.bind_function(function),
             Expr::Aggregate(_) => not_implemented("aggregate expression", None),
             Expr::Variable(variable) => {
                 let field = self
@@ -50,6 +51,53 @@ impl Binder<'_> {
             NonNegativeInteger::Parameter(_) => {
                 not_implemented("parameterized non-negative integer", None)
             }
+        }
+    }
+
+    pub fn bind_function(&self, function: &Function) -> BindResult<BoundExpr> {
+        match function {
+            Function::Generic(generic_func) => self.bind_generic_function(generic_func),
+            Function::Numeric(_) => not_implemented("numeric function", None),
+            Function::Case(_) => not_implemented("case function", None),
+        }
+    }
+
+    pub fn bind_generic_function(&self, func: &GenericFunction) -> BindResult<BoundExpr> {
+        let func_name = func.name.value().to_string();
+
+        match func_name.to_uppercase().as_str() {
+            "VECTOR_DISTANCE" => {
+                // VECTOR_DISTANCE expects exactly 3 arguments: (query_vector, target_vector,
+                // metric)
+                if func.args.len() != 3 {
+                    return Err(BindError::FunctionNotFound(
+                        format!(
+                            "VECTOR_DISTANCE expects exactly 3 arguments, got {}",
+                            func.args.len()
+                        )
+                        .into(),
+                    ));
+                }
+
+                // TODO: Parameter verification (Specified dimension: query_vector, target_vector,
+                // metric, dim)
+
+                let bound_args: Result<Vec<_>, _> = func
+                    .args
+                    .iter()
+                    .map(|arg| self.bind_value_expression(arg.value()))
+                    .collect();
+                let bound_args = bound_args?;
+
+                // Return type is Float32 (distance value)
+                Ok(BoundExpr::function_call(
+                    "VECTOR_DISTANCE".to_string(),
+                    bound_args,
+                    LogicalType::Float32,
+                    false, // distance is never null
+                ))
+            }
+            _ => not_implemented("function expression", None),
         }
     }
 }

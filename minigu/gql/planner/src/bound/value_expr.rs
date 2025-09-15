@@ -8,6 +8,10 @@ use serde::Serialize;
 pub enum BoundExprKind {
     Value(ScalarValue),
     Variable(String),
+    FunctionCall {
+        func_name: String,
+        args: Vec<BoundExpr>,
+    },
 }
 
 impl Display for BoundExprKind {
@@ -16,6 +20,16 @@ impl Display for BoundExprKind {
             // TODO: Use `Display` rather than `Debug` representation for `value`.
             BoundExprKind::Value(value) => write!(f, "{value:?}"),
             BoundExprKind::Variable(variable) => write!(f, "{variable}"),
+            BoundExprKind::FunctionCall { func_name, args } => {
+                write!(f, "{}(", func_name)?;
+                for (i, arg) in args.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{}", arg)?;
+                }
+                write!(f, ")")
+            }
         }
     }
 }
@@ -39,6 +53,19 @@ impl BoundExpr {
     pub fn variable(name: String, logical_type: LogicalType, nullable: bool) -> Self {
         Self {
             kind: BoundExprKind::Variable(name),
+            logical_type,
+            nullable,
+        }
+    }
+
+    pub fn function_call(
+        func_name: String,
+        args: Vec<BoundExpr>,
+        logical_type: LogicalType,
+        nullable: bool,
+    ) -> Self {
+        Self {
+            kind: BoundExprKind::FunctionCall { func_name, args },
             logical_type,
             nullable,
         }

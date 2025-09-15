@@ -115,8 +115,8 @@ impl LogicalPlanner {
         if statement.offset.is_some() {
             return not_implemented("offset clause", None);
         }
-        if let Some(limit) = statement.limit {
-            let limit = Limit::new(plan, limit);
+        if let Some(limit_clause) = statement.limit {
+            let limit = Limit::new(plan, limit_clause.count, limit_clause.approximate);
             plan = PlanNode::LogicalLimit(Arc::new(limit));
         }
         Ok(plan)
