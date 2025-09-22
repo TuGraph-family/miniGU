@@ -30,8 +30,8 @@ thiserror = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-diskann = { git = "https://github.com/Boat2U/DiskANN-rs.git", rev = "5cac50510d49782d774a55e45ec21211bce69174", optional = true }
-vector = { git = "https://github.com/Boat2U/DiskANN-rs.git", rev = "5cac50510d49782d774a55e45ec21211bce69174", optional = true }
+diskann = { git = "https://github.com/Boat2U/DiskANN-rs.git", rev = "0428a89844d7c9c441bad8bae1eaf64fa5d21540", optional = true }
+vector = { git = "https://github.com/Boat2U/DiskANN-rs.git", rev = "0428a89844d7c9c441bad8bae1eaf64fa5d21540", optional = true }
 
 [lints]
 workspace = true
