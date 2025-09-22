@@ -1083,7 +1083,7 @@ impl MemoryGraph {
         l_value: u32,
         filter_bitmap: Option<&BooleanArray>,
         should_pre: bool,
-    ) -> StorageResult<Vec<u64>> {
+    ) -> StorageResult<Vec<(u64, f32)>> {
         let index_ref = self.get_vector_index(index_key).ok_or_else(|| {
             StorageError::VectorIndex(VectorIndexError::IndexNotFound(format!(
                 "index_key: {:?}",
@@ -1228,7 +1228,7 @@ impl MemoryGraph {
         _l_value: u32,
         _filter_bitmap: Option<&BooleanArray>,
         _should_pre: bool,
-    ) -> StorageResult<Vec<u64>> {
+    ) -> StorageResult<Vec<(u64, f32)>> {
         Err(StorageError::NotSupported(
             "Vector search is only supported on Linux with DiskANN".to_string(),
         ))
@@ -2459,7 +2459,7 @@ pub mod tests {
             )?;
             assert_eq!(results.len(), 1);
             assert_eq!(
-                results[0], *expected_id,
+                results[0].0, *expected_id,
                 "ID mapping failed for vertex {}",
                 expected_id
             );
@@ -2643,7 +2643,7 @@ pub mod tests {
             None,
             false,
         )?;
-        Ok(results.contains(&expected_node_id))
+        Ok(results.iter().any(|(id, _)| *id == expected_node_id))
     }
 
     #[cfg(all(target_os = "linux", feature = "vector-support"))]
@@ -2662,7 +2662,7 @@ pub mod tests {
             None,
             false,
         )?; // Use larger k to be thorough
-        Ok(!results.contains(&excluded_node_id))
+        Ok(!results.iter().any(|(id, _)| *id == excluded_node_id))
     }
 
     #[cfg(all(target_os = "linux", feature = "vector-support"))]
@@ -3248,7 +3248,7 @@ pub mod tests {
             None,
             false,
         )?;
-        assert!(search_results.contains(new_id));
+        assert!(search_results.iter().any(|(id, _)| *id == *new_id));
 
         // 3. Delete the inserted vector
         graph.delete_from_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID), &[
@@ -3326,7 +3326,7 @@ pub mod tests {
 
         for result_id in &results {
             assert!(
-                selected_ids.contains(result_id),
+                selected_ids.contains(&result_id.0),
                 "Result ID should be in filtered set"
             );
         }
@@ -3390,7 +3390,7 @@ pub mod tests {
 
         for result_id in &results {
             assert!(
-                selected_ids.contains(result_id),
+                selected_ids.contains(&result_id.0),
                 "Result ID should be in filtered set"
             );
         }
@@ -3405,7 +3405,7 @@ pub mod tests {
             true,
         )?;
         assert_eq!(
-            result_k1[0], test_vectors[49].0,
+            result_k1[0].0, test_vectors[49].0,
             "result_k1 vid should be same as query vid"
         );
 
@@ -3468,7 +3468,7 @@ pub mod tests {
 
         for result_id in &results {
             assert!(
-                selected_ids.contains(result_id),
+                selected_ids.contains(&result_id.0),
                 "Result ID should be in filtered set"
             );
         }
@@ -3483,7 +3483,7 @@ pub mod tests {
             true,
         )?;
         assert_eq!(
-            result_k1[0], test_vectors[49].0,
+            result_k1[0].0, test_vectors[49].0,
             "result_k1 vid should be same as query vid"
         );
 
@@ -3613,7 +3613,7 @@ pub mod tests {
             test_vectors[0..25].iter().map(|(id, _, _)| *id).collect();
         for result_id in &results {
             assert!(
-                first_cluster_ids.contains(result_id),
+                first_cluster_ids.contains(&result_id.0),
                 "Result should be from first cluster"
             );
         }
@@ -3621,6 +3621,16 @@ pub mod tests {
         // Results should be sorted by similarity (closest first)
         assert!(!results.is_empty(), "Should find results in cluster");
         assert!(results.len() == 5, "Should be k");
+
+        // Verify distances are in ascending order (closest first)
+        for i in 1..results.len() {
+            assert!(
+                results[i - 1].1 <= results[i].1,
+                "Distances should be in ascending order: {} > {}",
+                results[i - 1].1,
+                results[i].1
+            );
+        }
 
         // pre-filter search should return the same result as query when k is one
         let result_k1 = graph.vector_search(
@@ -3632,7 +3642,7 @@ pub mod tests {
             true,
         )?;
         assert_eq!(
-            result_k1[0], test_vectors[10].0,
+            result_k1[0].0, test_vectors[10].0,
             "result_k1 vid should be same as query vid"
         );
 
@@ -3715,11 +3725,11 @@ pub mod tests {
             "Should return 2 filtered results"
         );
         assert_eq!(
-            filtered_results[0], 102,
+            filtered_results[0].0, 102,
             "First filtered result should be close (node_102)"
         );
         assert_eq!(
-            filtered_results[1], 103,
+            filtered_results[1].0, 103,
             "Second filtered result should be medium (node_103)"
         );
 

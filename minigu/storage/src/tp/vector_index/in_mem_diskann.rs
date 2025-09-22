@@ -275,7 +275,7 @@ impl InMemANNAdapter {
         query: &[f32],
         k: usize,
         filter_mask: &dyn FilterMask,
-    ) -> StorageResult<Vec<u64>> {
+    ) -> StorageResult<Vec<(u64, f32)>> {
         if k == 0 {
             return Ok(Vec::new());
         }
@@ -304,12 +304,16 @@ impl InMemANNAdapter {
         }
         let results: Vec<_> = heap.into_sorted_vec();
 
-        let node_ids: Vec<u64> = results
+        let results_with_distances: Vec<(u64, f32)> = results
             .into_iter()
-            .filter_map(|(_, vector_id)| self.vector_to_node.get(vector_id))
+            .filter_map(|(distance, vector_id)| {
+                self.vector_to_node
+                    .get(vector_id)
+                    .map(|node_id| (node_id, distance.0))
+            })
             .collect();
 
-        Ok(node_ids)
+        Ok(results_with_distances)
     }
 
     /// filter search: DiskANN search with FilterMask filtering
@@ -321,7 +325,7 @@ impl InMemANNAdapter {
         l_value: u32,
         filter_mask: &dyn FilterMask,
         should_pre: bool,
-    ) -> StorageResult<Vec<u64>> {
+    ) -> StorageResult<Vec<(u64, f32)>> {
         // Convert miniGU FilterMask to DiskANN FilterMask for pre-filtering
         let diskann_filter = {
             if let Some(dense) = filter_mask.as_any().downcast_ref::<DenseFilterMask>() {
@@ -485,7 +489,7 @@ impl VectorIndex for InMemANNAdapter {
         l_value: u32,
         filter_mask: Option<&dyn DiskANNFilterMask>,
         should_pre: bool,
-    ) -> StorageResult<Vec<u64>> {
+    ) -> StorageResult<Vec<(u64, f32)>> {
         // Check if index is built
         if self.vector_to_node.is_empty() {
             return Err(StorageError::VectorIndex(VectorIndexError::IndexNotBuilt));
@@ -497,6 +501,7 @@ impl VectorIndex for InMemANNAdapter {
             return Ok(Vec::new()); // No active vectors
         }
         let mut vector_ids = vec![0u32; effective_k];
+        let mut distances = vec![0.0f32; effective_k];
         let actual_count = self
             .inner
             .search(
@@ -504,21 +509,26 @@ impl VectorIndex for InMemANNAdapter {
                 effective_k,
                 l_value,
                 &mut vector_ids,
+                &mut distances,
                 filter_mask,
                 should_pre,
             )
             .map_err(|e| StorageError::VectorIndex(VectorIndexError::SearchError(e.to_string())))?;
-        let mut node_ids = Vec::with_capacity(actual_count as usize);
-        for &vector_id in vector_ids.iter().take(actual_count as usize) {
+        let mut results = Vec::with_capacity(actual_count as usize);
+        for (&vector_id, &distance) in vector_ids
+            .iter()
+            .zip(distances.iter())
+            .take(actual_count as usize)
+        {
             if let Some(node_id) = self.vector_to_node.get(vector_id) {
                 // Verify the node is still active (not soft-deleted)
                 if self.node_to_vector.contains_key(&node_id) {
-                    node_ids.push(node_id);
+                    results.push((node_id, distance));
                 }
             }
         }
 
-        Ok(node_ids)
+        Ok(results)
     }
 
     fn search(
@@ -528,7 +538,7 @@ impl VectorIndex for InMemANNAdapter {
         l_value: u32,
         filter_mask: Option<&dyn FilterMask>,
         should_pre: bool,
-    ) -> StorageResult<Vec<u64>> {
+    ) -> StorageResult<Vec<(u64, f32)>> {
         // No filter provided, DiskANN search without filter
         let Some(mask) = filter_mask else {
             return self.ann_search(query, k, l_value, None, false);
@@ -731,10 +741,6 @@ pub fn create_vector_index_config(dimension: usize, vector_count: usize) -> Inde
 
 #[cfg(test)]
 mod sharded_vector_map_tests {
-    use std::collections::HashMap;
-    use std::sync::Arc;
-    use std::thread;
-
     use super::*;
 
     #[test]
@@ -776,7 +782,7 @@ mod sharded_vector_map_tests {
         for vector_id in 0..64u32 {
             map.set(vector_id, vector_id as u64 + 1000)?;
         }
-        let mut shard_counts = vec![0; 16];
+        let mut shard_counts = [0; 16];
         for vector_id in 0..64u32 {
             let (shard_idx, _) = map.get_shard_and_index(vector_id);
             shard_counts[shard_idx] += 1;

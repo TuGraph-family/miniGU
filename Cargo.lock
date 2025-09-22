@@ -712,7 +712,7 @@ dependencies = [
 [[package]]
 name = "diskann"
 version = "0.1.0"
-source = "git+https://github.com/Boat2U/DiskANN-rs.git?rev=5cac50510d49782d774a55e45ec21211bce69174#5cac50510d49782d774a55e45ec21211bce69174"
+source = "git+https://github.com/Boat2U/DiskANN-rs.git?rev=0428a89844d7c9c441bad8bae1eaf64fa5d21540#0428a89844d7c9c441bad8bae1eaf64fa5d21540"
 dependencies = [
  "bit-vec",
  "byteorder",
@@ -2484,7 +2484,7 @@ dependencies = [
 [[package]]
 name = "vector"
 version = "0.1.0"
-source = "git+https://github.com/Boat2U/DiskANN-rs.git?rev=5cac50510d49782d774a55e45ec21211bce69174#5cac50510d49782d774a55e45ec21211bce69174"
+source = "git+https://github.com/Boat2U/DiskANN-rs.git?rev=0428a89844d7c9c441bad8bae1eaf64fa5d21540#0428a89844d7c9c441bad8bae1eaf64fa5d21540"
 dependencies = [
  "bytemuck",
  "cc",
