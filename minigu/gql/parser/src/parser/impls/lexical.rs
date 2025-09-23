@@ -4,8 +4,8 @@ use winnow::{ModalResult, Parser};
 
 use super::value_expr::vector_value_constructor;
 use crate::ast::{
-    BooleanLiteral, Ident, Literal, StringLiteral, StringLiteralKind, UnsignedInteger,
-    UnsignedIntegerKind, UnsignedNumericLiteral, UnsignedFloat,
+    BooleanLiteral, Ident, Literal, StringLiteral, StringLiteralKind, UnsignedFloat,
+    UnsignedInteger, UnsignedIntegerKind, UnsignedNumericLiteral,
 };
 use crate::lexer::TokenKind;
 use crate::parser::token::{Token, TokenStream, any};
