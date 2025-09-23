@@ -7,10 +7,11 @@ use crate::error::StorageResult;
 pub trait VectorIndex: Send + Sync {
     /// Build the index from vectors with their associated node IDs
     /// Configuration is provided during adapter creation
-    fn build(&mut self, vectors: &[(u64, Vec<f32>)]) -> StorageResult<()>;
+    fn build(&mut self, vectors: &[(u64, &[f32])]) -> StorageResult<()>;
 
     /// Pure DiskANN search for k nearest neighbors without filtering
     /// l_value corresponds to the search list size parameter
+    /// Returns a vector of (node_id, distance) tuples
     fn ann_search(
         &self,
         query: &[f32],
@@ -18,11 +19,12 @@ pub trait VectorIndex: Send + Sync {
         l_value: u32,
         filter_mask: Option<&dyn DiskANNFilterMask>,
         should_pre: bool,
-    ) -> StorageResult<Vec<u64>>;
+    ) -> StorageResult<Vec<(u64, f32)>>;
 
     /// Search for k nearest neighbors with optional filtering
     /// filter_mask: None for no filtering, Some(mask) for filtered search
     /// Automatically selects optimal strategy based on filter characteristics
+    /// Returns a vector of (node_id, distance) tuples
     fn search(
         &self,
         query: &[f32],
@@ -30,10 +32,10 @@ pub trait VectorIndex: Send + Sync {
         l_value: u32,
         filter_mask: Option<&dyn FilterMask>,
         should_pre: bool,
-    ) -> StorageResult<Vec<u64>>;
+    ) -> StorageResult<Vec<(u64, f32)>>;
 
     /// Insert vectors with their node IDs (for dynamic updates)
-    fn insert(&mut self, vectors: &[(u64, Vec<f32>)]) -> StorageResult<()>;
+    fn insert(&mut self, vectors: &[(u64, &[f32])]) -> StorageResult<()>;
 
     /// Delete vectors by their node IDs
     fn soft_delete(&mut self, node_ids: &[u64]) -> StorageResult<()>;

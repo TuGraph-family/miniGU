@@ -275,7 +275,7 @@ impl InMemANNAdapter {
         query: &[f32],
         k: usize,
         filter_mask: &dyn FilterMask,
-    ) -> StorageResult<Vec<u64>> {
+    ) -> StorageResult<Vec<(u64, f32)>> {
         if k == 0 {
             return Ok(Vec::new());
         }
@@ -304,12 +304,16 @@ impl InMemANNAdapter {
         }
         let results: Vec<_> = heap.into_sorted_vec();
 
-        let node_ids: Vec<u64> = results
+        let results_with_distances: Vec<(u64, f32)> = results
             .into_iter()
-            .filter_map(|(_, vector_id)| self.vector_to_node.get(vector_id))
+            .filter_map(|(distance, vector_id)| {
+                self.vector_to_node
+                    .get(vector_id)
+                    .map(|node_id| (node_id, distance.0))
+            })
             .collect();
 
-        Ok(node_ids)
+        Ok(results_with_distances)
     }
 
     /// filter search: DiskANN search with FilterMask filtering
@@ -321,7 +325,7 @@ impl InMemANNAdapter {
         l_value: u32,
         filter_mask: &dyn FilterMask,
         should_pre: bool,
-    ) -> StorageResult<Vec<u64>> {
+    ) -> StorageResult<Vec<(u64, f32)>> {
         // Convert miniGU FilterMask to DiskANN FilterMask for pre-filtering
         let diskann_filter = {
             if let Some(dense) = filter_mask.as_any().downcast_ref::<DenseFilterMask>() {
@@ -411,14 +415,27 @@ impl InMemANNAdapter {
 }
 
 impl VectorIndex for InMemANNAdapter {
-    fn build(&mut self, vectors: &[(u64, Vec<f32>)]) -> StorageResult<()> {
+    fn build(&mut self, vectors: &[(u64, &[f32])]) -> StorageResult<()> {
         if vectors.is_empty() {
             return Err(StorageError::VectorIndex(VectorIndexError::EmptyDataset));
         }
 
         self.clear_mappings();
 
-        let mut sorted_vectors = vectors.to_vec();
+        // Verify dimension consistency with index configuration
+        // Note: Upper layer should ensure all vectors have consistent dimensions
+        if let Some((_, first_vector)) = vectors.first() {
+            if first_vector.len() != self.dimension {
+                return Err(StorageError::VectorIndex(
+                    VectorIndexError::InvalidDimension {
+                        expected: self.dimension,
+                        actual: first_vector.len(),
+                    },
+                ));
+            }
+        }
+
+        let mut sorted_vectors: Vec<(u64, &[f32])> = vectors.to_vec();
         sorted_vectors.sort_by_key(|(node_id, _)| *node_id);
 
         // Basic boundary check: ensure vector count fits in u32 for DiskANN compatibility
@@ -441,10 +458,9 @@ impl VectorIndex for InMemANNAdapter {
         // - This is the correct behavior - DiskANN has fixed pre-allocated memory
 
         // Validate node IDs and establish ID mappings BEFORE calling DiskANN
-        let mut vector_data = Vec::with_capacity(sorted_vectors.len());
         let mut seen_nodes = std::collections::HashSet::new();
 
-        for (array_index, (node_id, vector)) in sorted_vectors.iter().enumerate() {
+        for (array_index, (node_id, _)) in sorted_vectors.iter().enumerate() {
             if !seen_nodes.insert(*node_id) {
                 self.clear_mappings();
                 return Err(StorageError::VectorIndex(
@@ -458,11 +474,12 @@ impl VectorIndex for InMemANNAdapter {
                 self.clear_mappings();
                 return Err(e);
             }
-
-            vector_data.push(vector.as_slice());
         }
 
-        match self.inner.build_from_memory(&vector_data) {
+        // Extract vector slices directly (no conversion needed)
+        let vector_slices: Vec<&[f32]> = sorted_vectors.iter().map(|(_, v)| *v).collect();
+
+        match self.inner.build_from_memory(&vector_slices) {
             Ok(()) => {
                 self.next_vector_id
                     .store(sorted_vectors.len() as u32, Ordering::Relaxed);
@@ -485,7 +502,7 @@ impl VectorIndex for InMemANNAdapter {
         l_value: u32,
         filter_mask: Option<&dyn DiskANNFilterMask>,
         should_pre: bool,
-    ) -> StorageResult<Vec<u64>> {
+    ) -> StorageResult<Vec<(u64, f32)>> {
         // Check if index is built
         if self.vector_to_node.is_empty() {
             return Err(StorageError::VectorIndex(VectorIndexError::IndexNotBuilt));
@@ -497,6 +514,7 @@ impl VectorIndex for InMemANNAdapter {
             return Ok(Vec::new()); // No active vectors
         }
         let mut vector_ids = vec![0u32; effective_k];
+        let mut distances = vec![0.0f32; effective_k];
         let actual_count = self
             .inner
             .search(
@@ -504,21 +522,26 @@ impl VectorIndex for InMemANNAdapter {
                 effective_k,
                 l_value,
                 &mut vector_ids,
+                &mut distances,
                 filter_mask,
                 should_pre,
             )
             .map_err(|e| StorageError::VectorIndex(VectorIndexError::SearchError(e.to_string())))?;
-        let mut node_ids = Vec::with_capacity(actual_count as usize);
-        for &vector_id in vector_ids.iter().take(actual_count as usize) {
+        let mut results = Vec::with_capacity(actual_count as usize);
+        for (&vector_id, &distance) in vector_ids
+            .iter()
+            .zip(distances.iter())
+            .take(actual_count as usize)
+        {
             if let Some(node_id) = self.vector_to_node.get(vector_id) {
                 // Verify the node is still active (not soft-deleted)
                 if self.node_to_vector.contains_key(&node_id) {
-                    node_ids.push(node_id);
+                    results.push((node_id, distance));
                 }
             }
         }
 
-        Ok(node_ids)
+        Ok(results)
     }
 
     fn search(
@@ -528,7 +551,7 @@ impl VectorIndex for InMemANNAdapter {
         l_value: u32,
         filter_mask: Option<&dyn FilterMask>,
         should_pre: bool,
-    ) -> StorageResult<Vec<u64>> {
+    ) -> StorageResult<Vec<(u64, f32)>> {
         // No filter provided, DiskANN search without filter
         let Some(mask) = filter_mask else {
             return self.ann_search(query, k, l_value, None, false);
@@ -563,13 +586,27 @@ impl VectorIndex for InMemANNAdapter {
         self.node_to_vector.get(&node_id).map(|entry| *entry)
     }
 
-    fn insert(&mut self, vectors: &[(u64, Vec<f32>)]) -> StorageResult<()> {
+    fn insert(&mut self, vectors: &[(u64, &[f32])]) -> StorageResult<()> {
         if vectors.is_empty() {
             return Ok(());
         }
         if self.node_to_vector.is_empty() {
             return Err(StorageError::VectorIndex(VectorIndexError::IndexNotBuilt));
         }
+
+        // Verify dimension consistency with index configuration
+        // Note: Upper layer should ensure all vectors have consistent dimensions
+        for (_, vector) in vectors.iter() {
+            if vector.len() != self.dimension {
+                return Err(StorageError::VectorIndex(
+                    VectorIndexError::InvalidDimension {
+                        expected: self.dimension,
+                        actual: vector.len(),
+                    },
+                ));
+            }
+        }
+
         // Check for duplicate node IDs
         for (node_id, _) in vectors {
             if self.node_to_vector.contains_key(node_id) {
@@ -612,10 +649,8 @@ impl VectorIndex for InMemANNAdapter {
             inserted_mappings.push((*node_id, vector_id));
         }
 
-        let vector_data: Vec<&[f32]> = vectors
-            .iter()
-            .map(|(_, vector)| vector.as_slice())
-            .collect();
+        // Extract vector slices directly (no conversion needed)
+        let vector_data: Vec<&[f32]> = vectors.iter().map(|(_, v)| *v).collect();
 
         match self.inner.insert_from_memory(&vector_data) {
             Ok(()) => Ok(()),
