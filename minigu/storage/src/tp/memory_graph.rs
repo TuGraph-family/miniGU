@@ -5,8 +5,7 @@ use crossbeam_skiplist::SkipSet;
 use dashmap::DashMap;
 use minigu_common::types::{EdgeId, VectorIndexKey, VertexId};
 #[cfg(all(target_os = "linux", feature = "vector-support"))]
-use minigu_common::types::{LabelId, PropertyId};
-use minigu_common::value::ScalarValue;
+use minigu_common::value::{ScalarValue, VectorValue};
 
 use super::checkpoint::{CheckpointManager, CheckpointManagerConfig};
 use super::transaction::{MemTransaction, MemTxnManager, TransactionHandle, UndoEntry, UndoPtr};
@@ -950,51 +949,76 @@ impl MemoryGraph {
 #[cfg(all(target_os = "linux", feature = "vector-support"))]
 impl MemoryGraph {
     // ===== Vector index methods =====
-    /// Collect vectors from graph nodes for the specified label and property
+
+    /// Extract vector data from a single vertex for the specified index key
+    fn extract_vector_from_vertex(
+        vertex: &Vertex,
+        index_key: VectorIndexKey,
+    ) -> Option<VectorValue> {
+        if vertex.label_id != index_key.label_id {
+            return None;
+        }
+
+        if let Ok(property_idx) = usize::try_from(index_key.property_id) {
+            if let Some(property_value) = vertex.properties().get(property_idx) {
+                match property_value {
+                    ScalarValue::Vector(Some(vector_value)) => {
+                        return Some(vector_value.clone());
+                    }
+                    ScalarValue::Vector(None) => {
+                        // Skip null vector values
+                        return None;
+                    }
+                    _ => {
+                        // Property exists but is not a vector - skip
+                        return None;
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    /// Collect vectors from specified node IDs for the given index key
+    fn collect_vectors_from_nodes(
+        &self,
+        txn: &TransactionHandle,
+        index_key: VectorIndexKey,
+        node_ids: &[u64],
+    ) -> StorageResult<Vec<(u64, VectorValue)>> {
+        let mut vectors = Vec::new();
+
+        for &node_id in node_ids {
+            // Try to get vertex, skip if not found
+            if let Ok(vertex) = self.get_vertex(txn, node_id) {
+                if let Some(vector_value) = Self::extract_vector_from_vertex(&vertex, index_key) {
+                    vectors.push((node_id, vector_value));
+                }
+            }
+            // Note: We silently skip nodes that don't exist or don't have the required vector
+            // property This allows bulk operations to be more forgiving
+        }
+
+        Ok(vectors)
+    }
+
+    /// Collect vectors from graph nodes for the specified vector index
     fn collect_vectors_for_index(
         &self,
         txn: &TransactionHandle,
-        label_id: LabelId,
-        property_id: PropertyId,
-    ) -> StorageResult<Vec<(u64, Vec<f32>)>> {
+        index_key: VectorIndexKey,
+    ) -> StorageResult<Vec<(u64, VectorValue)>> {
         let mut vectors = Vec::new();
 
         // Iterate through all vertices in the graph
         let vertex_iter = self.iter_vertices(txn)?;
-
         for vertex_result in vertex_iter {
             let vertex = vertex_result?;
-
-            // Skip vertices that don't match the specified label
-            if vertex.label_id != label_id {
-                continue;
-            }
-
             let node_id = vertex.vid();
 
-            // Check if vertex has the specified property at the given index
-            if let Ok(idx) = usize::try_from(property_id) {
-                if let Some(property_value) = vertex.properties().get(idx) {
-                    // Check if the property is a vector type
-                    match property_value {
-                        ScalarValue::Vector(Some(vector_data)) => {
-                            // Convert F32 wrapper to f32
-                            let vector: Vec<f32> = vector_data
-                                .iter()
-                                .map(|f32_val| f32_val.into_inner())
-                                .collect();
-                            vectors.push((node_id, vector));
-                        }
-                        ScalarValue::Vector(None) => {
-                            // Skip null vector values
-                            continue;
-                        }
-                        _ => {
-                            // Property exists but is not a vector - skip
-                            continue;
-                        }
-                    }
-                }
+            // Use helper function to extract vector from vertex
+            if let Some(vector_value) = Self::extract_vector_from_vertex(&vertex, index_key) {
+                vectors.push((node_id, vector_value));
             }
         }
 
@@ -1002,36 +1026,28 @@ impl MemoryGraph {
     }
 
     /// Build a vector index for the specified property within a specific label
-    /// Automatically infers vector dimension from the data and validates consistency
     pub fn build_vector_index(
         &self,
         txn: &TransactionHandle,
         index_key: VectorIndexKey,
     ) -> StorageResult<()> {
-        let label_id = index_key.label_id;
-        let property_id = index_key.property_id;
-
-        // Collect vectors from graph nodes with the specified label and property
-        let vectors = self.collect_vectors_for_index(txn, label_id, property_id)?;
+        let vectors = self.collect_vectors_for_index(txn, index_key)?;
         if vectors.is_empty() {
             return Err(StorageError::VectorIndex(VectorIndexError::EmptyDataset));
         }
-        // Infer dimension from the first vector
-        let inferred_dimension = vectors[0].1.len();
-        // Validate all vectors have consistent dimensions
-        for (_node_id, vector) in &vectors {
-            if vector.len() != inferred_dimension {
+        let dimension = vectors[0].1.dimension();
+        for (_, vector_value) in &vectors {
+            if vector_value.dimension() != dimension {
                 return Err(StorageError::VectorIndex(
                     VectorIndexError::InvalidDimension {
-                        expected: inferred_dimension,
-                        actual: vector.len(),
+                        expected: dimension,
+                        actual: vector_value.dimension(),
                     },
                 ));
             }
         }
-
-        // Validate dimension is supported by DiskANN SIMD implementation
-        match inferred_dimension {
+        // Validate dimension is supported by DiskANN
+        match dimension {
             104 | 128 | 256 => {
                 // Supported dimensions, continue with index building
             }
@@ -1039,7 +1055,7 @@ impl MemoryGraph {
                 return Err(StorageError::VectorIndex(
                     VectorIndexError::UnsupportedOperation(format!(
                         "Dimension {} not supported. Only dimensions 104, 128, 256 are supported.",
-                        inferred_dimension
+                        dimension
                     )),
                 ));
             }
@@ -1047,11 +1063,27 @@ impl MemoryGraph {
 
         // Create index configuration with intelligent capacity based on actual vector count
         let vector_count = vectors.len();
-        let index_config = create_vector_index_config(inferred_dimension, vector_count);
+        let index_config = create_vector_index_config(dimension, vector_count);
         let mut adapter = InMemANNAdapter::new(index_config)?;
-        adapter.build(&vectors)?;
+        // Convert VectorValue to &[f32] for VectorIndex
+        let f32_vectors: Vec<Vec<f32>> = vectors
+            .iter()
+            .map(|(_, vector_value)| {
+                vector_value
+                    .data()
+                    .iter()
+                    .map(|f32_val| f32_val.into_inner())
+                    .collect()
+            })
+            .collect();
+        let vector_refs: Vec<(u64, &[f32])> = vectors
+            .iter()
+            .zip(f32_vectors.iter())
+            .map(|((node_id, _), f32_data)| (*node_id, f32_data.as_slice()))
+            .collect();
 
-        // Store the index in the hash map using the provided composite key
+        adapter.build(&vector_refs)?;
+
         self.vector_indices
             .insert(index_key, Box::new(adapter) as Box<dyn VectorIndex>);
 
@@ -1066,7 +1098,7 @@ impl MemoryGraph {
         self.vector_indices.get(&index_key)
     }
 
-    /// Perform vector similarity search (returns node IDs)
+    /// Perform vector similarity search
     ///
     /// # Arguments
     /// * `index_key` - The VectorIndexKey identifying the vector index (label + property)
@@ -1078,7 +1110,7 @@ impl MemoryGraph {
     pub fn vector_search(
         &self,
         index_key: VectorIndexKey,
-        query: &[f32],
+        query: &VectorValue,
         k: usize,
         l_value: u32,
         filter_bitmap: Option<&BooleanArray>,
@@ -1090,23 +1122,23 @@ impl MemoryGraph {
                 index_key
             )))
         })?;
-
-        // Validate query vector dimension matches index dimension
-        if query.len() != index_ref.get_dimension() {
+        if query.dimension() != index_ref.get_dimension() {
             return Err(StorageError::VectorIndex(
                 VectorIndexError::InvalidDimension {
                     expected: index_ref.get_dimension(),
-                    actual: query.len(),
+                    actual: query.dimension(),
                 },
             ));
         }
+        let query_vec = query.to_f32_vec();
 
         // Convert BooleanArray to optimal FilterMask if provided
         let filter_mask = filter_bitmap.map(|bitmap| {
             let candidate_vector_ids = Self::bitmap_to_vector_ids(bitmap, &**index_ref);
             create_filter_mask(candidate_vector_ids, index_ref.size())
         });
-        let results = index_ref.search(query, k, l_value, filter_mask.as_deref(), should_pre)?;
+        let results =
+            index_ref.search(&query_vec, k, l_value, filter_mask.as_deref(), should_pre)?;
 
         Ok(results)
     }
@@ -1145,10 +1177,11 @@ impl MemoryGraph {
     /// Insert vectors into the specified vector index
     pub fn insert_into_vector_index(
         &self,
+        txn: &TransactionHandle,
         index_key: VectorIndexKey,
-        vectors: &[(u64, Vec<f32>)],
+        node_ids: &[u64],
     ) -> StorageResult<()> {
-        if vectors.is_empty() {
+        if node_ids.is_empty() {
             return Ok(());
         }
 
@@ -1159,20 +1192,37 @@ impl MemoryGraph {
             )))
         })?;
 
-        // Validate dimension consistency for all vectors
+        let vectors = self.collect_vectors_from_nodes(txn, index_key, node_ids)?;
+        if vectors.is_empty() {
+            return Ok(()); // Index exists but no matching vectors, this is valid
+        }
         let expected_dim = index_ref.get_dimension();
-        for (_node_id, vector) in vectors {
-            if vector.len() != expected_dim {
+        for (_, vector_value) in &vectors {
+            if vector_value.dimension() != expected_dim {
                 return Err(StorageError::VectorIndex(
                     VectorIndexError::InvalidDimension {
                         expected: expected_dim,
-                        actual: vector.len(),
+                        actual: vector_value.dimension(),
                     },
                 ));
             }
+            vector_value.validate_supported_dimension().map_err(|e| {
+                StorageError::VectorIndex(VectorIndexError::UnsupportedOperation(e))
+            })?;
         }
+        // Convert VectorValue to Vec<f32> for vector_index layer
+        let vector_data: Vec<Vec<f32>> = vectors
+            .iter()
+            .map(|(_, vector_value)| vector_value.to_f32_vec())
+            .collect();
 
-        index_ref.insert(vectors)?;
+        let vector_refs: Vec<(u64, &[f32])> = vectors
+            .iter()
+            .zip(vector_data.iter())
+            .map(|((node_id, _), f32_vec)| (*node_id, f32_vec.as_slice()))
+            .collect();
+
+        index_ref.insert(&vector_refs)?;
 
         Ok(())
     }
@@ -1223,7 +1273,7 @@ impl MemoryGraph {
     pub fn vector_search(
         &self,
         _index_key: VectorIndexKey,
-        _query: &[f32],
+        _query: &VectorValue,
         _k: usize,
         _l_value: u32,
         _filter_bitmap: Option<&BooleanArray>,
@@ -1237,8 +1287,9 @@ impl MemoryGraph {
     /// Insert vectors into vector index - not supported on non-Linux platforms
     pub fn insert_into_vector_index(
         &self,
+        _txn: &TransactionHandle,
         _index_key: VectorIndexKey,
-        _vectors: &[(u64, Vec<f32>)],
+        _node_ids: &[u64],
     ) -> StorageResult<()> {
         Err(StorageError::NotSupported(
             "Vector index operations are only supported on Linux with DiskANN".to_string(),
@@ -1286,10 +1337,10 @@ fn check_write_conflict(commit_ts: Timestamp, txn: &TransactionHandle) -> Storag
 pub mod tests {
     use std::fs;
 
-    use minigu_common::types::LabelId;
+    use minigu_common::types::{LabelId, PropertyId};
     #[cfg(all(target_os = "linux", feature = "vector-support"))]
     use minigu_common::value::F32;
-    use minigu_common::value::ScalarValue;
+    use minigu_common::value::{ScalarValue, VectorValue};
     use {Edge, Vertex};
 
     use super::*;
@@ -1330,15 +1381,13 @@ pub mod tests {
     /// Creates a test vertex with vector embedding
     #[cfg(all(target_os = "linux", feature = "vector-support"))]
     fn create_vertex_with_vector(id: VertexId, name: &str, embedding: Vec<f32>) -> Vertex {
-        let vector_value =
-            ScalarValue::Vector(Some(embedding.into_iter().map(F32::from).collect()));
-
+        let vector_value = create_vector_value_from_f32(embedding);
         Vertex::new(
             id,
             PERSON,
             PropertyRecord::new(vec![
                 ScalarValue::String(Some(name.to_string())), // Property 0: name
-                vector_value,                                // Property 1: embedding
+                ScalarValue::Vector(Some(vector_value)),     // Property 1: embedding
             ]),
         )
     }
@@ -2282,9 +2331,10 @@ pub mod tests {
         cluster1_query[0] = 35.0f32;
         cluster1_query[1] = 30.0f32;
         cluster1_query[2] = 25.0f32;
+        let cluster1_query_vector = create_vector_value_from_f32(cluster1_query);
         let results = graph.vector_search(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &cluster1_query,
+            &cluster1_query_vector,
             10,
             50,
             None,
@@ -2298,9 +2348,10 @@ pub mod tests {
         cluster2_query[0] = 55.0f32;
         cluster2_query[1] = 45.0f32;
         cluster2_query[2] = 37.0f32;
+        let cluster2_query_vector = create_vector_value_from_f32(cluster2_query);
         let results = graph.vector_search(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &cluster2_query,
+            &cluster2_query_vector,
             5,
             30,
             None,
@@ -2310,7 +2361,7 @@ pub mod tests {
         assert!(results.len() <= 5, "Results should not exceed k");
 
         // Test 3: Invalid dimension (too small) - should fail
-        let invalid_query_small = vec![1.0f32; TEST_DIMENSION - 1];
+        let invalid_query_small = create_vector_value_from_f32(vec![1.0f32; TEST_DIMENSION - 1]);
         let result = graph.vector_search(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
             &invalid_query_small,
@@ -2329,7 +2380,7 @@ pub mod tests {
         }
 
         // Test 4: Invalid dimension (too large) - should fail
-        let invalid_query_large = vec![1.0f32; TEST_DIMENSION + 10];
+        let invalid_query_large = create_vector_value_from_f32(vec![1.0f32; TEST_DIMENSION + 10]);
         let result = graph.vector_search(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
             &invalid_query_large,
@@ -2358,7 +2409,7 @@ pub mod tests {
         let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
         // Try to search without building index
-        let query = vec![1.0f32; TEST_DIMENSION];
+        let query = create_vector_value_from_f32(vec![1.0f32; TEST_DIMENSION]);
         let result = graph.vector_search(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
             &query,
@@ -2408,7 +2459,7 @@ pub mod tests {
         graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
 
         // Try to search with wrong dimension query
-        let wrong_dim_query = vec![0.0f32; 50]; // Wrong dimension
+        let wrong_dim_query = create_vector_value_from_f32(vec![0.0f32; 50]); // Wrong dimension
         let result = graph.vector_search(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
             &wrong_dim_query,
@@ -2449,9 +2500,10 @@ pub mod tests {
 
         // Search should return correct vertex IDs for modified vectors
         for (expected_id, _, embedding) in test_vectors.iter().take(5) {
+            let embedding_value = create_vector_value_from_f32(embedding.clone());
             let results = graph.vector_search(
                 VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-                embedding,
+                &embedding_value,
                 1,
                 50,
                 None,
@@ -2497,9 +2549,10 @@ pub mod tests {
         query[0] = 75.0f32; // Search in middle area
         query[1] = 60.0f32;
         query[2] = 45.0f32;
+        let query_vector = create_vector_value_from_f32(query);
         let results = graph.vector_search(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &query,
+            &query_vector,
             15,
             50,
             None,
@@ -2535,9 +2588,10 @@ pub mod tests {
             query[0] = 65.0f32; // Search in cluster area
             query[1] = 55.0f32;
             query[2] = 40.0f32;
+            let query_vector = create_vector_value_from_f32(query);
             let results = graph.vector_search(
                 VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-                &query,
+                &query_vector,
                 5,
                 30,
                 None,
@@ -2561,17 +2615,27 @@ pub mod tests {
         for (id, name, embedding) in &test_vectors {
             // Create property with different embeddings for property 1 and 2
             let embedding_1 = embedding.clone();
-            let mut embedding_2 = embedding.clone();
-            embedding_2[0] += 15.0; // Larger variation for large coordinates
-            embedding_2[1] += 10.0;
+            let mut embedding_2_data = embedding.clone();
+            embedding_2_data[0] += 15.0; // Larger variation for large coordinates
+            embedding_2_data[1] += 10.0;
+
+            let vector_data_1: Vec<F32> = embedding_1.into_iter().map(F32::from).collect();
+            let vector_data_2: Vec<F32> = embedding_2_data.into_iter().map(F32::from).collect();
+            let dimension_1 = vector_data_1.len();
+            let dimension_2 = vector_data_2.len();
+
+            let vector_value_1 = VectorValue::new(vector_data_1, dimension_1)
+                .expect("Failed to create VectorValue - dimension mismatch");
+            let vector_value_2 = VectorValue::new(vector_data_2, dimension_2)
+                .expect("Failed to create VectorValue - dimension mismatch");
 
             let vertex = Vertex::new(
                 *id,
                 PERSON,
                 PropertyRecord::new(vec![
                     ScalarValue::String(Some(name.clone())),
-                    ScalarValue::Vector(Some(embedding_1.into_iter().map(F32::from).collect())),
-                    ScalarValue::Vector(Some(embedding_2.into_iter().map(F32::from).collect())),
+                    ScalarValue::Vector(Some(vector_value_1)),
+                    ScalarValue::Vector(Some(vector_value_2)),
                 ]),
             );
             graph.create_vertex(&txn, vertex)?;
@@ -2586,16 +2650,38 @@ pub mod tests {
         query[0] = 80.0f32; // Query in large coordinate space
         query[1] = 70.0f32;
         query[2] = 50.0f32;
-        let results_1 =
-            graph.vector_search(VectorIndexKey::new(PERSON, 1), &query, 3, 30, None, false)?;
-        let results_2 =
-            graph.vector_search(VectorIndexKey::new(PERSON, 2), &query, 3, 30, None, false)?;
+        let query_vector = create_vector_value_from_f32(query);
+        let results_1 = graph.vector_search(
+            VectorIndexKey::new(PERSON, 1),
+            &query_vector,
+            3,
+            30,
+            None,
+            false,
+        )?;
+        let results_2 = graph.vector_search(
+            VectorIndexKey::new(PERSON, 2),
+            &query_vector,
+            3,
+            30,
+            None,
+            false,
+        )?;
 
         assert!(!results_1.is_empty());
         assert!(!results_2.is_empty());
 
         txn.commit()?;
         Ok(())
+    }
+
+    /// Helper function to convert Vec<f32> to VectorValue for testing
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
+    fn create_vector_value_from_f32(data: Vec<f32>) -> VectorValue {
+        let vector_data: Vec<F32> = data.into_iter().map(F32::from).collect();
+        let dimension = vector_data.len();
+        VectorValue::new(vector_data, dimension)
+            .expect("Failed to create VectorValue - dimension mismatch should not occur in tests")
     }
 
     /// Creates additional test vectors for insert operations
@@ -2635,9 +2721,10 @@ pub mod tests {
         target_vector: &[f32],
         expected_node_id: VertexId,
     ) -> StorageResult<bool> {
+        let target_vector_value = create_vector_value_from_f32(target_vector.to_vec());
         let results = graph.vector_search(
             VectorIndexKey::new(PERSON, property_id),
-            target_vector,
+            &target_vector_value,
             5,
             50,
             None,
@@ -2654,14 +2741,15 @@ pub mod tests {
         query_vector: &[f32],
         excluded_node_id: VertexId,
     ) -> StorageResult<bool> {
+        let query_vector_value = create_vector_value_from_f32(query_vector.to_vec());
         let results = graph.vector_search(
             VectorIndexKey::new(PERSON, property_id),
-            query_vector,
+            &query_vector_value,
             20,
             100,
             None,
             false,
-        )?; // Use larger k to be thorough
+        )?;
         Ok(!results.iter().any(|(id, _)| *id == excluded_node_id))
     }
 
@@ -2703,9 +2791,11 @@ pub mod tests {
         }
 
         // Insert 200 vectors into vector index - should succeed (reaching capacity limit)
+        let node_ids: Vec<u64> = insert_data.iter().map(|(id, _)| *id).collect();
         graph.insert_into_vector_index(
+            &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &insert_data,
+            &node_ids,
         )?;
 
         // Verify index size increased: 200 + 200 = 400 (exactly at capacity)
@@ -2726,16 +2816,15 @@ pub mod tests {
 
         // Test 2:  dimension mismatch - should fail
         let wrong_dimension_vector = vec![1.0f32; 100]; // 100 dimensions vs expected 104
-        let wrong_data = vec![(2000u64, wrong_dimension_vector.clone())];
-
-        // Create vertex in graph first (graph layer doesn't check dimensions)
-        let wrong_vertex = create_vertex_with_vector(2000, "wrong_dim", wrong_dimension_vector);
+        let wrong_id = 2000u64;
+        let wrong_vertex = create_vertex_with_vector(wrong_id, "wrong_dim", wrong_dimension_vector);
         graph.create_vertex(&txn, wrong_vertex)?;
 
         // Try to insert wrong dimension vector - should fail at insert_into_vector_index level
         let result = graph.insert_into_vector_index(
+            &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &wrong_data,
+            &[wrong_id],
         );
 
         assert!(result.is_err());
@@ -2776,9 +2865,11 @@ pub mod tests {
 
         // Try to insert 1 vector when capacity is already at maximum - should fail with capacity
         // error
+        let excess_node_ids: Vec<u64> = excess_insert_data.iter().map(|(id, _)| *id).collect();
         let capacity_result = graph.insert_into_vector_index(
+            &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &excess_insert_data,
+            &excess_node_ids,
         );
 
         // Verify that insertion fails due to capacity limit (this is expected and correct)
@@ -2842,9 +2933,11 @@ pub mod tests {
         }
 
         // Batch insert
+        let node_ids: Vec<u64> = insert_data.iter().map(|(id, _)| *id).collect();
         graph.insert_into_vector_index(
+            &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &insert_data,
+            &node_ids,
         )?;
 
         // Verify index size
@@ -2889,10 +2982,11 @@ pub mod tests {
             .size();
 
         // Insert empty vector list - should succeed but do nothing
-        let empty_vectors: Vec<(u64, Vec<f32>)> = vec![];
+        let empty_node_ids: Vec<u64> = vec![];
         let result = graph.insert_into_vector_index(
+            &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &empty_vectors,
+            &empty_node_ids,
         );
         assert!(result.is_ok());
 
@@ -2915,10 +3009,13 @@ pub mod tests {
 
         // Don't build any index
         let new_vectors = create_additional_test_vectors(3000, 1);
-        let insert_data = vec![(new_vectors[0].0, new_vectors[0].2.clone())];
+        let (test_id, test_name, test_embedding) = &new_vectors[0];
+        let vertex = create_vertex_with_vector(*test_id, test_name, test_embedding.clone());
+        graph.create_vertex(&txn, vertex)?;
 
         // Should fail with index not found error
-        let result = graph.insert_into_vector_index(VectorIndexKey::new(PERSON, 999), &insert_data);
+        let result =
+            graph.insert_into_vector_index(&txn, VectorIndexKey::new(PERSON, 999), &[*test_id]);
         assert!(result.is_err());
 
         txn.commit()?;
@@ -3157,9 +3254,11 @@ pub mod tests {
             insert_data.push((*id, embedding.clone()));
         }
 
+        let node_ids: Vec<u64> = insert_data.iter().map(|(id, _)| *id).collect();
         graph.insert_into_vector_index(
+            &txn,
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &insert_data,
+            &node_ids,
         )?;
 
         // Verify size after insertion
@@ -3234,15 +3333,17 @@ pub mod tests {
         let (new_id, new_name, new_embedding) = &new_vectors[0];
         let vertex = create_vertex_with_vector(*new_id, new_name, new_embedding.clone());
         graph.create_vertex(&txn, vertex)?;
-        graph.insert_into_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID), &[(
-            *new_id,
-            new_embedding.clone(),
-        )])?;
+        graph.insert_into_vector_index(
+            &txn,
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            &[*new_id],
+        )?;
 
         // 2. Search for inserted vector
+        let new_embedding_value = create_vector_value_from_f32(new_embedding.clone());
         let search_results = graph.vector_search(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            new_embedding,
+            &new_embedding_value,
             5,
             50,
             None,
@@ -3308,9 +3409,10 @@ pub mod tests {
 
         // Perform brute force search
         let query = &test_vectors[0].2; // Use first vector as query
+        let query_value = create_vector_value_from_f32(query.clone());
         let results = graph.vector_search(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            query,
+            &query_value,
             5,
             50,
             Some(&filter_bitmap),
@@ -3372,9 +3474,10 @@ pub mod tests {
 
         // Perform filtered search
         let query = &test_vectors[49].2; // Use middle vector as query
+        let query_value = create_vector_value_from_f32(query.clone());
         let results = graph.vector_search(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            query,
+            &query_value,
             10,
             100,
             Some(&filter_bitmap),
@@ -3396,9 +3499,10 @@ pub mod tests {
         }
 
         // pre-filter search should return the same result as query when k is one
+        let query_value = create_vector_value_from_f32(query.clone());
         let result_k1 = graph.vector_search(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            query,
+            &query_value,
             1,
             100,
             Some(&filter_bitmap),
@@ -3450,9 +3554,10 @@ pub mod tests {
 
         // Perform filtered search
         let query = &test_vectors[49].2; // Use middle vector as query
+        let query_value = create_vector_value_from_f32(query.clone());
         let results = graph.vector_search(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            query,
+            &query_value,
             5,
             100,
             Some(&filter_bitmap),
@@ -3474,9 +3579,10 @@ pub mod tests {
         }
 
         // pre-filter search should return the same result as query when k is one
+        let query_value = create_vector_value_from_f32(query.clone());
         let result_k1 = graph.vector_search(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            query,
+            &query_value,
             1,
             100,
             Some(&filter_bitmap),
@@ -3511,9 +3617,10 @@ pub mod tests {
         let max_node_id = test_vectors.iter().map(|(id, _, _)| *id).max().unwrap_or(0);
         let empty_filter =
             arrow::array::BooleanArray::from(vec![false; (max_node_id + 1) as usize]);
+        let query_value = create_vector_value_from_f32(query.clone());
         let results = graph.vector_search(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            query,
+            &query_value,
             5,
             50,
             Some(&empty_filter),
@@ -3529,9 +3636,10 @@ pub mod tests {
         let single_node_id = test_vectors[10].0; // Use actual node ID
         single_filter_bits[single_node_id as usize] = true;
         let single_filter = arrow::array::BooleanArray::from(single_filter_bits);
+        let query_value = create_vector_value_from_f32(query.clone());
         let results = graph.vector_search(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            query,
+            &query_value,
             5,
             50,
             Some(&single_filter),
@@ -3548,9 +3656,10 @@ pub mod tests {
             full_filter_bits[*node_id as usize] = true;
         }
         let full_filter = arrow::array::BooleanArray::from(full_filter_bits);
+        let query_value = create_vector_value_from_f32(query.clone());
         let results_filtered = graph.vector_search(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            query,
+            &query_value,
             5,
             50,
             Some(&full_filter),
@@ -3558,7 +3667,7 @@ pub mod tests {
         )?; // pre-filter
         let results_unfiltered = graph.vector_search(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            query,
+            &query_value,
             5,
             50,
             None,
@@ -3599,9 +3708,10 @@ pub mod tests {
 
         // Pre-filter Search within first cluster using a query from that cluster
         let cluster_query = &test_vectors[10].2; // 10th vector is in first cluster
+        let cluster_query_value = create_vector_value_from_f32(cluster_query.clone());
         let results = graph.vector_search(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            cluster_query,
+            &cluster_query_value,
             5,
             50,
             Some(&cluster_filter),
@@ -3633,9 +3743,10 @@ pub mod tests {
         }
 
         // pre-filter search should return the same result as query when k is one
+        let cluster_query_value = create_vector_value_from_f32(cluster_query.clone());
         let result_k1 = graph.vector_search(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            cluster_query,
+            &cluster_query_value,
             1,
             50,
             Some(&cluster_filter),
@@ -3711,9 +3822,10 @@ pub mod tests {
         filter_bits[103] = true; // medium  
         filter_bits[104] = true; // far
         let filter = arrow::array::BooleanArray::from(filter_bits);
+        let query_value = create_vector_value_from_f32(query.clone());
         let filtered_results = graph.vector_search(
             VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &query,
+            &query_value,
             2,
             50,
             Some(&filter),

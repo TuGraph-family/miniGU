@@ -415,14 +415,27 @@ impl InMemANNAdapter {
 }
 
 impl VectorIndex for InMemANNAdapter {
-    fn build(&mut self, vectors: &[(u64, Vec<f32>)]) -> StorageResult<()> {
+    fn build(&mut self, vectors: &[(u64, &[f32])]) -> StorageResult<()> {
         if vectors.is_empty() {
             return Err(StorageError::VectorIndex(VectorIndexError::EmptyDataset));
         }
 
         self.clear_mappings();
 
-        let mut sorted_vectors = vectors.to_vec();
+        // Verify dimension consistency with index configuration
+        // Note: Upper layer should ensure all vectors have consistent dimensions
+        if let Some((_, first_vector)) = vectors.first() {
+            if first_vector.len() != self.dimension {
+                return Err(StorageError::VectorIndex(
+                    VectorIndexError::InvalidDimension {
+                        expected: self.dimension,
+                        actual: first_vector.len(),
+                    },
+                ));
+            }
+        }
+
+        let mut sorted_vectors: Vec<(u64, &[f32])> = vectors.to_vec();
         sorted_vectors.sort_by_key(|(node_id, _)| *node_id);
 
         // Basic boundary check: ensure vector count fits in u32 for DiskANN compatibility
@@ -445,10 +458,9 @@ impl VectorIndex for InMemANNAdapter {
         // - This is the correct behavior - DiskANN has fixed pre-allocated memory
 
         // Validate node IDs and establish ID mappings BEFORE calling DiskANN
-        let mut vector_data = Vec::with_capacity(sorted_vectors.len());
         let mut seen_nodes = std::collections::HashSet::new();
 
-        for (array_index, (node_id, vector)) in sorted_vectors.iter().enumerate() {
+        for (array_index, (node_id, _)) in sorted_vectors.iter().enumerate() {
             if !seen_nodes.insert(*node_id) {
                 self.clear_mappings();
                 return Err(StorageError::VectorIndex(
@@ -462,11 +474,12 @@ impl VectorIndex for InMemANNAdapter {
                 self.clear_mappings();
                 return Err(e);
             }
-
-            vector_data.push(vector.as_slice());
         }
 
-        match self.inner.build_from_memory(&vector_data) {
+        // Extract vector slices directly (no conversion needed)
+        let vector_slices: Vec<&[f32]> = sorted_vectors.iter().map(|(_, v)| *v).collect();
+
+        match self.inner.build_from_memory(&vector_slices) {
             Ok(()) => {
                 self.next_vector_id
                     .store(sorted_vectors.len() as u32, Ordering::Relaxed);
@@ -573,13 +586,27 @@ impl VectorIndex for InMemANNAdapter {
         self.node_to_vector.get(&node_id).map(|entry| *entry)
     }
 
-    fn insert(&mut self, vectors: &[(u64, Vec<f32>)]) -> StorageResult<()> {
+    fn insert(&mut self, vectors: &[(u64, &[f32])]) -> StorageResult<()> {
         if vectors.is_empty() {
             return Ok(());
         }
         if self.node_to_vector.is_empty() {
             return Err(StorageError::VectorIndex(VectorIndexError::IndexNotBuilt));
         }
+
+        // Verify dimension consistency with index configuration
+        // Note: Upper layer should ensure all vectors have consistent dimensions
+        for (_, vector) in vectors.iter() {
+            if vector.len() != self.dimension {
+                return Err(StorageError::VectorIndex(
+                    VectorIndexError::InvalidDimension {
+                        expected: self.dimension,
+                        actual: vector.len(),
+                    },
+                ));
+            }
+        }
+
         // Check for duplicate node IDs
         for (node_id, _) in vectors {
             if self.node_to_vector.contains_key(node_id) {
@@ -622,10 +649,8 @@ impl VectorIndex for InMemANNAdapter {
             inserted_mappings.push((*node_id, vector_id));
         }
 
-        let vector_data: Vec<&[f32]> = vectors
-            .iter()
-            .map(|(_, vector)| vector.as_slice())
-            .collect();
+        // Extract vector slices directly (no conversion needed)
+        let vector_data: Vec<&[f32]> = vectors.iter().map(|(_, v)| *v).collect();
 
         match self.inner.insert_from_memory(&vector_data) {
             Ok(()) => Ok(()),

@@ -18,6 +18,71 @@ pub type Nullable<T> = Option<T>;
 pub type F32 = OrderedFloat<f32>;
 pub type F64 = OrderedFloat<f64>;
 
+/// A vector value that maintains both data and dimension information for type safety.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct VectorValue {
+    data: Vec<F32>,
+    dimension: usize,
+}
+
+impl VectorValue {
+    pub fn new(data: Vec<F32>, dimension: usize) -> Result<Self, String> {
+        if data.len() != dimension {
+            return Err(format!(
+                "Vector dimension mismatch: expected {}, got {}",
+                dimension,
+                data.len()
+            ));
+        }
+        Ok(Self { data, dimension })
+    }
+
+    /// Creates a VectorValue from raw f32 data with dimension validation.
+    pub fn from_f32_vec(data: Vec<f32>, dimension: usize) -> Result<Self, String> {
+        let f32_data: Vec<F32> = data.into_iter().map(F32::from).collect();
+        Self::new(f32_data, dimension)
+    }
+
+    /// Creates a VectorValue ensuring it matches the specified logical type dimension.
+    pub fn from_logical_type(
+        data: Vec<f32>,
+        logical_type: &crate::data_type::LogicalType,
+    ) -> Result<Self, String> {
+        match logical_type {
+            crate::data_type::LogicalType::Vector(expected_dim) => {
+                Self::from_f32_vec(data, *expected_dim)
+            }
+            _ => Err("LogicalType is not a Vector type".to_string()),
+        }
+    }
+
+    /// Returns a reference to the vector data.
+    pub fn data(&self) -> &[F32] {
+        &self.data
+    }
+
+    /// Returns the dimension of this vector.
+    pub fn dimension(&self) -> usize {
+        self.dimension
+    }
+
+    /// Converts to a Vec<f32> for compatibility with existing code.
+    pub fn to_f32_vec(&self) -> Vec<f32> {
+        self.data.iter().map(|f| f.into_inner()).collect()
+    }
+
+    /// Validates that this vector has a supported dimension (104, 128, 256).
+    pub fn validate_supported_dimension(&self) -> Result<(), String> {
+        match self.dimension {
+            104 | 128 | 256 => Ok(()),
+            _ => Err(format!(
+                "Unsupported vector dimension: {}. Only dimensions 104, 128, 256 are supported.",
+                self.dimension
+            )),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ScalarValue {
     Null,
@@ -33,7 +98,7 @@ pub enum ScalarValue {
     Float32(Nullable<F32>),
     Float64(Nullable<F64>),
     String(Nullable<String>),
-    Vector(Nullable<Vec<F32>>),
+    Vector(Nullable<VectorValue>),
     Vertex(Nullable<VertexValue>),
     Edge(Nullable<EdgeValue>),
 }
@@ -61,8 +126,8 @@ impl ScalarValue {
             ScalarValue::String(value) => Arc::new(StringArray::from_iter([value])),
             ScalarValue::Vector(value) => {
                 match value {
-                    Some(vec) => {
-                        let float_values: Vec<f32> = vec.iter().map(|f| f.into_inner()).collect();
+                    Some(vector_value) => {
+                        let float_values = vector_value.to_f32_vec();
                         let float_array = Arc::new(Float32Array::from(float_values));
                         let field = Arc::new(arrow::datatypes::Field::new(
                             "item",
@@ -71,7 +136,7 @@ impl ScalarValue {
                         ));
                         Arc::new(FixedSizeListArray::new(
                             field,
-                            vec.len() as i32,
+                            vector_value.dimension() as i32,
                             float_array,
                             None,
                         ))
@@ -194,11 +259,19 @@ impl ScalarValue {
         }
     }
 
-    pub fn get_vector(&self) -> Result<Vec<F32>, String> {
+    pub fn get_vector(&self) -> Result<VectorValue, String> {
         match self {
             ScalarValue::Vector(Some(val)) => Ok(val.clone()),
             ScalarValue::Vector(None) => Err("Null value".to_string()),
             _ => Err("Not a Vector value".to_string()),
+        }
+    }
+
+    /// Returns the vector data as Vec<F32>
+    pub fn get_vector_data(&self) -> Result<Vec<F32>, String> {
+        match self.get_vector() {
+            Ok(vector_value) => Ok(vector_value.data().to_vec()),
+            Err(e) => Err(e),
         }
     }
 
@@ -255,7 +328,7 @@ macro_rules! for_each_non_null_variant {
         $m!(float32, F32, Float32);
         $m!(float64, F64, Float64);
         $m!(string, String, String);
-        $m!(vector, Vec<F32>, Vector);
+        $m!(vector, VectorValue, Vector);
         $m!(vertex_value, VertexValue, Vertex);
         $m!(edge_value, EdgeValue, Edge);
     };
@@ -407,7 +480,7 @@ impl ScalarValueAccessor for dyn Array + '_ {
                     .then(|| array.value(index).to_string())
                     .into()
             }
-            DataType::FixedSizeList(field, _size) if field.data_type() == &DataType::Float32 => {
+            DataType::FixedSizeList(field, size) if field.data_type() == &DataType::Float32 => {
                 let array = self.as_fixed_size_list();
                 if array.is_valid(index) {
                     let values = array.value(index);
@@ -415,7 +488,10 @@ impl ScalarValueAccessor for dyn Array + '_ {
                     let vec_f32: Vec<F32> = (0..float_array.len())
                         .map(|i| OrderedFloat(float_array.value(i)))
                         .collect();
-                    ScalarValue::Vector(Some(vec_f32))
+                    match VectorValue::new(vec_f32, *size as usize) {
+                        Ok(vector_value) => ScalarValue::Vector(Some(vector_value)),
+                        Err(_) => ScalarValue::Vector(None), // Handle dimension mismatch gracefully
+                    }
                 } else {
                     ScalarValue::Vector(None)
                 }
@@ -436,9 +512,10 @@ mod tests {
     #[test]
     fn test_get_vector() {
         // Test successful vector retrieval
-        let vector = vec![OrderedFloat(1.0), OrderedFloat(2.0)];
-        let scalar = ScalarValue::Vector(Some(vector.clone()));
-        assert_eq!(scalar.get_vector().unwrap(), vector);
+        let vector_data = vec![OrderedFloat(1.0), OrderedFloat(2.0)];
+        let vector_value = VectorValue::new(vector_data.clone(), 2).unwrap();
+        let scalar = ScalarValue::Vector(Some(vector_value.clone()));
+        assert_eq!(scalar.get_vector().unwrap(), vector_value);
 
         // Test null vector
         let scalar = ScalarValue::Vector(None);
@@ -454,8 +531,9 @@ mod tests {
     #[test]
     fn test_vector_to_scalar_array() {
         // Test vector to Arrow array conversion
-        let vector = vec![OrderedFloat(1.0), OrderedFloat(2.0)];
-        let scalar = ScalarValue::Vector(Some(vector));
+        let vector_data = vec![OrderedFloat(1.0), OrderedFloat(2.0)];
+        let vector_value = VectorValue::new(vector_data, 2).unwrap();
+        let scalar = ScalarValue::Vector(Some(vector_value));
         let array = scalar.to_scalar_array();
 
         // Verify it's a FixedSizeListArray with correct type
@@ -467,18 +545,20 @@ mod tests {
 
     #[test]
     fn test_vector_from_conversion() {
-        // Test From trait for Vec<F32>
-        let vector = vec![OrderedFloat(1.0), OrderedFloat(2.0), OrderedFloat(3.0)];
-        let scalar: ScalarValue = vector.clone().into();
-        assert_eq!(scalar, ScalarValue::Vector(Some(vector)));
+        // Test From trait for VectorValue
+        let vector_data = vec![OrderedFloat(1.0), OrderedFloat(2.0), OrderedFloat(3.0)];
+        let vector_value = VectorValue::new(vector_data.clone(), 3).unwrap();
+        let scalar: ScalarValue = vector_value.clone().into();
+        assert_eq!(scalar, ScalarValue::Vector(Some(vector_value)));
 
-        // Test From trait for Option<Vec<F32>>
-        let vector_opt = Some(vec![OrderedFloat(1.0)]);
-        let scalar: ScalarValue = vector_opt.clone().into();
-        assert_eq!(scalar, ScalarValue::Vector(vector_opt));
+        // Test From trait for Option<VectorValue>
+        let vector_data_opt = vec![OrderedFloat(1.0)];
+        let vector_value_opt = Some(VectorValue::new(vector_data_opt, 1).unwrap());
+        let scalar: ScalarValue = vector_value_opt.clone().into();
+        assert_eq!(scalar, ScalarValue::Vector(vector_value_opt));
 
         // Test None case
-        let none_vector: Option<Vec<F32>> = None;
+        let none_vector: Option<VectorValue> = None;
         let scalar: ScalarValue = none_vector.into();
         assert_eq!(scalar, ScalarValue::Vector(None));
     }
