@@ -4,7 +4,6 @@ use arrow::array::BooleanArray;
 use crossbeam_skiplist::SkipSet;
 use dashmap::DashMap;
 use minigu_common::types::{EdgeId, VectorIndexKey, VertexId};
-#[cfg(all(target_os = "linux", feature = "vector-support"))]
 use minigu_common::value::{ScalarValue, VectorValue};
 
 use super::checkpoint::{CheckpointManager, CheckpointManagerConfig};
