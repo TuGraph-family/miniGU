@@ -442,6 +442,8 @@ pub enum TokenKind<'a> {
     Varchar,
     #[token("variable", ignore(case))]
     Variable,
+    #[token("vector", ignore(case))]
+    Vector,
     #[token("when", ignore(case))]
     When,
     #[token("where", ignore(case))]
@@ -760,6 +762,8 @@ pub enum TokenKind<'a> {
     UnsignedHexInteger(&'a str),
     #[regex(r"0b(_?[01])+")]
     UnsignedBinaryInteger(&'a str),
+    #[regex(r"[0-9](_?[0-9])*\.[0-9](_?[0-9])*")]
+    UnsignedFloatLiteral(&'a str),
 
     // The followings are quoted character sequences.
     #[regex(r#"'|@'"#, handle_quoted)]
@@ -882,7 +886,7 @@ impl TokenKind<'_> {
 
     #[inline]
     pub fn is_prefix_of_numeric_literal(&self) -> bool {
-        self.is_prefix_of_unsigned_integer()
+        self.is_prefix_of_unsigned_integer() || matches!(self, Self::UnsignedFloatLiteral(_))
     }
 
     #[inline]
@@ -1254,6 +1258,7 @@ impl TokenKind<'_> {
                 | Self::Dec
                 | Self::Null
                 | Self::Nothing
+                | Self::Vector
         ) || self.is_prefix_of_signed_exact_numeric_type()
             || self.is_prefix_of_unsigned_exact_numeric_type()
             || self.is_prefix_of_temporal_type()

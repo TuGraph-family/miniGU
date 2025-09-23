@@ -1,0 +1,14 @@
+---
+source: minigu/gql/parser/src/parser/impls/type_element.rs
+assertion_line: 1037
+expression: parsed
+---
+- Vector:
+    dimension:
+      - kind: Decimal
+        integer: "4"
+      - start: 7
+        end: 8
+    not_null: false
+- start: 0
+  end: 9

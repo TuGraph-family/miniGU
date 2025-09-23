@@ -2,7 +2,7 @@
 
 use smol_str::SmolStr;
 
-use super::{ListConstructor, RecordConstructor};
+use super::{ListConstructor, RecordConstructor, VectorConstructor};
 use crate::macros::base;
 use crate::span::Spanned;
 
@@ -17,6 +17,7 @@ pub enum Literal {
     Duration(DurationLiteral),
     List(ListConstructor),
     Record(RecordConstructor),
+    Vector(VectorConstructor),
     Null,
 }
 
@@ -69,6 +70,7 @@ pub enum DurationLiteralKind {
 #[apply(base)]
 pub enum UnsignedNumericLiteral {
     Integer(Spanned<UnsignedInteger>),
+    Float(Spanned<UnsignedFloat>),
 }
 
 #[apply(base)]
@@ -83,4 +85,9 @@ pub enum UnsignedIntegerKind {
 pub struct UnsignedInteger {
     pub kind: UnsignedIntegerKind,
     pub integer: SmolStr,
+}
+
+#[apply(base)]
+pub struct UnsignedFloat {
+    pub float: SmolStr,
 }

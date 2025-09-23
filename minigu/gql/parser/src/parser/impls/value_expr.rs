@@ -329,6 +329,17 @@ pub fn list_value_type_name(input: &mut TokenStream) -> ModalResult<Spanned<List
     .parse_next(input)
 }
 
+pub fn vector_value_constructor(input: &mut TokenStream) -> ModalResult<Spanned<VectorConstructor>> {
+    seq! {VectorConstructor {
+        _: TokenKind::Vector,
+        _: TokenKind::LeftBracket,
+        values: separated(0.., value_expression, TokenKind::Comma),
+        _: TokenKind::RightBracket,
+    }}
+    .spanned()
+    .parse_next(input)
+}
+
 pub fn path_value_constructor(input: &mut TokenStream) -> ModalResult<Spanned<PathConstructor>> {
     preceded(
         TokenKind::Path,
