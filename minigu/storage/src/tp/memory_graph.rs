@@ -4,7 +4,6 @@ use arrow::array::BooleanArray;
 use crossbeam_skiplist::SkipSet;
 use dashmap::DashMap;
 use minigu_common::types::{EdgeId, VectorIndexKey, VertexId};
-#[cfg(all(target_os = "linux", feature = "vector-support"))]
 use minigu_common::value::{ScalarValue, VectorValue};
 
 use super::checkpoint::{CheckpointManager, CheckpointManagerConfig};
@@ -1337,10 +1336,14 @@ fn check_write_conflict(commit_ts: Timestamp, txn: &TransactionHandle) -> Storag
 pub mod tests {
     use std::fs;
 
-    use minigu_common::types::{LabelId, PropertyId};
+    use minigu_common::types::LabelId;
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
+    use minigu_common::types::PropertyId;
     #[cfg(all(target_os = "linux", feature = "vector-support"))]
     use minigu_common::value::F32;
-    use minigu_common::value::{ScalarValue, VectorValue};
+    use minigu_common::value::ScalarValue;
+    #[cfg(all(target_os = "linux", feature = "vector-support"))]
+    use minigu_common::value::VectorValue;
     use {Edge, Vertex};
 
     use super::*;
