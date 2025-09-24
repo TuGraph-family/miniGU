@@ -85,6 +85,15 @@ pub enum BindError {
     ))]
     NotCatalogProcedure(SmolStr),
 
+    #[error("vector dimension mismatch: expected {expected}, got {actual}")]
+    VectorDimensionMismatch { expected: usize, actual: usize },
+
+    #[error("invalid vector element: {0}")]
+    InvalidVectorElement(String),
+
+    #[error("invalid float literal: {0}")]
+    InvalidFloatLiteral(String),
+
     // TODO: Remove this error variant
     #[error("unexpected bind error")]
     Unexpected,

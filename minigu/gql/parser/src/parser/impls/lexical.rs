@@ -2,7 +2,7 @@ use winnow::combinator::{cut_err, dispatch, empty, fail, peek};
 use winnow::token::one_of;
 use winnow::{ModalResult, Parser};
 
-use super::value_expr::vector_value_constructor;
+use super::value_expr::vector_literal;
 use crate::ast::{
     BooleanLiteral, Ident, Literal, StringLiteral, StringLiteralKind, UnsignedFloat,
     UnsignedInteger, UnsignedIntegerKind, UnsignedNumericLiteral,
@@ -85,7 +85,7 @@ pub fn unsigned_literal(input: &mut TokenStream) -> ModalResult<Spanned<Literal>
             unsigned_numeric_literal.map_inner(Literal::Numeric)
         },
         TokenKind::Vector => {
-            vector_value_constructor.map_inner(Literal::Vector)
+            vector_literal.map_inner(Literal::Vector)
         },
         _ => fail,
     }

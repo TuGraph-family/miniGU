@@ -1,12 +1,12 @@
 use gql_parser::ast::{
     BinaryOp, BooleanLiteral, Expr, Function, GenericFunction, Literal, NonNegativeInteger,
-    StringLiteral, StringLiteralKind, UnsignedInteger, UnsignedIntegerKind, UnsignedNumericLiteral,
-    Value,
+    SignedNumericLiteral, StringLiteral, StringLiteralKind, UnaryOp, UnsignedInteger,
+    UnsignedIntegerKind, UnsignedNumericLiteral, Value, VectorLiteral,
 };
 use minigu_common::constants::SESSION_USER;
 use minigu_common::data_type::LogicalType;
 use minigu_common::error::not_implemented;
-use minigu_common::value::ScalarValue;
+use minigu_common::value::{ScalarValue, VectorValue};
 
 use super::Binder;
 use super::error::{BindError, BindResult};
@@ -16,6 +16,8 @@ impl Binder<'_> {
     pub fn bind_value_expression(&self, expr: &Expr) -> BindResult<BoundExpr> {
         match expr {
             Expr::Binary { .. } => not_implemented("binary expression", None),
+            // TODO: Support unary operators so callers (e.g., vector literals) can rely on
+            // `bind_value_expression` rather than duplicating numeric parsing logic.
             Expr::Unary { .. } => not_implemented("unary expression", None),
             Expr::DurationBetween { .. } => not_implemented("duration between expression", None),
             Expr::Is { .. } => not_implemented("is expression", None),
@@ -143,6 +145,7 @@ pub fn bind_literal(literal: &Literal) -> BindResult<BoundExpr> {
         Literal::List(_) => not_implemented("list literal", None),
         Literal::Record(_) => not_implemented("record literal", None),
         Literal::Null => Ok(BoundExpr::value(ScalarValue::Null, LogicalType::Null, true)),
+        Literal::Vector(literal) => bind_vector_literal(literal),
     }
 }
 
@@ -165,6 +168,17 @@ pub fn bind_numeric_literal(literal: &UnsignedNumericLiteral) -> BindResult<Boun
                 }
             };
             Ok(expr)
+        }
+        UnsignedNumericLiteral::Float(float_literal) => {
+            let value = float_literal.value().float.parse::<f32>().map_err(|e| {
+                BindError::InvalidFloatLiteral(format!(
+                    "failed to parse '{}': {}",
+                    float_literal.value().float,
+                    e
+                ))
+            })?;
+            let scalar_value = ScalarValue::Float32(Some(value.into()));
+            Ok(BoundExpr::value(scalar_value, LogicalType::Float32, false))
         }
     }
 }
@@ -210,4 +224,16 @@ pub fn bind_string_literal(literal: &StringLiteral) -> BindResult<BoundExpr> {
         )),
         StringLiteralKind::Byte => not_implemented("byte string literal", None),
     }
+}
+
+pub fn bind_vector_literal(_vector_literal: &VectorLiteral) -> BindResult<BoundExpr> {
+    // TODO: Implement vector literal binding once unary expressions and scalar folding.
+    // - Use `bind_value_expression(...).evaluate_scalar()` to obtain each element as `ScalarValue`
+    //
+    // Expected result: BoundExpr::value(
+    //   ScalarValue::Vector(Some(VectorValue::from_f32_vec(parsed_elements, dimension))),
+    //   LogicalType::Vector(dimension),
+    //   false  // vector literals are never null
+    // )
+    not_implemented("vector literal binding", None)
 }
