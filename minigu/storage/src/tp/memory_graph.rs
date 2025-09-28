@@ -13,7 +13,7 @@ use crate::common::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp}
 use crate::common::wal::StorageWal;
 use crate::common::wal::graph_wal::{Operation, RedoEntry, WalManager, WalManagerConfig};
 use crate::error::{
-    EdgeNotFoundError, StorageError, StorageResult, TransactionError, VertexNotFoundError,
+    EdgeNotFoundError, StorageError, StorageResult, VertexNotFoundError,
 };
 
 // Perform the update properties operation
@@ -21,7 +21,6 @@ macro_rules! update_properties {
     ($self:expr, $id:expr, $entry:expr, $txn:expr, $indices:expr, $props:expr, $op:ident) => {{
         // Acquire the lock to modify the properties of the vertex/edge
         let mut current = $entry.chain.current.write().unwrap();
-        check_write_conflict(current.commit_ts, $txn)?;
 
         let delta_props = $indices
             .iter()
@@ -90,6 +89,11 @@ impl VersionedVertex {
         &self.chain.current
     }
 
+    pub fn data(&self) -> Vertex {
+        let current = self.chain.current.read().unwrap();
+        current.data.clone()
+    }
+    
     pub fn with_txn_id(initial: Vertex, txn_id: Timestamp) -> Self {
         debug_assert!(txn_id.0 > Timestamp::TXN_ID_START);
         Self {
@@ -104,82 +108,8 @@ impl VersionedVertex {
         }
     }
 
-    /// Returns the visible version of the vertex.
-    pub fn get_visible(&self, txn: &MemTransaction) -> StorageResult<Vertex> {
-        let current = self.chain.current.read().unwrap();
-        let mut visible_vertex = current.data.clone();
-        // If the vertex is modified by the same transaction, or the transaction is before the
-        // vertex was modified, return the vertex
-        let commit_ts = current.commit_ts;
-        // If the commit timestamp of current is equal to the transaction id of txn, it means
-        // the vertex is modified by the same transaction.
-        // If the commit timestamp of current is less than the start timestamp of txn, it means
-        // the vertex was modified before the transaction started, and the corresponding transaction
-        // has been committed.
-        if (commit_ts.is_txn_id() && commit_ts == txn.txn_id())
-            || (commit_ts.is_commit_ts() && commit_ts <= txn.start_ts())
-        {
-            // Check if the current vertex is tombstone
-            if visible_vertex.is_tombstone() {
-                return Err(StorageError::Transaction(
-                    TransactionError::VersionNotVisible(format!(
-                        "Vertex is tombstone for {:?}",
-                        txn.txn_id()
-                    )),
-                ));
-            }
-            Ok(visible_vertex)
-        } else {
-            // Otherwise, apply the deltas to the vertex
-            let undo_ptr = self.chain.undo_ptr.read().unwrap().clone();
-            // Closure to apply the deltas to the vertex
-            let apply_deltas = |undo_entry: &UndoEntry| match undo_entry.delta() {
-                DeltaOp::CreateVertex(original) => visible_vertex = original.clone(),
-                DeltaOp::SetVertexProps(_, SetPropsOp { indices, props }) => {
-                    visible_vertex.set_props(indices, props.clone());
-                }
-                DeltaOp::DelVertex(_) => {
-                    visible_vertex.is_tombstone = true;
-                }
-                _ => unreachable!("Unreachable delta op for a vertex"),
-            };
-            MemTransaction::apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
-            // Check if the vertex is tombstone after applying the deltas
-            if visible_vertex.is_tombstone() {
-                return Err(StorageError::Transaction(
-                    TransactionError::VersionNotVisible(format!(
-                        "Vertex is tombstone for {:?}",
-                        txn.txn_id()
-                    )),
-                ));
-            }
-            Ok(visible_vertex)
-        }
-    }
-
-    /// Returns whether the vertex is visible.
-    pub(super) fn is_visible(&self, txn: &MemTransaction) -> bool {
-        // Check if the vertex is visible based on the transaction's start timestamp
-        let current = self.chain.current.read().unwrap();
-        if (current.commit_ts.is_txn_id() && current.commit_ts == txn.txn_id())
-            || (current.commit_ts.is_commit_ts() && current.commit_ts <= txn.start_ts())
-        {
-            !current.data.is_tombstone()
-        } else {
-            let undo_ptr = self.chain.undo_ptr.read().unwrap().clone();
-            let mut is_visible = !current.data.is_tombstone();
-            let apply_deltas = |undo_entry: &UndoEntry| {
-                if let DeltaOp::DelVertex(_) = undo_entry.delta() {
-                    is_visible = false;
-                }
-                if let DeltaOp::CreateVertex(_) = undo_entry.delta() {
-                    is_visible = true;
-                }
-            };
-            MemTransaction::apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
-            is_visible
-        }
-    }
+    //TODO:You need to improve this MVCC
+    
 }
 
 #[derive(Debug)]
@@ -207,6 +137,11 @@ impl VersionedEdge {
         &self.chain.current
     }
 
+    pub fn data(&self) -> Edge {
+        let current = self.chain.current.read().unwrap();
+        current.data.clone()
+    }
+
     pub fn with_modified_ts(initial: Edge, txn_id: Timestamp) -> Self {
         debug_assert!(txn_id.0 > Timestamp::TXN_ID_START);
         Self {
@@ -219,97 +154,9 @@ impl VersionedEdge {
             }),
         }
     }
+    
+    //TODO:You need to improve this MVCC
 
-    /// Returns the visible version of the edge.
-    pub fn get_visible(&self, txn: &MemTransaction) -> StorageResult<Edge> {
-        let current = self.chain.current.read().unwrap();
-        let mut current_edge = current.data.clone();
-        if (current.commit_ts.is_txn_id() && current.commit_ts == txn.txn_id())
-            || (current.commit_ts.is_commit_ts() && current.commit_ts <= txn.start_ts())
-        {
-            // Check if the edge is tombstone
-            if current_edge.is_tombstone() {
-                return Err(StorageError::Transaction(
-                    TransactionError::VersionNotVisible(format!(
-                        "Edge is tombstone for {:?}",
-                        txn.txn_id()
-                    )),
-                ));
-            }
-            Ok(current_edge)
-        } else {
-            let undo_ptr = self.chain.undo_ptr.read().unwrap().clone();
-            let apply_deltas = |undo_entry: &UndoEntry| match undo_entry.delta() {
-                DeltaOp::CreateEdge(original) => current_edge = original.clone(),
-                DeltaOp::SetEdgeProps(_, SetPropsOp { indices, props }) => {
-                    current_edge.set_props(indices, props.clone());
-                }
-                DeltaOp::DelEdge(_) => {
-                    current_edge.is_tombstone = true;
-                }
-                _ => unreachable!("Unreachable delta op for an edge"),
-            };
-            MemTransaction::apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
-            // Check if the vertex is tombstone after applying the deltas
-            if current_edge.is_tombstone() {
-                return Err(StorageError::Transaction(
-                    TransactionError::VersionNotVisible(format!(
-                        "Edge is tombstone for {:?}",
-                        txn.txn_id()
-                    )),
-                ));
-            }
-            Ok(current_edge)
-        }
-    }
-
-    /// Returns whether the edge is visible.
-    pub fn is_visible(&self, txn: &MemTransaction) -> bool {
-        // Check if the src and dst vertices of edge are visible
-        let (src, dst);
-        {
-            let current = self.chain.current.read().unwrap();
-            src = current.data.dst_id();
-            dst = current.data.src_id();
-        }
-        if txn
-            .graph()
-            .vertices()
-            .get(&src)
-            .map(|v| v.is_visible(txn))
-            .unwrap_or(false)
-            && txn
-                .graph()
-                .vertices()
-                .get(&dst)
-                .map(|v| v.is_visible(txn))
-                .unwrap_or(false)
-        {
-            // Check if the vertex is visible based on the transaction's start timestamp
-            let current = self.chain.current.read().unwrap();
-            if (current.commit_ts.is_txn_id() && current.commit_ts == txn.txn_id())
-                || (current.commit_ts.is_commit_ts() && current.commit_ts <= txn.start_ts())
-            {
-                !current.data.is_tombstone()
-            } else {
-                let undo_ptr = self.chain.undo_ptr.read().unwrap().clone();
-                let mut is_visible = !current.data.is_tombstone();
-                let apply_deltas = |undo_entry: &UndoEntry| match undo_entry.delta() {
-                    DeltaOp::CreateEdge(_) => {
-                        is_visible = true;
-                    }
-                    DeltaOp::DelEdge(_) => {
-                        is_visible = false;
-                    }
-                    _ => {}
-                };
-                MemTransaction::apply_deltas_for_read(undo_ptr, apply_deltas, txn.start_ts());
-                is_visible
-            }
-        } else {
-            false
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -693,8 +540,6 @@ impl MemoryGraph {
             .or_insert_with(|| VersionedVertex::with_txn_id(vertex.clone(), txn.txn_id()));
 
         let current = entry.chain.current.read().unwrap();
-        // Conflict detection: ensure the vertex is visible or not modified by other transactions
-        check_write_conflict(current.commit_ts, txn)?;
 
         // Record the vertex creation in the transaction
         let delta = DeltaOp::DelVertex(vid);
@@ -738,8 +583,6 @@ impl MemoryGraph {
             .or_insert_with(|| VersionedEdge::with_modified_ts(edge.clone(), txn.txn_id()));
 
         let current = entry.chain.current.read().unwrap();
-        // Conflict detection: ensure the edge is visible or not modified by other transactions
-        check_write_conflict(current.commit_ts, txn)?;
 
         // Record the edge creation in the transaction
         let delta_edge = DeltaOp::DelEdge(eid);
@@ -782,7 +625,6 @@ impl MemoryGraph {
         ))?;
 
         let mut current = entry.chain.current.write().unwrap();
-        check_write_conflict(current.commit_ts, txn)?;
 
         // Delete all edges associated with the vertex
         if let Some(adjacency_container) = self.adjacency_list.get(&vid) {
@@ -831,7 +673,6 @@ impl MemoryGraph {
         ))?;
 
         let mut current = entry.chain.current.write().unwrap();
-        check_write_conflict(current.commit_ts, txn)?;
 
         // Record the edge deletion in the transaction
         let delta = DeltaOp::CreateEdge(current.data.clone());
@@ -929,29 +770,11 @@ impl MemoryGraph {
     }
 }
 
-/// Checks if the vertex is modified by other transactions or has a greater commit timestamp than
-/// the current transaction.
-/// Current check applies to both Snapshot Isolation and Serializable isolation levels.
+#[allow(dead_code)]
 #[inline]
-fn check_write_conflict(commit_ts: Timestamp, txn: &TransactionHandle) -> StorageResult<()> {
-    match commit_ts {
-        // If the vertex is modified by other transactions, return write-write conflict
-        ts if ts.is_txn_id() && ts != txn.txn_id() => Err(StorageError::Transaction(
-            TransactionError::WriteWriteConflict(format!(
-                "Data is being modified by transaction {:?}",
-                ts
-            )),
-        )),
-        // If the vertex is committed by other transactions and its commit timestamp is greater
-        // than the start timestamp of the current transaction, return version not visible
-        ts if ts.is_commit_ts() && ts > txn.start_ts() => Err(StorageError::Transaction(
-            TransactionError::VersionNotVisible(format!(
-                "Data version not visible for {:?}",
-                txn.txn_id()
-            )),
-        )),
-        _ => Ok(()),
-    }
+fn check_write_conflict(_commit_ts: Timestamp, _txn: &TransactionHandle) -> StorageResult<()> {
+    // TODO:You need to understand read and write conflict of MVCC
+    Ok(())
 }
 
 #[cfg(test)]

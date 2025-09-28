@@ -10,14 +10,18 @@ use crate::tp::transaction::MemTransaction;
 
 type AdjFilter<'a> = Box<dyn Fn(&Neighbor) -> bool + 'a>;
 
+#[allow(dead_code)]
 const BATCH_SIZE: usize = 64;
 
 /// An adjacency list iterator that supports filtering (for iterating over a single vertex's
 /// adjacency list).
 pub struct AdjacencyIterator<'a> {
     adj_list: Option<Arc<SkipSet<Neighbor>>>, // The adjacency list for the vertex
+    #[allow(dead_code)]
     current_entries: Vec<Neighbor>,           // Store current batch of entries
+    #[allow(dead_code)]
     current_index: usize,                     // Current index in the batch
+    #[allow(dead_code)]
     txn: &'a MemTransaction,                  // Reference to the transaction
     filters: Vec<AdjFilter<'a>>,              // List of filtering predicates
     current_adj: Option<Neighbor>,            // Current adjacency entry
@@ -28,69 +32,23 @@ impl Iterator for AdjacencyIterator<'_> {
 
     /// Retrieves the next visible adjacency entry that satisfies all filters.
     fn next(&mut self) -> Option<Self::Item> {
-        // If current batch is processed, get a new batch
-        if self.current_index >= self.current_entries.len() {
-            self.load_next_batch()?;
-        }
-
-        // Process entries in current batch
-        while self.current_index < self.current_entries.len() {
-            let entry = &self.current_entries[self.current_index];
-            self.current_index += 1;
-
-            let eid = entry.eid();
-
-            // Perform MVCC visibility check
-            let is_visible = self
-                .txn
-                .graph()
-                .edges
-                .get(&eid)
-                .map(|edge| edge.is_visible(self.txn))
-                .unwrap_or(false);
-
-            if is_visible && self.filters.iter().all(|f| f(entry)) {
-                let adj = *entry;
-                self.current_adj = Some(adj);
-                return Some(Ok(adj));
-            }
-        }
-
-        // If current batch is processed but no match found, try loading next batch
-        self.load_next_batch()?;
-        self.next()
+        // TODO：tp storage courge
+        // Implement batch processing logic here
+        // 1. Check if current_entries has unprocessed entries
+        // 2. If yes, process the next entry, apply filters and visibility checks
+        // 3. If no, call load_next_batch() to load the next batch of entries
+        // 4. Repeat until an entry is found or no more data is available
+        None
     }
 }
 
 impl<'a> AdjacencyIterator<'a> {
     fn load_next_batch(&mut self) -> Option<()> {
-        if let Some(adj_list) = &self.adj_list {
-            let mut current = if let Some(e) = self.current_entries.last() {
-                // If there is a last entry, get the next entry from the adjacency list
-                adj_list.get(e)?.next()?
-            } else {
-                // If there is no last entry, get the first entry from the adjacency list
-                adj_list.front()?
-            };
-            // Clear current entry batch
-            self.current_entries.clear();
-            self.current_index = 0;
-
-            // Load the next batch of entries
-            self.current_entries.push(*current.value());
-            for _ in 0..BATCH_SIZE {
-                if let Some(entry) = current.next() {
-                    self.current_entries.push(*entry.value());
-                    current = entry;
-                } else {
-                    break;
-                }
-            }
-
-            if !self.current_entries.is_empty() {
-                return Some(());
-            }
-        }
+        // TODO：tp storage courge
+        // You need to implement the logic for batch loading
+        // load BATCH_SIZE entries from adj_list into current_entries
+        // reset current_index to 0
+        // if data is loaded return Some(()), else return None
         None
     }
 
