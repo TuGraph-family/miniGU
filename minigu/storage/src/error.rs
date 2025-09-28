@@ -33,6 +33,7 @@ pub enum WalError {
     SerializationFailed(String),
 }
 
+#[allow(dead_code)]
 #[derive(Error, Debug)]
 pub enum TransactionError {
     #[error("Write-Read conflict: {0}")]
