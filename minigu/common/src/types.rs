@@ -5,6 +5,7 @@ use std::str::FromStr;
 use arrow::array::UInt64Array;
 use serde::{Deserialize, Serialize};
 
+use crate::data_type::LogicalType;
 use crate::error::{NotImplemented, not_implemented};
 
 /// Internal identifier associated with a label.
@@ -42,20 +43,27 @@ pub type PropertyId = u32;
 /// Internal identifier associated with a procedure (database-wide unique).
 pub type ProcedureId = u32;
 
-/// Uses (LabelId, PropertyId) to uniquely identify vector indices
+/// Uses (LabelId, PropertyId, dimension) to uniquely identify vector indices
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct VectorIndexKey {
     pub label_id: LabelId,
     pub property_id: PropertyId,
+    pub dimension: usize,
 }
 
 impl VectorIndexKey {
-    #[inline]
-    pub fn new(label_id: LabelId, property_id: PropertyId) -> Self {
-        Self {
+    /// Create a new VectorIndexKey with dimension validation
+    pub fn new(
+        label_id: LabelId,
+        property_id: PropertyId,
+        dimension: usize,
+    ) -> Result<Self, String> {
+        LogicalType::validate_vector_dimension(dimension)?;
+        Ok(Self {
             label_id,
             property_id,
-        }
+            dimension,
+        })
     }
 }
 

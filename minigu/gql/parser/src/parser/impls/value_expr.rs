@@ -336,25 +336,6 @@ pub fn signed_numeric_literal_expression(input: &mut TokenStream) -> ModalResult
     }
 }
 
-pub fn signed_numeric_literal(
-    input: &mut TokenStream,
-) -> ModalResult<Spanned<SignedNumericLiteral>> {
-    let sign = opt(TokenKind::Minus.spanned()).parse_next(input)?;
-    let unsigned = unsigned_numeric_literal.parse_next(input)?;
-    let result = if sign.is_some() {
-        SignedNumericLiteral::Negative(unsigned.0)
-    } else {
-        SignedNumericLiteral::Unsigned(unsigned.0)
-    };
-    let span = if let Some(sign_span) = sign {
-        sign_span.1.start..unsigned.1.end
-    } else {
-        unsigned.1
-    };
-
-    Ok(Spanned(result, span))
-}
-
 pub fn list_value_constructor(input: &mut TokenStream) -> ModalResult<Spanned<ListConstructor>> {
     seq! {ListConstructor {
         type_name: opt(list_value_type_name),
@@ -380,7 +361,7 @@ pub fn vector_literal(input: &mut TokenStream) -> ModalResult<Spanned<VectorLite
     seq! {VectorLiteral {
         _: TokenKind::Vector,
         _: TokenKind::LeftBracket,
-        elems: separated(0.., signed_numeric_literal, TokenKind::Comma),
+        elems: separated(0.., signed_numeric_literal_expression, TokenKind::Comma),
         _: TokenKind::RightBracket,
     }}
     .spanned()

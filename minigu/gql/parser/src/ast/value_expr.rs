@@ -133,11 +133,6 @@ pub struct ListConstructor {
 pub type RecordConstructor = VecSpanned<FieldOrProperty>;
 
 #[apply(base)]
-pub struct VectorConstructor {
-    pub values: VecSpanned<Expr>,
-}
-
-#[apply(base)]
 pub struct FieldOrProperty {
     pub name: Spanned<Ident>,
     pub value: Spanned<Expr>,

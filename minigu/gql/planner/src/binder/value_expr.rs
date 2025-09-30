@@ -1,7 +1,6 @@
 use gql_parser::ast::{
-    BinaryOp, BooleanLiteral, Expr, Function, GenericFunction, Literal, NonNegativeInteger,
-    SignedNumericLiteral, StringLiteral, StringLiteralKind, UnaryOp, UnsignedInteger,
-    UnsignedIntegerKind, UnsignedNumericLiteral, Value, VectorLiteral,
+    BinaryOp, BooleanLiteral, Expr, Literal, NonNegativeInteger, StringLiteral, StringLiteralKind,
+    UnaryOp, UnsignedInteger, UnsignedIntegerKind, UnsignedNumericLiteral, Value, VectorLiteral,
 };
 use minigu_common::constants::SESSION_USER;
 use minigu_common::data_type::LogicalType;
@@ -16,13 +15,11 @@ impl Binder<'_> {
     pub fn bind_value_expression(&self, expr: &Expr) -> BindResult<BoundExpr> {
         match expr {
             Expr::Binary { .. } => not_implemented("binary expression", None),
-            // TODO: Support unary operators so callers (e.g., vector literals) can rely on
-            // `bind_value_expression` rather than duplicating numeric parsing logic.
             Expr::Unary { .. } => not_implemented("unary expression", None),
             Expr::DurationBetween { .. } => not_implemented("duration between expression", None),
             Expr::Is { .. } => not_implemented("is expression", None),
             Expr::IsNot { .. } => not_implemented("is not expression", None),
-            Expr::Function(function) => self.bind_function(function),
+            Expr::Function(_) => not_implemented("function expression", None),
             Expr::Aggregate(_) => not_implemented("aggregate expression", None),
             Expr::Variable(variable) => {
                 let field = self
@@ -53,53 +50,6 @@ impl Binder<'_> {
             NonNegativeInteger::Parameter(_) => {
                 not_implemented("parameterized non-negative integer", None)
             }
-        }
-    }
-
-    pub fn bind_function(&self, function: &Function) -> BindResult<BoundExpr> {
-        match function {
-            Function::Generic(generic_func) => self.bind_generic_function(generic_func),
-            Function::Numeric(_) => not_implemented("numeric function", None),
-            Function::Case(_) => not_implemented("case function", None),
-        }
-    }
-
-    pub fn bind_generic_function(&self, func: &GenericFunction) -> BindResult<BoundExpr> {
-        let func_name = func.name.value().to_string();
-
-        match func_name.to_uppercase().as_str() {
-            "VECTOR_DISTANCE" => {
-                // VECTOR_DISTANCE expects exactly 3 arguments: (query_vector, target_vector,
-                // metric)
-                if func.args.len() != 3 {
-                    return Err(BindError::FunctionNotFound(
-                        format!(
-                            "VECTOR_DISTANCE expects exactly 3 arguments, got {}",
-                            func.args.len()
-                        )
-                        .into(),
-                    ));
-                }
-
-                // TODO: Parameter verification (Specified dimension: query_vector, target_vector,
-                // metric, dim)
-
-                let bound_args: Result<Vec<_>, _> = func
-                    .args
-                    .iter()
-                    .map(|arg| self.bind_value_expression(arg.value()))
-                    .collect();
-                let bound_args = bound_args?;
-
-                // Return type is Float32 (distance value)
-                Ok(BoundExpr::function_call(
-                    "VECTOR_DISTANCE".to_string(),
-                    bound_args,
-                    LogicalType::Float32,
-                    false, // distance is never null
-                ))
-            }
-            _ => not_implemented("function expression", None),
         }
     }
 }
@@ -145,7 +95,7 @@ pub fn bind_literal(literal: &Literal) -> BindResult<BoundExpr> {
         Literal::List(_) => not_implemented("list literal", None),
         Literal::Record(_) => not_implemented("record literal", None),
         Literal::Null => Ok(BoundExpr::value(ScalarValue::Null, LogicalType::Null, true)),
-        Literal::Vector(literal) => bind_vector_literal(literal),
+        Literal::Vector(literal) => bind_vector_literal(literal), // todo!
     }
 }
 
@@ -226,14 +176,7 @@ pub fn bind_string_literal(literal: &StringLiteral) -> BindResult<BoundExpr> {
     }
 }
 
+// TODO: Implement vector literal binding once unary expressions and scalar folding.
 pub fn bind_vector_literal(_vector_literal: &VectorLiteral) -> BindResult<BoundExpr> {
-    // TODO: Implement vector literal binding once unary expressions and scalar folding.
-    // - Use `bind_value_expression(...).evaluate_scalar()` to obtain each element as `ScalarValue`
-    //
-    // Expected result: BoundExpr::value(
-    //   ScalarValue::Vector(Some(VectorValue::from_f32_vec(parsed_elements, dimension))),
-    //   LogicalType::Vector(dimension),
-    //   false  // vector literals are never null
-    // )
     not_implemented("vector literal binding", None)
 }

@@ -73,6 +73,42 @@ pub enum LogicalType {
 }
 
 impl LogicalType {
+    const SUPPORTED_VECTOR_DIMENSIONS: [usize; 3] = [104, 128, 256];
+
+    /// Validate vector dimension is within acceptable range
+    pub fn validate_vector_dimension(dimension: usize) -> Result<(), String> {
+        if Self::SUPPORTED_VECTOR_DIMENSIONS.contains(&dimension) {
+            Ok(())
+        } else {
+            Err(format!(
+                "Unsupported vector dimension {}. Only dimensions {:?} are supported",
+                dimension,
+                Self::SUPPORTED_VECTOR_DIMENSIONS
+            ))
+        }
+    }
+
+    /// Check if two vector types are dimension-compatible
+    pub fn vector_types_compatible(&self, other: &LogicalType) -> bool {
+        match (self, other) {
+            (LogicalType::Vector(dim1), LogicalType::Vector(dim2)) => dim1 == dim2,
+            _ => false,
+        }
+    }
+
+    /// Get vector dimension if this is a vector type
+    pub fn vector_dimension(&self) -> Option<usize> {
+        match self {
+            LogicalType::Vector(dim) => Some(*dim),
+            _ => None,
+        }
+    }
+
+    /// Check if this is a vector type
+    pub fn is_vector(&self) -> bool {
+        matches!(self, LogicalType::Vector(_))
+    }
+
     #[inline]
     pub fn to_arrow_data_type(&self) -> DataType {
         match self {

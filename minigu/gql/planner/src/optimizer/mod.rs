@@ -1,11 +1,9 @@
-use std::str::FromStr;
 use std::sync::Arc;
 
 use itertools::Itertools;
 use minigu_common::types::{VectorIndexKey, VectorMetric};
-use minigu_common::value::ScalarValue;
 
-use crate::bound::{BoundExpr, BoundExprKind};
+use crate::bound::BoundExpr;
 use crate::error::PlanResult;
 use crate::plan::filter::Filter;
 use crate::plan::limit::Limit;
@@ -91,14 +89,15 @@ fn try_optimize_vector_search(child: &PlanNode, limit: &Limit) -> Option<VectorS
             {
                 if let Some(index_key) = extract_index_key_from_target(&target_vector) {
                     if let Some(schema) = child.schema().cloned() {
-                        return Some(VectorSearch::new(
+                        return VectorSearch::new(
                             schema,
                             index_key,
                             query_vector_expr,
                             limit.limit, /* return k results directly. TODO: Iterative
                                           * post-filtering */
                             metric,
-                        ));
+                        )
+                        .ok();
                     }
                 }
             }
@@ -115,18 +114,6 @@ fn extract_index_key_from_target(_target_expr: &BoundExpr) -> Option<VectorIndex
 
 /// Extracts arguments from VECTOR_DISTANCE function call
 /// Returns: (query_vector_expr, target_vector_expr, metric)
-fn extract_vector_distance_args(expr: &BoundExpr) -> Option<(BoundExpr, BoundExpr, VectorMetric)> {
-    if let BoundExprKind::FunctionCall { func_name, args } = &expr.kind {
-        if func_name == "VECTOR_DISTANCE" && args.len() == 3 {
-            let query_vector = args[0].clone();
-            let target_vector = args[1].clone();
-
-            if let Some(ScalarValue::String(Some(metric_str))) = args[2].clone().evaluate_scalar() {
-                if let Ok(metric) = FromStr::from_str(&metric_str) {
-                    return Some((query_vector, target_vector, metric));
-                }
-            }
-        }
-    }
-    None
+fn extract_vector_distance_args(_expr: &BoundExpr) -> Option<(BoundExpr, BoundExpr, VectorMetric)> {
+    todo!()
 }

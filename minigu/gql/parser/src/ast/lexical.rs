@@ -2,7 +2,7 @@
 
 use smol_str::SmolStr;
 
-use super::{ListConstructor, RecordConstructor};
+use super::{Expr, ListConstructor, RecordConstructor};
 use crate::macros::base;
 use crate::span::Spanned;
 
@@ -93,12 +93,6 @@ pub struct UnsignedFloat {
 }
 
 #[apply(base)]
-pub enum SignedNumericLiteral {
-    Unsigned(UnsignedNumericLiteral),
-    Negative(UnsignedNumericLiteral),
-}
-
-#[apply(base)]
 pub struct VectorLiteral {
-    pub elems: Vec<Spanned<SignedNumericLiteral>>,
+    pub elems: Vec<Spanned<Expr>>,
 }

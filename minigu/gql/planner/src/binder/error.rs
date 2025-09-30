@@ -53,9 +53,6 @@ pub enum BindError {
     #[error("invalid integer: {0}")]
     InvalidInteger(SmolStr),
 
-    #[error("function not found: {0}")]
-    FunctionNotFound(SmolStr),
-
     #[error(
         "incorrect number or types of arguments for procedure {procedure}: expected [{}], got [{}]",
         expected.iter().map(|t| t.to_string()).join(", "),

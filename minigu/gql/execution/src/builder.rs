@@ -1,11 +1,8 @@
-use std::str::FromStr;
 use std::sync::Arc;
 
 use arrow::array::{AsArray, Int32Array};
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::data_type::{DataSchema, LogicalType};
-use minigu_common::types::VectorMetric;
-use minigu_common::value::ScalarValue;
 use minigu_context::session::SessionContext;
 use minigu_planner::bound::{BoundExpr, BoundExprKind};
 use minigu_planner::plan::{PlanData, PlanNode};
@@ -13,7 +10,6 @@ use minigu_planner::plan::{PlanData, PlanNode};
 use crate::evaluator::BoxedEvaluator;
 use crate::evaluator::column_ref::ColumnRef;
 use crate::evaluator::constant::Constant;
-use crate::evaluator::vector_distance::VectorDistanceEvaluator;
 use crate::executor::procedure_call::ProcedureCallBuilder;
 use crate::executor::sort::SortSpec;
 use crate::executor::vector_search::VectorSearchBuilder;
@@ -129,53 +125,6 @@ impl ExecutorBuilder {
                     .expect("variable should be present in the schema");
                 Box::new(ColumnRef::new(index))
             }
-            BoundExprKind::FunctionCall { func_name, args } => {
-                self.build_function_evaluator(func_name, args, schema)
-            }
-        }
-    }
-
-    fn build_function_evaluator(
-        &self,
-        func_name: &str,
-        args: &[BoundExpr],
-        schema: &DataSchema,
-    ) -> BoxedEvaluator {
-        match func_name.to_uppercase().as_str() {
-            "VECTOR_DISTANCE" => {
-                assert_eq!(
-                    args.len(),
-                    3,
-                    "VECTOR_DISTANCE should have 3 args (verified by binder)"
-                );
-
-                let query_vector = self.build_evaluator(&args[0], schema);
-                let target_vector = self.build_evaluator(&args[1], schema);
-
-                // Extract metric from the third argument (validated by binder)
-                let scalar_value = args[2]
-                    .clone()
-                    .evaluate_scalar()
-                    .expect("metric should be compile-time constant");
-
-                let metric_str = if let ScalarValue::String(Some(s)) = scalar_value {
-                    s
-                } else {
-                    panic!("metric should be string")
-                };
-
-                let metric = VectorMetric::from_str(&metric_str).expect("metric should be valid");
-
-                Box::new(VectorDistanceEvaluator::new(
-                    query_vector,
-                    target_vector,
-                    metric,
-                ))
-            }
-            _ => panic!(
-                "Unsupported function '{}' (should be caught by binder)",
-                func_name
-            ),
         }
     }
 }

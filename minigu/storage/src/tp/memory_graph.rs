@@ -2282,7 +2282,7 @@ pub mod tests {
         }
         // Try to build index with unsupported dimension - should fail
         let result =
-            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID));
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap());
         assert!(result.is_err());
 
         // Clean up unsupported test data
@@ -2299,10 +2299,10 @@ pub mod tests {
         }
 
         // Build vector index with small-scale configuration
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
 
         // Verify index creation and properties
-        let index_key = VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID);
+        let index_key = VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap();
         let index = graph
             .get_vector_index(index_key)
             .expect("Index should exist after build");
@@ -2327,7 +2327,7 @@ pub mod tests {
         }
 
         // Build index with small-scale configuration
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
 
         // Test 1: Search in cluster 1 area (coordinates around 30-42)
         let mut cluster1_query = vec![0.0f32; TEST_DIMENSION];
@@ -2336,7 +2336,7 @@ pub mod tests {
         cluster1_query[2] = 25.0f32;
         let cluster1_query_vector = create_vector_value_from_f32(cluster1_query);
         let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &cluster1_query_vector,
             10,
             50,
@@ -2353,7 +2353,7 @@ pub mod tests {
         cluster2_query[2] = 37.0f32;
         let cluster2_query_vector = create_vector_value_from_f32(cluster2_query);
         let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &cluster2_query_vector,
             5,
             30,
@@ -2366,7 +2366,7 @@ pub mod tests {
         // Test 3: Invalid dimension (too small) - should fail
         let invalid_query_small = create_vector_value_from_f32(vec![1.0f32; TEST_DIMENSION - 1]);
         let result = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &invalid_query_small,
             1,
             20,
@@ -2385,7 +2385,7 @@ pub mod tests {
         // Test 4: Invalid dimension (too large) - should fail
         let invalid_query_large = create_vector_value_from_f32(vec![1.0f32; TEST_DIMENSION + 10]);
         let result = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &invalid_query_large,
             1,
             20,
@@ -2414,7 +2414,7 @@ pub mod tests {
         // Try to search without building index
         let query = create_vector_value_from_f32(vec![1.0f32; TEST_DIMENSION]);
         let result = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &query,
             1,
             20,
@@ -2437,7 +2437,7 @@ pub mod tests {
 
         // Try to build index on empty dataset
         let result =
-            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID));
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap());
 
         // Should fail with appropriate error
         assert!(result.is_err());
@@ -2459,12 +2459,12 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
 
         // Try to search with wrong dimension query
         let wrong_dim_query = create_vector_value_from_f32(vec![0.0f32; 50]); // Wrong dimension
         let result = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &wrong_dim_query,
             1,
             50,
@@ -2499,13 +2499,13 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
 
         // Search should return correct vertex IDs for modified vectors
         for (expected_id, _, embedding) in test_vectors.iter().take(5) {
             let embedding_value = create_vector_value_from_f32(embedding.clone());
             let results = graph.vector_search(
-                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
                 &embedding_value,
                 1,
                 50,
@@ -2539,11 +2539,11 @@ pub mod tests {
         }
 
         // Build index with small-scale configuration
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
 
         // Verify index properties
         let index = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())
             .unwrap();
         assert_eq!(index.size(), 200);
 
@@ -2554,7 +2554,7 @@ pub mod tests {
         query[2] = 45.0f32;
         let query_vector = create_vector_value_from_f32(query);
         let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &query_vector,
             15,
             50,
@@ -2581,7 +2581,7 @@ pub mod tests {
             graph.create_vertex(&txn1, vertex)?;
         }
 
-        graph.build_vector_index(&txn1, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn1, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
         txn1.commit()?;
 
         // Transaction 2: Use index with different isolation levels
@@ -2593,7 +2593,7 @@ pub mod tests {
             query[2] = 40.0f32;
             let query_vector = create_vector_value_from_f32(query);
             let results = graph.vector_search(
-                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
                 &query_vector,
                 5,
                 30,
@@ -2645,8 +2645,8 @@ pub mod tests {
         }
 
         // Build indices on different properties
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, 1))?; // Property 1
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, 2))?; // Property 2
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, 1, TEST_DIMENSION).unwrap())?; // Property 1
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, 2, TEST_DIMENSION).unwrap())?; // Property 2
 
         // Verify both indices work independently
         let mut query = vec![0.0f32; TEST_DIMENSION];
@@ -2655,7 +2655,7 @@ pub mod tests {
         query[2] = 50.0f32;
         let query_vector = create_vector_value_from_f32(query);
         let results_1 = graph.vector_search(
-            VectorIndexKey::new(PERSON, 1),
+            VectorIndexKey::new(PERSON, 1, TEST_DIMENSION).unwrap(),
             &query_vector,
             3,
             30,
@@ -2663,7 +2663,7 @@ pub mod tests {
             false,
         )?;
         let results_2 = graph.vector_search(
-            VectorIndexKey::new(PERSON, 2),
+            VectorIndexKey::new(PERSON, 2, TEST_DIMENSION).unwrap(),
             &query_vector,
             3,
             30,
@@ -2726,7 +2726,7 @@ pub mod tests {
     ) -> StorageResult<bool> {
         let target_vector_value = create_vector_value_from_f32(target_vector.to_vec());
         let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, property_id),
+            VectorIndexKey::new(PERSON, property_id, TEST_DIMENSION).unwrap(),
             &target_vector_value,
             5,
             50,
@@ -2746,7 +2746,7 @@ pub mod tests {
     ) -> StorageResult<bool> {
         let query_vector_value = create_vector_value_from_f32(query_vector.to_vec());
         let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, property_id),
+            VectorIndexKey::new(PERSON, property_id, TEST_DIMENSION).unwrap(),
             &query_vector_value,
             20,
             100,
@@ -2769,11 +2769,11 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
 
         // Verify initial index size
         let initial_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())
             .unwrap()
             .size();
         assert_eq!(initial_size, 200);
@@ -2797,13 +2797,13 @@ pub mod tests {
         let node_ids: Vec<u64> = insert_data.iter().map(|(id, _)| *id).collect();
         graph.insert_into_vector_index(
             &txn,
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &node_ids,
         )?;
 
         // Verify index size increased: 200 + 200 = 400 (exactly at capacity)
         let new_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())
             .unwrap()
             .size();
         assert_eq!(new_size, initial_size + 200);
@@ -2826,7 +2826,7 @@ pub mod tests {
         // Try to insert wrong dimension vector - should fail at insert_into_vector_index level
         let result = graph.insert_into_vector_index(
             &txn,
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &[wrong_id],
         );
 
@@ -2841,7 +2841,7 @@ pub mod tests {
 
         // Verify index size unchanged after failed insertion
         let final_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())
             .unwrap()
             .size();
         assert_eq!(final_size, new_size); // Should remain same as before failed insertion
@@ -2871,7 +2871,7 @@ pub mod tests {
         let excess_node_ids: Vec<u64> = excess_insert_data.iter().map(|(id, _)| *id).collect();
         let capacity_result = graph.insert_into_vector_index(
             &txn,
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &excess_node_ids,
         );
 
@@ -2895,7 +2895,7 @@ pub mod tests {
 
         // Verify index size unchanged after failed capacity insertion
         let size_after_capacity_failure = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())
             .unwrap()
             .size();
         assert_eq!(size_after_capacity_failure, new_size); // Should remain 400 (200 original + 200 Test 1 inserts)
@@ -2917,10 +2917,10 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
 
         let initial_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())
             .unwrap()
             .size();
 
@@ -2939,13 +2939,13 @@ pub mod tests {
         let node_ids: Vec<u64> = insert_data.iter().map(|(id, _)| *id).collect();
         graph.insert_into_vector_index(
             &txn,
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &node_ids,
         )?;
 
         // Verify index size
         let new_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())
             .unwrap()
             .size();
         assert_eq!(new_size, initial_size + 5);
@@ -2977,10 +2977,10 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
 
         let initial_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())
             .unwrap()
             .size();
 
@@ -2988,14 +2988,14 @@ pub mod tests {
         let empty_node_ids: Vec<u64> = vec![];
         let result = graph.insert_into_vector_index(
             &txn,
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &empty_node_ids,
         );
         assert!(result.is_ok());
 
         // Verify size unchanged
         let new_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())
             .unwrap()
             .size();
         assert_eq!(new_size, initial_size);
@@ -3018,7 +3018,7 @@ pub mod tests {
 
         // Should fail with index not found error
         let result =
-            graph.insert_into_vector_index(&txn, VectorIndexKey::new(PERSON, 999), &[*test_id]);
+            graph.insert_into_vector_index(&txn, VectorIndexKey::new(PERSON, 999, TEST_DIMENSION).unwrap(), &[*test_id]);
         assert!(result.is_err());
 
         txn.commit()?;
@@ -3038,10 +3038,10 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
 
         let initial_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())
             .unwrap()
             .size();
 
@@ -3057,13 +3057,13 @@ pub mod tests {
         )?);
 
         // Delete the vector
-        graph.delete_from_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID), &[
+        graph.delete_from_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(), &[
             *target_id,
         ])?;
 
         // Verify index size decreased (soft delete should reduce active count)
         let new_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())
             .unwrap()
             .size();
         assert_eq!(new_size, initial_size - 1);
@@ -3093,10 +3093,10 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
 
         let initial_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())
             .unwrap()
             .size();
 
@@ -3117,13 +3117,13 @@ pub mod tests {
 
         // Delete multiple vectors
         graph.delete_from_vector_index(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &delete_ids,
         )?;
 
         // Verify index size decreased
         let new_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())
             .unwrap()
             .size();
         assert_eq!(new_size, initial_size - 3);
@@ -3155,24 +3155,24 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
 
         let initial_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())
             .unwrap()
             .size();
 
         // Delete empty list - should succeed but do nothing
         let empty_ids: Vec<u64> = vec![];
         let result = graph.delete_from_vector_index(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &empty_ids,
         );
         assert!(result.is_ok());
 
         // Verify size unchanged
         let new_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())
             .unwrap()
             .size();
         assert_eq!(new_size, initial_size);
@@ -3191,7 +3191,7 @@ pub mod tests {
         let delete_ids = vec![1u64, 2u64];
 
         // Should fail with index not found error
-        let result = graph.delete_from_vector_index(VectorIndexKey::new(PERSON, 999), &delete_ids);
+        let result = graph.delete_from_vector_index(VectorIndexKey::new(PERSON, 999, TEST_DIMENSION).unwrap(), &delete_ids);
         assert!(result.is_err());
 
         txn.commit()?;
@@ -3211,12 +3211,12 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
 
         // Try to delete non-existent node ID
         let nonexistent_ids = vec![9999u64];
         let result = graph.delete_from_vector_index(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &nonexistent_ids,
         );
 
@@ -3240,10 +3240,10 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
 
         let initial_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())
             .unwrap()
             .size();
 
@@ -3260,13 +3260,13 @@ pub mod tests {
         let node_ids: Vec<u64> = insert_data.iter().map(|(id, _)| *id).collect();
         graph.insert_into_vector_index(
             &txn,
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &node_ids,
         )?;
 
         // Verify size after insertion
         let after_insert_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())
             .unwrap()
             .size();
         assert_eq!(after_insert_size, initial_size + 3);
@@ -3274,13 +3274,13 @@ pub mod tests {
         // Phase 2: Delete some original vectors
         let delete_ids: Vec<u64> = test_vectors.iter().take(2).map(|(id, _, _)| *id).collect();
         graph.delete_from_vector_index(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &delete_ids,
         )?;
 
         // Verify final size
         let final_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())
             .unwrap()
             .size();
         assert_eq!(final_size, initial_size + 3 - 2); // +3 inserts, -2 deletes
@@ -3327,7 +3327,7 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
 
         // Mixed operations: insert, search, delete, search again
 
@@ -3338,14 +3338,14 @@ pub mod tests {
         graph.create_vertex(&txn, vertex)?;
         graph.insert_into_vector_index(
             &txn,
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &[*new_id],
         )?;
 
         // 2. Search for inserted vector
         let new_embedding_value = create_vector_value_from_f32(new_embedding.clone());
         let search_results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &new_embedding_value,
             5,
             50,
@@ -3355,7 +3355,7 @@ pub mod tests {
         assert!(search_results.iter().any(|(id, _)| *id == *new_id));
 
         // 3. Delete the inserted vector
-        graph.delete_from_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID), &[
+        graph.delete_from_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(), &[
             *new_id,
         ])?;
 
@@ -3394,7 +3394,7 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
 
         // Create BooleanArray filter with low selectivity (5% = ~10 out of 200) to trigger brute
         // force Need to create bitmap that maps to actual node IDs, not array indices
@@ -3414,7 +3414,7 @@ pub mod tests {
         let query = &test_vectors[0].2; // Use first vector as query
         let query_value = create_vector_value_from_f32(query.clone());
         let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &query_value,
             5,
             50,
@@ -3453,7 +3453,7 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
 
         // Create BooleanArray filter with high selectivity (50% = ~100 out of 200) to trigger
         // post-filter
@@ -3479,7 +3479,7 @@ pub mod tests {
         let query = &test_vectors[49].2; // Use middle vector as query
         let query_value = create_vector_value_from_f32(query.clone());
         let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &query_value,
             10,
             100,
@@ -3504,7 +3504,7 @@ pub mod tests {
         // pre-filter search should return the same result as query when k is one
         let query_value = create_vector_value_from_f32(query.clone());
         let result_k1 = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &query_value,
             1,
             100,
@@ -3533,7 +3533,7 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
 
         // Create BooleanArray filter with high selectivity (50% = 100 out of 200) to trigger
         // pre-filter
@@ -3559,7 +3559,7 @@ pub mod tests {
         let query = &test_vectors[49].2; // Use middle vector as query
         let query_value = create_vector_value_from_f32(query.clone());
         let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &query_value,
             5,
             100,
@@ -3584,7 +3584,7 @@ pub mod tests {
         // pre-filter search should return the same result as query when k is one
         let query_value = create_vector_value_from_f32(query.clone());
         let result_k1 = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &query_value,
             1,
             100,
@@ -3613,7 +3613,7 @@ pub mod tests {
             graph.create_vertex(&txn, vertex)?;
         }
 
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
         let query = &test_vectors[0].2;
 
         // Test 1: Empty filter (all false)
@@ -3622,7 +3622,7 @@ pub mod tests {
             arrow::array::BooleanArray::from(vec![false; (max_node_id + 1) as usize]);
         let query_value = create_vector_value_from_f32(query.clone());
         let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &query_value,
             5,
             50,
@@ -3641,7 +3641,7 @@ pub mod tests {
         let single_filter = arrow::array::BooleanArray::from(single_filter_bits);
         let query_value = create_vector_value_from_f32(query.clone());
         let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &query_value,
             5,
             50,
@@ -3661,7 +3661,7 @@ pub mod tests {
         let full_filter = arrow::array::BooleanArray::from(full_filter_bits);
         let query_value = create_vector_value_from_f32(query.clone());
         let results_filtered = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &query_value,
             5,
             50,
@@ -3669,7 +3669,7 @@ pub mod tests {
             true,
         )?; // pre-filter
         let results_unfiltered = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &query_value,
             5,
             50,
@@ -3698,7 +3698,7 @@ pub mod tests {
             let vertex = create_vertex_with_vector(*id, name, embedding.clone());
             graph.create_vertex(&txn, vertex)?;
         }
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
 
         // Create a filter that selects only the first cluster (first 25 vectors, pre-filter search)
         let max_node_id = test_vectors.iter().map(|(id, _, _)| *id).max().unwrap_or(0);
@@ -3713,7 +3713,7 @@ pub mod tests {
         let cluster_query = &test_vectors[10].2; // 10th vector is in first cluster
         let cluster_query_value = create_vector_value_from_f32(cluster_query.clone());
         let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &cluster_query_value,
             5,
             50,
@@ -3748,7 +3748,7 @@ pub mod tests {
         // pre-filter search should return the same result as query when k is one
         let cluster_query_value = create_vector_value_from_f32(cluster_query.clone());
         let result_k1 = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &cluster_query_value,
             1,
             50,
@@ -3813,7 +3813,7 @@ pub mod tests {
             let vertex = create_vertex_with_vector(*id, name, embedding.clone());
             graph.create_vertex(&txn, vertex)?;
         }
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap())?;
 
         // Query vector: [1.0, 0.0, 0.0, ...]
         let mut query = vec![0.0f32; TEST_DIMENSION];
@@ -3827,7 +3827,7 @@ pub mod tests {
         let filter = arrow::array::BooleanArray::from(filter_bits);
         let query_value = create_vector_value_from_f32(query.clone());
         let filtered_results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID, TEST_DIMENSION).unwrap(),
             &query_value,
             2,
             50,
