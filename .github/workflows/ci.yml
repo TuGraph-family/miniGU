@@ -63,8 +63,6 @@ jobs:
         sudo apt-get install -y libopenblas-dev || (echo "Failed to install OpenBLAS" && exit 1)
     - uses: actions-rust-lang/setup-rust-toolchain@v1
     - run: cargo clippy --tests --features ${{ env.LINUX_FEATURES }} --no-deps
-      env:
-        RUSTFLAGS: "${{ env.RUSTFLAGS }} -Ctarget-feature=+avx2"
 
   machete:
     name: Machete Check
@@ -103,8 +101,6 @@ jobs:
     - name: Build with vector support on Linux
       if: matrix.os == 'ubuntu-latest'
       run: cargo build --features ${{ env.LINUX_FEATURES }}
-      env:
-        RUSTFLAGS: "${{ env.RUSTFLAGS }} -Ctarget-feature=+avx2"
     - name: Build without vector support on non-Linux
       if: matrix.os != 'ubuntu-latest'  
       run: cargo build --features ${{ env.DEFAULT_FEATURES }}
@@ -146,8 +142,6 @@ jobs:
       run: |
         cargo nextest run --features ${{ env.LINUX_FEATURES }}
         cargo test --features ${{ env.LINUX_FEATURES }} --doc
-      env:
-        RUSTFLAGS: "${{ env.RUSTFLAGS }} -Ctarget-feature=+avx2"
     - name: Test without vector support on non-Linux
       if: matrix.os != 'ubuntu-latest'
       run: |
@@ -167,5 +161,3 @@ jobs:
         sudo apt-get install -y libopenblas-dev || (echo "Failed to install OpenBLAS" && exit 1)
     - uses: actions-rust-lang/setup-rust-toolchain@v1
     - run: cargo doc --lib --no-deps --features ${{ env.LINUX_FEATURES }}
-      env:
-        RUSTFLAGS: "${{ env.RUSTFLAGS }} -Ctarget-feature=+avx2"

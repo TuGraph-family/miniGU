@@ -1,2 +1,2 @@
 [target.'cfg(target_os = "linux")']
-rustflags = ["-Ctarget-feature=+avx2", "-lopenblas"]
+rustflags = ["-lopenblas"]
