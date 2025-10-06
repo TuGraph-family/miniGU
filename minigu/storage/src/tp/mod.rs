@@ -2,6 +2,7 @@ pub mod checkpoint;
 pub mod iterators;
 pub mod memory_graph;
 pub mod transaction;
+#[cfg(all(target_os = "linux", feature = "vector-support"))]
 pub mod vector_index;
 
 // Re-export commonly used types for OLTP

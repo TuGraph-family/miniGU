@@ -9,11 +9,10 @@ use minigu_common::value::{ScalarValue, VectorValue};
 use super::checkpoint::{CheckpointManager, CheckpointManagerConfig};
 use super::transaction::{MemTransaction, MemTxnManager, TransactionHandle, UndoEntry, UndoPtr};
 #[cfg(all(target_os = "linux", feature = "vector-support"))]
-use super::vector_index::filter::create_filter_mask;
-#[cfg(all(target_os = "linux", feature = "vector-support"))]
-use super::vector_index::in_mem_diskann::create_vector_index_config;
-#[cfg(all(target_os = "linux", feature = "vector-support"))]
-use super::vector_index::{InMemANNAdapter, VectorIndex};
+use super::vector_index::{
+    InMemANNAdapter, VectorIndex, filter::create_filter_mask,
+    in_mem_diskann::create_vector_index_config,
+};
 use crate::common::model::edge::{Edge, Neighbor};
 use crate::common::model::vertex::Vertex;
 use crate::common::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp};
@@ -1337,13 +1336,7 @@ pub mod tests {
     use std::fs;
 
     use minigu_common::types::LabelId;
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    use minigu_common::types::PropertyId;
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    use minigu_common::value::F32;
     use minigu_common::value::ScalarValue;
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    use minigu_common::value::VectorValue;
     use {Edge, Vertex};
 
     use super::*;
@@ -1354,13 +1347,6 @@ pub mod tests {
     const FOLLOW: LabelId = LabelId::new(3).unwrap();
 
     // Vector index test constants
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    const _NAME_PROPERTY_ID: PropertyId = 0;
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    const EMBEDDING_PROPERTY_ID: PropertyId = 1;
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    const TEST_DIMENSION: usize = 104; // Supported dimensions: 104, 128, 256
-
     fn create_vertex(id: VertexId, label_id: LabelId, properties: Vec<ScalarValue>) -> Vertex {
         Vertex::new(id, label_id, PropertyRecord::new(properties))
     }
@@ -1379,66 +1365,6 @@ pub mod tests {
             label_id,
             PropertyRecord::new(properties),
         )
-    }
-
-    /// Creates a test vertex with vector embedding
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    fn create_vertex_with_vector(id: VertexId, name: &str, embedding: Vec<f32>) -> Vertex {
-        let vector_value = create_vector_value_from_f32(embedding);
-        Vertex::new(
-            id,
-            PERSON,
-            PropertyRecord::new(vec![
-                ScalarValue::String(Some(name.to_string())), // Property 0: name
-                ScalarValue::Vector(Some(vector_value)),     // Property 1: embedding
-            ]),
-        )
-    }
-
-    /// Generates 200 small-scale test vectors with big coordinates to ensure DiskANN graph
-    /// connectivity
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    fn create_small_scale_test_vectors() -> Vec<(VertexId, String, Vec<f32>)> {
-        let count = 200;
-        let points_per_cluster = 25; // 25 points per cluster, 8 clusters
-        // Not all graph nodes have vectors; so vids to vector search are non-contiguous (sparse
-        // subset)
-        let start_id: VertexId = 5;
-        let stride: VertexId = 3;
-
-        (0..count)
-            .map(|i| {
-                let cluster_id = i / points_per_cluster;
-                let point_in_cluster = i % points_per_cluster;
-
-                let mut vector = vec![0.0f32; TEST_DIMENSION];
-
-                // Large coordinate cluster centers (avoid small value precision issues)
-                let center_x = (cluster_id as f32) * 20.0 + 30.0; // [30, 50, 70, 90, 110, 130, 150, 170]
-                let center_y = (cluster_id as f32) * 15.0 + 25.0; // [25, 40, 55, 70, 85, 100, 115, 130]
-                let center_z = (cluster_id as f32) * 12.0 + 20.0; // [20, 32, 44, 56, 68, 80, 92, 104]
-
-                // Intra-cluster distribution (ensure overlapping connectivity)
-                let spread = 12.0; // cluster spread range
-                let offset_x = ((point_in_cluster as f32) * 2.1).sin() * spread;
-                let offset_y = ((point_in_cluster as f32) * 1.8).cos() * spread;
-                let offset_z = ((point_in_cluster as f32) * 2.5).sin() * spread;
-
-                vector[0] = center_x + offset_x;
-                vector[1] = center_y + offset_y;
-                vector[2] = center_z + offset_z;
-
-                // Other dimensions: add unique identifiers
-                let start = 3;
-                let end = std::cmp::min(10, TEST_DIMENSION);
-
-                for (j, item) in vector.iter_mut().enumerate().skip(start).take(end - start) {
-                    *item = (i as f32) * 0.1 + (j as f32) * 0.2 + 5.0;
-                }
-                let vid: VertexId = start_id + (i as VertexId) * stride;
-                (vid, format!("small_scale_{}", i), vector)
-            })
-            .collect()
     }
 
     pub fn mock_checkpoint_config() -> CheckpointManagerConfig {
@@ -2263,1592 +2189,1627 @@ pub mod tests {
         );
     }
 
+    // ===== Vector Index Tests - Linux Platform with vector-support =====
     #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_vector_index_build_and_verify() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+    mod vector_tests {
+        use minigu_common::types::PropertyId;
+        use minigu_common::value::{F32, VectorValue};
 
-        // Test 1: Build index with unsupported dimension should fail
-        let unsupported_vectors = vec![
-            // 200 dimensions, unsupported (not 104/128/256)
-            (1u64, "test1".to_string(), vec![1.0f32; 200]),
-            (2u64, "test2".to_string(), vec![2.0f32; 200]),
-            (3u64, "test3".to_string(), vec![3.0f32; 200]),
-        ];
-        for (id, name, embedding) in &unsupported_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
+        use super::*;
+
+        // Vector index test constants
+        const _NAME_PROPERTY_ID: PropertyId = 0;
+        const EMBEDDING_PROPERTY_ID: PropertyId = 1;
+        const TEST_DIMENSION: usize = 104; // Supported dimensions: 104, 128, 256
+
+        // ===== Helper Functions =====
+        /// Creates a test vertex with vector embedding
+        fn create_vertex_with_vector(id: VertexId, name: &str, embedding: Vec<f32>) -> Vertex {
+            let vector_value = create_vector_value_from_f32(embedding);
+            Vertex::new(
+                id,
+                PERSON,
+                PropertyRecord::new(vec![
+                    ScalarValue::String(Some(name.to_string())), // Property 0: name
+                    ScalarValue::Vector(Some(vector_value)),     // Property 1: embedding
+                ]),
+            )
         }
-        // Try to build index with unsupported dimension - should fail
-        let result =
-            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID));
-        assert!(result.is_err());
+        /// Generates 200 small-scale test vectors with big coordinates to ensure DiskANN graph
+        /// connectivity
+        fn create_small_scale_test_vectors() -> Vec<(VertexId, String, Vec<f32>)> {
+            let count = 200;
+            let points_per_cluster = 25; // 25 points per cluster, 8 clusters
+            // Not all graph nodes have vectors; so vids to vector search are non-contiguous (sparse
+            // subset)
+            let start_id: VertexId = 5;
+            let stride: VertexId = 3;
 
-        // Clean up unsupported test data
-        for (id, _, _) in &unsupported_vectors {
-            graph.delete_vertex(&txn, *id)?;
+            (0..count)
+                .map(|i| {
+                    let cluster_id = i / points_per_cluster;
+                    let point_in_cluster = i % points_per_cluster;
+
+                    let mut vector = vec![0.0f32; TEST_DIMENSION];
+
+                    // Large coordinate cluster centers (avoid small value precision issues)
+                    let center_x = (cluster_id as f32) * 20.0 + 30.0; // [30, 50, 70, 90, 110, 130, 150, 170]
+                    let center_y = (cluster_id as f32) * 15.0 + 25.0; // [25, 40, 55, 70, 85, 100, 115, 130]
+                    let center_z = (cluster_id as f32) * 12.0 + 20.0; // [20, 32, 44, 56, 68, 80, 92, 104]
+
+                    // Intra-cluster distribution (ensure overlapping connectivity)
+                    let spread = 12.0; // cluster spread range
+                    let offset_x = ((point_in_cluster as f32) * 2.1).sin() * spread;
+                    let offset_y = ((point_in_cluster as f32) * 1.8).cos() * spread;
+                    let offset_z = ((point_in_cluster as f32) * 2.5).sin() * spread;
+
+                    vector[0] = center_x + offset_x;
+                    vector[1] = center_y + offset_y;
+                    vector[2] = center_z + offset_z;
+
+                    // Other dimensions: add unique identifiers
+                    let start = 3;
+                    let end = std::cmp::min(10, TEST_DIMENSION);
+
+                    for (j, item) in vector.iter_mut().enumerate().skip(start).take(end - start) {
+                        *item = (i as f32) * 0.1 + (j as f32) * 0.2 + 5.0;
+                    }
+                    let vid: VertexId = start_id + (i as VertexId) * stride;
+                    (vid, format!("small_scale_{}", i), vector)
+                })
+                .collect()
         }
-
-        // Test 2: Build index with supported dimension should succeed
-        // Create 200 test vertices with small-scale vectors
-        let test_vectors = create_small_scale_test_vectors();
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
+        /// Helper function to convert Vec<f32> to VectorValue for testing
+        fn create_vector_value_from_f32(data: Vec<f32>) -> VectorValue {
+            let vector_data: Vec<F32> = data.into_iter().map(F32::from).collect();
+            let dimension = vector_data.len();
+            VectorValue::new(vector_data, dimension).expect(
+                "Failed to create VectorValue - dimension mismatch should not occur in tests",
+            )
         }
+        /// Creates additional test vectors for insert operations
+        fn create_additional_test_vectors(
+            start_id: VertexId,
+            count: usize,
+        ) -> Vec<(VertexId, String, Vec<f32>)> {
+            (0..count)
+                .map(|i| {
+                    let id = start_id + i as u64;
+                    let name = format!("additional_vertex_{}", id);
 
-        // Build vector index with small-scale configuration
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+                    // Create vectors in a new cluster area to avoid conflicts with existing test
+                    // data
+                    let mut vector = vec![0.0f32; TEST_DIMENSION];
+                    vector[0] = 200.0 + (i as f32) * 2.0; // New cluster starting at x=200
+                    vector[1] = 180.0 + (i as f32) * 1.5; // New cluster starting at y=180
+                    vector[2] = 160.0 + (i as f32) * 1.8; // New cluster starting at z=160
 
-        // Verify index creation and properties
-        let index_key = VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID);
-        let index = graph
-            .get_vector_index(index_key)
-            .expect("Index should exist after build");
-        assert_eq!(index.size(), 200);
-        assert_eq!(index.get_dimension(), TEST_DIMENSION);
+                    // Add some variation to other dimensions
+                    let start = 3;
+                    let end = std::cmp::min(10, TEST_DIMENSION);
+                    for (j, item) in vector.iter_mut().enumerate().skip(start).take(end - start) {
+                        *item = (id as f32) * 0.1 + (j as f32) * 0.3 + 10.0;
+                    }
 
-        txn.commit()?;
-        Ok(())
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_vector_search_accuracy() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Create small-scale test dataset
-        let test_vectors = create_small_scale_test_vectors();
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
+                    (id, name, vector)
+                })
+                .collect()
         }
-
-        // Build index with small-scale configuration
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
-
-        // Test 1: Search in cluster 1 area (coordinates around 30-42)
-        let mut cluster1_query = vec![0.0f32; TEST_DIMENSION];
-        cluster1_query[0] = 35.0f32;
-        cluster1_query[1] = 30.0f32;
-        cluster1_query[2] = 25.0f32;
-        let cluster1_query_vector = create_vector_value_from_f32(cluster1_query);
-        let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &cluster1_query_vector,
-            10,
-            50,
-            None,
-            false,
-        )?;
-        assert!(!results.is_empty(), "Should find vectors in cluster 1");
-        assert!(results.len() <= 10, "Results should not exceed k");
-
-        // Test 2: Search in cluster 2 area (coordinates around 50-62)
-        let mut cluster2_query = vec![0.0f32; TEST_DIMENSION];
-        cluster2_query[0] = 55.0f32;
-        cluster2_query[1] = 45.0f32;
-        cluster2_query[2] = 37.0f32;
-        let cluster2_query_vector = create_vector_value_from_f32(cluster2_query);
-        let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &cluster2_query_vector,
-            5,
-            30,
-            None,
-            false,
-        )?;
-        assert!(!results.is_empty(), "Should find vectors in cluster 2");
-        assert!(results.len() <= 5, "Results should not exceed k");
-
-        // Test 3: Invalid dimension (too small) - should fail
-        let invalid_query_small = create_vector_value_from_f32(vec![1.0f32; TEST_DIMENSION - 1]);
-        let result = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &invalid_query_small,
-            1,
-            20,
-            None,
-            false,
-        );
-        assert!(result.is_err(), "Invalid dimension query should fail");
-        match result.unwrap_err() {
-            StorageError::VectorIndex(VectorIndexError::InvalidDimension { expected, actual }) => {
-                assert_eq!(expected, TEST_DIMENSION);
-                assert_eq!(actual, TEST_DIMENSION - 1);
-            }
-            _ => panic!("Expected InvalidDimension error"),
-        }
-
-        // Test 4: Invalid dimension (too large) - should fail
-        let invalid_query_large = create_vector_value_from_f32(vec![1.0f32; TEST_DIMENSION + 10]);
-        let result = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &invalid_query_large,
-            1,
-            20,
-            None,
-            false,
-        );
-        assert!(result.is_err(), "Invalid dimension query should fail");
-        match result.unwrap_err() {
-            StorageError::VectorIndex(VectorIndexError::InvalidDimension { expected, actual }) => {
-                assert_eq!(expected, TEST_DIMENSION);
-                assert_eq!(actual, TEST_DIMENSION + 10);
-            }
-            _ => panic!("Expected InvalidDimension error"),
-        }
-
-        txn.commit()?;
-        Ok(())
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_vector_error_index_not_found() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Try to search without building index
-        let query = create_vector_value_from_f32(vec![1.0f32; TEST_DIMENSION]);
-        let result = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &query,
-            1,
-            20,
-            None,
-            false,
-        );
-
-        // Should fail with IndexNotFound error
-        assert!(result.is_err());
-
-        txn.commit()?;
-        Ok(())
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_vector_error_empty_dataset() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Try to build index on empty dataset
-        let result =
-            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID));
-
-        // Should fail with appropriate error
-        assert!(result.is_err());
-
-        txn.commit()?;
-        Ok(())
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_vector_error_dimension_mismatch() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Create index with valid small-scale vectors
-        let test_vectors = create_small_scale_test_vectors();
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
-        }
-
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
-
-        // Try to search with wrong dimension query
-        let wrong_dim_query = create_vector_value_from_f32(vec![0.0f32; 50]); // Wrong dimension
-        let result = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &wrong_dim_query,
-            1,
-            50,
-            None,
-            false,
-        );
-
-        // Should fail due to dimension mismatch
-        assert!(result.is_err());
-
-        txn.commit()?;
-        Ok(())
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_vertex_id_mapping_correctness() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Create small-scale vertices with specific IDs to test mapping
-        let mut test_vectors = create_small_scale_test_vectors();
-        // Replace some IDs with specific values for testing
-        test_vectors[0].0 = 10u64;
-        test_vectors[1].0 = 42u64;
-        test_vectors[2].0 = 100u64;
-        test_vectors[3].0 = 999u64;
-        test_vectors[4].0 = 50000u64;
-
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
-        }
-
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
-
-        // Search should return correct vertex IDs for modified vectors
-        for (expected_id, _, embedding) in test_vectors.iter().take(5) {
-            let embedding_value = create_vector_value_from_f32(embedding.clone());
+        /// Verify that a specific vector can be found in search results
+        fn verify_vector_in_search_results(
+            graph: &MemoryGraph,
+            property_id: PropertyId,
+            target_vector: &[f32],
+            expected_node_id: VertexId,
+        ) -> StorageResult<bool> {
+            let target_vector_value = create_vector_value_from_f32(target_vector.to_vec());
             let results = graph.vector_search(
-                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-                &embedding_value,
-                1,
+                VectorIndexKey::new(PERSON, property_id),
+                &target_vector_value,
+                5,
                 50,
                 None,
                 false,
             )?;
-            assert_eq!(results.len(), 1);
-            assert_eq!(
-                results[0].0, *expected_id,
-                "ID mapping failed for vertex {}",
-                expected_id
-            );
+            Ok(results.iter().any(|(id, _)| *id == expected_node_id))
+        }
+        /// Verify that a specific vector cannot be found in search results
+        fn verify_vector_not_in_search_results(
+            graph: &MemoryGraph,
+            property_id: PropertyId,
+            query_vector: &[f32],
+            excluded_node_id: VertexId,
+        ) -> StorageResult<bool> {
+            let query_vector_value = create_vector_value_from_f32(query_vector.to_vec());
+            let results = graph.vector_search(
+                VectorIndexKey::new(PERSON, property_id),
+                &query_vector_value,
+                20,
+                100,
+                None,
+                false,
+            )?;
+            Ok(!results.iter().any(|(id, _)| *id == excluded_node_id))
+        }
+        /// Create predictable test vectors with known distance relationships for accuracy testing
+        fn create_predictable_test_vectors() -> Vec<(VertexId, String, Vec<f32>)> {
+            let mut vectors = Vec::new();
+
+            // Query vector will be [1.0, 0.0, 0.0, 0.0, ...] (first dimension = 1.0, rest = 0.0)
+            // Create test vectors with predictable L2 squared distances:
+            // Vector 0: Exact match - distance² = 0.0
+            let mut vec0 = vec![0.0f32; TEST_DIMENSION];
+            vec0[0] = 1.0;
+            vectors.push((100u64, "exact_match".to_string(), vec0));
+            // Vector 1: Very close - distance² = 0.01
+            let mut vec1 = vec![0.0f32; TEST_DIMENSION];
+            vec1[0] = 0.9; // (1.0 - 0.9)² = 0.01
+            vectors.push((101u64, "very_close".to_string(), vec1));
+            // Vector 2: Close - distance² = 0.04
+            let mut vec2 = vec![0.0f32; TEST_DIMENSION];
+            vec2[0] = 0.8; // (1.0 - 0.8)² = 0.04
+            vectors.push((102u64, "close".to_string(), vec2));
+            // Vector 3: Medium distance - distance² = 1.0
+            let vec3 = vec![0.0f32; TEST_DIMENSION];
+            // Zero vector: (1.0)² + 0² + ... = 1.0
+            vectors.push((103u64, "medium".to_string(), vec3));
+            // Vector 4: Far - distance² = 2.0
+            let mut vec4 = vec![0.0f32; TEST_DIMENSION];
+            vec4[1] = 1.0; // 1² + 1² + 0² + ... = 2.0
+            vectors.push((104u64, "far".to_string(), vec4));
+            // Vector 5: Very far
+            let mut vec5 = vec![0.0f32; TEST_DIMENSION];
+            vec5[0] = -1.0;
+            vec5[1] = 1.0;
+            vec5[2] = 1.0;
+            vectors.push((105u64, "very_far".to_string(), vec5));
+
+            vectors
         }
 
-        txn.commit()?;
-        Ok(())
-    }
+        // ===== Test Functions =====
+        #[test]
+        fn test_vector_index_build_and_verify() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_vector_small_scale_dataset() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+            // Test 1: Build index with unsupported dimension should fail
+            let unsupported_vectors = vec![
+                // 200 dimensions, unsupported (not 104/128/256)
+                (1u64, "test1".to_string(), vec![1.0f32; 200]),
+                (2u64, "test2".to_string(), vec![2.0f32; 200]),
+                (3u64, "test3".to_string(), vec![3.0f32; 200]),
+            ];
+            for (id, name, embedding) in &unsupported_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+            }
+            // Try to build index with unsupported dimension - should fail
+            let result =
+                graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID));
+            assert!(result.is_err());
 
-        // Use the standard small-scale dataset (200 points)
-        let test_vectors = create_small_scale_test_vectors();
+            // Clean up unsupported test data
+            for (id, _, _) in &unsupported_vectors {
+                graph.delete_vertex(&txn, *id)?;
+            }
 
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
+            // Test 2: Build index with supported dimension should succeed
+            // Create 200 test vertices with small-scale vectors
+            let test_vectors = create_small_scale_test_vectors();
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+            }
+
+            // Build vector index with small-scale configuration
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+
+            // Verify index creation and properties
+            let index_key = VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID);
+            let index = graph
+                .get_vector_index(index_key)
+                .expect("Index should exist after build");
+            assert_eq!(index.size(), 200);
+            assert_eq!(index.get_dimension(), TEST_DIMENSION);
+
+            txn.commit()?;
+            Ok(())
         }
+        #[test]
+        fn test_vector_search_accuracy() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-        // Build index with small-scale configuration
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+            // Create small-scale test dataset
+            let test_vectors = create_small_scale_test_vectors();
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+            }
 
-        // Verify index properties
-        let index = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap();
-        assert_eq!(index.size(), 200);
+            // Build index with small-scale configuration
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
 
-        // Test search with various k values
-        let mut query = vec![0.0f32; TEST_DIMENSION];
-        query[0] = 75.0f32; // Search in middle area
-        query[1] = 60.0f32;
-        query[2] = 45.0f32;
-        let query_vector = create_vector_value_from_f32(query);
-        let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &query_vector,
-            15,
-            50,
-            None,
-            false,
-        )?;
-        assert!(!results.is_empty());
-        assert!(results.len() <= 15);
-
-        txn.commit()?;
-        Ok(())
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_vector_transaction_isolation() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-
-        // Transaction 1: Build index with small-scale data
-        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-        let test_vectors = create_small_scale_test_vectors();
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn1, vertex)?;
-        }
-
-        graph.build_vector_index(&txn1, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
-        txn1.commit()?;
-
-        // Transaction 2: Use index with different isolation levels
-        for &isolation in &[IsolationLevel::Snapshot, IsolationLevel::Serializable] {
-            let txn2 = graph.begin_transaction(isolation);
-            let mut query = vec![0.0f32; TEST_DIMENSION];
-            query[0] = 65.0f32; // Search in cluster area
-            query[1] = 55.0f32;
-            query[2] = 40.0f32;
-            let query_vector = create_vector_value_from_f32(query);
+            // Test 1: Search in cluster 1 area (coordinates around 30-42)
+            let mut cluster1_query = vec![0.0f32; TEST_DIMENSION];
+            cluster1_query[0] = 35.0f32;
+            cluster1_query[1] = 30.0f32;
+            cluster1_query[2] = 25.0f32;
+            let cluster1_query_vector = create_vector_value_from_f32(cluster1_query);
             let results = graph.vector_search(
                 VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-                &query_vector,
+                &cluster1_query_vector,
+                10,
+                50,
+                None,
+                false,
+            )?;
+            assert!(!results.is_empty(), "Should find vectors in cluster 1");
+            assert!(results.len() <= 10, "Results should not exceed k");
+
+            // Test 2: Search in cluster 2 area (coordinates around 50-62)
+            let mut cluster2_query = vec![0.0f32; TEST_DIMENSION];
+            cluster2_query[0] = 55.0f32;
+            cluster2_query[1] = 45.0f32;
+            cluster2_query[2] = 37.0f32;
+            let cluster2_query_vector = create_vector_value_from_f32(cluster2_query);
+            let results = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &cluster2_query_vector,
                 5,
                 30,
                 None,
                 false,
             )?;
-            assert!(!results.is_empty());
-            txn2.commit()?;
-        }
+            assert!(!results.is_empty(), "Should find vectors in cluster 2");
+            assert!(results.len() <= 5, "Results should not exceed k");
 
-        Ok(())
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_vector_multiple_indices_per_graph() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Create vertices with vectors on different properties using small-scale data
-        let test_vectors = create_small_scale_test_vectors();
-        for (id, name, embedding) in &test_vectors {
-            // Create property with different embeddings for property 1 and 2
-            let embedding_1 = embedding.clone();
-            let mut embedding_2_data = embedding.clone();
-            embedding_2_data[0] += 15.0; // Larger variation for large coordinates
-            embedding_2_data[1] += 10.0;
-
-            let vector_data_1: Vec<F32> = embedding_1.into_iter().map(F32::from).collect();
-            let vector_data_2: Vec<F32> = embedding_2_data.into_iter().map(F32::from).collect();
-            let dimension_1 = vector_data_1.len();
-            let dimension_2 = vector_data_2.len();
-
-            let vector_value_1 = VectorValue::new(vector_data_1, dimension_1)
-                .expect("Failed to create VectorValue - dimension mismatch");
-            let vector_value_2 = VectorValue::new(vector_data_2, dimension_2)
-                .expect("Failed to create VectorValue - dimension mismatch");
-
-            let vertex = Vertex::new(
-                *id,
-                PERSON,
-                PropertyRecord::new(vec![
-                    ScalarValue::String(Some(name.clone())),
-                    ScalarValue::Vector(Some(vector_value_1)),
-                    ScalarValue::Vector(Some(vector_value_2)),
-                ]),
+            // Test 3: Invalid dimension (too small) - should fail
+            let invalid_query_small =
+                create_vector_value_from_f32(vec![1.0f32; TEST_DIMENSION - 1]);
+            let result = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &invalid_query_small,
+                1,
+                20,
+                None,
+                false,
             );
-            graph.create_vertex(&txn, vertex)?;
-        }
-
-        // Build indices on different properties
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, 1))?; // Property 1
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, 2))?; // Property 2
-
-        // Verify both indices work independently
-        let mut query = vec![0.0f32; TEST_DIMENSION];
-        query[0] = 80.0f32; // Query in large coordinate space
-        query[1] = 70.0f32;
-        query[2] = 50.0f32;
-        let query_vector = create_vector_value_from_f32(query);
-        let results_1 = graph.vector_search(
-            VectorIndexKey::new(PERSON, 1),
-            &query_vector,
-            3,
-            30,
-            None,
-            false,
-        )?;
-        let results_2 = graph.vector_search(
-            VectorIndexKey::new(PERSON, 2),
-            &query_vector,
-            3,
-            30,
-            None,
-            false,
-        )?;
-
-        assert!(!results_1.is_empty());
-        assert!(!results_2.is_empty());
-
-        txn.commit()?;
-        Ok(())
-    }
-
-    /// Helper function to convert Vec<f32> to VectorValue for testing
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    fn create_vector_value_from_f32(data: Vec<f32>) -> VectorValue {
-        let vector_data: Vec<F32> = data.into_iter().map(F32::from).collect();
-        let dimension = vector_data.len();
-        VectorValue::new(vector_data, dimension)
-            .expect("Failed to create VectorValue - dimension mismatch should not occur in tests")
-    }
-
-    /// Creates additional test vectors for insert operations
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    fn create_additional_test_vectors(
-        start_id: VertexId,
-        count: usize,
-    ) -> Vec<(VertexId, String, Vec<f32>)> {
-        (0..count)
-            .map(|i| {
-                let id = start_id + i as u64;
-                let name = format!("additional_vertex_{}", id);
-
-                // Create vectors in a new cluster area to avoid conflicts with existing test data
-                let mut vector = vec![0.0f32; TEST_DIMENSION];
-                vector[0] = 200.0 + (i as f32) * 2.0; // New cluster starting at x=200
-                vector[1] = 180.0 + (i as f32) * 1.5; // New cluster starting at y=180
-                vector[2] = 160.0 + (i as f32) * 1.8; // New cluster starting at z=160
-
-                // Add some variation to other dimensions
-                let start = 3;
-                let end = std::cmp::min(10, TEST_DIMENSION);
-                for (j, item) in vector.iter_mut().enumerate().skip(start).take(end - start) {
-                    *item = (id as f32) * 0.1 + (j as f32) * 0.3 + 10.0;
+            assert!(result.is_err(), "Invalid dimension query should fail");
+            match result.unwrap_err() {
+                StorageError::VectorIndex(VectorIndexError::InvalidDimension {
+                    expected,
+                    actual,
+                }) => {
+                    assert_eq!(expected, TEST_DIMENSION);
+                    assert_eq!(actual, TEST_DIMENSION - 1);
                 }
-
-                (id, name, vector)
-            })
-            .collect()
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    /// Verify that a specific vector can be found in search results
-    fn verify_vector_in_search_results(
-        graph: &MemoryGraph,
-        property_id: PropertyId,
-        target_vector: &[f32],
-        expected_node_id: VertexId,
-    ) -> StorageResult<bool> {
-        let target_vector_value = create_vector_value_from_f32(target_vector.to_vec());
-        let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, property_id),
-            &target_vector_value,
-            5,
-            50,
-            None,
-            false,
-        )?;
-        Ok(results.iter().any(|(id, _)| *id == expected_node_id))
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    /// Verify that a specific vector cannot be found in search results
-    fn verify_vector_not_in_search_results(
-        graph: &MemoryGraph,
-        property_id: PropertyId,
-        query_vector: &[f32],
-        excluded_node_id: VertexId,
-    ) -> StorageResult<bool> {
-        let query_vector_value = create_vector_value_from_f32(query_vector.to_vec());
-        let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, property_id),
-            &query_vector_value,
-            20,
-            100,
-            None,
-            false,
-        )?;
-        Ok(!results.iter().any(|(id, _)| *id == excluded_node_id))
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_vector_insert_basic() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Create initial dataset and build index
-        let test_vectors = create_small_scale_test_vectors();
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
-        }
-
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
-
-        // Verify initial index size
-        let initial_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
-        assert_eq!(initial_size, 200);
-
-        // Test 1: Insert 200 new vectors to reach maximum capacity
-        //
-        // Capacity Analysis:
-        // - Initial build: 200 vectors
-        // - Total capacity: 200 × 2.0 (growth_potential) = 400 vectors
-        // - Test 1: Insert 200 more vectors → 200 + 200 = 400 (exactly at capacity limit)
-        let new_vectors = create_additional_test_vectors(1000, 200);
-        let mut insert_data = Vec::new();
-
-        for (id, name, embedding) in &new_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
-            insert_data.push((*id, embedding.clone()));
-        }
-
-        // Insert 200 vectors into vector index - should succeed (reaching capacity limit)
-        let node_ids: Vec<u64> = insert_data.iter().map(|(id, _)| *id).collect();
-        graph.insert_into_vector_index(
-            &txn,
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &node_ids,
-        )?;
-
-        // Verify index size increased: 200 + 200 = 400 (exactly at capacity)
-        let new_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
-        assert_eq!(new_size, initial_size + 200);
-
-        // Verify one of the inserted vectors can be found
-        let (sample_id, _, sample_embedding) = &new_vectors[0];
-        assert!(verify_vector_in_search_results(
-            &graph,
-            EMBEDDING_PROPERTY_ID,
-            sample_embedding,
-            *sample_id
-        )?);
-
-        // Test 2:  dimension mismatch - should fail
-        let wrong_dimension_vector = vec![1.0f32; 100]; // 100 dimensions vs expected 104
-        let wrong_id = 2000u64;
-        let wrong_vertex = create_vertex_with_vector(wrong_id, "wrong_dim", wrong_dimension_vector);
-        graph.create_vertex(&txn, wrong_vertex)?;
-
-        // Try to insert wrong dimension vector - should fail at insert_into_vector_index level
-        let result = graph.insert_into_vector_index(
-            &txn,
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &[wrong_id],
-        );
-
-        assert!(result.is_err());
-        match result.unwrap_err() {
-            StorageError::VectorIndex(VectorIndexError::InvalidDimension { expected, actual }) => {
-                assert_eq!(expected, TEST_DIMENSION);
-                assert_eq!(actual, 100);
+                _ => panic!("Expected InvalidDimension error"),
             }
-            _ => panic!("Expected InvalidDimension error"),
-        }
 
-        // Verify index size unchanged after failed insertion
-        let final_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
-        assert_eq!(final_size, new_size); // Should remain same as before failed insertion
-
-        // Test 3: Capacity limit validation - should fail when exceeding pre-allocated capacity
-        //
-        // growth_potential is a PRE-ALLOCATION strategy
-        //
-        // How DiskANN capacity works:
-        // 1. Initial build: max_points = 200, growth_potential = 2.0
-        // 2. Pre-allocated capacity = 200 × 2.0 = 400 vectors maximum
-        // 3. Current state: 200 original + 200 Test 1 inserts = 400 vectors (exactly at capacity)
-        // 4. Remaining capacity: 400 - 400 = 0 vectors
-        // 5. Attempt to insert 1 more vector: 400 + 1 = 401 > 400 → SHOULD FAIL
-        let excess_vectors = create_additional_test_vectors(3000, 1); // Create 1 additional vector
-        let mut excess_insert_data = Vec::new();
-
-        // Create vertices in graph first
-        for (id, name, embedding) in &excess_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
-            excess_insert_data.push((*id, embedding.clone()));
-        }
-
-        // Try to insert 1 vector when capacity is already at maximum - should fail with capacity
-        // error
-        let excess_node_ids: Vec<u64> = excess_insert_data.iter().map(|(id, _)| *id).collect();
-        let capacity_result = graph.insert_into_vector_index(
-            &txn,
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &excess_node_ids,
-        );
-
-        // Verify that insertion fails due to capacity limit (this is expected and correct)
-        assert!(
-            capacity_result.is_err(),
-            "Should fail when exceeding pre-allocated capacity"
-        );
-        match capacity_result.unwrap_err() {
-            StorageError::VectorIndex(VectorIndexError::BuildError(ref msg)) => {
-                // DiskANN returns BuildError with capacity message from InmemDataset
-                assert!(msg.contains("Cannot append 1 points to dataset of capacity 400"));
+            // Test 4: Invalid dimension (too large) - should fail
+            let invalid_query_large =
+                create_vector_value_from_f32(vec![1.0f32; TEST_DIMENSION + 10]);
+            let result = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &invalid_query_large,
+                1,
+                20,
+                None,
+                false,
+            );
+            assert!(result.is_err(), "Invalid dimension query should fail");
+            match result.unwrap_err() {
+                StorageError::VectorIndex(VectorIndexError::InvalidDimension {
+                    expected,
+                    actual,
+                }) => {
+                    assert_eq!(expected, TEST_DIMENSION);
+                    assert_eq!(actual, TEST_DIMENSION + 10);
+                }
+                _ => panic!("Expected InvalidDimension error"),
             }
-            other_err => {
-                panic!(
-                    "Expected BuildError with capacity message, got: {:?}",
-                    other_err
+
+            txn.commit()?;
+            Ok(())
+        }
+        #[test]
+        fn test_vector_error_index_not_found() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+            // Try to search without building index
+            let query = create_vector_value_from_f32(vec![1.0f32; TEST_DIMENSION]);
+            let result = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &query,
+                1,
+                20,
+                None,
+                false,
+            );
+
+            // Should fail with IndexNotFound error
+            assert!(result.is_err());
+
+            txn.commit()?;
+            Ok(())
+        }
+        #[test]
+        fn test_vector_error_empty_dataset() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+            // Try to build index on empty dataset
+            let result =
+                graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID));
+
+            // Should fail with appropriate error
+            assert!(result.is_err());
+
+            txn.commit()?;
+            Ok(())
+        }
+        #[test]
+        fn test_vector_error_dimension_mismatch() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+            // Create index with valid small-scale vectors
+            let test_vectors = create_small_scale_test_vectors();
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+            }
+
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+
+            // Try to search with wrong dimension query
+            let wrong_dim_query = create_vector_value_from_f32(vec![0.0f32; 50]); // Wrong dimension
+            let result = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &wrong_dim_query,
+                1,
+                50,
+                None,
+                false,
+            );
+
+            // Should fail due to dimension mismatch
+            assert!(result.is_err());
+
+            txn.commit()?;
+            Ok(())
+        }
+        #[test]
+        fn test_vertex_id_mapping_correctness() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+            // Create small-scale vertices with specific IDs to test mapping
+            let mut test_vectors = create_small_scale_test_vectors();
+            // Replace some IDs with specific values for testing
+            test_vectors[0].0 = 10u64;
+            test_vectors[1].0 = 42u64;
+            test_vectors[2].0 = 100u64;
+            test_vectors[3].0 = 999u64;
+            test_vectors[4].0 = 50000u64;
+
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+            }
+
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+
+            // Search should return correct vertex IDs for modified vectors
+            for (expected_id, _, embedding) in test_vectors.iter().take(5) {
+                let embedding_value = create_vector_value_from_f32(embedding.clone());
+                let results = graph.vector_search(
+                    VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                    &embedding_value,
+                    1,
+                    50,
+                    None,
+                    false,
+                )?;
+                assert_eq!(results.len(), 1);
+                assert_eq!(
+                    results[0].0, *expected_id,
+                    "ID mapping failed for vertex {}",
+                    expected_id
                 );
             }
+
+            txn.commit()?;
+            Ok(())
         }
+        #[test]
+        fn test_vector_small_scale_dataset() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-        // Verify index size unchanged after failed capacity insertion
-        let size_after_capacity_failure = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
-        assert_eq!(size_after_capacity_failure, new_size); // Should remain 400 (200 original + 200 Test 1 inserts)
+            // Use the standard small-scale dataset (200 points)
+            let test_vectors = create_small_scale_test_vectors();
 
-        txn.commit()?;
-        Ok(())
-    }
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+            }
 
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_vector_insert_multiple() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+            // Build index with small-scale configuration
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
 
-        // Create initial dataset
-        let test_vectors = create_small_scale_test_vectors();
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
+            // Verify index properties
+            let index = graph
+                .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+                .unwrap();
+            assert_eq!(index.size(), 200);
+
+            // Test search with various k values
+            let mut query = vec![0.0f32; TEST_DIMENSION];
+            query[0] = 75.0f32; // Search in middle area
+            query[1] = 60.0f32;
+            query[2] = 45.0f32;
+            let query_vector = create_vector_value_from_f32(query);
+            let results = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &query_vector,
+                15,
+                50,
+                None,
+                false,
+            )?;
+            assert!(!results.is_empty());
+            assert!(results.len() <= 15);
+
+            txn.commit()?;
+            Ok(())
         }
+        #[test]
+        fn test_vector_transaction_isolation() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
 
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+            // Transaction 1: Build index with small-scale data
+            let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+            let test_vectors = create_small_scale_test_vectors();
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn1, vertex)?;
+            }
 
-        let initial_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
+            graph.build_vector_index(&txn1, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+            txn1.commit()?;
 
-        // Insert multiple vectors
-        let new_vectors = create_additional_test_vectors(2000, 5);
-        let mut insert_data = Vec::new();
+            // Transaction 2: Use index with different isolation levels
+            for &isolation in &[IsolationLevel::Snapshot, IsolationLevel::Serializable] {
+                let txn2 = graph.begin_transaction(isolation);
+                let mut query = vec![0.0f32; TEST_DIMENSION];
+                query[0] = 65.0f32; // Search in cluster area
+                query[1] = 55.0f32;
+                query[2] = 40.0f32;
+                let query_vector = create_vector_value_from_f32(query);
+                let results = graph.vector_search(
+                    VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                    &query_vector,
+                    5,
+                    30,
+                    None,
+                    false,
+                )?;
+                assert!(!results.is_empty());
+                txn2.commit()?;
+            }
 
-        for (id, name, embedding) in &new_vectors {
-            // Create vertices first
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
-            insert_data.push((*id, embedding.clone()));
+            Ok(())
         }
+        #[test]
+        fn test_vector_multiple_indices_per_graph() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-        // Batch insert
-        let node_ids: Vec<u64> = insert_data.iter().map(|(id, _)| *id).collect();
-        graph.insert_into_vector_index(
-            &txn,
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &node_ids,
-        )?;
+            // Create vertices with vectors on different properties using small-scale data
+            let test_vectors = create_small_scale_test_vectors();
+            for (id, name, embedding) in &test_vectors {
+                // Create property with different embeddings for property 1 and 2
+                let embedding_1 = embedding.clone();
+                let mut embedding_2_data = embedding.clone();
+                embedding_2_data[0] += 15.0; // Larger variation for large coordinates
+                embedding_2_data[1] += 10.0;
 
-        // Verify index size
-        let new_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
-        assert_eq!(new_size, initial_size + 5);
+                let vector_data_1: Vec<F32> = embedding_1.into_iter().map(F32::from).collect();
+                let vector_data_2: Vec<F32> = embedding_2_data.into_iter().map(F32::from).collect();
+                let dimension_1 = vector_data_1.len();
+                let dimension_2 = vector_data_2.len();
 
-        // Verify all inserted vectors can be found
-        for (id, _, embedding) in &new_vectors {
-            assert!(verify_vector_in_search_results(
-                &graph,
-                EMBEDDING_PROPERTY_ID,
-                embedding,
-                *id
-            )?);
+                let vector_value_1 = VectorValue::new(vector_data_1, dimension_1)
+                    .expect("Failed to create VectorValue - dimension mismatch");
+                let vector_value_2 = VectorValue::new(vector_data_2, dimension_2)
+                    .expect("Failed to create VectorValue - dimension mismatch");
+
+                let vertex = Vertex::new(
+                    *id,
+                    PERSON,
+                    PropertyRecord::new(vec![
+                        ScalarValue::String(Some(name.clone())),
+                        ScalarValue::Vector(Some(vector_value_1)),
+                        ScalarValue::Vector(Some(vector_value_2)),
+                    ]),
+                );
+                graph.create_vertex(&txn, vertex)?;
+            }
+
+            // Build indices on different properties
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, 1))?; // Property 1
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, 2))?; // Property 2
+
+            // Verify both indices work independently
+            let mut query = vec![0.0f32; TEST_DIMENSION];
+            query[0] = 80.0f32; // Query in large coordinate space
+            query[1] = 70.0f32;
+            query[2] = 50.0f32;
+            let query_vector = create_vector_value_from_f32(query);
+            let results_1 = graph.vector_search(
+                VectorIndexKey::new(PERSON, 1),
+                &query_vector,
+                3,
+                30,
+                None,
+                false,
+            )?;
+            let results_2 = graph.vector_search(
+                VectorIndexKey::new(PERSON, 2),
+                &query_vector,
+                3,
+                30,
+                None,
+                false,
+            )?;
+
+            assert!(!results_1.is_empty());
+            assert!(!results_2.is_empty());
+
+            txn.commit()?;
+            Ok(())
         }
+        #[test]
+        fn test_vector_insert_basic() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-        txn.commit()?;
-        Ok(())
-    }
+            // Create initial dataset and build index
+            let test_vectors = create_small_scale_test_vectors();
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+            }
 
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_vector_insert_empty_list() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
 
-        // Create initial dataset
-        let test_vectors = create_small_scale_test_vectors();
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
-        }
-
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
-
-        let initial_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
-
-        // Insert empty vector list - should succeed but do nothing
-        let empty_node_ids: Vec<u64> = vec![];
-        let result = graph.insert_into_vector_index(
-            &txn,
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &empty_node_ids,
-        );
-        assert!(result.is_ok());
-
-        // Verify size unchanged
-        let new_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
-        assert_eq!(new_size, initial_size);
-
-        txn.commit()?;
-        Ok(())
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_vector_insert_index_not_found() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Don't build any index
-        let new_vectors = create_additional_test_vectors(3000, 1);
-        let (test_id, test_name, test_embedding) = &new_vectors[0];
-        let vertex = create_vertex_with_vector(*test_id, test_name, test_embedding.clone());
-        graph.create_vertex(&txn, vertex)?;
-
-        // Should fail with index not found error
-        let result =
-            graph.insert_into_vector_index(&txn, VectorIndexKey::new(PERSON, 999), &[*test_id]);
-        assert!(result.is_err());
-
-        txn.commit()?;
-        Ok(())
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_vector_delete_basic() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Create initial dataset
-        let test_vectors = create_small_scale_test_vectors();
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
-        }
-
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
-
-        let initial_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
-
-        // Select a vector to delete (use first vector from test data)
-        let (target_id, _, target_embedding) = &test_vectors[0];
-
-        // Verify vector can be found before deletion
-        assert!(verify_vector_in_search_results(
-            &graph,
-            EMBEDDING_PROPERTY_ID,
-            target_embedding,
-            *target_id
-        )?);
-
-        // Delete the vector
-        graph.delete_from_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID), &[
-            *target_id,
-        ])?;
-
-        // Verify index size decreased (soft delete should reduce active count)
-        let new_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
-        assert_eq!(new_size, initial_size - 1);
-
-        // Verify deleted vector is not found in search results
-        assert!(verify_vector_not_in_search_results(
-            &graph,
-            EMBEDDING_PROPERTY_ID,
-            target_embedding,
-            *target_id
-        )?);
-
-        txn.commit()?;
-        Ok(())
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_vector_delete_multiple() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Create initial dataset
-        let test_vectors = create_small_scale_test_vectors();
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
-        }
-
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
-
-        let initial_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
-
-        // Select multiple vectors to delete (first 3 vectors)
-        let delete_ids: Vec<u64> = test_vectors.iter().take(3).map(|(id, _, _)| *id).collect();
-        let delete_embeddings: Vec<&Vec<f32>> =
-            test_vectors.iter().take(3).map(|(_, _, emb)| emb).collect();
-
-        // Verify vectors can be found before deletion
-        for (i, &id) in delete_ids.iter().enumerate() {
-            assert!(verify_vector_in_search_results(
-                &graph,
-                EMBEDDING_PROPERTY_ID,
-                delete_embeddings[i],
-                id
-            )?);
-        }
-
-        // Delete multiple vectors
-        graph.delete_from_vector_index(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &delete_ids,
-        )?;
-
-        // Verify index size decreased
-        let new_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
-        assert_eq!(new_size, initial_size - 3);
-
-        // Verify deleted vectors are not found in search results
-        for (i, &id) in delete_ids.iter().enumerate() {
-            assert!(verify_vector_not_in_search_results(
-                &graph,
-                EMBEDDING_PROPERTY_ID,
-                delete_embeddings[i],
-                id
-            )?);
-        }
-
-        txn.commit()?;
-        Ok(())
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_vector_delete_empty_list() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Create initial dataset
-        let test_vectors = create_small_scale_test_vectors();
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
-        }
-
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
-
-        let initial_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
-
-        // Delete empty list - should succeed but do nothing
-        let empty_ids: Vec<u64> = vec![];
-        let result = graph.delete_from_vector_index(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &empty_ids,
-        );
-        assert!(result.is_ok());
-
-        // Verify size unchanged
-        let new_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
-        assert_eq!(new_size, initial_size);
-
-        txn.commit()?;
-        Ok(())
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_vector_delete_index_not_found() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Don't build any index
-        let delete_ids = vec![1u64, 2u64];
-
-        // Should fail with index not found error
-        let result = graph.delete_from_vector_index(VectorIndexKey::new(PERSON, 999), &delete_ids);
-        assert!(result.is_err());
-
-        txn.commit()?;
-        Ok(())
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_vector_delete_nonexistent_node() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Create initial dataset
-        let test_vectors = create_small_scale_test_vectors();
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
-        }
-
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
-
-        // Try to delete non-existent node ID
-        let nonexistent_ids = vec![9999u64];
-        let result = graph.delete_from_vector_index(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &nonexistent_ids,
-        );
-
-        // Should fail with appropriate error
-        assert!(result.is_err());
-
-        txn.commit()?;
-        Ok(())
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_vector_insert_delete_combined() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Create initial dataset
-        let test_vectors = create_small_scale_test_vectors();
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
-        }
-
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
-
-        let initial_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
-
-        // Phase 1: Insert new vectors
-        let new_vectors = create_additional_test_vectors(4000, 3);
-        let mut insert_data = Vec::new();
-
-        for (id, name, embedding) in &new_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
-            insert_data.push((*id, embedding.clone()));
-        }
-
-        let node_ids: Vec<u64> = insert_data.iter().map(|(id, _)| *id).collect();
-        graph.insert_into_vector_index(
-            &txn,
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &node_ids,
-        )?;
-
-        // Verify size after insertion
-        let after_insert_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
-        assert_eq!(after_insert_size, initial_size + 3);
-
-        // Phase 2: Delete some original vectors
-        let delete_ids: Vec<u64> = test_vectors.iter().take(2).map(|(id, _, _)| *id).collect();
-        graph.delete_from_vector_index(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &delete_ids,
-        )?;
-
-        // Verify final size
-        let final_size = graph
-            .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
-        assert_eq!(final_size, initial_size + 3 - 2); // +3 inserts, -2 deletes
-
-        // Verify inserted vectors are still findable
-        for (id, _, embedding) in &new_vectors {
-            assert!(verify_vector_in_search_results(
-                &graph,
-                EMBEDDING_PROPERTY_ID,
-                embedding,
-                *id
-            )?);
-        }
-
-        // Verify deleted vectors are not findable
-        for &id in &delete_ids {
-            let deleted_embedding = &test_vectors
-                .iter()
-                .find(|(vid, _, _)| *vid == id)
+            // Verify initial index size
+            let initial_size = graph
+                .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
                 .unwrap()
-                .2;
+                .size();
+            assert_eq!(initial_size, 200);
+
+            // Test 1: Insert 200 new vectors to reach maximum capacity
+            //
+            // Capacity Analysis:
+            // - Initial build: 200 vectors
+            // - Total capacity: 200 × 2.0 (growth_potential) = 400 vectors
+            // - Test 1: Insert 200 more vectors → 200 + 200 = 400 (exactly at capacity limit)
+            let new_vectors = create_additional_test_vectors(1000, 200);
+            let mut insert_data = Vec::new();
+
+            for (id, name, embedding) in &new_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+                insert_data.push((*id, embedding.clone()));
+            }
+
+            // Insert 200 vectors into vector index - should succeed (reaching capacity limit)
+            let node_ids: Vec<u64> = insert_data.iter().map(|(id, _)| *id).collect();
+            graph.insert_into_vector_index(
+                &txn,
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &node_ids,
+            )?;
+
+            // Verify index size increased: 200 + 200 = 400 (exactly at capacity)
+            let new_size = graph
+                .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+                .unwrap()
+                .size();
+            assert_eq!(new_size, initial_size + 200);
+
+            // Verify one of the inserted vectors can be found
+            let (sample_id, _, sample_embedding) = &new_vectors[0];
+            assert!(verify_vector_in_search_results(
+                &graph,
+                EMBEDDING_PROPERTY_ID,
+                sample_embedding,
+                *sample_id
+            )?);
+
+            // Test 2:  dimension mismatch - should fail
+            let wrong_dimension_vector = vec![1.0f32; 100]; // 100 dimensions vs expected 104
+            let wrong_id = 2000u64;
+            let wrong_vertex =
+                create_vertex_with_vector(wrong_id, "wrong_dim", wrong_dimension_vector);
+            graph.create_vertex(&txn, wrong_vertex)?;
+
+            // Try to insert wrong dimension vector - should fail at insert_into_vector_index level
+            let result = graph.insert_into_vector_index(
+                &txn,
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &[wrong_id],
+            );
+
+            assert!(result.is_err());
+            match result.unwrap_err() {
+                StorageError::VectorIndex(VectorIndexError::InvalidDimension {
+                    expected,
+                    actual,
+                }) => {
+                    assert_eq!(expected, TEST_DIMENSION);
+                    assert_eq!(actual, 100);
+                }
+                _ => panic!("Expected InvalidDimension error"),
+            }
+
+            // Verify index size unchanged after failed insertion
+            let final_size = graph
+                .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+                .unwrap()
+                .size();
+            assert_eq!(final_size, new_size); // Should remain same as before failed insertion
+
+            // Test 3: Capacity limit validation - should fail when exceeding pre-allocated capacity
+            //
+            // growth_potential is a PRE-ALLOCATION strategy
+            //
+            // How DiskANN capacity works:
+            // 1. Initial build: max_points = 200, growth_potential = 2.0
+            // 2. Pre-allocated capacity = 200 × 2.0 = 400 vectors maximum
+            // 3. Current state: 200 original + 200 Test 1 inserts = 400 vectors (exactly at
+            //    capacity)
+            // 4. Remaining capacity: 400 - 400 = 0 vectors
+            // 5. Attempt to insert 1 more vector: 400 + 1 = 401 > 400 → SHOULD FAIL
+            let excess_vectors = create_additional_test_vectors(3000, 1); // Create 1 additional vector
+            let mut excess_insert_data = Vec::new();
+
+            // Create vertices in graph first
+            for (id, name, embedding) in &excess_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+                excess_insert_data.push((*id, embedding.clone()));
+            }
+
+            // Try to insert 1 vector when capacity is already at maximum - should fail with
+            // capacity error
+            let excess_node_ids: Vec<u64> = excess_insert_data.iter().map(|(id, _)| *id).collect();
+            let capacity_result = graph.insert_into_vector_index(
+                &txn,
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &excess_node_ids,
+            );
+
+            // Verify that insertion fails due to capacity limit (this is expected and correct)
+            assert!(
+                capacity_result.is_err(),
+                "Should fail when exceeding pre-allocated capacity"
+            );
+            match capacity_result.unwrap_err() {
+                StorageError::VectorIndex(VectorIndexError::BuildError(ref msg)) => {
+                    // DiskANN returns BuildError with capacity message from InmemDataset
+                    assert!(msg.contains("Cannot append 1 points to dataset of capacity 400"));
+                }
+                other_err => {
+                    panic!(
+                        "Expected BuildError with capacity message, got: {:?}",
+                        other_err
+                    );
+                }
+            }
+
+            // Verify index size unchanged after failed capacity insertion
+            let size_after_capacity_failure = graph
+                .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+                .unwrap()
+                .size();
+            assert_eq!(size_after_capacity_failure, new_size); // Should remain 400 (200 original + 200 Test 1 inserts)
+
+            txn.commit()?;
+            Ok(())
+        }
+        #[test]
+        fn test_vector_insert_multiple() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+            // Create initial dataset
+            let test_vectors = create_small_scale_test_vectors();
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+            }
+
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+
+            let initial_size = graph
+                .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+                .unwrap()
+                .size();
+
+            // Insert multiple vectors
+            let new_vectors = create_additional_test_vectors(2000, 5);
+            let mut insert_data = Vec::new();
+
+            for (id, name, embedding) in &new_vectors {
+                // Create vertices first
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+                insert_data.push((*id, embedding.clone()));
+            }
+
+            // Batch insert
+            let node_ids: Vec<u64> = insert_data.iter().map(|(id, _)| *id).collect();
+            graph.insert_into_vector_index(
+                &txn,
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &node_ids,
+            )?;
+
+            // Verify index size
+            let new_size = graph
+                .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+                .unwrap()
+                .size();
+            assert_eq!(new_size, initial_size + 5);
+
+            // Verify all inserted vectors can be found
+            for (id, _, embedding) in &new_vectors {
+                assert!(verify_vector_in_search_results(
+                    &graph,
+                    EMBEDDING_PROPERTY_ID,
+                    embedding,
+                    *id
+                )?);
+            }
+
+            txn.commit()?;
+            Ok(())
+        }
+        #[test]
+        fn test_vector_insert_empty_list() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+            // Create initial dataset
+            let test_vectors = create_small_scale_test_vectors();
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+            }
+
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+
+            let initial_size = graph
+                .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+                .unwrap()
+                .size();
+
+            // Insert empty vector list - should succeed but do nothing
+            let empty_node_ids: Vec<u64> = vec![];
+            let result = graph.insert_into_vector_index(
+                &txn,
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &empty_node_ids,
+            );
+            assert!(result.is_ok());
+
+            // Verify size unchanged
+            let new_size = graph
+                .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+                .unwrap()
+                .size();
+            assert_eq!(new_size, initial_size);
+
+            txn.commit()?;
+            Ok(())
+        }
+        #[test]
+        fn test_vector_insert_index_not_found() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+            // Don't build any index
+            let new_vectors = create_additional_test_vectors(3000, 1);
+            let (test_id, test_name, test_embedding) = &new_vectors[0];
+            let vertex = create_vertex_with_vector(*test_id, test_name, test_embedding.clone());
+            graph.create_vertex(&txn, vertex)?;
+
+            // Should fail with index not found error
+            let result =
+                graph.insert_into_vector_index(&txn, VectorIndexKey::new(PERSON, 999), &[*test_id]);
+            assert!(result.is_err());
+
+            txn.commit()?;
+            Ok(())
+        }
+        #[test]
+        fn test_vector_delete_basic() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+            // Create initial dataset
+            let test_vectors = create_small_scale_test_vectors();
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+            }
+
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+
+            let initial_size = graph
+                .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+                .unwrap()
+                .size();
+
+            // Select a vector to delete (use first vector from test data)
+            let (target_id, _, target_embedding) = &test_vectors[0];
+
+            // Verify vector can be found before deletion
+            assert!(verify_vector_in_search_results(
+                &graph,
+                EMBEDDING_PROPERTY_ID,
+                target_embedding,
+                *target_id
+            )?);
+
+            // Delete the vector
+            graph
+                .delete_from_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID), &[
+                    *target_id,
+                ])?;
+
+            // Verify index size decreased (soft delete should reduce active count)
+            let new_size = graph
+                .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+                .unwrap()
+                .size();
+            assert_eq!(new_size, initial_size - 1);
+
+            // Verify deleted vector is not found in search results
             assert!(verify_vector_not_in_search_results(
                 &graph,
                 EMBEDDING_PROPERTY_ID,
-                deleted_embedding,
-                id
+                target_embedding,
+                *target_id
             )?);
+
+            txn.commit()?;
+            Ok(())
         }
+        #[test]
+        fn test_vector_delete_multiple() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-        txn.commit()?;
-        Ok(())
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_vector_operations_mixed() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Create initial dataset
-        let test_vectors = create_small_scale_test_vectors();
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
-        }
-
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
-
-        // Mixed operations: insert, search, delete, search again
-
-        // 1. Insert new vector
-        let new_vectors = create_additional_test_vectors(5000, 1);
-        let (new_id, new_name, new_embedding) = &new_vectors[0];
-        let vertex = create_vertex_with_vector(*new_id, new_name, new_embedding.clone());
-        graph.create_vertex(&txn, vertex)?;
-        graph.insert_into_vector_index(
-            &txn,
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &[*new_id],
-        )?;
-
-        // 2. Search for inserted vector
-        let new_embedding_value = create_vector_value_from_f32(new_embedding.clone());
-        let search_results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &new_embedding_value,
-            5,
-            50,
-            None,
-            false,
-        )?;
-        assert!(search_results.iter().any(|(id, _)| *id == *new_id));
-
-        // 3. Delete the inserted vector
-        graph.delete_from_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID), &[
-            *new_id,
-        ])?;
-
-        // 4. Search again - should not find deleted vector
-        assert!(verify_vector_not_in_search_results(
-            &graph,
-            EMBEDDING_PROPERTY_ID,
-            new_embedding,
-            *new_id
-        )?);
-
-        // 5. Verify original vectors are still accessible
-        let original_embedding = &test_vectors[10].2;
-        let original_id = test_vectors[10].0;
-        assert!(verify_vector_in_search_results(
-            &graph,
-            EMBEDDING_PROPERTY_ID,
-            original_embedding,
-            original_id
-        )?);
-
-        txn.commit()?;
-        Ok(())
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_adaptive_filter_brute_force_search() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Use existing create_small_scale_test_vectors (200 vectors with non-consecutive IDs)
-        let test_vectors = create_small_scale_test_vectors();
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
-        }
-
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
-
-        // Create BooleanArray filter with low selectivity (5% = ~10 out of 200) to trigger brute
-        // force Need to create bitmap that maps to actual node IDs, not array indices
-        let max_node_id = test_vectors.iter().map(|(id, _, _)| *id).max().unwrap_or(0);
-        let mut filter_bits = vec![false; (max_node_id + 1) as usize];
-
-        // Select every 20th test vector for filtering
-        let selected_test_vectors: Vec<_> = test_vectors.iter().step_by(20).collect();
-        for (node_id, _, _) in &selected_test_vectors {
-            if (*node_id as usize) < filter_bits.len() {
-                filter_bits[*node_id as usize] = true;
+            // Create initial dataset
+            let test_vectors = create_small_scale_test_vectors();
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
             }
-        }
-        let filter_bitmap = arrow::array::BooleanArray::from(filter_bits);
 
-        // Perform brute force search
-        let query = &test_vectors[0].2; // Use first vector as query
-        let query_value = create_vector_value_from_f32(query.clone());
-        let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &query_value,
-            5,
-            50,
-            Some(&filter_bitmap),
-            false,
-        )?;
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
 
-        // Verify results
-        assert!(!results.is_empty(), "Should find filtered results");
-        assert!(results.len() == 5, "Results should be k");
+            let initial_size = graph
+                .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+                .unwrap()
+                .size();
 
-        // Verify all returned IDs should be from the selected set
-        let selected_ids: Vec<u64> = selected_test_vectors.iter().map(|(id, _, _)| *id).collect();
+            // Select multiple vectors to delete (first 3 vectors)
+            let delete_ids: Vec<u64> = test_vectors.iter().take(3).map(|(id, _, _)| *id).collect();
+            let delete_embeddings: Vec<&Vec<f32>> =
+                test_vectors.iter().take(3).map(|(_, _, emb)| emb).collect();
 
-        for result_id in &results {
-            assert!(
-                selected_ids.contains(&result_id.0),
-                "Result ID should be in filtered set"
-            );
-        }
-
-        txn.commit()?;
-        Ok(())
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_adaptive_filter_post_filter_search() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Use existing test vectors
-        let test_vectors = create_small_scale_test_vectors();
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
-        }
-
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
-
-        // Create BooleanArray filter with high selectivity (50% = ~100 out of 200) to trigger
-        // post-filter
-        let max_node_id = test_vectors.iter().map(|(id, _, _)| *id).max().unwrap_or(0);
-        let mut filter_bits = vec![false; (max_node_id + 1) as usize];
-
-        // Select most test vectors (exclude every 2rd to get ~50% selectivity)
-        let selected_test_vectors: Vec<_> = test_vectors
-            .iter()
-            .enumerate()
-            .filter(|(i, _)| i % 2 != 0) // Exclude every 2nd element
-            .map(|(_, vector_data)| vector_data)
-            .collect();
-
-        for (node_id, _, _) in &selected_test_vectors {
-            if (*node_id as usize) < filter_bits.len() {
-                filter_bits[*node_id as usize] = true;
+            // Verify vectors can be found before deletion
+            for (i, &id) in delete_ids.iter().enumerate() {
+                assert!(verify_vector_in_search_results(
+                    &graph,
+                    EMBEDDING_PROPERTY_ID,
+                    delete_embeddings[i],
+                    id
+                )?);
             }
-        }
-        let filter_bitmap = arrow::array::BooleanArray::from(filter_bits);
 
-        // Perform filtered search
-        let query = &test_vectors[49].2; // Use middle vector as query
-        let query_value = create_vector_value_from_f32(query.clone());
-        let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &query_value,
-            10,
-            100,
-            Some(&filter_bitmap),
-            false,
-        )?;
+            // Delete multiple vectors
+            graph.delete_from_vector_index(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &delete_ids,
+            )?;
 
-        // Verify results
-        assert!(!results.is_empty(), "Should find filtered results");
-        assert!(results.len() <= 10, "Results should not exceed k");
+            // Verify index size decreased
+            let new_size = graph
+                .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+                .unwrap()
+                .size();
+            assert_eq!(new_size, initial_size - 3);
 
-        // Verify all returned IDs should be from the filtered set
-        let selected_ids: Vec<u64> = selected_test_vectors.iter().map(|(id, _, _)| *id).collect();
-
-        for result_id in &results {
-            assert!(
-                selected_ids.contains(&result_id.0),
-                "Result ID should be in filtered set"
-            );
-        }
-
-        // pre-filter search should return the same result as query when k is one
-        let query_value = create_vector_value_from_f32(query.clone());
-        let result_k1 = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &query_value,
-            1,
-            100,
-            Some(&filter_bitmap),
-            true,
-        )?;
-        assert_eq!(
-            result_k1[0].0, test_vectors[49].0,
-            "result_k1 vid should be same as query vid"
-        );
-
-        txn.commit()?;
-        Ok(())
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_adaptive_filter_pre_filter_search() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Use existing test vectors
-        let test_vectors = create_small_scale_test_vectors();
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
-        }
-
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
-
-        // Create BooleanArray filter with high selectivity (50% = 100 out of 200) to trigger
-        // pre-filter
-        let max_node_id = test_vectors.iter().map(|(id, _, _)| *id).max().unwrap_or(0);
-        let mut filter_bits = vec![false; (max_node_id + 1) as usize];
-
-        // Select most test vectors (exclude every 2rd to get 50% selectivity)
-        let selected_test_vectors: Vec<_> = test_vectors
-            .iter()
-            .enumerate()
-            .filter(|(i, _)| i % 2 != 0) // Exclude every 2nd element
-            .map(|(_, vector_data)| vector_data)
-            .collect();
-
-        for (node_id, _, _) in &selected_test_vectors {
-            if (*node_id as usize) < filter_bits.len() {
-                filter_bits[*node_id as usize] = true;
+            // Verify deleted vectors are not found in search results
+            for (i, &id) in delete_ids.iter().enumerate() {
+                assert!(verify_vector_not_in_search_results(
+                    &graph,
+                    EMBEDDING_PROPERTY_ID,
+                    delete_embeddings[i],
+                    id
+                )?);
             }
+
+            txn.commit()?;
+            Ok(())
         }
-        let filter_bitmap = arrow::array::BooleanArray::from(filter_bits);
+        #[test]
+        fn test_vector_delete_empty_list() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-        // Perform filtered search
-        let query = &test_vectors[49].2; // Use middle vector as query
-        let query_value = create_vector_value_from_f32(query.clone());
-        let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &query_value,
-            5,
-            100,
-            Some(&filter_bitmap),
-            true,
-        )?;
+            // Create initial dataset
+            let test_vectors = create_small_scale_test_vectors();
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+            }
 
-        // Verify results
-        assert!(!results.is_empty(), "Should find filtered results");
-        assert!(results.len() == 5, "Results should be k");
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
 
-        // Verify all returned IDs should be from the filtered set
-        let selected_ids: Vec<u64> = selected_test_vectors.iter().map(|(id, _, _)| *id).collect();
+            let initial_size = graph
+                .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+                .unwrap()
+                .size();
 
-        for result_id in &results {
-            assert!(
-                selected_ids.contains(&result_id.0),
-                "Result ID should be in filtered set"
+            // Delete empty list - should succeed but do nothing
+            let empty_ids: Vec<u64> = vec![];
+            let result = graph.delete_from_vector_index(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &empty_ids,
             );
+            assert!(result.is_ok());
+
+            // Verify size unchanged
+            let new_size = graph
+                .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+                .unwrap()
+                .size();
+            assert_eq!(new_size, initial_size);
+
+            txn.commit()?;
+            Ok(())
         }
+        #[test]
+        fn test_vector_delete_index_not_found() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-        // pre-filter search should return the same result as query when k is one
-        let query_value = create_vector_value_from_f32(query.clone());
-        let result_k1 = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &query_value,
-            1,
-            100,
-            Some(&filter_bitmap),
-            true,
-        )?;
-        assert_eq!(
-            result_k1[0].0, test_vectors[49].0,
-            "result_k1 vid should be same as query vid"
-        );
+            // Don't build any index
+            let delete_ids = vec![1u64, 2u64];
 
-        txn.commit()?;
-        Ok(())
-    }
+            // Should fail with index not found error
+            let result =
+                graph.delete_from_vector_index(VectorIndexKey::new(PERSON, 999), &delete_ids);
+            assert!(result.is_err());
 
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_filter_search_boundary_cases() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Use existing test vectors
-        let test_vectors = create_small_scale_test_vectors();
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
+            txn.commit()?;
+            Ok(())
         }
+        #[test]
+        fn test_vector_delete_nonexistent_node() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
-        let query = &test_vectors[0].2;
+            // Create initial dataset
+            let test_vectors = create_small_scale_test_vectors();
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+            }
 
-        // Test 1: Empty filter (all false)
-        let max_node_id = test_vectors.iter().map(|(id, _, _)| *id).max().unwrap_or(0);
-        let empty_filter =
-            arrow::array::BooleanArray::from(vec![false; (max_node_id + 1) as usize]);
-        let query_value = create_vector_value_from_f32(query.clone());
-        let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &query_value,
-            5,
-            50,
-            Some(&empty_filter),
-            false,
-        )?;
-        assert!(
-            results.is_empty(),
-            "Empty filter should return empty results"
-        );
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
 
-        // Test 2: Single element filter
-        let mut single_filter_bits = vec![false; (max_node_id + 1) as usize];
-        let single_node_id = test_vectors[10].0; // Use actual node ID
-        single_filter_bits[single_node_id as usize] = true;
-        let single_filter = arrow::array::BooleanArray::from(single_filter_bits);
-        let query_value = create_vector_value_from_f32(query.clone());
-        let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &query_value,
-            5,
-            50,
-            Some(&single_filter),
-            false,
-        )?;
-        assert!(
-            results.len() <= 1,
-            "Single element filter should return at most 1 result"
-        );
-
-        // Test 3: Full filter (all true) - should work like no filter
-        let mut full_filter_bits = vec![false; (max_node_id + 1) as usize];
-        for (node_id, _, _) in &test_vectors {
-            full_filter_bits[*node_id as usize] = true;
-        }
-        let full_filter = arrow::array::BooleanArray::from(full_filter_bits);
-        let query_value = create_vector_value_from_f32(query.clone());
-        let results_filtered = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &query_value,
-            5,
-            50,
-            Some(&full_filter),
-            true,
-        )?; // pre-filter
-        let results_unfiltered = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &query_value,
-            5,
-            50,
-            None,
-            false,
-        )?;
-        assert_eq!(
-            results_filtered.len(),
-            results_unfiltered.len(),
-            "Full filter should match unfiltered results"
-        );
-
-        txn.commit()?;
-        Ok(())
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_pre_filter_search_in_cluster() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Use existing test vectors with known clustering
-        let test_vectors = create_small_scale_test_vectors();
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
-            graph.create_vertex(&txn, vertex)?;
-        }
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
-
-        // Create a filter that selects only the first cluster (first 25 vectors, pre-filter search)
-        let max_node_id = test_vectors.iter().map(|(id, _, _)| *id).max().unwrap_or(0);
-        let mut cluster_filter_bits = vec![false; (max_node_id + 1) as usize];
-        // test_vectors: Vec<(VertexId, String, Vec<f32>)>
-        for &(node_id, _, _) in test_vectors.iter().take(25) {
-            cluster_filter_bits[node_id as usize] = true;
-        }
-        let cluster_filter = arrow::array::BooleanArray::from(cluster_filter_bits);
-
-        // Pre-filter Search within first cluster using a query from that cluster
-        let cluster_query = &test_vectors[10].2; // 10th vector is in first cluster
-        let cluster_query_value = create_vector_value_from_f32(cluster_query.clone());
-        let results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &cluster_query_value,
-            5,
-            50,
-            Some(&cluster_filter),
-            true,
-        )?;
-
-        // Verify results are within the first cluster
-        let first_cluster_ids: Vec<u64> =
-            test_vectors[0..25].iter().map(|(id, _, _)| *id).collect();
-        for result_id in &results {
-            assert!(
-                first_cluster_ids.contains(&result_id.0),
-                "Result should be from first cluster"
+            // Try to delete non-existent node ID
+            let nonexistent_ids = vec![9999u64];
+            let result = graph.delete_from_vector_index(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &nonexistent_ids,
             );
+
+            // Should fail with appropriate error
+            assert!(result.is_err());
+
+            txn.commit()?;
+            Ok(())
         }
+        #[test]
+        fn test_vector_insert_delete_combined() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-        // Results should be sorted by similarity (closest first)
-        assert!(!results.is_empty(), "Should find results in cluster");
-        assert!(results.len() == 5, "Should be k");
+            // Create initial dataset
+            let test_vectors = create_small_scale_test_vectors();
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+            }
 
-        // Verify distances are in ascending order (closest first)
-        for i in 1..results.len() {
-            assert!(
-                results[i - 1].1 <= results[i].1,
-                "Distances should be in ascending order: {} > {}",
-                results[i - 1].1,
-                results[i].1
-            );
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+
+            let initial_size = graph
+                .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+                .unwrap()
+                .size();
+
+            // Phase 1: Insert new vectors
+            let new_vectors = create_additional_test_vectors(4000, 3);
+            let mut insert_data = Vec::new();
+
+            for (id, name, embedding) in &new_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+                insert_data.push((*id, embedding.clone()));
+            }
+
+            let node_ids: Vec<u64> = insert_data.iter().map(|(id, _)| *id).collect();
+            graph.insert_into_vector_index(
+                &txn,
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &node_ids,
+            )?;
+
+            // Verify size after insertion
+            let after_insert_size = graph
+                .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+                .unwrap()
+                .size();
+            assert_eq!(after_insert_size, initial_size + 3);
+
+            // Phase 2: Delete some original vectors
+            let delete_ids: Vec<u64> = test_vectors.iter().take(2).map(|(id, _, _)| *id).collect();
+            graph.delete_from_vector_index(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &delete_ids,
+            )?;
+
+            // Verify final size
+            let final_size = graph
+                .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
+                .unwrap()
+                .size();
+            assert_eq!(final_size, initial_size + 3 - 2); // +3 inserts, -2 deletes
+
+            // Verify inserted vectors are still findable
+            for (id, _, embedding) in &new_vectors {
+                assert!(verify_vector_in_search_results(
+                    &graph,
+                    EMBEDDING_PROPERTY_ID,
+                    embedding,
+                    *id
+                )?);
+            }
+
+            // Verify deleted vectors are not findable
+            for &id in &delete_ids {
+                let deleted_embedding = &test_vectors
+                    .iter()
+                    .find(|(vid, _, _)| *vid == id)
+                    .unwrap()
+                    .2;
+                assert!(verify_vector_not_in_search_results(
+                    &graph,
+                    EMBEDDING_PROPERTY_ID,
+                    deleted_embedding,
+                    id
+                )?);
+            }
+
+            txn.commit()?;
+            Ok(())
         }
+        #[test]
+        fn test_vector_operations_mixed() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-        // pre-filter search should return the same result as query when k is one
-        let cluster_query_value = create_vector_value_from_f32(cluster_query.clone());
-        let result_k1 = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &cluster_query_value,
-            1,
-            50,
-            Some(&cluster_filter),
-            true,
-        )?;
-        assert_eq!(
-            result_k1[0].0, test_vectors[10].0,
-            "result_k1 vid should be same as query vid"
-        );
+            // Create initial dataset
+            let test_vectors = create_small_scale_test_vectors();
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+            }
 
-        txn.commit()?;
-        Ok(())
-    }
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
 
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    /// Create predictable test vectors with known distance relationships for accuracy testing
-    fn create_predictable_test_vectors() -> Vec<(VertexId, String, Vec<f32>)> {
-        let mut vectors = Vec::new();
+            // Mixed operations: insert, search, delete, search again
 
-        // Query vector will be [1.0, 0.0, 0.0, 0.0, ...] (first dimension = 1.0, rest = 0.0)
-        // Create test vectors with predictable L2 squared distances:
-        // Vector 0: Exact match - distance² = 0.0
-        let mut vec0 = vec![0.0f32; TEST_DIMENSION];
-        vec0[0] = 1.0;
-        vectors.push((100u64, "exact_match".to_string(), vec0));
-        // Vector 1: Very close - distance² = 0.01
-        let mut vec1 = vec![0.0f32; TEST_DIMENSION];
-        vec1[0] = 0.9; // (1.0 - 0.9)² = 0.01
-        vectors.push((101u64, "very_close".to_string(), vec1));
-        // Vector 2: Close - distance² = 0.04
-        let mut vec2 = vec![0.0f32; TEST_DIMENSION];
-        vec2[0] = 0.8; // (1.0 - 0.8)² = 0.04
-        vectors.push((102u64, "close".to_string(), vec2));
-        // Vector 3: Medium distance - distance² = 1.0
-        let vec3 = vec![0.0f32; TEST_DIMENSION];
-        // Zero vector: (1.0)² + 0² + ... = 1.0
-        vectors.push((103u64, "medium".to_string(), vec3));
-        // Vector 4: Far - distance² = 2.0
-        let mut vec4 = vec![0.0f32; TEST_DIMENSION];
-        vec4[1] = 1.0; // 1² + 1² + 0² + ... = 2.0
-        vectors.push((104u64, "far".to_string(), vec4));
-        // Vector 5: Very far
-        let mut vec5 = vec![0.0f32; TEST_DIMENSION];
-        vec5[0] = -1.0;
-        vec5[1] = 1.0;
-        vec5[2] = 1.0;
-        vectors.push((105u64, "very_far".to_string(), vec5));
-
-        vectors
-    }
-
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
-    #[test]
-    fn test_brute_force_search_accuracy() -> StorageResult<()> {
-        let (graph, _cleaner) = mock_empty_graph();
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
-
-        // Create predictable test vectors with known distance relationships
-        let test_vectors = create_predictable_test_vectors();
-        for (id, name, embedding) in &test_vectors {
-            let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+            // 1. Insert new vector
+            let new_vectors = create_additional_test_vectors(5000, 1);
+            let (new_id, new_name, new_embedding) = &new_vectors[0];
+            let vertex = create_vertex_with_vector(*new_id, new_name, new_embedding.clone());
             graph.create_vertex(&txn, vertex)?;
+            graph.insert_into_vector_index(
+                &txn,
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &[*new_id],
+            )?;
+
+            // 2. Search for inserted vector
+            let new_embedding_value = create_vector_value_from_f32(new_embedding.clone());
+            let search_results = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &new_embedding_value,
+                5,
+                50,
+                None,
+                false,
+            )?;
+            assert!(search_results.iter().any(|(id, _)| *id == *new_id));
+
+            // 3. Delete the inserted vector
+            graph
+                .delete_from_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID), &[
+                    *new_id,
+                ])?;
+
+            // 4. Search again - should not find deleted vector
+            assert!(verify_vector_not_in_search_results(
+                &graph,
+                EMBEDDING_PROPERTY_ID,
+                new_embedding,
+                *new_id
+            )?);
+
+            // 5. Verify original vectors are still accessible
+            let original_embedding = &test_vectors[10].2;
+            let original_id = test_vectors[10].0;
+            assert!(verify_vector_in_search_results(
+                &graph,
+                EMBEDDING_PROPERTY_ID,
+                original_embedding,
+                original_id
+            )?);
+
+            txn.commit()?;
+            Ok(())
         }
-        graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+        #[test]
+        fn test_adaptive_filter_brute_force_search() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
 
-        // Query vector: [1.0, 0.0, 0.0, ...]
-        let mut query = vec![0.0f32; TEST_DIMENSION];
-        query[0] = 1.0;
-        // Test with filter (only include nodes 102, 103, 104)
-        let max_node_id = test_vectors.iter().map(|(id, _, _)| *id).max().unwrap_or(0);
-        let mut filter_bits = vec![false; (max_node_id + 1) as usize];
-        filter_bits[102] = true; // close
-        filter_bits[103] = true; // medium  
-        filter_bits[104] = true; // far
-        let filter = arrow::array::BooleanArray::from(filter_bits);
-        let query_value = create_vector_value_from_f32(query.clone());
-        let filtered_results = graph.vector_search(
-            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
-            &query_value,
-            2,
-            50,
-            Some(&filter),
-            false,
-        )?;
-        assert_eq!(
-            filtered_results.len(),
-            2,
-            "Should return 2 filtered results"
-        );
-        assert_eq!(
-            filtered_results[0].0, 102,
-            "First filtered result should be close (node_102)"
-        );
-        assert_eq!(
-            filtered_results[1].0, 103,
-            "Second filtered result should be medium (node_103)"
-        );
+            // Use existing create_small_scale_test_vectors (200 vectors with non-consecutive IDs)
+            let test_vectors = create_small_scale_test_vectors();
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+            }
 
-        txn.commit()?;
-        Ok(())
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+
+            // Create BooleanArray filter with low selectivity (5% = ~10 out of 200) to trigger
+            // brute force Need to create bitmap that maps to actual node IDs, not array
+            // indices
+            let max_node_id = test_vectors.iter().map(|(id, _, _)| *id).max().unwrap_or(0);
+            let mut filter_bits = vec![false; (max_node_id + 1) as usize];
+
+            // Select every 20th test vector for filtering
+            let selected_test_vectors: Vec<_> = test_vectors.iter().step_by(20).collect();
+            for (node_id, _, _) in &selected_test_vectors {
+                if (*node_id as usize) < filter_bits.len() {
+                    filter_bits[*node_id as usize] = true;
+                }
+            }
+            let filter_bitmap = arrow::array::BooleanArray::from(filter_bits);
+
+            // Perform brute force search
+            let query = &test_vectors[0].2; // Use first vector as query
+            let query_value = create_vector_value_from_f32(query.clone());
+            let results = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &query_value,
+                5,
+                50,
+                Some(&filter_bitmap),
+                false,
+            )?;
+
+            // Verify results
+            assert!(!results.is_empty(), "Should find filtered results");
+            assert!(results.len() == 5, "Results should be k");
+
+            // Verify all returned IDs should be from the selected set
+            let selected_ids: Vec<u64> =
+                selected_test_vectors.iter().map(|(id, _, _)| *id).collect();
+
+            for result_id in &results {
+                assert!(
+                    selected_ids.contains(&result_id.0),
+                    "Result ID should be in filtered set"
+                );
+            }
+
+            txn.commit()?;
+            Ok(())
+        }
+        #[test]
+        fn test_adaptive_filter_post_filter_search() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+            // Use existing test vectors
+            let test_vectors = create_small_scale_test_vectors();
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+            }
+
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+
+            // Create BooleanArray filter with high selectivity (50% = ~100 out of 200) to trigger
+            // post-filter
+            let max_node_id = test_vectors.iter().map(|(id, _, _)| *id).max().unwrap_or(0);
+            let mut filter_bits = vec![false; (max_node_id + 1) as usize];
+
+            // Select most test vectors (exclude every 2rd to get ~50% selectivity)
+            let selected_test_vectors: Vec<_> = test_vectors
+                .iter()
+                .enumerate()
+                .filter(|(i, _)| i % 2 != 0) // Exclude every 2nd element
+                .map(|(_, vector_data)| vector_data)
+                .collect();
+
+            for (node_id, _, _) in &selected_test_vectors {
+                if (*node_id as usize) < filter_bits.len() {
+                    filter_bits[*node_id as usize] = true;
+                }
+            }
+            let filter_bitmap = arrow::array::BooleanArray::from(filter_bits);
+
+            // Perform filtered search
+            let query = &test_vectors[49].2; // Use middle vector as query
+            let query_value = create_vector_value_from_f32(query.clone());
+            let results = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &query_value,
+                10,
+                100,
+                Some(&filter_bitmap),
+                false,
+            )?;
+
+            // Verify results
+            assert!(!results.is_empty(), "Should find filtered results");
+            assert!(results.len() <= 10, "Results should not exceed k");
+
+            // Verify all returned IDs should be from the filtered set
+            let selected_ids: Vec<u64> =
+                selected_test_vectors.iter().map(|(id, _, _)| *id).collect();
+
+            for result_id in &results {
+                assert!(
+                    selected_ids.contains(&result_id.0),
+                    "Result ID should be in filtered set"
+                );
+            }
+
+            // pre-filter search should return the same result as query when k is one
+            let query_value = create_vector_value_from_f32(query.clone());
+            let result_k1 = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &query_value,
+                1,
+                100,
+                Some(&filter_bitmap),
+                true,
+            )?;
+            assert_eq!(
+                result_k1[0].0, test_vectors[49].0,
+                "result_k1 vid should be same as query vid"
+            );
+
+            txn.commit()?;
+            Ok(())
+        }
+        #[test]
+        fn test_adaptive_filter_pre_filter_search() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+            // Use existing test vectors
+            let test_vectors = create_small_scale_test_vectors();
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+            }
+
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+
+            // Create BooleanArray filter with high selectivity (50% = 100 out of 200) to trigger
+            // pre-filter
+            let max_node_id = test_vectors.iter().map(|(id, _, _)| *id).max().unwrap_or(0);
+            let mut filter_bits = vec![false; (max_node_id + 1) as usize];
+
+            // Select most test vectors (exclude every 2rd to get 50% selectivity)
+            let selected_test_vectors: Vec<_> = test_vectors
+                .iter()
+                .enumerate()
+                .filter(|(i, _)| i % 2 != 0) // Exclude every 2nd element
+                .map(|(_, vector_data)| vector_data)
+                .collect();
+
+            for (node_id, _, _) in &selected_test_vectors {
+                if (*node_id as usize) < filter_bits.len() {
+                    filter_bits[*node_id as usize] = true;
+                }
+            }
+            let filter_bitmap = arrow::array::BooleanArray::from(filter_bits);
+
+            // Perform filtered search
+            let query = &test_vectors[49].2; // Use middle vector as query
+            let query_value = create_vector_value_from_f32(query.clone());
+            let results = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &query_value,
+                5,
+                100,
+                Some(&filter_bitmap),
+                true,
+            )?;
+
+            // Verify results
+            assert!(!results.is_empty(), "Should find filtered results");
+            assert!(results.len() == 5, "Results should be k");
+
+            // Verify all returned IDs should be from the filtered set
+            let selected_ids: Vec<u64> =
+                selected_test_vectors.iter().map(|(id, _, _)| *id).collect();
+
+            for result_id in &results {
+                assert!(
+                    selected_ids.contains(&result_id.0),
+                    "Result ID should be in filtered set"
+                );
+            }
+
+            // pre-filter search should return the same result as query when k is one
+            let query_value = create_vector_value_from_f32(query.clone());
+            let result_k1 = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &query_value,
+                1,
+                100,
+                Some(&filter_bitmap),
+                true,
+            )?;
+            assert_eq!(
+                result_k1[0].0, test_vectors[49].0,
+                "result_k1 vid should be same as query vid"
+            );
+
+            txn.commit()?;
+            Ok(())
+        }
+        #[test]
+        fn test_filter_search_boundary_cases() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+            // Use existing test vectors
+            let test_vectors = create_small_scale_test_vectors();
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+            }
+
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+            let query = &test_vectors[0].2;
+
+            // Test 1: Empty filter (all false)
+            let max_node_id = test_vectors.iter().map(|(id, _, _)| *id).max().unwrap_or(0);
+            let empty_filter =
+                arrow::array::BooleanArray::from(vec![false; (max_node_id + 1) as usize]);
+            let query_value = create_vector_value_from_f32(query.clone());
+            let results = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &query_value,
+                5,
+                50,
+                Some(&empty_filter),
+                false,
+            )?;
+            assert!(
+                results.is_empty(),
+                "Empty filter should return empty results"
+            );
+
+            // Test 2: Single element filter
+            let mut single_filter_bits = vec![false; (max_node_id + 1) as usize];
+            let single_node_id = test_vectors[10].0; // Use actual node ID
+            single_filter_bits[single_node_id as usize] = true;
+            let single_filter = arrow::array::BooleanArray::from(single_filter_bits);
+            let query_value = create_vector_value_from_f32(query.clone());
+            let results = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &query_value,
+                5,
+                50,
+                Some(&single_filter),
+                false,
+            )?;
+            assert!(
+                results.len() <= 1,
+                "Single element filter should return at most 1 result"
+            );
+
+            // Test 3: Full filter (all true) - should work like no filter
+            let mut full_filter_bits = vec![false; (max_node_id + 1) as usize];
+            for (node_id, _, _) in &test_vectors {
+                full_filter_bits[*node_id as usize] = true;
+            }
+            let full_filter = arrow::array::BooleanArray::from(full_filter_bits);
+            let query_value = create_vector_value_from_f32(query.clone());
+            let results_filtered = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &query_value,
+                5,
+                50,
+                Some(&full_filter),
+                true,
+            )?; // pre-filter
+            let results_unfiltered = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &query_value,
+                5,
+                50,
+                None,
+                false,
+            )?;
+            assert_eq!(
+                results_filtered.len(),
+                results_unfiltered.len(),
+                "Full filter should match unfiltered results"
+            );
+
+            txn.commit()?;
+            Ok(())
+        }
+        #[test]
+        fn test_pre_filter_search_in_cluster() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+            // Use existing test vectors with known clustering
+            let test_vectors = create_small_scale_test_vectors();
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+            }
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+
+            // Create a filter that selects only the first cluster (first 25 vectors, pre-filter
+            // search)
+            let max_node_id = test_vectors.iter().map(|(id, _, _)| *id).max().unwrap_or(0);
+            let mut cluster_filter_bits = vec![false; (max_node_id + 1) as usize];
+            // test_vectors: Vec<(VertexId, String, Vec<f32>)>
+            for &(node_id, _, _) in test_vectors.iter().take(25) {
+                cluster_filter_bits[node_id as usize] = true;
+            }
+            let cluster_filter = arrow::array::BooleanArray::from(cluster_filter_bits);
+
+            // Pre-filter Search within first cluster using a query from that cluster
+            let cluster_query = &test_vectors[10].2; // 10th vector is in first cluster
+            let cluster_query_value = create_vector_value_from_f32(cluster_query.clone());
+            let results = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &cluster_query_value,
+                5,
+                50,
+                Some(&cluster_filter),
+                true,
+            )?;
+
+            // Verify results are within the first cluster
+            let first_cluster_ids: Vec<u64> =
+                test_vectors[0..25].iter().map(|(id, _, _)| *id).collect();
+            for result_id in &results {
+                assert!(
+                    first_cluster_ids.contains(&result_id.0),
+                    "Result should be from first cluster"
+                );
+            }
+
+            // Results should be sorted by similarity (closest first)
+            assert!(!results.is_empty(), "Should find results in cluster");
+            assert!(results.len() == 5, "Should be k");
+
+            // Verify distances are in ascending order (closest first)
+            for i in 1..results.len() {
+                assert!(
+                    results[i - 1].1 <= results[i].1,
+                    "Distances should be in ascending order: {} > {}",
+                    results[i - 1].1,
+                    results[i].1
+                );
+            }
+
+            // pre-filter search should return the same result as query when k is one
+            let cluster_query_value = create_vector_value_from_f32(cluster_query.clone());
+            let result_k1 = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &cluster_query_value,
+                1,
+                50,
+                Some(&cluster_filter),
+                true,
+            )?;
+            assert_eq!(
+                result_k1[0].0, test_vectors[10].0,
+                "result_k1 vid should be same as query vid"
+            );
+
+            txn.commit()?;
+            Ok(())
+        }
+        #[test]
+        fn test_brute_force_search_accuracy() -> StorageResult<()> {
+            let (graph, _cleaner) = mock_empty_graph();
+            let txn = graph.begin_transaction(IsolationLevel::Serializable);
+
+            // Create predictable test vectors with known distance relationships
+            let test_vectors = create_predictable_test_vectors();
+            for (id, name, embedding) in &test_vectors {
+                let vertex = create_vertex_with_vector(*id, name, embedding.clone());
+                graph.create_vertex(&txn, vertex)?;
+            }
+            graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))?;
+
+            // Query vector: [1.0, 0.0, 0.0, ...]
+            let mut query = vec![0.0f32; TEST_DIMENSION];
+            query[0] = 1.0;
+            // Test with filter (only include nodes 102, 103, 104)
+            let max_node_id = test_vectors.iter().map(|(id, _, _)| *id).max().unwrap_or(0);
+            let mut filter_bits = vec![false; (max_node_id + 1) as usize];
+            filter_bits[102] = true; // close
+            filter_bits[103] = true; // medium  
+            filter_bits[104] = true; // far
+            let filter = arrow::array::BooleanArray::from(filter_bits);
+            let query_value = create_vector_value_from_f32(query.clone());
+            let filtered_results = graph.vector_search(
+                VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+                &query_value,
+                2,
+                50,
+                Some(&filter),
+                false,
+            )?;
+            assert_eq!(
+                filtered_results.len(),
+                2,
+                "Should return 2 filtered results"
+            );
+            assert_eq!(
+                filtered_results[0].0, 102,
+                "First filtered result should be close (node_102)"
+            );
+            assert_eq!(
+                filtered_results[1].0, 103,
+                "Second filtered result should be medium (node_103)"
+            );
+
+            txn.commit()?;
+            Ok(())
+        }
     }
 }
