@@ -102,3 +102,11 @@ winnow = { version = "0.7.12", default-features = false, features = ["alloc"] }
 [profile.dev.package]
 insta.opt-level = 3
 similar.opt-level = 3
+
+[profile.dev]
+opt-level = 0
+debug = 2
+debug-assertions = true
+overflow-checks = true
+incremental = false
+codegen-units = 1

@@ -1,12 +1,6 @@
 use std::sync::Arc;
 
-use gql_parser::ast::{
-    AmbientLinearQueryStatement, CompositeQueryStatement, FocusedLinearQueryStatement,
-    FocusedLinearQueryStatementPart, LinearQueryStatement, MatchStatement,
-    NullOrdering as AstNullOrdering, OrderByAndPageStatement, Ordering, QueryConjunction,
-    ResultStatement, Return, ReturnStatement, SetOp, SetOpKind, SetQuantifier,
-    SimpleQueryStatement, SortSpec,
-};
+use gql_parser::ast::{AmbientLinearQueryStatement, CompositeQueryStatement, FocusedLinearQueryStatement, FocusedLinearQueryStatementPart, GraphPatternBindingTable, LinearQueryStatement, MatchStatement, NullOrdering as AstNullOrdering, OrderByAndPageStatement, Ordering, QueryConjunction, ResultStatement, Return, ReturnStatement, SetOp, SetOpKind, SetQuantifier, SimpleQueryStatement, SortSpec};
 use itertools::Itertools;
 use minigu_common::data_type::{DataField, DataSchema, DataSchemaRef};
 use minigu_common::error::not_implemented;
@@ -14,12 +8,7 @@ use minigu_common::ordering::{NullOrdering, SortOrdering};
 
 use super::Binder;
 use super::error::{BindError, BindResult};
-use crate::bound::{
-    BoundCompositeQueryStatement, BoundExpr, BoundLinearQueryStatement,
-    BoundOrderByAndPageStatement, BoundQueryConjunction, BoundResultStatement,
-    BoundReturnStatement, BoundSetOp, BoundSetOpKind, BoundSetQuantifier,
-    BoundSimpleQueryStatement, BoundSortSpec,
-};
+use crate::bound::{BoundCompositeQueryStatement, BoundExpr, BoundGraphPatternBindingTable, BoundLinearQueryStatement, BoundMatchStatement, BoundOrderByAndPageStatement, BoundQueryConjunction, BoundResultStatement, BoundReturnStatement, BoundSetOp, BoundSetOpKind, BoundSetQuantifier, BoundSimpleQueryStatement, BoundSortSpec};
 
 impl Binder<'_> {
     pub fn bind_composite_query_statement(
@@ -123,8 +112,12 @@ impl Binder<'_> {
         &mut self,
         statement: &SimpleQueryStatement,
     ) -> BindResult<BoundSimpleQueryStatement> {
+        eprintln!("== SimpleQueryStatement ==\n{:#?}", statement);
         match statement {
-            SimpleQueryStatement::Match(statement) => todo!(),
+            SimpleQueryStatement::Match(statement) => {
+                let statement = self.bind_match_statement(statement)?;
+                Ok(BoundSimpleQueryStatement::Match(statement))
+            }
             SimpleQueryStatement::Call(statement) => {
                 let statement = self.bind_call_procedure_statement(statement)?;
                 let schema = statement
@@ -143,11 +136,60 @@ impl Binder<'_> {
         }
     }
 
-    pub fn bind_match_statement(&mut self, statement: &MatchStatement) -> BindResult<()> {
+    pub fn bind_match_statement(&mut self, statement: &MatchStatement) -> BindResult<BoundMatchStatement> {
         match statement {
-            MatchStatement::Simple(table) => todo!(),
+            MatchStatement::Simple(table) => {
+                
+            }
             MatchStatement::Optional(_) => not_implemented("optional match statement", None),
         }
+    }
+
+    pub fn bind_graph_pattern_binding_table(
+        &mut self,
+        table: &GraphPatternBindingTable,
+    ) -> BindResult<BoundGraphPatternBindingTable> {
+        let bound_pattern = self.bind_graph_pattern(table.pattern.value())?;
+        let cur_schema = self.active_data_schema.as_ref().ok_or_else(
+            || BindError::Unexpected
+        )?;
+        let (outputs, output_schemas) = if table.yield_clause.is_empty() {
+            let outs:Vec<BoundExpr> = cur_schema.fields().iter().map(
+                |f| {
+                    BoundExpr::variable(
+                        f.name().to_string(),
+                        f.ty().clone(),
+                        f.is_nullable(),
+                    )
+                }
+            ).collect();
+            (outs, cur_schema.clone())
+        } else {
+            let mut outs = Vec::with_capacity(table.yield_clause.len());
+            let mut out_schema = DataSchema::new(Vec::new());
+            for id_sp in &table.yield_clause {
+                let name = id_sp.value().as_str();
+                let f = cur_schema.get_field_by_name(name)
+                    .ok_or_else(|| BindError::Unexpected)?;
+                outs.push(BoundExpr::variable(
+                    name.to_string(),
+                    f.ty().clone(),
+                    f.is_nullable(),
+                ));
+                let field = DataField::new(
+                    name.to_string(),
+                    f.ty().clone(),
+                    f.is_nullable(),
+                );
+                out_schema.push_back(&field)
+            }
+            (outs, out_schema)
+        };
+        Ok(BoundGraphPatternBindingTable {
+            pattern:bound_pattern,
+            yield_clause:outputs,
+            output_schema: output_schemas,
+        })
     }
 
     pub fn bind_result_statement(

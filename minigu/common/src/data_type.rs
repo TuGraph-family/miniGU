@@ -164,6 +164,10 @@ impl DataSchema {
     pub fn append(&mut self, schema: &DataSchema) {
         self.0.extend(schema.0.iter().cloned());
     }
+    
+    pub fn push_back(&mut self, field: &DataField) {
+        self.0.push(field.clone());
+    }
 
     pub fn get_field_by_name(&self, name: &str) -> Option<&DataField> {
         self.0.iter().find(|field| field.name() == name)

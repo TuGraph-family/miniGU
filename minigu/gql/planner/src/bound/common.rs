@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use minigu_common::types::LabelId;
 use serde::Serialize;
-
+use minigu_common::data_type::DataSchema;
 use crate::bound::BoundExpr;
 
 #[derive(Debug, Clone, Serialize)]
@@ -98,6 +98,13 @@ pub struct BoundGraphPattern {
     pub match_mode: Option<BoundMatchMode>,
     pub paths: Vec<Arc<BoundPathPattern>>,
     pub predicate: Option<BoundExpr>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct BoundGraphPatternBindingTable {
+    pub pattern: BoundGraphPattern,
+    pub yield_clause: Vec<BoundExpr>,
+    pub output_schema: DataSchema,
 }
 
 // match p1 = (a)-->()-->(b), p2 = (c)-->(d) return *;
