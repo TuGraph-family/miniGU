@@ -30,8 +30,8 @@ thiserror = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-diskann = { path = "./DiskANN-rs/DiskANN", optional = true }
-vector = { path = "./DiskANN-rs/vector", optional = true }
+diskann = { path = "../../DiskANN-rs/DiskANN", optional = true }
+vector = { path = "../../DiskANN-rs/vector", optional = true }
 
 [lints]
 workspace = true

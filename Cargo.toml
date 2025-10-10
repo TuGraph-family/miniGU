@@ -18,12 +18,8 @@ members = [
     "minigu/storage",
     "minigu/context",
 ]
-# Exclude third-party DiskANN-rs dependencies - they are only compiled conditionally
-# on Linux with vector-support feature via minigu/storage/Cargo.toml
-exclude = [
-    "minigu/storage/DiskANN-rs/vector",
-    "minigu/storage/DiskANN-rs/DiskANN",
-]
+
+exclude = ["DiskANN-rs"]
 resolver = "3"
 
 [workspace.package]
