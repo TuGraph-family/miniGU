@@ -6,7 +6,7 @@ use minigu_common::error::not_implemented;
 
 use super::error::{BindError, BindResult};
 use crate::binder::Binder;
-use crate::bound::{BoundElementPattern, BoundExpr, BoundGraphPattern, BoundLabelExpr, BoundMatchMode, BoundPathMode, BoundPathPattern, BoundPathPatternExpr, BoundVertexPattern};
+use crate::bound::{BoundElementPattern, BoundExpr, BoundGraphPattern, BoundGraphPatternBindingTable, BoundLabelExpr, BoundMatchMode, BoundPathMode, BoundPathPattern, BoundPathPatternExpr, BoundVertexPattern};
 
 impl Binder<'_> {
     pub fn bind_graph_pattern_binding_table(
@@ -14,7 +14,47 @@ impl Binder<'_> {
         table: &GraphPatternBindingTable,
     ) -> BindResult<BoundGraphPattern> {
         let graph = self.bind_graph_pattern(table.pattern.value())?;
-        todo!()
+        let bound_pattern = self.bind_graph_pattern(table.pattern.value())?;
+        let cur_schema = self.active_data_schema.as_ref().ok_or_else(
+            || BindError::Unexpected
+        )?;
+        let (outputs, output_schemas) = if table.yield_clause.is_empty() {
+            let outs:Vec<BoundExpr> = cur_schema.fields().iter().map(
+                |f| {
+                    BoundExpr::variable(
+                        f.name().to_string(),
+                        f.ty().clone(),
+                        f.is_nullable(),
+                    )
+                }
+            ).collect();
+            (outs, cur_schema.clone())
+        } else {
+            let mut outs = Vec::with_capacity(table.yield_clause.len());
+            let mut out_schema = DataSchema::new(Vec::new());
+            for id_sp in &table.yield_clause {
+                let name = id_sp.value().as_str();
+                let f = cur_schema.get_field_by_name(name)
+                    .ok_or_else(|| BindError::Unexpected)?;
+                outs.push(BoundExpr::variable(
+                    name.to_string(),
+                    f.ty().clone(),
+                    f.is_nullable(),
+                ));
+                let field = DataField::new(
+                    name.to_string(),
+                    f.ty().clone(),
+                    f.is_nullable(),
+                );
+                out_schema.push_back(&field)
+            }
+            (outs, out_schema)
+        };
+        Ok(BoundGraphPatternBindingTable {
+            pattern:bound_pattern,
+            yield_clause:outputs,
+            output_schema: output_schemas,
+        })
     }
 
     pub fn bind_graph_pattern(&mut self, pattern: &GraphPattern) -> BindResult<BoundGraphPattern> {
@@ -159,24 +199,24 @@ impl Binder<'_> {
 
 
 pub fn bind_path_pattern_prefix(prefix: &PathPatternPrefix) -> BindResult<BoundPathMode> {
-        match prefix {
-            PathPatternPrefix::PathMode(mode) => Ok(bind_path_mode(mode)),
-            PathPatternPrefix::PathSearch(_) => not_implemented("path search prefix", None),
-        }
+    match prefix {
+        PathPatternPrefix::PathMode(mode) => Ok(bind_path_mode(mode)),
+        PathPatternPrefix::PathSearch(_) => not_implemented("path search prefix", None),
     }
+}
 
-    pub fn bind_path_mode(mode: &PathMode) -> BoundPathMode {
-        match mode {
-            PathMode::Walk => BoundPathMode::Walk,
-            PathMode::Trail => BoundPathMode::Trail,
-            PathMode::Simple => BoundPathMode::Simple,
-            PathMode::Acyclic => BoundPathMode::Acyclic,
-        }
+pub fn bind_path_mode(mode: &PathMode) -> BoundPathMode {
+    match mode {
+        PathMode::Walk => BoundPathMode::Walk,
+        PathMode::Trail => BoundPathMode::Trail,
+        PathMode::Simple => BoundPathMode::Simple,
+        PathMode::Acyclic => BoundPathMode::Acyclic,
     }
+}
 
-    pub fn bind_match_mode(mode: &MatchMode) -> BoundMatchMode {
-        match mode {
-            MatchMode::Repeatable => BoundMatchMode::Repeatable,
-            MatchMode::Different => BoundMatchMode::Different,
-        }
+pub fn bind_match_mode(mode: &MatchMode) -> BoundMatchMode {
+    match mode {
+        MatchMode::Repeatable => BoundMatchMode::Repeatable,
+        MatchMode::Different => BoundMatchMode::Different,
     }
+}

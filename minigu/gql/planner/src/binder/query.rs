@@ -139,7 +139,8 @@ impl Binder<'_> {
     pub fn bind_match_statement(&mut self, statement: &MatchStatement) -> BindResult<BoundMatchStatement> {
         match statement {
             MatchStatement::Simple(table) => {
-                
+                let stmt  = self.bind_graph_pattern_binding_table(table)?;
+                Ok(BoundMatchStatement::Simple(stmt))
             }
             MatchStatement::Optional(_) => not_implemented("optional match statement", None),
         }
