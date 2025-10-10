@@ -1,2 +1,8 @@
 [files]
-extend-exclude = ["*.gql"]
+extend-exclude = [
+    "*.gql",
+    "minigu/storage/DiskANN-rs/**/tests/**",
+    "minigu/storage/DiskANN-rs/**/data/**",
+    "minigu/storage/DiskANN-rs/vector/build.rs",
+    "*.index",
+]
