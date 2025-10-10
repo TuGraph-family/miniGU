@@ -1,0 +1,5 @@
+[build]
+rustflags = ["-L", "/usr/lib/x86_64-linux-gnu/blas", "-l", "blas"]
+
+[target.'cfg(test)']
+rustflags = ["-L", "/usr/lib/x86_64-linux-gnu/blas", "-l", "blas"]
