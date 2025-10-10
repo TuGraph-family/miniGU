@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT license.
 [package]
-edition = "2024"
+edition = "2021"
 license = "MIT"
 name = "diskann"
 version = "0.1.0"
@@ -12,9 +12,9 @@ version = "0.1.0"
 bit-vec = "0.6.3"
 byteorder = "1.4.3"
 hashbrown = "0.13.2"
-matrixmultiply = "0.3"
 io-uring = "0.7"
 libc = "0.2"
+matrixmultiply = "0.3"
 num-traits = "0.2.15"
 rand = { version = "0.9", features = ["small_rng"] }
 rayon = "1.7.0"

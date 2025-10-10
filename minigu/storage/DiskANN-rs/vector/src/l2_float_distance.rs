@@ -168,8 +168,9 @@ pub fn distance_l2_vector_f32<const N: usize>(a: &[f32; N], b: &[f32; N]) -> f32
 
 #[cfg(test)]
 mod impl_tests {
-    use super::*;
     use approx::assert_abs_diff_eq;
+
+    use super::*;
 
     #[repr(C, align(32))]
     struct F32Slice104([f32; 104]);

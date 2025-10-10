@@ -94,8 +94,8 @@ mod e2e_test {
     }
 
     fn get_test_data(i1: usize, i2: usize) -> (F32Slice104, F32Slice104) {
-        use base64::engine::general_purpose;
         use base64::Engine as _;
+        use base64::engine::general_purpose;
 
         let b64 = general_purpose::STANDARD.decode(TEST_DATA).unwrap();
 

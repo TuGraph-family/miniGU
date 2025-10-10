@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
-use std::arch::x86_64::{_mm_prefetch, _MM_HINT_T0};
+use std::arch::x86_64::{_MM_HINT_T0, _mm_prefetch};
 
 /// Prefetch the given vector in chunks of 64 bytes, which is a cache line size
 /// NOTE: good efficiency when total_vec_size is integral multiple of 64
