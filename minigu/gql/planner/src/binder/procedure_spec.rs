@@ -4,7 +4,7 @@ use minigu_common::error::not_implemented;
 
 use super::Binder;
 use super::error::BindResult;
-use crate::bound::{BoundProcedure, BoundStatement};
+use crate::bound::{BoundProcedure, BoundStatement, BoundExplainStatement};
 
 impl Binder<'_> {
     pub fn bind_procedure(&mut self, procedure: &Procedure) -> BindResult<BoundProcedure> {
@@ -36,6 +36,12 @@ impl Binder<'_> {
                 .bind_composite_query_statement(statement)
                 .map(BoundStatement::Query),
             Statement::Data(_) => not_implemented("data-modifying statement".to_string(), None),
+            Statement::Explain(explain) => {
+                let bound_statement = self.bind_statement(&explain.statement.value())?;
+                Ok(BoundStatement::Explain(Box::new(BoundExplainStatement {
+                    statement: Box::new(bound_statement),
+                })))
+            }
         }
     }
 }

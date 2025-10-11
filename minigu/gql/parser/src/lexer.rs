@@ -158,6 +158,8 @@ pub enum TokenKind<'a> {
     Exists,
     #[token("exp", ignore(case))]
     Exp,
+    #[token("explain", ignore(case))]
+    Explain,
     #[token("false", ignore(case))]
     False,
     #[token("filter", ignore(case))]
