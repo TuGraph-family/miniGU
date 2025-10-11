@@ -1,5 +1,11 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT license.
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Copyright (c) 2025 MiniGU.
+//
+// Licensed under the MIT License. See DiskANN-rs/LICENSE for license information.
+//
+// Modifications for miniGU integration:
+// - Added build_from_memory and append_from_memory for memory-based dataset construction
+// - Added copy_aligned_data_from_memory for zero-copy vector loading
 #![warn(missing_debug_implementations, missing_docs)]
 
 //! In-memory Dataset

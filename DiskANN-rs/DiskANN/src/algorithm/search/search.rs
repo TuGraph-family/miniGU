@@ -1,5 +1,14 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT license.
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Copyright (c) 2025 MiniGU.
+//
+// Licensed under the MIT License. See DiskANN-rs/LICENSE for license information.
+//
+// Modifications for miniGU integration:
+// - Added FilterIndex support for pre-filter and post-filter search
+// - Enhanced search_with_l_override and greedy_search to support filtered search
+// - Modified get_init_ids to find alternative start points when pre-filtering
+// - Added early termination logic for filtered neighbor expansion
+
 #![warn(missing_debug_implementations, missing_docs)]
 
 //! Search algorithm for index construction and query

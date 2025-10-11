@@ -1,6 +1,3 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT license.
-
 //! Filter mask trait for DiskANN search filtering
 
 /// Filter mask trait for vector search filtering

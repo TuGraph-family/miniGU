@@ -1,5 +1,13 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT license.
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Copyright (c) 2025 MiniGU.
+//
+// Licensed under the MIT License. See DiskANN-rs/LICENSE for license information.
+//
+// Modifications:
+// - Replaced cblas::sgemm and snrm2 with matrixmultiply::sgemm and a parallel sum-of-squares;
+//   removed native OpenBLAS dependency and FFI calls.
+// - Kept row-major semantics; use explicit strides to compute data * centers^T.
+// - Dependencies: -cblas -openblas_src, +matrixmultiply.
 #![warn(missing_debug_implementations, missing_docs)]
 
 //! Aligned allocator

@@ -1,5 +1,14 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT license.
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Copyright (c) 2025 MiniGU.
+//
+// Licensed under the MIT License. See DiskANN-rs/LICENSE for license information.
+//
+// Modifications:
+// - Added memory-based interface methods for miniGU integration: `build_from_memory`,
+//   `insert_from_memory`, and `get_aligned_vector_data`.
+// - Extended the `search` method to include additional parameters: `distances: &mut [f32]`,
+//   `filter_mask: Option<&dyn FilterIndex>`, and `should_pre: bool`, allowing for more flexible
+//   search results with filtering and distance tracking.
 #![warn(missing_docs)]
 
 //! ANN in-memory index abstraction

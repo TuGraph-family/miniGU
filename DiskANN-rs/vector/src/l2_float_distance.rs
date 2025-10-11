@@ -1,5 +1,13 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT license.
+// Copyright (c) Microsoft Corporation.  All rights reserved.
+// Copyright (c) 2025 MiniGU.
+//
+// Licensed under the MIT License. See DiskANN-rs/LICENSE for license information.
+//
+// Modifications:
+// - Added scalar fallbacks for f32/f16; unified with AVX2 via const-generic API.
+// - Introduced runtime AVX2 dispatch using is_x86_feature_detected!("avx2").
+// - Removed upstream compile-time requirement for -C target-feature=+avx2.
+// - Added tests for scalar↔AVX2 consistency and dispatch behavior.
 #![warn(missing_debug_implementations, missing_docs)]
 
 //! Distance calculation for L2 Metric
@@ -9,9 +17,6 @@ use crate::Half;
 // ==================== Scalar Implementation (Universal Fallback) ====================
 
 /// Calculate L2 squared distance using scalar operations (fallback for non-AVX2)
-///
-/// This function is exposed as `pub(crate)` to allow direct testing of the scalar
-/// implementation independently of runtime dispatch logic.
 #[inline]
 pub(crate) fn distance_l2_scalar_f32<const N: usize>(a: &[f32; N], b: &[f32; N]) -> f32 {
     let mut sum = 0.0f32;
@@ -47,9 +52,6 @@ use std::arch::x86_64::*;
 ///
 /// # Safety
 /// This function requires AVX2 support. Caller must ensure CPU has AVX2 capability.
-///
-/// This function is exposed as `pub(crate)` to allow direct testing of the AVX2
-/// implementation independently of runtime dispatch logic.
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx2")]
 #[inline]
@@ -86,9 +88,6 @@ pub(crate) unsafe fn distance_l2_avx2_f16<const N: usize>(a: &[Half; N], b: &[Ha
 ///
 /// # Safety
 /// This function requires AVX2 support. Caller must ensure CPU has AVX2 capability.
-///
-/// This function is exposed as `pub(crate)` to allow direct testing of the AVX2
-/// implementation independently of runtime dispatch logic.
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx2")]
 #[inline]
