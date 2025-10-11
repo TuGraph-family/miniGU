@@ -27,6 +27,10 @@ impl LogicalPlanner {
                 self.plan_catalog_modifying_statement(statement)
             }
             BoundStatement::Query(statement) => self.plan_composite_query_statement(statement),
+            BoundStatement::Explain(explain) => {
+                let plan = self.plan_statement(*explain.statement)?;
+                Ok(plan)
+            }
         }
     }
 }

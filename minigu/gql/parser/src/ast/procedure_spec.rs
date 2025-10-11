@@ -17,10 +17,16 @@ pub struct Procedure {
 }
 
 #[apply(base)]
+pub struct ExplainStatement {
+    pub statement: Box<Spanned<Statement>>,
+}
+
+#[apply(base)]
 pub enum Statement {
     Catalog(LinearCatalogModifyingStatement),
     Query(CompositeQueryStatement),
     Data(LinearDataModifyingStatement),
+    Explain(ExplainStatement),
 }
 
 #[apply(base)]

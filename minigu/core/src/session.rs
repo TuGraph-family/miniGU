@@ -81,24 +81,32 @@ impl Session {
         let result = activity
             .procedure
             .as_ref()
-            .map(|procedure| self.handle_procedure(procedure.value()))
+            .map(|procedure| {
+                let proc = procedure.value();
+                let is_explain = matches!(proc.statement.value(), gql_parser::ast::Statement::Explain(_));
+                self.handle_procedure(proc, is_explain)
+            })
             .transpose()?
             .unwrap_or_default();
         Ok(result)
     }
 
-    fn handle_procedure(&self, procedure: &Procedure) -> Result<QueryResult> {
+    fn handle_procedure(&self, procedure: &Procedure, is_explain: bool) -> Result<QueryResult> {
         let mut metrics = QueryMetrics::default();
 
         let start = Instant::now();
         let planner = Planner::new(self.context.clone());
-        let physical_plan = planner.plan_query(procedure)?;
+        let plan = planner.plan_query(procedure, is_explain)?;
         metrics.planning_time = start.elapsed();
 
-        let schema = physical_plan.schema().cloned();
+        if is_explain {
+            return self.format_explain(plan);
+        }
+
+        let schema = plan.schema().cloned();
         let start = Instant::now();
         let chunks: Vec<_> = self.context.database().runtime().scope(|_| {
-            let mut executor = ExecutorBuilder::new(self.context.clone()).build(&physical_plan);
+            let mut executor = ExecutorBuilder::new(self.context.clone()).build(&plan);
             executor.into_iter().try_collect()
         })?;
         metrics.execution_time = start.elapsed();
@@ -108,5 +116,29 @@ impl Session {
             metrics,
             chunks,
         })
+    }
+
+    fn format_explain(&self, plan: impl PlanData) -> Result<QueryResult> {
+        let mut output = String::new();
+        self.format_explain_output(&plan, &mut output, 0);
+
+        let schema = Some(Arc::new(DataSchema::new(vec![DataField::new(
+            "EXPLAIN".to_string(),
+            LogicalType::String,
+            false
+        )])));
+
+        let chunks = vec![DataChunk::new(
+            vec![Arc::new(arrow::array::StringArray::from(vec![output]))]
+        )];
+        Ok(QueryResult {
+            schema,
+            metrics: QueryMetrics::default(),
+            chunks,
+        })
+    }
+
+    fn format_explain_output(& self, plan: &impl PlanData, output: &mut String, indent: usize) {
+        // todo: format logical plan output
     }
 }

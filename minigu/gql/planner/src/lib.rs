@@ -23,7 +23,7 @@ impl Planner {
         Self { context }
     }
 
-    pub fn plan_query(&self, query: &Procedure) -> PlanResult<PlanNode> {
+    pub fn plan_query(&self, query: &Procedure, is_explain: bool) -> PlanResult<PlanNode> {
         let binder = Binder::new(
             self.context.database().catalog(),
             self.context.current_schema.clone().map(|s| s as _),
@@ -33,6 +33,9 @@ impl Planner {
         );
         let bound = binder.bind(query)?;
         let logical_plan = LogicalPlanner::new().create_logical_plan(bound)?;
+        if is_explain {
+            return Ok(logical_plan);
+        }
         Optimizer::new().create_physical_plan(&logical_plan)
     }
 }
