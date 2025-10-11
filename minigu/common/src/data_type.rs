@@ -12,7 +12,6 @@ use crate::constants::{
     DST_FIELD_NAME, EID_FIELD_NAME, LABEL_FIELD_NAME, SRC_FIELD_NAME, VID_FIELD_NAME,
 };
 
-
 pub(crate) struct PredefinedFields;
 
 impl PredefinedFields {
@@ -230,5 +229,3 @@ impl fmt::Display for DataField {
         write!(f, "{}::{}", self.name, self.ty)
     }
 }
-
-
