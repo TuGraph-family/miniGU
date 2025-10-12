@@ -18,6 +18,7 @@ use crate::data_type::DataSchema;
 pub struct DataChunk {
     columns: Vec<ArrayRef>,
     filter: Option<BooleanArray>,
+    cur_idx: Option<usize>, // only used in factorized result_set. None represents unflat
 }
 
 impl DataChunk {
@@ -31,6 +32,7 @@ impl DataChunk {
         Self {
             columns,
             filter: None,
+            cur_idx: Some(0),
         }
     }
 
@@ -188,12 +190,38 @@ impl DataChunk {
             .map(|c| c.slice(offset, length))
             .collect();
         let filter = self.filter.as_ref().map(|f| f.slice(offset, length));
-        Self { columns, filter }
+        Self {
+            columns,
+            filter,
+            cur_idx: Some(0),
+        }
     }
 
     #[inline]
     pub fn filter(&self) -> Option<&BooleanArray> {
         self.filter.as_ref()
+    }
+
+    #[inline]
+    pub fn set_cur_idx(&mut self, idx: Option<usize>) {
+        self.cur_idx = idx;
+    }
+
+    #[inline]
+    pub fn cur_idx(&self) -> Option<usize> {
+        self.cur_idx
+    }
+
+    /// Sets the chunk as unflat (cur_idx = None)
+    #[inline]
+    pub fn set_unflat(&mut self) {
+        self.cur_idx = None;
+    }
+
+    /// Checks if the chunk is unflat
+    #[inline]
+    pub fn is_unflat(&self) -> bool {
+        self.cur_idx.is_none()
     }
 
     #[inline]
@@ -255,6 +283,7 @@ impl DataChunk {
         Self {
             columns,
             filter: None,
+            cur_idx: Some(0),
         }
     }
 
@@ -272,7 +301,11 @@ impl DataChunk {
             .as_ref()
             .map(|f| compute::take(f, indices, None).expect("`take` should be successful"))
             .map(|f| f.as_boolean().clone());
-        Self { columns, filter }
+        Self {
+            columns,
+            filter,
+            cur_idx: Some(0),
+        }
     }
 
     /// Converts the data chunk to an arrow [`RecordBatch`].

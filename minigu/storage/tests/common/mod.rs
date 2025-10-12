@@ -6,9 +6,10 @@ use minigu_common::value::ScalarValue;
 use minigu_storage::model::edge::Edge;
 use minigu_storage::model::properties::PropertyRecord;
 use minigu_storage::model::vertex::Vertex;
+use minigu_storage::tp::MemoryGraph;
 use minigu_storage::tp::checkpoint::CheckpointManagerConfig;
-use minigu_storage::tp::{IsolationLevel, MemoryGraph};
 use minigu_storage::wal::graph_wal::WalManagerConfig;
+use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
 
 pub const PERSON_LABEL_ID: LabelId = LabelId::new(1).unwrap();
 pub const FRIEND_LABEL_ID: LabelId = LabelId::new(1).unwrap();
@@ -74,7 +75,10 @@ pub fn create_test_graph() -> (Arc<MemoryGraph>, TestCleaner) {
     let (graph, cleaner) = create_empty_graph();
 
     // Initialize some test data
-    let txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
 
     let alice = Vertex::new(
         1,
