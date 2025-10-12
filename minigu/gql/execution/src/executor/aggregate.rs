@@ -92,7 +92,7 @@ impl AggregateSpec {
 
 /// Aggregate state for storing intermediate results during aggregation
 #[derive(Debug)]
-enum AggregateState {
+pub enum AggregateState {
     Count {
         count: i64,
     },
@@ -124,7 +124,7 @@ enum AggregateState {
 
 impl AggregateState {
     /// Create a new aggregate state
-    fn new(func: &AggregateFunction, distinct: bool) -> Self {
+    pub fn new(func: &AggregateFunction, distinct: bool) -> Self {
         match func {
             AggregateFunction::Count => Self::Count { count: 0 },
             AggregateFunction::CountExpression => Self::CountExpression {
@@ -155,7 +155,7 @@ impl AggregateState {
     }
 
     /// Update the aggregate state with a new value
-    fn update(&mut self, value: Option<ScalarValue>) -> ExecutionResult<()> {
+    pub fn update(&mut self, value: Option<ScalarValue>) -> ExecutionResult<()> {
         match self {
             AggregateState::Count { count } => {
                 *count += 1;
@@ -577,7 +577,7 @@ impl AggregateState {
     }
 
     /// Finalize the aggregate state and return the result
-    fn finalize(&self) -> ExecutionResult<ScalarValue> {
+    pub fn finalize(&self) -> ExecutionResult<ScalarValue> {
         match self {
             AggregateState::Count { count } => Ok(ScalarValue::Int64(Some(*count))),
 
@@ -673,7 +673,7 @@ impl AggregateState {
 }
 
 /// Check if a scalar value is null
-fn is_null_value(value: &ScalarValue) -> bool {
+pub fn is_null_value(value: &ScalarValue) -> bool {
     matches!(
         value,
         ScalarValue::Null
@@ -695,7 +695,7 @@ fn is_null_value(value: &ScalarValue) -> bool {
 }
 
 /// Convert a vector of scalar values to an array using macro to reduce code duplication
-fn scalar_values_to_array(values: Vec<ScalarValue>) -> ArrayRef {
+pub fn scalar_values_to_array(values: Vec<ScalarValue>) -> ArrayRef {
     if values.is_empty() {
         return Arc::new(Int64Array::from(Vec::<Option<i64>>::new())) as ArrayRef;
     }
