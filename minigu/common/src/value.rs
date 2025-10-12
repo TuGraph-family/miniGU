@@ -390,8 +390,10 @@ impl ScalarValue {
             ScalarValue::UInt64(None) => Err(ConversionError::NullValue),
             ScalarValue::Float32(Some(v)) => {
                 let f = v.into_inner();
-                if f.is_nan() || f.is_infinite() || f < 0.0 || f > u8::MAX as f32 {
+                if f.is_nan() || f.is_infinite() {
                     Err(ConversionError::ParseError(f.to_string()))
+                } else if f < 0.0 || f > u8::MAX as f32 {
+                    Err(ConversionError::Overflow)
                 } else {
                     Ok(f as u8)
                 }
@@ -399,8 +401,10 @@ impl ScalarValue {
             ScalarValue::Float32(None) => Err(ConversionError::NullValue),
             ScalarValue::Float64(Some(v)) => {
                 let f = v.into_inner();
-                if f.is_nan() || f.is_infinite() || f < 0.0 || f > u8::MAX as f64 {
+                if f.is_nan() || f.is_infinite() {
                     Err(ConversionError::ParseError(f.to_string()))
+                } else if f < 0.0 || f > u8::MAX as f64 {
+                    Err(ConversionError::Overflow)
                 } else {
                     Ok(f as u8)
                 }
@@ -474,8 +478,10 @@ impl ScalarValue {
             ScalarValue::UInt64(None) => Err(ConversionError::NullValue),
             ScalarValue::Float32(Some(v)) => {
                 let f = v.into_inner();
-                if f.is_nan() || f.is_infinite() || f < 0.0 || f > u16::MAX as f32 {
+                if f.is_nan() || f.is_infinite() {
                     Err(ConversionError::ParseError(f.to_string()))
+                } else if f < 0.0 || f > u16::MAX as f32 {
+                    Err(ConversionError::Overflow)
                 } else {
                     Ok(f as u16)
                 }
@@ -483,8 +489,10 @@ impl ScalarValue {
             ScalarValue::Float32(None) => Err(ConversionError::NullValue),
             ScalarValue::Float64(Some(v)) => {
                 let f = v.into_inner();
-                if f.is_nan() || f.is_infinite() || f < 0.0 || f > u16::MAX as f64 {
+                if f.is_nan() || f.is_infinite() {
                     Err(ConversionError::ParseError(f.to_string()))
+                } else if f < 0.0 || f > u16::MAX as f64 {
+                    Err(ConversionError::Overflow)
                 } else {
                     Ok(f as u16)
                 }
@@ -552,8 +560,10 @@ impl ScalarValue {
             ScalarValue::UInt64(None) => Err(ConversionError::NullValue),
             ScalarValue::Float32(Some(v)) => {
                 let f = v.into_inner();
-                if f.is_nan() || f.is_infinite() || f < 0.0 || f > u32::MAX as f32 {
+                if f.is_nan() || f.is_infinite() {
                     Err(ConversionError::ParseError(f.to_string()))
+                } else if f < 0.0 || f > u32::MAX as f32 {
+                    Err(ConversionError::Overflow)
                 } else {
                     Ok(f as u32)
                 }
@@ -561,8 +571,10 @@ impl ScalarValue {
             ScalarValue::Float32(None) => Err(ConversionError::NullValue),
             ScalarValue::Float64(Some(v)) => {
                 let f = v.into_inner();
-                if f.is_nan() || f.is_infinite() || f < 0.0 || f > u32::MAX as f64 {
+                if f.is_nan() || f.is_infinite() {
                     Err(ConversionError::ParseError(f.to_string()))
+                } else if f < 0.0 || f > u32::MAX as f64 {
+                    Err(ConversionError::Overflow)
                 } else {
                     Ok(f as u32)
                 }
@@ -624,8 +636,10 @@ impl ScalarValue {
             ScalarValue::UInt64(None) => Err(ConversionError::NullValue),
             ScalarValue::Float32(Some(v)) => {
                 let f = v.into_inner();
-                if f.is_nan() || f.is_infinite() || f < 0.0 || f > u64::MAX as f32 {
+                if f.is_nan() || f.is_infinite() {
                     Err(ConversionError::ParseError(f.to_string()))
+                } else if f < 0.0 || f > u64::MAX as f32 {
+                    Err(ConversionError::Overflow)
                 } else {
                     Ok(f as u64)
                 }
@@ -633,8 +647,10 @@ impl ScalarValue {
             ScalarValue::Float32(None) => Err(ConversionError::NullValue),
             ScalarValue::Float64(Some(v)) => {
                 let f = v.into_inner();
-                if f.is_nan() || f.is_infinite() || f < 0.0 || f > u64::MAX as f64 {
+                if f.is_nan() || f.is_infinite() {
                     Err(ConversionError::ParseError(f.to_string()))
+                } else if f < 0.0 || f > u64::MAX as f64 {
+                    Err(ConversionError::Overflow)
                 } else {
                     Ok(f as u64)
                 }
@@ -674,8 +690,10 @@ impl ScalarValue {
             ScalarValue::Float32(None) => Err(ConversionError::NullValue),
             ScalarValue::Float64(Some(v)) => {
                 let f = v.into_inner();
-                if f.is_nan() || f.is_infinite() || f > f32::MAX as f64 || f < f32::MIN as f64 {
+                if f.is_nan() || f.is_infinite() {
                     Err(ConversionError::ParseError(f.to_string()))
+                } else if f > f32::MAX as f64 || f < f32::MIN as f64 {
+                    Err(ConversionError::Overflow)
                 } else {
                     Ok(f as f32)
                 }
