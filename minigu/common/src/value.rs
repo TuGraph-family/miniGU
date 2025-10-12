@@ -400,7 +400,7 @@ impl ScalarValue {
             ScalarValue::Float64(Some(v)) => {
                 let f = v.into_inner();
                 if f.is_nan() || f.is_infinite() || f < 0.0 || f > u8::MAX as f64 {
-                    Err(ConversionError::ParseError(f.to_string()))
+                    Err(ConversionError::Overflow)
                 } else {
                     Ok(f as u8)
                 }
