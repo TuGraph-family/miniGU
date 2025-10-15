@@ -34,4 +34,14 @@ impl PlanData for Call {
     fn base(&self) -> &PlanBase {
         &self.base
     }
+    
+    fn explain(&self) -> Option<String> {
+        let proc_name = self.procedure.name().to_string();
+        let args_str = self.args
+            .iter()
+            .map(|arg| format!("{:?}", arg))
+            .collect::<Vec<_>>()
+            .join(", ");
+        Some(format!("Call: {}({})", proc_name, args_str))
+    }
 }

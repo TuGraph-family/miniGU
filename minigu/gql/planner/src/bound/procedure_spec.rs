@@ -18,7 +18,7 @@ impl BoundProcedure {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct BoundExplainStatement {
-    pub statement: Box<BoundStatement>,
+    pub statement: BoundStatement,
 }
 
 #[derive(Debug, Clone, Serialize)]

@@ -49,6 +49,8 @@ pub trait PlanData {
     fn children(&self) -> &[PlanNode] {
         self.base().children()
     }
+    // each node needs 
+    fn explain(&self) -> Option<String> { None }
 }
 
 #[derive(Debug, Clone, Serialize)]
