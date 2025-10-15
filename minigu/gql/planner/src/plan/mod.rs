@@ -5,7 +5,9 @@ pub mod logical_match;
 pub mod one_row;
 pub mod project;
 pub mod sort;
+pub mod scan;
 
+use std::iter::Scan;
 use std::sync::Arc;
 
 use minigu_common::data_type::DataSchemaRef;
@@ -17,6 +19,7 @@ use crate::plan::limit::Limit;
 use crate::plan::logical_match::LogicalMatch;
 use crate::plan::one_row::OneRow;
 use crate::plan::project::Project;
+use crate::plan::scan::PhysicalNodeScan;
 use crate::plan::sort::Sort;
 
 #[derive(Debug, Clone, Serialize)]
@@ -70,6 +73,7 @@ pub enum PlanNode {
     PhysicalOneRow(Arc<OneRow>),
     PhysicalSort(Arc<Sort>),
     PhysicalLimit(Arc<Limit>),
+    PhysicalNodeScan(Arc<PhysicalNodeScan>),
 }
 
 impl PlanData for PlanNode {
@@ -89,6 +93,7 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalOneRow(node) => node.base(),
             PlanNode::PhysicalSort(node) => node.base(),
             PlanNode::PhysicalLimit(node) => node.base(),
+            PlanNode::PhysicalNodeScan(node) => node.base(),
         }
     }
 }

@@ -139,58 +139,11 @@ impl Binder<'_> {
     pub fn bind_match_statement(&mut self, statement: &MatchStatement) -> BindResult<BoundMatchStatement> {
         match statement {
             MatchStatement::Simple(table) => {
-                let stmt  = self.bind_graph_pattern_binding_table(table)?;
+                let stmt  = self.bind_graph_pattern_binding_table(table.value())?;
                 Ok(BoundMatchStatement::Simple(stmt))
             }
             MatchStatement::Optional(_) => not_implemented("optional match statement", None),
         }
-    }
-
-    pub fn bind_graph_pattern_binding_table(
-        &mut self,
-        table: &GraphPatternBindingTable,
-    ) -> BindResult<BoundGraphPatternBindingTable> {
-        let bound_pattern = self.bind_graph_pattern(table.pattern.value())?;
-        let cur_schema = self.active_data_schema.as_ref().ok_or_else(
-            || BindError::Unexpected
-        )?;
-        let (outputs, output_schemas) = if table.yield_clause.is_empty() {
-            let outs:Vec<BoundExpr> = cur_schema.fields().iter().map(
-                |f| {
-                    BoundExpr::variable(
-                        f.name().to_string(),
-                        f.ty().clone(),
-                        f.is_nullable(),
-                    )
-                }
-            ).collect();
-            (outs, cur_schema.clone())
-        } else {
-            let mut outs = Vec::with_capacity(table.yield_clause.len());
-            let mut out_schema = DataSchema::new(Vec::new());
-            for id_sp in &table.yield_clause {
-                let name = id_sp.value().as_str();
-                let f = cur_schema.get_field_by_name(name)
-                    .ok_or_else(|| BindError::Unexpected)?;
-                outs.push(BoundExpr::variable(
-                    name.to_string(),
-                    f.ty().clone(),
-                    f.is_nullable(),
-                ));
-                let field = DataField::new(
-                    name.to_string(),
-                    f.ty().clone(),
-                    f.is_nullable(),
-                );
-                out_schema.push_back(&field)
-            }
-            (outs, out_schema)
-        };
-        Ok(BoundGraphPatternBindingTable {
-            pattern:bound_pattern,
-            yield_clause:outputs,
-            output_schema: output_schemas,
-        })
     }
 
     pub fn bind_result_statement(

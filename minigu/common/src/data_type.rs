@@ -160,6 +160,10 @@ impl DataSchema {
     pub fn new(fields: Vec<DataField>) -> Self {
         Self(fields)
     }
+    
+    pub fn size(&self) -> usize {
+        self.0.len()
+    }
 
     pub fn append(&mut self, schema: &DataSchema) {
         self.0.extend(schema.0.iter().cloned());

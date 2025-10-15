@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use gql_parser::ast::{ElementPattern, ElementPatternFiller, GraphPattern, GraphPatternBindingTable, LabelExpr, MatchMode, PathMode, PathPattern, PathPatternExpr, PathPatternPrefix};
+use gql_parser::span::Spanned;
 use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 use minigu_common::error::not_implemented;
 
@@ -12,7 +13,7 @@ impl Binder<'_> {
     pub fn bind_graph_pattern_binding_table(
         &mut self,
         table: &GraphPatternBindingTable,
-    ) -> BindResult<BoundGraphPattern> {
+    ) -> BindResult<BoundGraphPatternBindingTable> {
         let graph = self.bind_graph_pattern(table.pattern.value())?;
         let bound_pattern = self.bind_graph_pattern(table.pattern.value())?;
         let cur_schema = self.active_data_schema.as_ref().ok_or_else(
@@ -51,9 +52,9 @@ impl Binder<'_> {
             (outs, out_schema)
         };
         Ok(BoundGraphPatternBindingTable {
-            pattern:bound_pattern,
+            pattern:bound_pattern, 
             yield_clause:outputs,
-            output_schema: output_schemas,
+            output_schema:output_schemas
         })
     }
 
@@ -65,7 +66,24 @@ impl Binder<'_> {
             .match_mode
             .as_ref()
             .map(|m| bind_match_mode(m.value()));
-        todo!()
+        
+        let mut paths: Vec<Arc<BoundPathPattern>> = Vec::with_capacity(pattern.patterns.len());
+        for path in pattern.patterns.iter() {
+            let bound = self.bind_path_pattern(path.value())?;
+            paths.push(bound);
+        };
+        
+        let predicate: Option<BoundExpr> = match pattern.where_clause.as_ref() {
+            Some(expr) => Some(self.bind_value_expression(expr.value())?),
+            None => None,
+        };
+        
+        Ok(BoundGraphPattern {
+            match_mode,
+            paths,
+            predicate,
+        })
+        
     }
 
     pub fn bind_path_pattern(
@@ -90,7 +108,26 @@ impl Binder<'_> {
         match expr {
             Union(_) => not_implemented("union expression", None),
             Alternation(_) => not_implemented("alternate expression", None),
-            Concat(_) => not_implemented("concat expression", None),
+            Concat(items) => {
+                let mut bound_parts: Vec<BoundPathPatternExpr> = Vec::with_capacity(items.len());
+                for it in items.iter() {
+                    let child = self.bind_path_pattern_expr(it.value())?;
+                    match child {
+                        BoundPathPatternExpr::Concat(mut v) => bound_parts.extend(v),
+                        other => bound_parts.push(other),
+                    }
+                }
+                if bound_parts.is_empty() {
+                    return Err(BindError::Unexpected);
+                }
+                
+                if bound_parts.len() == 1 {
+                    return Ok(bound_parts.pop().unwrap());
+                }
+                
+                Ok(BoundPathPatternExpr::Concat(bound_parts))
+                
+            }
             Quantified { .. } => not_implemented("quantified expression", None),
             Optional(_) => not_implemented("optional expression", None),
             Grouped(_) => not_implemented("grouped expression", None),
@@ -126,7 +163,7 @@ impl Binder<'_> {
                 let graph = self.current_graph.as_ref().ok_or_else(
                     || BindError::Unexpected
                 )?;
-                // To handle. 
+                // To handle.
                 let id = graph.graph_type().get_label_id(name)?.unwrap();
                 Ok(BoundLabelExpr::Label(id))
             }
@@ -151,13 +188,25 @@ impl Binder<'_> {
         &mut self,
         f: &ElementPatternFiller,
     ) -> BindResult<BoundVertexPattern> {
-        if let Some(var) = &f.variable {
-            let name = var.value().to_string();
-            let vertex_ty = LogicalType::Vertex(
-                vec![DataField::new("id".into(), LogicalType::Int64, false)],
-            );
-            self.register_variable(name.as_str(), vertex_ty, false)?;
+        let var =  match &f.variable {
+            Some(var) => var.value().to_string(),
+            // If user didnt give a name, there whill generate a name.
+            None => {
+                let idx = self
+                    .active_data_schema
+                    .as_ref()
+                    .map(|s| s.size())
+                    .unwrap_or(0);
+                format!("__n{idx}")
+            }
         }
+
+        let vertex_ty = LogicalType::Vertex(
+            vec![DataField::new("id".into(), LogicalType::Int64, false)],
+        );
+        self.register_variable(var.as_str(), vertex_ty, false)?;
+        
+        
         let label = match &f.label {
             Some(sp) => Some(self.bind_label_expr(sp.value())?),
             None => None,
@@ -167,6 +216,7 @@ impl Binder<'_> {
             Some(sp) => None
         };
         Ok(BoundVertexPattern {
+            var,
             label,
             predicate
         })
@@ -178,6 +228,11 @@ impl Binder<'_> {
         ty: LogicalType,
         nullable: bool,
     ) -> BindResult<()> {
+        if self.active_data_schema.is_none() {
+            let schema = DataSchema::new(vec![DataField::new(name.to_string(), ty, nullable)]);
+            self.active_data_schema = Some(schema);
+            return Ok(());
+        }
         let schema = self.active_data_schema.as_mut().ok_or_else(|| BindError::Unexpected)?;
         if let Some(f) = schema.get_field_by_name(name) {
             if f.ty() != &ty {

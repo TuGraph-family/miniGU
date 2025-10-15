@@ -1,13 +1,15 @@
 use std::sync::Arc;
 
 use itertools::Itertools;
-
-use crate::error::PlanResult;
+use minigu_common::error::not_implemented;
+use crate::bound::{BoundElementPattern, BoundGraphPattern, BoundPathPatternExpr};
+use crate::error::{PlanError, PlanResult};
 use crate::plan::filter::Filter;
 use crate::plan::limit::Limit;
 use crate::plan::project::Project;
 use crate::plan::sort::Sort;
 use crate::plan::{PlanData, PlanNode};
+use crate::plan::scan::PhysicalNodeScan;
 
 #[derive(Debug, Default)]
 pub struct Optimizer {}
@@ -22,6 +24,33 @@ impl Optimizer {
     }
 }
 
+fn extract_single_node(p: &BoundGraphPattern) -> Option<(String, Vec<String>, i64)> {
+    if p.paths.len() != 1 { return None; }
+    if p.predicate.is_some() { return None; }
+
+    let path = &p.paths[0];
+
+    match path.expr {
+        BoundPathPatternExpr::Pattern(pattern) => {
+            match pattern {
+                BoundElementPattern::Vertex(vertex) => {
+                    
+                }
+            }
+        }
+        _ => None
+    }
+    if let Some(node) = path.expr {
+        let var = node.var.clone();                   // 例如 "n"
+        let labels = node.labels.clone();             // 例如 ["Person"] 或 []
+        let graph_id = 1;                             // 若你支持多图，在 pattern/match_mode 里取
+        return Some((var, labels, graph_id));
+    }
+
+
+    None
+}
+
 fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
     let children: Vec<_> = logical_plan
         .children()
@@ -29,7 +58,21 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
         .map(create_physical_plan_impl)
         .try_collect()?;
     match logical_plan {
-        PlanNode::LogicalMatch(_) => todo!(),
+        PlanNode::LogicalMatch(m) => {
+            assert!(children.is_empty());
+            let (var, labels, graph_id) = extract_single_node(&m.pattern)
+                .ok_or_else(|| PlanError::InvalidOperation("extract_error"))?;
+            let col_name = choose_node_id_col_name(&m.output_schema, &var);
+            let field = DataField::new(col_name, LogicalType::Int64, /*nullable=*/false);
+            let scan_schema = DataSchema::new(vec![field]);
+            let node = PhysicalNodeScan {
+                base: PlanBase { schema: Some(Arc::new(scan_schema)), children: vec![] },
+                var,
+                labels,
+                graph_id,
+            };
+            Ok(PlanNode::PhysicalNodeScan(Arc::new(node)))
+        }
         PlanNode::LogicalFilter(filter) => {
             let [child] = children
                 .try_into()

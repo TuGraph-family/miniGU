@@ -70,6 +70,7 @@ pub enum BoundElementPattern {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct BoundVertexPattern {
+    pub var: String,
     pub label: Option<BoundLabelExpr>,
     pub predicate: Option<BoundExpr>,
 }
@@ -87,6 +88,7 @@ pub enum BoundEdgePatternKind {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct BoundEdgePattern {
+    pub var: Option<String>,
     pub kind: BoundEdgePatternKind,
     pub label: Option<BoundLabelExpr>,
     pub predicate: Option<BoundExpr>,
