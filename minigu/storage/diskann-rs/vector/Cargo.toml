@@ -13,8 +13,6 @@ vector-support = []
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bytemuck = "1.7.0"
-half = "2.2.1"
 thiserror = { version = "2.0.12" }
 
 [dev-dependencies]
