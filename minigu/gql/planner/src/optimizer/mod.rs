@@ -2,14 +2,15 @@ use std::sync::Arc;
 
 use itertools::Itertools;
 use minigu_common::error::not_implemented;
+use minigu_common::types::LabelId;
 use crate::bound::{BoundElementPattern, BoundGraphPattern, BoundPathPatternExpr};
 use crate::error::{PlanError, PlanResult};
 use crate::plan::filter::Filter;
 use crate::plan::limit::Limit;
 use crate::plan::project::Project;
+use crate::plan::scan::PhysicalNodeScan;
 use crate::plan::sort::Sort;
 use crate::plan::{PlanData, PlanNode};
-use crate::plan::scan::PhysicalNodeScan;
 
 #[derive(Debug, Default)]
 pub struct Optimizer {}
@@ -24,31 +25,46 @@ impl Optimizer {
     }
 }
 
-fn extract_single_node(p: &BoundGraphPattern) -> Option<(String, Vec<String>, i64)> {
-    if p.paths.len() != 1 { return None; }
-    if p.predicate.is_some() { return None; }
+fn extract_single_vertex_from_graph_pattern(
+    g: &BoundGraphPattern,
+) -> PlanResult<(String, Vec<LabelId>, i64)> {
+    if g.predicate.is_some() {
+        return not_implemented("MATCH with predicate (WHERE) is not supported yet", Some(1));
+    }
+    if g.paths.len() != 1 {
+        return not_implemented("multiple paths in MATCH are not supported yet", Some(1));
+    }
+    let graph_id = 1;
 
-    let path = &p.paths[0];
+    extract_single_vertex_from_path(&g.paths[0].expr, graph_id)
+}
 
-    match path.expr {
-        BoundPathPatternExpr::Pattern(pattern) => {
-            match pattern {
-                BoundElementPattern::Vertex(vertex) => {
-                    
-                }
-            }
+fn extract_single_vertex_from_path(
+    expr: &BoundPathPatternExpr,
+    graph_id: i64,
+) -> PlanResult<(String, Vec<LabelId>, i64)> {
+    use BoundPathPatternExpr::*;
+    match expr {
+        Pattern(BoundElementPattern::Vertex(v)) => {
+            let var = v.var.clone();
+            let labels: Vec<LabelId> = v.label.clone();
+            Ok((var, labels, graph_id))
         }
-        _ => None
+        Concat(parts) => match parts.len() {
+            0 => not_implemented("empty concat in path pattern", None),
+            1 => extract_single_vertex_from_path(&parts[0], graph_id),
+            _ => not_implemented("concat with edges/nodes (length > 1) is not supported yet", None),
+        },
+        // Just handle Pattern and Concat.
+        Subpath(sp) => extract_single_vertex_from_path(&sp.expr, graph_id),
+        Alternation(_) => not_implemented("alternation (A|B) in path pattern is not supported yet", None),
+        Union(_) => not_implemented("union of path patterns is not supported yet", None),
+        Quantified { .. } => not_implemented("quantified path (*, +, {m,n}) is not supported yet", None),
+        Optional(_) => not_implemented("optional path (?) is not supported yet", None),
+        Pattern(BoundElementPattern::Edge(_)) => {
+            not_implemented("top-level single edge without anchors is not supported yet", None)
+        }
     }
-    if let Some(node) = path.expr {
-        let var = node.var.clone();                   // 例如 "n"
-        let labels = node.labels.clone();             // 例如 ["Person"] 或 []
-        let graph_id = 1;                             // 若你支持多图，在 pattern/match_mode 里取
-        return Some((var, labels, graph_id));
-    }
-
-
-    None
 }
 
 fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
@@ -60,17 +76,8 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
     match logical_plan {
         PlanNode::LogicalMatch(m) => {
             assert!(children.is_empty());
-            let (var, labels, graph_id) = extract_single_node(&m.pattern)
-                .ok_or_else(|| PlanError::InvalidOperation("extract_error"))?;
-            let col_name = choose_node_id_col_name(&m.output_schema, &var);
-            let field = DataField::new(col_name, LogicalType::Int64, /*nullable=*/false);
-            let scan_schema = DataSchema::new(vec![field]);
-            let node = PhysicalNodeScan {
-                base: PlanBase { schema: Some(Arc::new(scan_schema)), children: vec![] },
-                var,
-                labels,
-                graph_id,
-            };
+            let (var, labels, graph_id) = extract_single_vertex_from_graph_pattern(&m.pattern)?;
+            let node = PhysicalNodeScan::new(var.as_str(), labels, graph_id);
             Ok(PlanNode::PhysicalNodeScan(Arc::new(node)))
         }
         PlanNode::LogicalFilter(filter) => {

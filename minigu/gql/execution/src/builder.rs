@@ -1,8 +1,10 @@
 use std::sync::Arc;
 
 use arrow::array::{AsArray, Int32Array};
+use minigu_catalog::provider::GraphProvider;
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::data_type::{DataSchema, LogicalType};
+use minigu_context::graph::GraphContainer;
 use minigu_context::session::SessionContext;
 use minigu_planner::bound::{BoundExpr, BoundExprKind};
 use minigu_planner::plan::{PlanData, PlanNode};
@@ -13,6 +15,7 @@ use crate::evaluator::constant::Constant;
 use crate::executor::procedure_call::ProcedureCallBuilder;
 use crate::executor::sort::SortSpec;
 use crate::executor::{BoxedExecutor, Executor, IntoExecutor};
+use crate::executor::vertex_scan::VertexScanBuilder;
 
 const DEFAULT_CHUNK_SIZE: usize = 2048;
 
@@ -41,6 +44,13 @@ impl ExecutorBuilder {
                         .evaluate(c)
                         .map(|a| a.into_array().as_boolean().clone())
                 }))
+            }
+            PlanNode::PhysicalNodeScan(node_scan) => {
+                assert_eq!(children.len(), 0);
+                let cur_graph = self.as_ref().session.current_graph.unwrap();
+                let graph_container = cur_graph.as_ref().as_any().downcast_ref::<GraphContainer>();
+                let batch = graph_container.vertex_source(node_scan.labels.as_slice(), 1024);
+                Box::new(VertexScanBuilder::new(batch).into_executor())
             }
             PlanNode::PhysicalProject(project) => {
                 assert_eq!(children.len(), 1);

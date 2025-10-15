@@ -199,14 +199,14 @@ impl Binder<'_> {
                     .unwrap_or(0);
                 format!("__n{idx}")
             }
-        }
+        };
 
         let vertex_ty = LogicalType::Vertex(
             vec![DataField::new("id".into(), LogicalType::Int64, false)],
         );
         self.register_variable(var.as_str(), vertex_ty, false)?;
-        
-        
+
+
         let label = match &f.label {
             Some(sp) => Some(self.bind_label_expr(sp.value())?),
             None => None,
