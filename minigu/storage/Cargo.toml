@@ -15,7 +15,6 @@ serial_test = { workspace = true }
 temp-file = { workspace = true }
 
 [dependencies]
-arrow = { workspace = true }
 bitvec = { workspace = true }
 chrono = { workspace = true }
 crc32fast = { workspace = true }
@@ -23,8 +22,6 @@ crossbeam-skiplist = { workspace = true }
 dashmap = { workspace = true }
 minigu-common = { workspace = true }
 minigu-transaction = { workspace = true }
-ordered-float = { workspace = true }
-parking_lot = { workspace = true }
 postcard = { workspace = true, features = ["alloc"] }
 serde = { workspace = true, features = ["derive"] }
 temp-dir = { workspace = true }

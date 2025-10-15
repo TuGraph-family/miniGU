@@ -1639,7 +1639,6 @@ name = "minigu-storage"
 version = "0.1.0"
 dependencies = [
  "approx",
- "arrow",
  "bitvec",
  "chrono",
  "crc32fast",
@@ -1648,8 +1647,6 @@ dependencies = [
  "diskann",
  "minigu-common",
  "minigu-transaction",
- "ordered-float",
- "parking_lot",
  "postcard",
  "rand 0.9.2",
  "serde",
