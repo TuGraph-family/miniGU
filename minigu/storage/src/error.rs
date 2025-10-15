@@ -1,5 +1,6 @@
 use std::io;
 
+use minigu_transaction::TimestampError;
 use thiserror::Error;
 pub type StorageResult<T> = Result<T, StorageError>;
 
@@ -47,6 +48,10 @@ pub enum TransactionError {
     TransactionNotFound(String),
     #[error("Transaction already committed: {0}")]
     TransactionAlreadyCommitted(String),
+    #[error("Invalid state: {0}")]
+    InvalidState(String),
+    #[error("Timestamp error: {0}")]
+    Timestamp(#[from] TimestampError),
 }
 
 #[derive(Error, Debug)]
