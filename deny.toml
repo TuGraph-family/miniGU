@@ -1,6 +1,5 @@
 [graph]
 all-features = true
-exclude = ["diskann", "vector"]
 
 [output]
 feature-depth = 1

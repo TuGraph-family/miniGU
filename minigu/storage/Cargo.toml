@@ -9,6 +9,7 @@ version.workspace = true
 vector-support = ["diskann", "vector"]
 
 [dev-dependencies]
+approx = { workspace = true }
 rand = { workspace = true }
 serial_test = { workspace = true }
 temp-file = { workspace = true }
@@ -31,8 +32,8 @@ thiserror = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-diskann = { path = "./diskann-rs/diskann", optional = true }
-vector = { path = "./diskann-rs/vector", optional = true }
+diskann = { workspace = true, optional = true }
+vector = { workspace = true, optional = true }
 
 [lints]
 workspace = true

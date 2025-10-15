@@ -1638,6 +1638,7 @@ dependencies = [
 name = "minigu-storage"
 version = "0.1.0"
 dependencies = [
+ "approx",
  "arrow",
  "bitvec",
  "chrono",
@@ -2621,7 +2622,7 @@ dependencies = [
  "approx",
  "base64 0.21.7",
  "bincode",
- "rand 0.8.5",
+ "rand 0.9.2",
  "serde",
  "thiserror",
 ]
