@@ -5,12 +5,17 @@ name = "minigu-storage"
 repository.workspace = true
 version.workspace = true
 
+[features]
+vector-support = ["diskann", "vector"]
+
 [dev-dependencies]
+approx = { workspace = true }
 rand = { workspace = true }
 serial_test = { workspace = true }
 temp-file = { workspace = true }
 
 [dependencies]
+bitvec = { workspace = true }
 chrono = { workspace = true }
 crc32fast = { workspace = true }
 crossbeam-skiplist = { workspace = true }
@@ -23,7 +28,9 @@ temp-dir = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"] }
 
-bitvec = { workspace = true }
+[target.'cfg(target_os = "linux")'.dependencies]
+diskann = { workspace = true, optional = true }
+vector = { workspace = true, optional = true }
 
 [lints]
 workspace = true
