@@ -6,6 +6,10 @@ license = "MIT"
 name = "diskann"
 version = "0.1.0"
 
+[features]
+default = []
+vector-support = []
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
