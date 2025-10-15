@@ -1,0 +1,30 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT license.
+[package]
+edition = "2021"
+license = "MIT"
+name = "diskann"
+version = "0.1.0"
+
+[features]
+default = []
+vector-support = []
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+hashbrown = "0.13.2"
+libc = "0.2"
+num-traits = "0.2.15"
+rand = { version = "0.9", features = ["small_rng"] }
+rayon = "1.7.0"
+thiserror = { version = "2.0.12" }
+
+vector = { path = "../vector", version = "0.1.0" }
+
+[build-dependencies]
+cc = "1.0.79"
+
+[dev-dependencies]
+approx = "0.5.1"
+criterion = "0.5.1"
