@@ -13,9 +13,6 @@ bytemuck = "1.7.0"
 half = "2.2.1"
 thiserror = { version = "2.0.12" }
 
-[build-dependencies]
-cc = "1.0.79"
-
 [dev-dependencies]
 approx = "0.5.1"
 base64 = "0.21.2"

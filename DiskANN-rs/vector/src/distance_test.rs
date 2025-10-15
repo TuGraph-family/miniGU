@@ -6,30 +6,15 @@ mod e2e_test {
     #[repr(C, align(32))]
     pub struct F32Slice104([f32; 104]);
 
-    #[repr(C, align(32))]
-    pub struct F16Slice104([Half; 104]);
-
     use approx::assert_abs_diff_eq;
 
-    use crate::half::Half;
-    use crate::l2_float_distance::{distance_l2_vector_f16, distance_l2_vector_f32};
+    use crate::l2_float_distance::distance_l2_vector_f32;
 
     fn no_vector_compare_f32(a: &[f32], b: &[f32]) -> f32 {
         let mut sum = 0.0;
         for i in 0..a.len() {
             let a_f32 = a[i];
             let b_f32 = b[i];
-            let diff = a_f32 - b_f32;
-            sum += diff * diff;
-        }
-        sum
-    }
-
-    fn no_vector_compare(a: &[Half], b: &[Half]) -> f32 {
-        let mut sum = 0.0;
-        for i in 0..a.len() {
-            let a_f32 = a[i].to_f32();
-            let b_f32 = b[i].to_f32();
             let diff = a_f32 - b_f32;
             sum += diff * diff;
         }
@@ -58,41 +43,6 @@ mod e2e_test {
         assert_abs_diff_eq!(distance, distance_f32x8, epsilon = 1e-4);
     }
 
-    #[test]
-    fn avx_f16_matches_novector() {
-        for i in 1..3 {
-            let (f1, f2) = get_test_data_f16(0, i);
-            let _a_slice = f1.0.map(|x| x.to_f32().to_string()).join(", ");
-            let _b_slice = f2.0.map(|x| x.to_f32().to_string()).join(", ");
-
-            let expected = no_vector_compare(f1.0[0..].as_ref(), f2.0[0..].as_ref());
-            let distance_f16x8 = distance_l2_vector_f16::<104>(&f1.0, &f2.0);
-
-            assert_abs_diff_eq!(distance_f16x8, expected, epsilon = 1e-4);
-        }
-    }
-
-    #[test]
-    fn avx_f16_matches_novector_random() {
-        let (f1, f2) = get_test_data_f16_random();
-
-        let expected = no_vector_compare(f1.0[0..].as_ref(), f2.0[0..].as_ref());
-        let distance_f16x8 = distance_l2_vector_f16::<104>(&f1.0, &f2.0);
-
-        assert_abs_diff_eq!(distance_f16x8, expected, epsilon = 1e-4);
-    }
-
-    fn get_test_data_f16(i1: usize, i2: usize) -> (F16Slice104, F16Slice104) {
-        let (a_slice, b_slice) = get_test_data(i1, i2);
-        let a_data = a_slice.0.iter().map(|x| Half::from_f32(*x));
-        let b_data = b_slice.0.iter().map(|x| Half::from_f32(*x));
-
-        (
-            F16Slice104(a_data.collect::<Vec<Half>>().try_into().unwrap()),
-            F16Slice104(b_data.collect::<Vec<Half>>().try_into().unwrap()),
-        )
-    }
-
     fn get_test_data(i1: usize, i2: usize) -> (F32Slice104, F32Slice104) {
         use base64::Engine as _;
         use base64::engine::general_purpose;
@@ -114,17 +64,6 @@ mod e2e_test {
         f2.0.copy_from_slice(v2);
 
         (f1, f2)
-    }
-
-    fn get_test_data_f16_random() -> (F16Slice104, F16Slice104) {
-        let (a_slice, b_slice) = get_test_data_random();
-        let a_data = a_slice.0.iter().map(|x| Half::from_f32(*x));
-        let b_data = b_slice.0.iter().map(|x| Half::from_f32(*x));
-
-        (
-            F16Slice104(a_data.collect::<Vec<Half>>().try_into().unwrap()),
-            F16Slice104(b_data.collect::<Vec<Half>>().try_into().unwrap()),
-        )
     }
 
     fn get_test_data_random() -> (F32Slice104, F32Slice104) {

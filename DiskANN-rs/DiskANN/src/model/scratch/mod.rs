@@ -14,12 +14,3 @@ pub use inmem_query_scratch::*;
 
 pub mod scratch_store_manager;
 pub use scratch_store_manager::*;
-
-pub mod ssd_query_scratch;
-pub use ssd_query_scratch::*;
-
-pub mod ssd_thread_data;
-pub use ssd_thread_data::*;
-
-pub mod ssd_io_context;
-pub use ssd_io_context::*;

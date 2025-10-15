@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
-use crate::l2_float_distance::{distance_l2_vector_f16, distance_l2_vector_f32};
-use crate::{Half, Metric};
+use crate::Metric;
+use crate::l2_float_distance::distance_l2_vector_f32;
 
 /// Distance contract for full-precision vertex
 pub trait FullPrecisionDistance<T, const N: usize> {
@@ -17,17 +17,6 @@ impl<const N: usize> FullPrecisionDistance<f32, N> for [f32; N] {
     fn distance_compare(a: &[f32; N], b: &[f32; N], metric: Metric) -> f32 {
         match metric {
             Metric::L2 => distance_l2_vector_f32::<N>(a, b),
-            _ => panic!("Not supported Metric type {metric:?}"),
-        }
-    }
-}
-
-// reason = "Not supported Metric type Metric::Cosine"
-#[allow(clippy::panic)]
-impl<const N: usize> FullPrecisionDistance<Half, N> for [Half; N] {
-    fn distance_compare(a: &[Half; N], b: &[Half; N], metric: Metric) -> f32 {
-        match metric {
-            Metric::L2 => distance_l2_vector_f16::<N>(a, b),
             _ => panic!("Not supported Metric type {metric:?}"),
         }
     }
@@ -55,9 +44,6 @@ mod distance_test {
 
     #[repr(C, align(32))]
     pub struct F32Slice112([f32; 112]);
-
-    #[repr(C, align(32))]
-    pub struct F16Slice112([Half; 112]);
 
     fn get_turing_test_data() -> (F32Slice112, F32Slice112) {
         let a_slice: [f32; 112] = [
@@ -292,17 +278,6 @@ mod distance_test {
         (F32Slice112(a_slice), F32Slice112(b_slice))
     }
 
-    fn get_turing_test_data_f16() -> (F16Slice112, F16Slice112) {
-        let (a_slice, b_slice) = get_turing_test_data();
-        let a_data = a_slice.0.iter().map(|x| Half::from_f32(*x));
-        let b_data = b_slice.0.iter().map(|x| Half::from_f32(*x));
-
-        (
-            F16Slice112(a_data.collect::<Vec<Half>>().try_into().unwrap()),
-            F16Slice112(b_data.collect::<Vec<Half>>().try_into().unwrap()),
-        )
-    }
-
     use approx::assert_abs_diff_eq;
 
     use crate::test_util::*;
@@ -322,20 +297,6 @@ mod distance_test {
             no_vector_compare_f32(&a_slice.0, &b_slice.0),
             epsilon = 1e-6
         );
-    }
-
-    #[test]
-    fn test_dist_l2_f16_turing() {
-        // two vectors are allocated in the contiguous heap memory
-        let (a_slice, b_slice) = get_turing_test_data_f16();
-        let distance = <[Half; 112] as FullPrecisionDistance<Half, 112>>::distance_compare(
-            &a_slice.0,
-            &b_slice.0,
-            Metric::L2,
-        );
-
-        // Note the variance between the full 32 bit precision and the 16 bit precision
-        assert_eq!(distance, no_vector_compare_f16(&a_slice.0, &b_slice.0));
     }
 
     #[test]

@@ -19,7 +19,6 @@ members = [
     "minigu/context",
 ]
 
-exclude = ["DiskANN-rs"]
 resolver = "3"
 
 [workspace.package]

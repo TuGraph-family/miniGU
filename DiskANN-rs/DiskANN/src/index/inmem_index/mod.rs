@@ -4,6 +4,4 @@
 mod inmem_index;
 pub use inmem_index::InmemIndex;
 
-mod inmem_index_storage;
-
 pub mod ann_inmem_index;

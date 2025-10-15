@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.  All rights reserved.
-// Copyright (c) 2025 MiniGU.
+// Copyright (c) 2025 MiniGU. All rights reserved.
 //
 // Licensed under the MIT License. See DiskANN-rs/LICENSE for license information.
 //
@@ -26,18 +26,6 @@ pub trait ANNInmemIndex<T>: Sync + Send
 where
     T: Default + Copy + Sync + Send + Into<f32>,
 {
-    /// Build index from file
-    fn build(&mut self, filename: &str, num_points_to_load: usize) -> ANNResult<()>;
-
-    /// Save index
-    fn save(&mut self, filename: &str) -> ANNResult<()>;
-
-    /// Load index
-    fn load(&mut self, filename: &str, expected_num_points: usize) -> ANNResult<()>;
-
-    /// Insert index from file
-    fn insert(&mut self, filename: &str, num_points_to_insert: usize) -> ANNResult<()>;
-
     /// Search the index for K nearest neighbors of query using given L value, for benchmarking
     /// purposes
     #[allow(clippy::too_many_arguments)]
@@ -122,31 +110,6 @@ mod dataset_test {
     use super::*;
     use crate::model::configuration::index_write_parameters::IndexWriteParametersBuilder;
 
-    #[test]
-    #[should_panic(expected = "ERROR: Data file fake_file does not exist.")]
-    fn create_index_test() {
-        let index_write_parameters = IndexWriteParametersBuilder::new(50, 4)
-            .with_alpha(1.2)
-            .with_saturate_graph(false)
-            .with_num_threads(1)
-            .build();
-
-        let config = IndexConfiguration::new(
-            Metric::L2,
-            128,
-            256,
-            1_000_000,
-            false,
-            0,
-            false,
-            0,
-            1f32,
-            index_write_parameters,
-        );
-        let mut index = create_inmem_index::<f32>(config).unwrap();
-        index.build("fake_file", 100).unwrap();
-    }
-
     // Tests for memory-based interface methods
 
     #[test]
@@ -217,34 +180,6 @@ mod dataset_test {
         struct MockIndex;
 
         impl ANNInmemIndex<f32> for MockIndex {
-            fn build(
-                &mut self,
-                _filename: &str,
-                _num_points_to_load: usize,
-            ) -> crate::common::ANNResult<()> {
-                Ok(())
-            }
-
-            fn save(&mut self, _filename: &str) -> crate::common::ANNResult<()> {
-                Ok(())
-            }
-
-            fn load(
-                &mut self,
-                _filename: &str,
-                _expected_num_points: usize,
-            ) -> crate::common::ANNResult<()> {
-                Ok(())
-            }
-
-            fn insert(
-                &mut self,
-                _filename: &str,
-                _num_points_to_insert: usize,
-            ) -> crate::common::ANNResult<()> {
-                Ok(())
-            }
-
             fn search(
                 &self,
                 _query: &[f32],
@@ -294,34 +229,6 @@ mod dataset_test {
         struct MockIndex;
 
         impl ANNInmemIndex<f32> for MockIndex {
-            fn build(
-                &mut self,
-                _filename: &str,
-                _num_points_to_load: usize,
-            ) -> crate::common::ANNResult<()> {
-                Ok(())
-            }
-
-            fn save(&mut self, _filename: &str) -> crate::common::ANNResult<()> {
-                Ok(())
-            }
-
-            fn load(
-                &mut self,
-                _filename: &str,
-                _expected_num_points: usize,
-            ) -> crate::common::ANNResult<()> {
-                Ok(())
-            }
-
-            fn insert(
-                &mut self,
-                _filename: &str,
-                _num_points_to_insert: usize,
-            ) -> crate::common::ANNResult<()> {
-                Ok(())
-            }
-
             fn search(
                 &self,
                 _query: &[f32],

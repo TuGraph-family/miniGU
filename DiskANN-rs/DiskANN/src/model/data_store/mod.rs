@@ -3,6 +3,3 @@
 #[allow(clippy::module_inception)]
 mod inmem_dataset;
 pub use inmem_dataset::{DatasetDto, InmemDataset};
-
-mod disk_scratch_dataset;
-pub use disk_scratch_dataset::*;

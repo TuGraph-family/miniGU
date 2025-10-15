@@ -1,5 +1,5 @@
 // Copyright (c) Microsoft Corporation.  All rights reserved.
-// Copyright (c) 2025 MiniGU.
+// Copyright (c) 2025 MiniGU. All rights reserved.
 //
 // Licensed under the MIT License. See DiskANN-rs/LICENSE for license information.
 //
@@ -17,7 +17,6 @@ use vector::{FullPrecisionDistance, Metric};
 
 use crate::common::{ANNError, ANNResult, AlignedBoxWithSlice};
 use crate::model::Vertex;
-use crate::utils::copy_aligned_data_from_file;
 
 /// Dataset of all in-memory FP points
 #[derive(Debug)]
@@ -60,41 +59,6 @@ where
     /// get immutable data slice
     pub fn get_data(&self) -> &[T] {
         &self.data
-    }
-
-    /// Build the dataset from file
-    pub fn build_from_file(&mut self, filename: &str, num_points_to_load: usize) -> ANNResult<()> {
-        println!("Loading {num_points_to_load} vectors from file {filename} into dataset...");
-        self.num_active_pts = num_points_to_load;
-
-        copy_aligned_data_from_file(filename, self.as_dto(), 0)?;
-
-        println!("Dataset loaded.");
-        Ok(())
-    }
-
-    /// Append the dataset from file
-    pub fn append_from_file(
-        &mut self,
-        filename: &str,
-        num_points_to_append: usize,
-    ) -> ANNResult<()> {
-        println!("Appending {num_points_to_append} vectors from file {filename} into dataset...");
-        if self.num_points + num_points_to_append > self.capacity {
-            return Err(ANNError::log_index_error(format!(
-                "Cannot append {} points to dataset of capacity {}",
-                num_points_to_append, self.capacity
-            )));
-        }
-
-        let pts_offset = self.num_active_pts;
-        copy_aligned_data_from_file(filename, self.as_dto(), pts_offset)?;
-
-        self.num_active_pts += num_points_to_append;
-        self.num_points += num_points_to_append;
-
-        println!("Dataset appended.");
-        Ok(())
     }
 
     /// Build the dataset from memory vectors
@@ -172,7 +136,6 @@ where
 
     /// Copy data from memory vectors into aligned storage
     /// Similar to copy_aligned_data_from_file but operates on in-memory vectors
-    /// Maintains consistent behavior with file-based loading including alignment padding
     fn copy_aligned_data_from_memory(
         &mut self,
         vectors: &[&[T]],
@@ -330,8 +293,6 @@ pub struct DatasetDto<'a, T> {
 
 #[cfg(test)]
 mod dataset_test {
-    use std::fs;
-
     use super::*;
     use crate::model::vertex::DIM_128;
 
@@ -361,41 +322,6 @@ mod dataset_test {
         };
     }
 
-    #[test]
-    fn load_data_test() {
-        let file_name = "dataset_test_load_data_test.bin";
-        // npoints=2, dim=8, 2 vectors [1.0;8] [2.0;8]
-        let data: [u8; 72] = [
-            2, 0, 0, 0, 8, 0, 0, 0, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00,
-            0x40, 0x40, 0x00, 0x00, 0x80, 0x40, 0x00, 0x00, 0xa0, 0x40, 0x00, 0x00, 0xc0, 0x40,
-            0x00, 0x00, 0xe0, 0x40, 0x00, 0x00, 0x00, 0x41, 0x00, 0x00, 0x10, 0x41, 0x00, 0x00,
-            0x20, 0x41, 0x00, 0x00, 0x30, 0x41, 0x00, 0x00, 0x40, 0x41, 0x00, 0x00, 0x50, 0x41,
-            0x00, 0x00, 0x60, 0x41, 0x00, 0x00, 0x70, 0x41, 0x00, 0x00, 0x80, 0x41,
-        ];
-        std::fs::write(file_name, data).expect("Failed to write sample file");
-
-        let mut dataset = InmemDataset::<f32, 8>::new(2, 1f32).unwrap();
-
-        match copy_aligned_data_from_file(file_name, dataset.as_dto(), 0) {
-            Ok((npts, dim)) => {
-                fs::remove_file(file_name).expect("Failed to delete file");
-                assert!(npts == 2);
-                assert!(dim == 8);
-                assert!(dataset.data.len() == 16);
-
-                let first_vertex = dataset.get_vertex(0).unwrap();
-                let second_vertex = dataset.get_vertex(1).unwrap();
-
-                assert!(*first_vertex.vector() == [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]);
-                assert!(*second_vertex.vector() == [9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0]);
-            }
-            Err(e) => {
-                fs::remove_file(file_name).expect("Failed to delete file");
-                panic!("{}", e)
-            }
-        }
-    }
-
     // Tests for memory-based interfaces
 
     #[test]
@@ -423,46 +349,6 @@ mod dataset_test {
         assert_eq!(*vertex0.vector(), vector1);
         assert_eq!(*vertex1.vector(), vector2);
         assert_eq!(*vertex2.vector(), vector3);
-    }
-
-    #[test]
-    fn test_build_from_memory_vs_file() {
-        // Create test data
-        let vector1: [f32; 8] = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0];
-        let vector2: [f32; 8] = [9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0];
-        let vectors: Vec<&[f32]> = vec![&vector1, &vector2];
-
-        // Build from memory
-        let mut memory_dataset = InmemDataset::<f32, 8>::new(2, 1f32).unwrap();
-        memory_dataset.build_from_memory(&vectors, 2, 8).unwrap();
-
-        // Build from file (reuse the existing test file format)
-        let file_name = "dataset_memory_vs_file_test.bin";
-        let data: [u8; 72] = [
-            2, 0, 0, 0, 8, 0, 0, 0, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00,
-            0x40, 0x40, 0x00, 0x00, 0x80, 0x40, 0x00, 0x00, 0xa0, 0x40, 0x00, 0x00, 0xc0, 0x40,
-            0x00, 0x00, 0xe0, 0x40, 0x00, 0x00, 0x00, 0x41, 0x00, 0x00, 0x10, 0x41, 0x00, 0x00,
-            0x20, 0x41, 0x00, 0x00, 0x30, 0x41, 0x00, 0x00, 0x40, 0x41, 0x00, 0x00, 0x50, 0x41,
-            0x00, 0x00, 0x60, 0x41, 0x00, 0x00, 0x70, 0x41, 0x00, 0x00, 0x80, 0x41,
-        ];
-        std::fs::write(file_name, data).expect("Failed to write test file");
-
-        let mut file_dataset = InmemDataset::<f32, 8>::new(2, 1f32).unwrap();
-        copy_aligned_data_from_file(file_name, file_dataset.as_dto(), 0).unwrap();
-        fs::remove_file(file_name).expect("Failed to delete test file");
-
-        // Compare results
-        assert_eq!(memory_dataset.num_active_pts, file_dataset.num_active_pts);
-
-        for i in 0..2 {
-            let memory_vertex = memory_dataset.get_vertex(i).unwrap();
-            let file_vertex = file_dataset.get_vertex(i).unwrap();
-            assert_eq!(
-                memory_vertex.vector(),
-                file_vertex.vector(),
-                "Vertex {i} should be identical between memory and file loading"
-            );
-        }
     }
 
     #[test]

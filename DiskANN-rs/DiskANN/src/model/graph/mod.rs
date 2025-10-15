@@ -9,9 +9,3 @@ pub use vertex_and_neighbors::VertexAndNeighbors;
 
 mod adjacency_list;
 pub use adjacency_list::AdjacencyList;
-
-mod sector_graph;
-pub use sector_graph::*;
-
-mod disk_graph;
-pub use disk_graph::*;

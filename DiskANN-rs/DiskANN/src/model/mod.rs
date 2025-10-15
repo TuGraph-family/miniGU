@@ -17,9 +17,3 @@ pub use scratch::*;
 
 pub mod vertex;
 pub use vertex::Vertex;
-
-pub mod pq;
-pub use pq::*;
-
-pub mod aligned_file_reader;
-pub use aligned_file_reader::*;

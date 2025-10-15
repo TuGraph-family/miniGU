@@ -17,8 +17,3 @@ pub mod common;
 pub mod index;
 
 pub mod platform;
-
-pub mod storage;
-
-#[cfg(test)]
-pub mod test_utils;

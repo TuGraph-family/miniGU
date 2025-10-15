@@ -28,11 +28,3 @@ cc = "1.0.79"
 [dev-dependencies]
 approx = "0.5.1"
 criterion = "0.5.1"
-
-[[bench]]
-harness = false
-name = "distance_bench"
-
-[[bench]]
-harness = false
-name = "neighbor_bench"

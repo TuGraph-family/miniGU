@@ -9,7 +9,6 @@
 // mod f32x16;
 // Uncomment above 2 to experiment with f32x16
 mod distance;
-mod half;
 mod l2_float_distance;
 mod metric;
 mod utils;
@@ -18,8 +17,6 @@ pub use distance::FullPrecisionDistance;
 pub use l2_float_distance::distance_l2_vector_f32;
 pub use metric::Metric;
 pub use utils::prefetch_vector;
-
-pub use crate::half::Half;
 
 #[cfg(test)]
 mod distance_test;
