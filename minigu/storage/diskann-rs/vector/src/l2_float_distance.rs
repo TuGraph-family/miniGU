@@ -98,12 +98,12 @@ mod impl_tests {
 
     fn get_random_f32() -> (F32Slice104, F32Slice104) {
         use rand::Rng;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut a = F32Slice104([0.0; 104]);
         let mut b = F32Slice104([0.0; 104]);
         for i in 0..104 {
-            a.0[i] = rng.gen_range(-1.0..1.0);
-            b.0[i] = rng.gen_range(-1.0..1.0);
+            a.0[i] = rng.random_range(-1.0..1.0);
+            b.0[i] = rng.random_range(-1.0..1.0);
         }
         (a, b)
     }

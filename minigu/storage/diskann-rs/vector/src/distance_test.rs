@@ -69,17 +69,17 @@ mod e2e_test {
     fn get_test_data_random() -> (F32Slice104, F32Slice104) {
         use rand::Rng;
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut f1 = F32Slice104([0.0; 104]);
 
         for i in 0..104 {
-            f1.0[i] = rng.gen_range(-1.0..1.0);
+            f1.0[i] = rng.random_range(-1.0..1.0);
         }
 
         let mut f2 = F32Slice104([0.0; 104]);
 
         for i in 0..104 {
-            f2.0[i] = rng.gen_range(-1.0..1.0);
+            f2.0[i] = rng.random_range(-1.0..1.0);
         }
 
         (f1, f2)
