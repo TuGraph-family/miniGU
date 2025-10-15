@@ -1,7 +1,7 @@
 [files]
 extend-exclude = [
     "*.gql",
-    "DiskANN-rs/DiskANN/tests/data/**",
-    "DiskANN-rs/vector/build.rs",
+    "diskann-rs/DiskANN/tests/data/**",
+    "diskann-rs/vector/build.rs",
     "*.index",
 ]

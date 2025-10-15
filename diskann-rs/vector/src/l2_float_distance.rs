@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.  All rights reserved.
 // Copyright (c) 2025 MiniGU. All rights reserved.
 //
-// Licensed under the MIT License. See DiskANN-rs/LICENSE for license information.
+// Licensed under the MIT License. See diskann-rs/LICENSE for license information.
 //
 // Modifications:
 // - Added scalar fallbacks for f32; unified with AVX2 via const-generic API.

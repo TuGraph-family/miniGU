@@ -254,7 +254,7 @@ impl InMemANNAdapter {
 
     /// Create aligned query vector for optimal SIMD performance.
     /// DiskANN uses AVX-512 SIMD instructions, which require 64-byte alignment for optimal
-    /// performance and to avoid undefined behavior. Uses DiskANN-rs AlignedBoxWithSlice for
+    /// performance and to avoid undefined behavior. Uses diskann-rs AlignedBoxWithSlice for
     /// memory-safe 64-byte alignment.
     /// Returns AlignedQueryBuffer to maintain alignment guarantee.
     fn ensure_query_aligned(query: &[f32]) -> StorageResult<AlignedQueryBuffer<'_>> {

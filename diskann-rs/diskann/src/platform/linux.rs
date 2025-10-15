@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Copyright (c) 2025 MiniGU. All rights reserved.
 //
-// Licensed under the MIT License. See DiskANN-rs/LICENSE for license information.
+// Licensed under the MIT License. See diskann-rs/LICENSE for license information.
 //
 // Linux platform implementation adapted from Microsoft's file_handle.rs (Windows version):
 // - Simplified FileHandle using standard library (File, OpenOptions) instead of winapi

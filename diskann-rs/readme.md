@@ -1,4 +1,4 @@
-# DiskANN-rs for MiniGU
+# diskann-rs for MiniGU
 
 ## Overview
 
