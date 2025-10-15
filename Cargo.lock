@@ -1578,6 +1578,7 @@ dependencies = [
  "minigu-execution",
  "minigu-planner",
  "minigu-storage",
+ "minigu-transaction",
  "rayon",
  "serde",
  "serde_json",
@@ -1682,6 +1683,7 @@ dependencies = [
  "dashmap",
  "diskann",
  "minigu-common",
+ "minigu-transaction",
  "ordered-float",
  "parking_lot",
  "postcard",
@@ -1705,6 +1707,14 @@ dependencies = [
  "minigu",
  "pastey",
  "sqllogictest",
+]
+
+[[package]]
+name = "minigu-transaction"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror",
 ]
 
 [[package]]
