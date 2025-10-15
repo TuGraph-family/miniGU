@@ -35,4 +35,8 @@ impl PlanData for OneRow {
     fn base(&self) -> &PlanBase {
         &self.base
     }
+
+    fn explain(&self) -> Option<String> {
+        Some("OneRow".to_string())
+    }
 }

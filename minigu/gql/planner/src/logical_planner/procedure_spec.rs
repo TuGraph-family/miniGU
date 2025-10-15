@@ -28,7 +28,7 @@ impl LogicalPlanner {
             }
             BoundStatement::Query(statement) => self.plan_composite_query_statement(statement),
             BoundStatement::Explain(explain) => {
-                let plan = self.plan_statement(*explain.statement)?;
+                let plan = self.plan_statement(explain.statement)?;
                 Ok(plan)
             }
         }

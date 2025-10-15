@@ -39,7 +39,7 @@ impl Binder<'_> {
             Statement::Explain(explain) => {
                 let bound_statement = self.bind_statement(&explain.statement.value())?;
                 Ok(BoundStatement::Explain(Box::new(BoundExplainStatement {
-                    statement: Box::new(bound_statement),
+                    statement: bound_statement,
                 })))
             }
         }

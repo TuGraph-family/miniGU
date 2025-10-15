@@ -172,7 +172,12 @@ impl Session {
         })
     }
 
-    fn format_explain_output(& self, plan: &impl PlanData, output: &mut String, indent: usize) {
-        // todo: format logical plan output
+    fn format_explain_output(&self, plan: &impl PlanData, output: &mut String, indent: usize) {
+        let indent_str = " ".repeat(indent * 2);
+        let explain_str = plan.explain().unwrap_or_else(|| "ERROR".to_string());
+        output.push_str(&format!("{}{}\n", indent_str, explain_str));
+        for child in plan.children() {
+            self.format_explain_output(child, output, indent+1);
+        }
     }
 }
