@@ -1,5 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT license.
+// Copyright (c) 2025 MiniGU. All rights reserved.
+//
+// Licensed under the MIT License. See diskann-rs/LICENSE for license information.
+//
+// Modifications for miniGU integration:
+// - Replaced platform-specific CPU cycle measurement with cross-platform Instant implementation
+// - Removed libc dependency and _rdtsc assembly instructions for cycle counting
+// - Simplified Timer structure by eliminating pid and cycles fields
+// - Removed elapsed_gcycles() method, maintained core timing functionality
+// - Enabled cross-platform compatibility without performance-critical cycle counting
 use std::time::Instant;
 
 #[derive(Clone)]
