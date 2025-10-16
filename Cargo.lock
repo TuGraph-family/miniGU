@@ -708,7 +708,6 @@ dependencies = [
  "approx",
  "cc",
  "hashbrown 0.13.2",
- "libc",
  "num-traits",
  "rand 0.9.2",
  "rayon",

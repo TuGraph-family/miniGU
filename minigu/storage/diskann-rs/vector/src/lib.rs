@@ -18,6 +18,6 @@ pub use l2_float_distance::distance_l2_vector_f32;
 pub use metric::Metric;
 pub use utils::prefetch_vector;
 
-#[cfg(all(test))]
+#[cfg(test)]
 mod distance_test;
 mod test_util;

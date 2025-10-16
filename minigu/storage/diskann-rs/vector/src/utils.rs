@@ -6,28 +6,32 @@
 // Modifications:
 // - Added cross-platform support for `prefetch_vector` with no-op fallback implementation for
 //   non-x86_64 architectures to ensure compilation compatibility.
-use std::arch::x86_64::{_MM_HINT_T0, _mm_prefetch};
 
 /// Prefetch the given vector in chunks of 64 bytes, which is a cache line size
 /// NOTE: good efficiency when total_vec_size is integral multiple of 64
+/// Prefetch is a performance optimization, no-op fallback on non-x86_64 architectures
+/// doesn't affect functionality or correctness
 #[inline]
 pub fn prefetch_vector<T>(vec: &[T]) {
-    let vec_ptr = vec.as_ptr() as *const i8;
-    let vecsize = std::mem::size_of_val(vec);
-    let max_prefetch_size = (vecsize / 64) * 64;
+    #[cfg(target_arch = "x86_64")]
+    {
+        use std::arch::x86_64::{_MM_HINT_T0, _mm_prefetch};
 
-    for d in (0..max_prefetch_size).step_by(64) {
-        unsafe {
-            _mm_prefetch(vec_ptr.add(d), _MM_HINT_T0);
+        let vec_ptr = vec.as_ptr() as *const i8;
+        let vecsize = std::mem::size_of_val(vec);
+        let max_prefetch_size = (vecsize / 64) * 64;
+
+        for d in (0..max_prefetch_size).step_by(64) {
+            unsafe {
+                _mm_prefetch(vec_ptr.add(d), _MM_HINT_T0);
+            }
         }
     }
-}
 
-/// Prefetch fallback for non-x86_64 architectures
-/// Prefetch is a performance optimization, no-op fallback doesn't affect functionality
-#[cfg(not(target_arch = "x86_64"))]
-#[inline]
-pub fn prefetch_vector<T>(_vec: &[T]) {
-    // No prefetch implementation for this architecture
-    // Functionality remains correct, just without the prefetch optimization
+    #[cfg(not(target_arch = "x86_64"))]
+    {
+        // No prefetch implementation for this architecture
+        // Functionality remains correct, just without the prefetch optimization
+        // This is a performance optimization only and doesn't affect correctness
+    }
 }
