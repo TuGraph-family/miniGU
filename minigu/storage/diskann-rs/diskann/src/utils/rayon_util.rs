@@ -25,5 +25,5 @@ where
 /// set the thread count of Rayon, otherwise it will use threads as many as logical cores.
 #[inline]
 pub fn set_rayon_num_threads(num_threads: u32) {
-    unsafe { std::env::set_var("RAYON_NUM_THREADS", num_threads.to_string()) };
+    std::env::set_var("RAYON_NUM_THREADS", num_threads.to_string());
 }

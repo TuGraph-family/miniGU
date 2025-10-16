@@ -16,6 +16,8 @@ members = [
     "minigu/gql/planner",
     "minigu/gql/execution",
     "minigu/storage",
+    "minigu/storage/diskann-rs/diskann",
+    "minigu/storage/diskann-rs/vector",
     "minigu/context",
     "minigu/transaction",
 ]

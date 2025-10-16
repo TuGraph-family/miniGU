@@ -1541,7 +1541,6 @@ dependencies = [
  "crc32fast",
  "crossbeam-skiplist",
  "dashmap",
- "diskann",
  "minigu-common",
  "minigu-transaction",
  "postcard",
@@ -1552,7 +1551,6 @@ dependencies = [
  "temp-file",
  "thiserror",
  "uuid",
- "vector",
 ]
 
 [[package]]

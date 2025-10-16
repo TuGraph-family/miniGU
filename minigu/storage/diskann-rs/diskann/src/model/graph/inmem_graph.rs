@@ -36,6 +36,8 @@ impl InMemoryGraph {
 
     /// Extend the graph by size vectors
     pub fn extend(&mut self, size: usize, max_degree: u32) {
+        // Note: vertex_id here is a local identifier for batch construction, not global unique ID
+        // Actual data access uses array index position, not this internal vertex_id
         for id in 0..size {
             self.final_graph
                 .push(RwLock::new(VertexAndNeighbors::for_range(
