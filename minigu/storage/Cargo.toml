@@ -5,9 +5,6 @@ name = "minigu-storage"
 repository.workspace = true
 version.workspace = true
 
-[features]
-vector-support = ["diskann", "vector"]
-
 [dev-dependencies]
 approx = { workspace = true }
 rand = { workspace = true }
@@ -28,9 +25,8 @@ temp-dir = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"] }
 
-[target.'cfg(target_os = "linux")'.dependencies]
-diskann = { workspace = true, optional = true }
-vector = { workspace = true, optional = true }
+diskann = { workspace = true }
+vector = { workspace = true }
 
 [lints]
 workspace = true

@@ -37,11 +37,11 @@ This directory contains a vendored and modified version of Microsoft's DiskANN R
 - Removed compile-time requirement for `-C target-feature=+avx2`
 - Automatic selection of optimal implementation based on CPU capabilities
 
-### 5. Linux Platform Support
-- **Files**: `DiskANN/src/platform/linux.rs` (adapted from Windows version)
-- Created Linux-specific FileHandle implementation using standard library
-- Adapted from Microsoft's `file_handle.rs` (Windows/winapi version)
-- Simplified to Read-only mode for DiskANN index file access
+### 5. Cross-Platform Vector Support
+- **Files**: `vector/src/utils.rs`
+- Added cross-platform `prefetch_vector` implementation with architecture-specific variants
+- Provided no-op fallback for non-x86_64 architectures to ensure compilation compatibility
+- Enables vector library to build successfully on all platforms while maintaining performance optimization benefits on x86_64
 
 ## Modified Files Summary
 
@@ -53,7 +53,7 @@ This directory contains a vendored and modified version of Microsoft's DiskANN R
 | `DiskANN/src/algorithm/search/search.rs` | Enhanced | Filter-aware search, get_init_ids |
 | `DiskANN/src/common/filter_mask.rs` | New | FilterIndex trait (MiniGU original) |
 | `vector/src/l2_float_distance.rs` | Enhanced | Runtime SIMD dispatch, scalar fallback |
-| `DiskANN/src/platform/linux.rs` | Adapted | Linux FileHandle from Windows version |
+| `vector/src/utils.rs` | Enhanced | Cross-platform prefetch_vector with no-op fallback |
 
 ## Licensing
 
