@@ -32,26 +32,26 @@ impl GraphContainer {
     }
 }
 
-impl GraphContainer {
-
-    fn vertex_has_all_labels(
-        _mem: &Arc<MemoryGraph>,
-        _txn: &minigu_storage::tp::transaction::TransactionHandle,
-        _vid: u64,
-        _label_ids: &[LabelId],
-    ) -> StorageResult<bool> {
-        for label_id in _label_ids {
-            if _mem.get_vertex(_txn, _vid)?.label_id != *label_id {
-                return Ok(false);
-            }
+fn vertex_has_all_labels(
+    _mem: &Arc<MemoryGraph>,
+    _txn: &minigu_storage::tp::transaction::TransactionHandle,
+    _vid: u64,
+    _label_ids: &[LabelId],
+) -> StorageResult<bool> {
+    for label_id in _label_ids {
+        if _mem.get_vertex(_txn, _vid)?.label_id != *label_id {
+            return Ok(false);
         }
-        Ok(true)
     }
+    Ok(true)
+}
+
+impl GraphContainer {
     pub fn vertex_source(
-        self: &Arc<Self>,
+        &self,
         label_ids: &[LabelId],
         batch_size: usize,
-    )-> StorageResult<impl Iterator<Item = Arc<VertexIdArray>>> {
+    )-> StorageResult<Box<dyn Iterator<Item = Arc<VertexIdArray>> + Send + 'static>> {
         let mem = match self.graph_storage() {
             GraphStorage::Memory(m) => Arc::clone(m),
         };
@@ -62,24 +62,23 @@ impl GraphContainer {
             for v in it {
                 let v = v?;
                 let vid = v.vid();
-                if label_ids.is_empty() || self.vertex_has_all_labels(&mem, &txn, vid, label_ids)? {
+                if label_ids.is_empty() || vertex_has_all_labels(&mem, &txn, vid, label_ids)? {
                     ids.push(vid);
                 }
             }
         }
 
         let mut pos = 0usize;
-        Ok(std::iter::from_fn(move || {
+        let iter = std::iter::from_fn(move || {
             if pos >= ids.len() { return None; }
             let end = (pos + batch_size).min(ids.len());
             let slice = &ids[pos..end];
             pos = end;
-            let arr = Arc::new(VertexIdArray::from_iter(slice.iter().copied()));
-            Some(arr)
-        }))
-    }
+            Some(Arc::new(VertexIdArray::from_iter(slice.iter().copied())))
+        });
 
-    
+        Ok(Box::new(iter))
+    }
 }
 
 impl Debug for GraphContainer {

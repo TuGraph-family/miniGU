@@ -8,12 +8,16 @@ use crate::plan::{PlanBase, PlanData};
 pub struct PhysicalNodeScan {
     pub base: PlanBase,
     pub var: String,
-    pub labels: Vec<LabelId>,
+    // DNF: outer OR, inner AND
+    // labels = [ [] ] => Any
+    // labels = [ [A,B] ] LabelA and LabelB
+    // labels = [ [A], [B] ] LabelA or LabelB
+    pub labels: Vec<Vec<LabelId>>,
     pub graph_id: i64,
 }
 
 impl PhysicalNodeScan {
-    pub fn new(var: &str, labels: Vec<LabelId>, graph_id: i64) -> Self {
+    pub fn new(var: &str, labels: Vec<Vec<LabelId>>, graph_id: i64) -> Self {
         // For Single Node Scan, We just assume the id is only need.
         let field = DataField::new("id".to_string(), LogicalType::Int64,false);
         let schema = DataSchema::new(vec![field]);
