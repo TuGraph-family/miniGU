@@ -19,7 +19,7 @@ pub struct PhysicalNodeScan {
 impl PhysicalNodeScan {
     pub fn new(var: &str, labels: Vec<Vec<LabelId>>, graph_id: i64) -> Self {
         // For Single Node Scan, We just assume the id is only need.
-        let field = DataField::new("id".to_string(), LogicalType::Int64,false);
+        let field = DataField::new(var.to_string(), LogicalType::Int64,false);
         let schema = DataSchema::new(vec![field]);
         let base = PlanBase {
             schema: Some(Arc::new(schema)),

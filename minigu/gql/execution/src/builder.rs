@@ -49,8 +49,10 @@ impl ExecutorBuilder {
             }
             PlanNode::PhysicalNodeScan(node_scan) => {
                 assert_eq!(children.len(), 0);
-                let cur_graph = self.session.current_graph.as_ref().expect("binder ensures current_graph");
-                let provider: &dyn GraphProvider = cur_graph.object().as_ref();
+                use minigu_catalog::provider::SchemaProvider;
+                let cur_schema = self.session.home_schema.as_ref().expect("there should be a home schema");
+                let cur_graph = cur_schema.get_graph("test".to_string().as_str()).expect("there should be a test graph").unwrap();
+                let provider: &dyn GraphProvider = cur_graph.as_ref();
                 let container = provider
                     .as_any()
                     .downcast_ref::<GraphContainer>()

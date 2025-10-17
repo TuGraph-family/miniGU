@@ -74,6 +74,9 @@ pub enum PlanNode {
     PhysicalSort(Arc<Sort>),
     PhysicalLimit(Arc<Limit>),
     PhysicalNodeScan(Arc<PhysicalNodeScan>),
+    
+    // PhysicalCatalogModify(Arc<PhysicalCatalogModify>)
+    
 }
 
 impl PlanData for PlanNode {
