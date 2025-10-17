@@ -708,17 +708,7 @@ where
         }
 
         if self.configuration.index_write_parameter.num_threads > 0 {
-            // set the thread count of Rayon, otherwise it will use threads as many as logical
-            // cores.
-            unsafe {
-                std::env::set_var(
-                    "RAYON_NUM_THREADS",
-                    self.configuration
-                        .index_write_parameter
-                        .num_threads
-                        .to_string(),
-                )
-            };
+            set_rayon_num_threads(self.configuration.index_write_parameter.num_threads);
         }
 
         // Use dataset's memory append functionality

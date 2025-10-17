@@ -110,7 +110,6 @@ pub enum CheckpointError {
 #[derive(Error, Debug)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum VectorIndexError {
-    #[cfg(all(target_os = "linux", feature = "vector-support"))]
     #[error("DiskANN error: {0}")]
     DiskANN(#[from] diskann::common::ANNError),
     #[error("Index not found: {0}")]

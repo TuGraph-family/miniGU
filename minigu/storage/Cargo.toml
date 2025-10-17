@@ -5,9 +5,6 @@ name = "minigu-storage"
 repository.workspace = true
 version.workspace = true
 
-[features]
-vector-support = ["diskann", "vector"]
-
 [dev-dependencies]
 approx = { workspace = true }
 rand = { workspace = true }
@@ -21,6 +18,7 @@ chrono = { workspace = true }
 crc32fast = { workspace = true }
 crossbeam-skiplist = { workspace = true }
 dashmap = { workspace = true }
+diskann = { workspace = true }
 minigu-common = { workspace = true }
 minigu-transaction = { workspace = true }
 ordered-float = { workspace = true }
@@ -30,10 +28,7 @@ serde = { workspace = true, features = ["derive"] }
 temp-dir = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"] }
-
-[target.'cfg(target_os = "linux")'.dependencies]
-diskann = { workspace = true, optional = true }
-vector = { workspace = true, optional = true }
+vector = { workspace = true }
 
 [lints]
 workspace = true
