@@ -857,25 +857,6 @@ impl VectorValue {
         Ok(Self { data, dimension })
     }
 
-    /// Creates a VectorValue from raw f32 data with dimension validation.
-    pub fn from_f32_vec(data: Vec<f32>, dimension: usize) -> Result<Self, String> {
-        let f32_data: Vec<F32> = data.into_iter().map(F32::from).collect();
-        Self::new(f32_data, dimension)
-    }
-
-    /// Creates a VectorValue ensuring it matches the specified logical type dimension.
-    pub fn from_logical_type(
-        data: Vec<f32>,
-        logical_type: &crate::data_type::LogicalType,
-    ) -> Result<Self, String> {
-        match logical_type {
-            crate::data_type::LogicalType::Vector(expected_dim) => {
-                Self::from_f32_vec(data, *expected_dim)
-            }
-            _ => Err("LogicalType is not a Vector type".to_string()),
-        }
-    }
-
     /// Returns a reference to the vector data.
     pub fn data(&self) -> &[F32] {
         &self.data
@@ -886,7 +867,7 @@ impl VectorValue {
         self.dimension
     }
 
-    /// Converts to a Vec<f32> for compatibility with existing code.
+    /// Converts to a Vec<f32>
     pub fn to_f32_vec(&self) -> Vec<f32> {
         self.data.iter().map(|f| f.into_inner()).collect()
     }

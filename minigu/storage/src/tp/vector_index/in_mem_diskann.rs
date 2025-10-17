@@ -754,7 +754,7 @@ pub fn create_vector_index_config(dimension: usize, vector_count: usize) -> Inde
         index_write_parameter: write_params,
         dist_metric: Metric::L2,
         dim: dimension,
-        aligned_dim: dimension, // keeps the raw dimension. No round_up(dim, 8)
+        aligned_dim: dimension,
         max_points: calculated_max_points,
         num_frozen_pts: 0,
         use_pq_dist: false,
