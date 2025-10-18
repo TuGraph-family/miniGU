@@ -22,7 +22,7 @@ pub struct ShardedVectorMap {
 }
 
 impl ShardedVectorMap {
-    /// Create a new sharded vector map with hash-based sharding
+    /// Create a new sharded vector map with bit-striping sharding
     /// shard_count_log2: log2 of shard count
     pub fn new(shard_count_log2: u32) -> StorageResult<Self> {
         if shard_count_log2 > 16 {
@@ -554,7 +554,7 @@ impl VectorIndex for InMemANNAdapter {
     ) -> StorageResult<Vec<(u64, f32)>> {
         // No filter provided, DiskANN search without filter
         let Some(mask) = filter_mask else {
-            return self.ann_search(query, k, l_value, None, false);
+            return self.ann_search(query, k, l_value, None, should_pre);
         };
 
         if self.vector_to_node.is_empty() {

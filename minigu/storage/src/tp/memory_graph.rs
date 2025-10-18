@@ -360,7 +360,7 @@ pub struct MemoryGraph {
     pub(super) checkpoint_manager: Option<CheckpointManager>,
 
     // ---- Vector indices ----
-    pub(super) vector_indices: DashMap<VectorIndexKey, Box<dyn VectorIndex>>,
+    pub(super) vector_indices: DashMap<VectorIndexKey, Arc<RwLock<Box<dyn VectorIndex>>>>,
 }
 
 impl MemoryGraph {
@@ -1025,8 +1025,8 @@ impl MemoryGraph {
 
         adapter.build(&vector_refs)?;
 
-        self.vector_indices
-            .insert(index_key, Box::new(adapter) as Box<dyn VectorIndex>);
+        let index = Arc::new(RwLock::new(Box::new(adapter) as Box<dyn VectorIndex>));
+        self.vector_indices.insert(index_key, index);
 
         Ok(())
     }
@@ -1035,8 +1035,10 @@ impl MemoryGraph {
     pub fn get_vector_index(
         &self,
         index_key: VectorIndexKey,
-    ) -> Option<dashmap::mapref::one::Ref<VectorIndexKey, Box<dyn VectorIndex>>> {
-        self.vector_indices.get(&index_key)
+    ) -> Option<Arc<RwLock<Box<dyn VectorIndex>>>> {
+        self.vector_indices
+            .get(&index_key)
+            .map(|entry| Arc::clone(entry.value()))
     }
 
     /// Perform vector similarity search
@@ -1057,12 +1059,13 @@ impl MemoryGraph {
         filter_bitmap: Option<&BooleanArray>,
         should_pre: bool,
     ) -> StorageResult<Vec<(u64, f32)>> {
-        let index_ref = self.get_vector_index(index_key).ok_or_else(|| {
+        let index = self.get_vector_index(index_key).ok_or_else(|| {
             StorageError::VectorIndex(VectorIndexError::IndexNotFound(format!(
                 "index_key: {:?}",
                 index_key
             )))
         })?;
+        let index_ref = index.read().unwrap();
         if query.dimension() != index_ref.get_dimension() {
             return Err(StorageError::VectorIndex(
                 VectorIndexError::InvalidDimension {
@@ -1076,7 +1079,12 @@ impl MemoryGraph {
         // Convert BooleanArray to optimal FilterMask if provided
         let filter_mask = filter_bitmap.map(|bitmap| {
             let candidate_vector_ids = Self::bitmap_to_vector_ids(bitmap, &**index_ref);
-            create_filter_mask(candidate_vector_ids, index_ref.size())
+            let total_vector_num = candidate_vector_ids
+                .iter()
+                .max()
+                .map(|x| x + 1)
+                .unwrap_or(0);
+            create_filter_mask(candidate_vector_ids, total_vector_num.try_into().unwrap())
         });
         let results =
             index_ref.search(&query_vec, k, l_value, filter_mask.as_deref(), should_pre)?;
@@ -1107,14 +1115,6 @@ impl MemoryGraph {
             .collect()
     }
 
-    /// Get mutable vector index for the specified label and property
-    fn get_mutable_vector_index(
-        &self,
-        index_key: VectorIndexKey,
-    ) -> Option<dashmap::mapref::one::RefMut<VectorIndexKey, Box<dyn VectorIndex>>> {
-        self.vector_indices.get_mut(&index_key)
-    }
-
     /// Insert vectors into the specified vector index
     pub fn insert_into_vector_index(
         &self,
@@ -1126,7 +1126,7 @@ impl MemoryGraph {
             return Ok(());
         }
 
-        let mut index_ref = self.get_mutable_vector_index(index_key).ok_or_else(|| {
+        let index = self.get_vector_index(index_key).ok_or_else(|| {
             StorageError::VectorIndex(VectorIndexError::IndexNotFound(format!(
                 "label_id: {}, property_id: {}",
                 index_key.label_id, index_key.property_id
@@ -1137,7 +1137,7 @@ impl MemoryGraph {
         if vectors.is_empty() {
             return Ok(()); // Index exists but no matching vectors, this is valid
         }
-        let expected_dim = index_ref.get_dimension();
+        let expected_dim = index.read().unwrap().get_dimension();
         for (_, vector_value) in &vectors {
             if vector_value.dimension() != expected_dim {
                 return Err(StorageError::VectorIndex(
@@ -1163,7 +1163,7 @@ impl MemoryGraph {
             .map(|((node_id, _), f32_vec)| (*node_id, f32_vec.as_slice()))
             .collect();
 
-        index_ref.insert(&vector_refs)?;
+        index.write().unwrap().insert(&vector_refs)?;
 
         Ok(())
     }
@@ -1178,14 +1178,14 @@ impl MemoryGraph {
             return Ok(());
         }
 
-        let mut index_ref = self.get_mutable_vector_index(index_key).ok_or_else(|| {
+        let index = self.get_vector_index(index_key).ok_or_else(|| {
             StorageError::VectorIndex(VectorIndexError::IndexNotFound(format!(
                 "label_id: {}, property_id: {}",
                 index_key.label_id, index_key.property_id
             )))
         })?;
 
-        index_ref.soft_delete(node_ids)?;
+        index.write().unwrap().soft_delete(node_ids)?;
 
         Ok(())
     }
@@ -2409,6 +2409,7 @@ pub mod tests {
         let index = graph
             .get_vector_index(index_key)
             .expect("Index should exist after build");
+        let index = index.read().unwrap();
         assert_eq!(index.size(), 200);
         assert_eq!(index.get_dimension(), TEST_DIMENSION);
 
@@ -2654,7 +2655,7 @@ pub mod tests {
         let index = graph
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
             .unwrap();
-        assert_eq!(index.size(), 200);
+        assert_eq!(index.read().unwrap().size(), 200);
 
         // Test search with various k values
         let mut query = vec![0.0f32; TEST_DIMENSION];
@@ -2808,8 +2809,8 @@ pub mod tests {
         // Verify initial index size
         let initial_size = graph
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
+            .map(|index| index.read().unwrap().size())
+            .unwrap();
         assert_eq!(initial_size, 200);
 
         // Test 1: Insert 200 new vectors to reach maximum capacity
@@ -2838,8 +2839,8 @@ pub mod tests {
         // Verify index size increased: 200 + 200 = 400 (exactly at capacity)
         let new_size = graph
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
+            .map(|index| index.read().unwrap().size())
+            .unwrap();
         assert_eq!(new_size, initial_size + 200);
 
         // Verify one of the inserted vectors can be found
@@ -2876,8 +2877,8 @@ pub mod tests {
         // Verify index size unchanged after failed insertion
         let final_size = graph
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
+            .map(|index| index.read().unwrap().size())
+            .unwrap();
         assert_eq!(final_size, new_size); // Should remain same as before failed insertion
 
         // Test 3: Capacity limit validation - should fail when exceeding pre-allocated capacity
@@ -2930,8 +2931,8 @@ pub mod tests {
         // Verify index size unchanged after failed capacity insertion
         let size_after_capacity_failure = graph
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
+            .map(|index| index.read().unwrap().size())
+            .unwrap();
         assert_eq!(size_after_capacity_failure, new_size); // Should remain 400 (200 original + 200 Test 1 inserts)
 
         txn.commit()?;
@@ -2956,8 +2957,8 @@ pub mod tests {
 
         let initial_size = graph
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
+            .map(|index| index.read().unwrap().size())
+            .unwrap();
 
         // Insert multiple vectors
         let new_vectors = create_additional_test_vectors(2000, 5);
@@ -2981,8 +2982,8 @@ pub mod tests {
         // Verify index size
         let new_size = graph
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
+            .map(|index| index.read().unwrap().size())
+            .unwrap();
         assert_eq!(new_size, initial_size + 5);
 
         // Verify all inserted vectors can be found
@@ -3017,8 +3018,8 @@ pub mod tests {
 
         let initial_size = graph
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
+            .map(|index| index.read().unwrap().size())
+            .unwrap();
 
         // Insert empty vector list - should succeed but do nothing
         let empty_node_ids: Vec<u64> = vec![];
@@ -3032,8 +3033,8 @@ pub mod tests {
         // Verify size unchanged
         let new_size = graph
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
+            .map(|index| index.read().unwrap().size())
+            .unwrap();
         assert_eq!(new_size, initial_size);
 
         txn.commit()?;
@@ -3080,8 +3081,8 @@ pub mod tests {
 
         let initial_size = graph
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
+            .map(|index| index.read().unwrap().size())
+            .unwrap();
 
         // Select a vector to delete (use first vector from test data)
         let (target_id, _, target_embedding) = &test_vectors[0];
@@ -3102,8 +3103,8 @@ pub mod tests {
         // Verify index size decreased (soft delete should reduce active count)
         let new_size = graph
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
+            .map(|index| index.read().unwrap().size())
+            .unwrap();
         assert_eq!(new_size, initial_size - 1);
 
         // Verify deleted vector is not found in search results
@@ -3136,8 +3137,8 @@ pub mod tests {
 
         let initial_size = graph
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
+            .map(|index| index.read().unwrap().size())
+            .unwrap();
 
         // Select multiple vectors to delete (first 3 vectors)
         let delete_ids: Vec<u64> = test_vectors.iter().take(3).map(|(id, _, _)| *id).collect();
@@ -3163,8 +3164,8 @@ pub mod tests {
         // Verify index size decreased
         let new_size = graph
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
+            .map(|index| index.read().unwrap().size())
+            .unwrap();
         assert_eq!(new_size, initial_size - 3);
 
         // Verify deleted vectors are not found in search results
@@ -3199,8 +3200,8 @@ pub mod tests {
 
         let initial_size = graph
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
+            .map(|index| index.read().unwrap().size())
+            .unwrap();
 
         // Delete empty list - should succeed but do nothing
         let empty_ids: Vec<u64> = vec![];
@@ -3213,8 +3214,8 @@ pub mod tests {
         // Verify size unchanged
         let new_size = graph
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
+            .map(|index| index.read().unwrap().size())
+            .unwrap();
         assert_eq!(new_size, initial_size);
 
         txn.commit()?;
@@ -3287,8 +3288,8 @@ pub mod tests {
 
         let initial_size = graph
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
+            .map(|index| index.read().unwrap().size())
+            .unwrap();
 
         // Phase 1: Insert new vectors
         let new_vectors = create_additional_test_vectors(4000, 3);
@@ -3310,8 +3311,8 @@ pub mod tests {
         // Verify size after insertion
         let after_insert_size = graph
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
+            .map(|index| index.read().unwrap().size())
+            .unwrap();
         assert_eq!(after_insert_size, initial_size + 3);
 
         // Phase 2: Delete some original vectors
@@ -3324,8 +3325,8 @@ pub mod tests {
         // Verify final size
         let final_size = graph
             .get_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID))
-            .unwrap()
-            .size();
+            .map(|index| index.read().unwrap().size())
+            .unwrap();
         assert_eq!(final_size, initial_size + 3 - 2); // +3 inserts, -2 deletes
 
         // Verify inserted vectors are still findable
