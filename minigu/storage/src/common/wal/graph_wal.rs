@@ -25,10 +25,11 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, RwLock};
 
 use crc32fast::Hasher;
+use minigu_transaction::{IsolationLevel, Timestamp};
 use serde::{Deserialize, Serialize};
 
 use super::{LogRecord, StorageWal};
-use crate::common::transaction::{DeltaOp, IsolationLevel, Timestamp};
+use crate::common::DeltaOp;
 use crate::error::{StorageError, StorageResult, WalError};
 
 const HEADER_SIZE: usize = 8; // 4 bytes length + 4 bytes crc32
@@ -380,7 +381,7 @@ mod tests {
     use serial_test::serial;
 
     use super::*;
-    use crate::common::transaction::{DeltaOp, SetPropsOp, Timestamp};
+    use crate::common::{DeltaOp, SetPropsOp};
 
     fn temp_wal_path() -> PathBuf {
         let mut path = std::env::temp_dir();
@@ -396,7 +397,7 @@ mod tests {
     #[serial]
     fn test_walentry_serialization() {
         // Create a WalEntry with SetVertexProps operation
-        let txn_id = Timestamp(100);
+        let txn_id = Timestamp::with_ts(100);
         let delta = DeltaOp::SetVertexProps(42, SetPropsOp {
             indices: vec![0, 1],
             props: vec![
@@ -417,7 +418,7 @@ mod tests {
 
         // Verify the deserialized entry matches the original
         assert_eq!(deserialized.lsn, 0);
-        assert_eq!(deserialized.txn_id.0, 100);
+        assert_eq!(deserialized.txn_id.raw(), 100);
         match &deserialized.op {
             Operation::Delta(DeltaOp::SetVertexProps(vid, SetPropsOp { indices, props })) => {
                 assert_eq!(*vid, 42);
@@ -444,7 +445,7 @@ mod tests {
             // Entry 1: Delete vertex 42
             let entry1 = RedoEntry {
                 lsn: 1,
-                txn_id: Timestamp(100),
+                txn_id: Timestamp::with_ts(100),
                 iso_level: IsolationLevel::Serializable,
                 op: Operation::Delta(DeltaOp::DelVertex(42)),
             };
@@ -453,7 +454,7 @@ mod tests {
             // Entry 2: Delete edge 24
             let entry2 = RedoEntry {
                 lsn: 2,
-                txn_id: Timestamp(101),
+                txn_id: Timestamp::with_ts(101),
                 iso_level: IsolationLevel::Serializable,
                 op: Operation::Delta(DeltaOp::DelEdge(24)),
             };
@@ -472,7 +473,7 @@ mod tests {
 
             // Verify first entry
             assert_eq!(entries[0].lsn, 1);
-            assert_eq!(entries[0].txn_id.0, 100);
+            assert_eq!(entries[0].txn_id.raw(), 100);
             match &entries[0].op {
                 Operation::Delta(DeltaOp::DelVertex(vid)) => assert_eq!(*vid, 42),
                 _ => panic!("Expected Delta(DelVertex) operation"),
@@ -480,7 +481,7 @@ mod tests {
 
             // Verify second entry
             assert_eq!(entries[1].lsn, 2);
-            assert_eq!(entries[1].txn_id.0, 101);
+            assert_eq!(entries[1].txn_id.raw(), 101);
             match &entries[1].op {
                 Operation::Delta(DeltaOp::DelEdge(eid)) => assert_eq!(*eid, 24),
                 _ => panic!("Expected Delta(DelEdge) operation"),
@@ -503,7 +504,7 @@ mod tests {
             // Transaction 1: Delete vertex 10
             let entry1 = RedoEntry {
                 lsn: 1,
-                txn_id: Timestamp(100),
+                txn_id: Timestamp::with_ts(100),
                 iso_level: IsolationLevel::Serializable,
                 op: Operation::Delta(DeltaOp::DelVertex(10)),
             };
@@ -512,7 +513,7 @@ mod tests {
             // Transaction 2: Delete edge 20
             let entry2 = RedoEntry {
                 lsn: 2,
-                txn_id: Timestamp(101),
+                txn_id: Timestamp::with_ts(101),
                 iso_level: IsolationLevel::Serializable,
                 op: Operation::Delta(DeltaOp::DelEdge(20)),
             };
@@ -521,7 +522,7 @@ mod tests {
             // Transaction 3: Delete vertex 30
             let entry3 = RedoEntry {
                 lsn: 3,
-                txn_id: Timestamp(102),
+                txn_id: Timestamp::with_ts(102),
                 iso_level: IsolationLevel::Serializable,
                 op: Operation::Delta(DeltaOp::DelVertex(30)),
             };
@@ -567,7 +568,7 @@ mod tests {
             let mut wal = GraphWal::open(&path).unwrap();
             let entry = RedoEntry {
                 lsn: 1,
-                txn_id: Timestamp(100),
+                txn_id: Timestamp::with_ts(100),
                 iso_level: IsolationLevel::Serializable,
                 op: Operation::Delta(DeltaOp::DelVertex(42)),
             };
@@ -629,7 +630,7 @@ mod tests {
             // Entry 1: Delete vertex 42
             let entry1 = RedoEntry {
                 lsn: 1,
-                txn_id: Timestamp(100),
+                txn_id: Timestamp::with_ts(100),
                 iso_level: IsolationLevel::Serializable,
                 op: Operation::Delta(DeltaOp::DelVertex(42)),
             };
@@ -638,7 +639,7 @@ mod tests {
             // Entry 2: Delete edge 24
             let entry2 = RedoEntry {
                 lsn: 2,
-                txn_id: Timestamp(101),
+                txn_id: Timestamp::with_ts(101),
                 iso_level: IsolationLevel::Serializable,
                 op: Operation::Delta(DeltaOp::DelEdge(24)),
             };
@@ -657,7 +658,7 @@ mod tests {
 
             // Verify first entry
             assert_eq!(entries[0].lsn, 1);
-            assert_eq!(entries[0].txn_id.0, 100);
+            assert_eq!(entries[0].txn_id.raw(), 100);
             match &entries[0].op {
                 Operation::Delta(DeltaOp::DelVertex(vid)) => assert_eq!(*vid, 42),
                 _ => panic!("Expected Delta(DelVertex) operation"),
@@ -665,7 +666,7 @@ mod tests {
 
             // Verify second entry
             assert_eq!(entries[1].lsn, 2);
-            assert_eq!(entries[1].txn_id.0, 101);
+            assert_eq!(entries[1].txn_id.raw(), 101);
             match &entries[1].op {
                 Operation::Delta(DeltaOp::DelEdge(eid)) => assert_eq!(*eid, 24),
                 _ => panic!("Expected Delta(DelEdge) operation"),
@@ -688,7 +689,7 @@ mod tests {
             // Entry with LSN 1
             let entry1 = RedoEntry {
                 lsn: 1,
-                txn_id: Timestamp(100),
+                txn_id: Timestamp::with_ts(100),
                 iso_level: IsolationLevel::Serializable,
                 op: Operation::Delta(DeltaOp::DelVertex(10)),
             };
@@ -697,7 +698,7 @@ mod tests {
             // Entry with LSN 2
             let entry2 = RedoEntry {
                 lsn: 2,
-                txn_id: Timestamp(101),
+                txn_id: Timestamp::with_ts(101),
                 iso_level: IsolationLevel::Serializable,
                 op: Operation::Delta(DeltaOp::DelVertex(20)),
             };
@@ -706,7 +707,7 @@ mod tests {
             // Entry with LSN 3
             let entry3 = RedoEntry {
                 lsn: 3,
-                txn_id: Timestamp(102),
+                txn_id: Timestamp::with_ts(102),
                 iso_level: IsolationLevel::Serializable,
                 op: Operation::Delta(DeltaOp::DelVertex(30)),
             };

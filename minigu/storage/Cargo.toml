@@ -6,23 +6,24 @@ repository.workspace = true
 version.workspace = true
 
 [dev-dependencies]
+approx = { workspace = true }
 rand = { workspace = true }
 serial_test = { workspace = true }
 temp-file = { workspace = true }
 
 [dependencies]
+bitvec = { workspace = true }
 chrono = { workspace = true }
 crc32fast = { workspace = true }
 crossbeam-skiplist = { workspace = true }
 dashmap = { workspace = true }
 minigu-common = { workspace = true }
+minigu-transaction = { workspace = true }
 postcard = { workspace = true, features = ["alloc"] }
 serde = { workspace = true, features = ["derive"] }
 temp-dir = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"] }
-
-bitvec = { workspace = true }
 
 [lints]
 workspace = true

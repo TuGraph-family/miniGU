@@ -1,313 +1,27 @@
-use std::collections::HashMap;
-use std::ops::Deref;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, OnceLock, RwLock, Weak};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, OnceLock, RwLock};
 
-use crossbeam_skiplist::SkipMap;
 use dashmap::DashSet;
 use minigu_common::types::{EdgeId, VertexId};
+use minigu_transaction::{
+    GraphTxnManager, Transaction, UndoEntry as GenericUndoEntry, UndoPtr as GenericUndoPtr,
+    global_timestamp_generator,
+};
+pub use minigu_transaction::{IsolationLevel, Timestamp};
 
 use super::memory_graph::MemoryGraph;
-use crate::common::model::edge::{Edge, Neighbor};
-pub use crate::common::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp};
 use crate::common::wal::StorageWal;
 use crate::common::wal::graph_wal::{Operation, RedoEntry};
+use crate::common::{DeltaOp, SetPropsOp};
 use crate::error::{
     EdgeNotFoundError, StorageError, StorageResult, TransactionError, VertexNotFoundError,
 };
 
-const PERIODIC_GC_THRESHOLD: u64 = 50;
+/// Type alias for storage-specific undo entry
+pub type UndoEntry = GenericUndoEntry<DeltaOp>;
 
-pub type UndoPtr = Weak<UndoEntry>;
-
-#[derive(Debug, Clone)]
-/// Represents an undo log entry for multi-version concurrency control.
-pub struct UndoEntry {
-    /// The delta operation of the undo entry.
-    delta: DeltaOp,
-    /// The timestamp when this version is committed.
-    timestamp: Timestamp,
-    /// The next undo entry in the undo buffer.
-    next: UndoPtr,
-}
-
-impl UndoEntry {
-    /// Create a UndoEntry
-    pub(super) fn new(delta: DeltaOp, timestamp: Timestamp, next: UndoPtr) -> Self {
-        Self {
-            delta,
-            timestamp,
-            next,
-        }
-    }
-
-    /// Get the data of the undo entry.
-    pub(super) fn delta(&self) -> &DeltaOp {
-        &self.delta
-    }
-
-    /// Get the end timestamp of the undo entry.
-    pub(super) fn timestamp(&self) -> Timestamp {
-        self.timestamp
-    }
-
-    /// Get the next undo ptr of the undo entry.
-    pub(super) fn next(&self) -> UndoPtr {
-        self.next.clone()
-    }
-}
-
-/// A manager for managing transactions.
-pub struct MemTxnManager {
-    /// Active transactions' txn.
-    pub(super) active_txns: SkipMap<Timestamp, Arc<MemTransaction>>,
-    /// All transactions, running or committed.
-    pub(super) committed_txns: SkipMap<Timestamp, Arc<MemTransaction>>,
-    /// Commit lock to enforce serial commit order
-    pub(super) commit_lock: Mutex<()>,
-    pub(super) latest_commit_ts: AtomicU64,
-    /// The commit timestamp and transaction id
-    commit_ts_counter: AtomicU64,
-    txn_id_counter: AtomicU64,
-    /// The watermark is the minimum start timestamp of the active transactions.
-    /// If there is no active transaction, the watermark is the latest commit timestamp.
-    pub(super) watermark: AtomicU64,
-    last_gc_ts: Mutex<u64>,
-}
-
-impl Default for MemTxnManager {
-    fn default() -> Self {
-        Self {
-            active_txns: SkipMap::new(),
-            committed_txns: SkipMap::new(),
-            commit_lock: Mutex::new(()),
-            commit_ts_counter: AtomicU64::new(1),
-            txn_id_counter: AtomicU64::new(Timestamp::TXN_ID_START + 1),
-            latest_commit_ts: AtomicU64::new(0),
-            watermark: AtomicU64::new(0),
-            last_gc_ts: Mutex::new(0),
-        }
-    }
-}
-
-impl MemTxnManager {
-    /// Create a new MemTxnManager
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Register a new transaction.
-    pub fn start_transaction(&self, txn: Arc<MemTransaction>) {
-        self.active_txns.insert(txn.txn_id(), txn.clone());
-        // Update the watermark
-        self.update_watermark();
-    }
-
-    /// Unregister a transaction.
-    pub fn finish_transaction(&self, txn: &MemTransaction) -> StorageResult<()> {
-        let txn_entry = self.active_txns.remove(&txn.txn_id());
-        if let Some(txn) = txn_entry {
-            let commit_ts = txn.value().commit_ts.get();
-            if let Some(commit_ts) = commit_ts {
-                self.committed_txns.insert(*commit_ts, txn.value().clone());
-            }
-            self.update_watermark();
-            return Ok(());
-        }
-
-        self.periodic_garbage_collect(txn.graph())?;
-
-        Err(StorageError::Transaction(
-            TransactionError::TransactionNotFound(format!("{:?}", txn.txn_id())),
-        ))
-    }
-
-    /// Generate a new commit timestamp.
-    pub fn new_commit_ts(&self, ts: Option<Timestamp>) -> Timestamp {
-        if let Some(ts) = ts {
-            self.commit_ts_counter.store(ts.0 + 1, Ordering::Relaxed);
-            ts
-        } else {
-            Timestamp::with_ts(self.commit_ts_counter.fetch_add(1, Ordering::Relaxed))
-        }
-    }
-
-    /// Generate a new transaction id.
-    pub fn new_txn_id(&self, txn_id: Option<Timestamp>) -> Timestamp {
-        if let Some(txn_id) = txn_id {
-            self.txn_id_counter.store(txn_id.0 + 1, Ordering::Relaxed);
-            txn_id
-        } else {
-            Timestamp::with_ts(self.txn_id_counter.fetch_add(1, Ordering::Relaxed))
-        }
-    }
-
-    /// Periodlically garbage collect expired transactions.
-    fn periodic_garbage_collect(&self, graph: &MemoryGraph) -> StorageResult<()> {
-        // Through acquiring the lock, the garbage collection is single-threaded execution.
-        let mut last_gc_ts = self.last_gc_ts.lock().unwrap();
-        if self.watermark.load(Ordering::Relaxed) - *last_gc_ts > PERIODIC_GC_THRESHOLD {
-            self.garbage_collect(graph)?;
-            *last_gc_ts = self.watermark.load(Ordering::Relaxed);
-        }
-
-        Ok(())
-    }
-
-    /// GC (Garbage Collection) is triggered after transaction commit.
-    /// The following items will be cleaned up:
-    ///
-    /// 1. Transactions
-    ///    - Removes expired transactions (commit_ts < watermark)
-    ///
-    /// 2. Vertices
-    ///    - Removes vertices marked as deleted (tombstone = true)
-    ///    - Cleans up old vertex versions (commit_ts < watermark)
-    ///
-    /// 3. Edges
-    ///    - Removes edges marked as deleted (tombstone = true)
-    ///    - Cleans up old edge versions (commit_ts < watermark)
-    ///
-    /// 4. Adjacency Lists
-    ///    - Updates adjacency lists for deleted vertices and edges
-    pub fn garbage_collect(&self, graph: &MemoryGraph) -> StorageResult<()> {
-        // Step1: Obtain the min read timestamp of the active transactions
-        let min_read_ts = self.watermark.load(Ordering::Acquire);
-
-        // Clean up expired transactions
-        let mut expired_txns = Vec::new();
-        // Since both `DeleteVertex` and `DeleteEdge` trigger `DeleteEdge`,
-        // we only need to collect and analyze expired edges
-        let mut expired_edges: HashMap<EdgeId, Edge> = HashMap::new();
-        for entry in self.committed_txns.iter() {
-            // If the commit timestamp of the transaction is greater than the min read timestamp,
-            // it means the transaction is still active, and the subsequent transactions are also
-            // active.
-            if entry.key().0 > min_read_ts {
-                break;
-            }
-
-            for entry in entry.value().undo_buffer.read().unwrap().iter() {
-                match entry.delta() {
-                    // DeltaOp::CreateEdge means that the edge is deleted in this transaction
-                    DeltaOp::CreateEdge(edge) => {
-                        expired_edges.insert(edge.eid(), edge.without_properties());
-                    }
-                    DeltaOp::DelEdge(eid) => {
-                        expired_edges.remove(eid);
-                    }
-                    _ => {}
-                }
-            }
-
-            // Txn has been committed, iterate over its undo buffer
-            expired_txns.push(entry.value().clone());
-        }
-
-        // Remove expired transactions containing undo buffer
-        for txn in expired_txns {
-            self.committed_txns.remove(txn.commit_ts.get().unwrap());
-        }
-
-        for (_, edge) in expired_edges {
-            // Define a macro to check if an entity is marked as a tombstone
-            macro_rules! check_tombstone {
-                ($graph:expr, $collection:ident, $id_method:expr) => {
-                    $graph
-                        .$collection
-                        .get($id_method)
-                        .map(|v| Some(v.value().chain.current.read().unwrap().data.is_tombstone))
-                        .unwrap_or(None)
-                };
-            }
-            let src_tombstone = check_tombstone!(graph, vertices, &edge.src_id());
-            let dst_tombstone = check_tombstone!(graph, vertices, &edge.dst_id());
-            let edge_tombstone = check_tombstone!(graph, edges, &edge.eid());
-
-            // Remove the vertex and the corresponding adjacencies
-            fn remove_vertex_and_adjacencies(graph: &MemoryGraph, vid: VertexId) {
-                graph.vertices.remove(&vid);
-                let mut incoming_to_remove = Vec::new();
-                let mut outgoing_to_remove = Vec::new();
-
-                if let Some(adj_container) = graph.adjacency_list.get(&vid) {
-                    for adj in adj_container.incoming().iter() {
-                        outgoing_to_remove.push((
-                            adj.neighbor_id(),
-                            Neighbor::new(adj.label_id(), vid, adj.eid()),
-                        ));
-                    }
-                    for adj in adj_container.outgoing().iter() {
-                        incoming_to_remove.push((
-                            adj.neighbor_id(),
-                            Neighbor::new(adj.label_id(), vid, adj.eid()),
-                        ));
-                    }
-                }
-
-                for (other_vid, euid) in incoming_to_remove {
-                    graph.adjacency_list.entry(other_vid).and_modify(|l| {
-                        l.incoming().remove(&euid);
-                    });
-                }
-
-                for (other_vid, euid) in outgoing_to_remove {
-                    graph.adjacency_list.entry(other_vid).and_modify(|l| {
-                        l.outgoing().remove(&euid);
-                    });
-                }
-
-                // Remove adjancy list of the vertex
-                graph.adjacency_list.remove(&vid);
-            }
-
-            if let Some(true) = src_tombstone {
-                remove_vertex_and_adjacencies(graph, edge.src_id());
-            }
-
-            if let Some(true) = dst_tombstone {
-                remove_vertex_and_adjacencies(graph, edge.dst_id());
-            }
-
-            if let Some(true) = edge_tombstone {
-                graph.edges.remove(&edge.eid());
-                graph
-                    .adjacency_list
-                    .entry(edge.src_id())
-                    .and_modify(|adj_container| {
-                        adj_container.outgoing().remove(&Neighbor::new(
-                            edge.label_id(),
-                            edge.dst_id(),
-                            edge.eid(),
-                        ));
-                    });
-                graph
-                    .adjacency_list
-                    .entry(edge.dst_id())
-                    .and_modify(|adj_container| {
-                        adj_container.incoming().remove(&Neighbor::new(
-                            edge.label_id(),
-                            edge.src_id(),
-                            edge.eid(),
-                        ));
-                    });
-            }
-        }
-
-        Ok(())
-    }
-
-    /// Calculate the watermark based on the active transactions.
-    pub fn update_watermark(&self) {
-        let min_ts = self
-            .active_txns
-            .front()
-            .map(|v| v.value().start_ts().0)
-            .unwrap_or(self.latest_commit_ts.load(Ordering::Acquire))
-            .max(self.watermark.load(Ordering::Acquire));
-        self.watermark.store(min_ts, Ordering::SeqCst);
-    }
-}
+/// Type alias for storage-specific undo pointer
+pub type UndoPtr = GenericUndoPtr<DeltaOp>;
 
 pub struct MemTransaction {
     graph: Arc<MemoryGraph>, // Reference to the associated in-memory graph
@@ -330,6 +44,38 @@ pub struct MemTransaction {
 
     // ---- Write-ahead-log for crash recovery ----
     pub(super) redo_buffer: RwLock<Vec<RedoEntry>>,
+
+    // ---- Transaction state tracking ----
+    /// Flag to track whether the transaction has been explicitly handled (committed or aborted)
+    is_handled: Arc<AtomicBool>,
+}
+
+impl Transaction for MemTransaction {
+    type Error = StorageError;
+
+    fn txn_id(&self) -> Timestamp {
+        self.txn_id
+    }
+
+    fn start_ts(&self) -> Timestamp {
+        self.start_ts
+    }
+
+    fn commit_ts(&self) -> Option<Timestamp> {
+        self.commit_ts.get().copied()
+    }
+
+    fn isolation_level(&self) -> &IsolationLevel {
+        &self.isolation_level
+    }
+
+    fn commit(&self) -> Result<Timestamp, Self::Error> {
+        self.commit_at(None, false)
+    }
+
+    fn abort(&self) -> Result<(), Self::Error> {
+        self.abort_at(false)
+    }
 }
 
 impl MemTransaction {
@@ -349,6 +95,7 @@ impl MemTransaction {
             edge_reads: DashSet::new(),
             undo_buffer: RwLock::new(Vec::new()),
             redo_buffer: RwLock::new(Vec::new()),
+            is_handled: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -403,16 +150,6 @@ impl MemTransaction {
         Ok(())
     }
 
-    /// Returns the start timestamp of the transaction.
-    pub fn start_ts(&self) -> Timestamp {
-        self.start_ts
-    }
-
-    /// Returns the transaction ID.
-    pub fn txn_id(&self) -> Timestamp {
-        self.txn_id
-    }
-
     /// Returns the set of vertex reads in this transaction.
     pub fn vertex_reads(&self) -> &DashSet<VertexId> {
         &self.vertex_reads
@@ -428,9 +165,9 @@ impl MemTransaction {
         &self.graph
     }
 
-    /// Returns the isolution level
-    pub fn isolation_level(&self) -> &IsolationLevel {
-        &self.isolation_level
+    /// Returns a reference to the undo buffer for garbage collection.
+    pub fn undo_buffer(&self) -> &RwLock<Vec<Arc<UndoEntry>>> {
+        &self.undo_buffer
     }
 
     /// Reconstructs a specific version of a Vertex or Edge
@@ -456,18 +193,11 @@ impl MemTransaction {
             undo_ptr = undo_entry.next();
         }
     }
-}
 
-impl MemTransaction {
-    /// Commits the transaction, applying all changes atomically.
-    /// Ensures serializability, updates version chains, and manages adjacency lists.
-    pub fn commit(&self) -> StorageResult<Timestamp> {
-        self.commit_at(None, false)
-    }
-
-    /// Aborts the transaction, rolling back all changes.
-    pub fn abort(&self) -> StorageResult<()> {
-        self.abort_at(false)
+    /// Marks the transaction as handled (committed or aborted).
+    /// This prevents the automatic rollback in the Drop implementation.
+    pub fn mark_handled(&self) {
+        self.is_handled.store(true, Ordering::Release);
     }
 
     /// Commits the transaction at a specific commit timestamp.
@@ -476,7 +206,16 @@ impl MemTransaction {
         commit_ts: Option<Timestamp>,
         skip_wal: bool,
     ) -> StorageResult<Timestamp> {
-        let commit_ts = self.graph.txn_manager.new_commit_ts(commit_ts);
+        let commit_ts = if let Some(commit_ts) = commit_ts {
+            global_timestamp_generator()
+                .update_if_greater(commit_ts)
+                .map_err(TransactionError::Timestamp)?;
+            commit_ts
+        } else {
+            global_timestamp_generator()
+                .next()
+                .map_err(TransactionError::Timestamp)?
+        };
 
         // Acquire the global commit lock to enforce serial execution of commits.
         let _guard = self.graph.txn_manager.commit_lock.lock().unwrap();
@@ -574,11 +313,15 @@ impl MemTransaction {
         self.graph
             .txn_manager
             .latest_commit_ts
-            .store(commit_ts.0, Ordering::SeqCst);
+            .store(commit_ts.raw(), Ordering::SeqCst);
         self.graph.txn_manager.finish_transaction(self)?;
 
         // Step 6: Check if an auto checkpoint should be created
         self.graph.check_auto_checkpoint()?;
+
+        // Mark the transaction as handled
+        self.is_handled.store(true, Ordering::Release);
+
         Ok(commit_ts)
     }
 
@@ -698,277 +441,231 @@ impl MemTransaction {
 
         // Remove transaction from transaction manager
         self.graph.txn_manager.finish_transaction(self)?;
+
+        // Mark the transaction as handled
+        self.is_handled.store(true, Ordering::Release);
+
         Ok(())
     }
 }
 
-/// A smart pointer wrapper around `Arc<MemTransaction>` that provides automatic rollback
-/// functionality when the transaction goes out of scope without being explicitly committed or
-/// aborted.
-///
-/// This wrapper implements the RAII (Resource Acquisition Is Initialization) pattern to ensure
-/// that transactions are properly cleaned up in case of panics or when they go out of scope.
-pub struct TransactionHandle {
-    inner: Arc<MemTransaction>,
-    /// Flag to track whether the transaction has been explicitly handled (committed or aborted)
-    is_handled: std::cell::Cell<bool>,
-}
-
-impl TransactionHandle {
-    /// Creates a new `TransactionHandle` wrapper around an `Arc<MemTransaction>`.
-    pub fn new(txn: Arc<MemTransaction>) -> Self {
-        Self {
-            inner: txn,
-            is_handled: std::cell::Cell::new(false),
-        }
-    }
-
-    /// Marks the transaction as handled (committed or aborted).
-    /// This prevents the automatic rollback in the Drop implementation.
-    pub fn mark_handled(&self) {
-        self.is_handled.set(true);
-    }
-
-    /// Returns a reference to the inner `Arc<MemTransaction>`.
-    pub fn inner(&self) -> &Arc<MemTransaction> {
-        &self.inner
-    }
-}
-
-impl Deref for TransactionHandle {
-    type Target = MemTransaction;
-
-    fn deref(&self) -> &Self::Target {
-        &self.inner
-    }
-}
-
-impl Drop for TransactionHandle {
+impl Drop for MemTransaction {
     fn drop(&mut self) {
         // Only perform automatic rollback if:
         // 1. The transaction hasn't been explicitly handled (committed or aborted)
-        // 2. This is the last reference to the transaction (strong_count == 1)
-        if !self.is_handled.get() {
+        // 2. This is the last reference to the transaction
+        // Note: We can't check Arc::strong_count here because we have a &mut self,
+        // but the Drop will only be called when Arc count reaches 0
+        if !self.is_handled.load(Ordering::Acquire) {
             // Attempt to abort the transaction
             // We ignore errors here since we're in a Drop implementation
-            let _ = self.inner.abort();
-            println!("abort transaction {:?}", self.inner.txn_id());
-        }
-    }
-}
-
-impl TransactionHandle {
-    /// Commits the transaction through the underlying MemTransaction.
-    pub fn commit(&self) -> StorageResult<Timestamp> {
-        let result = self.inner.commit();
-        if result.is_ok() {
-            self.mark_handled();
-        }
-        result
-    }
-
-    /// Aborts the transaction through the underlying MemTransaction.
-    pub fn abort(&self) -> StorageResult<()> {
-        let result = self.inner.abort();
-        if result.is_ok() {
-            self.mark_handled();
-        }
-        result
-    }
-}
-
-impl Clone for TransactionHandle {
-    fn clone(&self) -> Self {
-        Self {
-            inner: self.inner.clone(),
-            is_handled: std::cell::Cell::new(self.is_handled.get()),
+            let _ = self.abort();
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{IsolationLevel, *};
+    use minigu_transaction::{GraphTxnManager, IsolationLevel};
+
+    use super::*;
     use crate::tp::memory_graph;
 
     #[test]
     fn test_watermark_tracking() {
         let (graph, _cleaner) = memory_graph::tests::mock_empty_graph();
-        let base_commit_ts = graph.txn_manager.latest_commit_ts.load(Ordering::Acquire);
+        let _base_commit_ts = graph.txn_manager.latest_commit_ts.load(Ordering::Acquire);
 
         // Start txn0
-        let txn0 = graph.begin_transaction(IsolationLevel::Serializable);
-        assert_eq!(txn0.start_ts().0, base_commit_ts + 1);
-        assert_eq!(
-            graph.txn_manager.watermark.load(Ordering::Acquire),
-            base_commit_ts + 1
-        );
+        let txn0 = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        let txn0_start_ts = txn0.start_ts().raw();
+
+        // The watermark should be set to the start timestamp of the first active transaction
+        assert_eq!(graph.txn_manager.low_watermark().raw(), txn0_start_ts);
 
         {
-            let txn_store_1 = graph.begin_transaction(IsolationLevel::Serializable);
-            assert_eq!(txn_store_1.start_ts().0, base_commit_ts + 2);
+            let txn_store_1 = graph
+                .txn_manager()
+                .begin_transaction(IsolationLevel::Serializable)
+                .unwrap();
+            let txn1_start_ts = txn_store_1.start_ts().raw();
+            // Ensure txn1 started after txn0
+            assert!(txn1_start_ts > txn0_start_ts);
             let commit_ts = txn_store_1.commit().unwrap();
-            assert_eq!(commit_ts.0, base_commit_ts + 3);
+            // Ensure commit timestamp is greater than start timestamp
+            assert!(commit_ts.raw() > txn1_start_ts);
         }
 
         // Watermark should remain unchanged since txn0 is still active
-        assert_eq!(
-            graph.txn_manager.watermark.load(Ordering::Acquire),
-            txn0.start_ts.0
-        );
+        assert_eq!(graph.txn_manager.low_watermark().raw(), txn0_start_ts);
 
         // Start txn1
-        let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-        assert_eq!(txn1.start_ts().0, base_commit_ts + 4);
+        let txn1 = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        let txn1_start_ts = txn1.start_ts().raw();
+        // Ensure txn1 starts after txn0
+        assert!(txn1_start_ts > txn0_start_ts);
 
-        // Watermark should remain unchanged
-        assert_eq!(
-            graph.txn_manager.watermark.load(Ordering::Acquire),
-            txn0.start_ts.0
-        );
+        // Watermark should remain unchanged (still pointing to txn0)
+        assert_eq!(graph.txn_manager.low_watermark().raw(), txn0_start_ts);
 
         // Create and commit txn_store_2
         {
-            let txn_store_2 = graph.begin_transaction(IsolationLevel::Serializable);
-            assert_eq!(txn_store_2.start_ts().0, base_commit_ts + 5);
+            let txn_store_2 = graph
+                .txn_manager()
+                .begin_transaction(IsolationLevel::Serializable)
+                .unwrap();
+            let txn2_start_ts = txn_store_2.start_ts().raw();
+            // Ensure txn2 starts after txn1
+            assert!(txn2_start_ts > txn1_start_ts);
             let commit_ts = txn_store_2.commit().unwrap();
-            assert_eq!(commit_ts.0, base_commit_ts + 6);
+            // Ensure commit timestamp is greater than start timestamp
+            assert!(commit_ts.raw() > txn2_start_ts);
         }
 
         // Watermark should remain unchanged
-        assert_eq!(
-            graph.txn_manager.watermark.load(Ordering::Acquire),
-            txn0.start_ts.0
-        );
+        assert_eq!(graph.txn_manager.low_watermark().raw(), txn0_start_ts);
 
         // Start txn2
-        let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
-        assert_eq!(txn2.start_ts().0, base_commit_ts + 7);
+        let txn2 = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        let txn2_start_ts = txn2.start_ts().raw();
+        // Ensure txn2 starts after txn1
+        assert!(txn2_start_ts > txn1_start_ts);
 
-        // Watermark should remain unchanged
-        assert_eq!(
-            graph.txn_manager.watermark.load(Ordering::Acquire),
-            txn0.start_ts.0
-        );
+        // Watermark should remain unchanged (still pointing to txn0)
+        assert_eq!(graph.txn_manager.low_watermark().raw(), txn0_start_ts);
 
         // Abort txn0
         txn0.abort().unwrap();
-        // Watermark should update to start_ts of txn1
-        assert_eq!(
-            graph.txn_manager.watermark.load(Ordering::Acquire),
-            txn1.start_ts().0
-        );
+        // Watermark should update to start_ts of txn1 (now the oldest active transaction)
+        assert_eq!(graph.txn_manager.low_watermark().raw(), txn1_start_ts);
 
         // Create and commit txn_store_3
         {
-            let txn_store_3 = graph.begin_transaction(IsolationLevel::Serializable);
-            assert_eq!(txn_store_3.start_ts().0, base_commit_ts + 8);
+            let txn_store_3 = graph
+                .txn_manager()
+                .begin_transaction(IsolationLevel::Serializable)
+                .unwrap();
+            let txn3_start_ts = txn_store_3.start_ts().raw();
+            // Ensure txn3 starts after txn2
+            assert!(txn3_start_ts > txn2_start_ts);
             let commit_ts = txn_store_3.commit().unwrap();
-            assert_eq!(commit_ts.0, base_commit_ts + 9);
+            // Ensure commit timestamp is greater than start timestamp
+            assert!(commit_ts.raw() > txn3_start_ts);
         }
 
-        // Watermark should remain unchanged
-        assert_eq!(
-            graph.txn_manager.watermark.load(Ordering::Acquire),
-            txn1.start_ts().0
-        );
+        // Watermark should remain unchanged (still pointing to txn1)
+        assert_eq!(graph.txn_manager.low_watermark().raw(), txn1_start_ts);
 
         // Start txn3
-        let txn3 = graph.begin_transaction(IsolationLevel::Serializable);
-        assert_eq!(txn3.start_ts().0, base_commit_ts + 10);
+        let txn3 = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        let txn3_start_ts = txn3.start_ts().raw();
+        // Ensure txn3 starts after txn2
+        assert!(txn3_start_ts > txn2_start_ts);
 
-        // Watermark should remain unchanged
-        assert_eq!(
-            graph.txn_manager.watermark.load(Ordering::Acquire),
-            txn1.start_ts().0
-        );
+        // Watermark should remain unchanged (still pointing to txn1)
+        assert_eq!(graph.txn_manager.low_watermark().raw(), txn1_start_ts);
 
         // Abort txn1
         txn1.abort().unwrap();
-        // Watermark should be updated to txn2's start timestamp
-        assert_eq!(
-            graph.txn_manager.watermark.load(Ordering::Acquire),
-            txn2.start_ts().0
-        );
+        // Watermark should be updated to txn2's start timestamp (now the oldest active)
+        assert_eq!(graph.txn_manager.low_watermark().raw(), txn2_start_ts);
 
         // Abort txn2
         txn2.abort().unwrap();
-        // Watermark should be updated to txn3's start timestamp
-        assert_eq!(
-            graph.txn_manager.watermark.load(Ordering::Acquire),
-            txn3.start_ts().0
-        );
+        // Watermark should be updated to txn3's start timestamp (now the only active)
+        assert_eq!(graph.txn_manager.low_watermark().raw(), txn3_start_ts);
 
         // Create and commit txn_store_4
         {
-            let txn_store_4 = graph.begin_transaction(IsolationLevel::Serializable);
-            assert_eq!(txn_store_4.start_ts().0, base_commit_ts + 11);
+            let txn_store_4 = graph
+                .txn_manager()
+                .begin_transaction(IsolationLevel::Serializable)
+                .unwrap();
+            let txn4_start_ts = txn_store_4.start_ts().raw();
+            // Ensure txn4 starts after txn3
+            assert!(txn4_start_ts > txn3_start_ts);
             let commit_ts = txn_store_4.commit().unwrap();
-            assert_eq!(commit_ts.0, base_commit_ts + 12);
+            // Ensure commit timestamp is greater than start timestamp
+            assert!(commit_ts.raw() > txn4_start_ts);
         }
 
-        // Watermark should remain unchanged
-        assert_eq!(
-            graph.txn_manager.watermark.load(Ordering::Acquire),
-            txn3.start_ts().0
-        );
+        // Watermark should remain unchanged (still pointing to txn3)
+        assert_eq!(graph.txn_manager.low_watermark().raw(), txn3_start_ts);
 
         // Start txn4
-        let txn4 = graph.begin_transaction(IsolationLevel::Serializable);
-        assert_eq!(txn4.start_ts().0, base_commit_ts + 13);
+        let txn4 = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        let txn4_start_ts = txn4.start_ts().raw();
+        // Ensure txn4 starts after txn3
+        assert!(txn4_start_ts > txn3_start_ts);
 
-        // Watermark should remain unchanged
-        assert_eq!(
-            graph.txn_manager.watermark.load(Ordering::Acquire),
-            txn3.start_ts().0
-        );
+        // Watermark should remain unchanged (still pointing to txn3)
+        assert_eq!(graph.txn_manager.low_watermark().raw(), txn3_start_ts);
 
         // Abort txn3
         txn3.abort().unwrap();
-        // Watermark should be updated to txn4's start timestamp
-        assert_eq!(
-            graph.txn_manager.watermark.load(Ordering::Acquire),
-            txn4.start_ts().0
-        );
+        // Watermark should be updated to txn4's start timestamp (now the only active)
+        assert_eq!(graph.txn_manager.low_watermark().raw(), txn4_start_ts);
 
         // Abort txn4
         txn4.abort().unwrap();
-        // Watermark should remain unchanged, since there are no active transactions
-        // and the latest commit timestamp is still txn4's commit timestamp
-        assert_eq!(
-            graph.txn_manager.watermark.load(Ordering::Acquire),
-            txn4.start_ts().0
-        );
+        // After all transactions are aborted, watermark should be updated
+        let current_watermark = graph.txn_manager.low_watermark().raw();
+        let latest_commit_ts = graph.txn_manager.latest_commit_ts.load(Ordering::Acquire);
+        // Watermark should be at least the latest commit timestamp
+        assert!(current_watermark >= latest_commit_ts);
 
         // Create and commit txn_store_5
-        {
-            let txn_store_5 = graph.begin_transaction(IsolationLevel::Serializable);
-            assert_eq!(txn_store_5.start_ts().0, base_commit_ts + 14);
+        let last_commit_ts = {
+            let txn_store_5 = graph
+                .txn_manager()
+                .begin_transaction(IsolationLevel::Serializable)
+                .unwrap();
+            let txn5_start_ts = txn_store_5.start_ts().raw();
+            // Ensure txn5 starts after previous transactions
+            assert!(txn5_start_ts > current_watermark);
             let commit_ts = txn_store_5.commit().unwrap();
-            assert_eq!(commit_ts.0, base_commit_ts + 15);
-        }
+            // Ensure commit timestamp is greater than start timestamp
+            assert!(commit_ts.raw() > txn5_start_ts);
+            commit_ts.raw()
+        };
 
         // The watermark should be updated because there are no active transactions
-        assert_eq!(
-            graph.txn_manager.watermark.load(Ordering::Acquire),
-            base_commit_ts + 15 // latest commit timestamp
-        );
+        let final_watermark = graph.txn_manager.low_watermark().raw();
+        // Watermark should be at least the latest commit timestamp
+        assert!(final_watermark >= last_commit_ts);
 
         // Start txn5
-        let txn5 = graph.begin_transaction(IsolationLevel::Serializable);
-        assert_eq!(txn5.start_ts().0, base_commit_ts + 16);
+        let txn5 = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        let txn5_start_ts = txn5.start_ts().raw();
+        // Ensure txn5 starts after the last commit
+        assert!(txn5_start_ts > last_commit_ts);
 
-        assert_eq!(
-            graph.txn_manager.watermark.load(Ordering::Acquire),
-            txn5.start_ts().0
-        );
+        // Watermark should now be set to txn5's start timestamp
+        assert_eq!(graph.txn_manager.low_watermark().raw(), txn5_start_ts);
 
         // Abort txn5
         txn5.abort().unwrap();
-        // Watermark should remain unchanged since there are no active transactions
-        assert_eq!(
-            graph.txn_manager.watermark.load(Ordering::Acquire),
-            txn5.start_ts().0
-        );
+        // After all transactions are aborted, watermark should be updated
+        let final_watermark_after_all_aborted = graph.txn_manager.low_watermark().raw();
+        // Watermark should be at least the latest commit timestamp
+        assert!(final_watermark_after_all_aborted >= last_commit_ts);
     }
 }

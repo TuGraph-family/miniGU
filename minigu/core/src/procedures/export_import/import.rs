@@ -32,7 +32,8 @@ use minigu_common::value::ScalarValue;
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::procedure::Procedure;
 use minigu_storage::common::{Edge, PropertyRecord, Vertex};
-use minigu_storage::tp::{IsolationLevel, MemoryGraph};
+use minigu_storage::tp::MemoryGraph;
+use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
 
 use crate::procedures::export_import::{Manifest, Result};
 
@@ -105,7 +106,9 @@ pub(crate) fn import<P: AsRef<Path>>(
 
     // Graph
     let graph = MemoryGraph::with_config_fresh(Default::default(), Default::default());
-    let txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)?;
 
     let manifest_parent_dir = manifest_path.as_ref().parent().ok_or_else(|| {
         anyhow::anyhow!(
