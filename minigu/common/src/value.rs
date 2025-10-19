@@ -3,8 +3,8 @@ use std::sync::Arc;
 
 use arrow::array::{
     Array, ArrayRef, AsArray, BooleanArray, FixedSizeListArray, Float32Array, Float64Array,
-    Int8Array, Int16Array, Int32Array, Int64Array, NullArray, StringArray, UInt8Array, UInt16Array,
-    UInt32Array, UInt64Array,
+    Int8Array, Int16Array, Int32Array, Int64Array, NullArray, NullBufferBuilder, StringArray,
+    UInt8Array, UInt16Array, UInt32Array, UInt64Array,
 };
 use arrow::datatypes::DataType;
 use ordered_float::OrderedFloat;
@@ -838,11 +838,10 @@ pub type Nullable<T> = Option<T>;
 pub type F32 = OrderedFloat<f32>;
 pub type F64 = OrderedFloat<f64>;
 
-/// A vector value that maintains both data and dimension information for type safety.
+/// A vector value backed by ordered floats so it can participate in equality/hash operations.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct VectorValue {
     data: Vec<F32>,
-    dimension: usize,
 }
 
 impl VectorValue {
@@ -854,7 +853,7 @@ impl VectorValue {
                 data.len()
             ));
         }
-        Ok(Self { data, dimension })
+        Ok(Self { data })
     }
 
     /// Returns a reference to the vector data.
@@ -864,7 +863,7 @@ impl VectorValue {
 
     /// Returns the dimension of this vector.
     pub fn dimension(&self) -> usize {
-        self.dimension
+        self.data.len()
     }
 
     /// Converts to a Vec<f32>
@@ -874,11 +873,11 @@ impl VectorValue {
 
     /// Validates that this vector has a supported dimension (104, 128, 256).
     pub fn validate_supported_dimension(&self) -> Result<(), String> {
-        match self.dimension {
+        match self.dimension() {
             104 | 128 | 256 => Ok(()),
             _ => Err(format!(
                 "Unsupported vector dimension: {}. Only dimensions 104, 128, 256 are supported.",
-                self.dimension
+                self.dimension()
             )),
         }
     }
@@ -899,7 +898,10 @@ pub enum ScalarValue {
     Float32(Nullable<F32>),
     Float64(Nullable<F64>),
     String(Nullable<String>),
-    Vector(Nullable<VectorValue>),
+    Vector {
+        dimension: usize,
+        value: Nullable<VectorValue>,
+    },
     Vertex(Nullable<VertexValue>),
     Edge(Nullable<EdgeValue>),
 }
@@ -925,36 +927,36 @@ impl ScalarValue {
                 Arc::new(Float64Array::from_iter([value.map(|f| f.into_inner())]))
             }
             ScalarValue::String(value) => Arc::new(StringArray::from_iter([value])),
-            ScalarValue::Vector(value) => {
+            ScalarValue::Vector { dimension, value } => {
+                let field = Arc::new(arrow::datatypes::Field::new(
+                    "item",
+                    arrow::datatypes::DataType::Float32,
+                    false,
+                ));
+                let size = *dimension as i32;
                 match value {
                     Some(vector_value) => {
+                        debug_assert_eq!(
+                            vector_value.dimension(),
+                            *dimension,
+                            "VectorValue dimension mismatch"
+                        );
                         let float_values = vector_value.to_f32_vec();
                         let float_array = Arc::new(Float32Array::from(float_values));
-                        let field = Arc::new(arrow::datatypes::Field::new(
-                            "item",
-                            arrow::datatypes::DataType::Float32,
-                            false,
-                        ));
-                        Arc::new(FixedSizeListArray::new(
-                            field,
-                            vector_value.dimension() as i32,
-                            float_array,
-                            None,
-                        ))
+                        Arc::new(FixedSizeListArray::new(field, size, float_array, None))
                     }
                     None => {
-                        // For null vector, create an empty FixedSizeListArray
-                        let field = Arc::new(arrow::datatypes::Field::new(
-                            "item",
-                            arrow::datatypes::DataType::Float32,
-                            false,
-                        ));
-                        let empty_array = Arc::new(Float32Array::from(Vec::<f32>::new()));
+                        let values = Arc::new(Float32Array::from(vec![0.0f32; *dimension]));
+                        let mut null_builder = NullBufferBuilder::new(1);
+                        null_builder.append_null();
+                        let null_buffer = null_builder
+                            .finish()
+                            .expect("Null vector should yield a null buffer");
                         Arc::new(FixedSizeListArray::new(
                             field,
-                            1,
-                            empty_array,
-                            Some(arrow::buffer::NullBuffer::new_null(1)),
+                            size,
+                            values,
+                            Some(null_buffer),
                         ))
                     }
                 }
@@ -1062,8 +1064,10 @@ impl ScalarValue {
 
     pub fn get_vector(&self) -> Result<VectorValue, String> {
         match self {
-            ScalarValue::Vector(Some(val)) => Ok(val.clone()),
-            ScalarValue::Vector(None) => Err("Null value".to_string()),
+            ScalarValue::Vector {
+                value: Some(val), ..
+            } => Ok(val.clone()),
+            ScalarValue::Vector { value: None, .. } => Err("Null value".to_string()),
             _ => Err("Not a Vector value".to_string()),
         }
     }
@@ -1129,7 +1133,6 @@ macro_rules! for_each_non_null_variant {
         $m!(float32, F32, Float32);
         $m!(float64, F64, Float64);
         $m!(string, String, String);
-        $m!(vector, VectorValue, Vector);
         $m!(vertex_value, VertexValue, Vertex);
         $m!(edge_value, EdgeValue, Edge);
     };
@@ -1175,6 +1178,27 @@ impl From<Nullable<&str>> for ScalarValue {
     }
 }
 
+impl From<VectorValue> for ScalarValue {
+    #[inline]
+    fn from(value: VectorValue) -> Self {
+        ScalarValue::new_vector(value.dimension(), Some(value))
+    }
+}
+
+impl From<(usize, Nullable<VectorValue>)> for ScalarValue {
+    #[inline]
+    fn from((dimension, value): (usize, Nullable<VectorValue>)) -> Self {
+        ScalarValue::new_vector(dimension, value)
+    }
+}
+
+impl From<(usize, VectorValue)> for ScalarValue {
+    #[inline]
+    fn from((dimension, value): (usize, VectorValue)) -> Self {
+        ScalarValue::new_vector(dimension, Some(value))
+    }
+}
+
 macro_rules! impl_as_for_variant {
     ($name:ident, $ty:ty, $variant:ident) => {
         impl ScalarValue {
@@ -1212,6 +1236,20 @@ macro_rules! impl_into_for_variant {
 }
 
 for_each_non_null_variant!(impl_into_for_variant);
+
+impl ScalarValue {
+    #[inline]
+    pub fn new_vector(dimension: usize, value: Nullable<VectorValue>) -> Self {
+        if let Some(ref vec_value) = value {
+            debug_assert_eq!(
+                vec_value.dimension(),
+                dimension,
+                "VectorValue dimension mismatch"
+            );
+        }
+        ScalarValue::Vector { dimension, value }
+    }
+}
 
 pub trait ScalarValueAccessor {
     fn index(&self, index: usize) -> ScalarValue;
@@ -1290,11 +1328,20 @@ impl ScalarValueAccessor for dyn Array + '_ {
                         .map(|i| OrderedFloat(float_array.value(i)))
                         .collect();
                     match VectorValue::new(vec_f32, *size as usize) {
-                        Ok(vector_value) => ScalarValue::Vector(Some(vector_value)),
-                        Err(_) => ScalarValue::Vector(None), // Handle dimension mismatch gracefully
+                        Ok(vector_value) => ScalarValue::Vector {
+                            dimension: *size as usize,
+                            value: Some(vector_value),
+                        },
+                        Err(_) => ScalarValue::Vector {
+                            dimension: *size as usize,
+                            value: None,
+                        },
                     }
                 } else {
-                    ScalarValue::Vector(None)
+                    ScalarValue::Vector {
+                        dimension: *size as usize,
+                        value: None,
+                    }
                 }
             }
             _ => todo!(),
@@ -1559,11 +1606,11 @@ mod tests {
         // Test successful vector retrieval
         let vector_data = vec![OrderedFloat(1.0), OrderedFloat(2.0)];
         let vector_value = VectorValue::new(vector_data.clone(), 2).unwrap();
-        let scalar = ScalarValue::Vector(Some(vector_value.clone()));
+        let scalar = ScalarValue::new_vector(vector_value.dimension(), Some(vector_value.clone()));
         assert_eq!(scalar.get_vector().unwrap(), vector_value);
 
         // Test null vector
-        let scalar = ScalarValue::Vector(None);
+        let scalar = ScalarValue::new_vector(2, None);
         assert!(scalar.get_vector().is_err());
         assert_eq!(scalar.get_vector().unwrap_err(), "Null value");
 
@@ -1578,7 +1625,7 @@ mod tests {
         // Test vector to Arrow array conversion
         let vector_data = vec![OrderedFloat(1.0), OrderedFloat(2.0)];
         let vector_value = VectorValue::new(vector_data, 2).unwrap();
-        let scalar = ScalarValue::Vector(Some(vector_value));
+        let scalar = ScalarValue::new_vector(vector_value.dimension(), Some(vector_value));
         let array = scalar.to_scalar_array();
 
         // Verify it's a FixedSizeListArray with correct type
@@ -1594,17 +1641,19 @@ mod tests {
         let vector_data = vec![OrderedFloat(1.0), OrderedFloat(2.0), OrderedFloat(3.0)];
         let vector_value = VectorValue::new(vector_data.clone(), 3).unwrap();
         let scalar: ScalarValue = vector_value.clone().into();
-        assert_eq!(scalar, ScalarValue::Vector(Some(vector_value)));
+        assert_eq!(
+            scalar,
+            ScalarValue::new_vector(vector_value.dimension(), Some(vector_value))
+        );
 
-        // Test From trait for Option<VectorValue>
+        // Test From trait for (usize, Option<VectorValue>)
         let vector_data_opt = vec![OrderedFloat(1.0)];
         let vector_value_opt = Some(VectorValue::new(vector_data_opt, 1).unwrap());
-        let scalar: ScalarValue = vector_value_opt.clone().into();
-        assert_eq!(scalar, ScalarValue::Vector(vector_value_opt));
+        let scalar: ScalarValue = (1usize, vector_value_opt.clone()).into();
+        assert_eq!(scalar, ScalarValue::new_vector(1, vector_value_opt));
 
         // Test None case
-        let none_vector: Option<VectorValue> = None;
-        let scalar: ScalarValue = none_vector.into();
-        assert_eq!(scalar, ScalarValue::Vector(None));
+        let scalar: ScalarValue = (1usize, None).into();
+        assert_eq!(scalar, ScalarValue::new_vector(1, None));
     }
 }

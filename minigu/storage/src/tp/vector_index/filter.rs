@@ -196,6 +196,7 @@ pub fn create_filter_mask(candidates: Vec<u32>, total_vector_num: usize) -> Box<
 }
 
 #[cfg(test)]
+#[allow(clippy::bool_assert_comparison)]
 mod tests {
     use diskann::common::FilterIndex as DiskANNFilterMask;
 
@@ -228,11 +229,11 @@ mod tests {
         assert!(FilterMask::contains_vector(&mask, 9));
 
         // Test negative cases
-        assert!(!FilterMask::contains_vector(&mask, 0));
-        assert!(!FilterMask::contains_vector(&mask, 2));
-        assert!(!FilterMask::contains_vector(&mask, 4));
-        assert!(!FilterMask::contains_vector(&mask, 10));
-        assert!(!FilterMask::contains_vector(&mask, 99));
+        assert_ne!(FilterMask::contains_vector(&mask, 0), true);
+        assert_ne!(FilterMask::contains_vector(&mask, 2), true);
+        assert_ne!(FilterMask::contains_vector(&mask, 4), true);
+        assert_ne!(FilterMask::contains_vector(&mask, 10), true);
+        assert_ne!(FilterMask::contains_vector(&mask, 99), true);
     }
 
     #[test]
@@ -252,7 +253,7 @@ mod tests {
         // Test DiskANN FilterMask trait implementation
         assert!(DiskANNFilterMask::contains_vector(&mask, 1));
         assert!(DiskANNFilterMask::contains_vector(&mask, 3));
-        assert!(!DiskANNFilterMask::contains_vector(&mask, 2));
+        assert_ne!(DiskANNFilterMask::contains_vector(&mask, 2), true);
     }
 
     #[test]
@@ -295,11 +296,11 @@ mod tests {
         assert!(FilterMask::contains_vector(&mask, 9));
 
         // Test negative cases
-        assert!(!FilterMask::contains_vector(&mask, 0));
-        assert!(!FilterMask::contains_vector(&mask, 2));
-        assert!(!FilterMask::contains_vector(&mask, 4));
-        assert!(!FilterMask::contains_vector(&mask, 6));
-        assert!(!FilterMask::contains_vector(&mask, 8));
+        assert_ne!(FilterMask::contains_vector(&mask, 0), true);
+        assert_ne!(FilterMask::contains_vector(&mask, 2), true);
+        assert_ne!(FilterMask::contains_vector(&mask, 4), true);
+        assert_ne!(FilterMask::contains_vector(&mask, 6), true);
+        assert_ne!(FilterMask::contains_vector(&mask, 8), true);
     }
 
     #[test]
@@ -333,7 +334,7 @@ mod tests {
         assert_eq!(mask.candidate_count(), 2);
         assert!(FilterMask::contains_vector(&mask, 1));
         assert!(FilterMask::contains_vector(&mask, 3));
-        assert!(!FilterMask::contains_vector(&mask, 15));
+        assert_ne!(FilterMask::contains_vector(&mask, 15), true);
     }
 
     #[test]
@@ -344,7 +345,7 @@ mod tests {
         // Test DiskANN FilterMask trait implementation
         assert!(DiskANNFilterMask::contains_vector(&mask, 1));
         assert!(DiskANNFilterMask::contains_vector(&mask, 3));
-        assert!(!DiskANNFilterMask::contains_vector(&mask, 2));
+        assert_ne!(DiskANNFilterMask::contains_vector(&mask, 2), true);
     }
 
     #[test]
@@ -394,8 +395,8 @@ mod tests {
 
         assert_eq!(mask.candidate_count(), 0);
         assert_eq!(mask.selectivity(), 0.0);
-        assert!(!FilterMask::contains_vector(mask.as_ref(), 0));
-        assert!(!FilterMask::contains_vector(mask.as_ref(), 50));
+        assert_ne!(FilterMask::contains_vector(mask.as_ref(), 0), true);
+        assert_ne!(FilterMask::contains_vector(mask.as_ref(), 50), true);
 
         let iterated: Vec<u32> = mask.iter_candidates().collect();
         assert!(iterated.is_empty());
@@ -440,11 +441,11 @@ mod tests {
 
         // Both should work through trait object
         assert!(FilterMask::contains_vector(sparse_mask.as_ref(), 1));
-        assert!(!FilterMask::contains_vector(sparse_mask.as_ref(), 2));
+        assert_ne!(FilterMask::contains_vector(sparse_mask.as_ref(), 2), true);
         assert_eq!(sparse_mask.candidate_count(), 3);
 
         assert!(FilterMask::contains_vector(dense_mask.as_ref(), 1));
-        assert!(!FilterMask::contains_vector(dense_mask.as_ref(), 2));
+        assert_ne!(FilterMask::contains_vector(dense_mask.as_ref(), 2), true);
         assert_eq!(dense_mask.candidate_count(), 3);
     }
 }

@@ -11,7 +11,7 @@ pub trait VectorIndex: Send + Sync {
 
     /// Pure DiskANN search for k nearest neighbors without filtering
     /// l_value corresponds to the search list size parameter
-    /// Returns a vector of (node_id, distance) tuples
+    /// Returns a vector of (vertex, distance) tuples
     fn ann_search(
         &self,
         query: &[f32],

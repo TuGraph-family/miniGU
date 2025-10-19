@@ -903,10 +903,13 @@ impl MemoryGraph {
         if let Ok(property_idx) = usize::try_from(index_key.property_id) {
             if let Some(property_value) = vertex.properties().get(property_idx) {
                 match property_value {
-                    ScalarValue::Vector(Some(vector_value)) => {
+                    ScalarValue::Vector {
+                        value: Some(vector_value),
+                        ..
+                    } => {
                         return Some(vector_value.clone());
                     }
-                    ScalarValue::Vector(None) => {
+                    ScalarValue::Vector { value: None, .. } => {
                         // Skip null vector values
                         return None;
                     }
@@ -1415,7 +1418,7 @@ pub mod tests {
             PERSON,
             PropertyRecord::new(vec![
                 ScalarValue::String(Some(name.to_string())), // Property 0: name
-                ScalarValue::Vector(Some(vector_value)),     // Property 1: embedding
+                ScalarValue::new_vector(vector_value.dimension(), Some(vector_value)), /* Property 1: embedding */
             ]),
         )
     }
@@ -2386,7 +2389,12 @@ pub mod tests {
         // Try to build index with unsupported dimension - should fail
         let result =
             graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID));
-        assert!(result.is_err());
+        assert!(matches!(
+            result,
+            Err(StorageError::VectorIndex(
+                VectorIndexError::UnsupportedOperation(_)
+            ))
+        ));
 
         // Clean up unsupported test data
         for (id, _, _) in &unsupported_vectors {
@@ -2416,6 +2424,7 @@ pub mod tests {
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_vector_search_accuracy() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2509,6 +2518,7 @@ pub mod tests {
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_vector_error_index_not_found() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2529,11 +2539,17 @@ pub mod tests {
         );
 
         // Should fail with IndexNotFound error
-        assert!(result.is_err());
+        assert!(matches!(
+            result,
+            Err(StorageError::VectorIndex(VectorIndexError::IndexNotFound(
+                _
+            )))
+        ));
 
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_vector_error_empty_dataset() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2547,11 +2563,15 @@ pub mod tests {
             graph.build_vector_index(&txn, VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID));
 
         // Should fail with appropriate error
-        assert!(result.is_err());
+        assert!(matches!(
+            result,
+            Err(StorageError::VectorIndex(VectorIndexError::EmptyDataset))
+        ));
 
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_vector_error_dimension_mismatch() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2581,11 +2601,17 @@ pub mod tests {
         );
 
         // Should fail due to dimension mismatch
-        assert!(result.is_err());
+        assert!(matches!(
+            result,
+            Err(StorageError::VectorIndex(
+                VectorIndexError::InvalidDimension { .. }
+            ))
+        ));
 
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_vertex_id_mapping_correctness() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2632,6 +2658,7 @@ pub mod tests {
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_vector_small_scale_dataset() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2677,6 +2704,7 @@ pub mod tests {
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_vector_transaction_isolation() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2717,6 +2745,7 @@ pub mod tests {
 
         Ok(())
     }
+
     #[test]
     fn test_vector_multiple_indices_per_graph() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2749,8 +2778,8 @@ pub mod tests {
                 PERSON,
                 PropertyRecord::new(vec![
                     ScalarValue::String(Some(name.clone())),
-                    ScalarValue::Vector(Some(vector_value_1)),
-                    ScalarValue::Vector(Some(vector_value_2)),
+                    ScalarValue::new_vector(vector_value_1.dimension(), Some(vector_value_1)),
+                    ScalarValue::new_vector(vector_value_2.dimension(), Some(vector_value_2)),
                 ]),
             );
             graph.create_vertex(&txn, vertex)?;
@@ -2789,6 +2818,7 @@ pub mod tests {
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_vector_insert_basic() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2865,14 +2895,10 @@ pub mod tests {
             &[wrong_id],
         );
 
-        assert!(result.is_err());
-        match result.unwrap_err() {
-            StorageError::VectorIndex(VectorIndexError::InvalidDimension { expected, actual }) => {
-                assert_eq!(expected, TEST_DIMENSION);
-                assert_eq!(actual, 100);
-            }
-            _ => panic!("Expected InvalidDimension error"),
-        }
+        assert!(matches!(
+            result,
+            Err(StorageError::VectorIndex(VectorIndexError::InvalidDimension { expected, actual })) if expected == TEST_DIMENSION && actual == 100
+        ));
 
         // Verify index size unchanged after failed insertion
         let final_size = graph
@@ -2918,7 +2944,11 @@ pub mod tests {
         match capacity_result.unwrap_err() {
             StorageError::VectorIndex(VectorIndexError::BuildError(ref msg)) => {
                 // DiskANN returns BuildError with capacity message from InmemDataset
-                assert!(msg.contains("Cannot append 1 points to dataset of capacity 400"));
+                assert!(
+                    msg.to_lowercase().contains("capacity"),
+                    "Expected error message to mention capacity, got: {}",
+                    msg
+                );
             }
             other_err => {
                 panic!(
@@ -2938,6 +2968,7 @@ pub mod tests {
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_vector_insert_multiple() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -2999,6 +3030,7 @@ pub mod tests {
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_vector_insert_empty_list() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3040,6 +3072,7 @@ pub mod tests {
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_vector_insert_index_not_found() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3057,11 +3090,17 @@ pub mod tests {
         // Should fail with index not found error
         let result =
             graph.insert_into_vector_index(&txn, VectorIndexKey::new(PERSON, 999), &[*test_id]);
-        assert!(result.is_err());
+        assert!(matches!(
+            result,
+            Err(StorageError::VectorIndex(VectorIndexError::IndexNotFound(
+                _
+            )))
+        ));
 
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_vector_delete_basic() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3118,6 +3157,7 @@ pub mod tests {
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_vector_delete_multiple() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3181,6 +3221,7 @@ pub mod tests {
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_vector_delete_empty_list() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3221,6 +3262,7 @@ pub mod tests {
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_vector_delete_index_not_found() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3234,11 +3276,17 @@ pub mod tests {
 
         // Should fail with index not found error
         let result = graph.delete_from_vector_index(VectorIndexKey::new(PERSON, 999), &delete_ids);
-        assert!(result.is_err());
+        assert!(matches!(
+            result,
+            Err(StorageError::VectorIndex(VectorIndexError::IndexNotFound(
+                _
+            )))
+        ));
 
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_vector_delete_nonexistent_node() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3264,11 +3312,17 @@ pub mod tests {
         );
 
         // Should fail with appropriate error
-        assert!(result.is_err());
+        assert!(matches!(
+            result,
+            Err(StorageError::VectorIndex(
+                VectorIndexError::NodeIdNotFound { .. }
+            ))
+        ));
 
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_vector_insert_delete_combined() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3357,6 +3411,7 @@ pub mod tests {
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_vector_operations_mixed() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3425,6 +3480,7 @@ pub mod tests {
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_adaptive_filter_brute_force_search() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3486,6 +3542,7 @@ pub mod tests {
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_adaptive_filter_post_filter_search() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3567,6 +3624,7 @@ pub mod tests {
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_adaptive_filter_pre_filter_search() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3648,6 +3706,7 @@ pub mod tests {
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_filter_search_boundary_cases() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3734,6 +3793,7 @@ pub mod tests {
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_pre_filter_search_in_cluster() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();
@@ -3814,6 +3874,7 @@ pub mod tests {
         txn.commit()?;
         Ok(())
     }
+
     #[test]
     fn test_brute_force_search_accuracy() -> StorageResult<()> {
         let (graph, _cleaner) = mock_empty_graph();

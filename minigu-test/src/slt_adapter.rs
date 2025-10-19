@@ -37,8 +37,6 @@ pub enum ColumnTypeSltWrapper {
     FloatingPoint,
     /// Boolean results
     Boolean,
-    /// Vector type (graph-specific)
-    Vector,
     /// Vertex type (graph-specific)
     Vertex,
     /// Edge type (graph-specific)
@@ -53,7 +51,6 @@ impl ColumnType for ColumnTypeSltWrapper {
             'T' => Some(Self::Text),
             'I' => Some(Self::Integer),
             'R' => Some(Self::FloatingPoint),
-            'M' => Some(Self::Vector),
             'V' => Some(Self::Vertex),
             'E' => Some(Self::Edge),
             'B' => Some(Self::Boolean),
@@ -67,7 +64,6 @@ impl ColumnType for ColumnTypeSltWrapper {
             Self::Integer => 'I',
             Self::FloatingPoint => 'R',
             Self::Boolean => 'B',
-            Self::Vector => 'M',
             Self::Vertex => 'V',
             Self::Edge => 'E',
             Self::Any => '?',
@@ -90,7 +86,7 @@ impl From<&LogicalType> for ColumnTypeSltWrapper {
             | LogicalType::UInt64 => Self::Integer,
             LogicalType::Float32 | LogicalType::Float64 => Self::FloatingPoint,
             LogicalType::Boolean => Self::Boolean,
-            LogicalType::Vector(_) => Self::Vector,
+            LogicalType::Vector(_) => Self::Any,
             LogicalType::Vertex(_) => Self::Vertex,
             LogicalType::Edge(_) => Self::Edge,
             LogicalType::Record(_) => Self::Any,
@@ -180,7 +176,7 @@ fn convert_scalar_value_to_string(value: &minigu::common::value::ScalarValue) ->
         ScalarValue::Float32(opt) => opt_to_string(opt, |v| v.to_string()),
         ScalarValue::Float64(opt) => opt_to_string(opt, |v| v.to_string()),
         ScalarValue::String(opt) => opt_to_string(opt, |v| v.clone()),
-        ScalarValue::Vector(opt) => opt_to_string(opt, |v| {
+        ScalarValue::Vector { value, .. } => opt_to_string(value, |v| {
             let values: Vec<String> = v
                 .data()
                 .iter()
@@ -219,10 +215,6 @@ mod tests {
 
         // Test graph-specific types
         assert_eq!(
-            ColumnTypeSltWrapper::from_char('M'),
-            Some(ColumnTypeSltWrapper::Vector)
-        );
-        assert_eq!(
             ColumnTypeSltWrapper::from_char('V'),
             Some(ColumnTypeSltWrapper::Vertex)
         );
@@ -244,7 +236,6 @@ mod tests {
         assert_eq!(ColumnTypeSltWrapper::Text.to_char(), 'T');
         assert_eq!(ColumnTypeSltWrapper::Integer.to_char(), 'I');
         assert_eq!(ColumnTypeSltWrapper::FloatingPoint.to_char(), 'R');
-        assert_eq!(ColumnTypeSltWrapper::Vector.to_char(), 'M');
         assert_eq!(ColumnTypeSltWrapper::Vertex.to_char(), 'V');
         assert_eq!(ColumnTypeSltWrapper::Edge.to_char(), 'E');
         assert_eq!(ColumnTypeSltWrapper::Any.to_char(), '?');
@@ -273,14 +264,6 @@ mod tests {
         );
 
         // Test graph-specific types
-        assert_eq!(
-            ColumnTypeSltWrapper::from(&LogicalType::Vector(128)),
-            ColumnTypeSltWrapper::Vector
-        );
-        assert_eq!(
-            ColumnTypeSltWrapper::from(&LogicalType::Vector(256)),
-            ColumnTypeSltWrapper::Vector
-        );
         assert_eq!(
             ColumnTypeSltWrapper::from(&LogicalType::Vertex(vec![])),
             ColumnTypeSltWrapper::Vertex
@@ -357,20 +340,20 @@ mod tests {
             F32::from(std::f32::consts::PI),
         ];
         let vector_value = VectorValue::new(vector_data, 3).unwrap();
-        let scalar = ScalarValue::Vector(Some(vector_value));
+        let scalar = ScalarValue::new_vector(vector_value.dimension(), Some(vector_value));
         let formatted = convert_scalar_value_to_string(&scalar);
         let expected = format!("[1, 2.5, {}]", std::f32::consts::PI);
         assert_eq!(formatted, expected);
 
         // Test null vector
-        let scalar = ScalarValue::Vector(None);
+        let scalar = ScalarValue::new_vector(3, None);
         let formatted = convert_scalar_value_to_string(&scalar);
         assert_eq!(formatted, "NULL");
 
         // Test empty vector
         let empty_vector_data: Vec<F32> = vec![];
         let empty_vector_value = VectorValue::new(empty_vector_data, 0).unwrap();
-        let scalar = ScalarValue::Vector(Some(empty_vector_value));
+        let scalar = ScalarValue::new_vector(0, Some(empty_vector_value));
         let formatted = convert_scalar_value_to_string(&scalar);
         assert_eq!(formatted, "[]");
     }

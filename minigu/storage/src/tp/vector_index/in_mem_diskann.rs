@@ -813,14 +813,14 @@ mod sharded_vector_map_tests {
             shard_counts[shard_idx] += 1;
         }
 
-        // Verify hash sharding spreads data evenly
+        // Verify bit-striping sharding spreads data evenly
         let min_count = *shard_counts.iter().min().unwrap();
         let max_count = *shard_counts.iter().max().unwrap();
         let range = max_count - min_count;
 
         assert!(
             range <= 8,
-            "Hash sharding should distribute evenly, range: {}",
+            "Bit-striping sharding should distribute evenly, range: {}",
             range
         );
         assert!(min_count > 0, "All shards should have data");
