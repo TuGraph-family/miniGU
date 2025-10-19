@@ -24,7 +24,7 @@ pub trait VectorIndex: Send + Sync {
     /// Search for k nearest neighbors with optional filtering
     /// filter_mask: None for no filtering, Some(mask) for filtered search
     /// Automatically selects optimal strategy based on filter characteristics
-    /// Returns a vector of (node_id, distance) tuples
+    /// Returns a vector of (vertex, distance) tuples
     fn search(
         &self,
         query: &[f32],
