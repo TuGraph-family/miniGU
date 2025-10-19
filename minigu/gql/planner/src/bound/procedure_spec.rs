@@ -17,15 +17,15 @@ impl BoundProcedure {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct BoundExplainStatement {
-    pub statement: BoundStatement,
+pub enum BoundUtilityStatement {
+    Explian(Box<BoundStatement>),
 }
 
 #[derive(Debug, Clone, Serialize)]
 pub enum BoundStatement {
     Catalog(Vec<BoundCatalogModifyingStatement>),
     Query(BoundCompositeQueryStatement),
-    Explain(Box<BoundExplainStatement>),
+    Utility(Box<BoundUtilityStatement>),
     // Data(BoundLinearDataModifyingStatement),
 }
 

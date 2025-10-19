@@ -72,7 +72,15 @@ pub fn statement(input: &mut TokenStream) -> ModalResult<Spanned<Statement>> {
             .map(Statement::Catalog)
             .spanned(),
         linear_data_modifying_statement.map_inner(Statement::Data),
-        explain_statement.map_inner(Statement::Explain),
+        utility_statement.map_inner(|utility| Statement::Utility(utility)),
+    ))
+    .parse_next(input)
+}
+
+pub fn utility_statement(input: &mut TokenStream) -> ModalResult<Spanned<UtilityStatement>> {
+    alt((
+        explain_statement.map_inner(UtilityStatement::Explain),
+        fail,
     ))
     .parse_next(input)
 }

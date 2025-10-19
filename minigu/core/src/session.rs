@@ -115,27 +115,29 @@ impl Session {
         let result = activity
             .procedure
             .as_ref()
-            .map(|procedure| {
-                let proc = procedure.value();
-                let is_explain = matches!(proc.statement.value(), gql_parser::ast::Statement::Explain(_));
-                self.handle_procedure(proc, is_explain)
-            })
+            .map(|procedure| self.handle_procedure(procedure.value()))
             .transpose()?
             .unwrap_or_default();
         Ok(result)
     }
 
-    fn handle_procedure(&self, procedure: &Procedure, is_explain: bool) -> Result<QueryResult> {
+    fn handle_procedure(&self, procedure: &Procedure) -> Result<QueryResult> {
         let mut metrics = QueryMetrics::default();
 
         let start = Instant::now();
         let planner = Planner::new(self.context.clone());
-        let plan = planner.plan_query(procedure, is_explain)?;
-        metrics.planning_time = start.elapsed();
-
-        if is_explain {
-            return self.format_explain(plan);
+        let plan = planner.plan_query(procedure)?;
+        let is_logical_plan = matches!(plan, minigu_planner::plan::PlanNode::LogicalMatch(_)
+            | minigu_planner::plan::PlanNode::LogicalFilter(_)
+            | minigu_planner::plan::PlanNode::LogicalProject(_)
+            | minigu_planner::plan::PlanNode::LogicalSort(_)
+            | minigu_planner::plan::PlanNode::LogicalLimit(_)
+            | minigu_planner::plan::PlanNode::LogicalCall(_)
+            | minigu_planner::plan::PlanNode::LogicalOneRow(_));
+        if is_logical_plan {
+            return self.format_explain(plan);   // return explain output string for logical plan
         }
+        metrics.planning_time = start.elapsed();
 
         let schema = plan.schema().cloned();
         let start = Instant::now();
