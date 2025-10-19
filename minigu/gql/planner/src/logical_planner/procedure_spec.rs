@@ -1,6 +1,6 @@
 use minigu_common::error::not_implemented;
 
-use crate::bound::{BoundProcedure, BoundStatement};
+use crate::bound::{BoundProcedure, BoundStatement, BoundUtilityStatement};
 use crate::error::PlanResult;
 use crate::logical_planner::LogicalPlanner;
 use crate::plan::PlanNode;
@@ -27,9 +27,13 @@ impl LogicalPlanner {
                 self.plan_catalog_modifying_statement(statement)
             }
             BoundStatement::Query(statement) => self.plan_composite_query_statement(statement),
-            BoundStatement::Explain(explain) => {
-                let plan = self.plan_statement(explain.statement)?;
-                Ok(plan)
+            BoundStatement::Utility(utility) => {
+                match utility.as_ref() {
+                    BoundUtilityStatement::Explian(explain) => {
+                        let plan = self.plan_statement(*explain.clone())?;
+                        Ok(plan)
+                    }
+                }
             }
         }
     }
