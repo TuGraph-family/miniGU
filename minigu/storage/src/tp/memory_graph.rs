@@ -1089,8 +1089,7 @@ impl MemoryGraph {
                 .unwrap_or(0);
             create_filter_mask(candidate_vector_ids, total_vector_num.try_into().unwrap())
         });
-        let results =
-            index_ref.search(&query_vec, k, l_value, filter_mask.as_deref(), should_pre)?;
+        let results = index_ref.search(&query_vec, k, l_value, filter_mask.as_ref(), should_pre)?;
 
         Ok(results)
     }

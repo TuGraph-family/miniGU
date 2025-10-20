@@ -11,7 +11,7 @@ use ordered_float::OrderedFloat;
 use parking_lot::RwLock;
 use vector::{Metric, distance_l2_vector_f32};
 
-use super::filter::{DenseFilterMask, FilterMask, SELECTIVITY_THRESHOLD};
+use super::filter::{FilterMask, SELECTIVITY_THRESHOLD};
 use super::index::VectorIndex;
 use crate::error::{StorageError, StorageResult, VectorIndexError};
 
@@ -274,7 +274,7 @@ impl InMemANNAdapter {
         &self,
         query: &[f32],
         k: usize,
-        filter_mask: &dyn FilterMask,
+        filter_mask: &FilterMask,
     ) -> StorageResult<Vec<(u64, f32)>> {
         if k == 0 {
             return Ok(Vec::new());
@@ -323,19 +323,11 @@ impl InMemANNAdapter {
         query: &[f32],
         k: usize,
         l_value: u32,
-        filter_mask: &dyn FilterMask,
+        filter_mask: &FilterMask,
         should_pre: bool,
     ) -> StorageResult<Vec<(u64, f32)>> {
-        // Convert miniGU FilterMask to DiskANN FilterMask for pre-filtering
-        let diskann_filter = {
-            if let Some(dense) = filter_mask.as_any().downcast_ref::<DenseFilterMask>() {
-                dense as &dyn DiskANNFilterMask
-            } else {
-                return Err(StorageError::VectorIndex(VectorIndexError::FilterError(
-                    "Unsupported FilterMask type".to_string(),
-                )));
-            }
-        };
+        // Convert miniGU FilterMask to DiskANN FilterMask
+        let diskann_filter = filter_mask as &dyn DiskANNFilterMask;
         let filtered_results =
             self.ann_search(query, k, l_value, Some(diskann_filter), should_pre)?;
 
@@ -549,7 +541,7 @@ impl VectorIndex for InMemANNAdapter {
         query: &[f32],
         k: usize,
         l_value: u32,
-        filter_mask: Option<&dyn FilterMask>,
+        filter_mask: Option<&FilterMask>,
         should_pre: bool,
     ) -> StorageResult<Vec<(u64, f32)>> {
         // No filter provided, DiskANN search without filter

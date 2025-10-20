@@ -30,7 +30,7 @@ pub trait VectorIndex: Send + Sync {
         query: &[f32],
         k: usize,
         l_value: u32,
-        filter_mask: Option<&dyn FilterMask>,
+        filter_mask: Option<&FilterMask>,
         should_pre: bool,
     ) -> StorageResult<Vec<(u64, f32)>>;
 
