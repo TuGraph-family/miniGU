@@ -13,7 +13,7 @@ pub enum PlanError {
     #[error(transparent)]
     #[diagnostic(transparent)]
     NotImplemented(#[from] NotImplemented),
-    
+
     #[error("internal error: {0}")]
     InvalidOperation(String),
 }

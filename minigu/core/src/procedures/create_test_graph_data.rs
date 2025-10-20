@@ -2,13 +2,15 @@ use std::sync::Arc;
 
 use minigu_catalog::memory::graph_type::MemoryGraphTypeCatalog;
 use minigu_catalog::named_ref::NamedGraphRef;
-use minigu_common::data_type::{DataField, DataSchema, LogicalType};
+use minigu_common::data_type::LogicalType;
 use minigu_common::types::{EdgeId, LabelId, VertexId};
 use minigu_common::value::ScalarValue;
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::procedure::Procedure;
-use minigu_storage::common::{Edge, IsolationLevel, PropertyRecord, Vertex};
+use minigu_storage::common::{Edge, PropertyRecord, Vertex};
 use minigu_storage::tp::MemoryGraph;
+use minigu_transaction::IsolationLevel::Serializable;
+use minigu_transaction::{GraphTxnManager, Transaction};
 
 /// Create a test graph data with the given name in the current schema.
 pub fn build_procedure() -> Procedure {
@@ -47,14 +49,14 @@ pub fn build_procedure() -> Procedure {
         if !schema.add_graph(graph_name.clone(), container.clone()) {
             return Err(anyhow::anyhow!("graph `{graph_name}` already exists").into());
         }
-        
-        context.current_graph = Some(NamedGraphRef::new(graph_name.into(), container.clone())); 
+
+        context.current_graph = Some(NamedGraphRef::new(graph_name.into(), container.clone()));
 
         let mem = match container.graph_storage() {
             GraphStorage::Memory(m) => Arc::clone(m),
         };
 
-        let txn = mem.begin_transaction(IsolationLevel::Serializable);
+        let txn = mem.txn_manager().begin_transaction(Serializable)?;
 
         const PERSON_LABEL_ID: LabelId = LabelId::new(1).unwrap();
         const FRIEND_LABEL_ID: LabelId = LabelId::new(2).unwrap();

@@ -5,9 +5,10 @@ use std::sync::Arc;
 use minigu_catalog::memory::graph_type::MemoryGraphTypeCatalog;
 use minigu_catalog::provider::{GraphProvider, GraphTypeRef};
 use minigu_common::types::{LabelId, VertexIdArray};
-use minigu_storage::common::IsolationLevel;
 use minigu_storage::error::StorageResult;
 use minigu_storage::tp::MemoryGraph;
+use minigu_storage::tp::transaction::IsolationLevel;
+use minigu_transaction::manager::GraphTxnManager;
 
 pub enum GraphStorage {
     Memory(Arc<MemoryGraph>),
@@ -32,9 +33,10 @@ impl GraphContainer {
     }
 }
 
+// A tmp code. In the feature, this label check will be done by a checker.
 fn vertex_has_all_labels(
     _mem: &Arc<MemoryGraph>,
-    _txn: &minigu_storage::tp::transaction::TransactionHandle,
+    _txn: &Arc<minigu_storage::tp::transaction::MemTransaction>,
     _vid: u64,
     _label_ids: &[LabelId],
 ) -> StorageResult<bool> {
@@ -51,11 +53,13 @@ impl GraphContainer {
         &self,
         label_ids: &[LabelId],
         batch_size: usize,
-    )-> StorageResult<Box<dyn Iterator<Item = Arc<VertexIdArray>> + Send + 'static>> {
+    ) -> StorageResult<Box<dyn Iterator<Item = Arc<VertexIdArray>> + Send + 'static>> {
         let mem = match self.graph_storage() {
             GraphStorage::Memory(m) => Arc::clone(m),
         };
-        let txn = mem.begin_transaction(IsolationLevel::Serializable);
+        let txn = mem
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)?;
         let mut ids: Vec<u64> = Vec::new();
         {
             let it = mem.iter_vertices(&txn)?;
@@ -70,7 +74,9 @@ impl GraphContainer {
 
         let mut pos = 0usize;
         let iter = std::iter::from_fn(move || {
-            if pos >= ids.len() { return None; }
+            if pos >= ids.len() {
+                return None;
+            }
             let end = (pos + batch_size).min(ids.len());
             let slice = &ids[pos..end];
             pos = end;

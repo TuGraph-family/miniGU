@@ -1,13 +1,19 @@
 use std::sync::Arc;
 
-use gql_parser::ast::{ElementPattern, ElementPatternFiller, GraphPattern, GraphPatternBindingTable, LabelExpr, MatchMode, PathMode, PathPattern, PathPatternExpr, PathPatternPrefix};
-use gql_parser::span::Spanned;
+use gql_parser::ast::{
+    ElementPattern, ElementPatternFiller, GraphPattern, GraphPatternBindingTable, LabelExpr,
+    MatchMode, PathMode, PathPattern, PathPatternExpr, PathPatternPrefix,
+};
 use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 use minigu_common::error::not_implemented;
 
 use super::error::{BindError, BindResult};
 use crate::binder::Binder;
-use crate::bound::{BoundElementPattern, BoundExpr, BoundGraphPattern, BoundGraphPatternBindingTable, BoundLabelExpr, BoundMatchMode, BoundPathMode, BoundPathPattern, BoundPathPatternExpr, BoundVertexPattern};
+use crate::bound::{
+    BoundElementPattern, BoundExpr, BoundGraphPattern, BoundGraphPatternBindingTable,
+    BoundLabelExpr, BoundMatchMode, BoundPathMode, BoundPathPattern, BoundPathPatternExpr,
+    BoundVertexPattern,
+};
 
 impl Binder<'_> {
     pub fn bind_graph_pattern_binding_table(
@@ -16,45 +22,39 @@ impl Binder<'_> {
     ) -> BindResult<BoundGraphPatternBindingTable> {
         let graph = self.bind_graph_pattern(table.pattern.value())?;
         let bound_pattern = self.bind_graph_pattern(table.pattern.value())?;
-        let cur_schema = self.active_data_schema.as_ref().ok_or_else(
-            || BindError::Unexpected
-        )?;
+        let cur_schema = self
+            .active_data_schema
+            .as_ref()
+            .ok_or_else(|| BindError::Unexpected)?;
         let (outputs, output_schemas) = if table.yield_clause.is_empty() {
-            let outs:Vec<BoundExpr> = cur_schema.fields().iter().map(
-                |f| {
-                    BoundExpr::variable(
-                        f.name().to_string(),
-                        f.ty().clone(),
-                        f.is_nullable(),
-                    )
-                }
-            ).collect();
+            let outs: Vec<BoundExpr> = cur_schema
+                .fields()
+                .iter()
+                .map(|f| BoundExpr::variable(f.name().to_string(), f.ty().clone(), f.is_nullable()))
+                .collect();
             (outs, cur_schema.clone())
         } else {
             let mut outs = Vec::with_capacity(table.yield_clause.len());
             let mut out_schema = DataSchema::new(Vec::new());
             for id_sp in &table.yield_clause {
                 let name = id_sp.value().as_str();
-                let f = cur_schema.get_field_by_name(name)
+                let f = cur_schema
+                    .get_field_by_name(name)
                     .ok_or_else(|| BindError::Unexpected)?;
                 outs.push(BoundExpr::variable(
                     name.to_string(),
                     f.ty().clone(),
                     f.is_nullable(),
                 ));
-                let field = DataField::new(
-                    name.to_string(),
-                    f.ty().clone(),
-                    f.is_nullable(),
-                );
+                let field = DataField::new(name.to_string(), f.ty().clone(), f.is_nullable());
                 out_schema.push_back(&field)
             }
             (outs, out_schema)
         };
         Ok(BoundGraphPatternBindingTable {
-            pattern:bound_pattern, 
-            yield_clause:outputs,
-            output_schema:output_schemas
+            pattern: bound_pattern,
+            yield_clause: outputs,
+            output_schema: output_schemas,
         })
     }
 
@@ -66,24 +66,23 @@ impl Binder<'_> {
             .match_mode
             .as_ref()
             .map(|m| bind_match_mode(m.value()));
-        
+
         let mut paths: Vec<Arc<BoundPathPattern>> = Vec::with_capacity(pattern.patterns.len());
         for path in pattern.patterns.iter() {
             let bound = self.bind_path_pattern(path.value())?;
             paths.push(bound);
-        };
-        
+        }
+
         let predicate: Option<BoundExpr> = match pattern.where_clause.as_ref() {
             Some(expr) => Some(self.bind_value_expression(expr.value())?),
             None => None,
         };
-        
+
         Ok(BoundGraphPattern {
             match_mode,
             paths,
             predicate,
         })
-        
     }
 
     pub fn bind_path_pattern(
@@ -120,13 +119,12 @@ impl Binder<'_> {
                 if bound_parts.is_empty() {
                     return Err(BindError::Unexpected);
                 }
-                
+
                 if bound_parts.len() == 1 {
                     return Ok(bound_parts.pop().unwrap());
                 }
-                
+
                 Ok(BoundPathPatternExpr::Concat(bound_parts))
-                
             }
             Quantified { .. } => not_implemented("quantified expression", None),
             Optional(_) => not_implemented("optional expression", None),
@@ -147,22 +145,19 @@ impl Binder<'_> {
                 let v = self.bind_vertex_filler(filler)?;
                 Ok(BoundElementPattern::Vertex(Arc::new(v)))
             }
-            ElementPattern::Edge { .. } => {
-                not_implemented("edge pattern", None)
-            }
+            ElementPattern::Edge { .. } => not_implemented("edge pattern", None),
         }
     }
-    pub fn bind_label_expr(
-        &mut self,
-        expr: &LabelExpr,
-    ) -> BindResult<BoundLabelExpr> {
+
+    pub fn bind_label_expr(&mut self, expr: &LabelExpr) -> BindResult<BoundLabelExpr> {
         match expr {
             LabelExpr::Wildcard => Ok(BoundLabelExpr::Any),
             LabelExpr::Label(ident) => {
                 let name = ident.as_str();
-                let graph = self.current_graph.as_ref().ok_or_else(
-                    || BindError::Unexpected
-                )?;
+                let graph = self
+                    .current_graph
+                    .as_ref()
+                    .ok_or_else(|| BindError::Unexpected)?;
                 // To handle.
                 let id = graph.graph_type().get_label_id(name)?.unwrap();
                 Ok(BoundLabelExpr::Label(id))
@@ -184,13 +179,10 @@ impl Binder<'_> {
         }
     }
 
-    fn bind_vertex_filler(
-        &mut self,
-        f: &ElementPatternFiller,
-    ) -> BindResult<BoundVertexPattern> {
-        let var =  match &f.variable {
+    fn bind_vertex_filler(&mut self, f: &ElementPatternFiller) -> BindResult<BoundVertexPattern> {
+        let var = match &f.variable {
             Some(var) => var.value().to_string(),
-            // If user didnt give a name, there whill generate a name.
+            // If user didnt give a name, there will generate a name.
             None => {
                 let idx = self
                     .active_data_schema
@@ -201,11 +193,9 @@ impl Binder<'_> {
             }
         };
 
-        let vertex_ty = LogicalType::Vertex(
-            vec![DataField::new("id".into(), LogicalType::Int64, false)],
-        );
+        let vertex_ty =
+            LogicalType::Vertex(vec![DataField::new("id".into(), LogicalType::Int64, false)]);
         self.register_variable(var.as_str(), vertex_ty, false)?;
-
 
         let label = match &f.label {
             Some(sp) => Some(self.bind_label_expr(sp.value())?),
@@ -213,12 +203,12 @@ impl Binder<'_> {
         };
         let predicate = match &f.predicate {
             None => None,
-            Some(sp) => None
+            Some(sp) => None,
         };
         Ok(BoundVertexPattern {
             var,
             label,
-            predicate
+            predicate,
         })
     }
 
@@ -233,7 +223,10 @@ impl Binder<'_> {
             self.active_data_schema = Some(schema);
             return Ok(());
         }
-        let schema = self.active_data_schema.as_mut().ok_or_else(|| BindError::Unexpected)?;
+        let schema = self
+            .active_data_schema
+            .as_mut()
+            .ok_or_else(|| BindError::Unexpected)?;
         if let Some(f) = schema.get_field_by_name(name) {
             if f.ty() != &ty {
                 return Err(BindError::Unexpected);
@@ -243,15 +236,12 @@ impl Binder<'_> {
             }
             Ok(())
         } else {
-            let data_schema = DataSchema::new(
-                vec![DataField::new(name.to_string(), ty, nullable)]
-            );
+            let data_schema = DataSchema::new(vec![DataField::new(name.to_string(), ty, nullable)]);
             schema.append(&data_schema);
             Ok(())
         }
     }
 }
-
 
 pub fn bind_path_pattern_prefix(prefix: &PathPatternPrefix) -> BindResult<BoundPathMode> {
     match prefix {

@@ -1,9 +1,7 @@
 use std::sync::Arc;
 
-use arrow::array::{ArrayRef, StringArray};
-use itertools::Itertools;
+use arrow::array::StringArray;
 use minigu_catalog::provider::SchemaProvider;
-use minigu_common::data_chunk;
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 use minigu_context::procedure::Procedure;
@@ -11,10 +9,12 @@ use minigu_context::procedure::Procedure;
 /// Show graph name in current schema.
 
 pub fn build_procedure() -> Procedure {
-    let schema = Arc::new(DataSchema::new(vec![
-        DataField::new("graph_name".into(), LogicalType::String, false)
-    ]));
-    
+    let schema = Arc::new(DataSchema::new(vec![DataField::new(
+        "graph_name".into(),
+        LogicalType::String,
+        false,
+    )]));
+
     Procedure::new(vec![], Some(schema.clone()), move |context, args| {
         assert!(args.is_empty());
         let chunk = if let Some(current_schema) = context.current_schema {

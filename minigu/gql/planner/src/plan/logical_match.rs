@@ -21,7 +21,12 @@ pub struct LogicalMatch {
 }
 
 impl LogicalMatch {
-    pub fn new(kind: MatchKind, pattern: BoundGraphPattern, yield_clause: Vec<BoundExpr>, output_schema: DataSchema) -> Self {
+    pub fn new(
+        kind: MatchKind,
+        pattern: BoundGraphPattern,
+        yield_clause: Vec<BoundExpr>,
+        output_schema: DataSchema,
+    ) -> Self {
         let schema_ref = Some(Arc::new(output_schema.clone()));
         let base = PlanBase {
             schema: schema_ref,

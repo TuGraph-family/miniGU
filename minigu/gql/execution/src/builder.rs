@@ -16,7 +16,6 @@ use crate::evaluator::constant::Constant;
 use crate::executor::procedure_call::ProcedureCallBuilder;
 use crate::executor::sort::SortSpec;
 use crate::executor::{BoxedExecutor, Executor, IntoExecutor};
-use crate::executor::vertex_scan::VertexScanBuilder;
 use crate::source::VertexSource;
 
 const DEFAULT_CHUNK_SIZE: usize = 2048;
@@ -50,15 +49,21 @@ impl ExecutorBuilder {
             PlanNode::PhysicalNodeScan(node_scan) => {
                 assert_eq!(children.len(), 0);
                 use minigu_catalog::provider::SchemaProvider;
-                let cur_schema = self.session.home_schema.as_ref().expect("there should be a home schema");
-                let cur_graph = cur_schema.get_graph("test".to_string().as_str()).expect("there should be a test graph").unwrap();
+                let cur_schema = self
+                    .session
+                    .home_schema
+                    .as_ref()
+                    .expect("there should be a home schema");
+                let cur_graph = cur_schema
+                    .get_graph("test".to_string().as_str())
+                    .expect("there should be a test graph")
+                    .unwrap();
                 let provider: &dyn GraphProvider = cur_graph.as_ref();
                 let container = provider
                     .as_any()
                     .downcast_ref::<GraphContainer>()
                     .expect("current graph must be GraphContainer");
-                let batches = container
-                    .vertex_source(&[], 1024).expect("err there");
+                let batches = container.vertex_source(&[], 1024).expect("err there");
                 let source = batches.map(|arr: Arc<VertexIdArray>| Ok(arr));
                 Box::new(source.scan_vertex())
             }

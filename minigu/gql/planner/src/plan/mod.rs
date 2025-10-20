@@ -4,8 +4,8 @@ pub mod limit;
 pub mod logical_match;
 pub mod one_row;
 pub mod project;
-pub mod sort;
 pub mod scan;
+pub mod sort;
 
 use std::iter::Scan;
 use std::sync::Arc;
@@ -74,9 +74,7 @@ pub enum PlanNode {
     PhysicalSort(Arc<Sort>),
     PhysicalLimit(Arc<Limit>),
     PhysicalNodeScan(Arc<PhysicalNodeScan>),
-    
     // PhysicalCatalogModify(Arc<PhysicalCatalogModify>)
-    
 }
 
 impl PlanData for PlanNode {

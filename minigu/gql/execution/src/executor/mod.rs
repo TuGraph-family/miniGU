@@ -103,9 +103,9 @@ pub trait Executor {
     {
         VertexPropertyScanBuilder::new(self, input_column_index, source).into_executor()
     }
-    
+
     fn scan_vertex<S>(self, source: S) -> impl Executor
-    where 
+    where
         Self: Sized,
         S: VertexSource,
     {

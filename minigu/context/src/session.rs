@@ -4,7 +4,6 @@ use gql_parser::ast::{Ident, SchemaPathSegment, SchemaRef};
 use minigu_catalog::memory::schema::MemorySchemaCatalog;
 use minigu_catalog::named_ref::NamedGraphRef;
 use minigu_catalog::provider::{CatalogProvider, SchemaProvider};
-use minigu_common::error::not_implemented;
 
 use crate::database::DatabaseContext;
 
@@ -81,12 +80,12 @@ impl SessionContext {
         let schema = self
             .current_schema
             .as_ref()
-            .ok_or_else(| | "Error".to_string())?
+            .ok_or_else(|| "Error".to_string())?
             .as_ref();
         let graph = schema
             .get_graph(graph_name.as_str())
             .map_err(|err| err.to_string())?
-            .ok_or_else(| | "Error".to_string())?;
+            .ok_or_else(|| "Error".to_string())?;
         self.current_graph = Some(NamedGraphRef::new(Ident::new(graph_name), graph));
         Ok("".to_string())
     }

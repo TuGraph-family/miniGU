@@ -1,9 +1,13 @@
 use std::sync::Arc;
-use minigu_common::data_type::DataSchemaRef;
-use minigu_common::error::{not_implemented, NotImplemented};
 
-use crate::bound::{BoundCompositeQueryStatement, BoundGraphPatternBindingTable, BoundLinearQueryStatement, BoundMatchStatement, BoundOrderByAndPageStatement, BoundResultStatement, BoundReturnStatement, BoundSimpleQueryStatement};
-use crate::error::{PlanError, PlanResult};
+use minigu_common::error::not_implemented;
+
+use crate::bound::{
+    BoundCompositeQueryStatement, BoundLinearQueryStatement, BoundMatchStatement,
+    BoundOrderByAndPageStatement, BoundResultStatement, BoundReturnStatement,
+    BoundSimpleQueryStatement,
+};
+use crate::error::PlanResult;
 use crate::logical_planner::LogicalPlanner;
 use crate::plan::PlanNode;
 use crate::plan::limit::Limit;
@@ -62,26 +66,22 @@ impl LogicalPlanner {
             BoundSimpleQueryStatement::Call(statement) => {
                 self.plan_call_procedure_statement(statement)
             }
-            BoundSimpleQueryStatement::Match(statement) => {
-                self.plan_match_statement(statement)
-            }
+            BoundSimpleQueryStatement::Match(statement) => self.plan_match_statement(statement),
         }
     }
-    
-    pub fn plan_match_statement(
-        &self,
-        statement: BoundMatchStatement,
-    ) -> PlanResult<PlanNode> {
+
+    pub fn plan_match_statement(&self, statement: BoundMatchStatement) -> PlanResult<PlanNode> {
         match statement {
             BoundMatchStatement::Simple(binding) => {
                 let node = LogicalMatch::new(
-                    MatchKind::Simple, binding.pattern,binding.yield_clause, binding.output_schema
+                    MatchKind::Simple,
+                    binding.pattern,
+                    binding.yield_clause,
+                    binding.output_schema,
                 );
                 Ok(PlanNode::LogicalMatch(Arc::new(node)))
-            },
-            BoundMatchStatement::Optional => {
-                not_implemented("match statement optional", None)
             }
+            BoundMatchStatement::Optional => not_implemented("match statement optional", None),
         }
     }
 

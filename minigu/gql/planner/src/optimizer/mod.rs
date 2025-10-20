@@ -97,7 +97,7 @@ fn extract_single_vertex_from_path(
                 None,
             ),
         },
-        
+
         Subpath(sp) => extract_single_vertex_from_path(&sp.expr, graph_id),
         Alternation(_) => not_implemented(
             "alternation (A|B) in path pattern is not supported yet",

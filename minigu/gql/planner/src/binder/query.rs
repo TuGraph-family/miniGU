@@ -1,6 +1,12 @@
 use std::sync::Arc;
 
-use gql_parser::ast::{AmbientLinearQueryStatement, CompositeQueryStatement, FocusedLinearQueryStatement, FocusedLinearQueryStatementPart, GraphPatternBindingTable, LinearQueryStatement, MatchStatement, NullOrdering as AstNullOrdering, OrderByAndPageStatement, Ordering, QueryConjunction, ResultStatement, Return, ReturnStatement, SetOp, SetOpKind, SetQuantifier, SimpleQueryStatement, SortSpec};
+use gql_parser::ast::{
+    AmbientLinearQueryStatement, CompositeQueryStatement, FocusedLinearQueryStatement,
+    FocusedLinearQueryStatementPart, LinearQueryStatement, MatchStatement,
+    NullOrdering as AstNullOrdering, OrderByAndPageStatement, Ordering, QueryConjunction,
+    ResultStatement, Return, ReturnStatement, SetOp, SetOpKind, SetQuantifier,
+    SimpleQueryStatement, SortSpec,
+};
 use itertools::Itertools;
 use minigu_common::data_type::{DataField, DataSchema, DataSchemaRef};
 use minigu_common::error::not_implemented;
@@ -8,7 +14,12 @@ use minigu_common::ordering::{NullOrdering, SortOrdering};
 
 use super::Binder;
 use super::error::{BindError, BindResult};
-use crate::bound::{BoundCompositeQueryStatement, BoundExpr, BoundGraphPatternBindingTable, BoundLinearQueryStatement, BoundMatchStatement, BoundOrderByAndPageStatement, BoundQueryConjunction, BoundResultStatement, BoundReturnStatement, BoundSetOp, BoundSetOpKind, BoundSetQuantifier, BoundSimpleQueryStatement, BoundSortSpec};
+use crate::bound::{
+    BoundCompositeQueryStatement, BoundExpr, BoundLinearQueryStatement, BoundMatchStatement,
+    BoundOrderByAndPageStatement, BoundQueryConjunction, BoundResultStatement,
+    BoundReturnStatement, BoundSetOp, BoundSetOpKind, BoundSetQuantifier,
+    BoundSimpleQueryStatement, BoundSortSpec,
+};
 
 impl Binder<'_> {
     pub fn bind_composite_query_statement(
@@ -135,10 +146,13 @@ impl Binder<'_> {
         }
     }
 
-    pub fn bind_match_statement(&mut self, statement: &MatchStatement) -> BindResult<BoundMatchStatement> {
+    pub fn bind_match_statement(
+        &mut self,
+        statement: &MatchStatement,
+    ) -> BindResult<BoundMatchStatement> {
         match statement {
             MatchStatement::Simple(table) => {
-                let stmt  = self.bind_graph_pattern_binding_table(table.value())?;
+                let stmt = self.bind_graph_pattern_binding_table(table.value())?;
                 Ok(BoundMatchStatement::Simple(stmt))
             }
             MatchStatement::Optional(_) => not_implemented("optional match statement", None),

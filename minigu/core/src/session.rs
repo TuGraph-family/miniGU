@@ -13,8 +13,8 @@ use minigu_context::database::DatabaseContext;
 use minigu_context::session::SessionContext;
 use minigu_execution::builder::ExecutorBuilder;
 use minigu_execution::executor::Executor;
-use minigu_planner::plan::PlanData;
 use minigu_planner::Planner;
+use minigu_planner::plan::PlanData;
 
 use crate::error::{Error, Result};
 use crate::metrics::QueryMetrics;
@@ -83,7 +83,7 @@ impl Session {
                     }
                 },
                 _ => {
-                   return not_implemented("not implement ", None);
+                    return not_implemented("not implement ", None);
                 }
             }
         }
