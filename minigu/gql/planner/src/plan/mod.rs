@@ -7,7 +7,6 @@ pub mod project;
 pub mod scan;
 pub mod sort;
 
-use std::iter::Scan;
 use std::sync::Arc;
 
 use minigu_common::data_type::DataSchemaRef;

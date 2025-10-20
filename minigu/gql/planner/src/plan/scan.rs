@@ -28,7 +28,7 @@ impl PhysicalNodeScan {
             children: vec![],
         };
         Self {
-            base: base,
+            base,
             var: var.to_string(),
             labels: labels.clone(),
             graph_id,
