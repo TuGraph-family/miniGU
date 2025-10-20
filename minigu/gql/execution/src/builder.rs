@@ -46,7 +46,8 @@ impl ExecutorBuilder {
                         .map(|a| a.into_array().as_boolean().clone())
                 }))
             }
-            PlanNode::PhysicalNodeScan(node_scan) => {
+            PlanNode::PhysicalNodeScan(_node_scan) => {
+                // Need to handle node scan for other path and query.
                 assert_eq!(children.len(), 0);
                 use minigu_catalog::provider::SchemaProvider;
                 let cur_schema = self

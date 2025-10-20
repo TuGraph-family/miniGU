@@ -6,7 +6,7 @@ use minigu_common::data_chunk::DataChunk;
 use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 use minigu_context::procedure::Procedure;
 
-/// Show graph name in current schema.
+// Show graph names in current schema.
 
 pub fn build_procedure() -> Procedure {
     let schema = Arc::new(DataSchema::new(vec![DataField::new(
