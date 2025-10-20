@@ -1,9 +1,9 @@
 mod create_test_graph;
+mod create_test_graph_data;
 mod echo;
 mod export_import;
+mod show_graph;
 mod show_procedures;
-mod create_test_graph_data;
-
 
 use minigu_context::procedure::Procedure;
 
@@ -21,7 +21,9 @@ pub fn build_predefined_procedures() -> Vec<(String, Procedure)> {
         (
             "create_test_graph_data".to_string(),
             create_test_graph_data::build_procedure(),
-            ),
+        ),
+        // Tmp procedure.
+        ("show_graph".to_string(), show_graph::build_procedure()),
         (
             "import".to_string(),
             export_import::import::build_procedure(),

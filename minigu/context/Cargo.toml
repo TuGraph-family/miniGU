@@ -9,6 +9,7 @@ version.workspace = true
 minigu-catalog = { workspace = true }
 minigu-common = { workspace = true }
 minigu-storage = { workspace = true }
+gql-parser = {workspace = true}
 rayon = { workspace = true }
 
 [lints]
