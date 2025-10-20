@@ -2,8 +2,7 @@ pub mod binary;
 pub mod column_ref;
 pub mod constant;
 pub mod datum;
-pub mod factorized_binary;
-pub mod factorized_unary;
+pub mod factorized_evaluator;
 pub mod scalar_function;
 pub mod unary;
 
@@ -11,8 +10,6 @@ use std::fmt::Debug;
 
 use binary::{Binary, BinaryOp};
 use datum::DatumRef;
-use factorized_binary::FactorizedBinary;
-use factorized_unary::FactorizedUnary;
 use minigu_common::data_chunk::DataChunk;
 use unary::{Unary, UnaryOp};
 
@@ -146,124 +143,6 @@ pub trait Evaluator: Debug {
         E: Evaluator,
     {
         Binary::new(BinaryOp::Le, self, other)
-    }
-
-    fn factorized_add<E>(self, other: E, fact: UnflatSide) -> FactorizedBinary<Self, E>
-    where
-        Self: Sized,
-        E: Evaluator,
-    {
-        FactorizedBinary::new(BinaryOp::Add, self, other, fact)
-    }
-
-    fn factorized_sub<E>(self, other: E, fact: UnflatSide) -> FactorizedBinary<Self, E>
-    where
-        Self: Sized,
-        E: Evaluator,
-    {
-        FactorizedBinary::new(BinaryOp::Sub, self, other, fact)
-    }
-
-    fn factorized_mul<E>(self, other: E, fact: UnflatSide) -> FactorizedBinary<Self, E>
-    where
-        Self: Sized,
-        E: Evaluator,
-    {
-        FactorizedBinary::new(BinaryOp::Mul, self, other, fact)
-    }
-
-    fn factorized_div<E>(self, other: E, fact: UnflatSide) -> FactorizedBinary<Self, E>
-    where
-        Self: Sized,
-        E: Evaluator,
-    {
-        FactorizedBinary::new(BinaryOp::Div, self, other, fact)
-    }
-
-    fn factorized_rem<E>(self, other: E, fact: UnflatSide) -> FactorizedBinary<Self, E>
-    where
-        Self: Sized,
-        E: Evaluator,
-    {
-        FactorizedBinary::new(BinaryOp::Rem, self, other, fact)
-    }
-
-    fn factorized_neg(self) -> FactorizedUnary<Self>
-    where
-        Self: Sized,
-    {
-        FactorizedUnary::new(UnaryOp::Neg, self)
-    }
-
-    fn factorized_not(self) -> FactorizedUnary<Self>
-    where
-        Self: Sized,
-    {
-        FactorizedUnary::new(UnaryOp::Not, self)
-    }
-
-    fn factorized_and<E>(self, other: E, fact: UnflatSide) -> FactorizedBinary<Self, E>
-    where
-        Self: Sized,
-        E: Evaluator,
-    {
-        FactorizedBinary::new(BinaryOp::And, self, other, fact)
-    }
-
-    fn factorized_or<E>(self, other: E, fact: UnflatSide) -> FactorizedBinary<Self, E>
-    where
-        Self: Sized,
-        E: Evaluator,
-    {
-        FactorizedBinary::new(BinaryOp::Or, self, other, fact)
-    }
-
-    fn factorized_eq<E>(self, other: E, fact: UnflatSide) -> FactorizedBinary<Self, E>
-    where
-        Self: Sized,
-        E: Evaluator,
-    {
-        FactorizedBinary::new(BinaryOp::Eq, self, other, fact)
-    }
-
-    fn factorized_ne<E>(self, other: E, fact: UnflatSide) -> FactorizedBinary<Self, E>
-    where
-        Self: Sized,
-        E: Evaluator,
-    {
-        FactorizedBinary::new(BinaryOp::Ne, self, other, fact)
-    }
-
-    fn factorized_gt<E>(self, other: E, fact: UnflatSide) -> FactorizedBinary<Self, E>
-    where
-        Self: Sized,
-        E: Evaluator,
-    {
-        FactorizedBinary::new(BinaryOp::Gt, self, other, fact)
-    }
-
-    fn factorized_ge<E>(self, other: E, fact: UnflatSide) -> FactorizedBinary<Self, E>
-    where
-        Self: Sized,
-        E: Evaluator,
-    {
-        FactorizedBinary::new(BinaryOp::Ge, self, other, fact)
-    }
-
-    fn factorized_lt<E>(self, other: E, fact: UnflatSide) -> FactorizedBinary<Self, E>
-    where
-        Self: Sized,
-        E: Evaluator,
-    {
-        FactorizedBinary::new(BinaryOp::Lt, self, other, fact)
-    }
-
-    fn factorized_le<E>(self, other: E, fact: UnflatSide) -> FactorizedBinary<Self, E>
-    where
-        Self: Sized,
-        E: Evaluator,
-    {
-        FactorizedBinary::new(BinaryOp::Le, self, other, fact)
     }
 }
 
