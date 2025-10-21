@@ -105,6 +105,9 @@ impl ExecutorBuilder {
                     .expect("variable should be present in the schema");
                 Box::new(ColumnRef::new(index))
             }
+            BoundExprKind::VectorDistance { .. } => {
+                unimplemented!("VECTOR_DISTANCE evaluator not implemented yet")
+            }
         }
     }
 }

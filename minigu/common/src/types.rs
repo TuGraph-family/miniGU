@@ -79,7 +79,7 @@ impl FromStr for VectorMetric {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_uppercase().as_str() {
-            "L2" => Ok(VectorMetric::L2),
+            "L2" | "EUCLIDEAN" => Ok(VectorMetric::L2),
             _ => not_implemented(format!("vector metric '{}'", s), None),
         }
     }

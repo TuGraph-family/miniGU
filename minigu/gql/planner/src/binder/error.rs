@@ -88,6 +88,12 @@ pub enum BindError {
     #[error("invalid vector element: {0}")]
     InvalidVectorElement(String),
 
+    #[error("argument {position} of VECTOR_DISTANCE must be a vector, but found {ty}")]
+    InvalidVectorDistanceArgument { position: usize, ty: LogicalType },
+
+    #[error("VECTOR_DISTANCE operands must share the same dimension: left {left}, right {right}")]
+    VectorDistanceDimensionMismatch { left: usize, right: usize },
+
     #[error("invalid float literal: {0}")]
     InvalidFloatLiteral(String),
 

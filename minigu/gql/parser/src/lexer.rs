@@ -444,6 +444,8 @@ pub enum TokenKind<'a> {
     Variable,
     #[token("vector", ignore(case))]
     Vector,
+    #[token("vector_distance", ignore(case))]
+    VectorDistance,
     #[token("when", ignore(case))]
     When,
     #[token("where", ignore(case))]
