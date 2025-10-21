@@ -1,0 +1,9 @@
+---
+source: minigu/gql/parser/src/parser/impls/lexical.rs
+assertion_line: 361
+expression: parsed
+---
+- Vector:
+    elems: []
+- start: 0
+  end: 9

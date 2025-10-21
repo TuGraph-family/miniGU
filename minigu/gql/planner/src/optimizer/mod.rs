@@ -64,7 +64,7 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
             let [child] = children
                 .try_into()
                 .expect("limit should have exactly one child");
-            let limit = Limit::new(child, limit.limit);
+            let limit = Limit::new(child, limit.limit, limit.approximate);
             Ok(PlanNode::PhysicalLimit(Arc::new(limit)))
         }
         _ => unreachable!(),

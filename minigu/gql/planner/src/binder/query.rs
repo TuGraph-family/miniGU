@@ -15,7 +15,7 @@ use minigu_common::ordering::{NullOrdering, SortOrdering};
 use super::Binder;
 use super::error::{BindError, BindResult};
 use crate::bound::{
-    BoundCompositeQueryStatement, BoundExpr, BoundLinearQueryStatement,
+    BoundCompositeQueryStatement, BoundExpr, BoundLimitClause, BoundLinearQueryStatement,
     BoundOrderByAndPageStatement, BoundQueryConjunction, BoundResultStatement,
     BoundReturnStatement, BoundSetOp, BoundSetOpKind, BoundSetQuantifier,
     BoundSimpleQueryStatement, BoundSortSpec,
@@ -242,9 +242,15 @@ impl Binder<'_> {
         let limit = order_by_and_page
             .limit
             .as_ref()
-            .map(|l| self.bind_non_negative_integer(l.value()))
+            .map(|l| {
+                self.bind_non_negative_integer(&l.value().count)
+                    .map(|bound_count| (bound_count, l.value().approximate))
+            })
             .transpose()?
-            .map(|l| l.to_usize());
+            .map(|(bound_count, approximate)| BoundLimitClause {
+                count: bound_count.to_usize(),
+                approximate,
+            });
         Ok(BoundOrderByAndPageStatement {
             order_by,
             offset,

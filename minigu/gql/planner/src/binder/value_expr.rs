@@ -1,11 +1,11 @@
 use gql_parser::ast::{
     BinaryOp, BooleanLiteral, Expr, Literal, NonNegativeInteger, StringLiteral, StringLiteralKind,
-    UnsignedInteger, UnsignedIntegerKind, UnsignedNumericLiteral, Value,
+    UnaryOp, UnsignedInteger, UnsignedIntegerKind, UnsignedNumericLiteral, Value, VectorLiteral,
 };
 use minigu_common::constants::SESSION_USER;
 use minigu_common::data_type::LogicalType;
 use minigu_common::error::not_implemented;
-use minigu_common::value::ScalarValue;
+use minigu_common::value::{F32, F64, ScalarValue, VectorValue};
 
 use super::Binder;
 use super::error::{BindError, BindResult};
@@ -94,6 +94,7 @@ pub fn bind_literal(literal: &Literal) -> BindResult<BoundExpr> {
         Literal::Duration(_) => not_implemented("duration literal", None),
         Literal::List(_) => not_implemented("list literal", None),
         Literal::Record(_) => not_implemented("record literal", None),
+        Literal::Vector(literal) => bind_vector_literal(literal),
         Literal::Null => Ok(BoundExpr::value(ScalarValue::Null, LogicalType::Null, true)),
     }
 }
@@ -118,6 +119,71 @@ pub fn bind_numeric_literal(literal: &UnsignedNumericLiteral) -> BindResult<Boun
             };
             Ok(expr)
         }
+        UnsignedNumericLiteral::Float(float) => {
+            let literal = float.value().float.as_str();
+            let parsed = literal
+                .parse::<f64>()
+                .map_err(|_| BindError::InvalidFloatLiteral(literal.to_string()))?;
+            Ok(BoundExpr::value(
+                ScalarValue::Float64(Some(F64::from(parsed))),
+                LogicalType::Float64,
+                false,
+            ))
+        }
+    }
+}
+
+fn bind_vector_literal(literal: &VectorLiteral) -> BindResult<BoundExpr> {
+    let dimension = literal.elems.len();
+
+    // Validate that vector is not empty
+    if dimension == 0 {
+        return Err(BindError::InvalidVectorElement(
+            "vector literals cannot be empty".into(),
+        ));
+    }
+
+    let mut data = Vec::with_capacity(dimension);
+    for elem in &literal.elems {
+        let value = bind_vector_element(elem.value())?;
+        data.push(F32::from(value));
+    }
+
+    let vector = VectorValue::new(data, dimension).map_err(BindError::InvalidVectorElement)?;
+
+    Ok(BoundExpr::value(
+        ScalarValue::new_vector(dimension, Some(vector)),
+        LogicalType::Vector(dimension),
+        false,
+    ))
+}
+
+fn bind_vector_element(expr: &Expr) -> BindResult<f32> {
+    match expr {
+        Expr::Unary { op, child } => {
+            let factor = match op.value() {
+                UnaryOp::Plus => 1.0f32,
+                UnaryOp::Minus => -1.0f32,
+                UnaryOp::Not => {
+                    return Err(BindError::InvalidVectorElement(
+                        "logical not is not allowed in vector literals".into(),
+                    ));
+                }
+            };
+            let inner = bind_vector_element(child.value())?;
+            Ok(factor * inner)
+        }
+        Expr::Value(Value::Literal(Literal::Numeric(numeric))) => {
+            let scalar = bind_numeric_literal(numeric)?
+                .evaluate_scalar()
+                .expect("numeric literal should evaluate to scalar");
+            scalar
+                .to_f32()
+                .map_err(|err| BindError::InvalidVectorElement(format!("{err:?}")))
+        }
+        _ => Err(BindError::InvalidVectorElement(
+            "vector elements must be numeric literals".into(),
+        )),
     }
 }
 
