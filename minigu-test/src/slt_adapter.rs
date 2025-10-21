@@ -86,6 +86,7 @@ impl From<&LogicalType> for ColumnTypeSltWrapper {
             | LogicalType::UInt64 => Self::Integer,
             LogicalType::Float32 | LogicalType::Float64 => Self::FloatingPoint,
             LogicalType::Boolean => Self::Boolean,
+            LogicalType::Vector(_) => Self::Any,
             LogicalType::Vertex(_) => Self::Vertex,
             LogicalType::Edge(_) => Self::Edge,
             LogicalType::Record(_) => Self::Any,
@@ -175,6 +176,14 @@ fn convert_scalar_value_to_string(value: &minigu::common::value::ScalarValue) ->
         ScalarValue::Float32(opt) => opt_to_string(opt, |v| v.to_string()),
         ScalarValue::Float64(opt) => opt_to_string(opt, |v| v.to_string()),
         ScalarValue::String(opt) => opt_to_string(opt, |v| v.clone()),
+        ScalarValue::Vector { value, .. } => opt_to_string(value, |v| {
+            let values: Vec<String> = v
+                .data()
+                .iter()
+                .map(|f| format!("{}", f.into_inner()))
+                .collect();
+            format!("[{}]", values.join(", "))
+        }),
         ScalarValue::Vertex(opt) => opt_to_string(opt, |v| format!("{:?}", v)),
         ScalarValue::Edge(opt) => opt_to_string(opt, |v| format!("{:?}", v)),
     }
@@ -318,5 +327,34 @@ mod tests {
 
         // Both queries should succeed, indicating session persistence
         assert!(result1.is_ok() && result2.is_ok());
+    }
+
+    #[test]
+    fn test_convert_scalar_value_to_string() {
+        use minigu::common::value::{F32, ScalarValue, VectorValue};
+
+        // Test vector formatting
+        let vector_data = vec![
+            F32::from(1.0),
+            F32::from(2.5),
+            F32::from(std::f32::consts::PI),
+        ];
+        let vector_value = VectorValue::new(vector_data, 3).unwrap();
+        let scalar = ScalarValue::new_vector(vector_value.dimension(), Some(vector_value));
+        let formatted = convert_scalar_value_to_string(&scalar);
+        let expected = format!("[1, 2.5, {}]", std::f32::consts::PI);
+        assert_eq!(formatted, expected);
+
+        // Test null vector
+        let scalar = ScalarValue::new_vector(3, None);
+        let formatted = convert_scalar_value_to_string(&scalar);
+        assert_eq!(formatted, "NULL");
+
+        // Test empty vector
+        let empty_vector_data: Vec<F32> = vec![];
+        let empty_vector_value = VectorValue::new(empty_vector_data, 0).unwrap();
+        let scalar = ScalarValue::new_vector(0, Some(empty_vector_value));
+        let formatted = convert_scalar_value_to_string(&scalar);
+        assert_eq!(formatted, "[]");
     }
 }
