@@ -1,8 +1,11 @@
 use std::sync::Arc;
 
 use arrow::array::{AsArray, Int32Array};
+use minigu_catalog::provider::GraphProvider;
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::data_type::{DataSchema, LogicalType};
+use minigu_common::types::VertexIdArray;
+use minigu_context::graph::GraphContainer;
 use minigu_context::session::SessionContext;
 use minigu_planner::bound::{BoundExpr, BoundExprKind};
 use minigu_planner::plan::{PlanData, PlanNode};
@@ -13,6 +16,7 @@ use crate::evaluator::constant::Constant;
 use crate::executor::procedure_call::ProcedureCallBuilder;
 use crate::executor::sort::SortSpec;
 use crate::executor::{BoxedExecutor, Executor, IntoExecutor};
+use crate::source::VertexSource;
 
 const DEFAULT_CHUNK_SIZE: usize = 2048;
 
@@ -41,6 +45,28 @@ impl ExecutorBuilder {
                         .evaluate(c)
                         .map(|a| a.into_array().as_boolean().clone())
                 }))
+            }
+            PlanNode::PhysicalNodeScan(_node_scan) => {
+                // Need to handle node scan for other path and query.
+                assert_eq!(children.len(), 0);
+                use minigu_catalog::provider::SchemaProvider;
+                let cur_schema = self
+                    .session
+                    .home_schema
+                    .as_ref()
+                    .expect("there should be a home schema");
+                let cur_graph = cur_schema
+                    .get_graph("test".to_string().as_str())
+                    .expect("there should be a test graph")
+                    .unwrap();
+                let provider: &dyn GraphProvider = cur_graph.as_ref();
+                let container = provider
+                    .as_any()
+                    .downcast_ref::<GraphContainer>()
+                    .expect("current graph must be GraphContainer");
+                let batches = container.vertex_source(&[], 1024).expect("err there");
+                let source = batches.map(|arr: Arc<VertexIdArray>| Ok(arr));
+                Box::new(source.scan_vertex())
             }
             PlanNode::PhysicalProject(project) => {
                 assert_eq!(children.len(), 1);

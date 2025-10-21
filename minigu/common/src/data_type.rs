@@ -167,8 +167,16 @@ impl DataSchema {
         Self(fields)
     }
 
+    pub fn size(&self) -> usize {
+        self.0.len()
+    }
+
     pub fn append(&mut self, schema: &DataSchema) {
         self.0.extend(schema.0.iter().cloned());
+    }
+
+    pub fn push_back(&mut self, field: &DataField) {
+        self.0.push(field.clone());
     }
 
     pub fn get_field_by_name(&self, name: &str) -> Option<&DataField> {
