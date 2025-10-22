@@ -10,6 +10,7 @@ use minigu_planner::plan::{PlanData, PlanNode};
 use crate::evaluator::BoxedEvaluator;
 use crate::evaluator::column_ref::ColumnRef;
 use crate::evaluator::constant::Constant;
+use crate::evaluator::vector_distance::VectorDistanceEvaluator;
 use crate::executor::procedure_call::ProcedureCallBuilder;
 use crate::executor::sort::SortSpec;
 use crate::executor::{BoxedExecutor, Executor, IntoExecutor};
@@ -96,6 +97,7 @@ impl ExecutorBuilder {
         }
     }
 
+    #[allow(clippy::only_used_in_recursion)]
     fn build_evaluator(&self, expr: &BoundExpr, schema: &DataSchema) -> BoxedEvaluator {
         match &expr.kind {
             BoundExprKind::Value(value) => Box::new(Constant::new(value.clone())),
@@ -105,8 +107,15 @@ impl ExecutorBuilder {
                     .expect("variable should be present in the schema");
                 Box::new(ColumnRef::new(index))
             }
-            BoundExprKind::VectorDistance { .. } => {
-                unimplemented!("VECTOR_DISTANCE evaluator not implemented yet")
+            BoundExprKind::VectorDistance {
+                lhs,
+                rhs,
+                metric,
+                dimension,
+            } => {
+                let lhs = self.build_evaluator(lhs.as_ref(), schema);
+                let rhs = self.build_evaluator(rhs.as_ref(), schema);
+                Box::new(VectorDistanceEvaluator::new(lhs, rhs, *metric, *dimension))
             }
         }
     }
