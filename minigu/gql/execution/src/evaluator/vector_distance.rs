@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use arrow::array::{Array, AsArray, Float32Array, Float32Builder};
+use arrow::array::{Array, AsArray, FixedSizeListArray, Float32Array, Float32Builder};
 use arrow::datatypes::Float32Type;
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::types::VectorMetric;
@@ -33,8 +33,8 @@ fn compute_l2_distance(
 
 /// Validate vector arrays: check row count and dimension consistency
 fn validate_vector_arrays(
-    lhs_array: &arrow::array::FixedSizeListArray,
-    rhs_array: &arrow::array::FixedSizeListArray,
+    lhs_array: &FixedSizeListArray,
+    rhs_array: &FixedSizeListArray,
     expected_dimension: usize,
     row_count: usize,
     lhs_is_scalar: bool,
@@ -75,8 +75,8 @@ fn validate_vector_arrays(
     if rhs_dim != expected_dimension {
         return Err(ExecutionError::Custom(Box::new(VectorDistanceEvalError(
             format!(
-                "vector dimension mismatch: left {} vs right {}",
-                expected_dimension, rhs_dim
+                "right vector dimension {} doesn't match expected dimension {}",
+                rhs_dim, expected_dimension
             ),
         ))));
     }

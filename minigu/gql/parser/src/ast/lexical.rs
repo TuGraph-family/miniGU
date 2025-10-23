@@ -3,6 +3,7 @@
 use smol_str::SmolStr;
 
 use super::{Expr, ListConstructor, RecordConstructor};
+use crate::imports::Vec;
 use crate::macros::base;
 use crate::span::Spanned;
 
