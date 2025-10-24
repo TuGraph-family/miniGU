@@ -24,4 +24,14 @@ impl PlanData for Sort {
     fn base(&self) -> &PlanBase {
         &self.base
     }
+
+    fn explain(&self) -> Option<String> {
+        let specs_str = self
+            .specs
+            .iter()
+            .map(|s| format!("{:?}", s))
+            .collect::<Vec<_>>()
+            .join(", ");
+        Some(format!("Sort: {}", specs_str))
+    }
 }

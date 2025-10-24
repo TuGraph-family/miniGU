@@ -11,4 +11,8 @@ impl PlanData for LogicalMatch {
     fn base(&self) -> &PlanBase {
         &self.base
     }
+
+    fn explain(&self) -> Option<String> {
+        Some("LogicalMatch".to_string())
+    }
 }
