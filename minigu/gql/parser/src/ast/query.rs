@@ -117,10 +117,16 @@ pub enum MatchStatement {
 }
 
 #[apply(base)]
+pub struct LimitClause {
+    pub count: NonNegativeInteger,
+    pub approximate: bool,
+}
+
+#[apply(base)]
 pub struct OrderByAndPageStatement {
     pub order_by: VecSpanned<SortSpec>,
     pub offset: OptSpanned<NonNegativeInteger>,
-    pub limit: OptSpanned<NonNegativeInteger>,
+    pub limit: OptSpanned<LimitClause>,
 }
 
 #[apply(base)]

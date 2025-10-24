@@ -1,0 +1,63 @@
+---
+source: minigu/gql/parser/src/parser/impls/lexical.rs
+assertion_line: 367
+expression: parsed
+---
+- Vector:
+    elems:
+      - - Value:
+            Literal:
+              Numeric:
+                Integer:
+                  - kind: Decimal
+                    integer: "1"
+                  - start: 8
+                    end: 9
+        - start: 8
+          end: 9
+      - - Unary:
+            op:
+              - Minus
+              - start: 11
+                end: 12
+            child:
+              - Value:
+                  Literal:
+                    Numeric:
+                      Integer:
+                        - kind: Decimal
+                          integer: "2"
+                        - start: 12
+                          end: 13
+              - start: 12
+                end: 13
+        - start: 11
+          end: 13
+      - - Value:
+            Literal:
+              Numeric:
+                Float:
+                  - float: "3.14"
+                  - start: 15
+                    end: 19
+        - start: 15
+          end: 19
+      - - Unary:
+            op:
+              - Minus
+              - start: 21
+                end: 22
+            child:
+              - Value:
+                  Literal:
+                    Numeric:
+                      Float:
+                        - float: "0.5"
+                        - start: 22
+                          end: 25
+              - start: 22
+                end: 25
+        - start: 21
+          end: 25
+- start: 0
+  end: 26

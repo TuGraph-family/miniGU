@@ -1,5 +1,6 @@
 ---
-source: minigu/parser/tests/parser_test.rs
+source: minigu/gql/parser/tests/parser_test.rs
+assertion_line: 30
 ---
 Ok:
   - activity:
@@ -420,10 +421,12 @@ Ok:
                                           end: 633
                                     offset: ~
                                     limit:
-                                      - Integer:
-                                          kind: Decimal
-                                          integer: "10"
-                                      - start: 640
+                                      - count:
+                                          Integer:
+                                            kind: Decimal
+                                            integer: "10"
+                                        approximate: false
+                                      - start: 634
                                         end: 642
                                   - start: 584
                                     end: 642

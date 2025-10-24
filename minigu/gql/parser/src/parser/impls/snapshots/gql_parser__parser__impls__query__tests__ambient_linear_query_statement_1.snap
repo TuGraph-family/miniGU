@@ -1,5 +1,6 @@
 ---
-source: minigu/parser/src/parser/impls/query.rs
+source: minigu/gql/parser/src/parser/impls/query.rs
+assertion_line: 349
 expression: query
 ---
 - Parts:
@@ -186,10 +187,12 @@ expression: query
                 - start: 168
                   end: 170
               limit:
-                - Integer:
-                    kind: Decimal
-                    integer: "10"
-                - start: 189
+                - count:
+                    Integer:
+                      kind: Decimal
+                      integer: "10"
+                  approximate: false
+                - start: 183
                   end: 191
             - start: 119
               end: 191

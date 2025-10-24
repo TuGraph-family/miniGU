@@ -2,9 +2,10 @@ use winnow::combinator::{cut_err, dispatch, empty, fail, peek};
 use winnow::token::one_of;
 use winnow::{ModalResult, Parser};
 
+use super::value_expr::vector_literal;
 use crate::ast::{
-    BooleanLiteral, Ident, Literal, StringLiteral, StringLiteralKind, UnsignedInteger,
-    UnsignedIntegerKind, UnsignedNumericLiteral,
+    BooleanLiteral, Ident, Literal, StringLiteral, StringLiteralKind, UnsignedFloat,
+    UnsignedInteger, UnsignedIntegerKind, UnsignedNumericLiteral,
 };
 use crate::lexer::TokenKind;
 use crate::parser::token::{Token, TokenStream, any};
@@ -83,6 +84,9 @@ pub fn unsigned_literal(input: &mut TokenStream) -> ModalResult<Spanned<Literal>
         kind if kind.is_prefix_of_numeric_literal() => {
             unsigned_numeric_literal.map_inner(Literal::Numeric)
         },
+        TokenKind::Vector => {
+            vector_literal.map_inner(Literal::Vector)
+        },
         _ => fail,
     }
     .parse_next(input)
@@ -91,10 +95,17 @@ pub fn unsigned_literal(input: &mut TokenStream) -> ModalResult<Spanned<Literal>
 pub fn unsigned_numeric_literal(
     input: &mut TokenStream,
 ) -> ModalResult<Spanned<UnsignedNumericLiteral>> {
-    unsigned_integer
-        .map(UnsignedNumericLiteral::Integer)
-        .spanned()
-        .parse_next(input)
+    dispatch! {peek(any);
+        kind if kind.is_prefix_of_unsigned_integer() => {
+            unsigned_integer.map(UnsignedNumericLiteral::Integer)
+        },
+        TokenKind::UnsignedFloatLiteral(_) => {
+            unsigned_float.map(UnsignedNumericLiteral::Float)
+        },
+        _ => fail,
+    }
+    .spanned()
+    .parse_next(input)
 }
 
 pub fn unsigned_integer(input: &mut TokenStream) -> ModalResult<Spanned<UnsignedInteger>> {
@@ -118,6 +129,18 @@ pub fn unsigned_integer(input: &mut TokenStream) -> ModalResult<Spanned<Unsigned
             .value(UnsignedInteger {
                 kind: UnsignedIntegerKind::Binary,
                 integer: integer.into(),
+            }),
+        _ => fail,
+    }
+    .spanned()
+    .parse_next(input)
+}
+
+pub fn unsigned_float(input: &mut TokenStream) -> ModalResult<Spanned<UnsignedFloat>> {
+    dispatch! {any;
+        &TokenKind::UnsignedFloatLiteral(float) => empty
+            .value(UnsignedFloat {
+                float: float.into(),
             }),
         _ => fail,
     }
@@ -317,6 +340,30 @@ mod tests {
     #[test]
     fn test_substituted_parameter_reference_2() {
         let parsed = parse!(substituted_parameter_reference, "$$\"abc\"");
+        assert_yaml_snapshot!(parsed);
+    }
+
+    #[test]
+    fn test_vector_literal_positive() {
+        let parsed = parse!(unsigned_literal, "VECTOR [1, 2, 3, 4]");
+        assert_yaml_snapshot!(parsed);
+    }
+
+    #[test]
+    fn test_vector_literal_negative() {
+        let parsed = parse!(unsigned_literal, "VECTOR [-1.5, 2.0, -3.14]");
+        assert_yaml_snapshot!(parsed);
+    }
+
+    #[test]
+    fn test_vector_literal_empty() {
+        let parsed = parse!(unsigned_literal, "VECTOR []");
+        assert_yaml_snapshot!(parsed);
+    }
+
+    #[test]
+    fn test_vector_literal_mixed() {
+        let parsed = parse!(unsigned_literal, "VECTOR [1, -2, 3.14, -0.5]");
         assert_yaml_snapshot!(parsed);
     }
 }

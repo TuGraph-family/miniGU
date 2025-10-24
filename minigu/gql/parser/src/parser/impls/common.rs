@@ -684,8 +684,13 @@ pub fn null_ordering(input: &mut TokenStream) -> ModalResult<Spanned<NullOrderin
 
 def_parser_alias!(sort_key, aggregating_value_expression, Spanned<Expr>);
 
-pub fn limit_clause(input: &mut TokenStream) -> ModalResult<Spanned<NonNegativeInteger>> {
-    preceded(TokenKind::Limit, non_negative_integer_specification).parse_next(input)
+pub fn limit_clause(input: &mut TokenStream) -> ModalResult<Spanned<LimitClause>> {
+    preceded(TokenKind::Limit, seq! {LimitClause {
+        approximate: opt(TokenKind::Approximate).map(|opt| opt.is_some()),
+        count: non_negative_integer_specification.unspanned()
+    }})
+    .spanned()
+    .parse_next(input)
 }
 
 pub fn offset_clause(input: &mut TokenStream) -> ModalResult<Spanned<NonNegativeInteger>> {

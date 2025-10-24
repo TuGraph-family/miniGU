@@ -1,7 +1,7 @@
 CREATE GRAPH test_graph {
   (Entity: EntityLabel {
     id INT64,
-    embedding vector<float, 4>,
+    embedding vector(4),
     PRIMARY KEY (id)
   }),
   (Entity)-[Rel: RelLabel {
@@ -11,5 +11,5 @@ CREATE GRAPH test_graph {
 };
 
 USE GRAPH test_graph;
-INSERT (n:Entity {id: 30001, embedding: VECTOR [1, 2, 3, 4]});
+INSERT (n:Entity {id: 30001, embedding: VECTOR [1.0, -2.5, 3.14, -0.5]});
 MATCH  (n:Entity {id: 30001}) return n, n.embedding;
