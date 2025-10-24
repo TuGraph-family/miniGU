@@ -13,6 +13,7 @@ use crate::evaluator::constant::Constant;
 use crate::evaluator::vector_distance::VectorDistanceEvaluator;
 use crate::executor::procedure_call::ProcedureCallBuilder;
 use crate::executor::sort::SortSpec;
+use crate::executor::vector_index_scan::VectorIndexScanBuilder;
 use crate::executor::{BoxedExecutor, Executor, IntoExecutor};
 
 const DEFAULT_CHUNK_SIZE: usize = 2048;
@@ -92,6 +93,11 @@ impl ExecutorBuilder {
             PlanNode::PhysicalLimit(limit) => {
                 assert_eq!(children.len(), 1);
                 Box::new(self.build_executor(&children[0]).limit(limit.limit))
+            }
+            PlanNode::PhysicalVectorIndexScan(vector_scan) => {
+                assert!(children.is_empty());
+                VectorIndexScanBuilder::new(self.session.clone(), vector_scan.clone())
+                    .into_executor()
             }
             _ => unreachable!(),
         }

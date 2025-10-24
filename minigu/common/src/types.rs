@@ -43,7 +43,7 @@ pub type PropertyId = u32;
 pub type ProcedureId = u32;
 
 /// Uses (LabelId, PropertyId) to uniquely identify vector indices
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct VectorIndexKey {
     pub label_id: LabelId,
     pub property_id: PropertyId,

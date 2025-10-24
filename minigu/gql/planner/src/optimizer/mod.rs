@@ -67,6 +67,10 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
             let limit = Limit::new(child, limit.limit, limit.approximate);
             Ok(PlanNode::PhysicalLimit(Arc::new(limit)))
         }
+        PlanNode::LogicalVectorIndexScan(vector_scan) => {
+            assert!(children.is_empty());
+            Ok(PlanNode::PhysicalVectorIndexScan(vector_scan.clone()))
+        }
         _ => unreachable!(),
     }
 }

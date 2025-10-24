@@ -11,6 +11,7 @@ use itertools::Itertools;
 use minigu_common::data_type::{DataField, DataSchema, DataSchemaRef};
 use minigu_common::error::not_implemented;
 use minigu_common::ordering::{NullOrdering, SortOrdering};
+use minigu_common::types::{VectorIndexKey, VectorMetric};
 
 use super::Binder;
 use super::error::{BindError, BindResult};
@@ -18,7 +19,7 @@ use crate::bound::{
     BoundCompositeQueryStatement, BoundExpr, BoundLimitClause, BoundLinearQueryStatement,
     BoundOrderByAndPageStatement, BoundQueryConjunction, BoundResultStatement,
     BoundReturnStatement, BoundSetOp, BoundSetOpKind, BoundSetQuantifier,
-    BoundSimpleQueryStatement, BoundSortSpec,
+    BoundSimpleQueryStatement, BoundSortSpec, BoundVectorIndexScan,
 };
 
 impl Binder<'_> {
@@ -143,6 +144,25 @@ impl Binder<'_> {
         }
     }
 
+    // NOTE: `bind_vector_index_scan` is currently only invoked via placeholder wiring so executor
+    // and planner layers compile; once MATCH binding is implemented, vector scans will be
+    // produced inside the MATCH → ORDER BY → LIMIT APPROXIMATE pipeline (plain LIMIT keeps the
+    // exact distance path) rather than as a standalone simple statement.
+    #[allow(dead_code)]
+    fn bind_vector_index_scan(
+        &mut self,
+        _order_by: &OrderByAndPageStatement,
+    ) -> BindResult<BoundVectorIndexScan> {
+        // TODO(minigu-vector-search): Enable vector index scan binding once MATCH.
+        // Planned flow:
+        // 1. Locate ORDER BY VECTOR_DISTANCE(...) and validate operands/metric.
+        // 2. Resolve the MATCH binding to fetch label/property metadata and derive VectorIndexKey.
+        // 3. Capture LIMIT (and APPROXIMATE) information along with the query vector expression.
+        // 4. Return BoundVectorIndexScan so later phases can emit VectorIndexScan plan nodes.
+        let _ = (VectorIndexKey::new, VectorMetric::L2);
+        not_implemented("vector index scan binding", None)
+    }
+
     pub fn bind_match_statement(&mut self, statement: &MatchStatement) -> BindResult<()> {
         match statement {
             MatchStatement::Simple(table) => todo!(),
@@ -224,6 +244,10 @@ impl Binder<'_> {
         }
     }
 
+    // TODO(minigu-vector-search): When MATCH binding is implemented, extend this method (or its
+    // caller) to detect ORDER BY VECTOR_DISTANCE ... LIMIT APPROXIMATE and replace the
+    // preceding MATCH simple statement with a BoundVectorIndexScan produced via
+    // `bind_vector_index_scan`.
     pub fn bind_order_by_and_page_statement(
         &self,
         order_by_and_page: &OrderByAndPageStatement,
