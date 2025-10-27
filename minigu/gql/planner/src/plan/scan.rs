@@ -35,6 +35,7 @@ impl PhysicalNodeScan {
         }
     }
 }
+
 impl PlanData for PhysicalNodeScan {
     fn base(&self) -> &PlanBase {
         &self.base

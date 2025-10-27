@@ -22,7 +22,7 @@ pub fn build_predefined_procedures() -> Vec<(String, Procedure)> {
             "create_test_graph_data".to_string(),
             create_test_graph_data::build_procedure(),
         ),
-        // Tmp procedure.
+        // Show graph in current schema.
         ("show_graph".to_string(), show_graph::build_procedure()),
         (
             "import".to_string(),

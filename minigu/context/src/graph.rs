@@ -33,7 +33,7 @@ impl GraphContainer {
     }
 }
 
-// A tmp code. In the feature, this label check will be done by a checker.
+// TODO: Remove and use a checker.
 fn vertex_has_all_labels(
     _mem: &Arc<MemoryGraph>,
     _txn: &Arc<minigu_storage::tp::transaction::MemTransaction>,

@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use arrow::array::{AsArray, Int32Array};
 use minigu_catalog::provider::GraphProvider;
+use minigu_catalog::provider::SchemaProvider;
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::data_type::{DataSchema, LogicalType};
 use minigu_common::types::VertexIdArray;
@@ -47,9 +48,8 @@ impl ExecutorBuilder {
                 }))
             }
             PlanNode::PhysicalNodeScan(_node_scan) => {
-                // Need to handle node scan for other path and query.
+                // NodeScan provide graph id and label, Handle in next pr.
                 assert_eq!(children.len(), 0);
-                use minigu_catalog::provider::SchemaProvider;
                 let cur_schema = self
                     .session
                     .home_schema
