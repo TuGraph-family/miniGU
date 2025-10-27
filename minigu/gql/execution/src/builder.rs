@@ -1,8 +1,7 @@
 use std::sync::Arc;
 
 use arrow::array::{AsArray, Int32Array};
-use minigu_catalog::provider::GraphProvider;
-use minigu_catalog::provider::SchemaProvider;
+use minigu_catalog::provider::{GraphProvider, SchemaProvider};
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::data_type::{DataSchema, LogicalType};
 use minigu_common::types::VertexIdArray;
