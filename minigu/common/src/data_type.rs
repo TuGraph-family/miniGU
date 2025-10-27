@@ -65,6 +65,7 @@ pub enum LogicalType {
     Float64,
     Boolean,
     String,
+    Vector(usize),
     Vertex(Vec<DataField>),
     Edge(Vec<DataField>),
     Record(Vec<DataField>),
@@ -87,6 +88,10 @@ impl LogicalType {
             LogicalType::Float64 => DataType::Float64,
             LogicalType::Boolean => DataType::Boolean,
             LogicalType::String => DataType::Utf8,
+            LogicalType::Vector(dim) => DataType::FixedSizeList(
+                Arc::new(ArrowField::new("item", DataType::Float32, false)),
+                *dim as i32,
+            ),
             LogicalType::Vertex(fields) => {
                 let vid_field = PredefinedFields::vid();
                 let label_id = PredefinedFields::label();
@@ -136,6 +141,7 @@ impl fmt::Display for LogicalType {
             LogicalType::Float64 => write!(f, "float64"),
             LogicalType::Boolean => write!(f, "boolean"),
             LogicalType::String => write!(f, "string"),
+            LogicalType::Vector(dim) => write!(f, "vector[{}]", dim),
             LogicalType::Vertex(properties) => {
                 write!(f, "vertex {{ {} }}", properties.iter().join(","))
             }

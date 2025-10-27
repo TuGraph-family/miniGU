@@ -1,12 +1,17 @@
 pub mod factorized_expand;
+pub mod factorized_flatten;
+pub mod factorized_project;
 pub mod factorized_simple_aggregate;
 pub mod factorized_transfer;
 
 use factorized_expand::FactorizedExpandBuilder;
+use factorized_flatten::FactorizedFlattenBuilder;
+use factorized_project::FactorizedProjectBuilder;
 use factorized_simple_aggregate::{FactorizedAggregateBuilder, SimpleAggregateSpec};
 use minigu_common::result_set::ResultSet;
 
 use crate::error::ExecutionResult;
+use crate::evaluator::factorized_evaluator::BoxedFactorizedEvaluator;
 use crate::source::ExpandSource;
 
 pub trait FactorizedExecutor {
@@ -39,6 +44,26 @@ pub trait FactorizedExecutor {
         Self: Sized,
     {
         FactorizedAggregateBuilder::new_simple(self, specs).into_factorized_executor()
+    }
+
+    fn factorized_project(
+        self,
+        evaluators: Vec<BoxedFactorizedEvaluator>,
+    ) -> impl FactorizedExecutor
+    where
+        Self: Sized,
+    {
+        FactorizedProjectBuilder::new(self, evaluators).into_factorized_executor()
+    }
+
+    fn factorized_flatten(
+        self,
+        target_chunk_pos: minigu_common::result_set::DataChunkPos,
+    ) -> impl FactorizedExecutor
+    where
+        Self: Sized,
+    {
+        FactorizedFlattenBuilder::new(self, target_chunk_pos).into_factorized_executor()
     }
 }
 
