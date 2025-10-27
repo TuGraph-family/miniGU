@@ -6,7 +6,7 @@ use crate::plan::{PlanBase, PlanData, PlanNode};
 pub struct Limit {
     pub base: PlanBase,
     pub limit: usize,
-    pub approximate: bool,    // if true, enable ANN search
+    pub approximate: bool, // if true, enable ANN search
 }
 
 impl Limit {
