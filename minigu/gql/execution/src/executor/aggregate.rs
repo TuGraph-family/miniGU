@@ -114,11 +114,13 @@ pub enum AggregateState {
         min_i64: Option<i64>,
         min_f64: Option<f64>,
         min_string: Option<String>,
+        min_bool: Option<bool>,
     },
     Max {
         max_i64: Option<i64>,
         max_f64: Option<f64>,
         max_string: Option<String>,
+        max_bool: Option<bool>,
     },
 }
 
@@ -145,11 +147,13 @@ impl AggregateState {
                 min_i64: None,
                 min_f64: None,
                 min_string: None,
+                min_bool: None,
             },
             AggregateFunction::Max => Self::Max {
                 max_i64: None,
                 max_f64: None,
                 max_string: None,
+                max_bool: None,
             },
         }
     }
@@ -307,7 +311,36 @@ impl AggregateState {
                             *sum_f64 = Some(v);
                         }
                     }
-                    _ => todo!(), // TODO: handle other types
+                    ScalarValue::Boolean(Some(v)) => {
+                        let v = if *v { 1.0 } else { 0.0 };
+                        if let Some(current) = sum_f64 {
+                            *sum_f64 = Some(*current + v);
+                        } else {
+                            *sum_f64 = Some(v);
+                        }
+                    }
+                    ScalarValue::Vector { .. } | ScalarValue::Vertex { .. } | ScalarValue::Edge { .. } => {
+                        return Err(crate::error::ExecutionError::Custom(
+                            "Cannot perform sum aggregation on non-numeric types (Vector/Vertex/Edge)".to_string().into()
+                        ));
+                    }
+                    ScalarValue::String(_) => {
+                        return Err(crate::error::ExecutionError::Custom(
+                            "Cannot perform sum aggregation on string type".to_string().into()
+                        ));
+                    }
+                    ScalarValue::Null => {
+                        // NULL values are ignored in aggregation
+                        // This should not happen as NULLs are filtered before aggregation
+                    }
+                    // Handle None variants (nullable types with None value)
+                    ScalarValue::Boolean(None) | ScalarValue::Int8(None) | ScalarValue::Int16(None) |
+                    ScalarValue::Int32(None) | ScalarValue::Int64(None) | ScalarValue::UInt8(None) |
+                    ScalarValue::UInt16(None) | ScalarValue::UInt32(None) | ScalarValue::UInt64(None) |
+                    ScalarValue::Float32(None) | ScalarValue::Float64(None) => {
+                        // NULL values are ignored in aggregation
+                        // This should not happen as NULLs are filtered before aggregation
+                    }
                 }
             }
             AggregateState::Avg { sum_f64, count, .. } => {
@@ -362,7 +395,33 @@ impl AggregateState {
                         *sum_f64 += v;
                         *count += 1;
                     }
-                    _ => todo!(), // TODO: handle other types
+                    ScalarValue::Boolean(Some(v)) => {
+                        let v = if *v { 1.0 } else { 0.0 };
+                        *sum_f64 += v;
+                        *count += 1;
+                    }
+                    ScalarValue::Vector { .. } | ScalarValue::Vertex { .. } | ScalarValue::Edge { .. } => {
+                        return Err(crate::error::ExecutionError::Custom(
+                            "Cannot perform avg aggregation on non-numeric types (Vector/Vertex/Edge)".to_string().into()
+                        ));
+                    }
+                    ScalarValue::String(_) => {
+                        return Err(crate::error::ExecutionError::Custom(
+                            "Cannot perform avg aggregation on string type".to_string().into()
+                        ));
+                    }
+                    ScalarValue::Null => {
+                        // NULL values are ignored in aggregation
+                        // This should not happen as NULLs are filtered before aggregation
+                    }
+                    // Handle None variants (nullable types with None value)
+                    ScalarValue::Boolean(None) | ScalarValue::Int8(None) | ScalarValue::Int16(None) |
+                    ScalarValue::Int32(None) | ScalarValue::Int64(None) | ScalarValue::UInt8(None) |
+                    ScalarValue::UInt16(None) | ScalarValue::UInt32(None) | ScalarValue::UInt64(None) |
+                    ScalarValue::Float32(None) | ScalarValue::Float64(None) => {
+                        // NULL values are ignored in aggregation
+                        // This should not happen as NULLs are filtered before aggregation
+                    }
                 }
             }
             _ => unreachable!(),
@@ -375,6 +434,7 @@ impl AggregateState {
             min_i64,
             min_f64,
             min_string,
+            min_bool,
         } = self
         {
             match val {
@@ -467,7 +527,32 @@ impl AggregateState {
                         *min_string = Some(s.clone());
                     }
                 }
-                _ => todo!(), // TODO: handle other types
+                ScalarValue::Boolean(Some(v)) => {
+                    if let Some(current) = min_bool {
+                        if *v < *current {
+                            *min_bool = Some(*v);
+                        }
+                    } else {
+                        *min_bool = Some(*v);
+                    }
+                }
+                ScalarValue::Vector { .. } | ScalarValue::Vertex { .. } | ScalarValue::Edge { .. } => {
+                    return Err(crate::error::ExecutionError::Custom(
+                        "Cannot perform min aggregation on complex types (Vector/Vertex/Edge)".to_string().into()
+                    ));
+                }
+                ScalarValue::Null => {
+                    // NULL values are ignored in aggregation
+                    // This should not happen as NULLs are filtered before aggregation
+                }
+                // Handle None variants (nullable types with None value)
+                ScalarValue::Boolean(None) | ScalarValue::Int8(None) | ScalarValue::Int16(None) |
+                ScalarValue::Int32(None) | ScalarValue::Int64(None) | ScalarValue::UInt8(None) |
+                ScalarValue::UInt16(None) | ScalarValue::UInt32(None) | ScalarValue::UInt64(None) |
+                ScalarValue::Float32(None) | ScalarValue::Float64(None) | ScalarValue::String(None) => {
+                    // NULL values are ignored in aggregation
+                    // This should not happen as NULLs are filtered before aggregation
+                }
             }
         }
         Ok(())
@@ -478,6 +563,7 @@ impl AggregateState {
             max_i64,
             max_f64,
             max_string,
+            max_bool,
         } = self
         {
             match val {
@@ -570,7 +656,32 @@ impl AggregateState {
                         *max_string = Some(s.clone());
                     }
                 }
-                _ => todo!(), // TODO: handle other types
+                ScalarValue::Boolean(Some(v)) => {
+                    if let Some(current) = max_bool {
+                        if *v > *current {
+                            *max_bool = Some(*v);
+                        }
+                    } else {
+                        *max_bool = Some(*v);
+                    }
+                }
+                ScalarValue::Vector { .. } | ScalarValue::Vertex { .. } | ScalarValue::Edge { .. } => {
+                    return Err(crate::error::ExecutionError::Custom(
+                        "Cannot perform max aggregation on complex types (Vector/Vertex/Edge)".to_string().into()
+                    ));
+                }
+                ScalarValue::Null => {
+                    // NULL values are ignored in aggregation
+                    // This should not happen as NULLs are filtered before aggregation
+                }
+                // Handle None variants (nullable types with None value)
+                ScalarValue::Boolean(None) | ScalarValue::Int8(None) | ScalarValue::Int16(None) |
+                ScalarValue::Int32(None) | ScalarValue::Int64(None) | ScalarValue::UInt8(None) |
+                ScalarValue::UInt16(None) | ScalarValue::UInt32(None) | ScalarValue::UInt64(None) |
+                ScalarValue::Float32(None) | ScalarValue::Float64(None) | ScalarValue::String(None) => {
+                    // NULL values are ignored in aggregation
+                    // This should not happen as NULLs are filtered before aggregation
+                }
             }
         }
         Ok(())
@@ -631,6 +742,7 @@ impl AggregateState {
                 min_i64,
                 min_f64,
                 min_string,
+                min_bool,
             } => {
                 // Check numeric minimums first
                 if let Some(value) = min_i64 {
@@ -640,6 +752,10 @@ impl AggregateState {
                     return Ok(ScalarValue::Float64(Some(minigu_common::value::F64::from(
                         *value,
                     ))));
+                }
+                // Check boolean minimum
+                if let Some(value) = min_bool {
+                    return Ok(ScalarValue::Boolean(Some(*value)));
                 }
                 // Check string minimum
                 if let Some(value) = min_string {
@@ -652,6 +768,7 @@ impl AggregateState {
                 max_i64,
                 max_f64,
                 max_string,
+                max_bool,
             } => {
                 // Check numeric maximums first
                 if let Some(value) = max_i64 {
@@ -661,6 +778,10 @@ impl AggregateState {
                     return Ok(ScalarValue::Float64(Some(minigu_common::value::F64::from(
                         *value,
                     ))));
+                }
+                // Check boolean maximum
+                if let Some(value) = max_bool {
+                    return Ok(ScalarValue::Boolean(Some(*value)));
                 }
                 // Check string maximum
                 if let Some(value) = max_string {
