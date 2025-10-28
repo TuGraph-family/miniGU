@@ -319,14 +319,18 @@ impl AggregateState {
                             *sum_f64 = Some(v);
                         }
                     }
-                    ScalarValue::Vector { .. } | ScalarValue::Vertex { .. } | ScalarValue::Edge { .. } => {
+                    ScalarValue::Vector { .. }
+                    | ScalarValue::Vertex { .. }
+                    | ScalarValue::Edge { .. } => {
                         return Err(crate::error::ExecutionError::Custom(
                             "Cannot perform sum aggregation on non-numeric types (Vector/Vertex/Edge)".to_string().into()
                         ));
                     }
                     ScalarValue::String(_) => {
                         return Err(crate::error::ExecutionError::Custom(
-                            "Cannot perform sum aggregation on string type".to_string().into()
+                            "Cannot perform sum aggregation on string type"
+                                .to_string()
+                                .into(),
                         ));
                     }
                     ScalarValue::Null => {
@@ -334,10 +338,17 @@ impl AggregateState {
                         // This should not happen as NULLs are filtered before aggregation
                     }
                     // Handle None variants (nullable types with None value)
-                    ScalarValue::Boolean(None) | ScalarValue::Int8(None) | ScalarValue::Int16(None) |
-                    ScalarValue::Int32(None) | ScalarValue::Int64(None) | ScalarValue::UInt8(None) |
-                    ScalarValue::UInt16(None) | ScalarValue::UInt32(None) | ScalarValue::UInt64(None) |
-                    ScalarValue::Float32(None) | ScalarValue::Float64(None) => {
+                    ScalarValue::Boolean(None)
+                    | ScalarValue::Int8(None)
+                    | ScalarValue::Int16(None)
+                    | ScalarValue::Int32(None)
+                    | ScalarValue::Int64(None)
+                    | ScalarValue::UInt8(None)
+                    | ScalarValue::UInt16(None)
+                    | ScalarValue::UInt32(None)
+                    | ScalarValue::UInt64(None)
+                    | ScalarValue::Float32(None)
+                    | ScalarValue::Float64(None) => {
                         // NULL values are ignored in aggregation
                         // This should not happen as NULLs are filtered before aggregation
                     }
@@ -400,14 +411,18 @@ impl AggregateState {
                         *sum_f64 += v;
                         *count += 1;
                     }
-                    ScalarValue::Vector { .. } | ScalarValue::Vertex { .. } | ScalarValue::Edge { .. } => {
+                    ScalarValue::Vector { .. }
+                    | ScalarValue::Vertex { .. }
+                    | ScalarValue::Edge { .. } => {
                         return Err(crate::error::ExecutionError::Custom(
                             "Cannot perform avg aggregation on non-numeric types (Vector/Vertex/Edge)".to_string().into()
                         ));
                     }
                     ScalarValue::String(_) => {
                         return Err(crate::error::ExecutionError::Custom(
-                            "Cannot perform avg aggregation on string type".to_string().into()
+                            "Cannot perform avg aggregation on string type"
+                                .to_string()
+                                .into(),
                         ));
                     }
                     ScalarValue::Null => {
@@ -415,10 +430,17 @@ impl AggregateState {
                         // This should not happen as NULLs are filtered before aggregation
                     }
                     // Handle None variants (nullable types with None value)
-                    ScalarValue::Boolean(None) | ScalarValue::Int8(None) | ScalarValue::Int16(None) |
-                    ScalarValue::Int32(None) | ScalarValue::Int64(None) | ScalarValue::UInt8(None) |
-                    ScalarValue::UInt16(None) | ScalarValue::UInt32(None) | ScalarValue::UInt64(None) |
-                    ScalarValue::Float32(None) | ScalarValue::Float64(None) => {
+                    ScalarValue::Boolean(None)
+                    | ScalarValue::Int8(None)
+                    | ScalarValue::Int16(None)
+                    | ScalarValue::Int32(None)
+                    | ScalarValue::Int64(None)
+                    | ScalarValue::UInt8(None)
+                    | ScalarValue::UInt16(None)
+                    | ScalarValue::UInt32(None)
+                    | ScalarValue::UInt64(None)
+                    | ScalarValue::Float32(None)
+                    | ScalarValue::Float64(None) => {
                         // NULL values are ignored in aggregation
                         // This should not happen as NULLs are filtered before aggregation
                     }
@@ -529,16 +551,20 @@ impl AggregateState {
                 }
                 ScalarValue::Boolean(Some(v)) => {
                     if let Some(current) = min_bool {
-                        if *v < *current {
+                        if !(*v) && *current {
                             *min_bool = Some(*v);
                         }
                     } else {
                         *min_bool = Some(*v);
                     }
                 }
-                ScalarValue::Vector { .. } | ScalarValue::Vertex { .. } | ScalarValue::Edge { .. } => {
+                ScalarValue::Vector { .. }
+                | ScalarValue::Vertex { .. }
+                | ScalarValue::Edge { .. } => {
                     return Err(crate::error::ExecutionError::Custom(
-                        "Cannot perform min aggregation on complex types (Vector/Vertex/Edge)".to_string().into()
+                        "Cannot perform min aggregation on complex types (Vector/Vertex/Edge)"
+                            .to_string()
+                            .into(),
                     ));
                 }
                 ScalarValue::Null => {
@@ -546,10 +572,18 @@ impl AggregateState {
                     // This should not happen as NULLs are filtered before aggregation
                 }
                 // Handle None variants (nullable types with None value)
-                ScalarValue::Boolean(None) | ScalarValue::Int8(None) | ScalarValue::Int16(None) |
-                ScalarValue::Int32(None) | ScalarValue::Int64(None) | ScalarValue::UInt8(None) |
-                ScalarValue::UInt16(None) | ScalarValue::UInt32(None) | ScalarValue::UInt64(None) |
-                ScalarValue::Float32(None) | ScalarValue::Float64(None) | ScalarValue::String(None) => {
+                ScalarValue::Boolean(None)
+                | ScalarValue::Int8(None)
+                | ScalarValue::Int16(None)
+                | ScalarValue::Int32(None)
+                | ScalarValue::Int64(None)
+                | ScalarValue::UInt8(None)
+                | ScalarValue::UInt16(None)
+                | ScalarValue::UInt32(None)
+                | ScalarValue::UInt64(None)
+                | ScalarValue::Float32(None)
+                | ScalarValue::Float64(None)
+                | ScalarValue::String(None) => {
                     // NULL values are ignored in aggregation
                     // This should not happen as NULLs are filtered before aggregation
                 }
@@ -658,16 +692,20 @@ impl AggregateState {
                 }
                 ScalarValue::Boolean(Some(v)) => {
                     if let Some(current) = max_bool {
-                        if *v > *current {
+                        if *v && !(*current) {
                             *max_bool = Some(*v);
                         }
                     } else {
                         *max_bool = Some(*v);
                     }
                 }
-                ScalarValue::Vector { .. } | ScalarValue::Vertex { .. } | ScalarValue::Edge { .. } => {
+                ScalarValue::Vector { .. }
+                | ScalarValue::Vertex { .. }
+                | ScalarValue::Edge { .. } => {
                     return Err(crate::error::ExecutionError::Custom(
-                        "Cannot perform max aggregation on complex types (Vector/Vertex/Edge)".to_string().into()
+                        "Cannot perform max aggregation on complex types (Vector/Vertex/Edge)"
+                            .to_string()
+                            .into(),
                     ));
                 }
                 ScalarValue::Null => {
@@ -675,10 +713,18 @@ impl AggregateState {
                     // This should not happen as NULLs are filtered before aggregation
                 }
                 // Handle None variants (nullable types with None value)
-                ScalarValue::Boolean(None) | ScalarValue::Int8(None) | ScalarValue::Int16(None) |
-                ScalarValue::Int32(None) | ScalarValue::Int64(None) | ScalarValue::UInt8(None) |
-                ScalarValue::UInt16(None) | ScalarValue::UInt32(None) | ScalarValue::UInt64(None) |
-                ScalarValue::Float32(None) | ScalarValue::Float64(None) | ScalarValue::String(None) => {
+                ScalarValue::Boolean(None)
+                | ScalarValue::Int8(None)
+                | ScalarValue::Int16(None)
+                | ScalarValue::Int32(None)
+                | ScalarValue::Int64(None)
+                | ScalarValue::UInt8(None)
+                | ScalarValue::UInt16(None)
+                | ScalarValue::UInt32(None)
+                | ScalarValue::UInt64(None)
+                | ScalarValue::Float32(None)
+                | ScalarValue::Float64(None)
+                | ScalarValue::String(None) => {
                     // NULL values are ignored in aggregation
                     // This should not happen as NULLs are filtered before aggregation
                 }
