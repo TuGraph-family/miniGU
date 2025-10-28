@@ -37,3 +37,6 @@ add_parser_tests!("opengql", [
     "session_set"
 ]);
 add_parser_tests!("gql_on_one_page", ["gql_on_one_page"]);
+add_parser_tests!("utility", [
+    "explain"
+]);
