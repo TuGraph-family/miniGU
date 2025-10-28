@@ -11,7 +11,7 @@ use crate::metrics::QueryMetrics;
 pub struct QueryResult {
     pub(crate) schema: Option<DataSchemaRef>,
     pub(crate) metrics: QueryMetrics,
-    pub(crate) chunks: Vec<DataChunk>,
+    pub chunks: Vec<DataChunk>,
 }
 
 impl QueryResult {

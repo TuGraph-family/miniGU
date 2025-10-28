@@ -973,6 +973,7 @@ impl TokenKind<'_> {
                 | Self::Except
                 | Self::Exists
                 | Self::Exp
+                | Self::Explain
                 | Self::False
                 | Self::Filter
                 | Self::Finish
