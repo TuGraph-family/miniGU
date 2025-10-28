@@ -10,6 +10,7 @@ use minigu_planner::plan::{PlanData, PlanNode};
 use crate::evaluator::BoxedEvaluator;
 use crate::evaluator::column_ref::ColumnRef;
 use crate::evaluator::constant::Constant;
+use crate::executor::catalog::CatalogDdlBuilder;
 use crate::executor::procedure_call::ProcedureCallBuilder;
 use crate::executor::sort::SortSpec;
 use crate::executor::{BoxedExecutor, Executor, IntoExecutor};
@@ -91,6 +92,13 @@ impl ExecutorBuilder {
             PlanNode::PhysicalLimit(limit) => {
                 assert_eq!(children.len(), 1);
                 Box::new(self.build_executor(&children[0]).limit(limit.limit))
+            }
+            PlanNode::PhysicalCatalogDdl(ddl) => {
+                assert!(children.is_empty());
+                Box::new(
+                    CatalogDdlBuilder::new(self.session.clone(), ddl.statement.clone())
+                        .into_executor(),
+                )
             }
             _ => unreachable!(),
         }

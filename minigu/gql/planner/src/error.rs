@@ -1,4 +1,5 @@
 use miette::Diagnostic;
+use minigu_catalog::txn::error::CatalogTxnError;
 use minigu_common::error::NotImplemented;
 use thiserror::Error;
 
@@ -13,6 +14,10 @@ pub enum PlanError {
     #[error(transparent)]
     #[diagnostic(transparent)]
     NotImplemented(#[from] NotImplemented),
+
+    #[error(transparent)]
+    #[diagnostic(code(planner::transaction))]
+    Transaction(#[from] CatalogTxnError),
 }
 
 pub type PlanResult<T> = std::result::Result<T, PlanError>;

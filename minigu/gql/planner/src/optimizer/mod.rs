@@ -52,6 +52,7 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
             Ok(PlanNode::PhysicalCall(call.clone()))
         }
         PlanNode::LogicalOneRow(one_row) => Ok(PlanNode::PhysicalOneRow(one_row.clone())),
+        PlanNode::LogicalCatalogDdl(ddl) => Ok(PlanNode::PhysicalCatalogDdl(ddl.clone())),
         PlanNode::LogicalSort(sort) => {
             let [child] = children
                 .try_into()

@@ -2,8 +2,9 @@ use gql_parser::ast::{
     GraphRef, PredefinedSchemaRef, ProcedureRef as AstProcedureRef, SchemaPath, SchemaPathSegment,
     SchemaRef as AstSchemaRef,
 };
-use minigu_catalog::named_ref::{NamedGraphRef, NamedProcedureRef};
+use minigu_catalog::named_ref::{NamedGraphRef, NamedGraphTypeRef, NamedProcedureRef};
 use minigu_catalog::provider::{CatalogProvider, DirectoryOrSchema, SchemaRef};
+use minigu_catalog::txn::catalog_txn::CatalogTxn;
 use minigu_common::error::not_implemented;
 
 use super::Binder;
@@ -22,7 +23,7 @@ impl Binder<'_> {
     }
 
     pub fn bind_absolute_schema_path(&self, schema_path: &SchemaPath) -> BindResult<SchemaRef> {
-        bind_absolute_schema_path(self.catalog, schema_path)
+        bind_absolute_schema_path(self.catalog, schema_path, self.txn)
     }
 
     pub fn bind_relative_schema_path(&self, schema_path: &SchemaPath) -> BindResult<SchemaRef> {
@@ -30,7 +31,7 @@ impl Binder<'_> {
             .current_schema
             .clone()
             .ok_or(BindError::CurrentSchemaNotSpecified)?;
-        bind_relative_schema_path(current_schema, schema_path)
+        bind_relative_schema_path(current_schema, schema_path, self.txn)
     }
 
     pub fn bind_predefined_schema_ref(
@@ -67,7 +68,7 @@ impl Binder<'_> {
                     [name] => {
                         let name = name.value();
                         let procedure = schema
-                            .get_procedure(name)?
+                            .get_procedure(name, self.txn)?
                             .ok_or_else(|| BindError::ProcedureNotFound(name.clone()))?;
                         Ok(NamedProcedureRef::new(name.clone(), procedure))
                     }
@@ -90,7 +91,7 @@ impl Binder<'_> {
                     .as_ref()
                     .ok_or(BindError::CurrentSchemaNotSpecified)?;
                 let graph = schema
-                    .get_graph(name)?
+                    .get_graph(name, self.txn)?
                     .ok_or_else(|| BindError::GraphNotFound(name.clone()))?;
                 Ok(NamedGraphRef::new(name.clone(), graph))
             }
@@ -110,7 +111,7 @@ impl Binder<'_> {
                     [name] => {
                         let name = name.value();
                         let graph = schema
-                            .get_graph(name)?
+                            .get_graph(name, self.txn)?
                             .ok_or_else(|| BindError::GraphNotFound(name.clone()))?;
                         Ok(NamedGraphRef::new(name.clone(), graph))
                     }
@@ -125,11 +126,45 @@ impl Binder<'_> {
                 .ok_or(BindError::HomeGraphNotSpecified),
         }
     }
+
+    pub fn bind_graph_type_ref(
+        &self,
+        graph_type_ref: &gql_parser::ast::GraphTypeRef,
+    ) -> BindResult<NamedGraphTypeRef> {
+        match graph_type_ref {
+            gql_parser::ast::GraphTypeRef::Ref(catalog_object_ref) => {
+                let schema = if let Some(schema) = &catalog_object_ref.schema {
+                    self.bind_schema_ref(schema.value())?
+                } else {
+                    self.current_schema
+                        .clone()
+                        .ok_or(BindError::CurrentSchemaNotSpecified)?
+                };
+                match catalog_object_ref.objects.as_slice() {
+                    [] => unreachable!(),
+                    [name] => {
+                        let name = name.value();
+                        let graph_type = schema
+                            .get_graph_type(name, self.txn)?
+                            .ok_or_else(|| BindError::GraphTypeNotFound(name.clone()))?;
+                        Ok(NamedGraphTypeRef::new(name.clone(), graph_type))
+                    }
+                    objects => Err(BindError::InvalidObjectReference(
+                        objects.iter().map(|o| o.value().clone()).collect(),
+                    )),
+                }
+            }
+            gql_parser::ast::GraphTypeRef::Parameter(_) => {
+                not_implemented("graph type reference parameter".to_string(), None)
+            }
+        }
+    }
 }
 
 pub fn bind_absolute_schema_path(
     catalog: &dyn CatalogProvider,
     path: &SchemaPath,
+    txn: &CatalogTxn,
 ) -> BindResult<SchemaRef> {
     let mut current = catalog.get_root()?;
     let mut current_path = vec![];
@@ -142,7 +177,7 @@ pub fn bind_absolute_schema_path(
             .into_directory()
             .ok_or_else(|| BindError::NotDirectory(path_to_string::<true>(&current_path)))?;
         current_path.push(segment.value());
-        let child = current_dir.get_child(name)?.ok_or_else(|| {
+        let child = current_dir.get_child(name, txn)?.ok_or_else(|| {
             BindError::DirectoryOrSchemaNotFound(path_to_string::<true>(&current_path))
         })?;
         current = child;
@@ -155,6 +190,7 @@ pub fn bind_absolute_schema_path(
 pub fn bind_relative_schema_path(
     current_schema: SchemaRef,
     schema_path: &SchemaPath,
+    txn: &CatalogTxn,
 ) -> BindResult<SchemaRef> {
     let mut current = DirectoryOrSchema::Schema(current_schema);
     let mut current_path = vec![];
@@ -165,7 +201,7 @@ pub fn bind_relative_schema_path(
                     BindError::NotDirectory(path_to_string::<false>(&current_path))
                 })?;
                 current_path.push(segment.value());
-                let child = current_dir.get_child(name)?.ok_or_else(|| {
+                let child = current_dir.get_child(name, txn)?.ok_or_else(|| {
                     BindError::DirectoryOrSchemaNotFound(path_to_string::<false>(&current_path))
                 })?;
                 current = child;

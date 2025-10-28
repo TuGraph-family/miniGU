@@ -1,4 +1,5 @@
 pub mod call;
+pub mod ddl;
 pub mod filter;
 pub mod limit;
 pub mod logical_match;
@@ -12,6 +13,7 @@ use minigu_common::data_type::DataSchemaRef;
 use serde::Serialize;
 
 use crate::plan::call::Call;
+use crate::plan::ddl::CatalogDdl;
 use crate::plan::filter::Filter;
 use crate::plan::limit::Limit;
 use crate::plan::logical_match::LogicalMatch;
@@ -63,6 +65,7 @@ pub enum PlanNode {
     // (by inserting PhysicalSort).
     LogicalSort(Arc<Sort>),
     LogicalLimit(Arc<Limit>),
+    LogicalCatalogDdl(Arc<CatalogDdl>),
 
     PhysicalFilter(Arc<Filter>),
     PhysicalProject(Arc<Project>),
@@ -70,6 +73,7 @@ pub enum PlanNode {
     PhysicalOneRow(Arc<OneRow>),
     PhysicalSort(Arc<Sort>),
     PhysicalLimit(Arc<Limit>),
+    PhysicalCatalogDdl(Arc<CatalogDdl>),
 }
 
 impl PlanData for PlanNode {
@@ -82,6 +86,7 @@ impl PlanData for PlanNode {
             PlanNode::LogicalOneRow(node) => node.base(),
             PlanNode::LogicalSort(node) => node.base(),
             PlanNode::LogicalLimit(node) => node.base(),
+            PlanNode::LogicalCatalogDdl(node) => node.base(),
 
             PlanNode::PhysicalFilter(node) => node.base(),
             PlanNode::PhysicalProject(node) => node.base(),
@@ -89,6 +94,7 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalOneRow(node) => node.base(),
             PlanNode::PhysicalSort(node) => node.base(),
             PlanNode::PhysicalLimit(node) => node.base(),
+            PlanNode::PhysicalCatalogDdl(node) => node.base(),
         }
     }
 }

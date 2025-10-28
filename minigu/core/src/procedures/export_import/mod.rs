@@ -29,6 +29,7 @@ use std::sync::Arc;
 use minigu_catalog::label_set::LabelSet;
 use minigu_catalog::property::Property;
 use minigu_catalog::provider::GraphTypeProvider;
+use minigu_catalog::txn::catalog_txn::CatalogTxn;
 use minigu_common::types::LabelId;
 use serde::{Deserialize, Serialize};
 
@@ -45,15 +46,23 @@ struct SchemaMetadata {
     vertex_labels: HashSet<LabelId>,
     edge_infos: HashMap<LabelId, (LabelId, LabelId)>,
     schema: Arc<dyn GraphTypeProvider>,
+    // Use an owned read-only txn built from the latest committed view to avoid
+    // missing labels/types due to caller's snapshot being older.
+    txn: Arc<CatalogTxn>,
 }
 
 impl SchemaMetadata {
-    fn from_schema(graph_type: Arc<dyn GraphTypeProvider>) -> Result<Self> {
+    fn from_schema(
+        graph_type: Arc<dyn GraphTypeProvider>,
+        catalog_txn: Arc<CatalogTxn>,
+    ) -> Result<Self> {
         // Build a label map LabelId -> String
-        let label_names = graph_type.label_names();
+        let label_names = graph_type.label_names(&catalog_txn);
         let mut label_map = HashMap::with_capacity(label_names.len());
         for name in label_names {
-            let label_id = graph_type.get_label_id(&name)?.expect("label id not found");
+            let label_id = graph_type
+                .get_label_id(&name, &catalog_txn)?
+                .expect("label id not found");
             label_map.insert(label_id, name);
         }
 
@@ -64,7 +73,7 @@ impl SchemaMetadata {
             let label_set = LabelSet::from_iter(vec![id]);
 
             if let Some(edge_type) = graph_type
-                .get_edge_type(&label_set)
+                .get_edge_type(&label_set, &catalog_txn)
                 .expect("edge type not found")
             {
                 let src_label_set = edge_type.src().label_set();
@@ -92,6 +101,7 @@ impl SchemaMetadata {
             vertex_labels,
             edge_infos,
             schema: Arc::clone(&graph_type),
+            txn: catalog_txn,
         })
     }
 }
@@ -190,11 +200,15 @@ impl Manifest {
         let mut vertex_specs = Vec::with_capacity(vertex_labels.len());
 
         for &id in vertex_labels {
-            let name = metadata.label_map.get(&id).expect("label id not found");
+            let name = metadata
+                .label_map
+                .get(&id)
+                .cloned()
+                .unwrap_or_else(|| format!("vertex_{}", id.get()));
             let path = format!("{}.csv", name);
             let props_schema = metadata
                 .schema
-                .get_vertex_type(&LabelSet::from_iter(vec![id]))? // will return None for vertex (inverse call later)
+                .get_vertex_type(&LabelSet::from_iter(vec![id]), &metadata.txn)? // will return None for vertex (inverse call later)
                 .expect("vertex type not found")
                 .properties()
                 .into_iter()
@@ -202,7 +216,7 @@ impl Manifest {
                 .collect::<Vec<_>>();
 
             vertex_specs.push(VertexSpec::new(
-                name.clone(),
+                name,
                 FileSpec::new(path, "csv".to_string()),
                 props_schema,
             ))
@@ -212,22 +226,34 @@ impl Manifest {
         let mut edge_specs = Vec::with_capacity(edge_infos.len());
 
         for (&id, (src_id, dst_id)) in edge_infos {
-            let name = metadata.label_map.get(&id).expect("label id not found");
+            let name = metadata
+                .label_map
+                .get(&id)
+                .cloned()
+                .unwrap_or_else(|| format!("edge_{}", id.get()));
             let path = format!("{}.csv", name);
             let props_schema = metadata
                 .schema
-                .get_edge_type(&LabelSet::from_iter(vec![id]))? // will return None for vertex (inverse call later)
+                .get_edge_type(&LabelSet::from_iter(vec![id]), &metadata.txn)? // will return None for vertex (inverse call later)
                 .expect("edge type not found")
                 .properties()
                 .into_iter()
                 .map(|prop| prop.1) // drop index key
                 .collect::<Vec<_>>();
 
-            let src_label = metadata.label_map.get(src_id).unwrap().clone();
-            let dst_label = metadata.label_map.get(dst_id).unwrap().clone();
+            let src_label = metadata
+                .label_map
+                .get(src_id)
+                .cloned()
+                .unwrap_or_else(|| format!("vertex_{}", src_id.get()));
+            let dst_label = metadata
+                .label_map
+                .get(dst_id)
+                .cloned()
+                .unwrap_or_else(|| format!("vertex_{}", dst_id.get()));
 
             edge_specs.push(EdgeSpec::new(
-                name.clone(),
+                name,
                 src_label,
                 dst_label,
                 FileSpec::new(path, "csv".to_string()),
@@ -266,6 +292,7 @@ mod tests {
     use minigu_catalog::memory::graph_type::{
         MemoryEdgeTypeCatalog, MemoryGraphTypeCatalog, MemoryVertexTypeCatalog,
     };
+    use minigu_catalog::txn::manager::CatalogTxnManager;
     use minigu_common::data_type::LogicalType;
     use minigu_common::types::{EdgeId, VertexId};
     use minigu_common::value::ScalarValue;
@@ -279,10 +306,6 @@ mod tests {
     use super::*;
     use crate::procedures::export_import::export::export;
     use crate::procedures::export_import::import::import;
-
-    const PERSON: LabelId = LabelId::new(1).unwrap();
-    const FRIEND: LabelId = LabelId::new(2).unwrap();
-    const FOLLOW: LabelId = LabelId::new(3).unwrap();
 
     fn create_vertex(vid: VertexId, label_id: LabelId, properties: Vec<ScalarValue>) -> Vertex {
         Vertex::new(vid, label_id, PropertyRecord::new(properties))
@@ -325,7 +348,7 @@ mod tests {
         WalManagerConfig { wal_path }
     }
 
-    fn mock_graph() -> Arc<MemoryGraph> {
+    fn mock_graph(person: LabelId, friend: LabelId, follow: LabelId) -> Arc<MemoryGraph> {
         let graph = MemoryGraph::with_config_fresh(mock_checkpoint_config(), mock_wal_config());
 
         let txn = graph
@@ -333,22 +356,22 @@ mod tests {
             .begin_transaction(IsolationLevel::Serializable)
             .unwrap();
 
-        let alice = create_vertex(1, PERSON, vec![
+        let alice = create_vertex(1, person, vec![
             ScalarValue::String(Some("Alice".to_string())),
             ScalarValue::Int32(Some(25)),
         ]);
 
-        let bob = create_vertex(2, PERSON, vec![
+        let bob = create_vertex(2, person, vec![
             ScalarValue::String(Some("Bob".to_string())),
             ScalarValue::Int32(Some(28)),
         ]);
 
-        let carol = create_vertex(3, PERSON, vec![
+        let carol = create_vertex(3, person, vec![
             ScalarValue::String(Some("Carol".to_string())),
             ScalarValue::Int32(Some(24)),
         ]);
 
-        let david = create_vertex(4, PERSON, vec![
+        let david = create_vertex(4, person, vec![
             ScalarValue::String(Some("David".to_string())),
             ScalarValue::Int32(Some(27)),
         ]);
@@ -360,20 +383,20 @@ mod tests {
         graph.create_vertex(&txn, david).unwrap();
 
         // Create friend edges
-        let friend1 = create_edge(1, 1, 2, FRIEND, vec![ScalarValue::String(Some(
+        let friend1 = create_edge(1, 1, 2, friend, vec![ScalarValue::String(Some(
             "2020-01-01".to_string(),
         ))]);
 
-        let friend2 = create_edge(2, 2, 3, FRIEND, vec![ScalarValue::String(Some(
+        let friend2 = create_edge(2, 2, 3, friend, vec![ScalarValue::String(Some(
             "2021-03-15".to_string(),
         ))]);
 
         // Create follow edges
-        let follow1 = create_edge(3, 1, 3, FOLLOW, vec![ScalarValue::String(Some(
+        let follow1 = create_edge(3, 1, 3, follow, vec![ScalarValue::String(Some(
             "2022-06-01".to_string(),
         ))]);
 
-        let follow2 = create_edge(4, 4, 1, FOLLOW, vec![ScalarValue::String(Some(
+        let follow2 = create_edge(4, 4, 1, follow, vec![ScalarValue::String(Some(
             "2022-07-15".to_string(),
         ))]);
 
@@ -388,11 +411,24 @@ mod tests {
         graph
     }
 
-    fn mock_graph_type() -> MemoryGraphTypeCatalog {
-        let mut graph_type = MemoryGraphTypeCatalog::new();
-        let person_id = graph_type.add_label("person".to_string()).unwrap();
-        let friend_id = graph_type.add_label("friend".to_string()).unwrap();
-        let follow_id = graph_type.add_label("follow".to_string()).unwrap();
+    fn mock_graph_type(
+        mgr: &CatalogTxnManager,
+    ) -> (MemoryGraphTypeCatalog, LabelId, LabelId, LabelId) {
+        use minigu_catalog::txn::manager::CatalogTxnManager;
+        use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
+        let graph_type = MemoryGraphTypeCatalog::new();
+
+        // Txn 1: Create labels and vertex types, and commit
+        let txn1 = mgr.begin_transaction(IsolationLevel::Snapshot).unwrap();
+        let person_id = graph_type
+            .add_label("person".to_string(), txn1.as_ref())
+            .unwrap();
+        let friend_id = graph_type
+            .add_label("friend".to_string(), txn1.as_ref())
+            .unwrap();
+        let follow_id = graph_type
+            .add_label("follow".to_string(), txn1.as_ref())
+            .unwrap();
 
         let person_label_set = LabelSet::from_iter([person_id]);
         let friend_label_set = LabelSet::from_iter([friend_id]);
@@ -406,35 +442,61 @@ mod tests {
             ],
         ));
 
-        graph_type.add_vertex_type(person_label_set, vertex_type.clone());
-        graph_type.add_edge_type(
-            friend_label_set.clone(),
-            Arc::new(MemoryEdgeTypeCatalog::new(
-                friend_label_set,
-                vertex_type.clone(),
-                vertex_type.clone(),
-                vec![Property::new(
-                    "date".to_string(),
-                    LogicalType::String,
-                    false,
-                )],
-            )),
-        );
-        graph_type.add_edge_type(
-            follow_label_set.clone(),
-            Arc::new(MemoryEdgeTypeCatalog::new(
-                follow_label_set,
-                vertex_type.clone(),
-                vertex_type.clone(),
-                vec![Property::new(
-                    "date".to_string(),
-                    LogicalType::String,
-                    false,
-                )],
-            )),
-        );
-
         graph_type
+            .add_vertex_type(person_label_set.clone(), vertex_type.clone(), txn1.as_ref())
+            .unwrap();
+        txn1.commit().unwrap();
+
+        // Txn 2: Create edge types based on committed vertex types, and commit
+        let txn2 = mgr.begin_transaction(IsolationLevel::Snapshot).unwrap();
+        graph_type
+            .add_edge_type(
+                friend_label_set.clone(),
+                Arc::new(MemoryEdgeTypeCatalog::new(
+                    friend_label_set,
+                    vertex_type.clone(),
+                    vertex_type.clone(),
+                    vec![Property::new(
+                        "date".to_string(),
+                        LogicalType::String,
+                        false,
+                    )],
+                )),
+                txn2.as_ref(),
+            )
+            .unwrap();
+        graph_type
+            .add_edge_type(
+                follow_label_set.clone(),
+                Arc::new(MemoryEdgeTypeCatalog::new(
+                    follow_label_set,
+                    vertex_type.clone(),
+                    vertex_type.clone(),
+                    vec![Property::new(
+                        "date".to_string(),
+                        LogicalType::String,
+                        false,
+                    )],
+                )),
+                txn2.as_ref(),
+            )
+            .unwrap();
+        txn2.commit().unwrap();
+
+        // Verification - check all labels are visible
+        let txn3 = mgr.begin_transaction(IsolationLevel::Snapshot).unwrap();
+
+        let fetched_person_id = graph_type.get_label_id("person", txn3.as_ref()).unwrap();
+        let fetched_friend_id = graph_type.get_label_id("friend", txn3.as_ref()).unwrap();
+        let fetched_follow_id = graph_type.get_label_id("follow", txn3.as_ref()).unwrap();
+
+        assert_eq!(fetched_person_id, Some(person_id), "person label mismatch");
+        assert_eq!(fetched_friend_id, Some(friend_id), "friend label mismatch");
+        assert_eq!(fetched_follow_id, Some(follow_id), "follow label mismatch");
+
+        txn3.commit().unwrap();
+
+        (graph_type, person_id, friend_id, follow_id)
     }
 
     fn export_dirs_equal_semantically<P: AsRef<Path>>(dir1: P, dir2: P) -> bool {
@@ -499,6 +561,42 @@ mod tests {
     }
 
     #[test]
+    fn test_mock_graph_type() {
+        let mgr = CatalogTxnManager::new();
+        let (gt, person_id, friend_id, follow_id) = mock_graph_type(&mgr);
+        assert_eq!(
+            gt.get_label_id(
+                "person",
+                mgr.begin_transaction(IsolationLevel::Snapshot)
+                    .unwrap()
+                    .as_ref()
+            )
+            .unwrap(),
+            Some(person_id)
+        );
+        assert_eq!(
+            gt.get_label_id(
+                "friend",
+                mgr.begin_transaction(IsolationLevel::Snapshot)
+                    .unwrap()
+                    .as_ref()
+            )
+            .unwrap(),
+            Some(friend_id)
+        );
+        assert_eq!(
+            gt.get_label_id(
+                "follow",
+                mgr.begin_transaction(IsolationLevel::Snapshot)
+                    .unwrap()
+                    .as_ref()
+            )
+            .unwrap(),
+            Some(follow_id)
+        );
+    }
+
+    #[test]
     fn test_export_and_import() {
         let export_dir1 = tempfile::tempdir().unwrap();
         let export_dir2 = tempfile::tempdir().unwrap();
@@ -508,30 +606,38 @@ mod tests {
 
         let manifest_rel_path = "manifest.json";
 
-        let graph_type: Arc<dyn GraphTypeProvider> = Arc::new(mock_graph_type());
+        let mgr = CatalogTxnManager::new();
+        let (gt, person_id, friend_id, follow_id) = mock_graph_type(&mgr);
+        let graph_type: Arc<dyn GraphTypeProvider> = Arc::new(gt);
         {
-            let graph = mock_graph();
+            let txn = mgr.begin_transaction(IsolationLevel::Snapshot).unwrap();
+            let graph = mock_graph(person_id, friend_id, follow_id);
 
             export(
                 graph,
                 export_dir1,
                 manifest_rel_path.as_ref(),
                 Arc::clone(&graph_type),
+                txn.clone(),
             )
             .unwrap();
+            let _ = txn.commit().unwrap();
         }
 
         {
             let manifest_path = export_dir1.join(manifest_rel_path);
-            let (graph, graph_type) = import(manifest_path).unwrap();
+            let (graph, graph_type) = import(manifest_path, &mgr).unwrap();
+            let txn = mgr.begin_transaction(IsolationLevel::Snapshot).unwrap();
 
             export(
                 graph,
                 export_dir2,
                 manifest_rel_path.as_ref(),
                 graph_type.clone(),
+                txn.clone(),
             )
             .unwrap();
+            let _ = txn.commit().unwrap();
         }
 
         assert!(export_dirs_equal_semantically(export_dir1, export_dir2));

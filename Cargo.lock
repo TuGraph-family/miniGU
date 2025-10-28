@@ -1452,6 +1452,12 @@ name = "minigu-catalog"
 version = "0.1.0"
 dependencies = [
  "minigu-common",
+ "minigu-context",
+ "minigu-execution",
+ "minigu-planner",
+ "minigu-storage",
+ "minigu-transaction",
+ "rayon",
  "serde",
  "smallvec",
  "smol_str",
@@ -1497,6 +1503,7 @@ dependencies = [
  "minigu-catalog",
  "minigu-common",
  "minigu-storage",
+ "minigu-transaction",
  "rayon",
 ]
 
@@ -1512,6 +1519,8 @@ dependencies = [
  "minigu-common",
  "minigu-context",
  "minigu-planner",
+ "minigu-storage",
+ "minigu-transaction",
  "rayon",
  "thiserror",
 ]
@@ -1526,6 +1535,7 @@ dependencies = [
  "minigu-catalog",
  "minigu-common",
  "minigu-context",
+ "minigu-transaction",
  "serde",
  "smol_str",
  "thiserror",

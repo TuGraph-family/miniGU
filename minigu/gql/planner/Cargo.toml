@@ -12,6 +12,7 @@ miette = { workspace = true }
 minigu-catalog = { workspace = true }
 minigu-common = { workspace = true }
 minigu-context = { workspace = true }
+minigu-transaction = { workspace = true }
 serde = { workspace = true }
 smol_str = { workspace = true }
 thiserror = { workspace = true }

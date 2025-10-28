@@ -8,6 +8,7 @@ use minigu_common::types::{LabelId, PropertyId};
 use crate::error::CatalogResult;
 use crate::label_set::LabelSet;
 use crate::property::Property;
+use crate::txn::catalog_txn::CatalogTxn;
 
 pub type DirectoryRef = Arc<dyn DirectoryProvider>;
 pub type SchemaRef = Arc<dyn SchemaProvider>;
@@ -24,39 +25,51 @@ pub trait CatalogProvider: Debug + Send + Sync {
     fn get_root(&self) -> CatalogResult<DirectoryOrSchema>;
 }
 
-pub trait DirectoryProvider: Debug + Send + Sync {
+pub trait DirectoryProvider: Debug + Send + Sync + 'static {
     /// Returns the parent directory ID of the directory.
     fn parent(&self) -> Option<DirectoryRef>;
 
     /// Retrieves a child directory or schema by its name.
-    fn get_child(&self, name: &str) -> CatalogResult<Option<DirectoryOrSchema>>;
+    fn get_child(&self, name: &str, txn: &CatalogTxn) -> CatalogResult<Option<DirectoryOrSchema>>;
 
-    /// Returns the names of the children of the directory.
-    fn children_names(&self) -> Vec<String>;
+    /// Returns the names of the children.
+    fn children_names(&self, txn: &CatalogTxn) -> Vec<String>;
+
+    /// Downcast support for concrete implementations
+    fn as_any(&self) -> &dyn Any;
 }
 
 /// Represents a logical schema, which contains graphs and graph type definitions.
-pub trait SchemaProvider: Debug + Send + Sync {
+pub trait SchemaProvider: Debug + Send + Sync + 'static {
     /// Returns the parent directory ID of the schema.
     fn parent(&self) -> Option<DirectoryRef>;
 
     /// Returns the names of the graphs in the schema.
-    fn graph_names(&self) -> Vec<String>;
+    /// Default implementation falls back to `graph_names()`.
+    fn graph_names(&self, txn: &CatalogTxn) -> Vec<String>;
 
     /// Retrieves a graph by its name.
-    fn get_graph(&self, name: &str) -> CatalogResult<Option<GraphRef>>;
+    /// Default implementation ignores the view and delegates to `get_graph`.
+    fn get_graph(&self, name: &str, txn: &CatalogTxn) -> CatalogResult<Option<GraphRef>>;
 
     /// Returns the names of the graph types in the schema.
-    fn graph_type_names(&self) -> Vec<String>;
+    /// Default implementation falls back to `graph_type_names()`.
+    fn graph_type_names(&self, txn: &CatalogTxn) -> Vec<String>;
 
     /// Retrieves a graph type by its name.
-    fn get_graph_type(&self, name: &str) -> CatalogResult<Option<GraphTypeRef>>;
+    /// Default implementation ignores the view and delegates to `get_graph_type`.
+    fn get_graph_type(&self, name: &str, txn: &CatalogTxn) -> CatalogResult<Option<GraphTypeRef>>;
 
     /// Returns the names of the procedures in the schema.
-    fn procedure_names(&self) -> Vec<String>;
+    /// Default implementation falls back to `procedure_names()`.
+    fn procedure_names(&self, txn: &CatalogTxn) -> Vec<String>;
 
     /// Retrieves a procedure by its name.
-    fn get_procedure(&self, name: &str) -> CatalogResult<Option<ProcedureRef>>;
+    /// Default implementation ignores the view and delegates to `get_procedure`.
+    fn get_procedure(&self, name: &str, txn: &CatalogTxn) -> CatalogResult<Option<ProcedureRef>>;
+
+    /// Downcast support for concrete implementations
+    fn as_any(&self) -> &dyn Any;
 }
 
 /// Represents a graph, which is an instance of a graph type.
@@ -74,22 +87,27 @@ pub trait GraphProvider: Debug + Send + Sync + Any {
 /// It contains vertex types and edge types.
 pub trait GraphTypeProvider: Debug + Send + Sync {
     /// Retrieves the ID of a label by its name.
-    fn get_label_id(&self, name: &str) -> CatalogResult<Option<LabelId>>;
+    fn get_label_id(&self, name: &str, txn: &CatalogTxn) -> CatalogResult<Option<LabelId>>;
 
     /// Returns the names of the labels in the graph type.
-    fn label_names(&self) -> Vec<String>;
+    fn label_names(&self, txn: &CatalogTxn) -> Vec<String>;
 
     /// Retrieves a vertex type by its key label set.
-    fn get_vertex_type(&self, key: &LabelSet) -> CatalogResult<Option<VertexTypeRef>>;
+    fn get_vertex_type(
+        &self,
+        key: &LabelSet,
+        txn: &CatalogTxn,
+    ) -> CatalogResult<Option<VertexTypeRef>>;
 
     /// Returns the keys of the vertex types in the graph type.
-    fn vertex_type_keys(&self) -> Vec<LabelSet>;
+    fn vertex_type_keys(&self, txn: &CatalogTxn) -> Vec<LabelSet>;
 
     /// Retrieves an edge type by its key label set.
-    fn get_edge_type(&self, key: &LabelSet) -> CatalogResult<Option<EdgeTypeRef>>;
+    fn get_edge_type(&self, key: &LabelSet, txn: &CatalogTxn)
+    -> CatalogResult<Option<EdgeTypeRef>>;
 
     /// Returns the keys of the edge types in the graph type.
-    fn edge_type_keys(&self) -> Vec<LabelSet>;
+    fn edge_type_keys(&self, txn: &CatalogTxn) -> Vec<LabelSet>;
 }
 
 /// Represents a vertex type, which defines the structure of a vertex.

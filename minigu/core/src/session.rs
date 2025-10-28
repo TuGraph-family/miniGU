@@ -2,7 +2,9 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use arrow::array::create_array;
-use gql_parser::ast::{Procedure, Program, ProgramActivity, SessionActivity, TransactionActivity};
+use gql_parser::ast::{
+    EndTransaction, Procedure, Program, ProgramActivity, SessionActivity, TransactionActivity,
+};
 use gql_parser::parse_gql;
 use itertools::Itertools;
 use minigu_catalog::memory::MemoryCatalog;
@@ -17,6 +19,7 @@ use minigu_execution::builder::ExecutorBuilder;
 use minigu_execution::executor::Executor;
 use minigu_planner::Planner;
 use minigu_planner::plan::PlanData;
+use minigu_transaction::{GraphTxnManager, Transaction};
 
 use crate::error::{Error, Result};
 use crate::metrics::QueryMetrics;
@@ -71,12 +74,43 @@ impl Session {
         not_implemented("session activity", None)
     }
 
-    fn handle_transaction_activity(&self, activity: &TransactionActivity) -> Result<QueryResult> {
+    fn handle_transaction_activity(
+        &mut self,
+        activity: &TransactionActivity,
+    ) -> Result<QueryResult> {
         if activity.start.is_some() {
-            return not_implemented("start transaction", None);
+            // Begin transaction: default using Snapshot isolation
+            use minigu_transaction::IsolationLevel;
+            let txn = self
+                .context
+                .catalog_txn_mgr
+                .begin_transaction(IsolationLevel::Snapshot)
+                .map_err(|e| {
+                    crate::error::Error::Catalog(minigu_catalog::error::CatalogError::External(
+                        Box::new(e),
+                    ))
+                })?;
+            self.context.current_txn = Some(txn);
         }
-        if activity.end.is_some() {
-            return not_implemented("end transaction", None);
+        if let Some(end) = activity.end.as_ref() {
+            if let Some(txn) = self.context.current_txn.take() {
+                match end.value() {
+                    EndTransaction::Commit => {
+                        let _cts = txn.commit().map_err(|e| {
+                            crate::error::Error::Catalog(
+                                minigu_catalog::error::CatalogError::External(Box::new(e)),
+                            )
+                        })?;
+                    }
+                    EndTransaction::Rollback => {
+                        txn.abort().map_err(|e| {
+                            crate::error::Error::Catalog(
+                                minigu_catalog::error::CatalogError::External(Box::new(e)),
+                            )
+                        })?;
+                    }
+                }
+            }
         }
         let result = activity
             .procedure

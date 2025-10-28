@@ -38,6 +38,9 @@ pub enum BindError {
     #[error("graph not found: {0}")]
     GraphNotFound(SmolStr),
 
+    #[error("graph type not found: {0}")]
+    GraphTypeNotFound(SmolStr),
+
     #[error("too many objects: {0:?}")]
     InvalidObjectReference(Vec<SmolStr>),
 
