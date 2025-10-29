@@ -33,12 +33,12 @@ impl PlanData for Project {
     }
 
     fn explain(&self) -> Option<String> {
-        let experss_str = self
+        let express_str = self
             .exprs
             .iter()
             .map(|e| format!("{}", e))
             .collect::<Vec<_>>()
             .join(", ");
-        Some(format!("Project: {}", experss_str))
+        Some(format!("Project: {}", express_str))
     }
 }
