@@ -50,6 +50,4 @@ add_e2e_tests!("misc", [
     "dml_dql",
     "vector_index"
 ]);
-add_e2e_tests!("utility", [
-    "explain"
-]);
+add_e2e_tests!("utility", ["explain"]);

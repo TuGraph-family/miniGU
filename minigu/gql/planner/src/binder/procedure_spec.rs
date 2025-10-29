@@ -36,13 +36,11 @@ impl Binder<'_> {
                 .bind_composite_query_statement(statement)
                 .map(BoundStatement::Query),
             Statement::Data(_) => not_implemented("data-modifying statement".to_string(), None),
-            Statement::Utility(utility) => {
-                match utility {
-                    gql_parser::ast::UtilityStatement::Explain(explain) => self
-                        .bind_explain_statement(explain)
-                        .map(|statement| BoundStatement::Utility(Box::new(statement))),
-                }
-            }
+            Statement::Utility(utility) => match utility {
+                gql_parser::ast::UtilityStatement::Explain(explain) => self
+                    .bind_explain_statement(explain)
+                    .map(|statement| BoundStatement::Utility(Box::new(statement))),
+            },
         }
     }
 
@@ -51,6 +49,6 @@ impl Binder<'_> {
         explain: &gql_parser::ast::ExplainStatement,
     ) -> BindResult<BoundUtilityStatement> {
         let statement = self.bind_statement(explain.statement.value())?;
-        Ok(BoundUtilityStatement::Explian(Box::new(statement)))
+        Ok(BoundUtilityStatement::Explain(Box::new(statement)))
     }
 }

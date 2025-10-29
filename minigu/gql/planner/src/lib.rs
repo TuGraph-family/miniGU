@@ -33,7 +33,10 @@ impl Planner {
         );
         let bound = binder.bind(query)?;
         let is_explain = if let crate::bound::BoundStatement::Utility(utility) = &bound.statement {
-            matches!(utility.as_ref(), crate::bound::BoundUtilityStatement::Explian(_))
+            matches!(
+                utility.as_ref(),
+                crate::bound::BoundUtilityStatement::Explain(_)
+            )
         } else {
             false
         };

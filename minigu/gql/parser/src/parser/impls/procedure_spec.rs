@@ -78,11 +78,7 @@ pub fn statement(input: &mut TokenStream) -> ModalResult<Spanned<Statement>> {
 }
 
 pub fn utility_statement(input: &mut TokenStream) -> ModalResult<Spanned<UtilityStatement>> {
-    alt((
-        explain_statement.map_inner(UtilityStatement::Explain),
-        fail,
-    ))
-    .parse_next(input)
+    alt((explain_statement.map_inner(UtilityStatement::Explain), fail)).parse_next(input)
 }
 
 pub fn explain_statement(input: &mut TokenStream) -> ModalResult<Spanned<ExplainStatement>> {

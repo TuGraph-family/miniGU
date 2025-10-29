@@ -18,7 +18,7 @@ impl BoundProcedure {
 
 #[derive(Debug, Clone, Serialize)]
 pub enum BoundUtilityStatement {
-    Explian(Box<BoundStatement>),
+    Explain(Box<BoundStatement>),
 }
 
 #[derive(Debug, Clone, Serialize)]

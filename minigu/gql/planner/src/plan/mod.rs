@@ -53,8 +53,10 @@ pub trait PlanData {
     fn children(&self) -> &[PlanNode] {
         self.base().children()
     }
-    // each node needs 
-    fn explain(&self) -> Option<String> { None }
+    // each node needs
+    fn explain(&self) -> Option<String> {
+        None
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -107,6 +109,25 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalNodeScan(node) => node.base(),
             PlanNode::LogicalVectorIndexScan(node) => node.base(),
             PlanNode::PhysicalVectorIndexScan(node) => node.base(),
+        }
+    }
+
+    fn explain(&self) -> Option<String> {
+        match self {
+            PlanNode::LogicalMatch(node) => node.explain(),
+            PlanNode::LogicalFilter(node) => node.explain(),
+            PlanNode::LogicalProject(node) => node.explain(),
+            PlanNode::LogicalCall(node) => node.explain(),
+            PlanNode::LogicalOneRow(node) => node.explain(),
+            PlanNode::LogicalSort(node) => node.explain(),
+            PlanNode::LogicalLimit(node) => node.explain(),
+
+            PlanNode::PhysicalFilter(node) => node.explain(),
+            PlanNode::PhysicalProject(node) => node.explain(),
+            PlanNode::PhysicalCall(node) => node.explain(),
+            PlanNode::PhysicalOneRow(node) => node.explain(),
+            PlanNode::PhysicalSort(node) => node.explain(),
+            PlanNode::PhysicalLimit(node) => node.explain(),
         }
     }
 }
