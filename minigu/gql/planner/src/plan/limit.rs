@@ -6,15 +6,20 @@ use crate::plan::{PlanBase, PlanData, PlanNode};
 pub struct Limit {
     pub base: PlanBase,
     pub limit: usize,
+    pub approximate: bool, // if true, enable ANN search
 }
 
 impl Limit {
-    pub fn new(child: PlanNode, limit: usize) -> Self {
+    pub fn new(child: PlanNode, limit: usize, approximate: bool) -> Self {
         let base = PlanBase {
             schema: child.schema().cloned(),
             children: vec![child],
         };
-        Self { base, limit }
+        Self {
+            base,
+            limit,
+            approximate,
+        }
     }
 }
 

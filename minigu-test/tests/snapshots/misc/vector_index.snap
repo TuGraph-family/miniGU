@@ -2,4 +2,4 @@
 source: minigu-test/tests/e2e_test.rs
 assertion_line: 47
 ---
-403
+407

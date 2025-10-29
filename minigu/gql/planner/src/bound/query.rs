@@ -1,5 +1,6 @@
 use minigu_common::data_type::DataSchemaRef;
 use minigu_common::ordering::{NullOrdering, SortOrdering};
+use minigu_common::types::{VectorIndexKey, VectorMetric};
 use serde::Serialize;
 
 use super::value_expr::BoundSetQuantifier;
@@ -70,10 +71,16 @@ pub struct BoundReturnStatement {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub struct BoundLimitClause {
+    pub count: usize,
+    pub approximate: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct BoundOrderByAndPageStatement {
     pub order_by: Vec<BoundSortSpec>,
     pub offset: Option<usize>,
-    pub limit: Option<usize>,
+    pub limit: Option<BoundLimitClause>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -84,8 +91,24 @@ pub struct BoundSortSpec {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub struct BoundVectorIndexScan {
+    pub binding: String,
+    pub distance_alias: String,
+    pub index_key: VectorIndexKey,
+    pub query: BoundExpr,
+    pub metric: VectorMetric,
+    pub dimension: usize,
+    pub limit: usize,
+    pub approximate: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub enum BoundSimpleQueryStatement {
     Call(BoundCallProcedureStatement),
+    // TODO(minigu-vector-search): once MATCH binding lands, retain the MATCH-produced
+    // candidate set (or bitmap) as input and append a VectorIndexScan to perform the
+    // ANN/precise search.
+    VectorIndexScan(BoundVectorIndexScan),
 }
 
 #[derive(Debug, Clone, Serialize)]

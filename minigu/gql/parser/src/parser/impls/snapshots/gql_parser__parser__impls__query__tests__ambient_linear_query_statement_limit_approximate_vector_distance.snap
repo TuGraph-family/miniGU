@@ -1,0 +1,147 @@
+---
+source: minigu/gql/parser/src/parser/impls/query.rs
+expression: query
+---
+- Parts:
+    parts:
+      - - Match:
+            Simple:
+              - pattern:
+                  - match_mode: ~
+                    patterns:
+                      - - variable: ~
+                          prefix: ~
+                          expr:
+                            - Concat:
+                                - - Pattern:
+                                      Node:
+                                        variable:
+                                          - a
+                                          - start: 20
+                                            end: 21
+                                        label:
+                                          - Label: Articles
+                                          - start: 22
+                                            end: 30
+                                        predicate: ~
+                                  - start: 19
+                                    end: 31
+                            - start: 19
+                              end: 31
+                        - start: 19
+                          end: 31
+                    keep: ~
+                    where_clause: ~
+                  - start: 19
+                    end: 31
+                yield_clause: []
+              - start: 19
+                end: 31
+        - start: 13
+          end: 31
+    result:
+      - Return:
+          statement:
+            - quantifier: ~
+              items:
+                - Items:
+                    - - value:
+                          - Function:
+                              Vector:
+                                lhs:
+                                  - Value:
+                                      Literal:
+                                        Vector:
+                                          elems:
+                                            - - Value:
+                                                  Literal:
+                                                    Numeric:
+                                                      Integer:
+                                                        - kind: Decimal
+                                                          integer: "1"
+                                                        - start: 75
+                                                          end: 76
+                                              - start: 75
+                                                end: 76
+                                            - - Value:
+                                                  Literal:
+                                                    Numeric:
+                                                      Float:
+                                                        - float: "2.3e-4"
+                                                        - start: 78
+                                                          end: 84
+                                              - start: 78
+                                                end: 84
+                                            - - Unary:
+                                                  op:
+                                                    - Minus
+                                                    - start: 86
+                                                      end: 87
+                                                  child:
+                                                    - Value:
+                                                        Literal:
+                                                          Numeric:
+                                                            Float:
+                                                              - float: "4.53"
+                                                              - start: 87
+                                                                end: 91
+                                                    - start: 87
+                                                      end: 91
+                                              - start: 86
+                                                end: 91
+                                  - start: 67
+                                    end: 92
+                                rhs:
+                                  - Property:
+                                      source:
+                                        - Variable: a
+                                        - start: 94
+                                          end: 95
+                                      trailing_names:
+                                        - - article_vector
+                                          - start: 96
+                                            end: 110
+                                  - start: 94
+                                    end: 110
+                                metric:
+                                  - L2
+                                  - start: 112
+                                    end: 114
+                          - start: 51
+                            end: 115
+                        alias:
+                          - distance
+                          - start: 119
+                            end: 127
+                      - start: 51
+                        end: 127
+                - start: 51
+                  end: 127
+              group_by: ~
+            - start: 44
+              end: 127
+          order_by:
+            - order_by:
+                - - key:
+                      - Variable: distance
+                      - start: 149
+                        end: 157
+                    ordering: ~
+                    null_ordering: ~
+                  - start: 149
+                    end: 157
+              offset: ~
+              limit:
+                - count:
+                    Integer:
+                      kind: Decimal
+                      integer: "10"
+                  approximate: true
+                - start: 170
+                  end: 190
+            - start: 140
+              end: 190
+      - start: 44
+        end: 190
+- start: 13
+  end: 190
