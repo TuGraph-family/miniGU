@@ -27,14 +27,12 @@ impl LogicalPlanner {
                 self.plan_catalog_modifying_statement(statement)
             }
             BoundStatement::Query(statement) => self.plan_composite_query_statement(statement),
-            BoundStatement::Utility(utility) => {
-                match utility.as_ref() {
-                    BoundUtilityStatement::Explian(explain) => {
-                        let plan = self.plan_statement(*explain.clone())?;
-                        Ok(plan)
-                    }
+            BoundStatement::Utility(utility) => match utility.as_ref() {
+                BoundUtilityStatement::Explain(explain) => {
+                    let plan = self.plan_statement(*explain.clone())?;
+                    Ok(plan)
                 }
-            }
+            },
         }
     }
 }
