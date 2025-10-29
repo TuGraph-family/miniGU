@@ -88,6 +88,9 @@ pub enum BindError {
     #[error("invalid vector element: {0}")]
     InvalidVectorElement(String),
 
+    #[error("invalid vector literal: {0}")]
+    InvalidVectorLiteral(String),
+
     #[error("argument {position} of VECTOR_DISTANCE must be a vector, but found {ty}")]
     InvalidVectorDistanceArgument { position: usize, ty: LogicalType },
 

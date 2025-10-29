@@ -13,6 +13,7 @@ use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
 use super::{BoxedExecutor, Executor};
 use crate::error::{ExecutionError, ExecutionResult};
 
+/// Default L parameter for DiskANN search
 const DEFAULT_L_VALUE: u32 = 100;
 
 /// Builds an executor that performs ANN search directly against the storage vector index.

@@ -764,7 +764,7 @@ pub enum TokenKind<'a> {
     UnsignedHexInteger(&'a str),
     #[regex(r"0b(_?[01])+")]
     UnsignedBinaryInteger(&'a str),
-    #[regex(r"([0-9]+\.[0-9]+([eE][+-]?[0-9]+)?)|([0-9]+[eE][+-]?[0-9]+)")]
+    #[regex(r"((?:[0-9]+\.[0-9]*|\.[0-9]+)([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+)")]
     UnsignedFloatLiteral(&'a str),
 
     // The followings are quoted character sequences.

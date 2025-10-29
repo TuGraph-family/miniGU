@@ -188,8 +188,8 @@ fn bind_vector_literal(literal: &VectorLiteral) -> BindResult<BoundExpr> {
 
     // Validate that vector is not empty
     if dimension == 0 {
-        return Err(BindError::InvalidVectorElement(
-            "vector literals cannot be empty".into(),
+        return Err(BindError::InvalidVectorLiteral(
+            "vector literal must contain at least one element".into(),
         ));
     }
 
@@ -199,7 +199,7 @@ fn bind_vector_literal(literal: &VectorLiteral) -> BindResult<BoundExpr> {
         data.push(F32::from(value));
     }
 
-    let vector = VectorValue::new(data, dimension).map_err(BindError::InvalidVectorElement)?;
+    let vector = VectorValue::new(data, dimension).map_err(BindError::InvalidVectorLiteral)?;
 
     Ok(BoundExpr::value(
         ScalarValue::new_vector(dimension, Some(vector)),
