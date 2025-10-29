@@ -1,5 +1,4 @@
-use std::error::Error;
-use std::fmt::{Display, Formatter};
+use std::io;
 use std::sync::Arc;
 
 use arrow::array::{ArrayRef, Float32Array, UInt64Array};
@@ -18,8 +17,8 @@ const DEFAULT_L_VALUE: u32 = 100;
 
 /// Builds an executor that performs ANN search directly against the storage vector index.
 ///
-/// TODO(minigu-vector-search): allow injecting additional execution parameters (bitmap filter,
-/// search configuration) once planner/binder provide them.
+/// TODO(minigu-vector-search): thread the MATCH-produced bitmap (and other execution hints) into
+/// this builder once the binder/planner can supply them
 #[derive(Debug)]
 pub struct VectorIndexScanBuilder {
     session_context: SessionContext,
@@ -61,10 +60,6 @@ impl Executor for VectorIndexScanExecutor {
 }
 
 impl VectorIndexScanExecutor {
-    /// Executes a single ANN search against the current graph.
-    ///
-    /// The method is intentionally one-shot; callers should guard with `finished` to avoid
-    /// re-running the search.
     fn execute_scan(&self) -> ExecutionResult<DataChunk> {
         let graph = self.resolve_memory_graph()?;
         let txn = graph
@@ -88,16 +83,22 @@ impl VectorIndexScanExecutor {
     }
 
     fn resolve_memory_graph(&self) -> Result<Arc<MemoryGraph>, ExecutionError> {
-        let graph_ref = self
-            .session_context
-            .current_graph
-            .clone()
-            .ok_or_else(|| exec_error("current graph is not selected"))?;
+        let graph_ref = self.session_context.current_graph.clone().ok_or_else(|| {
+            ExecutionError::Custom(Box::new(io::Error::new(
+                io::ErrorKind::NotFound,
+                "current graph is not selected",
+            )))
+        })?;
         let provider = graph_ref.object().clone();
         let container = provider
             .as_any()
             .downcast_ref::<GraphContainer>()
-            .ok_or_else(|| exec_error("only in-memory graphs support vector scans"))?;
+            .ok_or_else(|| {
+                ExecutionError::Custom(Box::new(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "only in-memory graphs support vector scans",
+                )))
+            })?;
         match container.graph_storage() {
             GraphStorage::Memory(graph) => Ok(Arc::clone(graph)),
         }
@@ -114,19 +115,22 @@ impl VectorIndexScanExecutor {
             return Ok(DataChunk::new(vec![id_array, distance_array]));
         }
 
-        let query_scalar = self
-            .plan
-            .query
-            .clone()
-            .evaluate_scalar()
-            .ok_or_else(|| exec_error("query vector must be a constant expression"))?;
+        let query_scalar = self.plan.query.clone().evaluate_scalar().ok_or_else(|| {
+            ExecutionError::Custom(Box::new(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "query vector must be a constant expression",
+            )))
+        })?;
         let vector_value = extract_vector(query_scalar)?;
         if vector_value.dimension() != self.plan.dimension {
-            return Err(exec_error(format!(
-                "query vector dimension {} does not match bound dimension {}",
-                vector_value.dimension(),
-                self.plan.dimension
-            )));
+            return Err(ExecutionError::Custom(Box::new(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                format!(
+                    "query vector dimension {} does not match bound dimension {}",
+                    vector_value.dimension(),
+                    self.plan.dimension
+                ),
+            ))));
         }
 
         let l_value = DEFAULT_L_VALUE.max(self.plan.limit as u32);
@@ -150,21 +154,11 @@ impl VectorIndexScanExecutor {
     }
 }
 
-#[derive(Debug)]
-struct VectorIndexScanExecError(String);
-
-impl Display for VectorIndexScanExecError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl Error for VectorIndexScanExecError {}
-
-fn exec_error(message: impl Into<String>) -> ExecutionError {
-    ExecutionError::Custom(Box::new(VectorIndexScanExecError(message.into())))
-}
-
 fn extract_vector(value: ScalarValue) -> ExecutionResult<VectorValue> {
-    value.get_vector().map_err(exec_error)
+    value.get_vector().map_err(|_| {
+        ExecutionError::Custom(Box::new(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "failed to extract vector from scalar value",
+        )))
+    })
 }

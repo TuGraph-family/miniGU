@@ -153,12 +153,13 @@ impl Binder<'_> {
         &mut self,
         _order_by: &OrderByAndPageStatement,
     ) -> BindResult<BoundVectorIndexScan> {
-        // TODO(minigu-vector-search): Enable vector index scan binding once MATCH.
-        // Planned flow:
+        // TODO(minigu-vector-search): Enable vector index scan binding once MATCH is able to
+        // provide the filtered candidate bitmap and schema context. Planned flow:
         // 1. Locate ORDER BY VECTOR_DISTANCE(...) and validate operands/metric.
         // 2. Resolve the MATCH binding to fetch label/property metadata and derive VectorIndexKey.
-        // 3. Capture LIMIT (and APPROXIMATE) information along with the query vector expression.
-        // 4. Return BoundVectorIndexScan so later phases can emit VectorIndexScan plan nodes.
+        // 3. Capture LIMIT/APPROXIMATE information, the query vector expression, and the MATCH
+        //    candidate bitmap so vector search can run against it.
+        // 4. Append BoundVectorIndexScan so later phases can emit VectorIndexScan plan nodes.
         let _ = (VectorIndexKey::new, VectorMetric::L2);
         not_implemented("vector index scan binding", None)
     }
@@ -244,10 +245,10 @@ impl Binder<'_> {
         }
     }
 
-    // TODO(minigu-vector-search): When MATCH binding is implemented, extend this method (or its
-    // caller) to detect ORDER BY VECTOR_DISTANCE ... LIMIT APPROXIMATE and replace the
-    // preceding MATCH simple statement with a BoundVectorIndexScan produced via
-    // `bind_vector_index_scan`.
+    // TODO(minigu-vector-search): Once MATCH binding is implemented, extend this method (or its
+    // caller) to detect ORDER BY VECTOR_DISTANCE ... LIMIT APPROXIMATE, preserve the MATCH
+    // bindings/bitmap, and append a BoundVectorIndexScan (via `bind_vector_index_scan`) so the
+    // vector search operates on the filtered candidate set instead of discarding it.
     pub fn bind_order_by_and_page_statement(
         &self,
         order_by_and_page: &OrderByAndPageStatement,

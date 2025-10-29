@@ -9,6 +9,9 @@ use crate::plan::{PlanBase, PlanData};
 
 /// Plan node representing a vector index scan.
 ///
+/// Downstream phases are expected to append this node after MATCH/WHERE filtering so the scan
+/// can leverage the candidate bitmap produced by graph pattern evaluation.
+///
 /// The node produces two columns:
 /// - The binding column (vertex identifier) named after `binding`.
 /// - The precomputed distance column identified by `distance_alias`.

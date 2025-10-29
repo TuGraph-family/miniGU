@@ -764,7 +764,7 @@ pub enum TokenKind<'a> {
     UnsignedHexInteger(&'a str),
     #[regex(r"0b(_?[01])+")]
     UnsignedBinaryInteger(&'a str),
-    #[regex(r"[0-9](_?[0-9])*\.[0-9](_?[0-9])*")]
+    #[regex(r"([0-9]+\.[0-9]+([eE][+-]?[0-9]+)?)|([0-9]+[eE][+-]?[0-9]+)")]
     UnsignedFloatLiteral(&'a str),
 
     // The followings are quoted character sequences.
@@ -1447,7 +1447,9 @@ impl TokenKind<'_> {
 
     #[inline]
     pub fn is_prefix_of_value_function(&self) -> bool {
-        self.is_prefix_of_regular_identifier() || self.is_prefix_of_numeric_value_function()
+        self.is_prefix_of_regular_identifier()
+            || self.is_prefix_of_numeric_value_function()
+            || matches!(self, Self::VectorDistance)
     }
 }
 
@@ -1525,6 +1527,17 @@ mod tests {
             Err(TokenErrorKind::InvalidToken),
             Ok(TokenKind::RegularIdentifier("abc")),
             Err(TokenErrorKind::InvalidToken)
+        ]);
+    }
+
+    #[test]
+    fn test_float_literal_scientific() {
+        let lexer = TokenKind::lexer("1.23e-4 1e10 1.23");
+        let tokens: Vec<_> = lexer.collect();
+        assert_eq!(tokens, vec![
+            Ok(TokenKind::UnsignedFloatLiteral("1.23e-4")),
+            Ok(TokenKind::UnsignedFloatLiteral("1e10")),
+            Ok(TokenKind::UnsignedFloatLiteral("1.23"))
         ]);
     }
 }
