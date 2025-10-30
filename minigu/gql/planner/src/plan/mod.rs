@@ -111,6 +111,7 @@ impl PlanData for PlanNode {
             PlanNode::LogicalOneRow(node) => node.explain(),
             PlanNode::LogicalSort(node) => node.explain(),
             PlanNode::LogicalLimit(node) => node.explain(),
+            PlanNode::LogicalVectorIndexScan(node) => node.explain(),
 
             PlanNode::PhysicalFilter(node) => node.explain(),
             PlanNode::PhysicalProject(node) => node.explain(),
@@ -118,6 +119,7 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalOneRow(node) => node.explain(),
             PlanNode::PhysicalSort(node) => node.explain(),
             PlanNode::PhysicalLimit(node) => node.explain(),
+            PlanNode::PhysicalVectorIndexScan(node) => node.explain(),
         }
     }
 }
