@@ -25,4 +25,8 @@ impl PlanData for Filter {
     fn base(&self) -> &PlanBase {
         &self.base
     }
+
+    fn explain(&self) -> Option<String> {
+        Some(format!("Filter: {:?}", self.predicate))
+    }
 }

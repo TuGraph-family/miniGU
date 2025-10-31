@@ -27,4 +27,8 @@ impl PlanData for Limit {
     fn base(&self) -> &PlanBase {
         &self.base
     }
+
+    fn explain(&self) -> Option<String> {
+        Some(format!("Limit: {}", self.limit))
+    }
 }
