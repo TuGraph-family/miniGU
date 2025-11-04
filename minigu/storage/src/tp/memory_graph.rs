@@ -12,9 +12,7 @@ use crate::common::model::vertex::Vertex;
 use crate::common::transaction::{DeltaOp, IsolationLevel, SetPropsOp, Timestamp};
 use crate::common::wal::StorageWal;
 use crate::common::wal::graph_wal::{Operation, RedoEntry, WalManager, WalManagerConfig};
-use crate::error::{
-    EdgeNotFoundError, StorageError, StorageResult, VertexNotFoundError,
-};
+use crate::error::{EdgeNotFoundError, StorageError, StorageResult, VertexNotFoundError};
 
 // Perform the update properties operation
 macro_rules! update_properties {
@@ -93,7 +91,7 @@ impl VersionedVertex {
         let current = self.chain.current.read().unwrap();
         current.data.clone()
     }
-    
+
     pub fn with_txn_id(initial: Vertex, txn_id: Timestamp) -> Self {
         debug_assert!(txn_id.0 > Timestamp::TXN_ID_START);
         Self {
@@ -107,9 +105,7 @@ impl VersionedVertex {
             }),
         }
     }
-
-    //TODO:You need to improve this MVCC
-    
+    // TODO:You need to improve this MVCC
 }
 
 #[derive(Debug)]
@@ -154,9 +150,7 @@ impl VersionedEdge {
             }),
         }
     }
-    
-    //TODO:You need to improve this MVCC
-
+    // TODO:You need to improve this MVCC
 }
 
 #[derive(Debug)]

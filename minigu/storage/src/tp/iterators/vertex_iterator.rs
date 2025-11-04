@@ -31,9 +31,9 @@ impl Iterator for VertexIterator<'_> {
             let vertex = entry.value().data();
 
             if vertex.is_tombstone() {
-                continue; 
+                continue;
             }
-            
+
             // Apply all filtering conditions
             if self.filters.iter().all(|f| f(&vertex)) {
                 // Record the vertex read in the transaction

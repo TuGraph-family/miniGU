@@ -18,11 +18,11 @@ const BATCH_SIZE: usize = 64;
 pub struct AdjacencyIterator<'a> {
     adj_list: Option<Arc<SkipSet<Neighbor>>>, // The adjacency list for the vertex
     #[allow(dead_code)]
-    current_entries: Vec<Neighbor>,           // Store current batch of entries
+    current_entries: Vec<Neighbor>, // Store current batch of entries
     #[allow(dead_code)]
-    current_index: usize,                     // Current index in the batch
+    current_index: usize, // Current index in the batch
     #[allow(dead_code)]
-    txn: &'a MemTransaction,                  // Reference to the transaction
+    txn: &'a MemTransaction, // Reference to the transaction
     filters: Vec<AdjFilter<'a>>,              // List of filtering predicates
     current_adj: Option<Neighbor>,            // Current adjacency entry
 }

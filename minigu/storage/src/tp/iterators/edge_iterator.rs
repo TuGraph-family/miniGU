@@ -15,7 +15,7 @@ type EdgeFilter<'a> = Box<dyn Fn(&Edge) -> bool + 'a>;
 pub struct EdgeIterator<'a> {
     inner: Iter<'a, EdgeId, VersionedEdge>, // Native DashMap iterator
     #[allow(dead_code)]
-    txn: &'a MemTransaction,                // Reference to the transaction
+    txn: &'a MemTransaction, // Reference to the transaction
     filters: Vec<EdgeFilter<'a>>,           // List of filtering predicates
     current_edge: Option<Edge>,             // Currently iterated edge
 }
