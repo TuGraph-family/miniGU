@@ -851,3 +851,599 @@ fn test_transaction_panic_during_deletion() {
     assert!(graph.get_vertex(&verify_txn, 2).is_ok());
     verify_txn.abort().unwrap();
 }
+
+// ========== ADVANCED WRITE-WRITE CONFLICT TESTS ==========
+
+#[test]
+fn test_serializable_concurrent_create_same_vertex() {
+    let (graph, _cleaner) = create_test_graph();
+
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+
+    let carol1 = Vertex::new(
+        3,
+        PERSON_LABEL_ID,
+        PropertyRecord::new(vec![
+            ScalarValue::String(Some("Carol1".to_string())),
+            ScalarValue::Int32(Some(28)),
+        ]),
+    );
+    let carol2 = Vertex::new(
+        3,
+        PERSON_LABEL_ID,
+        PropertyRecord::new(vec![
+            ScalarValue::String(Some("Carol2".to_string())),
+            ScalarValue::Int32(Some(29)),
+        ]),
+    );
+
+    // Both transactions try to create vertex with same ID
+    assert!(graph.create_vertex(&txn1, carol1).is_ok());
+    assert!(graph.create_vertex(&txn2, carol2).is_err());
+
+    txn1.commit().unwrap();
+    txn2.abort().unwrap();
+}
+
+#[test]
+fn test_serializable_concurrent_create_same_edge() {
+    let (graph, _cleaner) = create_test_graph();
+
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+
+    let edge1 = Edge::new(
+        2,
+        1,
+        2,
+        FOLLOW_LABEL_ID,
+        PropertyRecord::new(vec![ScalarValue::String(Some("2024-01-01".to_string()))]),
+    );
+    let edge2 = Edge::new(
+        2,
+        1,
+        2,
+        FOLLOW_LABEL_ID,
+        PropertyRecord::new(vec![ScalarValue::String(Some("2024-02-01".to_string()))]),
+    );
+
+    assert!(graph.create_edge(&txn1, edge1).is_ok());
+    assert!(graph.create_edge(&txn2, edge2).is_err());
+
+    txn1.commit().unwrap();
+    txn2.abort().unwrap();
+}
+
+#[test]
+fn test_serializable_update_after_delete_conflict() {
+    let (graph, _cleaner) = create_test_graph();
+
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+
+    // Transaction 1 deletes vertex
+    graph.delete_vertex(&txn1, 1).unwrap();
+
+    // Transaction 2 tries to update the same vertex
+    assert!(
+        graph
+            .set_vertex_property(&txn2, 1, vec![1], vec![ScalarValue::Int32(Some(100))])
+            .is_err()
+    );
+
+    txn1.commit().unwrap();
+    txn2.abort().unwrap();
+}
+
+#[test]
+fn test_serializable_delete_after_update_conflict() {
+    let (graph, _cleaner) = create_test_graph();
+
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+
+    // Transaction 1 updates vertex
+    graph
+        .set_vertex_property(&txn1, 1, vec![1], vec![ScalarValue::Int32(Some(100))])
+        .unwrap();
+
+    // Transaction 2 tries to delete the same vertex
+    assert!(graph.delete_vertex(&txn2, 1).is_err());
+
+    txn1.commit().unwrap();
+    txn2.abort().unwrap();
+}
+
+// ========== MULTIPLE PROPERTY UPDATE TESTS ==========
+
+#[test]
+fn test_serializable_multiple_property_updates() {
+    let (graph, _cleaner) = create_test_graph();
+
+    let txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+
+    // Update multiple properties in sequence
+    graph
+        .set_vertex_property(&txn, 1, vec![1], vec![ScalarValue::Int32(Some(26))])
+        .unwrap();
+    graph
+        .set_vertex_property(&txn, 1, vec![0], vec![ScalarValue::String(Some("Alicia".to_string()))])
+        .unwrap();
+
+    let alice = graph.get_vertex(&txn, 1).unwrap();
+    assert_eq!(alice.properties()[0], ScalarValue::String(Some("Alicia".to_string())));
+    assert_eq!(alice.properties()[1], ScalarValue::Int32(Some(26)));
+
+    txn.commit().unwrap();
+}
+
+#[test]
+fn test_serializable_batch_property_updates() {
+    let (graph, _cleaner) = create_test_graph();
+
+    let txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+
+    // Update multiple properties at once
+    graph
+        .set_vertex_property(
+            &txn,
+            1,
+            vec![0, 1],
+            vec![
+                ScalarValue::String(Some("Alicia".to_string())),
+                ScalarValue::Int32(Some(26)),
+            ],
+        )
+        .unwrap();
+
+    let alice = graph.get_vertex(&txn, 1).unwrap();
+    assert_eq!(alice.properties()[0], ScalarValue::String(Some("Alicia".to_string())));
+    assert_eq!(alice.properties()[1], ScalarValue::Int32(Some(26)));
+
+    txn.commit().unwrap();
+}
+
+// ========== CROSS-VERTEX TRANSACTION TESTS ==========
+
+#[test]
+fn test_serializable_multi_vertex_consistency() {
+    let (graph, _cleaner) = create_test_graph();
+
+    let txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+
+    // Update multiple vertices in one transaction
+    graph
+        .set_vertex_property(&txn, 1, vec![1], vec![ScalarValue::Int32(Some(26))])
+        .unwrap();
+    graph
+        .set_vertex_property(&txn, 2, vec![1], vec![ScalarValue::Int32(Some(31))])
+        .unwrap();
+
+    txn.commit().unwrap();
+
+    // Verify both updates are visible
+    let verify_txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    let alice = graph.get_vertex(&verify_txn, 1).unwrap();
+    let bob = graph.get_vertex(&verify_txn, 2).unwrap();
+    assert_eq!(alice.properties()[1], ScalarValue::Int32(Some(26)));
+    assert_eq!(bob.properties()[1], ScalarValue::Int32(Some(31)));
+    verify_txn.abort().unwrap();
+}
+
+#[test]
+fn test_serializable_multi_edge_consistency() {
+    let (graph, _cleaner) = create_test_graph();
+
+    let txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+
+    // Create multiple edges
+    let edge2 = Edge::new(
+        2,
+        2,
+        1,
+        FOLLOW_LABEL_ID,
+        PropertyRecord::new(vec![ScalarValue::String(Some("2024-02-01".to_string()))]),
+    );
+    let edge3 = Edge::new(
+        3,
+        1,
+        2,
+        FOLLOW_LABEL_ID,
+        PropertyRecord::new(vec![ScalarValue::String(Some("2024-03-01".to_string()))]),
+    );
+
+    graph.create_edge(&txn, edge2).unwrap();
+    graph.create_edge(&txn, edge3).unwrap();
+
+    txn.commit().unwrap();
+
+    // Verify both edges exist
+    let verify_txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    assert!(graph.get_edge(&verify_txn, 2).is_ok());
+    assert!(graph.get_edge(&verify_txn, 3).is_ok());
+    verify_txn.abort().unwrap();
+}
+
+// ========== EDGE DIRECTION TESTS ==========
+
+#[test]
+fn test_serializable_bidirectional_edge_consistency() {
+    let (graph, _cleaner) = create_test_graph();
+
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+
+    // Check outgoing edges from Alice
+    let outgoing_count = txn1
+        .iter_adjacency_outgoing(1)
+        .filter_map(|adj| adj.ok())
+        .count();
+    assert_eq!(outgoing_count, 1);
+
+    // Check incoming edges to Bob
+    let incoming_count = txn1
+        .iter_adjacency_incoming(2)
+        .filter_map(|adj| adj.ok())
+        .count();
+    assert_eq!(incoming_count, 1);
+
+    // Transaction 2 adds new edge
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    let new_edge = Edge::new(
+        2,
+        2,
+        1,
+        FRIEND_LABEL_ID,
+        PropertyRecord::new(vec![ScalarValue::String(Some("2024-04-01".to_string()))]),
+    );
+    graph.create_edge(&txn2, new_edge).unwrap();
+    txn2.commit().unwrap();
+
+    // Transaction 1 should still see consistent view
+    let outgoing_count2 = txn1
+        .iter_adjacency_outgoing(1)
+        .filter_map(|adj| adj.ok())
+        .count();
+    assert_eq!(outgoing_count2, 1);
+
+    txn1.abort().unwrap();
+}
+
+// ========== VERTEX-EDGE RELATIONSHIP TESTS ==========
+
+#[test]
+fn test_serializable_delete_vertex_cascades_edges() {
+    let (graph, _cleaner) = create_test_graph();
+
+    let txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+
+    // Delete Alice
+    graph.delete_vertex(&txn, 1).unwrap();
+    txn.commit().unwrap();
+
+    // Verify edge is also deleted
+    let verify_txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    assert!(graph.get_edge(&verify_txn, 1).is_err());
+    verify_txn.abort().unwrap();
+}
+
+#[test]
+fn test_serializable_orphaned_edge_prevention() {
+    let (graph, _cleaner) = create_test_graph();
+
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+
+    // Delete Bob (target vertex)
+    graph.delete_vertex(&txn1, 2).unwrap();
+    txn1.commit().unwrap();
+
+    // Verify edge from Alice to Bob is deleted
+    let verify_txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    assert!(graph.get_edge(&verify_txn, 1).is_err());
+    verify_txn.abort().unwrap();
+}
+
+// ========== EMPTY TRANSACTION TESTS ==========
+
+#[test]
+fn test_empty_transaction_commit() {
+    let (graph, _cleaner) = create_test_graph();
+
+    let txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    assert!(txn.commit().is_ok());
+}
+
+#[test]
+fn test_empty_transaction_abort() {
+    let (graph, _cleaner) = create_test_graph();
+
+    let txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    assert!(txn.abort().is_ok());
+}
+
+// ========== ITERATOR CONSISTENCY TESTS ==========
+
+#[test]
+fn test_vertex_iterator_snapshot_isolation() {
+    let (graph, _cleaner) = create_test_graph();
+
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+
+    // Collect initial vertices
+    let initial_vertices: Vec<_> = txn1
+        .iter_vertices()
+        .filter_map(|v| v.ok())
+        .map(|v| v.vid())
+        .collect();
+
+    // Another transaction adds vertices
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    for i in 10..15 {
+        let vertex = Vertex::new(
+            i,
+            PERSON_LABEL_ID,
+            PropertyRecord::new(vec![
+                ScalarValue::String(Some(format!("User{}", i))),
+                ScalarValue::Int32(Some(20 + i as i32)),
+            ]),
+        );
+        graph.create_vertex(&txn2, vertex).unwrap();
+    }
+    txn2.commit().unwrap();
+
+    // Original transaction should see same vertices
+    let final_vertices: Vec<_> = txn1
+        .iter_vertices()
+        .filter_map(|v| v.ok())
+        .map(|v| v.vid())
+        .collect();
+
+    assert_eq!(initial_vertices.len(), final_vertices.len());
+    txn1.abort().unwrap();
+}
+
+#[test]
+fn test_edge_iterator_snapshot_isolation() {
+    let (graph, _cleaner) = create_test_graph();
+
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+
+    let initial_edges: Vec<_> = txn1
+        .iter_edges()
+        .filter_map(|e| e.ok())
+        .map(|e| e.eid())
+        .collect();
+
+    // Another transaction adds edges
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    for i in 10..15 {
+        let edge = Edge::new(
+            i,
+            1,
+            2,
+            FOLLOW_LABEL_ID,
+            PropertyRecord::new(vec![ScalarValue::String(Some(format!("2024-{:02}-01", i - 8)))]),
+        );
+        if graph.create_edge(&txn2, edge).is_ok() {
+            // Some may fail due to duplicate IDs, that's ok
+        }
+    }
+    txn2.commit().unwrap();
+
+    let final_edges: Vec<_> = txn1
+        .iter_edges()
+        .filter_map(|e| e.ok())
+        .map(|e| e.eid())
+        .collect();
+
+    assert_eq!(initial_edges.len(), final_edges.len());
+    txn1.abort().unwrap();
+}
+
+// ========== LABEL FILTER TESTS ==========
+
+#[test]
+fn test_filter_vertices_by_label() {
+    let (graph, _cleaner) = create_test_graph();
+
+    let txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+
+    let person_count = txn
+        .iter_vertices()
+        .filter_map(|v| v.ok())
+        .filter(|v| v.label_id == PERSON_LABEL_ID)
+        .count();
+
+    assert_eq!(person_count, 2); // Alice and Bob
+    txn.abort().unwrap();
+}
+
+#[test]
+fn test_filter_edges_by_label() {
+    let (graph, _cleaner) = create_test_graph();
+
+    let txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+
+    let friend_edges = txn
+        .iter_edges()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.label_id() == FRIEND_LABEL_ID)
+        .count();
+
+    assert_eq!(friend_edges, 1);
+    txn.abort().unwrap();
+}
+
+// ========== LARGE TRANSACTION TESTS ==========
+
+#[test]
+fn test_large_batch_vertex_creation() {
+    let (graph, _cleaner) = create_test_graph();
+
+    let txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+
+    // Create 100 vertices
+    for i in 100..200 {
+        let vertex = Vertex::new(
+            i,
+            PERSON_LABEL_ID,
+            PropertyRecord::new(vec![
+                ScalarValue::String(Some(format!("User{}", i))),
+                ScalarValue::Int32(Some((20 + (i % 50)) as i32)),
+            ]),
+        );
+        graph.create_vertex(&txn, vertex).unwrap();
+    }
+
+    txn.commit().unwrap();
+
+    // Verify all created
+    let verify_txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    for i in 100..200 {
+        assert!(graph.get_vertex(&verify_txn, i).is_ok());
+    }
+    verify_txn.abort().unwrap();
+}
+
+#[test]
+fn test_large_batch_edge_creation() {
+    let (graph, _cleaner) = create_test_graph();
+
+    // First create vertices
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    for i in 100..110 {
+        let vertex = Vertex::new(
+            i,
+            PERSON_LABEL_ID,
+            PropertyRecord::new(vec![
+                ScalarValue::String(Some(format!("User{}", i))),
+                ScalarValue::Int32(Some(25)),
+            ]),
+        );
+        graph.create_vertex(&txn1, vertex).unwrap();
+    }
+    txn1.commit().unwrap();
+
+    // Then create edges
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    for i in 0..45 {
+        let edge = Edge::new(
+            100 + i,
+            100 + (i % 10),
+            100 + ((i + 1) % 10),
+            FOLLOW_LABEL_ID,
+            PropertyRecord::new(vec![ScalarValue::String(Some("2024-01-01".to_string()))]),
+        );
+        graph.create_edge(&txn2, edge).unwrap();
+    }
+    txn2.commit().unwrap();
+
+    // Verify
+    let verify_txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    let edge_count = verify_txn
+        .iter_edges()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.eid() >= 100)
+        .count();
+    assert_eq!(edge_count, 45);
+    verify_txn.abort().unwrap();
+}
