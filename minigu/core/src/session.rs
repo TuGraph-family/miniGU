@@ -127,7 +127,7 @@ impl Session {
         let start = Instant::now();
         let planner = Planner::new(self.context.clone());
         let plan = planner.plan_query(procedure)?;
-        let is_logical_plan = matches!(
+        if matches!(
             plan,
             minigu_planner::plan::PlanNode::LogicalMatch(_)
                 | minigu_planner::plan::PlanNode::LogicalFilter(_)
@@ -136,9 +136,22 @@ impl Session {
                 | minigu_planner::plan::PlanNode::LogicalLimit(_)
                 | minigu_planner::plan::PlanNode::LogicalCall(_)
                 | minigu_planner::plan::PlanNode::LogicalOneRow(_)
-        );
-        if is_logical_plan {
-            return self.format_explain(plan); // return explain output string for logical plan
+        ) {
+            let schema = Some(Arc::new(DataSchema::new(vec![DataField::new(
+                "EXPLAIN".to_string(),
+                LogicalType::String,
+                false,
+            )])));
+
+            let chunks = vec![DataChunk::new(vec![Arc::new(
+                arrow::array::StringArray::from(vec![plan.explain(0).unwrap_or_default()]),
+            )])];
+
+            return Ok(QueryResult {
+                schema,
+                metrics: QueryMetrics::default(),
+                chunks,
+            });
         }
         metrics.planning_time = start.elapsed();
 
@@ -155,35 +168,5 @@ impl Session {
             metrics,
             chunks,
         })
-    }
-
-    fn format_explain(&self, plan: impl PlanData) -> Result<QueryResult> {
-        let mut output = String::new();
-        self.format_explain_output(&plan, &mut output, 0);
-
-        let schema = Some(Arc::new(DataSchema::new(vec![DataField::new(
-            "EXPLAIN".to_string(),
-            LogicalType::String,
-            false,
-        )])));
-
-        let chunks = vec![DataChunk::new(vec![Arc::new(
-            arrow::array::StringArray::from(vec![output]),
-        )])];
-        Ok(QueryResult {
-            schema,
-            metrics: QueryMetrics::default(),
-            chunks,
-        })
-    }
-
-    #[allow(clippy::only_used_in_recursion)]
-    fn format_explain_output(&self, plan: &impl PlanData, output: &mut String, indent: usize) {
-        let indent_str = " ".repeat(indent * 2);
-        let explain_str = plan.explain().unwrap_or_else(|| "ERROR".to_string());
-        output.push_str(&format!("{}{}\n", indent_str, explain_str));
-        for child in plan.children() {
-            self.format_explain_output(child, output, indent + 1);
-        }
     }
 }

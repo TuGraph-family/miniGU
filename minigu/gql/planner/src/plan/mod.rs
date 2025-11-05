@@ -54,8 +54,13 @@ pub trait PlanData {
         self.base().children()
     }
     // each node needs
-    fn explain(&self) -> Option<String> {
-        None
+    fn explain(&self, indent: usize) -> Option<String> {
+        let indent_str = " ".repeat(indent * 2);
+        let mut output = format!("{}ERROR: explain() not implemented\n", indent_str);
+        for child in self.children() {
+            output.push_str(child.explain(indent + 1)?.as_str());
+        }
+        Some(output)
     }
 }
 
@@ -112,24 +117,24 @@ impl PlanData for PlanNode {
         }
     }
 
-    fn explain(&self) -> Option<String> {
+    fn explain(&self, indent: usize) -> Option<String> {
         match self {
-            PlanNode::LogicalMatch(node) => node.explain(),
-            PlanNode::LogicalFilter(node) => node.explain(),
-            PlanNode::LogicalProject(node) => node.explain(),
-            PlanNode::LogicalCall(node) => node.explain(),
-            PlanNode::LogicalOneRow(node) => node.explain(),
-            PlanNode::LogicalSort(node) => node.explain(),
-            PlanNode::LogicalLimit(node) => node.explain(),
-            PlanNode::LogicalVectorIndexScan(node) => node.explain(),
+            PlanNode::LogicalMatch(node) => node.explain(indent),
+            PlanNode::LogicalFilter(node) => node.explain(indent),
+            PlanNode::LogicalProject(node) => node.explain(indent),
+            PlanNode::LogicalCall(node) => node.explain(indent),
+            PlanNode::LogicalOneRow(node) => node.explain(indent),
+            PlanNode::LogicalSort(node) => node.explain(indent),
+            PlanNode::LogicalLimit(node) => node.explain(indent),
+            PlanNode::LogicalVectorIndexScan(node) => node.explain(indent),
 
-            PlanNode::PhysicalFilter(node) => node.explain(),
-            PlanNode::PhysicalProject(node) => node.explain(),
-            PlanNode::PhysicalCall(node) => node.explain(),
-            PlanNode::PhysicalOneRow(node) => node.explain(),
-            PlanNode::PhysicalSort(node) => node.explain(),
-            PlanNode::PhysicalLimit(node) => node.explain(),
-            PlanNode::PhysicalVectorIndexScan(node) => node.explain(),
+            PlanNode::PhysicalFilter(node) => node.explain(indent),
+            PlanNode::PhysicalProject(node) => node.explain(indent),
+            PlanNode::PhysicalCall(node) => node.explain(indent),
+            PlanNode::PhysicalOneRow(node) => node.explain(indent),
+            PlanNode::PhysicalSort(node) => node.explain(indent),
+            PlanNode::PhysicalLimit(node) => node.explain(indent),
+            PlanNode::PhysicalVectorIndexScan(node) => node.explain(indent),
         }
     }
 }

@@ -26,7 +26,15 @@ impl PlanData for Filter {
         &self.base
     }
 
-    fn explain(&self) -> Option<String> {
-        Some(format!("Filter: {:?}", self.predicate))
+    fn explain(&self, indent: usize) -> Option<String> {
+        let indent_str = " ".repeat(indent * 2);
+        let mut output = String::new();
+        output.push_str(&format!("{}Filter: {:?}\n", indent_str, self.predicate));
+
+        for child in self.children() {
+            output.push_str(child.explain(indent + 1)?.as_str());
+        }
+
+        Some(output)
     }
 }
