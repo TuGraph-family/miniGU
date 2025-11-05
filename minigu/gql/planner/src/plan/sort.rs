@@ -25,13 +25,21 @@ impl PlanData for Sort {
         &self.base
     }
 
-    fn explain(&self) -> Option<String> {
+    fn explain(&self, indent: usize) -> Option<String> {
+        let indent_str = " ".repeat(indent * 2);
+        let mut output = String::new();
         let specs_str = self
             .specs
             .iter()
             .map(|s| format!("{:?}", s))
             .collect::<Vec<_>>()
             .join(", ");
-        Some(format!("Sort: {}", specs_str))
+        output.push_str(&format!("{}Sort: {}\n", indent_str, specs_str));
+
+        for child in self.children() {
+            output.push_str(child.explain(indent + 1)?.as_str());
+        }
+
+        Some(output)
     }
 }

@@ -1,5 +1,4 @@
 extern crate alloc;
-use alloc::boxed::Box;
 
 use winnow::combinator::{alt, delimited, dispatch, fail, opt, peek, repeat, seq};
 use winnow::{ModalResult, Parser};

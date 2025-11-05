@@ -1,7 +1,6 @@
 //! AST definitions for *procedure specification*.
 
 extern crate alloc;
-use alloc::boxed::Box;
 
 use super::{
     BindingTableVariableDef, CompositeQueryStatement, GraphVariableDef,
