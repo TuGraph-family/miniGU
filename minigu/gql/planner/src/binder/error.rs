@@ -82,6 +82,24 @@ pub enum BindError {
     ))]
     NotCatalogProcedure(SmolStr),
 
+    #[error("vector dimension mismatch: expected {expected}, got {actual}")]
+    VectorDimensionMismatch { expected: usize, actual: usize },
+
+    #[error("invalid vector element: {0}")]
+    InvalidVectorElement(String),
+
+    #[error("invalid vector literal: {0}")]
+    InvalidVectorLiteral(String),
+
+    #[error("argument {position} of VECTOR_DISTANCE must be a vector, but found {ty}")]
+    InvalidVectorDistanceArgument { position: usize, ty: LogicalType },
+
+    #[error("VECTOR_DISTANCE operands must share the same dimension: left {left}, right {right}")]
+    VectorDistanceDimensionMismatch { left: usize, right: usize },
+
+    #[error("invalid float literal: {0}")]
+    InvalidFloatLiteral(String),
+
     // TODO: Remove this error variant
     #[error("unexpected bind error")]
     Unexpected,

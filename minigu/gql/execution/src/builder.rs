@@ -13,8 +13,10 @@ use minigu_planner::plan::{PlanData, PlanNode};
 use crate::evaluator::BoxedEvaluator;
 use crate::evaluator::column_ref::ColumnRef;
 use crate::evaluator::constant::Constant;
+use crate::evaluator::vector_distance::VectorDistanceEvaluator;
 use crate::executor::procedure_call::ProcedureCallBuilder;
 use crate::executor::sort::SortSpec;
+use crate::executor::vector_index_scan::VectorIndexScanBuilder;
 use crate::executor::{BoxedExecutor, Executor, IntoExecutor};
 use crate::source::VertexSource;
 
@@ -117,10 +119,16 @@ impl ExecutorBuilder {
                 assert_eq!(children.len(), 1);
                 Box::new(self.build_executor(&children[0]).limit(limit.limit))
             }
+            PlanNode::PhysicalVectorIndexScan(vector_scan) => {
+                assert!(children.is_empty());
+                VectorIndexScanBuilder::new(self.session.clone(), vector_scan.clone())
+                    .into_executor()
+            }
             _ => unreachable!(),
         }
     }
 
+    #[allow(clippy::only_used_in_recursion)]
     fn build_evaluator(&self, expr: &BoundExpr, schema: &DataSchema) -> BoxedEvaluator {
         match &expr.kind {
             BoundExprKind::Value(value) => Box::new(Constant::new(value.clone())),
@@ -129,6 +137,16 @@ impl ExecutorBuilder {
                     .get_field_index_by_name(variable)
                     .expect("variable should be present in the schema");
                 Box::new(ColumnRef::new(index))
+            }
+            BoundExprKind::VectorDistance {
+                lhs,
+                rhs,
+                metric,
+                dimension,
+            } => {
+                let lhs = self.build_evaluator(lhs.as_ref(), schema);
+                let rhs = self.build_evaluator(rhs.as_ref(), schema);
+                Box::new(VectorDistanceEvaluator::new(lhs, rhs, *metric, *dimension))
             }
         }
     }

@@ -17,6 +17,7 @@ pub mod limit;
 pub mod project;
 pub mod sort;
 pub mod utils;
+pub mod vector_index_scan;
 pub mod vertex_property_scan;
 pub mod vertex_scan;
 

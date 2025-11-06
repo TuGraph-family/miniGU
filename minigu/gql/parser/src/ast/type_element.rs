@@ -61,6 +61,10 @@ pub enum ValueType {
         max_length: Option<BoxSpanned<UnsignedInteger>>,
         not_null: bool,
     },
+    Vector {
+        dimension: BoxSpanned<UnsignedInteger>,
+        not_null: bool,
+    },
     AnyRecord {
         not_null: bool,
     },

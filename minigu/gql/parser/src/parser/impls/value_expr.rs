@@ -6,7 +6,7 @@ use winnow::{ModalResult, Parser};
 
 use super::lexical::{
     boolean_literal, general_parameter_reference, property_name, regular_identifier,
-    unsigned_integer, unsigned_literal,
+    unsigned_integer, unsigned_literal, unsigned_numeric_literal,
 };
 use crate::ast::*;
 use crate::imports::{Box, Vec};
@@ -308,6 +308,34 @@ def_parser_alias!(
     Spanned<Ident>
 );
 
+pub fn signed_numeric_literal_expression(input: &mut TokenStream) -> ModalResult<Spanned<Expr>> {
+    let sign = opt(dispatch! {any;
+        TokenKind::Plus => empty.value(UnaryOp::Plus),
+        TokenKind::Minus => empty.value(UnaryOp::Minus),
+        _ => fail,
+    }
+    .spanned())
+    .parse_next(input)?;
+
+    let literal = unsigned_numeric_literal
+        .map_inner(|num| Expr::Value(Value::Literal(Literal::Numeric(num))))
+        .parse_next(input)?;
+
+    if let Some(op_span) = sign {
+        let literal_span = literal.1.clone();
+        let span = op_span.1.start..literal_span.end;
+        Ok(Spanned(
+            Expr::Unary {
+                op: op_span,
+                child: Box::new(literal),
+            },
+            span,
+        ))
+    } else {
+        Ok(literal)
+    }
+}
+
 pub fn list_value_constructor(input: &mut TokenStream) -> ModalResult<Spanned<ListConstructor>> {
     seq! {ListConstructor {
         type_name: opt(list_value_type_name),
@@ -325,6 +353,17 @@ pub fn list_value_type_name(input: &mut TokenStream) -> ModalResult<Spanned<List
         TokenKind::Array => empty.value(ListTypeName::Array),
         _ => fail
     }
+    .spanned()
+    .parse_next(input)
+}
+
+pub fn vector_literal(input: &mut TokenStream) -> ModalResult<Spanned<VectorLiteral>> {
+    seq! {VectorLiteral {
+        _: TokenKind::Vector,
+        _: TokenKind::LeftBracket,
+        elems: separated(0.., signed_numeric_literal_expression, TokenKind::Comma),
+        _: TokenKind::RightBracket,
+    }}
     .spanned()
     .parse_next(input)
 }
@@ -370,6 +409,9 @@ pub fn value_function(input: &mut TokenStream) -> ModalResult<Spanned<Function>>
         kind if kind.is_prefix_of_numeric_value_function() => {
             numeric_value_function.map_inner(Function::Numeric)
         },
+        TokenKind::VectorDistance => {
+            vector_distance_function.map_inner(Function::Vector)
+        },
         _ => fail
     }
     .parse_next(input)
@@ -395,6 +437,20 @@ pub fn numeric_value_function(input: &mut TokenStream) -> ModalResult<Spanned<Nu
         TokenKind::Abs => absolute_value_function,
         _ => fail
     }
+    .parse_next(input)
+}
+
+pub fn vector_distance_function(input: &mut TokenStream) -> ModalResult<Spanned<VectorDistance>> {
+    seq! {VectorDistance {
+        _: TokenKind::VectorDistance,
+        _: TokenKind::LeftParen,
+        lhs: value_expression.map(Box::new),
+        _: TokenKind::Comma,
+        rhs: value_expression.map(Box::new),
+        metric: opt(preceded(TokenKind::Comma, regular_identifier)),
+        _: TokenKind::RightParen,
+    }}
+    .spanned()
     .parse_next(input)
 }
 

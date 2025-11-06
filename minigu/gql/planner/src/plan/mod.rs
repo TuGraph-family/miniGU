@@ -6,6 +6,7 @@ pub mod one_row;
 pub mod project;
 pub mod scan;
 pub mod sort;
+pub mod vector_index_scan;
 
 use std::sync::Arc;
 
@@ -20,6 +21,7 @@ use crate::plan::one_row::OneRow;
 use crate::plan::project::Project;
 use crate::plan::scan::PhysicalNodeScan;
 use crate::plan::sort::Sort;
+use crate::plan::vector_index_scan::VectorIndexScan;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct PlanBase {
@@ -65,6 +67,7 @@ pub enum PlanNode {
     // (by inserting PhysicalSort).
     LogicalSort(Arc<Sort>),
     LogicalLimit(Arc<Limit>),
+    LogicalVectorIndexScan(Arc<VectorIndexScan>),
 
     PhysicalFilter(Arc<Filter>),
     PhysicalProject(Arc<Project>),
@@ -72,6 +75,7 @@ pub enum PlanNode {
     PhysicalOneRow(Arc<OneRow>),
     PhysicalSort(Arc<Sort>),
     PhysicalLimit(Arc<Limit>),
+    PhysicalVectorIndexScan(Arc<VectorIndexScan>),
     PhysicalNodeScan(Arc<PhysicalNodeScan>),
     // PhysicalCatalogModify(Arc<PhysicalCatalogModify>)
 }
@@ -94,6 +98,8 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalSort(node) => node.base(),
             PlanNode::PhysicalLimit(node) => node.base(),
             PlanNode::PhysicalNodeScan(node) => node.base(),
+            PlanNode::LogicalVectorIndexScan(node) => node.base(),
+            PlanNode::PhysicalVectorIndexScan(node) => node.base(),
         }
     }
 }

@@ -1,6 +1,7 @@
 use minigu_catalog::memory::MemoryCatalog;
 use rayon::ThreadPool;
 
+#[derive(Debug)]
 pub struct DatabaseContext {
     catalog: MemoryCatalog,
     runtime: ThreadPool,

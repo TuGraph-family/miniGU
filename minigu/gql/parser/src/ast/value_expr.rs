@@ -90,6 +90,7 @@ pub enum Function {
     Generic(GenericFunction),
     Numeric(NumericFunction),
     Case(CaseFunction),
+    Vector(VectorDistance),
 }
 
 #[apply(base)]
@@ -110,6 +111,13 @@ pub enum NumericFunction {
 pub enum CaseFunction {
     NullIf(BoxSpanned<Expr>, BoxSpanned<Expr>),
     Coalesce(VecSpanned<Expr>),
+}
+
+#[apply(base)]
+pub struct VectorDistance {
+    pub lhs: BoxSpanned<Expr>,
+    pub rhs: BoxSpanned<Expr>,
+    pub metric: OptSpanned<Ident>,
 }
 
 #[apply(base)]

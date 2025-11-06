@@ -3,9 +3,9 @@ use std::sync::Arc;
 use minigu_common::error::not_implemented;
 
 use crate::bound::{
-    BoundCompositeQueryStatement, BoundLinearQueryStatement, BoundMatchStatement,
-    BoundOrderByAndPageStatement, BoundResultStatement, BoundReturnStatement,
-    BoundSimpleQueryStatement,
+    BoundCompositeQueryStatement, BoundLinearQueryStatement, BoundOrderByAndPageStatement,
+    BoundResultStatement, BoundReturnStatement, BoundSimpleQueryStatement, BoundVectorIndexScan,
+    BoundMatchStatement
 };
 use crate::error::PlanResult;
 use crate::logical_planner::LogicalPlanner;
@@ -15,6 +15,7 @@ use crate::plan::logical_match::{LogicalMatch, MatchKind};
 use crate::plan::one_row::OneRow;
 use crate::plan::project::Project;
 use crate::plan::sort::Sort;
+use crate::plan::vector_index_scan::VectorIndexScan;
 
 impl LogicalPlanner {
     pub fn plan_composite_query_statement(
@@ -67,6 +68,10 @@ impl LogicalPlanner {
                 self.plan_call_procedure_statement(statement)
             }
             BoundSimpleQueryStatement::Match(statement) => self.plan_match_statement(statement),
+
+            BoundSimpleQueryStatement::VectorIndexScan(statement) => {
+                self.plan_vector_index_scan_statement(statement)
+            }
         }
     }
 
@@ -83,6 +88,23 @@ impl LogicalPlanner {
             }
             BoundMatchStatement::Optional => not_implemented("match statement optional", None),
         }
+    }
+
+    fn plan_vector_index_scan_statement(
+        &self,
+        statement: BoundVectorIndexScan,
+    ) -> PlanResult<PlanNode> {
+        let scan = VectorIndexScan::new(
+            statement.binding,
+            statement.distance_alias,
+            statement.index_key,
+            statement.query,
+            statement.metric,
+            statement.dimension,
+            statement.limit,
+            statement.approximate,
+        );
+        Ok(PlanNode::LogicalVectorIndexScan(Arc::new(scan)))
     }
 
     pub fn plan_result_statement(
@@ -133,8 +155,8 @@ impl LogicalPlanner {
         if statement.offset.is_some() {
             return not_implemented("offset clause", None);
         }
-        if let Some(limit) = statement.limit {
-            let limit = Limit::new(plan, limit);
+        if let Some(limit_clause) = statement.limit {
+            let limit = Limit::new(plan, limit_clause.count, limit_clause.approximate);
             plan = PlanNode::LogicalLimit(Arc::new(limit));
         }
         Ok(plan)
