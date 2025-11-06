@@ -16,9 +16,8 @@ use minigu_common::types::{VectorIndexKey, VectorMetric};
 use super::Binder;
 use super::error::{BindError, BindResult};
 use crate::bound::{
-    BoundCompositeQueryStatement, BoundExpr, BoundMatchStatement,
-    BoundLimitClause, BoundLinearQueryStatement,
-    BoundOrderByAndPageStatement, BoundQueryConjunction, BoundResultStatement,
+    BoundCompositeQueryStatement, BoundExpr, BoundLimitClause, BoundLinearQueryStatement,
+    BoundMatchStatement, BoundOrderByAndPageStatement, BoundQueryConjunction, BoundResultStatement,
     BoundReturnStatement, BoundSetOp, BoundSetOpKind, BoundSetQuantifier,
     BoundSimpleQueryStatement, BoundSortSpec, BoundVectorIndexScan,
 };

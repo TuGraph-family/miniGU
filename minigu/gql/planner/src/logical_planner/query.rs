@@ -3,9 +3,9 @@ use std::sync::Arc;
 use minigu_common::error::not_implemented;
 
 use crate::bound::{
-    BoundCompositeQueryStatement, BoundLinearQueryStatement, BoundOrderByAndPageStatement,
-    BoundResultStatement, BoundReturnStatement, BoundSimpleQueryStatement, BoundVectorIndexScan,
-    BoundMatchStatement
+    BoundCompositeQueryStatement, BoundLinearQueryStatement, BoundMatchStatement,
+    BoundOrderByAndPageStatement, BoundResultStatement, BoundReturnStatement,
+    BoundSimpleQueryStatement, BoundVectorIndexScan,
 };
 use crate::error::PlanResult;
 use crate::logical_planner::LogicalPlanner;
