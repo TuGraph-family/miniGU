@@ -20,7 +20,6 @@ impl Binder<'_> {
         &mut self,
         table: &GraphPatternBindingTable,
     ) -> BindResult<BoundGraphPatternBindingTable> {
-        let graph = self.bind_graph_pattern(table.pattern.value())?;
         let bound_pattern = self.bind_graph_pattern(table.pattern.value())?;
         let cur_schema = self
             .active_data_schema
@@ -182,7 +181,7 @@ impl Binder<'_> {
     fn bind_vertex_filler(&mut self, f: &ElementPatternFiller) -> BindResult<BoundVertexPattern> {
         let var = match &f.variable {
             Some(var) => var.value().to_string(),
-            // If user didnt give a name, there will generate a name.
+            // If the user didn't give a name, we will generate a name.
             None => {
                 let idx = self
                     .active_data_schema

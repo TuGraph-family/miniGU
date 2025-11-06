@@ -20,7 +20,7 @@ pub struct PhysicalNodeScan {
 
 impl PhysicalNodeScan {
     pub fn new(var: &str, labels: Vec<Vec<LabelId>>, graph_id: i64) -> Self {
-        // For Single Node Scan, We just assume the id is only need.
+        // For Single Node Scan, We just assume the id is only needed.
         let field = DataField::new(var.to_string(), LogicalType::Int64, false);
         let schema = DataSchema::new(vec![field]);
         let base = PlanBase {
@@ -30,7 +30,7 @@ impl PhysicalNodeScan {
         Self {
             base,
             var: var.to_string(),
-            labels: labels.clone(),
+            labels,
             graph_id,
         }
     }

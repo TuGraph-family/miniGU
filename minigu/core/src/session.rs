@@ -13,8 +13,8 @@ use minigu_context::database::DatabaseContext;
 use minigu_context::session::SessionContext;
 use minigu_execution::builder::ExecutorBuilder;
 use minigu_execution::executor::Executor;
-use minigu_planner::Planner;
 use minigu_planner::plan::PlanData;
+use minigu_planner::Planner;
 
 use crate::error::{Error, Result};
 use crate::metrics::QueryMetrics;
@@ -70,9 +70,7 @@ impl Session {
             let set = s.value();
             match &set {
                 SessionSet::Schema(sp_ref) => {
-                    self.context
-                        .set_current_schema(sp_ref.value().clone())
-                        .map_err(|e| QueryResult::default());
+                    self.context.set_current_schema(sp_ref.value().clone())?;
                 }
                 SessionSet::Graph(sp_ref) => match sp_ref.value() {
                     GraphExpr::Name(graph_name) => {
@@ -83,7 +81,7 @@ impl Session {
                     }
                 },
                 _ => {
-                    return not_implemented("not implement ", None);
+                    return not_implemented("not implemented ", None);
                 }
             }
         }

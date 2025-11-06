@@ -12,7 +12,7 @@ use minigu_storage::tp::MemoryGraph;
 use minigu_transaction::IsolationLevel::Serializable;
 use minigu_transaction::{GraphTxnManager, Transaction};
 
-/// Create a test graph data with the given name in the current schema.
+/// Creates test graph and data with the given name in the current schema.
 pub fn build_procedure() -> Procedure {
     let parameters = vec![LogicalType::String, LogicalType::Int8];
 
@@ -81,7 +81,7 @@ pub fn build_procedure() -> Procedure {
                 let src = id_map[i];
                 let dst = id_map[j];
                 let edge = Edge::new(
-                    EdgeId::from((i * j) as u64),
+                    EdgeId::from((i * n + j) as u64),
                     src,
                     dst,
                     FRIEND_LABEL_ID,
@@ -91,7 +91,6 @@ pub fn build_procedure() -> Procedure {
                 created_edges += 1;
             }
         }
-        // txn.commit().unwrap();
         txn.commit()?;
         Ok(vec![])
     })
