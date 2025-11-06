@@ -11,7 +11,7 @@ pub enum Error {
     Catalog(#[from] CatalogError),
 
     #[error("schema path error")]
-    SchemaPathError,
+    SchemaPathInvalid,
 
     #[error("graph not exists{0}")]
     GraphNotExists(String),

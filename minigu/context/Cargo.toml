@@ -7,12 +7,12 @@ version.workspace = true
 
 [dependencies]
 gql-parser = { workspace = true }
+miette = { workspace = true }
 minigu-catalog = { workspace = true }
 minigu-common = { workspace = true }
 minigu-storage = { workspace = true }
 minigu-transaction = { workspace = true }
 rayon = { workspace = true }
-miette = { workspace = true }
 thiserror = { workspace = true }
 
 [lints]

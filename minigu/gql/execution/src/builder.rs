@@ -10,10 +10,10 @@ use minigu_context::session::SessionContext;
 use minigu_planner::bound::{BoundExpr, BoundExprKind};
 use minigu_planner::plan::{PlanData, PlanNode};
 
+use crate::evaluator::BoxedEvaluator;
 use crate::evaluator::column_ref::ColumnRef;
 use crate::evaluator::constant::Constant;
 use crate::evaluator::vector_distance::VectorDistanceEvaluator;
-use crate::evaluator::BoxedEvaluator;
 use crate::executor::procedure_call::ProcedureCallBuilder;
 use crate::executor::sort::SortSpec;
 use crate::executor::vector_index_scan::VectorIndexScanBuilder;

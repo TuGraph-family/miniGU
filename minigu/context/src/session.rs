@@ -46,20 +46,20 @@ impl SessionContext {
                     };
                     let current_dir = current
                         .into_directory()
-                        .ok_or_else(|| Error::SchemaPathError)?;
+                        .ok_or_else(|| Error::SchemaPathInvalid)?;
                     current_path.push(segment.value().clone());
                     let child = current_dir
                         .get_child(name)?
-                        .ok_or_else(|| Error::SchemaPathError)?;
+                        .ok_or_else(|| Error::SchemaPathInvalid)?;
                     current = child;
                 }
                 let schema_arc: minigu_catalog::provider::SchemaRef = current
                     .into_schema()
-                    .ok_or_else(|| Error::SchemaPathError)?;
+                    .ok_or_else(|| Error::SchemaPathInvalid)?;
 
                 let msc: Arc<MemorySchemaCatalog> = schema_arc
                     .downcast_arc::<MemorySchemaCatalog>()
-                    .map_err(|_| Error::SchemaPathError)?;
+                    .map_err(|_| Error::SchemaPathInvalid)?;
                 self.current_schema = Some(msc);
                 Ok(())
             }
