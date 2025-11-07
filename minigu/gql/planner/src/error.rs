@@ -13,6 +13,9 @@ pub enum PlanError {
     #[error(transparent)]
     #[diagnostic(transparent)]
     NotImplemented(#[from] NotImplemented),
+
+    #[error("internal error: {0}")]
+    InvalidOperation(String),
 }
 
 pub type PlanResult<T> = std::result::Result<T, PlanError>;

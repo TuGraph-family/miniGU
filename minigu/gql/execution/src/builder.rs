@@ -1,8 +1,11 @@
 use std::sync::Arc;
 
 use arrow::array::{AsArray, Int32Array};
+use minigu_catalog::provider::{GraphProvider, SchemaProvider};
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::data_type::{DataSchema, LogicalType};
+use minigu_common::types::VertexIdArray;
+use minigu_context::graph::GraphContainer;
 use minigu_context::session::SessionContext;
 use minigu_planner::bound::{BoundExpr, BoundExprKind};
 use minigu_planner::plan::{PlanData, PlanNode};
@@ -10,9 +13,12 @@ use minigu_planner::plan::{PlanData, PlanNode};
 use crate::evaluator::BoxedEvaluator;
 use crate::evaluator::column_ref::ColumnRef;
 use crate::evaluator::constant::Constant;
+use crate::evaluator::vector_distance::VectorDistanceEvaluator;
 use crate::executor::procedure_call::ProcedureCallBuilder;
 use crate::executor::sort::SortSpec;
+use crate::executor::vector_index_scan::VectorIndexScanBuilder;
 use crate::executor::{BoxedExecutor, Executor, IntoExecutor};
+use crate::source::VertexSource;
 
 const DEFAULT_CHUNK_SIZE: usize = 2048;
 
@@ -41,6 +47,29 @@ impl ExecutorBuilder {
                         .evaluate(c)
                         .map(|a| a.into_array().as_boolean().clone())
                 }))
+            }
+            PlanNode::PhysicalNodeScan(_node_scan) => {
+                // NodeScan provide graph id and label, Handle in next pr.
+                assert_eq!(children.len(), 0);
+                let cur_schema = self
+                    .session
+                    .home_schema
+                    .as_ref()
+                    .expect("there should be a home schema");
+                let cur_graph = cur_schema
+                    .get_graph("test".to_string().as_str())
+                    .expect("there should be a test graph")
+                    .unwrap();
+                let provider: &dyn GraphProvider = cur_graph.as_ref();
+                let container = provider
+                    .as_any()
+                    .downcast_ref::<GraphContainer>()
+                    .expect("current graph must be GraphContainer");
+                let batches = container
+                    .vertex_source(&[], 1024)
+                    .expect("failed to create vertex source");
+                let source = batches.map(|arr: Arc<VertexIdArray>| Ok(arr));
+                Box::new(source.scan_vertex())
             }
             PlanNode::PhysicalProject(project) => {
                 assert_eq!(children.len(), 1);
@@ -92,10 +121,16 @@ impl ExecutorBuilder {
                 assert_eq!(children.len(), 1);
                 Box::new(self.build_executor(&children[0]).limit(limit.limit))
             }
+            PlanNode::PhysicalVectorIndexScan(vector_scan) => {
+                assert!(children.is_empty());
+                VectorIndexScanBuilder::new(self.session.clone(), vector_scan.clone())
+                    .into_executor()
+            }
             _ => unreachable!(),
         }
     }
 
+    #[allow(clippy::only_used_in_recursion)]
     fn build_evaluator(&self, expr: &BoundExpr, schema: &DataSchema) -> BoxedEvaluator {
         match &expr.kind {
             BoundExprKind::Value(value) => Box::new(Constant::new(value.clone())),
@@ -104,6 +139,16 @@ impl ExecutorBuilder {
                     .get_field_index_by_name(variable)
                     .expect("variable should be present in the schema");
                 Box::new(ColumnRef::new(index))
+            }
+            BoundExprKind::VectorDistance {
+                lhs,
+                rhs,
+                metric,
+                dimension,
+            } => {
+                let lhs = self.build_evaluator(lhs.as_ref(), schema);
+                let rhs = self.build_evaluator(rhs.as_ref(), schema);
+                Box::new(VectorDistanceEvaluator::new(lhs, rhs, *metric, *dimension))
             }
         }
     }

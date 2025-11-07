@@ -1,5 +1,5 @@
 use minigu_storage::error::StorageResult;
-use minigu_storage::tp::IsolationLevel;
+use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
 
 use crate::common::*;
 
@@ -9,7 +9,10 @@ fn test_graph_basic_operations() -> StorageResult<()> {
     let (graph, _cleaner) = create_empty_graph();
 
     // 2. Open transaction
-    let txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
 
     // 3. Create vertices
     let alice = create_test_vertex(1, "Alice", 25);
@@ -90,7 +93,10 @@ fn test_graph_basic_operations() -> StorageResult<()> {
     txn.commit()?;
 
     // 10. Open new transaction and verify data
-    let verify_txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let verify_txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
 
     // Verify vertices still exist
     assert_eq!(graph.get_vertex(&verify_txn, alice_id)?, alice);
@@ -113,13 +119,19 @@ fn test_graph_basic_operations() -> StorageResult<()> {
     verify_txn.commit()?;
 
     // 11. Test delete vertices and edges
-    let delete_txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let delete_txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     graph.delete_vertex(&delete_txn, alice_id)?;
     graph.delete_edge(&delete_txn, another_follow_edge_id)?;
     delete_txn.commit()?;
 
     // 12. Open new transaction and verify data
-    let verify_txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let verify_txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
 
     // Check alice's vertex and its corresponding edges
     assert!(graph.get_vertex(&verify_txn, alice_id).is_err());
@@ -178,7 +190,10 @@ fn test_graph_basic_operations() -> StorageResult<()> {
     // 13. Test garbage collection
     // Loop to trigger garbage collection
     for _ in 0..50 {
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+        let txn = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
         txn.commit()?;
     }
 

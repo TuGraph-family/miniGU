@@ -15,13 +15,13 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use crc32fast::Hasher;
 use minigu_common::types::{EdgeId, VertexId};
+use minigu_transaction::Timestamp;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use super::memory_graph::{AdjacencyContainer, MemoryGraph, VersionedEdge, VersionedVertex};
 use crate::common::model::edge::{Edge, Neighbor};
 use crate::common::model::vertex::Vertex;
-use crate::common::transaction::Timestamp;
 use crate::common::wal::StorageWal;
 use crate::common::wal::graph_wal::WalManagerConfig;
 use crate::error::{CheckpointError, StorageError, StorageResult};
@@ -840,11 +840,11 @@ mod tests {
     use std::{env, fs};
 
     use minigu_common::value::ScalarValue;
+    use minigu_transaction::{GraphTxnManager, IsolationLevel};
 
     use super::*;
     use crate::error::CheckpointError;
     use crate::tp::memory_graph;
-    use crate::tp::transaction::IsolationLevel;
 
     fn get_temp_file_path(prefix: &str) -> std::path::PathBuf {
         env::temp_dir().join(format!("{}_{}.bin", prefix, std::process::id()))
@@ -918,8 +918,14 @@ mod tests {
         // Restore graph from checkpoint
         let restored_graph = checkpoint.restore(checkpoint_config, wal_config).unwrap();
 
-        let origin_txn = original_graph.begin_transaction(IsolationLevel::Serializable);
-        let restore_txn = restored_graph.begin_transaction(IsolationLevel::Serializable);
+        let origin_txn = original_graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        let restore_txn = restored_graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
 
         // Check vertices
         let original_alice = original_graph.get_vertex(&origin_txn, 1).unwrap();
@@ -1043,8 +1049,14 @@ mod tests {
             .unwrap();
 
         // Verify the restored graph has the same data
-        let original_txn = graph.begin_transaction(IsolationLevel::Serializable);
-        let restored_txn = restored_graph.begin_transaction(IsolationLevel::Serializable);
+        let original_txn = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        let restored_txn = restored_graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
 
         // Check vertices
         let original_alice = graph.get_vertex(&original_txn, 1).unwrap();

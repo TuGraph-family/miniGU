@@ -1,0 +1,18 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT license.
+[package]
+edition = "2021"
+license = "MIT"
+name = "vector"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+thiserror = { workspace = true }
+
+[dev-dependencies]
+approx = { workspace = true }
+base64 = { workspace = true }
+bincode = { workspace = true }
+rand = { workspace = true }
+serde = { workspace = true }

@@ -4,4 +4,5 @@ pub mod builder;
 pub mod error;
 pub mod evaluator;
 pub mod executor;
+pub mod factorized_executor;
 pub mod source;

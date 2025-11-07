@@ -270,9 +270,10 @@ mod tests {
     use minigu_common::types::{EdgeId, VertexId};
     use minigu_common::value::ScalarValue;
     use minigu_storage::common::{Edge, PropertyRecord, Vertex};
+    use minigu_storage::tp::MemoryGraph;
     use minigu_storage::tp::checkpoint::CheckpointManagerConfig;
-    use minigu_storage::tp::{IsolationLevel, MemoryGraph};
     use minigu_storage::wal::graph_wal::WalManagerConfig;
+    use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
     use walkdir::WalkDir;
 
     use super::*;
@@ -327,7 +328,10 @@ mod tests {
     fn mock_graph() -> Arc<MemoryGraph> {
         let graph = MemoryGraph::with_config_fresh(mock_checkpoint_config(), mock_wal_config());
 
-        let txn = graph.begin_transaction(IsolationLevel::Serializable);
+        let txn = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
 
         let alice = create_vertex(1, PERSON, vec![
             ScalarValue::String(Some("Alice".to_string())),

@@ -363,4 +363,30 @@ mod tests {
         );
         assert_yaml_snapshot!(query);
     }
+
+    #[test]
+    fn test_ambient_linear_query_statement_limit_approximate_vector_distance() {
+        let query = parse!(
+            ambient_linear_query_statement,
+            r"
+            MATCH (a:Articles)
+            RETURN VECTOR_DISTANCE(VECTOR [1, 2.3e-4, -4.53], a.article_vector, L2) AS distance
+            ORDER BY distance
+            LIMIT APPROXIMATE 10"
+        );
+        assert_yaml_snapshot!(query);
+    }
+
+    #[test]
+    fn test_ambient_linear_query_statement_limit_vector_distance() {
+        let query = parse!(
+            ambient_linear_query_statement,
+            r"
+            MATCH (a:Articles)
+            RETURN VECTOR_DISTANCE(VECTOR [1, 2.3e-4, -4.53], a.article_vector, L2) AS distance
+            ORDER BY distance
+            LIMIT 10"
+        );
+        assert_yaml_snapshot!(query);
+    }
 }

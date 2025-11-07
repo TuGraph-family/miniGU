@@ -4,7 +4,7 @@ use minigu_common::value::ScalarValue;
 use minigu_storage::model::edge::Edge;
 use minigu_storage::model::properties::PropertyRecord;
 use minigu_storage::model::vertex::Vertex;
-use minigu_storage::tp::IsolationLevel;
+use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
 
 use crate::common::*;
 
@@ -15,12 +15,18 @@ fn test_serializable_prevents_dirty_read_vertex() {
     let (graph, _cleaner) = create_test_graph();
 
     // Transaction 1 reads the vertex
-    let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     let alice_v1 = graph.get_vertex(&txn1, 1).unwrap();
     assert_eq!(alice_v1.properties()[1], ScalarValue::Int32(Some(25)));
 
     // Transaction 2 modifies the vertex but does not commit
-    let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     graph
         .set_vertex_property(&txn2, 1, vec![1], vec![ScalarValue::Int32(Some(26))])
         .unwrap();
@@ -38,7 +44,10 @@ fn test_serializable_prevents_dirty_read_edge() {
     let (graph, _cleaner) = create_test_graph();
 
     // Transaction 1 reads the edge
-    let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     let edge_v1 = graph.get_edge(&txn1, 1).unwrap();
     assert_eq!(
         edge_v1.properties()[0],
@@ -46,7 +55,10 @@ fn test_serializable_prevents_dirty_read_edge() {
     );
 
     // Transaction 2 modifies the edge but does not commit
-    let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     graph
         .set_edge_property(&txn2, 1, vec![0], vec![ScalarValue::String(Some(
             "2024-02-01".to_string(),
@@ -68,11 +80,17 @@ fn test_serializable_prevents_dirty_read_new_vertex() {
     let (graph, _cleaner) = create_test_graph();
 
     // Transaction 1 reads vertex with vid 3
-    let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     assert!(graph.get_vertex(&txn1, 3).is_err()); // Should not exist
 
     // Transaction 2 creates a new vertex but does not commit
-    let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     let carol = Vertex::new(
         3,
         PERSON_LABEL_ID,
@@ -96,12 +114,18 @@ fn test_serializable_prevents_non_repeatable_read() {
     let (graph, _cleaner) = create_test_graph();
 
     // Transaction 1 reads the vertex
-    let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     let alice_v1 = graph.get_vertex(&txn1, 1).unwrap();
     assert_eq!(alice_v1.properties()[1], ScalarValue::Int32(Some(25)));
 
     // Transaction 2 modifies and commits
-    let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     graph
         .set_vertex_property(&txn2, 1, vec![1], vec![ScalarValue::Int32(Some(26))])
         .unwrap();
@@ -119,7 +143,10 @@ fn test_serializable_prevents_non_repeatable_read_edge() {
     let (graph, _cleaner) = create_test_graph();
 
     // Transaction 1 reads the edge
-    let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     let edge_v1 = graph.get_edge(&txn1, 1).unwrap();
     assert_eq!(
         edge_v1.properties()[0],
@@ -127,7 +154,10 @@ fn test_serializable_prevents_non_repeatable_read_edge() {
     );
 
     // Transaction 2 modifies the edge and commits
-    let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     graph
         .set_edge_property(&txn2, 1, vec![0], vec![ScalarValue::String(Some(
             "2024-02-01".to_string(),
@@ -152,7 +182,10 @@ fn test_serializable_prevents_phantom_read_vertices() {
     let (graph, _cleaner) = create_test_graph();
 
     // Transaction 1 reads vertices within a certain age range
-    let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     let iter1 = txn1
         .iter_vertices()
         .filter_map(|v| v.ok())
@@ -164,7 +197,10 @@ fn test_serializable_prevents_phantom_read_vertices() {
     assert_eq!(count1, 2); // Alice (25) and Bob (30)
 
     // Transaction 2 inserts a new vertex that fits the criteria
-    let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     let carol = Vertex::new(
         3,
         PERSON_LABEL_ID,
@@ -195,7 +231,10 @@ fn test_serializable_prevents_phantom_read_edges() {
     let (graph, _cleaner) = create_test_graph();
 
     // Transaction 1 reads edges of a specific type (e.g., FRIEND)
-    let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     let iter1 = txn1
         .iter_edges()
         .filter_map(|e| e.ok())
@@ -204,7 +243,10 @@ fn test_serializable_prevents_phantom_read_edges() {
     assert_eq!(count1, 1);
 
     // Transaction 2 inserts a new FRIEND edge
-    let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     let new_friend_edge = Edge::new(
         2,
         2,
@@ -232,8 +274,14 @@ fn test_serializable_prevents_phantom_read_edges() {
 fn test_serializable_write_write_conflict_vertex() {
     let (graph, _cleaner) = create_test_graph();
 
-    let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-    let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
 
     // Transaction 1 modifies the vertex
     graph
@@ -255,8 +303,14 @@ fn test_serializable_write_write_conflict_vertex() {
 fn test_serializable_write_write_conflict_edge() {
     let (graph, _cleaner) = create_test_graph();
 
-    let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-    let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
 
     // Transaction 1 modifies the edge
     graph
@@ -284,8 +338,14 @@ fn test_serializable_write_write_conflict_edge() {
 fn test_serializable_delete_vertex_conflict() {
     let (graph, _cleaner) = create_test_graph();
 
-    let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-    let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
 
     // Transaction 1 modifies the vertex
     graph
@@ -303,8 +363,14 @@ fn test_serializable_delete_vertex_conflict() {
 fn test_serializable_delete_edge_conflict() {
     let (graph, _cleaner) = create_test_graph();
 
-    let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
-    let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
 
     // Transaction 1 modifies the edge
     graph
@@ -324,7 +390,10 @@ fn test_serializable_delete_edge_conflict() {
 fn test_serializable_read_deleted_vertex() {
     let (graph, _cleaner) = create_test_graph();
 
-    let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
 
     // First read of the vertex
     let alice = graph.get_vertex(&txn1, 1).unwrap();
@@ -334,7 +403,10 @@ fn test_serializable_read_deleted_vertex() {
     );
 
     // Transaction 2 deletes the vertex
-    let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     graph.delete_vertex(&txn2, 1).unwrap();
     txn2.commit().unwrap();
 
@@ -352,7 +424,10 @@ fn test_serializable_read_deleted_vertex() {
 fn test_serializable_read_deleted_edge() {
     let (graph, _cleaner) = create_test_graph();
 
-    let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
 
     // First read of the edge
     let friend_edge = graph.get_edge(&txn1, 1).unwrap();
@@ -362,7 +437,10 @@ fn test_serializable_read_deleted_edge() {
     );
 
     // Transaction 2 deletes the edge
-    let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     graph.delete_edge(&txn2, 1).unwrap();
     txn2.commit().unwrap();
 
@@ -382,7 +460,10 @@ fn test_serializable_read_deleted_edge() {
 fn test_serializable_adjacency_consistency() {
     let (graph, _cleaner) = create_test_graph();
 
-    let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
 
     // Read Alice's adjacency list
     let adj_iter1 = txn1.iter_adjacency(1);
@@ -390,7 +471,10 @@ fn test_serializable_adjacency_consistency() {
     assert_eq!(count1, 1); // Alice has one outgoing edge to Bob
 
     // Transaction 2 modifies the graph
-    let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     let carol = Vertex::new(
         3,
         PERSON_LABEL_ID,
@@ -426,7 +510,10 @@ fn test_serializable_complex_transaction_scenario() {
     let (graph, _cleaner) = create_test_graph();
 
     // Simulate a complex social network scenario
-    let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
 
     // Transaction 1: Count Alice's friends
     let friends_count_1 = txn1
@@ -437,7 +524,10 @@ fn test_serializable_complex_transaction_scenario() {
     assert_eq!(friends_count_1, 1);
 
     // Transaction 2: Concurrently add a new friend
-    let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     let david = Vertex::new(
         4,
         PERSON_LABEL_ID,
@@ -475,7 +565,10 @@ fn test_serializable_complex_transaction_scenario() {
 fn test_rollback_vertex_creation() {
     let (graph, _cleaner) = create_test_graph();
 
-    let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
 
     let carol = Vertex::new(
         3,
@@ -491,7 +584,10 @@ fn test_rollback_vertex_creation() {
     txn1.abort().unwrap();
 
     // Verify the vertex does not exist
-    let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     assert!(graph.get_vertex(&txn2, 3).is_err());
     txn2.abort().unwrap();
 }
@@ -500,7 +596,10 @@ fn test_rollback_vertex_creation() {
 fn test_rollback_edge_creation() {
     let (graph, _cleaner) = create_test_graph();
 
-    let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
 
     let follow_edge = Edge::new(
         2,
@@ -515,7 +614,10 @@ fn test_rollback_edge_creation() {
     txn1.abort().unwrap();
 
     // Verify the edge does not exist
-    let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     assert!(graph.get_edge(&txn2, 2).is_err());
     txn2.abort().unwrap();
 }
@@ -524,7 +626,10 @@ fn test_rollback_edge_creation() {
 fn test_rollback_property_update() {
     let (graph, _cleaner) = create_test_graph();
 
-    let txn1 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn1 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
 
     // Modify property
     graph
@@ -535,7 +640,10 @@ fn test_rollback_property_update() {
     txn1.abort().unwrap();
 
     // Verify the property has not changed
-    let txn2 = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn2 = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     let alice = graph.get_vertex(&txn2, 1).unwrap();
     assert_eq!(alice.properties()[1], ScalarValue::Int32(Some(25))); // Original value
     txn2.abort().unwrap();
@@ -552,7 +660,10 @@ fn test_concurrent_transactions_stress() {
     // Create multiple concurrent transactions
     let handle1 = thread::spawn(move || {
         for i in 0..10 {
-            let txn = graph_clone.begin_transaction(IsolationLevel::Serializable);
+            let txn = graph_clone
+                .txn_manager()
+                .begin_transaction(IsolationLevel::Serializable)
+                .unwrap();
             let vertex = Vertex::new(
                 100 + i,
                 PERSON_LABEL_ID,
@@ -572,7 +683,10 @@ fn test_concurrent_transactions_stress() {
     let graph_clone2 = graph.clone();
     let handle2 = thread::spawn(move || {
         for i in 0..10 {
-            let txn = graph_clone2.begin_transaction(IsolationLevel::Serializable);
+            let txn = graph_clone2
+                .txn_manager()
+                .begin_transaction(IsolationLevel::Serializable)
+                .unwrap();
             if graph_clone2
                 .set_vertex_property(&txn, 1, vec![1], vec![ScalarValue::Int32(Some(30 + i))])
                 .is_ok()
@@ -588,7 +702,10 @@ fn test_concurrent_transactions_stress() {
     handle2.join().unwrap();
 
     // Verify the graph is still consistent
-    let txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     let alice = graph.get_vertex(&txn, 1).unwrap();
     assert!(alice.properties()[1].try_as_int32().unwrap().unwrap() >= 25);
     txn.abort().unwrap();
@@ -600,7 +717,10 @@ fn test_read_only_transaction_consistency_under_concurrent_writes() {
     let (graph, _cleaner) = create_test_graph();
 
     // Start a read-only transaction to establish a consistent snapshot
-    let read_txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let read_txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
 
     // Read initial state
     let initial_alice = graph.get_vertex(&read_txn, 1).unwrap();
@@ -621,7 +741,10 @@ fn test_read_only_transaction_consistency_under_concurrent_writes() {
     // Concurrent writer 1: Update Alice's age multiple times
     let handle1 = thread::spawn(move || {
         for i in 0..5 {
-            let write_txn = graph_clone1.begin_transaction(IsolationLevel::Serializable);
+            let write_txn = graph_clone1
+                .txn_manager()
+                .begin_transaction(IsolationLevel::Serializable)
+                .unwrap();
             if graph_clone1
                 .set_vertex_property(&write_txn, 1, vec![1], vec![ScalarValue::Int32(Some(
                     26 + i,
@@ -638,7 +761,10 @@ fn test_read_only_transaction_consistency_under_concurrent_writes() {
     // Concurrent writer 2: Update Bob's age multiple times
     let handle2 = thread::spawn(move || {
         for i in 0..5 {
-            let write_txn = graph_clone2.begin_transaction(IsolationLevel::Serializable);
+            let write_txn = graph_clone2
+                .txn_manager()
+                .begin_transaction(IsolationLevel::Serializable)
+                .unwrap();
             if graph_clone2
                 .set_vertex_property(&write_txn, 2, vec![1], vec![ScalarValue::Int32(Some(
                     31 + i,
@@ -655,7 +781,10 @@ fn test_read_only_transaction_consistency_under_concurrent_writes() {
     // Concurrent writer 3: Update edge properties and create new vertices
     let handle3 = thread::spawn(move || {
         for i in 0..3 {
-            let write_txn = graph_clone3.begin_transaction(IsolationLevel::Serializable);
+            let write_txn = graph_clone3
+                .txn_manager()
+                .begin_transaction(IsolationLevel::Serializable)
+                .unwrap();
 
             // Update edge property
             if graph_clone3
@@ -727,7 +856,10 @@ fn test_read_only_transaction_consistency_under_concurrent_writes() {
     read_txn.abort().unwrap();
 
     // Verify that changes are visible in a new transaction
-    let verify_txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let verify_txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     let updated_alice = graph.get_vertex(&verify_txn, 1).unwrap();
     let updated_bob = graph.get_vertex(&verify_txn, 2).unwrap();
 
@@ -751,14 +883,20 @@ fn test_transaction_panic_during_vertex_creation() {
     let (graph, _cleaner) = create_test_graph();
 
     // Record initial state
-    let initial_txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let initial_txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     let initial_vertex_count = initial_txn.iter_vertices().filter_map(|v| v.ok()).count();
     initial_txn.abort().unwrap();
 
     // Create a transaction that will panic
     let graph_clone = graph.clone();
     let panic_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        let txn = graph_clone.begin_transaction(IsolationLevel::Serializable);
+        let txn = graph_clone
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
 
         // Create a vertex
         let vertex = Vertex::new(
@@ -779,7 +917,10 @@ fn test_transaction_panic_during_vertex_creation() {
     assert!(panic_result.is_err());
 
     // Verify graph consistency - should not create new vertex
-    let verify_txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let verify_txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     let final_vertex_count = verify_txn.iter_vertices().filter_map(|v| v.ok()).count();
     assert_eq!(initial_vertex_count, final_vertex_count);
 
@@ -793,7 +934,10 @@ fn test_transaction_panic_during_property_update() {
     let (graph, _cleaner) = create_test_graph();
 
     // Record initial age of Alice
-    let initial_txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let initial_txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     let initial_alice = graph.get_vertex(&initial_txn, 1).unwrap();
     let initial_age = initial_alice.properties()[1].clone();
     initial_txn.abort().unwrap();
@@ -801,7 +945,10 @@ fn test_transaction_panic_during_property_update() {
     // Create a transaction that will panic
     let graph_clone = graph.clone();
     let panic_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        let txn = graph_clone.begin_transaction(IsolationLevel::Serializable);
+        let txn = graph_clone
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
 
         // Update Alice's age
         graph_clone
@@ -816,7 +963,10 @@ fn test_transaction_panic_during_property_update() {
     assert!(panic_result.is_err());
 
     // Verify Alice's age did not change
-    let verify_txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let verify_txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     let final_alice = graph.get_vertex(&verify_txn, 1).unwrap();
     assert_eq!(final_alice.properties()[1], initial_age);
     verify_txn.abort().unwrap();
@@ -827,14 +977,20 @@ fn test_transaction_panic_during_deletion() {
     let (graph, _cleaner) = create_test_graph();
 
     // Assert that Bob exists
-    let initial_txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let initial_txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     assert!(graph.get_vertex(&initial_txn, 2).is_ok());
     initial_txn.abort().unwrap();
 
     // Create a transaction that will panic
     let graph_clone = graph.clone();
     let panic_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        let txn = graph_clone.begin_transaction(IsolationLevel::Serializable);
+        let txn = graph_clone
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
 
         // Delete Bob
         graph_clone.delete_vertex(&txn, 2).unwrap();
@@ -847,7 +1003,10 @@ fn test_transaction_panic_during_deletion() {
     assert!(panic_result.is_err());
 
     // Verify that Bob still exists
-    let verify_txn = graph.begin_transaction(IsolationLevel::Serializable);
+    let verify_txn = graph
+        .txn_manager()
+        .begin_transaction(IsolationLevel::Serializable)
+        .unwrap();
     assert!(graph.get_vertex(&verify_txn, 2).is_ok());
     verify_txn.abort().unwrap();
 }

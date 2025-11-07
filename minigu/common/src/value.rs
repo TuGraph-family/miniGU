@@ -2,9 +2,9 @@ use std::hash::Hash;
 use std::sync::Arc;
 
 use arrow::array::{
-    Array, ArrayRef, AsArray, BooleanArray, Float32Array, Float64Array, Int8Array, Int16Array,
-    Int32Array, Int64Array, NullArray, StringArray, UInt8Array, UInt16Array, UInt32Array,
-    UInt64Array,
+    Array, ArrayRef, AsArray, BooleanArray, FixedSizeListArray, Float32Array, Float64Array,
+    Int8Array, Int16Array, Int32Array, Int64Array, NullArray, NullBufferBuilder, StringArray,
+    UInt8Array, UInt16Array, UInt32Array, UInt64Array,
 };
 use arrow::datatypes::DataType;
 use ordered_float::OrderedFloat;
@@ -12,11 +12,876 @@ use serde::{Deserialize, Serialize};
 
 use crate::types::{EdgeId, LabelId, VertexId};
 
+const EPSILON: f64 = 1e-10;
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ConversionError {
+    NullValue,
+    IncompatibleType,
+    Overflow,
+    ParseError(String),
+}
+
+impl ScalarValue {
+    // Convert to i8
+    pub fn to_i8(&self) -> Result<i8, ConversionError> {
+        match self {
+            ScalarValue::Int8(Some(v)) => Ok(*v),
+            ScalarValue::Int8(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int16(Some(v)) => {
+                if *v > i8::MAX as i16 || *v < i8::MIN as i16 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as i8)
+                }
+            }
+            ScalarValue::Int16(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int32(Some(v)) => {
+                if *v > i8::MAX as i32 || *v < i8::MIN as i32 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as i8)
+                }
+            }
+            ScalarValue::Int32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int64(Some(v)) => {
+                if *v > i8::MAX as i64 || *v < i8::MIN as i64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as i8)
+                }
+            }
+            ScalarValue::Int64(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt8(Some(v)) => {
+                if *v > i8::MAX as u8 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as i8)
+                }
+            }
+            ScalarValue::UInt8(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt16(Some(v)) => {
+                if *v > i8::MAX as u16 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as i8)
+                }
+            }
+            ScalarValue::UInt16(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt32(Some(v)) => {
+                if *v > i8::MAX as u32 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as i8)
+                }
+            }
+            ScalarValue::UInt32(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt64(Some(v)) => {
+                if *v > i8::MAX as u64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as i8)
+                }
+            }
+            ScalarValue::UInt64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float32(Some(v)) => {
+                let f = v.into_inner();
+                if f.is_nan() || f.is_infinite() {
+                    Err(ConversionError::ParseError(f.to_string()))
+                } else if f > i8::MAX as f32 || f < i8::MIN as f32 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(f as i8)
+                }
+            }
+            ScalarValue::Float32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float64(Some(v)) => {
+                let f = v.into_inner();
+                if f.is_nan() || f.is_infinite() {
+                    Err(ConversionError::ParseError(f.to_string()))
+                } else if f > i8::MAX as f64 || f < i8::MIN as f64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(f as i8)
+                }
+            }
+            ScalarValue::Float64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Boolean(Some(v)) => Ok(if *v { 1 } else { 0 }),
+            ScalarValue::Boolean(None) => Err(ConversionError::NullValue),
+            ScalarValue::String(Some(s)) => s
+                .parse::<i8>()
+                .map_err(|_| ConversionError::ParseError(s.clone())),
+            ScalarValue::String(None) => Err(ConversionError::NullValue),
+            ScalarValue::Null => Err(ConversionError::NullValue),
+            _ => Err(ConversionError::IncompatibleType),
+        }
+    }
+
+    // Convert to i16
+    pub fn to_i16(&self) -> Result<i16, ConversionError> {
+        match self {
+            ScalarValue::Int8(Some(v)) => Ok(*v as i16),
+            ScalarValue::Int8(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int16(Some(v)) => Ok(*v),
+            ScalarValue::Int16(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int32(Some(v)) => {
+                if *v > i16::MAX as i32 || *v < i16::MIN as i32 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as i16)
+                }
+            }
+            ScalarValue::Int32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int64(Some(v)) => {
+                if *v > i16::MAX as i64 || *v < i16::MIN as i64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as i16)
+                }
+            }
+            ScalarValue::Int64(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt8(Some(v)) => Ok(*v as i16),
+            ScalarValue::UInt8(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt16(Some(v)) => {
+                if *v > i16::MAX as u16 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as i16)
+                }
+            }
+            ScalarValue::UInt16(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt32(Some(v)) => {
+                if *v > i16::MAX as u32 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as i16)
+                }
+            }
+            ScalarValue::UInt32(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt64(Some(v)) => {
+                if *v > i16::MAX as u64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as i16)
+                }
+            }
+            ScalarValue::UInt64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float32(Some(v)) => {
+                let f = v.into_inner();
+                if f.is_nan() || f.is_infinite() {
+                    Err(ConversionError::ParseError(f.to_string()))
+                } else if f > i16::MAX as f32 || f < i16::MIN as f32 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(f as i16)
+                }
+            }
+            ScalarValue::Float32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float64(Some(v)) => {
+                let f = v.into_inner();
+                if f.is_nan() || f.is_infinite() {
+                    Err(ConversionError::ParseError(f.to_string()))
+                } else if f > i16::MAX as f64 || f < i16::MIN as f64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(f as i16)
+                }
+            }
+            ScalarValue::Float64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Boolean(Some(v)) => Ok(if *v { 1 } else { 0 }),
+            ScalarValue::Boolean(None) => Err(ConversionError::NullValue),
+            ScalarValue::String(Some(s)) => s
+                .parse::<i16>()
+                .map_err(|_| ConversionError::ParseError(s.clone())),
+            ScalarValue::String(None) => Err(ConversionError::NullValue),
+            ScalarValue::Null => Err(ConversionError::NullValue),
+            _ => Err(ConversionError::IncompatibleType),
+        }
+    }
+
+    // Convert to i32
+    pub fn to_i32(&self) -> Result<i32, ConversionError> {
+        match self {
+            ScalarValue::Int8(Some(v)) => Ok(*v as i32),
+            ScalarValue::Int8(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int16(Some(v)) => Ok(*v as i32),
+            ScalarValue::Int16(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int32(Some(v)) => Ok(*v),
+            ScalarValue::Int32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int64(Some(v)) => {
+                if *v > i32::MAX as i64 || *v < i32::MIN as i64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as i32)
+                }
+            }
+            ScalarValue::Int64(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt8(Some(v)) => Ok(*v as i32),
+            ScalarValue::UInt8(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt16(Some(v)) => Ok(*v as i32),
+            ScalarValue::UInt16(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt32(Some(v)) => {
+                if *v > i32::MAX as u32 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as i32)
+                }
+            }
+            ScalarValue::UInt32(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt64(Some(v)) => {
+                if *v > i32::MAX as u64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as i32)
+                }
+            }
+            ScalarValue::UInt64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float32(Some(v)) => {
+                let f = v.into_inner();
+                if f.is_nan() || f.is_infinite() {
+                    Err(ConversionError::ParseError(f.to_string()))
+                } else if f > i32::MAX as f32 || f < i32::MIN as f32 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(f as i32)
+                }
+            }
+            ScalarValue::Float32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float64(Some(v)) => {
+                let f = v.into_inner();
+                if f.is_nan() || f.is_infinite() {
+                    Err(ConversionError::ParseError(f.to_string()))
+                } else if f > i32::MAX as f64 || f < i32::MIN as f64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(f as i32)
+                }
+            }
+            ScalarValue::Float64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Boolean(Some(v)) => Ok(if *v { 1 } else { 0 }),
+            ScalarValue::Boolean(None) => Err(ConversionError::NullValue),
+            ScalarValue::String(Some(s)) => s
+                .parse::<i32>()
+                .map_err(|_| ConversionError::ParseError(s.clone())),
+            ScalarValue::String(None) => Err(ConversionError::NullValue),
+            ScalarValue::Null => Err(ConversionError::NullValue),
+            _ => Err(ConversionError::IncompatibleType),
+        }
+    }
+
+    // Convert to i64
+    pub fn to_i64(&self) -> Result<i64, ConversionError> {
+        match self {
+            ScalarValue::Int8(Some(v)) => Ok(*v as i64),
+            ScalarValue::Int8(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int16(Some(v)) => Ok(*v as i64),
+            ScalarValue::Int16(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int32(Some(v)) => Ok(*v as i64),
+            ScalarValue::Int32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int64(Some(v)) => Ok(*v),
+            ScalarValue::Int64(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt8(Some(v)) => Ok(*v as i64),
+            ScalarValue::UInt8(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt16(Some(v)) => Ok(*v as i64),
+            ScalarValue::UInt16(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt32(Some(v)) => Ok(*v as i64),
+            ScalarValue::UInt32(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt64(Some(v)) => {
+                if *v > i64::MAX as u64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as i64)
+                }
+            }
+            ScalarValue::UInt64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float32(Some(v)) => {
+                let f = v.into_inner();
+                if f.is_nan() || f.is_infinite() {
+                    Err(ConversionError::ParseError(f.to_string()))
+                } else if f > i64::MAX as f32 || f < i64::MIN as f32 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(f as i64)
+                }
+            }
+            ScalarValue::Float32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float64(Some(v)) => {
+                let f = v.into_inner();
+                if f.is_nan() || f.is_infinite() {
+                    Err(ConversionError::ParseError(f.to_string()))
+                } else if f > i64::MAX as f64 || f < i64::MIN as f64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(f as i64)
+                }
+            }
+            ScalarValue::Float64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Boolean(Some(v)) => Ok(if *v { 1 } else { 0 }),
+            ScalarValue::Boolean(None) => Err(ConversionError::NullValue),
+            ScalarValue::String(Some(s)) => s
+                .parse::<i64>()
+                .map_err(|_| ConversionError::ParseError(s.clone())),
+            ScalarValue::String(None) => Err(ConversionError::NullValue),
+            ScalarValue::Null => Err(ConversionError::NullValue),
+            _ => Err(ConversionError::IncompatibleType),
+        }
+    }
+
+    // Convert to u8
+    pub fn to_u8(&self) -> Result<u8, ConversionError> {
+        match self {
+            ScalarValue::Int8(Some(v)) => {
+                if *v < 0 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u8)
+                }
+            }
+            ScalarValue::Int8(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int16(Some(v)) => {
+                if *v < 0 || *v > u8::MAX as i16 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u8)
+                }
+            }
+            ScalarValue::Int16(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int32(Some(v)) => {
+                if *v < 0 || *v > u8::MAX as i32 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u8)
+                }
+            }
+            ScalarValue::Int32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int64(Some(v)) => {
+                if *v < 0 || *v > u8::MAX as i64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u8)
+                }
+            }
+            ScalarValue::Int64(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt8(Some(v)) => Ok(*v),
+            ScalarValue::UInt8(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt16(Some(v)) => {
+                if *v > u8::MAX as u16 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u8)
+                }
+            }
+            ScalarValue::UInt16(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt32(Some(v)) => {
+                if *v > u8::MAX as u32 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u8)
+                }
+            }
+            ScalarValue::UInt32(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt64(Some(v)) => {
+                if *v > u8::MAX as u64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u8)
+                }
+            }
+            ScalarValue::UInt64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float32(Some(v)) => {
+                let f = v.into_inner();
+                if f.is_nan() || f.is_infinite() {
+                    Err(ConversionError::ParseError(f.to_string()))
+                } else if f < 0.0 || f > u8::MAX as f32 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(f as u8)
+                }
+            }
+            ScalarValue::Float32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float64(Some(v)) => {
+                let f = v.into_inner();
+                if f.is_nan() || f.is_infinite() {
+                    Err(ConversionError::ParseError(f.to_string()))
+                } else if f < 0.0 || f > u8::MAX as f64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(f as u8)
+                }
+            }
+            ScalarValue::Float64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Boolean(Some(v)) => Ok(if *v { 1 } else { 0 }),
+            ScalarValue::Boolean(None) => Err(ConversionError::NullValue),
+            ScalarValue::String(Some(s)) => s
+                .parse::<u8>()
+                .map_err(|_| ConversionError::ParseError(s.clone())),
+            ScalarValue::String(None) => Err(ConversionError::NullValue),
+            ScalarValue::Null => Err(ConversionError::NullValue),
+            _ => Err(ConversionError::IncompatibleType),
+        }
+    }
+
+    // Convert to u16
+    pub fn to_u16(&self) -> Result<u16, ConversionError> {
+        match self {
+            ScalarValue::Int8(Some(v)) => {
+                if *v < 0 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u16)
+                }
+            }
+            ScalarValue::Int8(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int16(Some(v)) => {
+                if *v < 0 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u16)
+                }
+            }
+            ScalarValue::Int16(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int32(Some(v)) => {
+                if *v < 0 || *v > u16::MAX as i32 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u16)
+                }
+            }
+            ScalarValue::Int32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int64(Some(v)) => {
+                if *v < 0 || *v > u16::MAX as i64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u16)
+                }
+            }
+            ScalarValue::Int64(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt8(Some(v)) => Ok(*v as u16),
+            ScalarValue::UInt8(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt16(Some(v)) => Ok(*v),
+            ScalarValue::UInt16(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt32(Some(v)) => {
+                if *v > u16::MAX as u32 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u16)
+                }
+            }
+            ScalarValue::UInt32(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt64(Some(v)) => {
+                if *v > u16::MAX as u64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u16)
+                }
+            }
+            ScalarValue::UInt64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float32(Some(v)) => {
+                let f = v.into_inner();
+                if f.is_nan() || f.is_infinite() {
+                    Err(ConversionError::ParseError(f.to_string()))
+                } else if f < 0.0 || f > u16::MAX as f32 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(f as u16)
+                }
+            }
+            ScalarValue::Float32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float64(Some(v)) => {
+                let f = v.into_inner();
+                if f.is_nan() || f.is_infinite() {
+                    Err(ConversionError::ParseError(f.to_string()))
+                } else if f < 0.0 || f > u16::MAX as f64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(f as u16)
+                }
+            }
+            ScalarValue::Float64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Boolean(Some(v)) => Ok(if *v { 1 } else { 0 }),
+            ScalarValue::Boolean(None) => Err(ConversionError::NullValue),
+            ScalarValue::String(Some(s)) => s
+                .parse::<u16>()
+                .map_err(|_| ConversionError::ParseError(s.clone())),
+            ScalarValue::String(None) => Err(ConversionError::NullValue),
+            ScalarValue::Null => Err(ConversionError::NullValue),
+            _ => Err(ConversionError::IncompatibleType),
+        }
+    }
+
+    // Convert to u32
+    pub fn to_u32(&self) -> Result<u32, ConversionError> {
+        match self {
+            ScalarValue::Int8(Some(v)) => {
+                if *v < 0 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u32)
+                }
+            }
+            ScalarValue::Int8(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int16(Some(v)) => {
+                if *v < 0 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u32)
+                }
+            }
+            ScalarValue::Int16(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int32(Some(v)) => {
+                if *v < 0 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u32)
+                }
+            }
+            ScalarValue::Int32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int64(Some(v)) => {
+                if *v < 0 || *v > u32::MAX as i64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u32)
+                }
+            }
+            ScalarValue::Int64(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt8(Some(v)) => Ok(*v as u32),
+            ScalarValue::UInt8(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt16(Some(v)) => Ok(*v as u32),
+            ScalarValue::UInt16(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt32(Some(v)) => Ok(*v),
+            ScalarValue::UInt32(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt64(Some(v)) => {
+                if *v > u32::MAX as u64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u32)
+                }
+            }
+            ScalarValue::UInt64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float32(Some(v)) => {
+                let f = v.into_inner();
+                if f.is_nan() || f.is_infinite() {
+                    Err(ConversionError::ParseError(f.to_string()))
+                } else if f < 0.0 || f > u32::MAX as f32 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(f as u32)
+                }
+            }
+            ScalarValue::Float32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float64(Some(v)) => {
+                let f = v.into_inner();
+                if f.is_nan() || f.is_infinite() {
+                    Err(ConversionError::ParseError(f.to_string()))
+                } else if f < 0.0 || f > u32::MAX as f64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(f as u32)
+                }
+            }
+            ScalarValue::Float64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Boolean(Some(v)) => Ok(if *v { 1 } else { 0 }),
+            ScalarValue::Boolean(None) => Err(ConversionError::NullValue),
+            ScalarValue::String(Some(s)) => s
+                .parse::<u32>()
+                .map_err(|_| ConversionError::ParseError(s.clone())),
+            ScalarValue::String(None) => Err(ConversionError::NullValue),
+            ScalarValue::Null => Err(ConversionError::NullValue),
+            _ => Err(ConversionError::IncompatibleType),
+        }
+    }
+
+    // Convert to u64
+    pub fn to_u64(&self) -> Result<u64, ConversionError> {
+        match self {
+            ScalarValue::Int8(Some(v)) => {
+                if *v < 0 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u64)
+                }
+            }
+            ScalarValue::Int8(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int16(Some(v)) => {
+                if *v < 0 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u64)
+                }
+            }
+            ScalarValue::Int16(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int32(Some(v)) => {
+                if *v < 0 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u64)
+                }
+            }
+            ScalarValue::Int32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int64(Some(v)) => {
+                if *v < 0 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(*v as u64)
+                }
+            }
+            ScalarValue::Int64(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt8(Some(v)) => Ok(*v as u64),
+            ScalarValue::UInt8(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt16(Some(v)) => Ok(*v as u64),
+            ScalarValue::UInt16(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt32(Some(v)) => Ok(*v as u64),
+            ScalarValue::UInt32(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt64(Some(v)) => Ok(*v),
+            ScalarValue::UInt64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float32(Some(v)) => {
+                let f = v.into_inner();
+                if f.is_nan() || f.is_infinite() {
+                    Err(ConversionError::ParseError(f.to_string()))
+                } else if f < 0.0 || f > u64::MAX as f32 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(f as u64)
+                }
+            }
+            ScalarValue::Float32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float64(Some(v)) => {
+                let f = v.into_inner();
+                if f.is_nan() || f.is_infinite() {
+                    Err(ConversionError::ParseError(f.to_string()))
+                } else if f < 0.0 || f > u64::MAX as f64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(f as u64)
+                }
+            }
+            ScalarValue::Float64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Boolean(Some(v)) => Ok(if *v { 1 } else { 0 }),
+            ScalarValue::Boolean(None) => Err(ConversionError::NullValue),
+            ScalarValue::String(Some(s)) => s
+                .parse::<u64>()
+                .map_err(|_| ConversionError::ParseError(s.clone())),
+            ScalarValue::String(None) => Err(ConversionError::NullValue),
+            ScalarValue::Null => Err(ConversionError::NullValue),
+            _ => Err(ConversionError::IncompatibleType),
+        }
+    }
+
+    // Convert to f32
+    pub fn to_f32(&self) -> Result<f32, ConversionError> {
+        match self {
+            ScalarValue::Int8(Some(v)) => Ok(*v as f32),
+            ScalarValue::Int8(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int16(Some(v)) => Ok(*v as f32),
+            ScalarValue::Int16(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int32(Some(v)) => Ok(*v as f32),
+            ScalarValue::Int32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int64(Some(v)) => Ok(*v as f32),
+            ScalarValue::Int64(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt8(Some(v)) => Ok(*v as f32),
+            ScalarValue::UInt8(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt16(Some(v)) => Ok(*v as f32),
+            ScalarValue::UInt16(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt32(Some(v)) => Ok(*v as f32),
+            ScalarValue::UInt32(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt64(Some(v)) => Ok(*v as f32),
+            ScalarValue::UInt64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float32(Some(v)) => Ok(v.into_inner()),
+            ScalarValue::Float32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float64(Some(v)) => {
+                let f = v.into_inner();
+                if f.is_nan() || f.is_infinite() {
+                    Err(ConversionError::ParseError(f.to_string()))
+                } else if f > f32::MAX as f64 || f < f32::MIN as f64 {
+                    Err(ConversionError::Overflow)
+                } else {
+                    Ok(f as f32)
+                }
+            }
+            ScalarValue::Float64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Boolean(Some(v)) => Ok(if *v { 1.0 } else { 0.0 }),
+            ScalarValue::Boolean(None) => Err(ConversionError::NullValue),
+            ScalarValue::String(Some(s)) => s
+                .parse::<f32>()
+                .map_err(|_| ConversionError::ParseError(s.clone())),
+            ScalarValue::String(None) => Err(ConversionError::NullValue),
+            ScalarValue::Null => Err(ConversionError::NullValue),
+            _ => Err(ConversionError::IncompatibleType),
+        }
+    }
+
+    // Convert to f64
+    pub fn to_f64(&self) -> Result<f64, ConversionError> {
+        match self {
+            ScalarValue::Int8(Some(v)) => Ok(*v as f64),
+            ScalarValue::Int8(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int16(Some(v)) => Ok(*v as f64),
+            ScalarValue::Int16(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int32(Some(v)) => Ok(*v as f64),
+            ScalarValue::Int32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int64(Some(v)) => Ok(*v as f64),
+            ScalarValue::Int64(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt8(Some(v)) => Ok(*v as f64),
+            ScalarValue::UInt8(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt16(Some(v)) => Ok(*v as f64),
+            ScalarValue::UInt16(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt32(Some(v)) => Ok(*v as f64),
+            ScalarValue::UInt32(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt64(Some(v)) => Ok(*v as f64),
+            ScalarValue::UInt64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float32(Some(v)) => Ok(v.into_inner() as f64),
+            ScalarValue::Float32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float64(Some(v)) => Ok(v.into_inner()),
+            ScalarValue::Float64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Boolean(Some(v)) => Ok(if *v { 1.0 } else { 0.0 }),
+            ScalarValue::Boolean(None) => Err(ConversionError::NullValue),
+            ScalarValue::String(Some(s)) => s
+                .parse::<f64>()
+                .map_err(|_| ConversionError::ParseError(s.clone())),
+            ScalarValue::String(None) => Err(ConversionError::NullValue),
+            ScalarValue::Null => Err(ConversionError::NullValue),
+            _ => Err(ConversionError::IncompatibleType),
+        }
+    }
+
+    // Convert to bool
+    pub fn to_bool(&self) -> Result<bool, ConversionError> {
+        match self {
+            ScalarValue::Int8(Some(v)) => Ok(*v != 0),
+            ScalarValue::Int8(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int16(Some(v)) => Ok(*v != 0),
+            ScalarValue::Int16(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int32(Some(v)) => Ok(*v != 0),
+            ScalarValue::Int32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int64(Some(v)) => Ok(*v != 0),
+            ScalarValue::Int64(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt8(Some(v)) => Ok(*v != 0),
+            ScalarValue::UInt8(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt16(Some(v)) => Ok(*v != 0),
+            ScalarValue::UInt16(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt32(Some(v)) => Ok(*v != 0),
+            ScalarValue::UInt32(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt64(Some(v)) => Ok(*v != 0),
+            ScalarValue::UInt64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float32(Some(v)) => {
+                let f = v.into_inner();
+                if f.is_nan() {
+                    Err(ConversionError::ParseError(f.to_string()))
+                } else {
+                    Ok(f.abs() > EPSILON as f32)
+                }
+            }
+            ScalarValue::Float32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float64(Some(v)) => {
+                let f = v.into_inner();
+                if f.is_nan() {
+                    Err(ConversionError::ParseError(f.to_string()))
+                } else {
+                    Ok(f.abs() > EPSILON)
+                }
+            }
+            ScalarValue::Float64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Boolean(Some(v)) => Ok(*v),
+            ScalarValue::Boolean(None) => Err(ConversionError::NullValue),
+            ScalarValue::String(Some(s)) => {
+                let lowered = s.to_lowercase();
+                if lowered == "true" || lowered == "1" {
+                    Ok(true)
+                } else if lowered == "false" || lowered == "0" {
+                    Ok(false)
+                } else {
+                    Err(ConversionError::ParseError(s.clone()))
+                }
+            }
+            ScalarValue::String(None) => Err(ConversionError::NullValue),
+            ScalarValue::Null => Err(ConversionError::NullValue),
+            _ => Err(ConversionError::IncompatibleType),
+        }
+    }
+
+    // Convert to String
+    pub fn to_string(&self) -> Result<String, ConversionError> {
+        match self {
+            ScalarValue::Int8(Some(v)) => Ok(v.to_string()),
+            ScalarValue::Int8(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int16(Some(v)) => Ok(v.to_string()),
+            ScalarValue::Int16(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int32(Some(v)) => Ok(v.to_string()),
+            ScalarValue::Int32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Int64(Some(v)) => Ok(v.to_string()),
+            ScalarValue::Int64(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt8(Some(v)) => Ok(v.to_string()),
+            ScalarValue::UInt8(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt16(Some(v)) => Ok(v.to_string()),
+            ScalarValue::UInt16(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt32(Some(v)) => Ok(v.to_string()),
+            ScalarValue::UInt32(None) => Err(ConversionError::NullValue),
+            ScalarValue::UInt64(Some(v)) => Ok(v.to_string()),
+            ScalarValue::UInt64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float32(Some(v)) => Ok(v.into_inner().to_string()),
+            ScalarValue::Float32(None) => Err(ConversionError::NullValue),
+            ScalarValue::Float64(Some(v)) => Ok(v.into_inner().to_string()),
+            ScalarValue::Float64(None) => Err(ConversionError::NullValue),
+            ScalarValue::Boolean(Some(v)) => Ok(v.to_string()),
+            ScalarValue::Boolean(None) => Err(ConversionError::NullValue),
+            ScalarValue::String(Some(s)) => Ok(s.clone()),
+            ScalarValue::String(None) => Err(ConversionError::NullValue),
+            ScalarValue::Null => Err(ConversionError::NullValue),
+            _ => Err(ConversionError::IncompatibleType),
+        }
+    }
+}
+
 pub type Nullable<T> = Option<T>;
 
 /// A wrapper around floats providing implementations of `Eq` and `Hash`.
 pub type F32 = OrderedFloat<f32>;
 pub type F64 = OrderedFloat<f64>;
+
+/// A vector value backed by ordered floats so it can participate in equality/hash operations.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct VectorValue {
+    data: Vec<F32>,
+}
+
+impl VectorValue {
+    pub fn new(data: Vec<F32>, dimension: usize) -> Result<Self, String> {
+        if data.len() != dimension {
+            return Err(format!(
+                "Vector dimension mismatch: expected {}, got {}",
+                dimension,
+                data.len()
+            ));
+        }
+        Ok(Self { data })
+    }
+
+    /// Returns a reference to the vector data.
+    pub fn data(&self) -> &[F32] {
+        &self.data
+    }
+
+    /// Returns the dimension of this vector.
+    pub fn dimension(&self) -> usize {
+        self.data.len()
+    }
+
+    /// Converts to a Vec<f32>
+    pub fn to_f32_vec(&self) -> Vec<f32> {
+        self.data.iter().map(|f| f.into_inner()).collect()
+    }
+
+    /// Validates that this vector has a supported dimension (104, 128, 256).
+    pub fn validate_supported_dimension(&self) -> Result<(), String> {
+        match self.dimension() {
+            104 | 128 | 256 => Ok(()),
+            _ => Err(format!(
+                "Unsupported vector dimension: {}. Only dimensions 104, 128, 256 are supported.",
+                self.dimension()
+            )),
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ScalarValue {
@@ -33,6 +898,10 @@ pub enum ScalarValue {
     Float32(Nullable<F32>),
     Float64(Nullable<F64>),
     String(Nullable<String>),
+    Vector {
+        dimension: usize,
+        value: Nullable<VectorValue>,
+    },
     Vertex(Nullable<VertexValue>),
     Edge(Nullable<EdgeValue>),
 }
@@ -58,6 +927,40 @@ impl ScalarValue {
                 Arc::new(Float64Array::from_iter([value.map(|f| f.into_inner())]))
             }
             ScalarValue::String(value) => Arc::new(StringArray::from_iter([value])),
+            ScalarValue::Vector { dimension, value } => {
+                let field = Arc::new(arrow::datatypes::Field::new(
+                    "item",
+                    arrow::datatypes::DataType::Float32,
+                    false,
+                ));
+                let size = *dimension as i32;
+                match value {
+                    Some(vector_value) => {
+                        debug_assert_eq!(
+                            vector_value.dimension(),
+                            *dimension,
+                            "VectorValue dimension mismatch"
+                        );
+                        let float_values = vector_value.to_f32_vec();
+                        let float_array = Arc::new(Float32Array::from(float_values));
+                        Arc::new(FixedSizeListArray::new(field, size, float_array, None))
+                    }
+                    None => {
+                        let values = Arc::new(Float32Array::from(vec![0.0f32; *dimension]));
+                        let mut null_builder = NullBufferBuilder::new(1);
+                        null_builder.append_null();
+                        let null_buffer = null_builder
+                            .finish()
+                            .expect("Null vector should yield a null buffer");
+                        Arc::new(FixedSizeListArray::new(
+                            field,
+                            size,
+                            values,
+                            Some(null_buffer),
+                        ))
+                    }
+                }
+            }
             ScalarValue::Vertex(value) => todo!(),
             ScalarValue::Edge(_value) => todo!(),
         }
@@ -159,6 +1062,24 @@ impl ScalarValue {
         }
     }
 
+    pub fn get_vector(&self) -> Result<VectorValue, String> {
+        match self {
+            ScalarValue::Vector {
+                value: Some(val), ..
+            } => Ok(val.clone()),
+            ScalarValue::Vector { value: None, .. } => Err("Null value".to_string()),
+            _ => Err("Not a Vector value".to_string()),
+        }
+    }
+
+    /// Returns the vector data as Vec<F32>
+    pub fn get_vector_data(&self) -> Result<Vec<F32>, String> {
+        match self.get_vector() {
+            Ok(vector_value) => Ok(vector_value.data().to_vec()),
+            Err(e) => Err(e),
+        }
+    }
+
     pub fn get_vertex(&self) -> Result<VertexValue, String> {
         match self {
             ScalarValue::Vertex(Some(val)) => Ok(val.clone()),
@@ -257,6 +1178,27 @@ impl From<Nullable<&str>> for ScalarValue {
     }
 }
 
+impl From<VectorValue> for ScalarValue {
+    #[inline]
+    fn from(value: VectorValue) -> Self {
+        ScalarValue::new_vector(value.dimension(), Some(value))
+    }
+}
+
+impl From<(usize, Nullable<VectorValue>)> for ScalarValue {
+    #[inline]
+    fn from((dimension, value): (usize, Nullable<VectorValue>)) -> Self {
+        ScalarValue::new_vector(dimension, value)
+    }
+}
+
+impl From<(usize, VectorValue)> for ScalarValue {
+    #[inline]
+    fn from((dimension, value): (usize, VectorValue)) -> Self {
+        ScalarValue::new_vector(dimension, Some(value))
+    }
+}
+
 macro_rules! impl_as_for_variant {
     ($name:ident, $ty:ty, $variant:ident) => {
         impl ScalarValue {
@@ -294,6 +1236,20 @@ macro_rules! impl_into_for_variant {
 }
 
 for_each_non_null_variant!(impl_into_for_variant);
+
+impl ScalarValue {
+    #[inline]
+    pub fn new_vector(dimension: usize, value: Nullable<VectorValue>) -> Self {
+        if let Some(ref vec_value) = value {
+            debug_assert_eq!(
+                vec_value.dimension(),
+                dimension,
+                "VectorValue dimension mismatch"
+            );
+        }
+        ScalarValue::Vector { dimension, value }
+    }
+}
 
 pub trait ScalarValueAccessor {
     fn index(&self, index: usize) -> ScalarValue;
@@ -363,7 +1319,341 @@ impl ScalarValueAccessor for dyn Array + '_ {
                     .then(|| array.value(index).to_string())
                     .into()
             }
+            DataType::FixedSizeList(field, size) if field.data_type() == &DataType::Float32 => {
+                let array = self.as_fixed_size_list();
+                if array.is_valid(index) {
+                    let values = array.value(index);
+                    let float_array = values.as_primitive::<arrow::datatypes::Float32Type>();
+                    let vec_f32: Vec<F32> = (0..float_array.len())
+                        .map(|i| OrderedFloat(float_array.value(i)))
+                        .collect();
+                    match VectorValue::new(vec_f32, *size as usize) {
+                        Ok(vector_value) => ScalarValue::Vector {
+                            dimension: *size as usize,
+                            value: Some(vector_value),
+                        },
+                        Err(_) => ScalarValue::Vector {
+                            dimension: *size as usize,
+                            value: None,
+                        },
+                    }
+                } else {
+                    ScalarValue::Vector {
+                        dimension: *size as usize,
+                        value: None,
+                    }
+                }
+            }
             _ => todo!(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use ordered_float::OrderedFloat;
+
+    use super::{ConversionError, ScalarValue, *};
+
+    #[test]
+    fn test_to_i8() {
+        // Successful conversions
+        assert_eq!(ScalarValue::Int8(Some(42)).to_i8(), Ok(42i8));
+        assert_eq!(ScalarValue::Int16(Some(42)).to_i8(), Ok(42i8));
+        assert_eq!(ScalarValue::Int32(Some(42)).to_i8(), Ok(42i8));
+        assert_eq!(ScalarValue::Int64(Some(42)).to_i8(), Ok(42i8));
+        assert_eq!(ScalarValue::UInt8(Some(42)).to_i8(), Ok(42i8));
+        assert_eq!(ScalarValue::UInt16(Some(42)).to_i8(), Ok(42i8));
+        assert_eq!(ScalarValue::UInt32(Some(42)).to_i8(), Ok(42i8));
+        assert_eq!(ScalarValue::UInt64(Some(42)).to_i8(), Ok(42i8));
+        assert_eq!(
+            ScalarValue::Float32(Some(OrderedFloat(42.0))).to_i8(),
+            Ok(42i8)
+        );
+        assert_eq!(
+            ScalarValue::Float64(Some(OrderedFloat(42.0))).to_i8(),
+            Ok(42i8)
+        );
+        assert_eq!(ScalarValue::Boolean(Some(true)).to_i8(), Ok(1i8));
+        assert_eq!(ScalarValue::Boolean(Some(false)).to_i8(), Ok(0i8));
+        assert_eq!(
+            ScalarValue::String(Some("42".to_string())).to_i8(),
+            Ok(42i8)
+        );
+        assert_eq!(
+            ScalarValue::String(Some("-128".to_string())).to_i8(),
+            Ok(-128i8)
+        ); // Min value
+
+        // Overflow cases
+        assert!(matches!(
+            ScalarValue::Int16(Some(128)).to_i8(),
+            Err(ConversionError::Overflow)
+        )); // > i8::MAX
+        assert!(matches!(
+            ScalarValue::Int16(Some(-129)).to_i8(),
+            Err(ConversionError::Overflow)
+        )); // < i8::MIN
+        assert!(matches!(
+            ScalarValue::UInt8(Some(128)).to_i8(),
+            Err(ConversionError::Overflow)
+        ));
+        assert!(matches!(
+            ScalarValue::Float32(Some(OrderedFloat(128.0))).to_i8(),
+            Err(ConversionError::Overflow)
+        ));
+        assert!(matches!(
+            ScalarValue::Float64(Some(OrderedFloat(-129.0))).to_i8(),
+            Err(ConversionError::Overflow)
+        ));
+
+        // NaN and Infinity cases
+        assert!(matches!(
+            ScalarValue::Float32(Some(OrderedFloat(f32::NAN))).to_i8(),
+            Err(ConversionError::ParseError(_))
+        ));
+        assert!(matches!(
+            ScalarValue::Float32(Some(OrderedFloat(f32::INFINITY))).to_i8(),
+            Err(ConversionError::ParseError(_))
+        ));
+        assert!(matches!(
+            ScalarValue::Float64(Some(OrderedFloat(f64::NAN))).to_i8(),
+            Err(ConversionError::ParseError(_))
+        ));
+        assert!(matches!(
+            ScalarValue::Float64(Some(OrderedFloat(f64::INFINITY))).to_i8(),
+            Err(ConversionError::ParseError(_))
+        ));
+
+        // Parse error
+        assert!(matches!(
+            ScalarValue::String(Some("invalid".to_string())).to_i8(),
+            Err(ConversionError::ParseError(_))
+        ));
+        assert!(matches!(
+            ScalarValue::String(Some("128".to_string())).to_i8(),
+            Err(ConversionError::ParseError(_))
+        )); // Overflow via parse
+
+        // Null cases
+        assert!(matches!(
+            ScalarValue::Int8(None).to_i8(),
+            Err(ConversionError::NullValue)
+        ));
+        assert!(matches!(
+            ScalarValue::Null.to_i8(),
+            Err(ConversionError::NullValue)
+        ));
+    }
+
+    #[test]
+    fn test_to_bool() {
+        // Successful conversions
+        assert_eq!(ScalarValue::Int8(Some(1)).to_bool(), Ok(true));
+        assert_eq!(ScalarValue::Int8(Some(0)).to_bool(), Ok(false));
+        assert_eq!(ScalarValue::Int16(Some(42)).to_bool(), Ok(true));
+        assert_eq!(ScalarValue::Int32(Some(-1)).to_bool(), Ok(true)); // Non-zero is true
+        assert_eq!(ScalarValue::Int64(Some(0)).to_bool(), Ok(false));
+        assert_eq!(ScalarValue::UInt8(Some(1)).to_bool(), Ok(true));
+        assert_eq!(ScalarValue::UInt16(Some(0)).to_bool(), Ok(false));
+        assert_eq!(ScalarValue::UInt32(Some(42)).to_bool(), Ok(true));
+        assert_eq!(ScalarValue::UInt64(Some(0)).to_bool(), Ok(false));
+        assert_eq!(
+            ScalarValue::Float32(Some(OrderedFloat(0.0))).to_bool(),
+            Ok(false)
+        );
+        assert_eq!(
+            ScalarValue::Float32(Some(OrderedFloat(1.5))).to_bool(),
+            Ok(true)
+        );
+        assert_eq!(
+            ScalarValue::Float64(Some(OrderedFloat(-1.0))).to_bool(),
+            Ok(true)
+        );
+        assert_eq!(
+            ScalarValue::Float32(Some(OrderedFloat(0.00000000001))).to_bool(),
+            Ok(false)
+        ); // Less than EPSILON
+        assert_eq!(
+            ScalarValue::Float64(Some(OrderedFloat(0.00000000001))).to_bool(),
+            Ok(false)
+        ); // Less than EPSILON
+        assert_eq!(ScalarValue::Boolean(Some(true)).to_bool(), Ok(true));
+        assert_eq!(ScalarValue::Boolean(Some(false)).to_bool(), Ok(false));
+        assert_eq!(
+            ScalarValue::String(Some("true".to_string())).to_bool(),
+            Ok(true)
+        );
+        assert_eq!(
+            ScalarValue::String(Some("TRUE".to_string())).to_bool(),
+            Ok(true)
+        ); // Case insensitive
+        assert_eq!(
+            ScalarValue::String(Some("false".to_string())).to_bool(),
+            Ok(false)
+        );
+        assert_eq!(
+            ScalarValue::String(Some("1".to_string())).to_bool(),
+            Ok(true)
+        );
+        assert_eq!(
+            ScalarValue::String(Some("0".to_string())).to_bool(),
+            Ok(false)
+        );
+
+        // NaN cases
+        assert!(matches!(
+            ScalarValue::Float32(Some(OrderedFloat(f32::NAN))).to_bool(),
+            Err(ConversionError::ParseError(_))
+        ));
+        assert!(matches!(
+            ScalarValue::Float64(Some(OrderedFloat(f64::NAN))).to_bool(),
+            Err(ConversionError::ParseError(_))
+        ));
+
+        // Parse error
+        assert!(matches!(
+            ScalarValue::String(Some("invalid".to_string())).to_bool(),
+            Err(ConversionError::ParseError(_))
+        ));
+        assert!(matches!(
+            ScalarValue::String(Some("yes".to_string())).to_bool(),
+            Err(ConversionError::ParseError(_))
+        ));
+
+        // Null cases
+        assert!(matches!(
+            ScalarValue::Boolean(None).to_bool(),
+            Err(ConversionError::NullValue)
+        ));
+        assert!(matches!(
+            ScalarValue::Null.to_bool(),
+            Err(ConversionError::NullValue)
+        ));
+    }
+
+    #[test]
+    fn test_to_string() {
+        // Successful conversions
+        assert_eq!(
+            ScalarValue::Int8(Some(42)).to_string(),
+            Ok("42".to_string())
+        );
+        assert_eq!(
+            ScalarValue::Int16(Some(-42)).to_string(),
+            Ok("-42".to_string())
+        );
+        assert_eq!(
+            ScalarValue::Int32(Some(42)).to_string(),
+            Ok("42".to_string())
+        );
+        assert_eq!(
+            ScalarValue::Int64(Some(42)).to_string(),
+            Ok("42".to_string())
+        );
+        assert_eq!(
+            ScalarValue::UInt8(Some(42)).to_string(),
+            Ok("42".to_string())
+        );
+        assert_eq!(
+            ScalarValue::UInt16(Some(42)).to_string(),
+            Ok("42".to_string())
+        );
+        assert_eq!(
+            ScalarValue::UInt32(Some(42)).to_string(),
+            Ok("42".to_string())
+        );
+        assert_eq!(
+            ScalarValue::UInt64(Some(42)).to_string(),
+            Ok("42".to_string())
+        );
+        assert_eq!(
+            ScalarValue::Float32(Some(OrderedFloat(42.5))).to_string(),
+            Ok("42.5".to_string())
+        );
+        assert_eq!(
+            ScalarValue::Float64(Some(OrderedFloat(42.5))).to_string(),
+            Ok("42.5".to_string())
+        );
+        assert_eq!(
+            ScalarValue::Boolean(Some(true)).to_string(),
+            Ok("true".to_string())
+        );
+        assert_eq!(
+            ScalarValue::Boolean(Some(false)).to_string(),
+            Ok("false".to_string())
+        );
+        assert_eq!(
+            ScalarValue::String(Some("hello".to_string())).to_string(),
+            Ok("hello".to_string())
+        );
+
+        // Null cases
+        assert!(matches!(
+            ScalarValue::String(None).to_string(),
+            Err(ConversionError::NullValue)
+        ));
+        assert!(matches!(
+            ScalarValue::Null.to_string(),
+            Err(ConversionError::NullValue)
+        ));
+    }
+
+    #[test]
+    fn test_get_vector() {
+        // Test successful vector retrieval
+        let vector_data = vec![OrderedFloat(1.0), OrderedFloat(2.0)];
+        let vector_value = VectorValue::new(vector_data.clone(), 2).unwrap();
+        let scalar = ScalarValue::new_vector(vector_value.dimension(), Some(vector_value.clone()));
+        assert_eq!(scalar.get_vector().unwrap(), vector_value);
+
+        // Test null vector
+        let scalar = ScalarValue::new_vector(2, None);
+        assert!(scalar.get_vector().is_err());
+        assert_eq!(scalar.get_vector().unwrap_err(), "Null value");
+
+        // Test wrong type
+        let scalar = ScalarValue::String(Some("test".to_string()));
+        assert!(scalar.get_vector().is_err());
+        assert_eq!(scalar.get_vector().unwrap_err(), "Not a Vector value");
+    }
+
+    #[test]
+    fn test_vector_to_scalar_array() {
+        // Test vector to Arrow array conversion
+        let vector_data = vec![OrderedFloat(1.0), OrderedFloat(2.0)];
+        let vector_value = VectorValue::new(vector_data, 2).unwrap();
+        let scalar = ScalarValue::new_vector(vector_value.dimension(), Some(vector_value));
+        let array = scalar.to_scalar_array();
+
+        // Verify it's a FixedSizeListArray with correct type
+        use arrow::datatypes::{DataType, Field};
+        let expected_field = Arc::new(Field::new("item", DataType::Float32, false));
+        let expected_type = DataType::FixedSizeList(expected_field, 2);
+        assert_eq!(array.data_type(), &expected_type);
+    }
+
+    #[test]
+    fn test_vector_from_conversion() {
+        // Test From trait for VectorValue
+        let vector_data = vec![OrderedFloat(1.0), OrderedFloat(2.0), OrderedFloat(3.0)];
+        let vector_value = VectorValue::new(vector_data.clone(), 3).unwrap();
+        let scalar: ScalarValue = vector_value.clone().into();
+        assert_eq!(
+            scalar,
+            ScalarValue::new_vector(vector_value.dimension(), Some(vector_value))
+        );
+
+        // Test From trait for (usize, Option<VectorValue>)
+        let vector_data_opt = vec![OrderedFloat(1.0)];
+        let vector_value_opt = Some(VectorValue::new(vector_data_opt, 1).unwrap());
+        let scalar: ScalarValue = (1usize, vector_value_opt.clone()).into();
+        assert_eq!(scalar, ScalarValue::new_vector(1, vector_value_opt));
+
+        // Test None case
+        let scalar: ScalarValue = (1usize, None).into();
+        assert_eq!(scalar, ScalarValue::new_vector(1, None));
     }
 }
