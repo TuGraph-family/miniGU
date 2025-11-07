@@ -110,6 +110,7 @@ uuid = "1.17.0"
 vector = { path = "minigu/storage/diskann-rs/vector", version = "0.1.0" }
 walkdir = "2.5.0"
 winnow = { version = "0.7.12", default-features = false, features = ["alloc"] }
+sha2 = "0.10"
 
 [profile.dev.package]
 insta.opt-level = 3

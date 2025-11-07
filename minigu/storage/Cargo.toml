@@ -10,6 +10,7 @@ approx = { workspace = true }
 rand = { workspace = true }
 serial_test = { workspace = true }
 temp-file = { workspace = true }
+sha2 = { workspace = true }
 
 [dependencies]
 arrow = { workspace = true }

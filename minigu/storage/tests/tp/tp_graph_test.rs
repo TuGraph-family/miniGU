@@ -352,7 +352,7 @@ fn test_graph_delete_nonexistent_edge() -> StorageResult<()> {
 #[test]
 fn test_graph_update_nonexistent_vertex_property() -> StorageResult<()> {
     use minigu_common::value::ScalarValue;
-    
+
     let (graph, _cleaner) = create_empty_graph();
     let txn = graph
         .txn_manager()
@@ -370,7 +370,7 @@ fn test_graph_update_nonexistent_vertex_property() -> StorageResult<()> {
 #[test]
 fn test_graph_update_nonexistent_edge_property() -> StorageResult<()> {
     use minigu_common::value::ScalarValue;
-    
+
     let (graph, _cleaner) = create_empty_graph();
     let txn = graph
         .txn_manager()
@@ -378,12 +378,9 @@ fn test_graph_update_nonexistent_edge_property() -> StorageResult<()> {
         .unwrap();
 
     // Try to update property of non-existent edge
-    let result = graph.set_edge_property(
-        &txn,
-        999,
-        vec![0],
-        vec![ScalarValue::String(Some("test".to_string()))],
-    );
+    let result = graph.set_edge_property(&txn, 999, vec![0], vec![ScalarValue::String(Some(
+        "test".to_string(),
+    ))]);
     assert!(result.is_err());
 
     txn.abort()?;
@@ -502,10 +499,10 @@ fn test_graph_multiple_edge_types() -> StorageResult<()> {
 
 #[test]
 fn test_graph_property_value_types() -> StorageResult<()> {
+    use minigu_common::value::ScalarValue;
     use minigu_storage::model::properties::PropertyRecord;
     use minigu_storage::model::vertex::Vertex;
-    use minigu_common::value::ScalarValue;
-    
+
     let (graph, _cleaner) = create_empty_graph();
     let txn = graph
         .txn_manager()
@@ -527,10 +524,16 @@ fn test_graph_property_value_types() -> StorageResult<()> {
     graph.create_vertex(&txn, vertex)?;
 
     let retrieved = graph.get_vertex(&txn, 1)?;
-    assert_eq!(retrieved.properties()[0], ScalarValue::String(Some("Alice".to_string())));
+    assert_eq!(
+        retrieved.properties()[0],
+        ScalarValue::String(Some("Alice".to_string()))
+    );
     assert_eq!(retrieved.properties()[1], ScalarValue::Int32(Some(25)));
     assert_eq!(retrieved.properties()[2], ScalarValue::Int64(Some(1000000)));
-    assert_eq!(retrieved.properties()[3], ScalarValue::Float32(Some(1.75.into())));
+    assert_eq!(
+        retrieved.properties()[3],
+        ScalarValue::Float32(Some(1.75.into()))
+    );
     assert_eq!(retrieved.properties()[4], ScalarValue::Boolean(Some(true)));
 
     txn.commit()?;
@@ -539,10 +542,10 @@ fn test_graph_property_value_types() -> StorageResult<()> {
 
 #[test]
 fn test_graph_null_property_values() -> StorageResult<()> {
+    use minigu_common::value::ScalarValue;
     use minigu_storage::model::properties::PropertyRecord;
     use minigu_storage::model::vertex::Vertex;
-    use minigu_common::value::ScalarValue;
-    
+
     let (graph, _cleaner) = create_empty_graph();
     let txn = graph
         .txn_manager()
@@ -552,10 +555,7 @@ fn test_graph_null_property_values() -> StorageResult<()> {
     let vertex = Vertex::new(
         1,
         PERSON_LABEL_ID,
-        PropertyRecord::new(vec![
-            ScalarValue::String(None),
-            ScalarValue::Int32(None),
-        ]),
+        PropertyRecord::new(vec![ScalarValue::String(None), ScalarValue::Int32(None)]),
     );
     graph.create_vertex(&txn, vertex)?;
 

@@ -1154,11 +1154,16 @@ fn test_serializable_multiple_property_updates() {
         .set_vertex_property(&txn, 1, vec![1], vec![ScalarValue::Int32(Some(26))])
         .unwrap();
     graph
-        .set_vertex_property(&txn, 1, vec![0], vec![ScalarValue::String(Some("Alicia".to_string()))])
+        .set_vertex_property(&txn, 1, vec![0], vec![ScalarValue::String(Some(
+            "Alicia".to_string(),
+        ))])
         .unwrap();
 
     let alice = graph.get_vertex(&txn, 1).unwrap();
-    assert_eq!(alice.properties()[0], ScalarValue::String(Some("Alicia".to_string())));
+    assert_eq!(
+        alice.properties()[0],
+        ScalarValue::String(Some("Alicia".to_string()))
+    );
     assert_eq!(alice.properties()[1], ScalarValue::Int32(Some(26)));
 
     txn.commit().unwrap();
@@ -1175,19 +1180,17 @@ fn test_serializable_batch_property_updates() {
 
     // Update multiple properties at once
     graph
-        .set_vertex_property(
-            &txn,
-            1,
-            vec![0, 1],
-            vec![
-                ScalarValue::String(Some("Alicia".to_string())),
-                ScalarValue::Int32(Some(26)),
-            ],
-        )
+        .set_vertex_property(&txn, 1, vec![0, 1], vec![
+            ScalarValue::String(Some("Alicia".to_string())),
+            ScalarValue::Int32(Some(26)),
+        ])
         .unwrap();
 
     let alice = graph.get_vertex(&txn, 1).unwrap();
-    assert_eq!(alice.properties()[0], ScalarValue::String(Some("Alicia".to_string())));
+    assert_eq!(
+        alice.properties()[0],
+        ScalarValue::String(Some("Alicia".to_string()))
+    );
     assert_eq!(alice.properties()[1], ScalarValue::Int32(Some(26)));
 
     txn.commit().unwrap();
@@ -1459,7 +1462,10 @@ fn test_edge_iterator_snapshot_isolation() {
             1,
             2,
             FOLLOW_LABEL_ID,
-            PropertyRecord::new(vec![ScalarValue::String(Some(format!("2024-{:02}-01", i - 8)))]),
+            PropertyRecord::new(vec![ScalarValue::String(Some(format!(
+                "2024-{:02}-01",
+                i - 8
+            )))]),
         );
         if graph.create_edge(&txn2, edge).is_ok() {
             // Some may fail due to duplicate IDs, that's ok
