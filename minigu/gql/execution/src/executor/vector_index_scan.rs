@@ -92,7 +92,6 @@ impl VectorIndexScanExecutor {
         })?;
         let provider = graph_ref.object().clone();
         let container = provider
-            .as_any()
             .downcast_ref::<GraphContainer>()
             .ok_or_else(|| {
                 ExecutionError::Custom(Box::new(io::Error::new(
