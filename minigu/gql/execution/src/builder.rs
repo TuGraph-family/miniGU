@@ -80,7 +80,17 @@ impl ExecutorBuilder {
                     .expect("there should be a test graph")
                     .unwrap();
                 let container: Arc<GraphContainer> = cur_graph.downcast_arc::<GraphContainer>().unwrap();
-                Box::new(child.expand(expand.input_column_index, container))
+                
+                // Get the number of columns before expand
+                let child_schema = children[0].schema().expect("child should have a schema");
+                let num_child_columns = child_schema.fields().len();
+                
+                // Expand adds new columns (as ListArray) that need to be flattened.
+                // Currently, ExpandSource returns 1 column (neighbor IDs), so we flatten
+                // the column at index num_child_columns.
+                let expand_executor = child.expand(expand.input_column_index, container);
+                let column_indices_to_flatten: Vec<usize> = (num_child_columns..num_child_columns + 1).collect();
+                Box::new(expand_executor.flatten(column_indices_to_flatten))
             }
             PlanNode::PhysicalProject(project) => {
                 assert_eq!(children.len(), 1);

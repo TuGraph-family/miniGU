@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use arrow::array::ArrayRef;
-use minigu_common::types::{VertexId, VertexIdArray};
+use minigu_common::types::{LabelId, VertexId, VertexIdArray};
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_storage::common::model::edge::Neighbor;
 use minigu_storage::tp::transaction::IsolationLevel;
@@ -45,11 +45,11 @@ impl Iterator for GraphExpandIter {
 impl ExpandSource for GraphContainer {
     type ExpandIter = GraphExpandIter;
 
-    fn expand_from_vertex(&self, vertex: VertexId) -> Option<Self::ExpandIter> {
+    fn expand_from_vertex(&self, vertex: VertexId, labels: Vec<Vec<LabelId>>) -> Option<Self::ExpandIter> {
         let mem = match self.graph_storage() {
             GraphStorage::Memory(m) => Arc::clone(m),
         };
-        
+
         let txn = match mem
             .txn_manager()
             .begin_transaction(IsolationLevel::Serializable)

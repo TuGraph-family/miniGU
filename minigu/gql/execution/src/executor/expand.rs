@@ -14,14 +14,16 @@ use crate::source::ExpandSource;
 pub struct ExpandBuilder<E, S> {
     child: E,
     input_column_index: usize,
+    labels: Vec<Vec<LabelId>>,
     source: S,
 }
 
 impl<E, S> ExpandBuilder<E, S> {
-    pub fn new(child: E, input_column_index: usize, source: S) -> Self {
+    pub fn new(child: E, input_column_index: usize, labels: Vec<Vec<LabelId>>, source: S) -> Self {
         Self {
             child,
             input_column_index,
+            labels,
             source,
         }
     }
@@ -65,7 +67,7 @@ where
                     let vertex = input_column.value(i);
                     // Slice the chunk to the current row.
                     let chunk = chunk.slice(i, 1);
-                    let expand_iter = if let Some(expand_iter) = source.expand_from_vertex(vertex) {
+                    let expand_iter = if let Some(expand_iter) = source.expand_from_vertex(vertex, self.labels) {
                         expand_iter
                     } else {
                         continue;

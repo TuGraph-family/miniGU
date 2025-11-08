@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use arrow::array::ArrayRef;
 use auto_impl::auto_impl;
-use minigu_common::types::{VertexId, VertexIdArray};
+use minigu_common::types::{LabelId, VertexId, VertexIdArray};
 
 use crate::error::ExecutionResult;
 use crate::executor::vertex_scan::VertexScanBuilder;
@@ -52,7 +52,7 @@ pub trait ExpandSource {
     ///
     /// For the first case, this method should return `None`. For the second case, this method
     /// should return an iterator that yields no output.
-    fn expand_from_vertex(&self, vertex: VertexId) -> Option<Self::ExpandIter>;
+    fn expand_from_vertex(&self, vertex: VertexId, labels: Option<Vec<Vec<LabelId>>>) -> Option<Self::ExpandIter>;
 }
 
 pub type BoxedExpandSource =
