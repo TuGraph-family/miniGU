@@ -1,9 +1,13 @@
 use std::sync::Arc;
 
-use minigu_catalog::memory::graph_type::MemoryGraphTypeCatalog;
+use minigu_catalog::label_set::LabelSet;
+use minigu_catalog::memory::graph_type::{
+    MemoryEdgeTypeCatalog, MemoryGraphTypeCatalog, MemoryVertexTypeCatalog,
+};
 use minigu_catalog::named_ref::NamedGraphRef;
+use minigu_catalog::property::Property;
 use minigu_common::data_type::LogicalType;
-use minigu_common::types::{EdgeId, LabelId, VertexId};
+use minigu_common::types::{EdgeId, VertexId};
 use minigu_common::value::ScalarValue;
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::procedure::Procedure;
@@ -12,7 +16,8 @@ use minigu_storage::tp::MemoryGraph;
 use minigu_transaction::IsolationLevel::Serializable;
 use minigu_transaction::{GraphTxnManager, Transaction};
 
-/// Creates test graph and data with the given name in the current schema.
+
+/// Create a test graph data with the given name in the current schema.
 pub fn build_procedure() -> Procedure {
     let parameters = vec![LogicalType::String, LogicalType::Int8];
 
@@ -39,10 +44,34 @@ pub fn build_procedure() -> Procedure {
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("current schema not set"))?;
 
-        let graph = MemoryGraph::new();
-        let graph_type = Arc::new(MemoryGraphTypeCatalog::new());
+        let graph = MemoryGraph::with_config_fresh(Default::default(), Default::default());
+        let mut graph_type = MemoryGraphTypeCatalog::new();
+        let person_label_id = graph_type.add_label("PERSON".to_string()).unwrap();
+        let friend_label_id = graph_type.add_label("FRIEND".to_string()).unwrap();
+        let person_label_set: LabelSet = vec![person_label_id].into_iter().collect();
+        let person = Arc::new(MemoryVertexTypeCatalog::new(
+            person_label_set.clone(),
+            vec![
+                Property::new("name".to_string(), LogicalType::String, false),
+                Property::new("age".to_string(), LogicalType::Int8, false),
+            ],
+        ));
+        let friend_label_set: LabelSet = vec![friend_label_id].into_iter().collect();
+        let friend = Arc::new(MemoryEdgeTypeCatalog::new(
+            friend_label_set.clone(),
+            person.clone(),
+            person.clone(),
+            vec![Property::new(
+                "distance".to_string(),
+                LogicalType::Int32,
+                false,
+            )],
+        ));
+
+        graph_type.add_vertex_type(person_label_set, person);
+        graph_type.add_edge_type(friend_label_set, friend);
         let container = Arc::new(GraphContainer::new(
-            graph_type.clone(),
+            Arc::new(graph_type),
             GraphStorage::Memory(graph.clone()),
         ));
 
@@ -58,15 +87,15 @@ pub fn build_procedure() -> Procedure {
 
         let txn = mem.txn_manager().begin_transaction(Serializable)?;
 
-        const PERSON_LABEL_ID: LabelId = LabelId::new(1).unwrap();
-        const FRIEND_LABEL_ID: LabelId = LabelId::new(2).unwrap();
-
         let mut id_map: Vec<u64> = Vec::with_capacity(n);
         for _i in 0..n as u64 {
             let vertex = Vertex::new(
                 VertexId::from(_i),
-                PERSON_LABEL_ID,
-                PropertyRecord::new(vec![ScalarValue::String(Some("per".to_string()))]),
+                person_label_id,
+                PropertyRecord::new(vec![
+                    ScalarValue::String(Some(format!("bob{}", _i).to_string())),
+                    ScalarValue::Int8(Some(20 + _i as i8)),
+                ]),
             );
             mem.create_vertex(&txn, vertex);
             id_map.push(_i);
@@ -81,11 +110,11 @@ pub fn build_procedure() -> Procedure {
                 let src = id_map[i];
                 let dst = id_map[j];
                 let edge = Edge::new(
-                    EdgeId::from((i * n + j) as u64),
+                    EdgeId::from((i * j) as u64),
                     src,
                     dst,
-                    FRIEND_LABEL_ID,
-                    PropertyRecord::new(vec![ScalarValue::String(Some("2024-03-01".to_string()))]),
+                    friend_label_id,
+                    PropertyRecord::new(vec![ScalarValue::Int32(Some(i as i32 * j as i32))]),
                 );
                 mem.create_edge(&txn, edge);
                 created_edges += 1;

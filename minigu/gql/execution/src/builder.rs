@@ -60,16 +60,27 @@ impl ExecutorBuilder {
                     .get_graph("test".to_string().as_str())
                     .expect("there should be a test graph")
                     .unwrap();
-                let provider: &dyn GraphProvider = cur_graph.as_ref();
-                let container = provider
-                    .as_any()
-                    .downcast_ref::<GraphContainer>()
-                    .expect("current graph must be GraphContainer");
+                let container: Arc<GraphContainer> = cur_graph.downcast_arc::<GraphContainer>().unwrap();
                 let batches = container
                     .vertex_source(&[], 1024)
                     .expect("failed to create vertex source");
                 let source = batches.map(|arr: Arc<VertexIdArray>| Ok(arr));
                 Box::new(source.scan_vertex())
+            }
+            PlanNode::PhysicalExpand(expand) => {
+                assert_eq!(children.len(), 1);
+                let child = self.build_executor(&children[0]);
+                let cur_schema = self
+                    .session
+                    .home_schema
+                    .as_ref()
+                    .expect("there should be a home schema");
+                let cur_graph = cur_schema
+                    .get_graph("test".to_string().as_str())
+                    .expect("there should be a test graph")
+                    .unwrap();
+                let container: Arc<GraphContainer> = cur_graph.downcast_arc::<GraphContainer>().unwrap();
+                Box::new(child.expand(expand.input_column_index, container))
             }
             PlanNode::PhysicalProject(project) => {
                 assert_eq!(children.len(), 1);

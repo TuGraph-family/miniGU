@@ -50,6 +50,9 @@ pub enum BindError {
     #[error("variable not found: {0}")]
     VariableNotFound(SmolStr),
 
+    #[error("label not found: {0}")]
+    LabelNotFound(SmolStr),
+
     #[error("invalid integer: {0}")]
     InvalidInteger(SmolStr),
 

@@ -65,13 +65,15 @@ impl_downcast!(sync SchemaProvider);
 /// Represents a graph, which is an instance of a graph type.
 ///
 /// Use [`Arc::downcast`] to cast the trait object into the concrete type.
-pub trait GraphProvider: Debug + Send + Sync + Any {
+pub trait GraphProvider: Debug + Send + Sync + Any + DowncastSync {
     /// Returns the graph type of the graph.
     fn graph_type(&self) -> GraphTypeRef;
 
     /// Returns a reference to the underlying graph.
     fn as_any(&self) -> &dyn Any;
 }
+
+impl_downcast!(sync GraphProvider);
 
 /// Represents a graph type, which defines the structure of a graph.
 /// It contains vertex types and edge types.

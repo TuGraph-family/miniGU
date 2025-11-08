@@ -1,10 +1,11 @@
 use std::sync::Arc;
 
 use minigu_common::data_type::DataSchema;
-use minigu_common::types::LabelId;
+use minigu_common::types::{GraphId, LabelId};
 use serde::Serialize;
-
+use gql_parser::ast::EdgePatternKind;
 use crate::bound::BoundExpr;
+use crate::plan::expand::ExpandDirection;
 
 #[derive(Debug, Clone, Serialize)]
 pub enum BoundLabelExpr {
@@ -57,6 +58,20 @@ pub struct BoundSubpathPattern {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub enum PathPatternInfo {
+    SingleVertex {
+        var: String,
+        label_specs: Vec<Vec<LabelId>>,
+        graph_id: GraphId,
+    },
+    Path {
+        vertices: Vec<(String, Vec<Vec<LabelId>>)>,
+        edges: Vec<(Option<String>, Vec<Vec<LabelId>>, ExpandDirection)>,
+        graph_id: GraphId,
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub enum BoundMatchMode {
     Repeatable,
     Different,
@@ -92,6 +107,21 @@ pub enum BoundEdgePatternKind {
     RightUndirected,
     Undirected,
     Any,
+}
+
+impl From<&EdgePatternKind> for BoundEdgePatternKind {
+    fn from(kind: &EdgePatternKind) -> Self {
+        use EdgePatternKind::*;
+        match kind {
+            Left => Self::Left,
+            LeftUndirected => Self::LeftUndirected,
+            LeftRight => Self::LeftRight,
+            Right => Self::Right,
+            RightUndirected => Self::RightUndirected,
+            Undirected => Self::Undirected,
+            Any => Self::Any,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]

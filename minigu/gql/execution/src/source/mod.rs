@@ -1,5 +1,6 @@
 #[cfg(test)]
 pub(crate) mod mock;
+mod expand_source;
 
 use std::sync::Arc;
 
