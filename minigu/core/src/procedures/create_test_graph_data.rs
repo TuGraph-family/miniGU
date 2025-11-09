@@ -237,7 +237,7 @@ pub fn build_procedure() -> Procedure {
         // Every person is friends with every other person (complete graph)
         // This creates a complete subgraph: PERSON-FRIEND-PERSON yields all persons
         for i in 0..num_persons {
-            for j in (i + 1)..num_persons {
+            for j in 0..num_persons {
                 let edge = Edge::new(
                     EdgeId::from(edge_id_counter),
                     person_ids[i],
@@ -251,7 +251,6 @@ pub fn build_procedure() -> Procedure {
         }
         
         // Create WORKS_AT edges - NOT all persons have jobs (partial connection)
-        // Only about 60% of persons have jobs, creating distinction in the graph
         // This means PERSON-WORKS_AT-COMPANY does NOT yield all persons (some are unemployed)
         let num_employed = (num_persons * 3 / 5).max(1); // 60% of persons have jobs
         for i in 0..num_employed {

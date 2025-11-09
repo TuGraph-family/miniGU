@@ -4,7 +4,7 @@ use arrow::array::{Array, AsArray, ListArray};
 use arrow::buffer::OffsetBuffer;
 use arrow::datatypes::Field;
 use itertools::Itertools;
-use minigu_common::types::VertexIdArray;
+use minigu_common::types::{LabelId, VertexIdArray};
 
 use super::utils::gen_try;
 use super::{Executor, IntoExecutor};
@@ -14,12 +14,12 @@ use crate::source::ExpandSource;
 pub struct ExpandBuilder<E, S> {
     child: E,
     input_column_index: usize,
-    labels: Vec<Vec<LabelId>>,
+    labels: Option<Vec<Vec<LabelId>>>,
     source: S,
 }
 
 impl<E, S> ExpandBuilder<E, S> {
-    pub fn new(child: E, input_column_index: usize, labels: Vec<Vec<LabelId>>, source: S) -> Self {
+    pub fn new(child: E, input_column_index: usize, labels: Option<Vec<Vec<LabelId>>>, source: S) -> Self {
         Self {
             child,
             input_column_index,
@@ -41,10 +41,12 @@ where
             let ExpandBuilder {
                 child,
                 input_column_index,
+                labels,
                 source,
             } = self;
             for chunk in child.into_iter() {
                 let mut chunk = gen_try!(chunk);
+                chunk.debug_print();
                 // Compact the chunk to avoid expanding from vertices filtered out.
                 chunk.compact();
                 if chunk.is_empty() {
@@ -67,11 +69,13 @@ where
                     let vertex = input_column.value(i);
                     // Slice the chunk to the current row.
                     let chunk = chunk.slice(i, 1);
-                    let expand_iter = if let Some(expand_iter) = source.expand_from_vertex(vertex, self.labels) {
-                        expand_iter
-                    } else {
-                        continue;
-                    };
+                    let expand_iter =
+                        if let Some(expand_iter) = source.expand_from_vertex(vertex, labels.clone()) {
+                            expand_iter
+                        } else {
+                            continue;
+                        };
+                    println!("get here !");
                     for neighbor_columns in expand_iter {
                         let mut chunk = chunk.clone();
                         let neighbor_columns = gen_try!(neighbor_columns);
@@ -87,6 +91,7 @@ where
                                 .try_collect()
                         );
                         chunk.append_columns(lists);
+                        chunk.debug_print();
                         yield Ok(chunk);
                     }
                 }
@@ -98,7 +103,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use arrow::array::{ArrayRef, ListBuilder, StringBuilder, UInt64Builder, create_array};
+    use arrow::array::{create_array, ArrayRef, ListBuilder, StringBuilder, UInt64Builder};
     use arrow::datatypes::DataType;
     use minigu_common::data_chunk;
     use minigu_common::data_chunk::DataChunk;

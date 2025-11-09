@@ -4,6 +4,7 @@ use arrow::array::ArrayRef;
 use minigu_common::types::{LabelId, VertexId, VertexIdArray};
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_storage::common::model::edge::Neighbor;
+use minigu_storage::iterators::AdjacencyIteratorTrait;
 use minigu_storage::tp::transaction::IsolationLevel;
 use minigu_transaction::GraphTxnManager;
 
@@ -45,7 +46,11 @@ impl Iterator for GraphExpandIter {
 impl ExpandSource for GraphContainer {
     type ExpandIter = GraphExpandIter;
 
-    fn expand_from_vertex(&self, vertex: VertexId, labels: Vec<Vec<LabelId>>) -> Option<Self::ExpandIter> {
+    fn expand_from_vertex(
+        &self,
+        vertex: VertexId,
+        labels: Option<Vec<Vec<LabelId>>>,
+    ) -> Option<Self::ExpandIter> {
         let mem = match self.graph_storage() {
             GraphStorage::Memory(m) => Arc::clone(m),
         };
@@ -65,8 +70,16 @@ impl ExpandSource for GraphContainer {
 
         // Use the transaction's adjacency iterator to get all visible outgoing neighbors
         let mut neighbors = Vec::new();
-        let adj_iter = txn.iter_adjacency_outgoing(vertex);
-        
+        let mut adj_iter = txn.iter_adjacency_outgoing(vertex);
+
+        if labels.is_some() {
+            use std::collections::HashSet;
+            let allowed_labels: HashSet<LabelId> = labels.expect("labels not empty").iter().flatten().copied().collect();
+            adj_iter = AdjacencyIteratorTrait::filter(adj_iter, move |neighbor| {
+                allowed_labels.contains(&neighbor.label_id())
+            });
+        }
+
         for neighbor_result in adj_iter {
             match neighbor_result {
                 Ok(neighbor) => neighbors.push(neighbor),
@@ -112,28 +125,24 @@ mod tests {
     use super::*;
 
     fn create_test_graph() -> GraphContainer {
-        use minigu_storage::tp::checkpoint::CheckpointManagerConfig;
-        use minigu_storage::wal::graph_wal::WalManagerConfig;
         use std::fs;
         use std::time::{SystemTime, UNIX_EPOCH};
-        
+
+        use minigu_storage::tp::checkpoint::CheckpointManagerConfig;
+        use minigu_storage::wal::graph_wal::WalManagerConfig;
+
         // Create temporary directories for checkpoint and WAL
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        
-        let checkpoint_dir = std::env::temp_dir().join(format!(
-            "test_expand_checkpoint_{}",
-            timestamp
-        ));
+
+        let checkpoint_dir =
+            std::env::temp_dir().join(format!("test_expand_checkpoint_{}", timestamp));
         fs::create_dir_all(&checkpoint_dir).unwrap();
-        
-        let wal_file = std::env::temp_dir().join(format!(
-            "test_expand_wal_{}.log",
-            timestamp
-        ));
-        
+
+        let wal_file = std::env::temp_dir().join(format!("test_expand_wal_{}.log", timestamp));
+
         let checkpoint_config = CheckpointManagerConfig {
             checkpoint_dir,
             max_checkpoints: 3,
@@ -141,18 +150,16 @@ mod tests {
             checkpoint_prefix: "test_expand".to_string(),
             transaction_timeout_secs: 10,
         };
-        
-        let wal_config = WalManagerConfig {
-            wal_path: wal_file,
-        };
-        
+
+        let wal_config = WalManagerConfig { wal_path: wal_file };
+
         let graph = MemoryGraph::with_config_fresh(checkpoint_config, wal_config);
         let mut graph_type = MemoryGraphTypeCatalog::new();
-        
+
         // Add labels
         let person_label_id = graph_type.add_label("PERSON".to_string()).unwrap();
         let friend_label_id = graph_type.add_label("FRIEND".to_string()).unwrap();
-        
+
         // Create vertex type
         let person_label_set: LabelSet = vec![person_label_id].into_iter().collect();
         let person = Arc::new(MemoryVertexTypeCatalog::new(
@@ -162,7 +169,7 @@ mod tests {
                 Property::new("age".to_string(), LogicalType::Int8, false),
             ],
         ));
-        
+
         // Create edge type
         let friend_label_set: LabelSet = vec![friend_label_id].into_iter().collect();
         let friend = Arc::new(MemoryEdgeTypeCatalog::new(
@@ -175,29 +182,26 @@ mod tests {
                 false,
             )],
         ));
-        
+
         graph_type.add_vertex_type(person_label_set, person);
         graph_type.add_edge_type(friend_label_set, friend);
-        
-        GraphContainer::new(
-            Arc::new(graph_type),
-            GraphStorage::Memory(graph),
-        )
+
+        GraphContainer::new(Arc::new(graph_type), GraphStorage::Memory(graph))
     }
 
     fn setup_test_data(container: &GraphContainer) {
         let mem = match container.graph_storage() {
             GraphStorage::Memory(m) => Arc::clone(m),
         };
-        
+
         let txn = mem
             .txn_manager()
             .begin_transaction(IsolationLevel::Serializable)
             .unwrap();
-        
+
         // Create vertices: 1, 2, 3, 4
         let person_label_id = LabelId::new(1).unwrap();
-        
+
         let v1 = Vertex::new(
             1,
             person_label_id,
@@ -206,7 +210,7 @@ mod tests {
                 ScalarValue::Int8(Some(25)),
             ]),
         );
-        
+
         let v2 = Vertex::new(
             2,
             person_label_id,
@@ -215,7 +219,7 @@ mod tests {
                 ScalarValue::Int8(Some(30)),
             ]),
         );
-        
+
         let v3 = Vertex::new(
             3,
             person_label_id,
@@ -224,7 +228,7 @@ mod tests {
                 ScalarValue::Int8(Some(28)),
             ]),
         );
-        
+
         let v4 = Vertex::new(
             4,
             person_label_id,
@@ -233,19 +237,19 @@ mod tests {
                 ScalarValue::Int8(Some(32)),
             ]),
         );
-        
+
         mem.create_vertex(&txn, v1).unwrap();
         mem.create_vertex(&txn, v2).unwrap();
         mem.create_vertex(&txn, v3).unwrap();
         mem.create_vertex(&txn, v4).unwrap();
-        
+
         // Create edges:
         // 1 -> 2 (FRIEND)
         // 1 -> 3 (FRIEND)
         // 2 -> 3 (FRIEND)
         // (vertex 4 has no outgoing edges)
         let friend_label_id = LabelId::new(1).unwrap();
-        
+
         let e1 = Edge::new(
             1,
             1,
@@ -253,7 +257,7 @@ mod tests {
             friend_label_id,
             PropertyRecord::new(vec![ScalarValue::Int32(Some(10))]),
         );
-        
+
         let e2 = Edge::new(
             2,
             1,
@@ -261,7 +265,7 @@ mod tests {
             friend_label_id,
             PropertyRecord::new(vec![ScalarValue::Int32(Some(20))]),
         );
-        
+
         let e3 = Edge::new(
             3,
             2,
@@ -269,11 +273,11 @@ mod tests {
             friend_label_id,
             PropertyRecord::new(vec![ScalarValue::Int32(Some(15))]),
         );
-        
+
         mem.create_edge(&txn, e1).unwrap();
         mem.create_edge(&txn, e2).unwrap();
         mem.create_edge(&txn, e3).unwrap();
-        
+
         txn.commit().unwrap();
     }
 
@@ -281,21 +285,24 @@ mod tests {
     fn test_expand_from_nonexistent_vertex() {
         let container = create_test_graph();
         setup_test_data(&container);
-        
+
         // Try to expand from a non-existent vertex
-        let result = container.expand_from_vertex(999);
-        assert!(result.is_none(), "Should return None for non-existent vertex");
+        let result = container.expand_from_vertex(999, None);
+        assert!(
+            result.is_none(),
+            "Should return None for non-existent vertex"
+        );
     }
 
     #[test]
     fn test_expand_from_vertex_with_no_neighbors() {
         let container = create_test_graph();
         setup_test_data(&container);
-        
+
         // Vertex 4 has no outgoing edges
-        let result = container.expand_from_vertex(4);
+        let result = container.expand_from_vertex(4, None);
         assert!(result.is_some(), "Should return Some for existing vertex");
-        
+
         let mut iter = result.unwrap();
         // Should return an empty iterator (no neighbors)
         assert!(iter.next().is_none(), "Should have no neighbors");
@@ -305,25 +312,25 @@ mod tests {
     fn test_expand_from_vertex_with_neighbors() {
         let container = create_test_graph();
         setup_test_data(&container);
-        
+
         // Vertex 1 has neighbors: 2, 3
-        let result = container.expand_from_vertex(1);
+        let result = container.expand_from_vertex(1, None);
         assert!(result.is_some(), "Should return Some for existing vertex");
-        
+
         let mut iter = result.unwrap();
         let first_batch = iter.next();
         assert!(first_batch.is_some(), "Should have at least one batch");
-        
+
         let batch = first_batch.unwrap().unwrap();
         assert_eq!(batch.len(), 1, "Should have one column (neighbor IDs)");
-        
+
         let neighbor_array: &VertexIdArray = batch[0].as_primitive();
         assert_eq!(neighbor_array.len(), 2, "Should have 2 neighbors");
-        
+
         let neighbors: Vec<u64> = neighbor_array.values().iter().copied().collect();
         assert!(neighbors.contains(&2), "Should contain neighbor 2");
         assert!(neighbors.contains(&3), "Should contain neighbor 3");
-        
+
         // Should be done after one batch
         assert!(iter.next().is_none(), "Should have no more batches");
     }
@@ -332,20 +339,20 @@ mod tests {
     fn test_expand_from_vertex_with_single_neighbor() {
         let container = create_test_graph();
         setup_test_data(&container);
-        
+
         // Vertex 2 has one neighbor: 3
-        let result = container.expand_from_vertex(2);
+        let result = container.expand_from_vertex(2, None);
         assert!(result.is_some(), "Should return Some for existing vertex");
-        
+
         let mut iter = result.unwrap();
         let first_batch = iter.next();
         assert!(first_batch.is_some(), "Should have at least one batch");
-        
+
         let batch = first_batch.unwrap().unwrap();
         let neighbor_array: &VertexIdArray = batch[0].as_primitive();
         assert_eq!(neighbor_array.len(), 1, "Should have 1 neighbor");
         assert_eq!(neighbor_array.value(0), 3, "Should be neighbor 3");
-        
+
         // Should be done after one batch
         assert!(iter.next().is_none(), "Should have no more batches");
     }
@@ -354,17 +361,17 @@ mod tests {
     fn test_expand_batching() {
         let container = create_test_graph();
         setup_test_data(&container);
-        
+
         // Create a vertex with many neighbors to test batching
         let mem = match container.graph_storage() {
             GraphStorage::Memory(m) => Arc::clone(m),
         };
-        
+
         let txn = mem
             .txn_manager()
             .begin_transaction(IsolationLevel::Serializable)
             .unwrap();
-        
+
         // Create vertex 5
         let person_label_id = LabelId::new(1).unwrap();
         let v5 = Vertex::new(
@@ -376,7 +383,7 @@ mod tests {
             ]),
         );
         mem.create_vertex(&txn, v5).unwrap();
-        
+
         // Create 100 edges from vertex 5 to vertices 1-100
         // (We'll create vertices 6-100 first)
         let friend_label_id = LabelId::new(1).unwrap();
@@ -390,7 +397,7 @@ mod tests {
                 ]),
             );
             mem.create_vertex(&txn, v).unwrap();
-            
+
             let edge = Edge::new(
                 i as u64,
                 5,
@@ -400,28 +407,27 @@ mod tests {
             );
             mem.create_edge(&txn, edge).unwrap();
         }
-        
+
         txn.commit().unwrap();
-        
+
         // Now expand from vertex 5
-        let result = container.expand_from_vertex(5);
+        let result = container.expand_from_vertex(5, None);
         assert!(result.is_some(), "Should return Some for existing vertex");
-        
+
         let mut iter = result.unwrap();
         let mut total_neighbors = 0;
         let mut batch_count = 0;
-        
+
         while let Some(batch_result) = iter.next() {
             batch_count += 1;
             let batch = batch_result.unwrap();
             let neighbor_array: &VertexIdArray = batch[0].as_primitive();
             total_neighbors += neighbor_array.len();
         }
-        
+
         assert_eq!(total_neighbors, 95, "Should have 95 neighbors (6-100)");
         // With batch_size=64, we should have 2 batches: 64 + 31
         assert!(batch_count >= 1, "Should have at least one batch");
         assert!(batch_count <= 2, "Should have at most 2 batches");
     }
 }
-
