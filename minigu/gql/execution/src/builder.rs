@@ -88,7 +88,12 @@ impl ExecutorBuilder {
                 // Expand adds new columns (as ListArray) that need to be flattened.
                 // Currently, ExpandSource returns 1 column (neighbor IDs), so we flatten
                 // the column at index num_child_columns.
-                let expand_executor = child.expand(expand.input_column_index, Some(expand.edge_labels.clone()), container);
+                let expand_executor = child.expand(
+                    expand.input_column_index,
+                    Some(expand.edge_labels.clone()),
+                    expand.target_vertex_labels.clone(),
+                    container,
+                );
                 let column_indices_to_flatten: Vec<usize> = (num_child_columns..num_child_columns + 1).collect();
                 Box::new(expand_executor.flatten(column_indices_to_flatten))
             }

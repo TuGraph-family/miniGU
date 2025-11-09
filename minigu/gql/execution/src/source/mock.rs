@@ -90,7 +90,13 @@ impl Iterator for ExpandIter {
 impl ExpandSource for MockExpandSource {
     type ExpandIter = ExpandIter;
 
-    fn expand_from_vertex(&self, vertex: VertexId) -> Option<Self::ExpandIter> {
+    fn expand_from_vertex(
+        &self,
+        vertex: VertexId,
+        _edge_labels: Option<Vec<Vec<minigu_common::types::LabelId>>>,
+        _target_vertex_labels: Option<Vec<Vec<minigu_common::types::LabelId>>>,
+    ) -> Option<Self::ExpandIter> {
+        // Mock implementation ignores label filters for simplicity
         self.adj_lists.get(&vertex).map(|adj_list| ExpandIter {
             neighbors_props: adj_list.clone(),
             offset: 0,

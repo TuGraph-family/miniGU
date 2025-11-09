@@ -45,6 +45,13 @@ pub trait ExpandSource {
     /// Returns an iterator over the neighbors and (possibly) properties of the given vertex, if
     /// the vertex exists. Otherwise, return `None`.
     ///
+    /// # Parameters
+    /// - `vertex`: The source vertex ID to expand from
+    /// - `edge_labels`: Optional filter for edge labels. If `Some(labels)`, only neighbors
+    ///   connected by edges with labels in `labels` are returned.
+    /// - `target_vertex_labels`: Optional filter for target vertex labels. If `Some(labels)`,
+    ///   only neighbors with labels matching `labels` are returned.
+    ///
     /// # Notes
     /// The following two cases should be handled correctly:
     /// - The vertex does not exists.
@@ -52,7 +59,12 @@ pub trait ExpandSource {
     ///
     /// For the first case, this method should return `None`. For the second case, this method
     /// should return an iterator that yields no output.
-    fn expand_from_vertex(&self, vertex: VertexId, labels: Option<Vec<Vec<LabelId>>>) -> Option<Self::ExpandIter>;
+    fn expand_from_vertex(
+        &self,
+        vertex: VertexId,
+        edge_labels: Option<Vec<Vec<LabelId>>>,
+        target_vertex_labels: Option<Vec<Vec<LabelId>>>,
+    ) -> Option<Self::ExpandIter>;
 }
 
 pub type BoxedExpandSource =

@@ -49,7 +49,8 @@ impl ExpandSource for GraphContainer {
     fn expand_from_vertex(
         &self,
         vertex: VertexId,
-        labels: Option<Vec<Vec<LabelId>>>,
+        edge_labels: Option<Vec<Vec<LabelId>>>,
+        target_vertex_labels: Option<Vec<Vec<LabelId>>>,
     ) -> Option<Self::ExpandIter> {
         let mem = match self.graph_storage() {
             GraphStorage::Memory(m) => Arc::clone(m),
@@ -72,21 +73,50 @@ impl ExpandSource for GraphContainer {
         let mut neighbors = Vec::new();
         let mut adj_iter = txn.iter_adjacency_outgoing(vertex);
 
-        if labels.is_some() {
+        // Filter by edge labels
+        if let Some(labels) = &edge_labels {
             use std::collections::HashSet;
-            let allowed_labels: HashSet<LabelId> = labels.expect("labels not empty").iter().flatten().copied().collect();
+            let allowed_labels: HashSet<LabelId> = labels.iter().flatten().copied().collect();
             adj_iter = AdjacencyIteratorTrait::filter(adj_iter, move |neighbor| {
                 allowed_labels.contains(&neighbor.label_id())
             });
         }
 
+        // Filter by target vertex labels
         for neighbor_result in adj_iter {
             match neighbor_result {
-                Ok(neighbor) => neighbors.push(neighbor),
+                Ok(neighbor) => {
+                    // If target vertex labels are specified, check if the neighbor matches
+                    if let Some(target_labels) = &target_vertex_labels {
+                        match mem.get_vertex(&txn, neighbor.neighbor_id()) {
+                            Ok(neighbor_vertex) => {
+                                // Check if neighbor vertex label matches target labels
+                                let neighbor_label = neighbor_vertex.label_id;
+                                let mut matches = false;
+                                for and_labels in target_labels {
+                                    if and_labels.is_empty() {
+                                        matches = true;
+                                        break;
+                                    }
+                                    if and_labels.contains(&neighbor_label) {
+                                        matches = true;
+                                        break;
+                                    }
+                                }
+                                if !matches {
+                                    continue; // Skip neighbors that don't match target labels
+                                }
+                            }
+                            Err(_) => {
+                                // If we can't get the vertex, skip it
+                                continue;
+                            }
+                        }
+                    }
+                    neighbors.push(neighbor);
+                }
                 Err(_) => {
                     // If there's an error iterating neighbors, we can skip it
-                    // or return None depending on the error type
-                    // For now, we'll skip errors and continue
                     continue;
                 }
             }
@@ -287,7 +317,7 @@ mod tests {
         setup_test_data(&container);
 
         // Try to expand from a non-existent vertex
-        let result = container.expand_from_vertex(999, None);
+        let result = container.expand_from_vertex(999, None, None);
         assert!(
             result.is_none(),
             "Should return None for non-existent vertex"
@@ -300,7 +330,7 @@ mod tests {
         setup_test_data(&container);
 
         // Vertex 4 has no outgoing edges
-        let result = container.expand_from_vertex(4, None);
+        let result = container.expand_from_vertex(4, None, None);
         assert!(result.is_some(), "Should return Some for existing vertex");
 
         let mut iter = result.unwrap();
@@ -314,7 +344,7 @@ mod tests {
         setup_test_data(&container);
 
         // Vertex 1 has neighbors: 2, 3
-        let result = container.expand_from_vertex(1, None);
+        let result = container.expand_from_vertex(1, None, None);
         assert!(result.is_some(), "Should return Some for existing vertex");
 
         let mut iter = result.unwrap();
@@ -341,7 +371,7 @@ mod tests {
         setup_test_data(&container);
 
         // Vertex 2 has one neighbor: 3
-        let result = container.expand_from_vertex(2, None);
+        let result = container.expand_from_vertex(2, None, None);
         assert!(result.is_some(), "Should return Some for existing vertex");
 
         let mut iter = result.unwrap();
@@ -410,8 +440,8 @@ mod tests {
 
         txn.commit().unwrap();
 
-        // Now expand from vertex 5
-        let result = container.expand_from_vertex(5, None);
+                // Now expand from vertex 5
+                let result = container.expand_from_vertex(5, None, None);
         assert!(result.is_some(), "Should return Some for existing vertex");
 
         let mut iter = result.unwrap();

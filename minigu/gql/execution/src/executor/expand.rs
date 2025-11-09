@@ -14,16 +14,24 @@ use crate::source::ExpandSource;
 pub struct ExpandBuilder<E, S> {
     child: E,
     input_column_index: usize,
-    labels: Option<Vec<Vec<LabelId>>>,
+    edge_labels: Option<Vec<Vec<LabelId>>>,
+    target_vertex_labels: Option<Vec<Vec<LabelId>>>,
     source: S,
 }
 
 impl<E, S> ExpandBuilder<E, S> {
-    pub fn new(child: E, input_column_index: usize, labels: Option<Vec<Vec<LabelId>>>, source: S) -> Self {
+    pub fn new(
+        child: E,
+        input_column_index: usize,
+        edge_labels: Option<Vec<Vec<LabelId>>>,
+        target_vertex_labels: Option<Vec<Vec<LabelId>>>,
+        source: S,
+    ) -> Self {
         Self {
             child,
             input_column_index,
-            labels,
+            edge_labels,
+            target_vertex_labels,
             source,
         }
     }
@@ -41,12 +49,12 @@ where
             let ExpandBuilder {
                 child,
                 input_column_index,
-                labels,
+                edge_labels,
+                target_vertex_labels,
                 source,
             } = self;
             for chunk in child.into_iter() {
                 let mut chunk = gen_try!(chunk);
-                chunk.debug_print();
                 // Compact the chunk to avoid expanding from vertices filtered out.
                 chunk.compact();
                 if chunk.is_empty() {
@@ -69,13 +77,15 @@ where
                     let vertex = input_column.value(i);
                     // Slice the chunk to the current row.
                     let chunk = chunk.slice(i, 1);
-                    let expand_iter =
-                        if let Some(expand_iter) = source.expand_from_vertex(vertex, labels.clone()) {
-                            expand_iter
-                        } else {
-                            continue;
-                        };
-                    println!("get here !");
+                    let expand_iter = if let Some(expand_iter) = source.expand_from_vertex(
+                        vertex,
+                        edge_labels.clone(),
+                        target_vertex_labels.clone(),
+                    ) {
+                        expand_iter
+                    } else {
+                        continue;
+                    };
                     for neighbor_columns in expand_iter {
                         let mut chunk = chunk.clone();
                         let neighbor_columns = gen_try!(neighbor_columns);
@@ -91,7 +101,6 @@ where
                                 .try_collect()
                         );
                         chunk.append_columns(lists);
-                        chunk.debug_print();
                         yield Ok(chunk);
                     }
                 }
@@ -132,7 +141,7 @@ mod tests {
         );
         let chunk: DataChunk = [Ok(chunk)]
             .into_executor()
-            .expand(0, build_test_source())
+            .expand(0, None, None, build_test_source())
             .into_iter()
             .try_collect()
             .unwrap();

@@ -103,7 +103,7 @@ fn extract_path_pattern(
             }
             let mut vertices = Vec::new();
             let mut edges = Vec::new();
-            for (i, part) in parts.iter().enumerate() {
+            for (_i, part) in parts.iter().enumerate() {
                 match part {
                     Pattern(BoundElementPattern::Vertex(v)) => {
                         let var = v.var.clone();
@@ -189,15 +189,16 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
                         first_lables,
                         graph_id,
                     )));
-                    for (i, (edge_info, next_vertex)) in
+                    for (_i, (edge_info, next_vertex)) in
                         edges.iter().zip(vertices.iter().skip(1)).enumerate()
                     {
                         let (edge_var, edge_labels, direction) = edge_info;
-                        let (next_var, next_labels) = next_vertex;
+                        let (_next_var, next_labels) = next_vertex;
                         let expand = Expand::new(
                             current_plan.clone(),
                             0,
                             edge_labels.clone(),
+                            Some(next_labels.clone()),
                             edge_var.clone(),
                             direction.clone(),
                             graph_id,
