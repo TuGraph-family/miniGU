@@ -1,11 +1,12 @@
 use std::sync::Arc;
 
-use arrow::array::ArrayRef;
-use minigu_common::types::{LabelId, VertexId, VertexIdArray};
+use arrow::array::{ArrayRef, UInt64Array};
+use minigu_common::types::{EdgeId, LabelId, VertexId, VertexIdArray};
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_storage::common::model::edge::Neighbor;
 use minigu_storage::iterators::AdjacencyIteratorTrait;
 use minigu_storage::tp::transaction::IsolationLevel;
+use minigu_storage::tp::MemoryGraph;
 use minigu_transaction::GraphTxnManager;
 
 use super::ExpandSource;
@@ -16,6 +17,7 @@ pub struct GraphExpandIter {
     neighbors: Vec<Neighbor>,
     offset: usize,
     batch_size: usize,
+    mem: Arc<MemoryGraph>,
     _graph_storage: GraphStorage,
     _txn: Arc<minigu_storage::tp::transaction::MemTransaction>,
 }
@@ -31,15 +33,18 @@ impl Iterator for GraphExpandIter {
         let end = (self.offset + self.batch_size).min(self.neighbors.len());
         let batch = &self.neighbors[self.offset..end];
 
-        // Collect neighbor IDs from the batch
+        // Collect edge IDs and neighbor IDs from the batch
+        let edge_ids: Vec<EdgeId> = batch.iter().map(|n| n.eid()).collect();
         let neighbor_ids: Vec<VertexId> = batch.iter().map(|n| n.neighbor_id()).collect();
 
-        // Create the neighbor ID array
+        // Create arrays for edge IDs and neighbor IDs
+        let edge_id_array = UInt64Array::from_iter_values(edge_ids.iter().copied());
         let neighbor_array = VertexIdArray::from_iter_values(neighbor_ids.iter().copied());
 
         self.offset = end;
 
-        Some(Ok(vec![Arc::new(neighbor_array)]))
+        // Return two columns: edge IDs and target vertex IDs
+        Some(Ok(vec![Arc::new(edge_id_array), Arc::new(neighbor_array)]))
     }
 }
 
@@ -126,6 +131,7 @@ impl ExpandSource for GraphContainer {
             neighbors,
             offset: 0,
             batch_size: 64, // Default batch size
+            mem: Arc::clone(&mem),
             _graph_storage: match self.graph_storage() {
                 GraphStorage::Memory(m) => GraphStorage::Memory(Arc::clone(m)),
             },
@@ -352,9 +358,11 @@ mod tests {
         assert!(first_batch.is_some(), "Should have at least one batch");
 
         let batch = first_batch.unwrap().unwrap();
-        assert_eq!(batch.len(), 1, "Should have one column (neighbor IDs)");
+        assert_eq!(batch.len(), 2, "Should have two columns (edge IDs and neighbor IDs)");
 
-        let neighbor_array: &VertexIdArray = batch[0].as_primitive();
+        let edge_id_array: &UInt64Array = batch[0].as_primitive();
+        let neighbor_array: &VertexIdArray = batch[1].as_primitive();
+        assert_eq!(edge_id_array.len(), 2, "Should have 2 edge IDs");
         assert_eq!(neighbor_array.len(), 2, "Should have 2 neighbors");
 
         let neighbors: Vec<u64> = neighbor_array.values().iter().copied().collect();
@@ -379,7 +387,10 @@ mod tests {
         assert!(first_batch.is_some(), "Should have at least one batch");
 
         let batch = first_batch.unwrap().unwrap();
-        let neighbor_array: &VertexIdArray = batch[0].as_primitive();
+        assert_eq!(batch.len(), 2, "Should have two columns (edge IDs and neighbor IDs)");
+        let edge_id_array: &UInt64Array = batch[0].as_primitive();
+        let neighbor_array: &VertexIdArray = batch[1].as_primitive();
+        assert_eq!(edge_id_array.len(), 1, "Should have 1 edge ID");
         assert_eq!(neighbor_array.len(), 1, "Should have 1 neighbor");
         assert_eq!(neighbor_array.value(0), 3, "Should be neighbor 3");
 
@@ -451,7 +462,7 @@ mod tests {
         while let Some(batch_result) = iter.next() {
             batch_count += 1;
             let batch = batch_result.unwrap();
-            let neighbor_array: &VertexIdArray = batch[0].as_primitive();
+            let neighbor_array: &VertexIdArray = batch[1].as_primitive(); // Second column is neighbor IDs
             total_neighbors += neighbor_array.len();
         }
 

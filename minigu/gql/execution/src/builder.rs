@@ -86,15 +86,15 @@ impl ExecutorBuilder {
                 let num_child_columns = child_schema.fields().len();
                 
                 // Expand adds new columns (as ListArray) that need to be flattened.
-                // Currently, ExpandSource returns 1 column (neighbor IDs), so we flatten
-                // the column at index num_child_columns.
+                // ExpandSource returns 2 columns: edge IDs and target vertex IDs
+                // We need to flatten both columns at indices num_child_columns and num_child_columns + 1
                 let expand_executor = child.expand(
                     expand.input_column_index,
                     Some(expand.edge_labels.clone()),
                     expand.target_vertex_labels.clone(),
                     container,
                 );
-                let column_indices_to_flatten: Vec<usize> = (num_child_columns..num_child_columns + 1).collect();
+                let column_indices_to_flatten: Vec<usize> = (num_child_columns..num_child_columns + 2).collect();
                 Box::new(expand_executor.flatten(column_indices_to_flatten))
             }
             PlanNode::PhysicalProject(project) => {
