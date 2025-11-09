@@ -193,13 +193,14 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
                         edges.iter().zip(vertices.iter().skip(1)).enumerate()
                     {
                         let (edge_var, edge_labels, direction) = edge_info;
-                        let (_next_var, next_labels) = next_vertex;
+                        let (next_var, next_labels) = next_vertex;
                         let expand = Expand::new(
                             current_plan.clone(),
                             0,
                             edge_labels.clone(),
                             Some(next_labels.clone()),
                             edge_var.clone(),
+                            Some(next_var.clone()),
                             direction.clone(),
                             graph_id,
                         );

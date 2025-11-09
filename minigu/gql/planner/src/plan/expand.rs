@@ -16,7 +16,8 @@ pub struct Expand {
     pub input_column_index: usize,
     pub edge_labels: Vec<Vec<LabelId>>,
     pub target_vertex_labels: Option<Vec<Vec<LabelId>>>,
-    pub output_var: Option<String>,
+    pub output_var: Option<String>, // Edge variable name (e.g., "f")
+    pub target_vertex_var: Option<String>, // Target vertex variable name (e.g., "n")
     pub direction: ExpandDirection,
     pub graph_id: GraphId,
 }
@@ -28,10 +29,47 @@ impl Expand {
         edge_labels: Vec<Vec<LabelId>>,
         target_vertex_labels: Option<Vec<Vec<LabelId>>>,
         output_var: Option<String>,
+        target_vertex_var: Option<String>,
         direction: ExpandDirection,
         graph_id: GraphId,
     ) -> Self {
-        let schema = child.schema().cloned();
+        use minigu_common::data_type::{DataField, DataSchema, LogicalType};
+        use std::sync::Arc;
+        
+        // Start with child's schema
+        let mut new_fields = if let Some(child_schema) = child.schema() {
+            child_schema.fields().to_vec()
+        } else {
+            Vec::new()
+        };
+        
+        // Add edge variable if specified
+        if let Some(edge_var) = &output_var {
+            // Check if edge variable already exists in schema
+            if !new_fields.iter().any(|f| f.name() == edge_var) {
+                let edge_field = DataField::new(
+                    edge_var.clone(),
+                    LogicalType::Edge(vec![DataField::new("id".into(), LogicalType::Int64, false)]),
+                    false,
+                );
+                new_fields.push(edge_field);
+            }
+        }
+        
+        // Add target vertex variable if specified
+        if let Some(vertex_var) = &target_vertex_var {
+            // Check if vertex variable already exists in schema
+            if !new_fields.iter().any(|f| f.name() == vertex_var) {
+                let vertex_field = DataField::new(
+                    vertex_var.clone(),
+                    LogicalType::Vertex(vec![DataField::new("id".into(), LogicalType::Int64, false)]),
+                    false,
+                );
+                new_fields.push(vertex_field);
+            }
+        }
+        
+        let schema = Some(Arc::new(DataSchema::new(new_fields)));
         let base = PlanBase {
             schema,
             children: vec![child],
@@ -42,6 +80,7 @@ impl Expand {
             edge_labels,
             target_vertex_labels,
             output_var,
+            target_vertex_var,
             direction,
             graph_id
         }
