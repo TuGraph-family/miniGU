@@ -3,13 +3,15 @@ use std::sync::Arc;
 use minigu_common::error::not_implemented;
 
 use crate::bound::{
-    BoundCompositeQueryStatement, BoundLinearQueryStatement, BoundOrderByAndPageStatement,
-    BoundResultStatement, BoundReturnStatement, BoundSimpleQueryStatement, BoundVectorIndexScan,
+    BoundCompositeQueryStatement, BoundLinearQueryStatement, BoundMatchStatement,
+    BoundOrderByAndPageStatement, BoundResultStatement, BoundReturnStatement,
+    BoundSimpleQueryStatement, BoundVectorIndexScan,
 };
 use crate::error::PlanResult;
 use crate::logical_planner::LogicalPlanner;
 use crate::plan::PlanNode;
 use crate::plan::limit::Limit;
+use crate::plan::logical_match::{LogicalMatch, MatchKind};
 use crate::plan::one_row::OneRow;
 use crate::plan::project::Project;
 use crate::plan::sort::Sort;
@@ -65,9 +67,26 @@ impl LogicalPlanner {
             BoundSimpleQueryStatement::Call(statement) => {
                 self.plan_call_procedure_statement(statement)
             }
+            BoundSimpleQueryStatement::Match(statement) => self.plan_match_statement(statement),
+
             BoundSimpleQueryStatement::VectorIndexScan(statement) => {
                 self.plan_vector_index_scan_statement(statement)
             }
+        }
+    }
+
+    pub fn plan_match_statement(&self, statement: BoundMatchStatement) -> PlanResult<PlanNode> {
+        match statement {
+            BoundMatchStatement::Simple(binding) => {
+                let node = LogicalMatch::new(
+                    MatchKind::Simple,
+                    binding.pattern,
+                    binding.yield_clause,
+                    binding.output_schema,
+                );
+                Ok(PlanNode::LogicalMatch(Arc::new(node)))
+            }
+            BoundMatchStatement::Optional => not_implemented("match statement optional", None),
         }
     }
 

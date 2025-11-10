@@ -17,7 +17,7 @@ use super::Binder;
 use super::error::{BindError, BindResult};
 use crate::bound::{
     BoundCompositeQueryStatement, BoundExpr, BoundLimitClause, BoundLinearQueryStatement,
-    BoundOrderByAndPageStatement, BoundQueryConjunction, BoundResultStatement,
+    BoundMatchStatement, BoundOrderByAndPageStatement, BoundQueryConjunction, BoundResultStatement,
     BoundReturnStatement, BoundSetOp, BoundSetOpKind, BoundSetQuantifier,
     BoundSimpleQueryStatement, BoundSortSpec, BoundVectorIndexScan,
 };
@@ -125,7 +125,10 @@ impl Binder<'_> {
         statement: &SimpleQueryStatement,
     ) -> BindResult<BoundSimpleQueryStatement> {
         match statement {
-            SimpleQueryStatement::Match(statement) => todo!(),
+            SimpleQueryStatement::Match(statement) => {
+                let statement = self.bind_match_statement(statement)?;
+                Ok(BoundSimpleQueryStatement::Match(statement))
+            }
             SimpleQueryStatement::Call(statement) => {
                 let statement = self.bind_call_procedure_statement(statement)?;
                 let schema = statement
@@ -164,9 +167,15 @@ impl Binder<'_> {
         not_implemented("vector index scan binding", None)
     }
 
-    pub fn bind_match_statement(&mut self, statement: &MatchStatement) -> BindResult<()> {
+    pub fn bind_match_statement(
+        &mut self,
+        statement: &MatchStatement,
+    ) -> BindResult<BoundMatchStatement> {
         match statement {
-            MatchStatement::Simple(table) => todo!(),
+            MatchStatement::Simple(table) => {
+                let stmt = self.bind_graph_pattern_binding_table(table.value())?;
+                Ok(BoundMatchStatement::Simple(stmt))
+            }
             MatchStatement::Optional(_) => not_implemented("optional match statement", None),
         }
     }

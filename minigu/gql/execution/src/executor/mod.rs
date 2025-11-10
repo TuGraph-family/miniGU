@@ -38,7 +38,8 @@ use crate::error::ExecutionResult;
 use crate::evaluator::BoxedEvaluator;
 use crate::executor::join::{JoinBuilder, JoinCond};
 use crate::executor::limit::LimitBuilder;
-use crate::source::{ExpandSource, VertexPropertySource};
+use crate::executor::vertex_scan::VertexScanBuilder;
+use crate::source::{ExpandSource, VertexPropertySource, VertexSource};
 
 pub type BoxedExecutor = Box<dyn Executor>;
 
@@ -102,6 +103,14 @@ pub trait Executor {
         S: VertexPropertySource,
     {
         VertexPropertyScanBuilder::new(self, input_column_index, source).into_executor()
+    }
+
+    fn scan_vertex<S>(self, source: S) -> impl Executor
+    where
+        Self: Sized,
+        S: VertexSource,
+    {
+        VertexScanBuilder::new(source).into_executor()
     }
 
     fn sort(self, specs: Vec<SortSpec>, max_chunk_size: usize) -> impl Executor

@@ -4,7 +4,9 @@ use minigu_common::types::{VectorIndexKey, VectorMetric};
 use serde::Serialize;
 
 use super::value_expr::BoundSetQuantifier;
-use crate::bound::{BoundCallProcedureStatement, BoundExpr, BoundProcedure};
+use crate::bound::{
+    BoundCallProcedureStatement, BoundExpr, BoundGraphPatternBindingTable, BoundProcedure,
+};
 
 #[derive(Debug, Clone, Serialize)]
 pub enum BoundCompositeQueryStatement {
@@ -105,10 +107,17 @@ pub struct BoundVectorIndexScan {
 #[derive(Debug, Clone, Serialize)]
 pub enum BoundSimpleQueryStatement {
     Call(BoundCallProcedureStatement),
+    Match(BoundMatchStatement),
     // TODO(minigu-vector-search): once MATCH binding lands, retain the MATCH-produced
     // candidate set (or bitmap) as input and append a VectorIndexScan to perform the
     // ANN/precise search.
     VectorIndexScan(BoundVectorIndexScan),
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub enum BoundMatchStatement {
+    Simple(BoundGraphPatternBindingTable),
+    Optional,
 }
 
 #[derive(Debug, Clone, Serialize)]

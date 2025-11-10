@@ -2,6 +2,7 @@ use std::any::Any;
 use std::fmt::Debug;
 use std::sync::Arc;
 
+use downcast_rs::{DowncastSync, impl_downcast};
 use minigu_common::data_type::{DataSchemaRef, LogicalType};
 use minigu_common::types::{LabelId, PropertyId};
 
@@ -36,7 +37,7 @@ pub trait DirectoryProvider: Debug + Send + Sync {
 }
 
 /// Represents a logical schema, which contains graphs and graph type definitions.
-pub trait SchemaProvider: Debug + Send + Sync {
+pub trait SchemaProvider: Debug + Send + Sync + DowncastSync {
     /// Returns the parent directory ID of the schema.
     fn parent(&self) -> Option<DirectoryRef>;
 
@@ -58,6 +59,8 @@ pub trait SchemaProvider: Debug + Send + Sync {
     /// Retrieves a procedure by its name.
     fn get_procedure(&self, name: &str) -> CatalogResult<Option<ProcedureRef>>;
 }
+
+impl_downcast!(sync SchemaProvider);
 
 /// Represents a graph, which is an instance of a graph type.
 ///

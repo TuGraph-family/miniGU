@@ -2,13 +2,10 @@
 members = [
     # Library API
     "minigu/core",
-
     # CLI client
     "minigu-cli",
-
     # End-to-end tests
     "minigu-test",
-
     # Internal
     "minigu/catalog",
     "minigu/common",

@@ -7,7 +7,7 @@ use crate::logical_planner::LogicalPlanner;
 use crate::optimizer::Optimizer;
 use crate::plan::PlanNode;
 
-mod binder;
+pub mod binder;
 pub mod bound;
 pub mod error;
 mod logical_planner;

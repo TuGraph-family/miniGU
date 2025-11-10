@@ -22,6 +22,10 @@ pub enum Error {
     #[error("rayon error")]
     Rayon(#[from] rayon::ThreadPoolBuildError),
 
+    #[error("session error")]
+    #[diagnostic(transparent)]
+    Session(#[from] minigu_context::error::Error),
+
     #[error("current session is closed")]
     SessionClosed,
 
