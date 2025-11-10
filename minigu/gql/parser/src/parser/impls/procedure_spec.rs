@@ -86,7 +86,7 @@ pub fn utility_statement(input: &mut TokenStream) -> ModalResult<Spanned<Utility
 pub fn explain_statement(input: &mut TokenStream) -> ModalResult<Spanned<ExplainStatement>> {
     seq! {ExplainStatement{
         _: TokenKind::Explain,
-        statement: statement.map(Box::new),
+        statement: statement.map(alloc::boxed::Box::new),
     }}
     .spanned()
     .parse_next(input)

@@ -20,7 +20,7 @@ pub struct Procedure {
 
 #[apply(base)]
 pub struct ExplainStatement {
-    pub statement: Box<Spanned<Statement>>,
+    pub statement: alloc::boxed::Box<Spanned<Statement>>,
     // reserved for future Utility operations
 }
 
