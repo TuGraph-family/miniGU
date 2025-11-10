@@ -8,6 +8,8 @@ use gql_parser::ast::{
 use gql_parser::parse_gql;
 use itertools::Itertools;
 use minigu_catalog::memory::schema::MemorySchemaCatalog;
+use minigu_common::data_chunk::DataChunk;
+use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 use minigu_common::error::not_implemented;
 use minigu_context::database::DatabaseContext;
 use minigu_context::session::SessionContext;
