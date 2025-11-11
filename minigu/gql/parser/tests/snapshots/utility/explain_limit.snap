@@ -30,25 +30,25 @@ Ok:
                                                                     Node:
                                                                       variable:
                                                                         - n
-                                                                        - start: 15
-                                                                          end: 16
+                                                                        - start: 14
+                                                                          end: 15
                                                                       label: ~
                                                                       predicate: ~
-                                                                - start: 14
-                                                                  end: 17
-                                                          - start: 14
-                                                            end: 17
-                                                      - start: 14
-                                                        end: 17
+                                                                - start: 13
+                                                                  end: 16
+                                                          - start: 13
+                                                            end: 16
+                                                      - start: 13
+                                                        end: 16
                                                   keep: ~
                                                   where_clause: ~
-                                                - start: 14
-                                                  end: 17
+                                                - start: 13
+                                                  end: 16
                                               yield_clause: []
-                                            - start: 14
-                                              end: 17
+                                            - start: 13
+                                              end: 16
                                       - start: 8
-                                        end: 17
+                                        end: 16
                                   result:
                                     - Return:
                                         statement:
@@ -57,29 +57,41 @@ Ok:
                                               - Items:
                                                   - - value:
                                                         - Variable: n
-                                                        - start: 25
-                                                          end: 26
+                                                        - start: 24
+                                                          end: 25
                                                       alias: ~
-                                                    - start: 25
-                                                      end: 26
-                                              - start: 25
-                                                end: 26
+                                                    - start: 24
+                                                      end: 25
+                                              - start: 24
+                                                end: 25
                                             group_by: ~
-                                          - start: 18
-                                            end: 26
-                                        order_by: ~
-                                    - start: 18
-                                      end: 26
+                                          - start: 17
+                                            end: 25
+                                        order_by:
+                                          - order_by: []
+                                            offset: ~
+                                            limit:
+                                              - count:
+                                                  Integer:
+                                                    kind: Decimal
+                                                    integer: "10"
+                                                approximate: false
+                                              - start: 26
+                                                end: 34
+                                          - start: 26
+                                            end: 34
+                                    - start: 17
+                                      end: 34
                         - start: 8
-                          end: 26
+                          end: 34
                 - start: 0
-                  end: 26
+                  end: 34
               next_statements: []
             - start: 0
-              end: 26
+              end: 34
           end: ~
       - start: 0
-        end: 26
+        end: 34
     session_close: false
   - start: 0
-    end: 26
+    end: 34

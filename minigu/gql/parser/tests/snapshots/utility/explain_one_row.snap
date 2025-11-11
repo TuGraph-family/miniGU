@@ -1,0 +1,60 @@
+---
+source: minigu/gql/parser/tests/parser_test.rs
+---
+Ok:
+  - activity:
+      - Transaction:
+          start: ~
+          procedure:
+            - at: ~
+              binding_variable_defs: []
+              statement:
+                - Utility:
+                    Explain:
+                      statement:
+                        - Query:
+                            Primary:
+                              Ambient:
+                                Parts:
+                                  parts: []
+                                  result:
+                                    - Return:
+                                        statement:
+                                          - quantifier: ~
+                                            items:
+                                              - Items:
+                                                  - - value:
+                                                        - Value:
+                                                            Literal:
+                                                              Numeric:
+                                                                Integer:
+                                                                  - kind: Decimal
+                                                                    integer: "1"
+                                                                  - start: 15
+                                                                    end: 16
+                                                        - start: 15
+                                                          end: 16
+                                                      alias: ~
+                                                    - start: 15
+                                                      end: 16
+                                              - start: 15
+                                                end: 16
+                                            group_by: ~
+                                          - start: 8
+                                            end: 16
+                                        order_by: ~
+                                    - start: 8
+                                      end: 16
+                        - start: 8
+                          end: 16
+                - start: 0
+                  end: 16
+              next_statements: []
+            - start: 0
+              end: 16
+          end: ~
+      - start: 0
+        end: 16
+    session_close: false
+  - start: 0
+    end: 16
