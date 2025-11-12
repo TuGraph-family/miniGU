@@ -1,12 +1,13 @@
 #[cfg(test)]
 pub(crate) mod mock;
 mod expand_source;
+mod property_scan_source;
 
 use std::sync::Arc;
 
 use arrow::array::ArrayRef;
 use auto_impl::auto_impl;
-use minigu_common::types::{LabelId, VertexId, VertexIdArray};
+use minigu_common::types::{LabelId, PropertyId, VertexId, VertexIdArray};
 
 use crate::error::ExecutionResult;
 use crate::executor::vertex_scan::VertexScanBuilder;
@@ -33,7 +34,7 @@ impl<I> VertexSource for I where I: Iterator<Item = VertexSourceOutput> {}
 /// A trait for sources that map vertex IDs to (multiple) property value columns.
 #[auto_impl(&, Box, Arc)]
 pub trait VertexPropertySource {
-    fn scan_vertex_properties(&self, vertices: &VertexIdArray) -> ExecutionResult<Vec<ArrayRef>>;
+    fn scan_vertex_properties(&self, vertices: &VertexIdArray, property_list: &Vec<PropertyId>) -> ExecutionResult<Vec<ArrayRef>>;
 }
 
 /// A trait for sources that map a vertex to its neighbors and (possibly) properties of the

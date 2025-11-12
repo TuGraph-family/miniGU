@@ -18,6 +18,9 @@ minigu-storage = { workspace = true }
 minigu-transaction = { workspace = true }
 rayon = { workspace = true }
 thiserror = { workspace = true }
+ordered-float = "5.0.0"
+temp-dir = { workspace = true }
+temp-file = {workspace = true}
 
 [lints]
 workspace = true

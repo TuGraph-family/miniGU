@@ -30,7 +30,7 @@ use factorized_filter::FactorizedFilterBuilder;
 use filter::FilterBuilder;
 use flatten::FlattenBuilder;
 use minigu_common::data_chunk::DataChunk;
-use minigu_common::types::LabelId;
+use minigu_common::types::{LabelId, PropertyId};
 use project::ProjectBuilder;
 use sort::{SortBuilder, SortSpec};
 use vertex_property_scan::VertexPropertyScanBuilder;
@@ -104,12 +104,12 @@ pub trait Executor {
         ExpandBuilder::new(self, input_column_index, edge_labels, target_vertex_labels, source).into_executor()
     }
 
-    fn scan_vertex_property<S>(self, input_column_index: usize, source: S) -> impl Executor
+    fn scan_vertex_property<S>(self, input_column_index: usize, properties: Vec<PropertyId>, source: S) -> impl Executor
     where
         Self: Sized,
         S: VertexPropertySource,
     {
-        VertexPropertyScanBuilder::new(self, input_column_index, source).into_executor()
+        VertexPropertyScanBuilder::new(self, input_column_index, properties, source).into_executor()
     }
 
     fn scan_vertex<S>(self, source: S) -> impl Executor

@@ -6,7 +6,6 @@ use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_storage::common::model::edge::Neighbor;
 use minigu_storage::iterators::AdjacencyIteratorTrait;
 use minigu_storage::tp::transaction::IsolationLevel;
-use minigu_storage::tp::MemoryGraph;
 use minigu_transaction::GraphTxnManager;
 
 use super::ExpandSource;
@@ -17,7 +16,6 @@ pub struct GraphExpandIter {
     neighbors: Vec<Neighbor>,
     offset: usize,
     batch_size: usize,
-    mem: Arc<MemoryGraph>,
     _graph_storage: GraphStorage,
     _txn: Arc<minigu_storage::tp::transaction::MemTransaction>,
 }
@@ -131,7 +129,6 @@ impl ExpandSource for GraphContainer {
             neighbors,
             offset: 0,
             batch_size: 64, // Default batch size
-            mem: Arc::clone(&mem),
             _graph_storage: match self.graph_storage() {
                 GraphStorage::Memory(m) => GraphStorage::Memory(Arc::clone(m)),
             },
