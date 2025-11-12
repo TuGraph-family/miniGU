@@ -47,4 +47,3 @@ name = "alloc"
 [[bench]]
 harness = false
 name = "parse"
-
