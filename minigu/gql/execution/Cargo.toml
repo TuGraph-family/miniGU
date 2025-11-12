@@ -16,11 +16,11 @@ minigu-context = { workspace = true }
 minigu-planner = { workspace = true }
 minigu-storage = { workspace = true }
 minigu-transaction = { workspace = true }
-rayon = { workspace = true }
-thiserror = { workspace = true }
 ordered-float = "5.0.0"
+rayon = { workspace = true }
 temp-dir = { workspace = true }
-temp-file = {workspace = true}
+temp-file = { workspace = true }
+thiserror = { workspace = true }
 
 [lints]
 workspace = true

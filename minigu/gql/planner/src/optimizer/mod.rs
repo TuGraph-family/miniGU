@@ -139,10 +139,10 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
                     if vertices.is_empty() {
                         return not_implemented("empty path patterns", None);
                     }
-                    let (first_var, first_lables) = vertices[0].clone();
+                    let (first_var, first_labels) = vertices[0].clone();
                     let mut current_plan = PlanNode::PhysicalNodeScan(Arc::new(NodeIdScan::new(
                         first_var.as_str(),
-                        first_lables,
+                        first_labels,
                         graph_id,
                     )));
                     for (edge_info, next_vertex) in edges.iter().zip(vertices.iter().skip(1)) {
