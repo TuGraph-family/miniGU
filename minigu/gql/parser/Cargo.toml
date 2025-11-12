@@ -48,6 +48,3 @@ name = "alloc"
 harness = false
 name = "parse"
 
-[[test]]
-name = "parser_test"
-required-features = ["std", "serde"]

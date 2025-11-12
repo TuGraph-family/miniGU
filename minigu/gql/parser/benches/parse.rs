@@ -18,12 +18,12 @@ mod antlr4 {
 }
 
 macro_rules! add_parser_bench {
-    ($dataset:expr, [ $($query:expr),* ]) => {
+    ($dataset:expr, [ $($query:expr),* ]) => {  
         paste! {
             $(
                 #[divan::bench]
                 fn [<parse_ $dataset _ $query>]() -> Spanned<Program> {
-                    let input = include_str!(concat!("../../../../resources/gql/", $dataset, "/", $query, ".gql"));
+                    let input = include_str!(concat!("../../../../minigu-test/resources/gql/", $dataset, "/", $query, ".gql"));
                     black_box(gql_parser::parse_gql(input).unwrap())
                 }
 

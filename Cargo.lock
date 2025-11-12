@@ -1502,11 +1502,13 @@ name = "minigu-context"
 version = "0.1.0"
 dependencies = [
  "gql-parser",
+ "miette",
  "minigu-catalog",
  "minigu-common",
  "minigu-storage",
  "minigu-transaction",
  "rayon",
+ "thiserror",
 ]
 
 [[package]]
@@ -1574,6 +1576,7 @@ name = "minigu-test"
 version = "0.1.0"
 dependencies = [
  "glob",
+ "gql-parser",
  "insta",
  "libtest-mimic",
  "minigu",

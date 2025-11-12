@@ -18,7 +18,7 @@ macro_rules! add_parser_tests {
                 #[test]
                 fn [<parse_ $dataset _ $query>]() {
                     let _guard = setup(concat!("snapshots/", $dataset));
-                    let query_str = include_str!(concat!("../../../../resources/gql/", $dataset, "/", $query, ".gql"));
+                    let query_str = include_str!(concat!("../resources/gql/", $dataset, "/", $query, ".gql"));
                     assert_yaml_snapshot!($query, parse_gql(query_str));
                 }
             )*

@@ -4,16 +4,35 @@ license.workspace = true
 name = "minigu-test"
 repository.workspace = true
 version.workspace = true
-
+ 
+[features]
+default = ["std"]
+std = []
+serde = []
+ 
 [dependencies]
 glob = { workspace = true }
+gql-parser = { workspace = true, features = ["std", "serde"] }
 libtest-mimic = { workspace = true }
 minigu = { workspace = true }
 sqllogictest = { workspace = true }
-
+ 
 [dev-dependencies]
 insta = { workspace = true }
 pastey = { workspace = true }
-
+ 
 [lints]
 workspace = true
+ 
+[[test]]
+name = "parser_tests"
+path = "parser/parser_test.rs"
+required-features = ["std", "serde"]
+ 
+[[test]]
+name = "e2e_test"
+path = "end2end/e2e_test.rs"
+ 
+[[test]]
+name = "sqllogictest"
+path = "end2end/sqllogictest.rs"
