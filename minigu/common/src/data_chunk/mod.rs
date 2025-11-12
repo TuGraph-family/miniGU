@@ -396,18 +396,15 @@ mod tests {
 
     #[test]
     fn test_debug_print() {
-        // Create a test data chunk
         let chunk = data_chunk!(
             (Int32, [1, 2, 3, 4, 5]),
             (Utf8, ["Alice", "Bob", "Carol", "David", "Eve"]),
             (Int64, [25, 30, 28, 32, 27])
         );
-
-        // Test debug_print without schema
+        
         println!("=== Debug print without schema ===");
         chunk.debug_print();
 
-        // Test debug_print with schema
         let schema = DataSchema::new(vec![
             DataField::new("id".to_string(), LogicalType::Int32, false),
             DataField::new("name".to_string(), LogicalType::String, false),
@@ -416,7 +413,6 @@ mod tests {
         println!("\n=== Debug print with schema ===");
         chunk.debug_print_with_schema(&schema);
 
-        // Test with filtered chunk
         let filtered_chunk = data_chunk!(
             { true, false, true, false, true },
             (Int32, [1, 2, 3, 4, 5]),

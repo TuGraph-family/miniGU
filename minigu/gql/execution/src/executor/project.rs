@@ -28,7 +28,6 @@ where
             let ProjectBuilder { child, evaluators } = self;
             for chunk in child.into_iter() {
                 let chunk = gen_try!(chunk);
-                chunk.debug_print();
                 let columns = gen_try!(
                     evaluators
                         .iter()

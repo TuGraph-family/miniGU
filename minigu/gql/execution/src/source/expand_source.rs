@@ -279,7 +279,7 @@ mod tests {
         // Create edges:
         // 1 -> 2 (FRIEND)
         // 1 -> 3 (FRIEND)
-        // 2 -> 3 (FRIEND)
+        // 2 -> 3(FRIEND)
         // (vertex 4 has no outgoing edges)
         let friend_label_id = LabelId::new(1).unwrap();
 
@@ -337,7 +337,7 @@ mod tests {
         assert!(result.is_some(), "Should return Some for existing vertex");
 
         let mut iter = result.unwrap();
-        // Should return an empty iterator (no neighbors)
+        // Should return an empty iterator
         assert!(iter.next().is_none(), "Should have no neighbors");
     }
 

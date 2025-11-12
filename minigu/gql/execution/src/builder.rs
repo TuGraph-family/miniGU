@@ -126,8 +126,7 @@ impl ExecutorBuilder {
                                 let vid_index = child_schema
                                     .get_field_index_by_name(var_name)
                                     .expect("variable should be present in child schema");
-
-                                // Get graph container
+                                
                                 let cur_schema = self
                                     .session
                                     .home_schema
@@ -160,8 +159,7 @@ impl ExecutorBuilder {
                                 } else {
                                     Vec::new()
                                 };
-
-                                // Add VertexPropertyScan with empty list to get all properties
+                                
                                 child_executor = Box::new(child_executor.scan_vertex_property(
                                     vid_index,
                                     property_list.clone(),

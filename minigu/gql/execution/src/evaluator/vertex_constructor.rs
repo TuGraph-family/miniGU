@@ -12,9 +12,9 @@ use crate::error::{ExecutionError, ExecutionResult};
 /// An evaluator that constructs a Vertex struct from vertex ID and property columns.
 /// This evaluator:
 /// 1. Takes a vertex ID column (VertexIdArray)
-/// 2. Retrieves label_id from storage for each vertex
+/// 2. Retrieves label_id
 /// 3. Takes property columns (already scanned)
-/// 4. Constructs a StructArray with vid, label_id, and properties
+/// 4. Constructs a StructArray with vid, label_id, and its properties
 #[derive(Debug)]
 pub struct VertexConstructor {
     /// Index of the vertex ID column
@@ -67,6 +67,7 @@ impl Evaluator for VertexConstructor {
             property_arrays.push(prop_column.clone());
         }
 
+        // TODO: Get label set from catalog if the label_specs is none.
         let label_id = if let Some(label_specs) = &self.label_specs {
             if let Some(first_label_set) = label_specs.first() {
                 if let Some(&id) = first_label_set.first() {
