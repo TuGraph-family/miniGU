@@ -18,7 +18,7 @@ mod antlr4 {
 }
 
 macro_rules! add_parser_bench {
-    ($dataset:expr, [ $($query:expr),* ]) => {  
+    ($dataset:expr, [ $($query:expr),* ]) => {
         paste! {
             $(
                 #[divan::bench]
