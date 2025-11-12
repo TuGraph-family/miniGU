@@ -24,30 +24,26 @@ use crate::error::{ExecutionError, ExecutionResult};
 pub struct VertexConstructor {
     /// Index of the vertex ID column
     vid_column_index: usize,
-    /// Indices of property columns (in order)
+    /// Indices of property columns
     property_column_indices: Vec<usize>,
-    /// Property names (in order, matching property_column_indices)
-    property_names: Vec<String>,
-    /// Graph container for retrieving vertex labels
+    /// Label specifications from schema (if available)
+    label_specs: Option<Vec<Vec<LabelId>>>,
+    /// Graph container for retrieving vertex labels (if label_specs not available)
     graph_container: Arc<GraphContainer>,
-    /// Vertex type fields (for constructing the struct)
-    vertex_fields: Vec<(String, LogicalType)>,
 }
 
 impl VertexConstructor {
     pub fn new(
         vid_column_index: usize,
         property_column_indices: Vec<usize>,
-        property_names: Vec<String>,
+        label_specs: Option<Vec<Vec<LabelId>>>,
         graph_container: Arc<GraphContainer>,
-        vertex_fields: Vec<(String, LogicalType)>,
     ) -> Self {
         Self {
             vid_column_index,
             property_column_indices,
-            property_names,
+            label_specs,
             graph_container,
-            vertex_fields,
         }
     }
 }
@@ -62,7 +58,7 @@ impl Evaluator for VertexConstructor {
                 std::io::ErrorKind::InvalidInput,
                 format!("Vertex ID column at index {} not found", self.vid_column_index),
             ))))?;
-        
+
         let vid_array: &VertexIdArray = vid_column.as_primitive();
         let len = vid_array.len();
 
@@ -78,40 +74,32 @@ impl Evaluator for VertexConstructor {
                 ))))?;
             property_arrays.push(prop_column.clone());
         }
-
-        // Retrieve label_id for each vertex
-        let mem = match self.graph_container.graph_storage() {
-            GraphStorage::Memory(m) => Arc::clone(m),
+        
+        let label_id = if let Some(label_specs) = &self.label_specs {
+            if let Some(first_label_set) = label_specs.first() {
+                if let Some(&id) = first_label_set.first() {
+                    u32::from(id)
+                } else {
+                    0
+                }
+            } else {
+                0
+            }
+        } else {
+            0
         };
-        let txn = mem
-            .txn_manager()
-            .begin_transaction(IsolationLevel::Serializable)
-            .map_err(|e| ExecutionError::Custom(Box::new(e)))?;
-
-        let mut label_ids = Vec::with_capacity(len);
-        for vid in vid_array.values().iter().copied() {
-            let vertex = mem
-                .get_vertex(&txn, vid)
-                .map_err(|e| ExecutionError::Custom(Box::new(e)))?;
-            label_ids.push(u32::from(vertex.label_id));
-        }
-
-        // Create label_id array
-        let label_array: ArrayRef = Arc::new(UInt32Array::from_iter_values(label_ids.iter().copied()));
-
-        // Build struct fields: [vid, label_id, ...properties]
+        
+        let label_array: ArrayRef = Arc::new(UInt32Array::from_iter_values(
+            std::iter::repeat(label_id).take(len)
+        ));
+        
         let mut struct_arrays = Vec::new();
         
-        // Add vid field (convert from VertexIdArray to UInt64Array)
         let vid_values: Vec<u64> = vid_array.values().iter().copied().collect();
         let vid_u64_array: ArrayRef = Arc::new(UInt64Array::from_iter_values(vid_values));
         struct_arrays.push(vid_u64_array);
         
-        // Add label_id field
         struct_arrays.push(label_array);
-        
-        // Add property fields
-        struct_arrays.extend(property_arrays);
 
         // Create StructArray
         // Build field definitions matching the LogicalType::Vertex structure
@@ -129,23 +117,25 @@ impl Evaluator for VertexConstructor {
             )),
         ];
         
-        // Add property fields
-        for (name, logical_type) in &self.vertex_fields {
+        for (idx, prop_array) in property_arrays.iter().enumerate() {
             let arrow_field = arrow::datatypes::Field::new(
-                name.clone(),
-                logical_type.to_arrow_data_type(),
+                format!("prop_{}", idx),
+                prop_array.data_type().clone(),
                 true, // properties can be null
             );
             struct_fields.push(Arc::new(arrow_field));
         }
 
+        struct_arrays.extend(property_arrays);
+        
         let struct_array = StructArray::new(
             Fields::from(struct_fields),
             struct_arrays,
-            None, // null buffer - all rows are valid
+            None,
         );
 
         Ok(DatumRef::new(Arc::new(struct_array), false))
     }
+    
 }
 

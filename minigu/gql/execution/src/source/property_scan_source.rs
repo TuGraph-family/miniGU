@@ -60,6 +60,24 @@ impl VertexPropertySource for GraphContainer {
             .begin_transaction(IsolationLevel::Serializable)
             .map_err(|e| ExecutionError::Custom(Box::new(e)))?;
 
+        // If property_list is empty, get all properties from the first vertex
+        let property_list = if property_list.is_empty() {
+            if let Some(&first_vid) = vertices.values().first() {
+                let sample_vertex = mem
+                    .get_vertex(&txn, first_vid)
+                    .map_err(|e| ExecutionError::Custom(Box::new(e)))?;
+                let num_properties = sample_vertex.properties().len();
+                (0..num_properties as u32)
+                    .map(PropertyId::from)
+                    .collect()
+            } else {
+                // No vertices, return empty list
+                Vec::new()
+            }
+        } else {
+            property_list.clone()
+        };
+
         let mut results = Vec::new();
 
         for prop_id in property_list.iter() {

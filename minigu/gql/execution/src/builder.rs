@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
 use arrow::array::{AsArray, Int32Array};
-use minigu_catalog::provider::SchemaProvider;
+use minigu_catalog::label_set::LabelSet;
+use minigu_catalog::provider::{GraphTypeProvider, SchemaProvider};
 use minigu_common::data_chunk::DataChunk;
-use minigu_common::data_type::{DataSchema, LogicalType};
+use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 use minigu_common::types::VertexIdArray;
 use minigu_context::graph::GraphContainer;
 use minigu_context::session::SessionContext;
@@ -100,13 +101,83 @@ impl ExecutorBuilder {
             }
             PlanNode::PhysicalProject(project) => {
                 assert_eq!(children.len(), 1);
-                let schema = children[0].schema().expect("child should have a schema");
+                let child_schema = children[0].schema().expect("child should have a schema");
+                let mut child_executor = self.build_executor(&children[0]);
+                let output_schema = physical_plan.schema().expect("there should be a schema");
+
+                let mut updated_schema = child_schema.clone();
+                
+                // Check if any expression is a Vertex type that needs properties
+                // If output type is Vertex, we need to scan properties
+                for expr in &project.exprs {
+                    if let LogicalType::Vertex(_) = &expr.logical_type {
+                        if let BoundExprKind::Variable(var_name) = &expr.kind {
+                            // Check child schema to see if this variable only has id (Int64)
+                            let child_field = child_schema
+                                .get_field_by_name(var_name)
+                                .expect("variable should be present in child schema");
+                            
+                            // If child schema only has id (Int64), need to add VertexPropertyScan
+                            if matches!(child_field.ty(), LogicalType::Int64) {
+                                let vid_index = child_schema
+                                    .get_field_index_by_name(var_name)
+                                    .expect("variable should be present in child schema");
+                                
+                                // Get graph container
+                                let cur_schema = self
+                                    .session
+                                    .home_schema
+                                    .as_ref()
+                                    .expect("there should be a home schema");
+                                let cur_graph = cur_schema
+                                    .get_graph("test".to_string().as_str())
+                                    .expect("there should be a test graph")
+                                    .unwrap();
+                                let container: Arc<GraphContainer> = cur_graph.downcast_arc::<GraphContainer>().unwrap();
+
+                                let property_list = if let Some(label_specs) = output_schema.get_var_label(var_name.as_str()) {
+                                    let graph_type = container.graph_type();
+                                    let mut property_ids = Vec::new();
+                                    if let Some(first_label_set) = label_specs.first() {
+                                        if let Ok(Some(vertex_type)) = graph_type.get_vertex_type(&LabelSet::from_iter(first_label_set.clone())) {
+                                            for (idx, _) in vertex_type.properties().iter().enumerate() {
+                                                property_ids.push(idx as u32);
+                                            }
+                                        }
+                                    }
+                                    property_ids
+                                } else {
+                                    Vec::new()
+                                };
+                                
+                                // Add VertexPropertyScan with empty list to get all properties
+                                child_executor = Box::new(
+                                    child_executor.scan_vertex_property(vid_index, property_list.clone(), container)
+                                );
+                                
+                                // Update schema: add property columns with __{var_name}_prop_{index} naming
+                                let mut new_fields = updated_schema.fields().to_vec();
+                                for (idx, _) in property_list.iter().enumerate() {
+                                    new_fields.push(DataField::new(
+                                        format!("__{}_prop_{}", var_name, idx),
+                                        LogicalType::String, // Type will be determined from actual data
+                                        true, // nullable
+                                    ));
+                                }
+                                updated_schema = Arc::new(DataSchema::new(new_fields));
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                // Build evaluators with updated schema
                 let evaluators = project
                     .exprs
                     .iter()
-                    .map(|e| self.build_evaluator(e, schema))
+                    .map(|e| self.build_evaluator(e, &updated_schema))
                     .collect();
-                Box::new(self.build_executor(&children[0]).project(evaluators))
+                Box::new(child_executor.project(evaluators))
             }
             PlanNode::PhysicalCall(call) => {
                 assert!(children.is_empty());
@@ -163,60 +234,41 @@ impl ExecutorBuilder {
             BoundExprKind::Value(value) => Box::new(Constant::new(value.clone())),
             BoundExprKind::Variable(variable) => {
                 // Check if this is a Vertex type that needs to be constructed
-                if let LogicalType::Vertex(vertex_fields) = &expr.logical_type {
+                if let LogicalType::Vertex(_vertex_fields) = &expr.logical_type {
                     // Find the vertex ID column
                     let vid_index = schema
                         .get_field_index_by_name(variable)
                         .expect("variable should be present in the schema");
-                    
-                    // Check if property columns exist in the schema
-                    // Properties should be appended after the vertex ID column by VertexPropertyScan
-                    let num_properties = vertex_fields.len();
-                    let mut property_indices = Vec::new();
-                    let mut property_names = Vec::new();
-                    
-                    // Properties are typically appended after the vertex column
-                    // We need to find them by checking if there are additional columns
-                    // For now, assume properties are at indices after vid_index
-                    // This is a simplified approach - in practice, you might need to track
-                    // which columns are properties more explicitly
-                    let start_prop_idx = vid_index + 1;
-                    if start_prop_idx + num_properties <= schema.fields().len() {
-                        for i in 0..num_properties {
-                            let prop_idx = start_prop_idx + i;
-                            if prop_idx < schema.fields().len() {
-                                property_indices.push(prop_idx);
-                                property_names.push(vertex_fields[i].name().to_string());
-                            }
+
+                    let cur_schema = self
+                        .session
+                        .home_schema
+                        .as_ref()
+                        .expect("there should be a home schema");
+                    let cur_graph = cur_schema
+                        .get_graph("test".to_string().as_str())
+                        .expect("there should be a test graph")
+                        .unwrap();
+                    let container: Arc<GraphContainer> = cur_graph.downcast_arc::<GraphContainer>().unwrap();
+
+                    let label_specs = schema.get_var_label(variable);
+
+                    let mut property_column_indices = Vec::new();
+                    for i in 0.. {
+                        let prop_name = format!("__{}_prop_{}", variable, i);
+                        if let Some(prop_idx) = schema.get_field_index_by_name(&prop_name) {
+                            property_column_indices.push(prop_idx);
+                        } else {
+                            break;
                         }
                     }
-                    
-                    // If we have properties, use VertexConstructor
-                    if !property_indices.is_empty() {
-                        let cur_schema = self
-                            .session
-                            .home_schema
-                            .as_ref()
-                            .expect("there should be a home schema");
-                        let cur_graph = cur_schema
-                            .get_graph("test".to_string().as_str())
-                            .expect("there should be a test graph")
-                            .unwrap();
-                        let container: Arc<GraphContainer> = cur_graph.downcast_arc::<GraphContainer>().unwrap();
-                        
-                        let vertex_fields_with_types: Vec<(String, LogicalType)> = vertex_fields
-                            .iter()
-                            .map(|f| (f.name().to_string(), f.ty().clone()))
-                            .collect();
-                        
-                        return Box::new(VertexConstructor::new(
-                            vid_index,
-                            property_indices,
-                            property_names,
-                            container,
-                            vertex_fields_with_types,
-                        ));
-                    }
+
+                    return Box::new(VertexConstructor::new(
+                        vid_index,
+                        property_column_indices,
+                        label_specs,
+                        container,
+                    ));
                 }
                 
                 // Default: just return the column reference

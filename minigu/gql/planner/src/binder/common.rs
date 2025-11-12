@@ -7,10 +7,47 @@ use gql_parser::ast::{
 use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 use minigu_common::error::not_implemented;
 use smol_str::ToSmolStr;
-
+use minigu_common::types::LabelId;
 use super::error::{BindError, BindResult};
 use crate::binder::Binder;
 use crate::bound::{BoundEdgePattern, BoundEdgePatternKind, BoundElementPattern, BoundExpr, BoundGraphPattern, BoundGraphPatternBindingTable, BoundLabelExpr, BoundMatchMode, BoundPathMode, BoundPathPattern, BoundPathPatternExpr, BoundVertexPattern};
+use crate::bound::BoundLabelExpr::Any;
+
+pub fn lower_label_expr_to_specs(expr: &BoundLabelExpr) -> Vec<Vec<LabelId>> {
+    use BoundLabelExpr::*;
+    match expr {
+        Any => vec![vec![]],
+        Label(id) => vec![vec![*id]],
+
+        // Disjunction => concatenate routes
+        Disjunction(lhs, rhs) => {
+            let mut a = lower_label_expr_to_specs(lhs);
+            let mut b = lower_label_expr_to_specs(rhs);
+            a.append(&mut b);
+            a
+        }
+
+        // Conjunction => distributive product of routes, merging inner AND sets
+        Conjunction(lhs, rhs) => {
+            let left = lower_label_expr_to_specs(lhs);
+            let right = lower_label_expr_to_specs(rhs);
+            let mut out: Vec<Vec<LabelId>> = Vec::with_capacity(left.len() * right.len());
+            for l in &left {
+                for r in &right {
+                    let mut merged = Vec::with_capacity(l.len() + r.len());
+                    merged.extend_from_slice(l);
+                    merged.extend_from_slice(r);
+                    merged.sort_unstable();
+                    merged.dedup();
+                    out.push(merged);
+                }
+            }
+            out
+        }
+        Negation(_) => Vec::new(),
+    }
+}
+
 
 impl Binder<'_> {
     pub fn bind_graph_pattern_binding_table(
@@ -210,11 +247,20 @@ impl Binder<'_> {
             Some(sp) => Some(self.bind_label_expr(sp.value())?),
             None => None,
         };
+        
+        let label_set = if label.is_some() {
+            lower_label_expr_to_specs(&label.unwrap())
+        } else {
+            vec![vec![]]
+        };
+        
+        self.register_variable_labels(var.as_str(), &label_set);
+        
         let kind: BoundEdgePatternKind = BoundEdgePatternKind::from(kind);
         Ok(BoundEdgePattern {
             var: Some(var),
             kind,
-            label,
+            label:label_set,
             predicate: None,
         })
     }
@@ -241,13 +287,22 @@ impl Binder<'_> {
             Some(sp) => Some(self.bind_label_expr(sp.value())?),
             None => None,
         };
+        let label_set = if label.is_some() {
+            lower_label_expr_to_specs(&label.unwrap())
+        } else {
+            vec![vec![]]
+        };
+        
+        self.register_variable_labels(var.as_str(), &label_set);
+        
         let predicate = match &f.predicate {
             None => None,
             Some(sp) => None,
         };
+        
         Ok(BoundVertexPattern {
             var,
-            label,
+            label:label_set,
             predicate,
         })
     }
@@ -281,7 +336,22 @@ impl Binder<'_> {
             Ok(())
         }
     }
+    
+    pub fn register_variable_labels(
+        &mut self,
+        name: &str,
+        labels: &Vec<Vec<LabelId>>,
+    ) -> BindResult<()> {
+        if self.active_data_schema.is_none() {
+            return Err(BindError::Unexpected);
+        }
+        let mut schema = self.active_data_schema.clone().expect("schema should be initialized");
+        schema.set_var_label(name.to_string(), labels.clone());
+        Ok(())
+    }
 }
+
+
 
 pub fn bind_path_pattern_prefix(prefix: &PathPatternPrefix) -> BindResult<BoundPathMode> {
     match prefix {

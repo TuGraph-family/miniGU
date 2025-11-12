@@ -3,7 +3,8 @@ use std::sync::Arc;
 use itertools::Itertools;
 use minigu_common::error::not_implemented;
 use minigu_common::types::{GraphId, LabelId};
-
+use crate::binder::Binder;
+use crate::binder::common::lower_label_expr_to_specs;
 use crate::bound::{
     BoundEdgePatternKind, BoundElementPattern, BoundGraphPattern, BoundLabelExpr,
     BoundPathPatternExpr, PathPatternInfo,
@@ -44,41 +45,6 @@ fn extract_path_pattern_from_graph_pattern(
     extract_path_pattern(&g.paths[0].expr, graph_id)
 }
 
-fn lower_label_expr_to_specs(expr: &BoundLabelExpr) -> PlanResult<Vec<Vec<LabelId>>> {
-    use BoundLabelExpr::*;
-    match expr {
-        Any => Ok(vec![vec![]]),
-        Label(id) => Ok(vec![vec![*id]]),
-
-        // Disjunction => concatenate routes
-        Disjunction(lhs, rhs) => {
-            let mut a = lower_label_expr_to_specs(lhs)?;
-            let mut b = lower_label_expr_to_specs(rhs)?;
-            a.append(&mut b);
-            Ok(a)
-        }
-
-        // Conjunction => distributive product of routes, merging inner AND sets
-        Conjunction(lhs, rhs) => {
-            let left = lower_label_expr_to_specs(lhs)?;
-            let right = lower_label_expr_to_specs(rhs)?;
-            let mut out: Vec<Vec<LabelId>> = Vec::with_capacity(left.len() * right.len());
-            for l in &left {
-                for r in &right {
-                    let mut merged = Vec::with_capacity(l.len() + r.len());
-                    merged.extend_from_slice(l);
-                    merged.extend_from_slice(r);
-                    merged.sort_unstable();
-                    merged.dedup();
-                    out.push(merged);
-                }
-            }
-            Ok(out)
-        }
-        Negation(_) => not_implemented("label negation is not supported yet", None),
-    }
-}
-
 fn extract_path_pattern(
     expr: &BoundPathPatternExpr,
     graph_id: GraphId,
@@ -87,10 +53,7 @@ fn extract_path_pattern(
     match expr {
         Pattern(BoundElementPattern::Vertex(v)) => {
             let var = v.var.clone();
-            let label_specs: Vec<Vec<LabelId>> = match &v.label {
-                None => vec![vec![]],
-                Some(lbl) => lower_label_expr_to_specs(lbl)?,
-            };
+            let label_specs: Vec<Vec<LabelId>> = v.label.clone();
             Ok(PathPatternInfo::SingleVertex {
                 var,
                 label_specs,
@@ -107,17 +70,11 @@ fn extract_path_pattern(
                 match part {
                     Pattern(BoundElementPattern::Vertex(v)) => {
                         let var = v.var.clone();
-                        let label_specs: Vec<Vec<LabelId>> = match &v.label {
-                            None => vec![vec![]],
-                            Some(lbl) => lower_label_expr_to_specs(lbl)?,
-                        };
+                        let label_specs: Vec<Vec<LabelId>> = v.label.clone();
                         vertices.push((var, label_specs));
                     }
                     Pattern(BoundElementPattern::Edge(e)) => {
-                        let edge_labels: Vec<Vec<LabelId>> = match &e.label {
-                            None => vec![vec![]],
-                            Some(lbl) => lower_label_expr_to_specs(lbl)?,
-                        };
+                        let edge_labels: Vec<Vec<LabelId>> = e.label.clone();
                         let direction = match e.kind {
                             BoundEdgePatternKind::Right => ExpandDirection::Outgoing,
                             BoundEdgePatternKind::Left => ExpandDirection::Incoming,

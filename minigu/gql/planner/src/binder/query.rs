@@ -8,19 +8,14 @@ use gql_parser::ast::{
     SimpleQueryStatement, SortSpec,
 };
 use itertools::Itertools;
-use minigu_common::data_type::{DataField, DataSchema, DataSchemaRef};
+use minigu_common::data_type::{DataField, DataSchema, DataSchemaRef, LogicalType};
 use minigu_common::error::not_implemented;
 use minigu_common::ordering::{NullOrdering, SortOrdering};
 use minigu_common::types::{VectorIndexKey, VectorMetric};
 
 use super::Binder;
 use super::error::{BindError, BindResult};
-use crate::bound::{
-    BoundCompositeQueryStatement, BoundExpr, BoundLimitClause, BoundLinearQueryStatement,
-    BoundMatchStatement, BoundOrderByAndPageStatement, BoundQueryConjunction, BoundResultStatement,
-    BoundReturnStatement, BoundSetOp, BoundSetOpKind, BoundSetQuantifier,
-    BoundSimpleQueryStatement, BoundSortSpec, BoundVectorIndexScan,
-};
+use crate::bound::{BoundCompositeQueryStatement, BoundExpr, BoundExprKind, BoundLimitClause, BoundLinearQueryStatement, BoundMatchStatement, BoundOrderByAndPageStatement, BoundQueryConjunction, BoundResultStatement, BoundReturnStatement, BoundSetOp, BoundSetOpKind, BoundSetQuantifier, BoundSimpleQueryStatement, BoundSortSpec, BoundVectorIndexScan};
 
 impl Binder<'_> {
     pub fn bind_composite_query_statement(
@@ -226,6 +221,7 @@ impl Binder<'_> {
             Return::Items(items) => {
                 let mut fields = Vec::new();
                 let mut exprs = Vec::new();
+                let mut schema = DataSchema::new(Vec::new());
                 for item in items {
                     let item = item.value();
                     let expr = self.bind_value_expression(item.value.value())?;
@@ -239,9 +235,24 @@ impl Binder<'_> {
                         expr.logical_type.clone(),
                         expr.nullable,
                     ));
+
+                    if let LogicalType::Vertex(_) = &expr.logical_type {
+                        if let BoundExprKind::Variable(var_name) = &expr.kind    {
+                            if let Some(active_schema) = &self.active_data_schema {
+                                if let Some(label_set) = active_schema.get_var_label(var_name) {
+                                    schema.set_var_label(var_name.clone(), label_set);
+                                }
+                            }
+                        }
+                    }
                     exprs.push(expr);
                 }
-                let schema = Arc::new(DataSchema::new(fields));
+                for field in &fields {
+                    schema.push_back(&field);
+                }
+                let schema = Arc::new(schema);
+                
+                
                 Ok((Some(exprs), schema))
             }
             Return::All => {
