@@ -14,6 +14,7 @@ use crate::evaluator::BoxedEvaluator;
 use crate::evaluator::column_ref::ColumnRef;
 use crate::evaluator::constant::Constant;
 use crate::evaluator::vector_distance::VectorDistanceEvaluator;
+use crate::evaluator::vertex_constructor::VertexConstructor;
 use crate::executor::procedure_call::ProcedureCallBuilder;
 use crate::executor::sort::SortSpec;
 use crate::executor::vector_index_scan::VectorIndexScanBuilder;
@@ -161,6 +162,64 @@ impl ExecutorBuilder {
         match &expr.kind {
             BoundExprKind::Value(value) => Box::new(Constant::new(value.clone())),
             BoundExprKind::Variable(variable) => {
+                // Check if this is a Vertex type that needs to be constructed
+                if let LogicalType::Vertex(vertex_fields) = &expr.logical_type {
+                    // Find the vertex ID column
+                    let vid_index = schema
+                        .get_field_index_by_name(variable)
+                        .expect("variable should be present in the schema");
+                    
+                    // Check if property columns exist in the schema
+                    // Properties should be appended after the vertex ID column by VertexPropertyScan
+                    let num_properties = vertex_fields.len();
+                    let mut property_indices = Vec::new();
+                    let mut property_names = Vec::new();
+                    
+                    // Properties are typically appended after the vertex column
+                    // We need to find them by checking if there are additional columns
+                    // For now, assume properties are at indices after vid_index
+                    // This is a simplified approach - in practice, you might need to track
+                    // which columns are properties more explicitly
+                    let start_prop_idx = vid_index + 1;
+                    if start_prop_idx + num_properties <= schema.fields().len() {
+                        for i in 0..num_properties {
+                            let prop_idx = start_prop_idx + i;
+                            if prop_idx < schema.fields().len() {
+                                property_indices.push(prop_idx);
+                                property_names.push(vertex_fields[i].name().to_string());
+                            }
+                        }
+                    }
+                    
+                    // If we have properties, use VertexConstructor
+                    if !property_indices.is_empty() {
+                        let cur_schema = self
+                            .session
+                            .home_schema
+                            .as_ref()
+                            .expect("there should be a home schema");
+                        let cur_graph = cur_schema
+                            .get_graph("test".to_string().as_str())
+                            .expect("there should be a test graph")
+                            .unwrap();
+                        let container: Arc<GraphContainer> = cur_graph.downcast_arc::<GraphContainer>().unwrap();
+                        
+                        let vertex_fields_with_types: Vec<(String, LogicalType)> = vertex_fields
+                            .iter()
+                            .map(|f| (f.name().to_string(), f.ty().clone()))
+                            .collect();
+                        
+                        return Box::new(VertexConstructor::new(
+                            vid_index,
+                            property_indices,
+                            property_names,
+                            container,
+                            vertex_fields_with_types,
+                        ));
+                    }
+                }
+                
+                // Default: just return the column reference
                 let index = schema
                     .get_field_index_by_name(variable)
                     .expect("variable should be present in the schema");

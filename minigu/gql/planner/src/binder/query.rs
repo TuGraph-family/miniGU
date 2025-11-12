@@ -208,6 +208,7 @@ impl Binder<'_> {
         &self,
         statement: &ReturnStatement,
     ) -> BindResult<BoundReturnStatement> {
+        println!("{:?}", statement);
         let quantifier = statement
             .quantifier
             .as_ref()
