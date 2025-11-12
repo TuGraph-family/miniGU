@@ -1,3 +1,5 @@
+extern crate alloc;
+
 use winnow::combinator::{alt, delimited, dispatch, fail, opt, peek, repeat, seq};
 use winnow::{ModalResult, Parser};
 
@@ -72,7 +74,21 @@ pub fn statement(input: &mut TokenStream) -> ModalResult<Spanned<Statement>> {
             .map(Statement::Catalog)
             .spanned(),
         linear_data_modifying_statement.map_inner(Statement::Data),
+        utility_statement.map_inner(Statement::Utility),
     ))
+    .parse_next(input)
+}
+
+pub fn utility_statement(input: &mut TokenStream) -> ModalResult<Spanned<UtilityStatement>> {
+    alt((explain_statement.map_inner(UtilityStatement::Explain), fail)).parse_next(input)
+}
+
+pub fn explain_statement(input: &mut TokenStream) -> ModalResult<Spanned<ExplainStatement>> {
+    seq! {ExplainStatement{
+        _: TokenKind::Explain,
+        statement: statement.map(alloc::boxed::Box::new),
+    }}
+    .spanned()
     .parse_next(input)
 }
 

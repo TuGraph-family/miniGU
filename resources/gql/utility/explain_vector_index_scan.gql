@@ -1,0 +1,4 @@
+MATCH (a:Articles)
+RETURN VECTOR_DISTANCE([0.1, 0.2, 0.3], a.article_vector, L2) AS distance
+ORDER BY distance
+LIMIT 10;

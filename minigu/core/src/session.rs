@@ -8,6 +8,8 @@ use gql_parser::ast::{
 use gql_parser::parse_gql;
 use itertools::Itertools;
 use minigu_catalog::memory::schema::MemorySchemaCatalog;
+use minigu_common::data_chunk::DataChunk;
+use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 use minigu_common::error::not_implemented;
 use minigu_context::database::DatabaseContext;
 use minigu_context::session::SessionContext;
@@ -126,13 +128,39 @@ impl Session {
 
         let start = Instant::now();
         let planner = Planner::new(self.context.clone());
-        let physical_plan = planner.plan_query(procedure)?;
+        let plan = planner.plan_query(procedure)?;
+        if matches!(
+            plan,
+            minigu_planner::plan::PlanNode::LogicalMatch(_)
+                | minigu_planner::plan::PlanNode::LogicalFilter(_)
+                | minigu_planner::plan::PlanNode::LogicalProject(_)
+                | minigu_planner::plan::PlanNode::LogicalSort(_)
+                | minigu_planner::plan::PlanNode::LogicalLimit(_)
+                | minigu_planner::plan::PlanNode::LogicalCall(_)
+                | minigu_planner::plan::PlanNode::LogicalOneRow(_)
+        ) {
+            let schema = Some(Arc::new(DataSchema::new(vec![DataField::new(
+                "EXPLAIN".to_string(),
+                LogicalType::String,
+                false,
+            )])));
+
+            let chunks = vec![DataChunk::new(vec![Arc::new(
+                arrow::array::StringArray::from(vec![plan.explain(0).unwrap_or_default()]),
+            )])];
+
+            return Ok(QueryResult {
+                schema,
+                metrics: QueryMetrics::default(),
+                chunks,
+            });
+        }
         metrics.planning_time = start.elapsed();
 
-        let schema = physical_plan.schema().cloned();
+        let schema = plan.schema().cloned();
         let start = Instant::now();
         let chunks: Vec<_> = self.context.database().runtime().scope(|_| {
-            let mut executor = ExecutorBuilder::new(self.context.clone()).build(&physical_plan);
+            let mut executor = ExecutorBuilder::new(self.context.clone()).build(&plan);
             executor.into_iter().try_collect()
         })?;
         metrics.execution_time = start.elapsed();
