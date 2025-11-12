@@ -33,16 +33,17 @@ impl Expand {
         direction: ExpandDirection,
         graph_id: GraphId,
     ) -> Self {
-        use minigu_common::data_type::{DataField, DataSchema, LogicalType};
         use std::sync::Arc;
-        
+
+        use minigu_common::data_type::{DataField, DataSchema, LogicalType};
+
         // Start with child's schema
         let mut new_fields = if let Some(child_schema) = child.schema() {
             child_schema.fields().to_vec()
         } else {
             Vec::new()
         };
-        
+
         // Add edge variable if specified
         if let Some(edge_var) = &output_var {
             // Check if edge variable already exists in schema
@@ -55,20 +56,24 @@ impl Expand {
                 new_fields.push(edge_field);
             }
         }
-        
+
         // Add target vertex variable if specified
         if let Some(vertex_var) = &target_vertex_var {
             // Check if vertex variable already exists in schema
             if !new_fields.iter().any(|f| f.name() == vertex_var) {
                 let vertex_field = DataField::new(
                     vertex_var.clone(),
-                    LogicalType::Vertex(vec![DataField::new("id".into(), LogicalType::Int64, false)]),
+                    LogicalType::Vertex(vec![DataField::new(
+                        "id".into(),
+                        LogicalType::Int64,
+                        false,
+                    )]),
                     false,
                 );
                 new_fields.push(vertex_field);
             }
         }
-        
+
         let schema = Some(Arc::new(DataSchema::new(new_fields)));
         let base = PlanBase {
             schema,
@@ -82,11 +87,13 @@ impl Expand {
             output_var,
             target_vertex_var,
             direction,
-            graph_id
+            graph_id,
         }
     }
 }
 
 impl PlanData for Expand {
-    fn base(&self) -> &PlanBase { &self.base }
+    fn base(&self) -> &PlanBase {
+        &self.base
+    }
 }

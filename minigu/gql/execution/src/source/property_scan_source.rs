@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use arrow::array::{
-    ArrayRef, BooleanArray, Float32Array, Float64Array, Int16Array, Int32Array, Int64Array,
-    Int8Array, UInt16Array, UInt32Array, UInt64Array, UInt8Array,
+    ArrayRef, BooleanArray, Float32Array, Float64Array, Int8Array, Int16Array, Int32Array,
+    Int64Array, UInt8Array, UInt16Array, UInt32Array, UInt64Array,
 };
 use minigu_common::types::{PropertyId, VertexIdArray};
 use minigu_common::value::ScalarValue;
@@ -67,9 +67,7 @@ impl VertexPropertySource for GraphContainer {
                     .get_vertex(&txn, first_vid)
                     .map_err(|e| ExecutionError::Custom(Box::new(e)))?;
                 let num_properties = sample_vertex.properties().len();
-                (0..num_properties as u32)
-                    .map(PropertyId::from)
-                    .collect()
+                (0..num_properties as u32).map(PropertyId::from).collect()
             } else {
                 // No vertices, return empty list
                 Vec::new()
@@ -177,8 +175,8 @@ mod tests {
     use minigu_context::graph::{GraphContainer, GraphStorage};
     use minigu_storage::common::graph_wal::WalManagerConfig;
     use minigu_storage::common::{PropertyRecord, Vertex};
-    use minigu_storage::tp::checkpoint::CheckpointManagerConfig;
     use minigu_storage::tp::MemoryGraph;
+    use minigu_storage::tp::checkpoint::CheckpointManagerConfig;
     use minigu_transaction::{IsolationLevel, Transaction};
 
     use super::*;

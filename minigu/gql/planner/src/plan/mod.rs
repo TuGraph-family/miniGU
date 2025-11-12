@@ -1,4 +1,5 @@
 pub mod call;
+pub mod expand;
 pub mod filter;
 pub mod limit;
 pub mod logical_match;
@@ -7,7 +8,6 @@ pub mod project;
 pub mod scan;
 pub mod sort;
 pub mod vector_index_scan;
-pub mod expand;
 
 use std::sync::Arc;
 

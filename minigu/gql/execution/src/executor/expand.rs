@@ -112,7 +112,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use arrow::array::{create_array, ArrayRef, ListBuilder, StringBuilder, UInt64Builder};
+    use arrow::array::{ArrayRef, ListBuilder, StringBuilder, UInt64Builder, create_array};
     use arrow::datatypes::DataType;
     use minigu_common::data_chunk;
     use minigu_common::data_chunk::DataChunk;

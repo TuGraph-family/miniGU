@@ -15,7 +15,12 @@ use minigu_common::types::{VectorIndexKey, VectorMetric};
 
 use super::Binder;
 use super::error::{BindError, BindResult};
-use crate::bound::{BoundCompositeQueryStatement, BoundExpr, BoundExprKind, BoundLimitClause, BoundLinearQueryStatement, BoundMatchStatement, BoundOrderByAndPageStatement, BoundQueryConjunction, BoundResultStatement, BoundReturnStatement, BoundSetOp, BoundSetOpKind, BoundSetQuantifier, BoundSimpleQueryStatement, BoundSortSpec, BoundVectorIndexScan};
+use crate::bound::{
+    BoundCompositeQueryStatement, BoundExpr, BoundExprKind, BoundLimitClause,
+    BoundLinearQueryStatement, BoundMatchStatement, BoundOrderByAndPageStatement,
+    BoundQueryConjunction, BoundResultStatement, BoundReturnStatement, BoundSetOp, BoundSetOpKind,
+    BoundSetQuantifier, BoundSimpleQueryStatement, BoundSortSpec, BoundVectorIndexScan,
+};
 
 impl Binder<'_> {
     pub fn bind_composite_query_statement(
@@ -237,7 +242,7 @@ impl Binder<'_> {
                     ));
 
                     if let LogicalType::Vertex(_) = &expr.logical_type {
-                        if let BoundExprKind::Variable(var_name) = &expr.kind    {
+                        if let BoundExprKind::Variable(var_name) = &expr.kind {
                             if let Some(active_schema) = &self.active_data_schema {
                                 if let Some(label_set) = active_schema.get_var_label(var_name) {
                                     schema.set_var_label(var_name.clone(), label_set);
@@ -251,8 +256,7 @@ impl Binder<'_> {
                     schema.push_back(&field);
                 }
                 let schema = Arc::new(schema);
-                
-                
+
                 Ok((Some(exprs), schema))
             }
             Return::All => {

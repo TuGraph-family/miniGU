@@ -62,7 +62,8 @@ impl ExecutorBuilder {
                     .get_graph("test".to_string().as_str())
                     .expect("there should be a test graph")
                     .unwrap();
-                let container: Arc<GraphContainer> = cur_graph.downcast_arc::<GraphContainer>().unwrap();
+                let container: Arc<GraphContainer> =
+                    cur_graph.downcast_arc::<GraphContainer>().unwrap();
                 let batches = container
                     .vertex_source(&Some(_node_scan.labels.clone()), 1024)
                     .expect("failed to create vertex source");
@@ -81,22 +82,25 @@ impl ExecutorBuilder {
                     .get_graph("test".to_string().as_str())
                     .expect("there should be a test graph")
                     .unwrap();
-                let container: Arc<GraphContainer> = cur_graph.downcast_arc::<GraphContainer>().unwrap();
-                
+                let container: Arc<GraphContainer> =
+                    cur_graph.downcast_arc::<GraphContainer>().unwrap();
+
                 // Get the number of columns before expand
                 let child_schema = children[0].schema().expect("child should have a schema");
                 let num_child_columns = child_schema.fields().len();
-                
+
                 // Expand adds new columns (as ListArray) that need to be flattened.
                 // ExpandSource returns 2 columns: edge IDs and target vertex IDs
-                // We need to flatten both columns at indices num_child_columns and num_child_columns + 1
+                // We need to flatten both columns at indices num_child_columns and
+                // num_child_columns + 1
                 let expand_executor = child.expand(
                     expand.input_column_index,
                     Some(expand.edge_labels.clone()),
                     expand.target_vertex_labels.clone(),
                     container,
                 );
-                let column_indices_to_flatten: Vec<usize> = (num_child_columns..num_child_columns + 2).collect();
+                let column_indices_to_flatten: Vec<usize> =
+                    (num_child_columns..num_child_columns + 2).collect();
                 Box::new(expand_executor.flatten(column_indices_to_flatten))
             }
             PlanNode::PhysicalProject(project) => {
@@ -106,7 +110,7 @@ impl ExecutorBuilder {
                 let output_schema = physical_plan.schema().expect("there should be a schema");
 
                 let mut updated_schema = child_schema.clone();
-                
+
                 // Check if any expression is a Vertex type that needs properties
                 // If output type is Vertex, we need to scan properties
                 for expr in &project.exprs {
@@ -116,13 +120,13 @@ impl ExecutorBuilder {
                             let child_field = child_schema
                                 .get_field_by_name(var_name)
                                 .expect("variable should be present in child schema");
-                            
+
                             // If child schema only has id (Int64), need to add VertexPropertyScan
                             if matches!(child_field.ty(), LogicalType::Int64) {
                                 let vid_index = child_schema
                                     .get_field_index_by_name(var_name)
                                     .expect("variable should be present in child schema");
-                                
+
                                 // Get graph container
                                 let cur_schema = self
                                     .session
@@ -133,14 +137,21 @@ impl ExecutorBuilder {
                                     .get_graph("test".to_string().as_str())
                                     .expect("there should be a test graph")
                                     .unwrap();
-                                let container: Arc<GraphContainer> = cur_graph.downcast_arc::<GraphContainer>().unwrap();
+                                let container: Arc<GraphContainer> =
+                                    cur_graph.downcast_arc::<GraphContainer>().unwrap();
 
-                                let property_list = if let Some(label_specs) = output_schema.get_var_label(var_name.as_str()) {
+                                let property_list = if let Some(label_specs) =
+                                    output_schema.get_var_label(var_name.as_str())
+                                {
                                     let graph_type = container.graph_type();
                                     let mut property_ids = Vec::new();
                                     if let Some(first_label_set) = label_specs.first() {
-                                        if let Ok(Some(vertex_type)) = graph_type.get_vertex_type(&LabelSet::from_iter(first_label_set.clone())) {
-                                            for (idx, _) in vertex_type.properties().iter().enumerate() {
+                                        if let Ok(Some(vertex_type)) = graph_type.get_vertex_type(
+                                            &LabelSet::from_iter(first_label_set.clone()),
+                                        ) {
+                                            for (idx, _) in
+                                                vertex_type.properties().iter().enumerate()
+                                            {
                                                 property_ids.push(idx as u32);
                                             }
                                         }
@@ -149,18 +160,22 @@ impl ExecutorBuilder {
                                 } else {
                                     Vec::new()
                                 };
-                                
+
                                 // Add VertexPropertyScan with empty list to get all properties
-                                child_executor = Box::new(
-                                    child_executor.scan_vertex_property(vid_index, property_list.clone(), container)
-                                );
-                                
-                                // Update schema: add property columns with __{var_name}_prop_{index} naming
+                                child_executor = Box::new(child_executor.scan_vertex_property(
+                                    vid_index,
+                                    property_list.clone(),
+                                    container,
+                                ));
+
+                                // Update schema: add property columns with
+                                // __{var_name}_prop_{index} naming
                                 let mut new_fields = updated_schema.fields().to_vec();
                                 for (idx, _) in property_list.iter().enumerate() {
                                     new_fields.push(DataField::new(
                                         format!("__{}_prop_{}", var_name, idx),
-                                        LogicalType::String, // Type will be determined from actual data
+                                        LogicalType::String, /* Type will be determined from
+                                                              * actual data */
                                         true, // nullable
                                     ));
                                 }
@@ -170,7 +185,7 @@ impl ExecutorBuilder {
                         }
                     }
                 }
-                
+
                 // Build evaluators with updated schema
                 let evaluators = project
                     .exprs
@@ -249,7 +264,8 @@ impl ExecutorBuilder {
                         .get_graph("test".to_string().as_str())
                         .expect("there should be a test graph")
                         .unwrap();
-                    let container: Arc<GraphContainer> = cur_graph.downcast_arc::<GraphContainer>().unwrap();
+                    let container: Arc<GraphContainer> =
+                        cur_graph.downcast_arc::<GraphContainer>().unwrap();
 
                     let label_specs = schema.get_var_label(variable);
 
@@ -270,7 +286,7 @@ impl ExecutorBuilder {
                         container,
                     ));
                 }
-                
+
                 // Default: just return the column reference
                 let index = schema
                     .get_field_index_by_name(variable)

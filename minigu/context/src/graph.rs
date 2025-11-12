@@ -31,9 +31,11 @@ impl GraphContainer {
     pub fn graph_storage(&self) -> &GraphStorage {
         &self.graph_storage
     }
-    
+
     #[inline]
-    pub fn graph_type(&self) -> Arc<MemoryGraphTypeCatalog> { self.graph_type.clone() }
+    pub fn graph_type(&self) -> Arc<MemoryGraphTypeCatalog> {
+        self.graph_type.clone()
+    }
 }
 
 // TODO: Remove and use a checker.

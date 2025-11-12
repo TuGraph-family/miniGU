@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
+use gql_parser::ast::EdgePatternKind;
 use minigu_common::data_type::DataSchema;
 use minigu_common::types::{GraphId, LabelId};
 use serde::Serialize;
-use gql_parser::ast::EdgePatternKind;
+
 use crate::bound::BoundExpr;
 use crate::plan::expand::ExpandDirection;
 
@@ -68,7 +69,7 @@ pub enum PathPatternInfo {
         vertices: Vec<(String, Vec<Vec<LabelId>>)>,
         edges: Vec<(Option<String>, Vec<Vec<LabelId>>, ExpandDirection)>,
         graph_id: GraphId,
-    }
+    },
 }
 
 #[derive(Debug, Clone, Serialize)]

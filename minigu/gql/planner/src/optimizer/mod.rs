@@ -3,8 +3,7 @@ use std::sync::Arc;
 use itertools::Itertools;
 use minigu_common::error::not_implemented;
 use minigu_common::types::{GraphId, LabelId};
-use crate::binder::Binder;
-use crate::binder::common::lower_label_expr_to_specs;
+
 use crate::bound::{
     BoundEdgePatternKind, BoundElementPattern, BoundGraphPattern, BoundLabelExpr,
     BoundPathPatternExpr, PathPatternInfo,

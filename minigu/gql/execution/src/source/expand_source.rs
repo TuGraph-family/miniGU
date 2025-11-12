@@ -355,7 +355,11 @@ mod tests {
         assert!(first_batch.is_some(), "Should have at least one batch");
 
         let batch = first_batch.unwrap().unwrap();
-        assert_eq!(batch.len(), 2, "Should have two columns (edge IDs and neighbor IDs)");
+        assert_eq!(
+            batch.len(),
+            2,
+            "Should have two columns (edge IDs and neighbor IDs)"
+        );
 
         let edge_id_array: &UInt64Array = batch[0].as_primitive();
         let neighbor_array: &VertexIdArray = batch[1].as_primitive();
@@ -384,7 +388,11 @@ mod tests {
         assert!(first_batch.is_some(), "Should have at least one batch");
 
         let batch = first_batch.unwrap().unwrap();
-        assert_eq!(batch.len(), 2, "Should have two columns (edge IDs and neighbor IDs)");
+        assert_eq!(
+            batch.len(),
+            2,
+            "Should have two columns (edge IDs and neighbor IDs)"
+        );
         let edge_id_array: &UInt64Array = batch[0].as_primitive();
         let neighbor_array: &VertexIdArray = batch[1].as_primitive();
         assert_eq!(edge_id_array.len(), 1, "Should have 1 edge ID");
@@ -448,8 +456,8 @@ mod tests {
 
         txn.commit().unwrap();
 
-                // Now expand from vertex 5
-                let result = container.expand_from_vertex(5, None, None);
+        // Now expand from vertex 5
+        let result = container.expand_from_vertex(5, None, None);
         assert!(result.is_some(), "Should return Some for existing vertex");
 
         let mut iter = result.unwrap();

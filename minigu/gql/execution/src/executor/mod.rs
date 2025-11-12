@@ -101,10 +101,22 @@ pub trait Executor {
         Self: Sized,
         S: ExpandSource,
     {
-        ExpandBuilder::new(self, input_column_index, edge_labels, target_vertex_labels, source).into_executor()
+        ExpandBuilder::new(
+            self,
+            input_column_index,
+            edge_labels,
+            target_vertex_labels,
+            source,
+        )
+        .into_executor()
     }
 
-    fn scan_vertex_property<S>(self, input_column_index: usize, properties: Vec<PropertyId>, source: S) -> impl Executor
+    fn scan_vertex_property<S>(
+        self,
+        input_column_index: usize,
+        properties: Vec<PropertyId>,
+        source: S,
+    ) -> impl Executor
     where
         Self: Sized,
         S: VertexPropertySource,

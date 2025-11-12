@@ -1,5 +1,6 @@
 use arrow::array::AsArray;
 use minigu_common::types::PropertyId;
+
 use super::utils::gen_try;
 use super::{Executor, IntoExecutor};
 use crate::source::VertexPropertySource;
@@ -13,7 +14,12 @@ pub struct VertexPropertyScanBuilder<E, S> {
 }
 
 impl<E, S> VertexPropertyScanBuilder<E, S> {
-    pub fn new(child: E, input_column_index: usize, property_id: Vec<PropertyId>, source: S) -> Self {
+    pub fn new(
+        child: E,
+        input_column_index: usize,
+        property_id: Vec<PropertyId>,
+        source: S,
+    ) -> Self {
         Self {
             child,
             input_column_index,

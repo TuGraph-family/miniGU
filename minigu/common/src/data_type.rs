@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::fmt;
-use std::fmt::format;
 use std::sync::{Arc, LazyLock};
 
 use arrow::datatypes::{
@@ -187,19 +186,19 @@ impl DataSchema {
     pub fn push_back(&mut self, field: &DataField) {
         self.fields.push(field.clone());
     }
-    
-    pub fn set_var_label(&mut self, var: String, labels:Vec<Vec<LabelId>>) {
+
+    pub fn set_var_label(&mut self, var: String, labels: Vec<Vec<LabelId>>) {
         // TODO: Refine this.
         if !self.fields.iter().any(|f| f.name == var) {
-            return ()
+            return ();
         }
         self.var_labels.insert(var, labels);
     }
 
-    
     pub fn get_var_label(&self, var: &str) -> Option<Vec<Vec<LabelId>>> {
         self.var_labels.get(var).cloned()
     }
+
     pub fn get_field_by_name(&self, name: &str) -> Option<&DataField> {
         self.fields.iter().find(|field| field.name() == name)
     }

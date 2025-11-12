@@ -332,9 +332,7 @@ impl DataChunk {
     pub fn debug_print(&self) {
         use display::{TableBuilder, TableOptions, TableStyle};
         let options = TableOptions::new().with_style(TableStyle::Sharp);
-        let table = TableBuilder::new(None, options)
-            .append_chunk(self)
-            .build();
+        let table = TableBuilder::new(None, options).append_chunk(self).build();
         println!("{}", table);
     }
 

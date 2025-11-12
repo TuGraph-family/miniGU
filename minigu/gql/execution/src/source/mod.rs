@@ -1,6 +1,7 @@
+mod expand_source;
 #[cfg(test)]
 pub(crate) mod mock;
-mod expand_source;
+
 mod property_scan_source;
 
 use std::sync::Arc;
@@ -34,7 +35,11 @@ impl<I> VertexSource for I where I: Iterator<Item = VertexSourceOutput> {}
 /// A trait for sources that map vertex IDs to (multiple) property value columns.
 #[auto_impl(&, Box, Arc)]
 pub trait VertexPropertySource {
-    fn scan_vertex_properties(&self, vertices: &VertexIdArray, property_list: &Vec<PropertyId>) -> ExecutionResult<Vec<ArrayRef>>;
+    fn scan_vertex_properties(
+        &self,
+        vertices: &VertexIdArray,
+        property_list: &Vec<PropertyId>,
+    ) -> ExecutionResult<Vec<ArrayRef>>;
 }
 
 /// A trait for sources that map a vertex to its neighbors and (possibly) properties of the
@@ -50,8 +55,8 @@ pub trait ExpandSource {
     /// - `vertex`: The source vertex ID to expand from
     /// - `edge_labels`: Optional filter for edge labels. If `Some(labels)`, only neighbors
     ///   connected by edges with labels in `labels` are returned.
-    /// - `target_vertex_labels`: Optional filter for target vertex labels. If `Some(labels)`,
-    ///   only neighbors with labels matching `labels` are returned.
+    /// - `target_vertex_labels`: Optional filter for target vertex labels. If `Some(labels)`, only
+    ///   neighbors with labels matching `labels` are returned.
     ///
     /// # Notes
     /// The following two cases should be handled correctly:

@@ -6,12 +6,17 @@ use gql_parser::ast::{
 };
 use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 use minigu_common::error::not_implemented;
-use smol_str::ToSmolStr;
 use minigu_common::types::LabelId;
+use smol_str::ToSmolStr;
+
 use super::error::{BindError, BindResult};
 use crate::binder::Binder;
-use crate::bound::{BoundEdgePattern, BoundEdgePatternKind, BoundElementPattern, BoundExpr, BoundGraphPattern, BoundGraphPatternBindingTable, BoundLabelExpr, BoundMatchMode, BoundPathMode, BoundPathPattern, BoundPathPatternExpr, BoundVertexPattern};
 use crate::bound::BoundLabelExpr::Any;
+use crate::bound::{
+    BoundEdgePattern, BoundEdgePatternKind, BoundElementPattern, BoundExpr, BoundGraphPattern,
+    BoundGraphPatternBindingTable, BoundLabelExpr, BoundMatchMode, BoundPathMode, BoundPathPattern,
+    BoundPathPatternExpr, BoundVertexPattern,
+};
 
 pub fn lower_label_expr_to_specs(expr: &BoundLabelExpr) -> Vec<Vec<LabelId>> {
     use BoundLabelExpr::*;
@@ -47,7 +52,6 @@ pub fn lower_label_expr_to_specs(expr: &BoundLabelExpr) -> Vec<Vec<LabelId>> {
         Negation(_) => Vec::new(),
     }
 }
-
 
 impl Binder<'_> {
     pub fn bind_graph_pattern_binding_table(
@@ -229,11 +233,19 @@ impl Binder<'_> {
         }
     }
 
-    fn bind_edge_filler(&mut self, f: &ElementPatternFiller, kind: &EdgePatternKind) -> BindResult<BoundEdgePattern> {
+    fn bind_edge_filler(
+        &mut self,
+        f: &ElementPatternFiller,
+        kind: &EdgePatternKind,
+    ) -> BindResult<BoundEdgePattern> {
         let var = match &f.variable {
             Some(var) => var.value().to_string(),
             None => {
-                let idx = self.active_data_schema.as_ref().map(|s| s.size()).unwrap_or(0);
+                let idx = self
+                    .active_data_schema
+                    .as_ref()
+                    .map(|s| s.size())
+                    .unwrap_or(0);
                 format!("__e{idx}")
             }
         };
@@ -241,26 +253,27 @@ impl Binder<'_> {
         if f.predicate.is_some() {
             return Err(BindError::Unexpected);
         }
-        let edge_ty = LogicalType::Edge(vec![DataField::new("id".into(), LogicalType::Int64, false)]);
+        let edge_ty =
+            LogicalType::Edge(vec![DataField::new("id".into(), LogicalType::Int64, false)]);
         self.register_variable(var.as_str(), edge_ty, false)?;
         let label = match &f.label {
             Some(sp) => Some(self.bind_label_expr(sp.value())?),
             None => None,
         };
-        
+
         let label_set = if label.is_some() {
             lower_label_expr_to_specs(&label.unwrap())
         } else {
             vec![vec![]]
         };
-        
+
         self.register_variable_labels(var.as_str(), &label_set);
-        
+
         let kind: BoundEdgePatternKind = BoundEdgePatternKind::from(kind);
         Ok(BoundEdgePattern {
             var: Some(var),
             kind,
-            label:label_set,
+            label: label_set,
             predicate: None,
         })
     }
@@ -292,17 +305,17 @@ impl Binder<'_> {
         } else {
             vec![vec![]]
         };
-        
+
         self.register_variable_labels(var.as_str(), &label_set);
-        
+
         let predicate = match &f.predicate {
             None => None,
             Some(sp) => None,
         };
-        
+
         Ok(BoundVertexPattern {
             var,
-            label:label_set,
+            label: label_set,
             predicate,
         })
     }
@@ -336,7 +349,7 @@ impl Binder<'_> {
             Ok(())
         }
     }
-    
+
     pub fn register_variable_labels(
         &mut self,
         name: &str,
@@ -345,13 +358,14 @@ impl Binder<'_> {
         if self.active_data_schema.is_none() {
             return Err(BindError::Unexpected);
         }
-        let mut schema = self.active_data_schema.clone().expect("schema should be initialized");
+        let mut schema = self
+            .active_data_schema
+            .clone()
+            .expect("schema should be initialized");
         schema.set_var_label(name.to_string(), labels.clone());
         Ok(())
     }
 }
-
-
 
 pub fn bind_path_pattern_prefix(prefix: &PathPatternPrefix) -> BindResult<BoundPathMode> {
     match prefix {

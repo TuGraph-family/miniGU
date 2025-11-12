@@ -16,7 +16,6 @@ use minigu_storage::tp::MemoryGraph;
 use minigu_transaction::IsolationLevel::Serializable;
 use minigu_transaction::{GraphTxnManager, Transaction};
 
-
 /// Create a test graph data with the given name in the current schema.
 pub fn build_procedure() -> Procedure {
     let parameters = vec![LogicalType::String, LogicalType::Int8];
@@ -46,7 +45,7 @@ pub fn build_procedure() -> Procedure {
 
         let graph = MemoryGraph::with_config_fresh(Default::default(), Default::default());
         let mut graph_type = MemoryGraphTypeCatalog::new();
-        
+
         // Add labels
         let person_label_id = graph_type.add_label("PERSON".to_string()).unwrap();
         let company_label_id = graph_type.add_label("COMPANY".to_string()).unwrap();
@@ -54,7 +53,7 @@ pub fn build_procedure() -> Procedure {
         let friend_label_id = graph_type.add_label("FRIEND".to_string()).unwrap();
         let works_at_label_id = graph_type.add_label("WORKS_AT".to_string()).unwrap();
         let located_in_label_id = graph_type.add_label("LOCATED_IN".to_string()).unwrap();
-        
+
         // Create vertex types
         let person_label_set: LabelSet = vec![person_label_id].into_iter().collect();
         let person = Arc::new(MemoryVertexTypeCatalog::new(
@@ -64,7 +63,7 @@ pub fn build_procedure() -> Procedure {
                 Property::new("age".to_string(), LogicalType::Int8, false),
             ],
         ));
-        
+
         let company_label_set: LabelSet = vec![company_label_id].into_iter().collect();
         let company = Arc::new(MemoryVertexTypeCatalog::new(
             company_label_set.clone(),
@@ -73,16 +72,13 @@ pub fn build_procedure() -> Procedure {
                 Property::new("revenue".to_string(), LogicalType::Int64, false),
             ],
         ));
-        
+
         let city_label_set: LabelSet = vec![city_label_id].into_iter().collect();
-        let city = Arc::new(MemoryVertexTypeCatalog::new(
-            city_label_set.clone(),
-            vec![
-                Property::new("name".to_string(), LogicalType::String, false),
-                Property::new("population".to_string(), LogicalType::Int32, false),
-            ],
-        ));
-        
+        let city = Arc::new(MemoryVertexTypeCatalog::new(city_label_set.clone(), vec![
+            Property::new("name".to_string(), LogicalType::String, false),
+            Property::new("population".to_string(), LogicalType::Int32, false),
+        ]));
+
         // Create edge types
         let friend_label_set: LabelSet = vec![friend_label_id].into_iter().collect();
         let friend = Arc::new(MemoryEdgeTypeCatalog::new(
@@ -95,7 +91,7 @@ pub fn build_procedure() -> Procedure {
                 false,
             )],
         ));
-        
+
         let works_at_label_set: LabelSet = vec![works_at_label_id].into_iter().collect();
         let works_at = Arc::new(MemoryEdgeTypeCatalog::new(
             works_at_label_set.clone(),
@@ -107,7 +103,7 @@ pub fn build_procedure() -> Procedure {
                 false,
             )],
         ));
-        
+
         let located_in_label_set: LabelSet = vec![located_in_label_id].into_iter().collect();
         let located_in = Arc::new(MemoryEdgeTypeCatalog::new(
             located_in_label_set.clone(),
@@ -151,11 +147,11 @@ pub fn build_procedure() -> Procedure {
         let num_persons = (n / 2).max(1);
         let num_companies = (n / 4).max(1);
         let num_cities = (n / 4).max(1);
-        
+
         let mut person_ids: Vec<u64> = Vec::with_capacity(num_persons);
         let mut company_ids: Vec<u64> = Vec::with_capacity(num_companies);
         let mut city_ids: Vec<u64> = Vec::with_capacity(num_cities);
-        
+
         // Create PERSON vertices
         for i in 0..num_persons {
             let vid = i as u64;
@@ -170,7 +166,7 @@ pub fn build_procedure() -> Procedure {
             mem.create_vertex(&txn, vertex)?;
             person_ids.push(vid);
         }
-        
+
         // Create COMPANY vertices
         let company_start_id = num_persons as u64;
         for i in 0..num_companies {
@@ -186,7 +182,7 @@ pub fn build_procedure() -> Procedure {
             mem.create_vertex(&txn, vertex)?;
             company_ids.push(vid);
         }
-        
+
         // Create CITY vertices
         let city_start_id = company_start_id + num_companies as u64;
         for i in 0..num_cities {
@@ -204,22 +200,22 @@ pub fn build_procedure() -> Procedure {
         }
 
         // Create edges - reduce total number
-        // 
+        //
         // Example when n=5:
         //   Vertices: person0, person1, company0, city0
-        //   
+        //
         //   FRIEND edges (fully connected):
         //     - person0 <-> person1 (1 edge, bidirectional representation)
         //     Total: 1 FRIEND edge
-        //   
+        //
         //   WORKS_AT edges (partial connection - only 60% employed):
         //     - person0 -> company0 (person1 has no job)
         //     Total: 1 WORKS_AT edge
-        //   
+        //
         //   LOCATED_IN edges:
         //     - company0 -> city0
         //     Total: 1 LOCATED_IN edge
-        //   
+        //
         //   Graph structure:
         //     person0 <--FRIEND--> person1
         //       |                    |
@@ -232,7 +228,7 @@ pub fn build_procedure() -> Procedure {
         //     city0
         //
         let mut edge_id_counter = 0u64;
-        
+
         // Create FRIEND edges - fully connected graph between all persons
         // Every person is friends with every other person (complete graph)
         // This creates a complete subgraph: PERSON-FRIEND-PERSON yields all persons
@@ -249,7 +245,7 @@ pub fn build_procedure() -> Procedure {
                 edge_id_counter += 1;
             }
         }
-        
+
         // Create WORKS_AT edges - NOT all persons have jobs (partial connection)
         // This means PERSON-WORKS_AT-COMPANY does NOT yield all persons (some are unemployed)
         let num_employed = (num_persons * 3 / 5).max(1); // 60% of persons have jobs
@@ -265,7 +261,7 @@ pub fn build_procedure() -> Procedure {
             mem.create_edge(&txn, edge)?;
             edge_id_counter += 1;
         }
-        
+
         // Create LOCATED_IN edges (each company is located in one city)
         for i in 0..num_companies {
             let city_idx = i % num_cities;
@@ -279,7 +275,7 @@ pub fn build_procedure() -> Procedure {
             mem.create_edge(&txn, edge)?;
             edge_id_counter += 1;
         }
-        
+
         txn.commit()?;
         Ok(vec![])
     })
