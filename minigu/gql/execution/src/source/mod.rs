@@ -38,7 +38,7 @@ pub trait VertexPropertySource {
     fn scan_vertex_properties(
         &self,
         vertices: &VertexIdArray,
-        property_list: &Vec<PropertyId>,
+        property_list: &[PropertyId],
     ) -> ExecutionResult<Vec<ArrayRef>>;
 }
 

@@ -261,8 +261,8 @@ impl Binder<'_> {
             None => None,
         };
 
-        let label_set = if label.is_some() {
-            lower_label_expr_to_specs(&label.unwrap())
+        let label_set = if let Some(label_val) = label.as_ref() {
+            lower_label_expr_to_specs(label_val)
         } else {
             vec![vec![]]
         };
@@ -300,8 +300,8 @@ impl Binder<'_> {
             Some(sp) => Some(self.bind_label_expr(sp.value())?),
             None => None,
         };
-        let label_set = if label.is_some() {
-            lower_label_expr_to_specs(&label.unwrap())
+        let label_set = if let Some(label_val) = label.as_ref() {
+            lower_label_expr_to_specs(label_val)
         } else {
             vec![vec![]]
         };
@@ -353,7 +353,7 @@ impl Binder<'_> {
     pub fn register_variable_labels(
         &mut self,
         name: &str,
-        labels: &Vec<Vec<LabelId>>,
+        labels: &[Vec<LabelId>],
     ) -> BindResult<()> {
         if self.active_data_schema.is_none() {
             return Err(BindError::Unexpected);
@@ -362,7 +362,7 @@ impl Binder<'_> {
             .active_data_schema
             .clone()
             .expect("schema should be initialized");
-        schema.set_var_label(name.to_string(), labels.clone());
+        schema.set_var_label(name.to_string(), labels.to_owned());
         Ok(())
     }
 }

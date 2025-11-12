@@ -126,7 +126,7 @@ impl VertexPropertySource for MockVertexPropertySource {
     fn scan_vertex_properties(
         &self,
         vertices: &VertexIdArray,
-        _property_id: &Vec<PropertyId>,
+        _property_id: &[PropertyId],
     ) -> ExecutionResult<Vec<ArrayRef>> {
         assert!(!vertices.is_nullable());
         let properties = StringArray::from_iter(

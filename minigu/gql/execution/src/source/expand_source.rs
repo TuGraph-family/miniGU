@@ -445,7 +445,7 @@ mod tests {
             mem.create_vertex(&txn, v).unwrap();
 
             let edge = Edge::new(
-                i as u64,
+                i,
                 5,
                 i,
                 friend_label_id,
@@ -460,11 +460,11 @@ mod tests {
         let result = container.expand_from_vertex(5, None, None);
         assert!(result.is_some(), "Should return Some for existing vertex");
 
-        let mut iter = result.unwrap();
+        let iter = result.unwrap();
         let mut total_neighbors = 0;
         let mut batch_count = 0;
 
-        while let Some(batch_result) = iter.next() {
+        for batch_result in iter {
             batch_count += 1;
             let batch = batch_result.unwrap();
             let neighbor_array: &VertexIdArray = batch[1].as_primitive(); // Second column is neighbor IDs

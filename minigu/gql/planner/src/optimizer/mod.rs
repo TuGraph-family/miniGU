@@ -5,8 +5,8 @@ use minigu_common::error::not_implemented;
 use minigu_common::types::{GraphId, LabelId};
 
 use crate::bound::{
-    BoundEdgePatternKind, BoundElementPattern, BoundGraphPattern, BoundLabelExpr,
-    BoundPathPatternExpr, PathPatternInfo,
+    BoundEdgePatternKind, BoundElementPattern, BoundGraphPattern, BoundPathPatternExpr,
+    PathPatternInfo,
 };
 use crate::error::PlanResult;
 use crate::plan::expand::{Expand, ExpandDirection};
@@ -65,7 +65,7 @@ fn extract_path_pattern(
             }
             let mut vertices = Vec::new();
             let mut edges = Vec::new();
-            for (_i, part) in parts.iter().enumerate() {
+            for part in parts.iter() {
                 match part {
                     Pattern(BoundElementPattern::Vertex(v)) => {
                         let var = v.var.clone();
@@ -145,9 +145,7 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
                         first_lables,
                         graph_id,
                     )));
-                    for (_i, (edge_info, next_vertex)) in
-                        edges.iter().zip(vertices.iter().skip(1)).enumerate()
-                    {
+                    for (edge_info, next_vertex) in edges.iter().zip(vertices.iter().skip(1)) {
                         let (edge_var, edge_labels, direction) = edge_info;
                         let (next_var, next_labels) = next_vertex;
                         let expand = Expand::new(

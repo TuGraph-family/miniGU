@@ -249,7 +249,7 @@ pub fn build_procedure() -> Procedure {
         // Create WORKS_AT edges - NOT all persons have jobs (partial connection)
         // This means PERSON-WORKS_AT-COMPANY does NOT yield all persons (some are unemployed)
         let num_employed = (num_persons * 3 / 5).max(1); // 60% of persons have jobs
-        for i in 0..num_employed {
+        for (i, _) in person_ids.iter().enumerate().take(num_employed) {
             let company_idx = i % num_companies;
             let edge = Edge::new(
                 EdgeId::from(edge_id_counter),
@@ -263,7 +263,7 @@ pub fn build_procedure() -> Procedure {
         }
 
         // Create LOCATED_IN edges (each company is located in one city)
-        for i in 0..num_companies {
+        for (i, _) in company_ids.iter().enumerate().take(num_companies) {
             let city_idx = i % num_cities;
             let edge = Edge::new(
                 EdgeId::from(edge_id_counter),

@@ -50,10 +50,10 @@ impl VertexPropertySource for GraphContainer {
     fn scan_vertex_properties(
         &self,
         vertices: &VertexIdArray,
-        property_list: &Vec<PropertyId>,
+        property_list: &[PropertyId],
     ) -> ExecutionResult<Vec<ArrayRef>> {
         let mem = match self.graph_storage() {
-            GraphStorage::Memory(mem) => Arc::clone(&mem),
+            GraphStorage::Memory(mem) => Arc::clone(mem),
         };
         let txn = mem
             .txn_manager()
@@ -67,13 +67,13 @@ impl VertexPropertySource for GraphContainer {
                     .get_vertex(&txn, first_vid)
                     .map_err(|e| ExecutionError::Custom(Box::new(e)))?;
                 let num_properties = sample_vertex.properties().len();
-                (0..num_properties as u32).map(PropertyId::from).collect()
+                (0..num_properties as u32).collect()
             } else {
                 // No vertices, return empty list
                 Vec::new()
             }
         } else {
-            property_list.clone()
+            Vec::from(property_list)
         };
 
         let mut results = Vec::new();

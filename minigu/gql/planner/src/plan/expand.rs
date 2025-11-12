@@ -23,6 +23,7 @@ pub struct Expand {
 }
 
 impl Expand {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         child: PlanNode,
         input_column_index: usize,

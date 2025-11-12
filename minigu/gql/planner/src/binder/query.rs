@@ -253,7 +253,7 @@ impl Binder<'_> {
                     exprs.push(expr);
                 }
                 for field in &fields {
-                    schema.push_back(&field);
+                    schema.push_back(field);
                 }
                 let schema = Arc::new(schema);
 

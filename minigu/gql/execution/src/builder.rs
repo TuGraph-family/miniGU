@@ -255,18 +255,6 @@ impl ExecutorBuilder {
                         .get_field_index_by_name(variable)
                         .expect("variable should be present in the schema");
 
-                    let cur_schema = self
-                        .session
-                        .home_schema
-                        .as_ref()
-                        .expect("there should be a home schema");
-                    let cur_graph = cur_schema
-                        .get_graph("test".to_string().as_str())
-                        .expect("there should be a test graph")
-                        .unwrap();
-                    let container: Arc<GraphContainer> =
-                        cur_graph.downcast_arc::<GraphContainer>().unwrap();
-
                     let label_specs = schema.get_var_label(variable);
 
                     let mut property_column_indices = Vec::new();
@@ -283,7 +271,6 @@ impl ExecutorBuilder {
                         vid_index,
                         property_column_indices,
                         label_specs,
-                        container,
                     ));
                 }
 

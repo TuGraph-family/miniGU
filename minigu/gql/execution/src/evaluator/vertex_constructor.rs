@@ -5,8 +5,6 @@ use arrow::datatypes::Fields;
 use minigu_common::constants::{LABEL_FIELD_NAME, VID_FIELD_NAME};
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::types::{LabelId, VertexIdArray};
-use minigu_context::graph::GraphContainer;
-use minigu_transaction::GraphTxnManager;
 
 use super::{DatumRef, Evaluator};
 use crate::error::{ExecutionError, ExecutionResult};
@@ -25,8 +23,6 @@ pub struct VertexConstructor {
     property_column_indices: Vec<usize>,
     /// Label specifications from schema (if available)
     label_specs: Option<Vec<Vec<LabelId>>>,
-    /// Graph container for retrieving vertex labels (if label_specs not available)
-    graph_container: Arc<GraphContainer>,
 }
 
 impl VertexConstructor {
@@ -34,13 +30,11 @@ impl VertexConstructor {
         vid_column_index: usize,
         property_column_indices: Vec<usize>,
         label_specs: Option<Vec<Vec<LabelId>>>,
-        graph_container: Arc<GraphContainer>,
     ) -> Self {
         Self {
             vid_column_index,
             property_column_indices,
             label_specs,
-            graph_container,
         }
     }
 }
