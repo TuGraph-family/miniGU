@@ -25,8 +25,8 @@ macro_rules! add_e2e_tests {
             $(
                 #[test]
                 fn [<e2e_ $dataset _ $query>]() {
-                    let _guard = setup(concat!("test-case/", $dataset, "/", $query, "/"));
-                    let query_str = include_str!(concat!("test-case/", $dataset, "/", $query, "/", $query, ".gql"));
+                    let _guard = setup(concat!("gql/", $dataset, "/", $query, "/"));
+                    let query_str = include_str!(concat!("gql/", $dataset, "/", $query, "/", $query, ".gql"));
                     assert_yaml_snapshot!($query, do_something(query_str));
                 }
             )*

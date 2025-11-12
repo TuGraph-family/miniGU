@@ -23,7 +23,7 @@ macro_rules! add_parser_bench {
             $(
                 #[divan::bench]
                 fn [<parse_ $dataset _ $query>]() -> Spanned<Program> {
-                    let input = include_str!(concat!("../../../../minigu-test/resources/gql/", $dataset, "/", $query, ".gql"));
+                    let input = include_str!(concat!("../../../../minigu-test/gql/", $dataset, "/", $query, "/", $query, ".gql"));
                     black_box(gql_parser::parse_gql(input).unwrap())
                 }
 
