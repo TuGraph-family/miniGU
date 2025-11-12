@@ -26,13 +26,13 @@ workspace = true
 
 [[test]]
 name = "parser_tests"
-path = "parser/parser_test.rs"
+path = "parser_test.rs"
 required-features = ["std", "serde"]
 
 [[test]]
 name = "e2e_test"
-path = "end2end/e2e_test.rs"
+path = "e2e_test.rs"
 
 [[test]]
 name = "sqllogictest"
-path = "end2end/sqllogictest.rs"
+path = "sqllogictest.rs"
