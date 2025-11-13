@@ -39,11 +39,3 @@ std = [
 
 [lints]
 workspace = true
-
-[[bench]]
-harness = false
-name = "alloc"
-
-[[bench]]
-harness = false
-name = "parse"

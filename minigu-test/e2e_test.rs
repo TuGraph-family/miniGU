@@ -15,7 +15,8 @@ fn setup(snapshot_path: &str) -> SettingsBindDropGuard {
     settings.bind_to_scope()
 }
 
-fn do_something(input: &str) -> usize {
+fn query_executor(input: &str) -> usize {
+    // todo: implement query executor and return results as string
     input.len()
 }
 
@@ -27,7 +28,7 @@ macro_rules! add_e2e_tests {
                 fn [<e2e_ $dataset _ $query>]() {
                     let _guard = setup(concat!("gql/", $dataset, "/", $query, "/"));
                     let query_str = include_str!(concat!("gql/", $dataset, "/", $query, "/", $query, ".gql"));
-                    assert_yaml_snapshot!($query, do_something(query_str));
+                    assert_yaml_snapshot!($query, query_executor(query_str));
                 }
             )*
         }

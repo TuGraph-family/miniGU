@@ -23,7 +23,7 @@ macro_rules! add_parser_bench {
             $(
                 #[divan::bench]
                 fn [<parse_ $dataset _ $query>]() -> Spanned<Program> {
-                    let input = include_str!(concat!("../../../../minigu-test/gql/", $dataset, "/", $query, "/", $query, ".gql"));
+                    let input = include_str!(concat!("../gql/", $dataset, "/", $query, "/", $query, ".gql"));
                     black_box(gql_parser::parse_gql(input).unwrap())
                 }
 
@@ -31,7 +31,7 @@ macro_rules! add_parser_bench {
                 #[divan::bench]
                 fn [<parse_ $dataset _ $query _antlr>](b: divan::Bencher) {
                     use std::ffi::CString;
-                    let input = include_str!(concat!("../../../resources/gql/", $dataset, "/", $query, ".gql"));
+                    let input = include_str!(concat!("../gql/", $dataset, "/", $query, ".gql"));
                     b.with_inputs(|| CString::new(input).unwrap())
                         .bench_values(|input| unsafe {
                             black_box(antlr4::parse_gql(input.as_ptr()));

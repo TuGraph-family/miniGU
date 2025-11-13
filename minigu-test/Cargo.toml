@@ -9,15 +9,18 @@ version.workspace = true
 default = ["std"]
 serde = []
 std = []
+bench-antlr4 = ["cmake"]
 
 [dependencies]
 glob = { workspace = true }
+cmake = { workspace = true, optional = true }
 gql-parser = { workspace = true, features = ["std", "serde"] }
 libtest-mimic = { workspace = true }
 minigu = { workspace = true }
 sqllogictest = { workspace = true }
 
 [dev-dependencies]
+divan = { workspace = true }
 insta = { workspace = true }
 pastey = { workspace = true }
 
@@ -36,3 +39,14 @@ path = "e2e_test.rs"
 [[test]]
 name = "sqllogictest"
 path = "sqllogictest.rs"
+
+[[bench]]
+harness = false
+name = "alloc"
+path = "/benches/alloc.rs"
+
+[[bench]]
+harness = false
+name = "parse"
+path = "/benches/parse.rs"
+required-features = ["bench-antlr4"]
