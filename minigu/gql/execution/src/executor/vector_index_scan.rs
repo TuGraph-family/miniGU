@@ -91,15 +91,12 @@ impl VectorIndexScanExecutor {
             )))
         })?;
         let provider = graph_ref.object().clone();
-        let container = provider
-            .as_any()
-            .downcast_ref::<GraphContainer>()
-            .ok_or_else(|| {
-                ExecutionError::Custom(Box::new(io::Error::new(
-                    io::ErrorKind::InvalidData,
-                    "only in-memory graphs support vector scans",
-                )))
-            })?;
+        let container = provider.downcast_ref::<GraphContainer>().ok_or_else(|| {
+            ExecutionError::Custom(Box::new(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "only in-memory graphs support vector scans",
+            )))
+        })?;
         match container.graph_storage() {
             GraphStorage::Memory(graph) => Ok(Arc::clone(graph)),
         }

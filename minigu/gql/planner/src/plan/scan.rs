@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
 use minigu_common::data_type::{DataField, DataSchema, LogicalType};
-use minigu_common::types::LabelId;
+use minigu_common::types::{GraphId, LabelId};
 use serde::Serialize;
 
 use crate::plan::{PlanBase, PlanData};
 
 #[derive(Debug, Clone, Serialize)]
-pub struct PhysicalNodeScan {
+pub struct NodeIdScan {
     pub base: PlanBase,
     pub var: String,
     // DNF: outer OR, inner AND
@@ -15,11 +15,11 @@ pub struct PhysicalNodeScan {
     // labels = [ [A,B] ] LabelA and LabelB
     // labels = [ [A], [B] ] LabelA or LabelB
     pub labels: Vec<Vec<LabelId>>,
-    pub graph_id: i64,
+    pub graph_id: GraphId,
 }
 
-impl PhysicalNodeScan {
-    pub fn new(var: &str, labels: Vec<Vec<LabelId>>, graph_id: i64) -> Self {
+impl NodeIdScan {
+    pub fn new(var: &str, labels: Vec<Vec<LabelId>>, graph_id: GraphId) -> Self {
         // For Single Node Scan, We just assume the id is only needed.
         let field = DataField::new(var.to_string(), LogicalType::Int64, false);
         let schema = DataSchema::new(vec![field]);
@@ -36,7 +36,7 @@ impl PhysicalNodeScan {
     }
 }
 
-impl PlanData for PhysicalNodeScan {
+impl PlanData for NodeIdScan {
     fn base(&self) -> &PlanBase {
         &self.base
     }

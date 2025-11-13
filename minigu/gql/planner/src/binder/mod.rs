@@ -1,7 +1,7 @@
 #![allow(unused)]
 
 mod catalog;
-mod common;
+pub mod common;
 pub mod error;
 mod object_expr;
 mod object_ref;
