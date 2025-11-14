@@ -35,8 +35,9 @@ Examples:
 """
 
 # Main module initialization file
+# Import Rust bindings - this is the single source of truth for Rust bindings
 try:
-    import minigu_python
+    import minigu_python  # type: ignore
     HAS_RUST_BINDINGS = True
     PyMiniGU = minigu_python.PyMiniGU
     # Try to import the error checking functions
@@ -48,8 +49,11 @@ except ImportError as e:
     PyMiniGU = None
     is_transaction_error = None
     is_not_implemented_error = None
-    # Print the actual error for debugging purposes
-    print(f"Warning: Failed to import Rust extension: {e}")
+    # Raise error to prevent usage without Rust bindings
+    raise ImportError(
+        f"Rust bindings not available. miniGU requires Rust bindings to function.\n"
+        f"Original error: {e}"
+    )
 
 # Import the main classes and functions to expose them publicly
 from .minigu import (
@@ -57,12 +61,12 @@ from .minigu import (
     AsyncMiniGU,
     QueryResult,
     MiniGUError,
-    ConnectionError,
-    QuerySyntaxError,
-    QueryExecutionError,
-    QueryTimeoutError,
+    MiniGUConnectionError,
+    MiniGUQueryError,
+    MiniGUQuerySyntaxError,
+    MiniGUQueryExecutionError,
+    MiniGUQueryTimeoutError,
     GraphError,
-    DataError,
     TransactionError,
 )
 
@@ -71,17 +75,15 @@ __all__ = [
     "AsyncMiniGU", 
     "QueryResult",
     "MiniGUError",
-    "ConnectionError",
-    "QuerySyntaxError",
-    "QueryExecutionError",
-    "QueryTimeoutError",
+    "MiniGUConnectionError",
+    "MiniGUQueryError",
+    "MiniGUQuerySyntaxError",
+    "MiniGUQueryExecutionError",
+    "MiniGUQueryTimeoutError",
     "GraphError",
-    "DataError",
     "TransactionError",
     "HAS_RUST_BINDINGS",
     "PyMiniGU",
-    "is_transaction_error",
-    "is_not_implemented_error",
 ]
 
 __version__ = "0.1.0"
