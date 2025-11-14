@@ -44,12 +44,12 @@ path = "sqllogictest.rs"
 [[bench]]
 harness = false
 name = "alloc"
-path = "/benches/alloc.rs"
+path = "./benches/alloc.rs"
 
 [[bench]]
 harness = false
 name = "parse"
-path = "/benches/parse.rs"
+path = "./benches/parse.rs"
 required-features = ["bench-antlr4"]
 
 [package.metadata.cargo-machete]

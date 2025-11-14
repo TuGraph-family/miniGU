@@ -8,9 +8,9 @@
 //! `snapshots`.
 use insta::internals::SettingsBindDropGuard;
 use insta::{Settings, assert_snapshot};
-use pastey::paste;
 use minigu::database::{Database, DatabaseConfig};
 use minigu::result::QueryResult;
+use pastey::paste;
 
 fn setup(snapshot_path: &str) -> SettingsBindDropGuard {
     let mut settings = Settings::clone_current();
@@ -25,14 +25,14 @@ fn query_executor(input: &str) -> String {
     let config = DatabaseConfig::default();
     let database = Database::open_in_memory(&config).unwrap();
     let mut session = database.session().unwrap();
-    match session.query(input) {  
-        Ok(result) => result_to_string(&result),  
+    match session.query(input) {
+        Ok(result) => result_to_string(&result),
         Err(e) => {
-            let debug_str = format!("{:#?}", e);  // 用 pretty-print Debug
-            let display_str = debug_str.replace("\\n", "\n"); // 把转义的换行还原
+            let debug_str = format!("{:#?}", e);
+            let display_str = debug_str.replace("\\n", "\n");
             format!("Error: {}", display_str)
         }
-    }  
+    }
 }
 
 fn result_to_string(result: &QueryResult) -> String {
@@ -68,7 +68,7 @@ fn result_to_string(result: &QueryResult) -> String {
 
 fn extract_string_value(array: &arrow::array::ArrayRef, row_idx: usize) -> String {
     use arrow::array::*;
-    
+
     if let Some(string_array) = array.as_any().downcast_ref::<StringArray>() {
         string_array.value(row_idx).to_string()
     } else if let Some(string_array) = array.as_any().downcast_ref::<LargeStringArray>() {
