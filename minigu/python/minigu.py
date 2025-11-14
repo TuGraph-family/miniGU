@@ -11,27 +11,9 @@ from pathlib import Path
 import json
 import asyncio
 
-# Import from package __init__.py - this is the primary way to get the Rust bindings
-try:
-    from . import HAS_RUST_BINDINGS, PyMiniGU, is_transaction_error, is_not_implemented_error
-except (ImportError, ModuleNotFoundError):
-    # Fallback when running directly or if package imports fail
-    try:
-        import minigu_python
-        HAS_RUST_BINDINGS = True
-        PyMiniGU = minigu_python.PyMiniGU
-        # Try to import the error checking functions
-        try:
-            is_transaction_error = minigu_python.is_transaction_error
-            is_not_implemented_error = minigu_python.is_not_implemented_error
-        except AttributeError:
-            # Fallback if these functions are not available
-            is_transaction_error = None
-            is_not_implemented_error = None
-    except (ImportError, ModuleNotFoundError):
-        # No longer provide simulated implementation warning, directly raise exception
-        HAS_RUST_BINDINGS = False
-        raise ImportError("Rust bindings not available. miniGU requires Rust bindings to function.")
+# Import Rust bindings from package __init__.py
+# __init__.py is the single source of truth for Rust bindings
+from . import HAS_RUST_BINDINGS, PyMiniGU, is_transaction_error, is_not_implemented_error
 
 
 def _handle_exception(e: Exception) -> None:
@@ -69,11 +51,11 @@ def _handle_exception(e: Exception) -> None:
     if ("syntax" in error_lower and "error" in error_lower) or \
        "unexpected" in error_lower or \
        ("invalid" in error_lower and "syntax" in error_lower):
-        raise QuerySyntaxError("Invalid query syntax")
+        raise MiniGUQuerySyntaxError("Invalid query syntax")
     
     # Timeout errors
     elif "timeout" in error_lower:
-        raise QueryTimeoutError("Query execution timed out")
+        raise MiniGUQueryTimeoutError("Query execution timed out")
     
     # Transaction errors - more precise detection
     elif "transaction" in error_lower or \
@@ -89,70 +71,35 @@ def _handle_exception(e: Exception) -> None:
     
     # General execution errors
     else:
-        raise QueryExecutionError("Query execution failed")
-
-
-# Add specific exception checking functions with better error messages
-def _is_transaction_error(e: Exception) -> bool:
-    """
-    Check if an exception is a transaction-related error.
-    
-    Args:
-        e: The exception to check
-        
-    Returns:
-        bool: True if the exception is transaction-related, False otherwise
-    """
-    error_msg = str(e).lower()
-    return "transaction" in error_msg or "txn" in error_msg or "commit" in error_msg or "rollback" in error_msg
-
-
-def _is_not_implemented_error(e: Exception) -> bool:
-    """
-    Check if an exception indicates a feature is not implemented.
-    
-    Args:
-        e: The exception to check
-        
-    Returns:
-        bool: True if the feature is not implemented, False otherwise
-    """
-    error_msg = str(e).lower()
-    return "not implemented" in error_msg or "not yet implemented" in error_msg
-
+        raise MiniGUQueryExecutionError("Query execution failed")
 
 class MiniGUError(Exception):
     """Base exception class for miniGU database"""
     pass
 
 
-class ConnectionError(MiniGUError):
+class MiniGUConnectionError(MiniGUError):
     """Database connection error"""
     pass
 
 
-class QueryError(MiniGUError):
+class MiniGUQueryError(MiniGUError):
     """Base query execution error"""
     pass
 
 
-class QuerySyntaxError(QueryError):
+class MiniGUQuerySyntaxError(MiniGUQueryError):
     """Query syntax error"""
     pass
 
 
-class QueryExecutionError(QueryError):
+class MiniGUQueryExecutionError(MiniGUQueryError):
     """Query execution error"""
     pass
 
 
-class QueryTimeoutError(QueryError):
+class MiniGUQueryTimeoutError(MiniGUQueryError):
     """Query timeout error"""
-    pass
-
-
-class DataError(MiniGUError):
-    """Data loading/saving error"""
     pass
 
 
@@ -225,7 +172,7 @@ class _BaseMiniGU:
                 else:
                     raise RuntimeError("Rust bindings not available")
             except Exception as e:
-                raise ConnectionError(f"Failed to connect to database: {str(e)}")
+                raise MiniGUConnectionError(f"Failed to connect to database: {str(e)}")
     
     def close(self) -> None:
         """
