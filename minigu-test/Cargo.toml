@@ -6,15 +6,15 @@ repository.workspace = true
 version.workspace = true
 
 [features]
+bench-antlr4 = ["cmake"]
 default = ["std"]
 serde = []
 std = []
-bench-antlr4 = ["cmake"]
 
 [dependencies]
 arrow = { workspace = true }
-glob = { workspace = true }
 cmake = { workspace = true, optional = true }
+glob = { workspace = true }
 gql-parser = { workspace = true, features = ["std", "serde"] }
 libtest-mimic = { workspace = true }
 minigu = { workspace = true }
