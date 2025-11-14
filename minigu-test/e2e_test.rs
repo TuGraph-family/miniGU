@@ -5,6 +5,9 @@
 use insta::internals::SettingsBindDropGuard;
 use insta::{Settings, assert_yaml_snapshot};
 use pastey::paste;
+use arrow::array::Array;
+use minigu::database::{Database, DatabaseConfig};
+use minigu::result::QueryResult;
 
 fn setup(snapshot_path: &str) -> SettingsBindDropGuard {
     let mut settings = Settings::clone_current();
@@ -15,9 +18,43 @@ fn setup(snapshot_path: &str) -> SettingsBindDropGuard {
     settings.bind_to_scope()
 }
 
-fn query_executor(input: &str) -> usize {
-    // todo: implement query executor and return results as string
-    input.len()
+fn query_executor(input: &str) -> String {
+    let config = DatabaseConfig::default();
+    let database = Database::open_in_memory(&config).unwrap();
+    let mut session = database.session().unwrap();
+    let result = session.query(input).unwrap();
+    result_to_string(&result)
+}
+
+fn result_to_string(result: &QueryResult) -> String {
+    if result.iter().count() == 0 {
+        return "No results".to_string();
+    }
+    let mut output = String::new();
+    if let Some(schema) = result.schema() {
+        let headers: Vec<String> = schema
+            .fields()
+            .iter()
+            .map(|f| f.name().to_string())
+            .collect();
+        output.push_str(&headers.join("\t"));
+        output.push('\n');
+    }
+    for chunk in result.iter() {
+        let rows_count = chunk.cardinality();
+        let column = chunk.columns();
+        for _row_idx in 0..rows_count {
+            let row_values: Vec<String> = (0..column.len())
+                .map(|col_idx| {
+                    let array = &column[col_idx];
+                    format!("{:?}", array.to_data())
+                })
+                .collect();
+            output.push_str(&row_values.join("\t"));
+            output.push('\n');
+        }
+    }
+    output.trim_end().to_string()
 }
 
 macro_rules! add_e2e_tests {

@@ -12,6 +12,7 @@ std = []
 bench-antlr4 = ["cmake"]
 
 [dependencies]
+arrow = { workspace = true }
 glob = { workspace = true }
 cmake = { workspace = true, optional = true }
 gql-parser = { workspace = true, features = ["std", "serde"] }
