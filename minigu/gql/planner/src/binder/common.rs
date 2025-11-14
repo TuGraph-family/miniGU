@@ -158,7 +158,7 @@ impl Binder<'_> {
                     .as_ref()
                     .ok_or_else(|| BindError::Unexpected)?;
                 // To handle.
-                let id = graph.graph_type().get_label_id(name)?.unwrap();
+                let id = graph.graph_type().get_label_id(name, self.txn)?.unwrap();
                 Ok(BoundLabelExpr::Label(id))
             }
             LabelExpr::Negation(inner) => {

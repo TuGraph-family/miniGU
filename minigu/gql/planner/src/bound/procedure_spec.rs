@@ -12,7 +12,7 @@ pub struct BoundProcedure {
 
 impl BoundProcedure {
     pub fn schema(&self) -> Option<DataSchemaRef> {
-        todo!()
+        None
     }
 }
 

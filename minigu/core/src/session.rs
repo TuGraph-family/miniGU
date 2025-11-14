@@ -1,9 +1,10 @@
 use std::sync::Arc;
 use std::time::Instant;
 
+use arrow::array::create_array;
 use gql_parser::ast::{
-    GraphExpr, Procedure, ProgramActivity, SessionActivity, SessionResetArgs, SessionSet,
-    TransactionActivity,
+    EndTransaction, GraphExpr, Procedure, Program, ProgramActivity, SessionActivity,
+    SessionResetArgs, SessionSet, TransactionActivity,
 };
 use gql_parser::parse_gql;
 use itertools::Itertools;
@@ -105,12 +106,34 @@ impl Session {
         Ok(QueryResult::default())
     }
 
-    fn handle_transaction_activity(&self, activity: &TransactionActivity) -> Result<QueryResult> {
+    fn handle_transaction_activity(
+        &mut self,
+        activity: &TransactionActivity,
+    ) -> Result<QueryResult> {
         if activity.start.is_some() {
-            return not_implemented("start transaction", None);
+            self.context.begin_explicit_txn().map_err(|e| {
+                crate::error::Error::Catalog(minigu_catalog::error::CatalogError::External(
+                    Box::new(e),
+                ))
+            })?;
         }
-        if activity.end.is_some() {
-            return not_implemented("end transaction", None);
+        if let Some(end) = activity.end.as_ref() {
+            match end.value() {
+                EndTransaction::Commit => {
+                    self.context.commit_explicit_txn().map_err(|e| {
+                        crate::error::Error::Catalog(minigu_catalog::error::CatalogError::External(
+                            Box::new(e),
+                        ))
+                    })?;
+                }
+                EndTransaction::Rollback => {
+                    self.context.rollback_explicit_txn().map_err(|e| {
+                        crate::error::Error::Catalog(minigu_catalog::error::CatalogError::External(
+                            Box::new(e),
+                        ))
+                    })?;
+                }
+            }
         }
         let result = activity
             .procedure
@@ -125,7 +148,7 @@ impl Session {
         let mut metrics = QueryMetrics::default();
 
         let start = Instant::now();
-        let planner = Planner::new(self.context.clone());
+        let mut planner = Planner::new(self.context.clone());
         let physical_plan = planner.plan_query(procedure)?;
         metrics.planning_time = start.elapsed();
 
