@@ -1,0 +1,7 @@
+---
+source: minigu-test/tests/e2e_test.rs
+---
+EXPLAIN
+Limit: 10
+  Project: n
+    LogicalMatch

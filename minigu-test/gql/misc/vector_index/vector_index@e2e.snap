@@ -1,0 +1,30 @@
+---
+source: minigu-test/e2e_test.rs
+---
+Error: Parser(
+    InvalidToken(
+        TokenError {
+            input: "CREATE GRAPH test_graph {
+  (Entity: EntityLabel {
+    id INT64,
+    embedding vector(4),
+    PRIMARY KEY (id)
+  }),
+  (Entity)-[Rel: RelLabel {
+    timestamp\tINT64,
+    PRIMARY KEY (SOURCE_PRIMARY_KEY, timestamp, DESTINATION_PRIMARY_KEY)
+  }]->(Entity),
+};
+
+USE GRAPH test_graph;
+INSERT (n:Entity {id: 30001, embedding: VECTOR [1.0, -2.5, 3.14, -0.5]});
+MATCH  (n:Entity {id: 30001}) return n, n.embedding;",
+            span: 256..257,
+            position: (
+                11,
+                2,
+            ),
+            kind: InvalidToken,
+        },
+    ),
+)

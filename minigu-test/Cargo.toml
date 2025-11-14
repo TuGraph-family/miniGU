@@ -5,15 +5,52 @@ name = "minigu-test"
 repository.workspace = true
 version.workspace = true
 
+[features]
+bench-antlr4 = ["cmake"]
+default = ["std"]
+serde = []
+std = []
+
 [dependencies]
+arrow = { workspace = true }
+cmake = { workspace = true, optional = true }
 glob = { workspace = true }
+gql-parser = { workspace = true, features = ["std", "serde"] }
 libtest-mimic = { workspace = true }
 minigu = { workspace = true }
 sqllogictest = { workspace = true }
 
 [dev-dependencies]
+divan = { workspace = true }
 insta = { workspace = true }
 pastey = { workspace = true }
 
 [lints]
 workspace = true
+
+[[test]]
+name = "parser_tests"
+path = "parser_test.rs"
+required-features = ["std", "serde"]
+
+[[test]]
+name = "e2e_test"
+path = "e2e_test.rs"
+
+[[test]]
+name = "sqllogictest"
+path = "sqllogictest.rs"
+
+[[bench]]
+harness = false
+name = "alloc"
+path = "./benches/alloc.rs"
+
+[[bench]]
+harness = false
+name = "parse"
+path = "./benches/parse.rs"
+required-features = ["bench-antlr4"]
+
+[package.metadata.cargo-machete]
+ignored = ["cmake"]
