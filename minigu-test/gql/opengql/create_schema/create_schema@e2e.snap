@@ -1,4 +1,15 @@
 ---
 source: minigu-test/e2e_test.rs
 ---
-97
+Error: Plan(
+    Bind(
+        NotImplemented(
+            NotImplemented {
+                feature: "create schema statement",
+                issue: TrackingIssue(
+                    None,
+                ),
+            },
+        ),
+    ),
+)

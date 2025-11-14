@@ -1,4 +1,15 @@
 ---
 source: minigu-test/e2e_test.rs
 ---
-625
+Error: Plan(
+    Bind(
+        NotImplemented(
+            NotImplemented {
+                feature: "query conjunction",
+                issue: TrackingIssue(
+                    None,
+                ),
+            },
+        ),
+    ),
+)

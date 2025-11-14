@@ -2,10 +2,13 @@
 //!
 //! Test cases can be found in `../../resources/gql`, and expected outputs can be found in
 //! `snapshots`.
+//! This file defines end-to-end tests for miniGU.
+//!
+//! Test cases can be found in `../../resources/gql`, and expected outputs can be found in
+//! `snapshots`.
 use insta::internals::SettingsBindDropGuard;
-use insta::{Settings, assert_yaml_snapshot};
+use insta::{Settings, assert_snapshot};
 use pastey::paste;
-use arrow::array::Array;
 use minigu::database::{Database, DatabaseConfig};
 use minigu::result::QueryResult;
 
@@ -22,8 +25,14 @@ fn query_executor(input: &str) -> String {
     let config = DatabaseConfig::default();
     let database = Database::open_in_memory(&config).unwrap();
     let mut session = database.session().unwrap();
-    let result = session.query(input).unwrap();
-    result_to_string(&result)
+    match session.query(input) {  
+        Ok(result) => result_to_string(&result),  
+        Err(e) => {
+            let debug_str = format!("{:#?}", e);  // 用 pretty-print Debug
+            let display_str = debug_str.replace("\\n", "\n"); // 把转义的换行还原
+            format!("Error: {}", display_str)
+        }
+    }  
 }
 
 fn result_to_string(result: &QueryResult) -> String {
@@ -43,11 +52,11 @@ fn result_to_string(result: &QueryResult) -> String {
     for chunk in result.iter() {
         let rows_count = chunk.cardinality();
         let column = chunk.columns();
-        for _row_idx in 0..rows_count {
+        for row_idx in 0..rows_count {
             let row_values: Vec<String> = (0..column.len())
                 .map(|col_idx| {
                     let array = &column[col_idx];
-                    format!("{:?}", array.to_data())
+                    extract_string_value(array, row_idx)
                 })
                 .collect();
             output.push_str(&row_values.join("\t"));
@@ -55,6 +64,24 @@ fn result_to_string(result: &QueryResult) -> String {
         }
     }
     output.trim_end().to_string()
+}
+
+fn extract_string_value(array: &arrow::array::ArrayRef, row_idx: usize) -> String {
+    use arrow::array::*;
+    
+    if let Some(string_array) = array.as_any().downcast_ref::<StringArray>() {
+        string_array.value(row_idx).to_string()
+    } else if let Some(string_array) = array.as_any().downcast_ref::<LargeStringArray>() {
+        string_array.value(row_idx).to_string()
+    } else if let Some(int_array) = array.as_any().downcast_ref::<Int64Array>() {
+        int_array.value(row_idx).to_string()
+    } else if let Some(double_array) = array.as_any().downcast_ref::<Float64Array>() {
+        double_array.value(row_idx).to_string()
+    } else if let Some(bool_array) = array.as_any().downcast_ref::<BooleanArray>() {
+        bool_array.value(row_idx).to_string()
+    } else {
+        format!("{:?}", array.to_data())
+    }
 }
 
 macro_rules! add_e2e_tests {
@@ -65,7 +92,8 @@ macro_rules! add_e2e_tests {
                 fn [<e2e_ $dataset _ $query>]() {
                     let _guard = setup(concat!("gql/", $dataset, "/", $query, "/"));
                     let query_str = include_str!(concat!("gql/", $dataset, "/", $query, "/", $query, ".gql"));
-                    assert_yaml_snapshot!($query, query_executor(query_str));
+                    let result = query_executor(query_str);
+                    assert_snapshot!($query, &result);
                 }
             )*
         }

@@ -1,4 +1,15 @@
 ---
 source: minigu-test/e2e_test.rs
 ---
-333
+Error: Plan(
+    Bind(
+        NotImplemented(
+            NotImplemented {
+                feature: "quantified expression",
+                issue: TrackingIssue(
+                    None,
+                ),
+            },
+        ),
+    ),
+)

@@ -1,4 +1,8 @@
 ---
 source: minigu-test/e2e_test.rs
 ---
-397
+Error: Plan(
+    Bind(
+        Unexpected,
+    ),
+)
