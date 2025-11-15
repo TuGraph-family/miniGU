@@ -256,7 +256,7 @@ fn test_graph_duplicate_vertex_id() -> StorageResult<()> {
         .unwrap();
     let retrieved = graph.get_vertex(&txn3, 1)?;
     // The vertex should exist (either original or updated)
-    assert!(retrieved.vid() == 1);
+    assert_eq!(retrieved.vid(), 1);
     txn3.abort()?;
     Ok(())
 }
