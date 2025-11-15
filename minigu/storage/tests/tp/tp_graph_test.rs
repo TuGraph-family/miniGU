@@ -295,7 +295,7 @@ fn test_graph_duplicate_edge_id() -> StorageResult<()> {
         .begin_transaction(IsolationLevel::Serializable)
         .unwrap();
     let retrieved = graph.get_edge(&txn3, 1)?;
-    assert!(retrieved.eid() == 1);
+    assert_eq!(retrieved.eid(), 1);
     txn3.abort()?;
     Ok(())
 }
