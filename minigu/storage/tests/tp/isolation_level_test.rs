@@ -1500,7 +1500,7 @@ fn test_filter_vertices_by_label() {
     let person_count = txn
         .iter_vertices()
         .filter_map(|v| v.ok())
-        .filter(|v| v.label_id() == PERSON_LABEL_ID)
+        .filter(|v| v.label_id == PERSON_LABEL_ID)
         .count();
 
     assert_eq!(person_count, 2); // Alice and Bob
