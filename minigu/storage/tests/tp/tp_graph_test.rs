@@ -604,7 +604,7 @@ fn test_graph_edge_count() -> StorageResult<()> {
 
     // Create edges
     for i in 1..5 {
-        let edge = create_test_edge(i as u64, i, i + 1, FRIEND_LABEL_ID);
+        let edge = create_test_edge(i , i, i + 1, FRIEND_LABEL_ID);
         graph.create_edge(&txn, edge)?;
     }
 
