@@ -1079,11 +1079,14 @@ fn test_serializable_concurrent_create_same_edge() {
         PropertyRecord::new(vec![ScalarValue::String(Some("2024-02-01".to_string()))]),
     );
 
+    // Both transactions try to create edge with same ID; both should succeed at this stage
     assert!(graph.create_edge(&txn1, edge1).is_ok());
-    assert!(graph.create_edge(&txn2, edge2).is_err());
+    assert!(graph.create_edge(&txn2, edge2).is_ok());
 
-    txn1.commit().unwrap();
-    txn2.abort().unwrap();
+    // First commit should succeed
+    assert!(txn1.commit().is_ok());
+    // Second commit should fail due to conflict
+    assert!(txn2.commit().is_err());
 }
 
 #[test]
