@@ -1,6 +1,0 @@
----
-source: minigu-test/tests/e2e_test.rs
----
-EXPLAIN
-Project: Int8(Some(1))
-  OneRow
