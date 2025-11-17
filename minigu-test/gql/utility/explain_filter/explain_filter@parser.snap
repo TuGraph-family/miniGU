@@ -1,0 +1,115 @@
+---
+source: minigu-test/parser_test.rs
+---
+Ok:
+  - activity:
+      - Transaction:
+          start: ~
+          procedure:
+            - at: ~
+              binding_variable_defs: []
+              statement:
+                - Utility:
+                    Explain:
+                      statement:
+                        - Query:
+                            Primary:
+                              Ambient:
+                                Parts:
+                                  parts:
+                                    - - Match:
+                                          Simple:
+                                            - pattern:
+                                                - match_mode: ~
+                                                  patterns:
+                                                    - - variable: ~
+                                                        prefix: ~
+                                                        expr:
+                                                          - Concat:
+                                                              - - Pattern:
+                                                                    Node:
+                                                                      variable:
+                                                                        - n
+                                                                        - start: 14
+                                                                          end: 15
+                                                                      label: ~
+                                                                      predicate: ~
+                                                                - start: 13
+                                                                  end: 16
+                                                          - start: 13
+                                                            end: 16
+                                                      - start: 13
+                                                        end: 16
+                                                  keep: ~
+                                                  where_clause:
+                                                    - Binary:
+                                                        op:
+                                                          - Gt
+                                                          - start: 29
+                                                            end: 30
+                                                        left:
+                                                          - Property:
+                                                              source:
+                                                                - Variable: n
+                                                                - start: 23
+                                                                  end: 24
+                                                              trailing_names:
+                                                                - - age
+                                                                  - start: 25
+                                                                    end: 28
+                                                          - start: 23
+                                                            end: 28
+                                                        right:
+                                                          - Value:
+                                                              Literal:
+                                                                Numeric:
+                                                                  Integer:
+                                                                    - kind: Decimal
+                                                                      integer: "18"
+                                                                    - start: 31
+                                                                      end: 33
+                                                          - start: 31
+                                                            end: 33
+                                                    - start: 23
+                                                      end: 33
+                                                - start: 13
+                                                  end: 33
+                                              yield_clause: []
+                                            - start: 13
+                                              end: 33
+                                      - start: 8
+                                        end: 33
+                                  result:
+                                    - Return:
+                                        statement:
+                                          - quantifier: ~
+                                            items:
+                                              - Items:
+                                                  - - value:
+                                                        - Variable: n
+                                                        - start: 41
+                                                          end: 42
+                                                      alias: ~
+                                                    - start: 41
+                                                      end: 42
+                                              - start: 41
+                                                end: 42
+                                            group_by: ~
+                                          - start: 34
+                                            end: 42
+                                        order_by: ~
+                                    - start: 34
+                                      end: 42
+                        - start: 8
+                          end: 42
+                - start: 0
+                  end: 42
+              next_statements: []
+            - start: 0
+              end: 42
+          end: ~
+      - start: 0
+        end: 42
+    session_close: false
+  - start: 0
+    end: 42
