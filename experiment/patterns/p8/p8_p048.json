@@ -1,0 +1,84 @@
+{
+  "vertices": [
+    {
+      "id": 1,
+      "label": "comment"
+    },
+    {
+      "id": 2,
+      "label": "comment"
+    },
+    {
+      "id": 3,
+      "label": "person"
+    },
+    {
+      "id": 4,
+      "label": "person"
+    },
+    {
+      "id": 5,
+      "label": "tag"
+    }
+  ],
+  "edges": [
+    {
+      "id": 1,
+      "label": "comment_hascreator_person",
+      "src": 1,
+      "dst": 3
+    },
+    {
+      "id": 2,
+      "label": "comment_hascreator_person",
+      "src": 2,
+      "dst": 4
+    },
+    {
+      "id": 3,
+      "label": "comment_hastag_tag",
+      "src": 1,
+      "dst": 5
+    },
+    {
+      "id": 4,
+      "label": "comment_hastag_tag",
+      "src": 2,
+      "dst": 5
+    },
+    {
+      "id": 5,
+      "label": "person_knows_person",
+      "src": 3,
+      "dst": 4
+    },
+    {
+      "id": 6,
+      "label": "comment_replyof_comment",
+      "src": 1,
+      "dst": 2
+    }
+  ],
+  "predicates": [
+    {
+      "predicate_id": 1,
+      "target": "vertex",
+      "id": 1,
+      "property": "length",
+      "op": "ge",
+      "value": {
+        "Int64": 79
+      }
+    },
+    {
+      "predicate_id": 2,
+      "target": "vertex",
+      "id": 5,
+      "property": "name",
+      "op": "eq",
+      "value": {
+        "String": "Adolf_Hitler"
+      }
+    }
+  ]
+}

@@ -1,0 +1,5352 @@
+[
+  {
+    "query_id": "p8_p001",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Muammar_Gaddafi"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 20
+  },
+  {
+    "query_id": "p8_p002",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Khalid_Sheikh_Mohammed"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 7
+  },
+  {
+    "query_id": "p8_p003",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 5
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 2290
+  },
+  {
+    "query_id": "p8_p004",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Wolfgang_Amadeus_Mozart"
+        }
+      }
+    ],
+    "truecard": 7
+  },
+  {
+    "query_id": "p8_p005",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      }
+    ],
+    "truecard": 2476
+  },
+  {
+    "query_id": "p8_p006",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Maximilian_I,_Holy_Roman_Emperor"
+        }
+      }
+    ],
+    "truecard": 5
+  },
+  {
+    "query_id": "p8_p007",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 206
+  },
+  {
+    "query_id": "p8_p008",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "de;en"
+        }
+      }
+    ],
+    "truecard": 548
+  },
+  {
+    "query_id": "p8_p009",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Sonia_Gandhi"
+        }
+      }
+    ],
+    "truecard": 7
+  },
+  {
+    "query_id": "p8_p010",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Muammar_Gaddafi"
+        }
+      }
+    ],
+    "truecard": 14
+  },
+  {
+    "query_id": "p8_p011",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Imelda_Marcos"
+        }
+      }
+    ],
+    "truecard": 16
+  },
+  {
+    "query_id": "p8_p012",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 2533
+  },
+  {
+    "query_id": "p8_p013",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 2897
+  },
+  {
+    "query_id": "p8_p014",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 5
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 79
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 621
+  },
+  {
+    "query_id": "p8_p015",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 411
+  },
+  {
+    "query_id": "p8_p016",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 4679
+  },
+  {
+    "query_id": "p8_p017",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Sonia_Gandhi"
+        }
+      }
+    ],
+    "truecard": 8
+  },
+  {
+    "query_id": "p8_p018",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Augustine_of_Hippo"
+        }
+      }
+    ],
+    "truecard": 28
+  },
+  {
+    "query_id": "p8_p019",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 721
+  },
+  {
+    "query_id": "p8_p020",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 3052
+  },
+  {
+    "query_id": "p8_p021",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 381
+  },
+  {
+    "query_id": "p8_p022",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Mariano_Rivera"
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 1
+  },
+  {
+    "query_id": "p8_p023",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1350093427787
+        }
+      }
+    ],
+    "truecard": 3319
+  },
+  {
+    "query_id": "p8_p024",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 222
+  },
+  {
+    "query_id": "p8_p025",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 3404
+  },
+  {
+    "query_id": "p8_p026",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Muammar_Gaddafi"
+        }
+      }
+    ],
+    "truecard": 34
+  },
+  {
+    "query_id": "p8_p027",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Adolf_Hitler"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 16
+  },
+  {
+    "query_id": "p8_p028",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 3737
+  },
+  {
+    "query_id": "p8_p029",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 563
+  },
+  {
+    "query_id": "p8_p030",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 929
+  },
+  {
+    "query_id": "p8_p031",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 174
+  },
+  {
+    "query_id": "p8_p032",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 3210
+  },
+  {
+    "query_id": "p8_p033",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 2,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1350093427787
+        }
+      }
+    ],
+    "truecard": 2389
+  },
+  {
+    "query_id": "p8_p034",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1350093427787
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 47
+  },
+  {
+    "query_id": "p8_p035",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 3669
+  },
+  {
+    "query_id": "p8_p036",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Sonia_Gandhi"
+        }
+      }
+    ],
+    "truecard": 4
+  },
+  {
+    "query_id": "p8_p037",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 403
+  },
+  {
+    "query_id": "p8_p038",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 2357
+  },
+  {
+    "query_id": "p8_p039",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 5
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 745
+  },
+  {
+    "query_id": "p8_p040",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Mariano_Rivera"
+        }
+      }
+    ],
+    "truecard": 11
+  },
+  {
+    "query_id": "p8_p041",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Adolf_Hitler"
+        }
+      }
+    ],
+    "truecard": 18
+  },
+  {
+    "query_id": "p8_p042",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1350093427787
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 2,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      }
+    ],
+    "truecard": 2959
+  },
+  {
+    "query_id": "p8_p043",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 87
+  },
+  {
+    "query_id": "p8_p044",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 2979
+  },
+  {
+    "query_id": "p8_p045",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 2,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 4324
+  },
+  {
+    "query_id": "p8_p046",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Genghis_Khan"
+        }
+      }
+    ],
+    "truecard": 6
+  },
+  {
+    "query_id": "p8_p047",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 480
+  },
+  {
+    "query_id": "p8_p048",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 79
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Adolf_Hitler"
+        }
+      }
+    ],
+    "truecard": 26
+  },
+  {
+    "query_id": "p8_p049",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1350093427787
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 2836
+  },
+  {
+    "query_id": "p8_p050",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 433
+  },
+  {
+    "query_id": "p8_p051",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Wolfgang_Amadeus_Mozart"
+        }
+      }
+    ],
+    "truecard": 8
+  },
+  {
+    "query_id": "p8_p052",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 2,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1350093427787
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 1123
+  },
+  {
+    "query_id": "p8_p053",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Imelda_Marcos"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      }
+    ],
+    "truecard": 15
+  },
+  {
+    "query_id": "p8_p054",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 719
+  },
+  {
+    "query_id": "p8_p055",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 3642
+  },
+  {
+    "query_id": "p8_p056",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Georg_Wilhelm_Friedrich_Hegel"
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 2
+  },
+  {
+    "query_id": "p8_p057",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 453
+  },
+  {
+    "query_id": "p8_p058",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Morocco"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 1
+  },
+  {
+    "query_id": "p8_p059",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 259
+  },
+  {
+    "query_id": "p8_p060",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 5
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 1342
+  },
+  {
+    "query_id": "p8_p061",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 3973
+  },
+  {
+    "query_id": "p8_p062",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 4608
+  },
+  {
+    "query_id": "p8_p063",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      }
+    ],
+    "truecard": 4324
+  },
+  {
+    "query_id": "p8_p064",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1350093427787
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 1247
+  },
+  {
+    "query_id": "p8_p065",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 5
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 673
+  },
+  {
+    "query_id": "p8_p066",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Safari"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Opera"
+        }
+      }
+    ],
+    "truecard": 23
+  },
+  {
+    "query_id": "p8_p067",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Safari"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Chrome"
+        }
+      }
+    ],
+    "truecard": 116
+  },
+  {
+    "query_id": "p8_p068",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Safari"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Opera"
+        }
+      }
+    ],
+    "truecard": 24
+  },
+  {
+    "query_id": "p8_p069",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Chrome"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Safari"
+        }
+      }
+    ],
+    "truecard": 125
+  },
+  {
+    "query_id": "p8_p070",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Opera"
+        }
+      }
+    ],
+    "truecard": 122
+  },
+  {
+    "query_id": "p8_p071",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Opera"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Opera"
+        }
+      }
+    ],
+    "truecard": 16
+  },
+  {
+    "query_id": "p8_p072",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Internet Explorer"
+        }
+      }
+    ],
+    "truecard": 1444
+  },
+  {
+    "query_id": "p8_p073",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 1916
+  },
+  {
+    "query_id": "p8_p074",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Opera"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Opera"
+        }
+      }
+    ],
+    "truecard": 239
+  },
+  {
+    "query_id": "p8_p075",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Safari"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Chrome"
+        }
+      }
+    ],
+    "truecard": 125
+  },
+  {
+    "query_id": "p8_p076",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Firefox"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Chrome"
+        }
+      }
+    ],
+    "truecard": 24
+  },
+  {
+    "query_id": "p8_p077",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Firefox"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Safari"
+        }
+      }
+    ],
+    "truecard": 160
+  },
+  {
+    "query_id": "p8_p078",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Opera"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Internet Explorer"
+        }
+      }
+    ],
+    "truecard": 66
+  },
+  {
+    "query_id": "p8_p079",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Safari"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Chrome"
+        }
+      }
+    ],
+    "truecard": 118
+  },
+  {
+    "query_id": "p8_p080",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Chrome"
+        }
+      }
+    ],
+    "truecard": 1096
+  },
+  {
+    "query_id": "p8_p081",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Chrome"
+        }
+      }
+    ],
+    "truecard": 979
+  },
+  {
+    "query_id": "p8_p082",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Firefox"
+        }
+      }
+    ],
+    "truecard": 1443
+  },
+  {
+    "query_id": "p8_p083",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Chrome"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Safari"
+        }
+      }
+    ],
+    "truecard": 2
+  },
+  {
+    "query_id": "p8_p084",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Firefox"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Safari"
+        }
+      }
+    ],
+    "truecard": 3
+  },
+  {
+    "query_id": "p8_p085",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Internet Explorer"
+        }
+      }
+    ],
+    "truecard": 1438
+  },
+  {
+    "query_id": "p8_p086",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Opera"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 149
+  },
+  {
+    "query_id": "p8_p087",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Chrome"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Firefox"
+        }
+      }
+    ],
+    "truecard": 24
+  },
+  {
+    "query_id": "p8_p088",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Chrome"
+        }
+      }
+    ],
+    "truecard": 1046
+  },
+  {
+    "query_id": "p8_p089",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Safari"
+        }
+      }
+    ],
+    "truecard": 235
+  },
+  {
+    "query_id": "p8_p090",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Firefox"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Opera"
+        }
+      }
+    ],
+    "truecard": 87
+  },
+  {
+    "query_id": "p8_p091",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Chrome"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Firefox"
+        }
+      }
+    ],
+    "truecard": 654
+  },
+  {
+    "query_id": "p8_p092",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Internet Explorer"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Safari"
+        }
+      }
+    ],
+    "truecard": 214
+  },
+  {
+    "query_id": "p8_p093",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Internet Explorer"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Chrome"
+        }
+      }
+    ],
+    "truecard": 612
+  },
+  {
+    "query_id": "p8_p094",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Opera"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Safari"
+        }
+      }
+    ],
+    "truecard": 24
+  },
+  {
+    "query_id": "p8_p095",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Internet Explorer"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Safari"
+        }
+      }
+    ],
+    "truecard": 146
+  },
+  {
+    "query_id": "p8_p096",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Internet Explorer"
+        }
+      }
+    ],
+    "truecard": 2332
+  },
+  {
+    "query_id": "p8_p097",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Firefox"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Opera"
+        }
+      }
+    ],
+    "truecard": 90
+  },
+  {
+    "query_id": "p8_p098",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Safari"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Internet Explorer"
+        }
+      }
+    ],
+    "truecard": 1
+  },
+  {
+    "query_id": "p8_p099",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Internet Explorer"
+        }
+      }
+    ],
+    "truecard": 1237
+  },
+  {
+    "query_id": "p8_p100",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "Comment"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      },
+      {
+        "id": 5,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Chrome"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "browserused",
+        "op": "eq",
+        "value": {
+          "String": "Chrome"
+        }
+      }
+    ],
+    "truecard": 1894
+  }
+]

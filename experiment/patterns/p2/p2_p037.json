@@ -1,0 +1,68 @@
+{
+  "vertices": [
+    {
+      "id": 1,
+      "label": "comment"
+    },
+    {
+      "id": 2,
+      "label": "city"
+    },
+    {
+      "id": 3,
+      "label": "person"
+    },
+    {
+      "id": 4,
+      "label": "person"
+    }
+  ],
+  "edges": [
+    {
+      "id": 1,
+      "label": "comment_hascreator_person",
+      "src": 1,
+      "dst": 4
+    },
+    {
+      "id": 2,
+      "label": "person_islocatedin_city",
+      "src": 3,
+      "dst": 2
+    },
+    {
+      "id": 3,
+      "label": "person_islocatedin_city",
+      "src": 4,
+      "dst": 2
+    },
+    {
+      "id": 4,
+      "label": "person_likes_comment",
+      "src": 3,
+      "dst": 1
+    }
+  ],
+  "predicates": [
+    {
+      "predicate_id": 1,
+      "target": "edge",
+      "id": 2,
+      "property": "explicitlydeleted",
+      "op": "eq",
+      "value": {
+        "Boolean": false
+      }
+    },
+    {
+      "predicate_id": 2,
+      "target": "vertex",
+      "id": 2,
+      "property": "name",
+      "op": "eq",
+      "value": {
+        "String": "Pontianak"
+      }
+    }
+  ]
+}

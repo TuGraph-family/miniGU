@@ -1,0 +1,1216 @@
+-- q4_p001
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+m.creationdate >= 1308052370341
+m.creationdate <= 1343818164989
+liker.gender = 'male'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 63317
+
+-- q4_p002
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+liker.language = 'es;en'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 8085
+
+-- q4_p003
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+liker.language = 'es;en'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 18904
+
+-- q4_p004
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+c.length >= 79
+php.explicitlydeleted = FALSE
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 76065
+
+-- q4_p005
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+liker.language = 'pt;en'
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 7393
+
+-- q4_p006
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+liker.language = 'en'
+t.name = 'Wolfgang_Amadeus_Mozart'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 156
+
+-- q4_p007
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+t.name = 'Muammar_Gaddafi'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 768
+
+-- q4_p008
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+t.name = 'Maximilian_I,_Holy_Roman_Emperor'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 675
+
+-- q4_p009
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+plp.explicitlydeleted = FALSE
+liker.language = 'en'
+m.creationdate >= 1328021100728
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 14560
+
+-- q4_p010
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+creator.language = 'es;en'
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 12477
+
+-- q4_p011
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+m.language = 'en'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 166059
+
+-- q4_p012
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+plp.creationdate >= 1338452282578
+t.name = 'Genghis_Khan'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 555
+
+-- q4_p013
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+plp.explicitlydeleted = FALSE
+c.length <= 4
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 105335
+
+-- q4_p014
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+t.name = 'Hamid_Karzai'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 292
+
+-- q4_p015
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+liker.language = 'es;en'
+creator.language = 'en'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 1562
+
+-- q4_p016
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+m.creationdate >= 1308052370341
+m.creationdate <= 1343818164989
+crp.explicitlydeleted = FALSE
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 131725
+
+-- q4_p017
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+c.length <= 4
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 46892
+
+-- q4_p018
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+m.explicitlydeleted = FALSE
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 290601
+
+-- q4_p019
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+t.name = 'Wolfgang_Amadeus_Mozart'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 2660
+
+-- q4_p020
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+c.length >= 79
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 18286
+
+-- q4_p021
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+m.language = 'en'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 164726
+
+-- q4_p022
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+liker.language = 'en'
+t.name = 'Maximilian_I,_Holy_Roman_Emperor'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 397
+
+-- q4_p023
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+liker.language = 'en'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 16240
+
+-- q4_p024
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+t.name = 'Genghis_Khan'
+m.language = 'en'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 483
+
+-- q4_p025
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+t.name = 'Hamid_Karzai'
+liker.gender = 'female'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 57
+
+-- q4_p026
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+m.language = 'en'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 115817
+
+-- q4_p027
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+t.name = 'Hamid_Karzai'
+liker.gender = 'female'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 67
+
+-- q4_p028
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+m.creationdate >= 1328021100728
+t.name = 'Adolf_Hitler'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 439
+
+-- q4_p029
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+creator.gender = 'male'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 89622
+
+-- q4_p030
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+liker.gender = 'female'
+creator.language = 'zh;en'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 13211
+
+-- q4_p031
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+t.name = 'Mariano_Rivera'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 1170
+
+-- q4_p032
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+m.language = 'en'
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 115817
+
+-- q4_p033
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+m.length >= 0
+m.length <= 97
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 36385
+
+-- q4_p034
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+plp.creationdate >= 1338452282578
+creator.language = 'en'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 6782
+
+-- q4_p035
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+plp.creationdate >= 1338452282578
+m.explicitlydeleted = FALSE
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 123356
+
+-- q4_p036
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+m.creationdate >= 1328021100728
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 176835
+
+-- q4_p037
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+c.length >= 79
+t.name = 'Mariano_Rivera'
+m.creationdate >= 1328021100728
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 4
+
+-- q4_p038
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+m.explicitlydeleted = FALSE
+liker.gender = 'male'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 106402
+
+-- q4_p039
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+creator.language = 'pt;en'
+php.explicitlydeleted = FALSE
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 3730
+
+-- q4_p040
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+creator.gender = 'female'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 107229
+
+-- q4_p041
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+creator.language = 'zh;en'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 26084
+
+-- q4_p042
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+plp.explicitlydeleted = FALSE
+liker.language = 'pt;en'
+creator.gender = 'male'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 5475
+
+-- q4_p043
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+c.length >= 79
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 34744
+
+-- q4_p044
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+plp.creationdate >= 1338452282578
+m.creationdate >= 1308052370341
+m.creationdate <= 1343818164989
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 4907
+
+-- q4_p045
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+plp.explicitlydeleted = FALSE
+m.creationdate >= 1308052370341
+m.creationdate <= 1343818164989
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 129067
+
+-- q4_p046
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+t.name = 'Maximilian_I,_Holy_Roman_Emperor'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 3312
+
+-- q4_p047
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+liker.language = 'en'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 10368
+
+-- q4_p048
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+liker.language = 'zh;en'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 27399
+
+-- q4_p049
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+m.creationdate >= 1328021100728
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 37512
+
+-- q4_p050
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+creator.language = 'es;en'
+php.explicitlydeleted = FALSE
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 15068
+
+-- q4_p051
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+t.name = 'Augustine_of_Hippo'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 579
+
+-- q4_p052
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+creator.gender = 'female'
+liker.gender = 'male'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 53703
+
+-- q4_p053
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+plp.creationdate >= 1338452282578
+m.explicitlydeleted = FALSE
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 146203
+
+-- q4_p054
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 52140
+
+-- q4_p055
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+t.name = 'Muammar_Gaddafi'
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 757
+
+-- q4_p056
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+c.length >= 5
+c.length <= 79
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 21669
+
+-- q4_p057
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+liker.language = 'zh;en'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 32848
+
+-- q4_p058
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+c.length >= 5
+c.length <= 79
+t.name = 'Hamid_Karzai'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 110
+
+-- q4_p059
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+c.length >= 5
+c.length <= 79
+plp.explicitlydeleted = FALSE
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 45605
+
+-- q4_p060
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+creator.gender = 'male'
+m.creationdate >= 1328021100728
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 82280
+
+-- q4_p061
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+t.name = 'Maximilian_I,_Holy_Roman_Emperor'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 5201
+
+-- q4_p062
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+t.name = 'Hamid_Karzai'
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 75
+
+-- q4_p063
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+t.name = 'Hamid_Karzai'
+plp.creationdate >= 1338452282578
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 122
+
+-- q4_p064
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+c.length <= 4
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 76520
+
+-- q4_p065
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+liker.gender = 'male'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 139831
+
+-- q4_p066
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+t.name = 'Muammar_Gaddafi'
+liker.language = 'pt;en'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 35
+
+-- q4_p067
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+t.name = 'Mariano_Rivera'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 1170
+
+-- q4_p068
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+t.name = 'Muammar_Gaddafi'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 757
+
+-- q4_p069
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+t.name = 'Augustine_of_Hippo'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 893
+
+-- q4_p070
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+m.explicitlydeleted = FALSE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 126302
+
+-- q4_p071
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+c.length >= 79
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 76065
+
+-- q4_p072
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+m.length >= 0
+m.length <= 97
+liker.gender = 'female'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 27214
+
+-- q4_p073
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+plp.explicitlydeleted = FALSE
+creator.gender = 'male'
+t.name = 'Wolfgang_Amadeus_Mozart'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 94
+
+-- q4_p074
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+liker.language = 'es;en'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 19038
+
+-- q4_p075
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+m.length > 0
+t.name = 'Hamid_Karzai'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 292
+
+-- q4_p076
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+t.name = 'Muammar_Gaddafi'
+c.creationdate >= 1350093427787
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 106
+
+-- q4_p077
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+m.language = 'en'
+crp.explicitlydeleted = FALSE
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 125279
+
+-- q4_p078
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+plp.explicitlydeleted = FALSE
+liker.language = 'en'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 22938
+
+-- q4_p079
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+plp.creationdate >= 1338452282578
+t.name = 'Adolf_Hitler'
+php.explicitlydeleted = FALSE
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 435
+
+-- q4_p080
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+m.creationdate >= 1328021100728
+liker.gender = 'female'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 18587
+
+-- q4_p081
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+creator.gender = 'female'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 156095
+
+-- q4_p082
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+plp.creationdate >= 1338452282578
+c.length <= 4
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 2051
+
+-- q4_p083
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+plp.explicitlydeleted = FALSE
+t.name = 'Hamid_Karzai'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 281
+
+-- q4_p084
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+t.name = 'Adolf_Hitler'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 1571
+
+-- q4_p085
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+c.explicitlydeleted = FALSE
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 287945
+
+-- q4_p086
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+plp.explicitlydeleted = FALSE
+m.creationdate >= 1328021100728
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 174199
+
+-- q4_p087
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+m.creationdate >= 1308052370341
+m.creationdate <= 1343818164989
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 113122
+
+-- q4_p088
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+m.length > 0
+t.name = 'Genghis_Khan'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 2231
+
+-- q4_p089
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+t.name = 'Muammar_Gaddafi'
+plp.explicitlydeleted = FALSE
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 414
+
+-- q4_p090
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+creator.gender = 'male'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 91683
+
+-- q4_p091
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+plp.explicitlydeleted = FALSE
+m.creationdate >= 1328021100728
+t.name = 'Maximilian_I,_Holy_Roman_Emperor'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 4579
+
+-- q4_p092
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+liker.language = 'en'
+t.name = 'Mariano_Rivera'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 78
+
+-- q4_p093
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+m.explicitlydeleted = FALSE
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 287945
+
+-- q4_p094
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+m.creationdate >= 1308052370341
+m.creationdate <= 1343818164989
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 132328
+
+-- q4_p095
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+t.name = 'Genghis_Khan'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 2231
+
+-- q4_p096
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+creator.gender = 'male'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 60906
+
+-- q4_p097
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+liker.language = 'zh;en'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 41903
+
+-- q4_p098
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+m.creationdate >= 1308052370341
+m.creationdate <= 1343818164989
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 59242
+
+-- q4_p099
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+creator.language = 'pt;en'
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 17277
+
+-- q4_p100
+MATCH 
+(c:Comment)-[crp:comment_replyof_post]->(m:Post),
+(liker:Person)-[plp:person_likes_post]->(m:Post),
+(m:Post)-[pht:post_hastag_tag]->(t:Tag),
+(m:Post)-[php:post_hascreator_person]->(creator:Person)
+FILTER WHERE
+pht.creationdate >= 1301148754469
+pht.creationdate <= 1339192828781
+liker.gender = 'male'
+c.creationdate >= 1350093427787
+RETURN c, m, liker, t, creator, crp, plp, pht, php; -- || 15126

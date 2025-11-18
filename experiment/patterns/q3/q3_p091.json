@@ -1,0 +1,120 @@
+{
+  "vertices": [
+    {
+      "id": 1,
+      "label": "city"
+    },
+    {
+      "id": 2,
+      "label": "city"
+    },
+    {
+      "id": 3,
+      "label": "city"
+    },
+    {
+      "id": 4,
+      "label": "country"
+    },
+    {
+      "id": 5,
+      "label": "person"
+    },
+    {
+      "id": 6,
+      "label": "person"
+    },
+    {
+      "id": 7,
+      "label": "person"
+    }
+  ],
+  "edges": [
+    {
+      "id": 1,
+      "label": "city_ispartof_country",
+      "src": 1,
+      "dst": 4
+    },
+    {
+      "id": 2,
+      "label": "city_ispartof_country",
+      "src": 2,
+      "dst": 4
+    },
+    {
+      "id": 3,
+      "label": "city_ispartof_country",
+      "src": 3,
+      "dst": 4
+    },
+    {
+      "id": 4,
+      "label": "person_knows_person",
+      "src": 5,
+      "dst": 6
+    },
+    {
+      "id": 5,
+      "label": "person_knows_person",
+      "src": 5,
+      "dst": 7
+    },
+    {
+      "id": 6,
+      "label": "person_knows_person",
+      "src": 6,
+      "dst": 7
+    },
+    {
+      "id": 7,
+      "label": "person_islocatedin_city",
+      "src": 5,
+      "dst": 1
+    },
+    {
+      "id": 8,
+      "label": "person_islocatedin_city",
+      "src": 6,
+      "dst": 2
+    },
+    {
+      "id": 9,
+      "label": "person_islocatedin_city",
+      "src": 7,
+      "dst": 3
+    }
+  ],
+  "predicates": [
+    {
+      "predicate_id": 1,
+      "target": "edge",
+      "id": 1,
+      "property": "src_type",
+      "op": "eq",
+      "value": {
+        "String": "City"
+      }
+    },
+    {
+      "predicate_id": 2,
+      "target": "vertex",
+      "id": 6,
+      "property": "language",
+      "op": "eq",
+      "value": {
+        "String": "en"
+      }
+    },
+    {
+      "predicate_id": 3,
+      "target": "vertex",
+      "id": 5,
+      "property": "language",
+      "op": "eq",
+      "value": {
+        "String": "es;en"
+      }
+    }
+  ]
+}

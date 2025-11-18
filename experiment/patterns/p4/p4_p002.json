@@ -1,0 +1,72 @@
+{
+  "vertices": [
+    {
+      "id": 1,
+      "label": "comment"
+    },
+    {
+      "id": 2,
+      "label": "forum"
+    },
+    {
+      "id": 3,
+      "label": "person"
+    },
+    {
+      "id": 4,
+      "label": "person"
+    },
+    {
+      "id": 5,
+      "label": "post"
+    }
+  ],
+  "edges": [
+    {
+      "id": 1,
+      "label": "comment_hascreator_person",
+      "src": 1,
+      "dst": 3
+    },
+    {
+      "id": 2,
+      "label": "comment_replyof_post",
+      "src": 1,
+      "dst": 5
+    },
+    {
+      "id": 3,
+      "label": "forum_containerof_post",
+      "src": 2,
+      "dst": 5
+    },
+    {
+      "id": 4,
+      "label": "forum_hasmember_person",
+      "src": 2,
+      "dst": 4
+    }
+  ],
+  "predicates": [
+    {
+      "predicate_id": 1,
+      "target": "edge",
+      "id": 3,
+      "property": "explicitlydeleted",
+      "op": "eq",
+      "value": {
+        "Boolean": false
+      }
+    },
+    {
+      "predicate_id": 2,
+      "target": "vertex",
+      "id": 4,
+      "property": "gender",
+      "op": "eq",
+      "value": {
+        "String": "male"
+      }
+    }
+  ]
+}

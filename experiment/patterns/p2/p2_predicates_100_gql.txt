@@ -1,0 +1,1203 @@
+-- p2_p001
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+p1.language = 'zh;en'
+chp.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 268
+
+-- p2_p002
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.creationdate >= 1351344255062
+ci.name = 'Rạch_Giá'
+plc1.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 2
+
+-- p2_p003
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+c.creationdate >= 1350093427787
+p2.language = 'en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 101
+
+-- p2_p004
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.explicitlydeleted = FALSE
+p2.language = 'pt;en'
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 41
+
+-- p2_p005
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.creationdate >= 1351344255062
+p2.language = 'en'
+plc1.creationdate >= 1285358988937
+plc1.creationdate <= 1347940587243
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 62
+
+-- p2_p006
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+p2.gender = 'female'
+p1.language = 'zh;en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 95
+
+-- p2_p007
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+plc_like.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1388
+
+-- p2_p008
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.explicitlydeleted = FALSE
+c.length >= 5
+c.length <= 79
+plc1.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 588
+
+-- p2_p009
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+c.length >= 5
+c.length <= 79
+plc_like.creationdate >= 1351344255062
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 244
+
+-- p2_p010
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+p2.language = 'en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 188
+
+-- p2_p011
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+p2.language = 'en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 131
+
+-- p2_p012
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+c.length >= 79
+plc_like.creationdate >= 1351344255062
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 767
+
+-- p2_p013
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.explicitlydeleted = FALSE
+c.length >= 79
+p2.language = 'pt;en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 76
+
+-- p2_p014
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.creationdate >= 1285358988937
+plc1.creationdate <= 1347940587243
+c.length >= 79
+p1.gender = 'male'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 542
+
+-- p2_p015
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+c.creationdate >= 1350093427787
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 871
+
+-- p2_p016
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+p1.gender = 'female'
+p2.gender = 'female'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1112
+
+-- p2_p017
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.explicitlydeleted = FALSE
+p2.language = 'en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 184
+
+-- p2_p018
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+ci.name = 'Rạch_Giá'
+plc_like.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 2
+
+-- p2_p019
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.creationdate >= 1351344255062
+p2.language = 'pt;en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 49
+
+-- p2_p020
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+c.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 2158
+
+-- p2_p021
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.creationdate >= 1351344255062
+p2.language = 'zh;en'
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 98
+
+-- p2_p022
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+ci.name = 'Intramuros'
+plc1.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 4
+
+-- p2_p023
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+p2.gender = 'male'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 711
+
+-- p2_p024
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.creationdate >= 1285358988937
+plc1.creationdate <= 1347940587243
+p1.gender = 'female'
+plc_like.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 753
+
+-- p2_p025
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+p1.gender = 'female'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 773
+
+-- p2_p026
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+p1.language = 'es;en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 168
+
+-- p2_p027
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.creationdate >= 1351344255062
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+chp.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 774
+
+-- p2_p028
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.creationdate >= 1285358988937
+plc1.creationdate <= 1347940587243
+c.creationdate >= 1350093427787
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 715
+
+-- p2_p029
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.explicitlydeleted = FALSE
+ci.name = 'Pontianak'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1
+
+-- p2_p030
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+p1.language = 'zh;en'
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 148
+
+-- p2_p031
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+p2.language = 'en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 188
+
+-- p2_p032
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+p1.gender = 'female'
+p2.language = 'pt;en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 21
+
+-- p2_p033
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.creationdate >= 1351344255062
+c.explicitlydeleted = FALSE
+p2.gender = 'male'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 467
+
+-- p2_p034
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.explicitlydeleted = FALSE
+c.length >= 5
+c.length <= 79
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 591
+
+-- p2_p035
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.explicitlydeleted = FALSE
+p2.gender = 'female'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1130
+
+-- p2_p036
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+p1.language = 'pt;en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 104
+
+-- p2_p037
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+ci.name = 'Pontianak'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1
+
+-- p2_p038
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+p2.language = 'es;en'
+plc_like.creationdate >= 1351344255062
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 61
+
+-- p2_p039
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+p2.gender = 'female'
+ci.name = 'Intramuros'
+plc2.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 4
+
+-- p2_p040
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+p1.gender = 'male'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1016
+
+-- p2_p041
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1426
+
+-- p2_p042
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+p2.language = 'es;en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 167
+
+-- p2_p043
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+ci.name = 'Rạch_Giá'
+plc_like.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1
+
+-- p2_p044
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+c.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1419
+
+-- p2_p045
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+p1.language = 'pt;en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 62
+
+-- p2_p046
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+p2.language = 'pt;en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 105
+
+-- p2_p047
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+p1.language = 'en'
+plc2.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 183
+
+-- p2_p048
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+ci.name = 'Intramuros'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 4
+
+-- p2_p049
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+p1.gender = 'male'
+plc2.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 669
+
+-- p2_p050
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+p2.gender = 'male'
+p1.gender = 'male'
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 642
+
+-- p2_p051
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+c.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1462
+
+-- p2_p052
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.creationdate >= 1351344255062
+p2.language = 'en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 95
+
+-- p2_p053
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+c.creationdate >= 1350093427787
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1067
+
+-- p2_p054
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.creationdate >= 1351344255062
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 781
+
+-- p2_p055
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.explicitlydeleted = FALSE
+c.creationdate >= 1350093427787
+plc1.creationdate >= 1285358988937
+plc1.creationdate <= 1347940587243
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 692
+
+-- p2_p056
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.creationdate >= 1351344255062
+p2.language = 'pt;en'
+chp.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 49
+
+-- p2_p057
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+c.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 2147
+
+-- p2_p058
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+p1.gender = 'female'
+c.length >= 5
+c.length <= 79
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 311
+
+-- p2_p059
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+p1.gender = 'female'
+p2.language = 'zh;en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 139
+
+-- p2_p060
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+c.length >= 79
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1103
+
+-- p2_p061
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+p1.language = 'zh;en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 270
+
+-- p2_p062
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.creationdate >= 1351344255062
+p2.gender = 'female'
+p1.language = 'pt;en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 21
+
+-- p2_p063
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+ci.name = 'Rạch_Giá'
+plc_like.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 2
+
+-- p2_p064
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+p1.language = 'es;en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 117
+
+-- p2_p065
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+p2.gender = 'male'
+plc2.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 671
+
+-- p2_p066
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.creationdate >= 1285358988937
+plc1.creationdate <= 1347940587243
+p2.language = 'zh;en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 212
+
+-- p2_p067
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.explicitlydeleted = FALSE
+c.creationdate >= 1350093427787
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1038
+
+-- p2_p068
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.creationdate >= 1285358988937
+plc1.creationdate <= 1347940587243
+c.length >= 5
+c.length <= 79
+ci.name = 'Izmir'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 2
+
+-- p2_p069
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.creationdate >= 1351344255062
+p1.language = 'pt;en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 49
+
+-- p2_p070
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+ci.name = 'Intramuros'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 2
+
+-- p2_p071
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+p2.gender = 'male'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1016
+
+-- p2_p072
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+p1.language = 'en'
+ci.name = 'Intramuros'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 4
+
+-- p2_p073
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.creationdate >= 1285358988937
+plc1.creationdate <= 1347940587243
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1022
+
+-- p2_p074
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+p2.gender = 'female'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1148
+
+-- p2_p075
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+c.length >= 79
+ci.name = 'Izmir'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 2
+
+-- p2_p076
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+c.length >= 5
+c.length <= 79
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 600
+
+-- p2_p077
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.creationdate >= 1351344255062
+p2.gender = 'male'
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 376
+
+-- p2_p078
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+c.explicitlydeleted = FALSE
+plc1.creationdate >= 1285358988937
+plc1.creationdate <= 1347940587243
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1432
+
+-- p2_p079
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+p2.gender = 'male'
+c.length >= 79
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 536
+
+-- p2_p080
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.creationdate >= 1351344255062
+c.length >= 79
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 777
+
+-- p2_p081
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+p2.language = 'es;en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 91
+
+-- p2_p082
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.creationdate >= 1351344255062
+p1.gender = 'female'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 506
+
+-- p2_p083
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.creationdate >= 1285358988937
+plc1.creationdate <= 1347940587243
+p2.gender = 'male'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 706
+
+-- p2_p084
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1426
+
+-- p2_p085
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+ci.name = 'Pontianak'
+c.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1
+
+-- p2_p086
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+p1.gender = 'male'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1011
+
+-- p2_p087
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.creationdate >= 1285358988937
+plc1.creationdate <= 1347940587243
+p2.gender = 'female'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 780
+
+-- p2_p088
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.creationdate >= 1351344255062
+c.length >= 79
+plc2.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 775
+
+-- p2_p089
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+p1.gender = 'female'
+plc2.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1156
+
+-- p2_p090
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.explicitlydeleted = FALSE
+p1.gender = 'female'
+plc1.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1125
+
+-- p2_p091
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.creationdate >= 1351344255062
+p1.language = 'pt;en'
+plc1.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 49
+
+-- p2_p092
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.explicitlydeleted = FALSE
+c.length >= 79
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 1624
+
+-- p2_p093
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+p1.language = 'en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 185
+
+-- p2_p094
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+p2.gender = 'female'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 768
+
+-- p2_p095
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+p2.language = 'en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 187
+
+-- p2_p096
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+p1.language = 'en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 184
+
+-- p2_p097
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.creationdate >= 1351344255062
+c.length >= 5
+c.length <= 79
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 244
+
+-- p2_p098
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+p1.language = 'en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 131
+
+-- p2_p099
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+p1.gender = 'female'
+plc1.explicitlydeleted = FALSE
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 772
+
+-- p2_p100
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci:City),
+(p1:Person)-[plc_like:person_likes_comment]->(c:Comment)
+FILTER WHERE
+plc_like.explicitlydeleted = FALSE
+p2.language = 'pt;en'
+RETURN c, p2, ci, p1, chp, plc2, plc1, plc_like; -- || 101

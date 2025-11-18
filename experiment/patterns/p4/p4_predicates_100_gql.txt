@@ -1,0 +1,1219 @@
+-- p4_p001
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.explicitlydeleted = FALSE
+p_creator.language = 'zh;en'
+f.creationdate >= 1305589168419
+f.creationdate <= 1351610285871
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 352941
+
+-- p4_p002
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+p_member.gender = 'male'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 3974869
+
+-- p4_p003
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+c.length >= 5
+c.length <= 79
+po.language = 'en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 1512309
+
+-- p4_p004
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+f.title = 'Wall of Rahul Singh'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 25434
+
+-- p4_p005
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1352177414840
+p_member.language = 'pt;en'
+chp.explicitlydeleted = FALSE
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 191365
+
+-- p4_p006
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+c.length <= 4
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 2999556
+
+-- p4_p007
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+p_member.language = 'en'
+crp.explicitlydeleted = FALSE
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 665664
+
+-- p4_p008
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.creationdate >= 1321789849404
+fhm.creationdate <= 1354857790702
+p_member.language = 'zh;en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 828377
+
+-- p4_p009
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+c.explicitlydeleted = FALSE
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 4818057
+
+-- p4_p010
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+p_member.language = 'pt;en'
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1352177414840
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 138012
+
+-- p4_p011
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+po.length >= 0
+po.length <= 97
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 1478403
+
+-- p4_p012
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1352177414840
+f.title = 'Wall of Yang Li'
+po.length > 0
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 282
+
+-- p4_p013
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.creationdate >= 1321789849404
+fhm.creationdate <= 1354857790702
+f.explicitlydeleted = FALSE
+c.length >= 5
+c.length <= 79
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 2175056
+
+-- p4_p014
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.explicitlydeleted = FALSE
+po.length > 0
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1352177414840
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 4966405
+
+-- p4_p015
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.explicitlydeleted = FALSE
+p_creator.gender = 'male'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 3917973
+
+-- p4_p016
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1352177414840
+p_creator.gender = 'male'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 2476831
+
+-- p4_p017
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+p_member.language = 'pt;en'
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 182081
+
+-- p4_p018
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.creationdate >= 1321789849404
+fhm.creationdate <= 1354857790702
+p_creator.language = 'zh;en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 804709
+
+-- p4_p019
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+po.language = 'zh'
+f.explicitlydeleted = FALSE
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 297785
+
+-- p4_p020
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+c.length <= 4
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 1845818
+
+-- p4_p021
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.explicitlydeleted = FALSE
+p_member.gender = 'female'
+po.language = 'en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 1985560
+
+-- p4_p022
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+f.creationdate >= 1305589168419
+f.creationdate <= 1351610285871
+p_member.gender = 'female'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 1265145
+
+-- p4_p023
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+p_creator.gender = 'male'
+f.explicitlydeleted = FALSE
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 2662654
+
+-- p4_p024
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.creationdate >= 1321789849404
+fhm.creationdate <= 1354857790702
+p_creator.gender = 'male'
+p_member.language = 'zh;en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 409038
+
+-- p4_p025
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+c.length >= 79
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 2015960
+
+-- p4_p026
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.explicitlydeleted = FALSE
+po.length >= 0
+po.length <= 97
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 2433939
+
+-- p4_p027
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.explicitlydeleted = FALSE
+f.title = 'Wall of Rahul Singh'
+p_creator.language = 'en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 1672
+
+-- p4_p028
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+p_creator.language = 'en'
+crp.explicitlydeleted = FALSE
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 670956
+
+-- p4_p029
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+p_member.language = 'pt;en'
+f.creationdate >= 1305589168419
+f.creationdate <= 1351610285871
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 88679
+
+-- p4_p030
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+po.language = 'en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 3880642
+
+-- p4_p031
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.creationdate >= 1321789849404
+fhm.creationdate <= 1354857790702
+p_creator.gender = 'male'
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 1896527
+
+-- p4_p032
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+po.language = 'zh'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 513016
+
+-- p4_p033
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+c.creationdate >= 1350093427787
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 3268700
+
+-- p4_p034
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+f.title = 'Wall of Yang Li'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 890
+
+-- p4_p035
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+p_member.gender = 'male'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 2641061
+
+-- p4_p036
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.explicitlydeleted = FALSE
+p_creator.gender = 'male'
+fcp.explicitlydeleted = FALSE
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 3917443
+
+-- p4_p037
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+c.creationdate >= 1350093427787
+po.length > 0
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 3268700
+
+-- p4_p038
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+f.title = 'Wall of Rahul Singh'
+po.language = 'en'
+chp.explicitlydeleted = FALSE
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 42075
+
+-- p4_p039
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+f.title = 'Wall of Rahul Singh'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 50992
+
+-- p4_p040
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1352177414840
+po.length > 0
+fhm.creationdate >= 1321789849404
+fhm.creationdate <= 1354857790702
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 3570153
+
+-- p4_p041
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+p_member.language = 'es;en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 540206
+
+-- p4_p042
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+po.explicitlydeleted = FALSE
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 7993542
+
+-- p4_p043
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+c.length <= 4
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 3049836
+
+-- p4_p044
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1352177414840
+po.language = 'en'
+p_member.language = 'en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 209584
+
+-- p4_p045
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.creationdate >= 1321789849404
+fhm.creationdate <= 1354857790702
+po.length >= 0
+po.length <= 97
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 1696780
+
+-- p4_p046
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+p_creator.language = 'en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 683906
+
+-- p4_p047
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.explicitlydeleted = FALSE
+po.explicitlydeleted = FALSE
+chp.explicitlydeleted = FALSE
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 7885217
+
+-- p4_p048
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+po.language = 'en'
+fhm.creationdate >= 1321789849404
+fhm.creationdate <= 1354857790702
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 2725035
+
+-- p4_p049
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+po.language = 'zh'
+chp.explicitlydeleted = FALSE
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 505692
+
+-- p4_p050
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+c.explicitlydeleted = FALSE
+fcp.explicitlydeleted = FALSE
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 4817561
+
+-- p4_p051
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.explicitlydeleted = FALSE
+po.language = 'en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 3892700
+
+-- p4_p052
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.creationdate >= 1321789849404
+fhm.creationdate <= 1354857790702
+po.creationdate >= 1308052370341
+po.creationdate <= 1352177414840
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 3570153
+
+-- p4_p053
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+p_creator.gender = 'female'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 2454971
+
+-- p4_p054
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.creationdate >= 1321789849404
+fhm.creationdate <= 1354857790702
+c.explicitlydeleted = FALSE
+po.language = 'zh'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 354295
+
+-- p4_p055
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+c.length >= 5
+c.length <= 79
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 3161856
+
+-- p4_p056
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+p_creator.language = 'zh;en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 1156736
+
+-- p4_p057
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+f.title = 'Wall of Rahul Khan'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 3349
+
+-- p4_p058
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+c.explicitlydeleted = FALSE
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 5284606
+
+-- p4_p059
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+p_creator.language = 'en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 670970
+
+-- p4_p060
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+p_creator.language = 'pt;en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 191007
+
+-- p4_p061
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.explicitlydeleted = FALSE
+po.explicitlydeleted = FALSE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 4823820
+
+-- p4_p062
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+po.creationdate >= 1308052370341
+po.creationdate <= 1352177414840
+p_member.language = 'zh;en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 742701
+
+-- p4_p063
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1352177414840
+po.explicitlydeleted = FALSE
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 5025058
+
+-- p4_p064
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1352177414840
+po.explicitlydeleted = FALSE
+p_member.gender = 'male'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 2468783
+
+-- p4_p065
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+p_creator.language = 'zh;en'
+po.language = 'zh'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 171067
+
+-- p4_p066
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+po.creationdate >= 1308052370341
+po.creationdate <= 1352177414840
+p_member.language = 'en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 305761
+
+-- p4_p067
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+c.creationdate >= 1350093427787
+po.explicitlydeleted = FALSE
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 3323580
+
+-- p4_p068
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+p_member.gender = 'male'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 2410546
+
+-- p4_p069
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.creationdate >= 1321789849404
+fhm.creationdate <= 1354857790702
+f.title = 'Wall of Yang Li'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 555
+
+-- p4_p070
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+p_creator.language = 'en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 401685
+
+-- p4_p071
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.explicitlydeleted = FALSE
+c.creationdate >= 1350093427787
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 2642137
+
+-- p4_p072
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+p_member.language = 'en'
+c.length >= 5
+c.length <= 79
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 158815
+
+-- p4_p073
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+f.title = 'Wall of Yang Li'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 848
+
+-- p4_p074
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+f.title = 'Wall of Yang Li'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 848
+
+-- p4_p075
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+p_creator.gender = 'male'
+f.title = 'Wall of Rahul Khan'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 2256
+
+-- p4_p076
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+p_creator.gender = 'male'
+fhm.explicitlydeleted = FALSE
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 3849716
+
+-- p4_p077
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.explicitlydeleted = FALSE
+p_creator.gender = 'female'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 4100259
+
+-- p4_p078
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+po.length > 0
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 5375361
+
+-- p4_p079
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+c.length <= 4
+p_member.language = 'pt;en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 76840
+
+-- p4_p080
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+p_member.gender = 'male'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 3910222
+
+-- p4_p081
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+p_creator.language = 'es;en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 532698
+
+-- p4_p082
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+f.title = 'Wall of Yang Li'
+c.length >= 79
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 120
+
+-- p4_p083
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+c.explicitlydeleted = FALSE
+fhm.explicitlydeleted = FALSE
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 7886334
+
+-- p4_p084
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+po.creationdate >= 1308052370341
+po.creationdate <= 1352177414840
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 4942233
+
+-- p4_p085
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1352177414840
+p_member.gender = 'male'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 2468959
+
+-- p4_p086
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+po.language = 'en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 3880642
+
+-- p4_p087
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+p_member.language = 'en'
+c.length <= 4
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 168854
+
+-- p4_p088
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.creationdate >= 1321789849404
+fhm.creationdate <= 1354857790702
+c.creationdate >= 1350093427787
+p_creator.language = 'zh;en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 337398
+
+-- p4_p089
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+p_member.gender = 'female'
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 2448079
+
+-- p4_p090
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.creationdate >= 1321789849404
+fhm.creationdate <= 1354857790702
+p_member.gender = 'female'
+f.creationdate >= 1305589168419
+f.creationdate <= 1351610285871
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 1029811
+
+-- p4_p091
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1352177414840
+c.length <= 4
+po.length > 0
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 1895187
+
+-- p4_p092
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.creationdate >= 1321789849404
+fhm.creationdate <= 1354857790702
+f.title = 'Wall of Yang Li'
+crp.creationdate >= 1335749795059
+crp.creationdate <= 1356234923082
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 257
+
+-- p4_p093
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+p_creator.gender = 'male'
+po.length >= 0
+po.length <= 97
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 1177851
+
+-- p4_p094
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+p_member.gender = 'female'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 2490273
+
+-- p4_p095
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.explicitlydeleted = FALSE
+f.title = 'Wall of Rahul Singh'
+po.length >= 0
+po.length <= 97
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 16723
+
+-- p4_p096
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+po.length > 0
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 7994677
+
+-- p4_p097
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+p_creator.language = 'zh;en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 1139791
+
+-- p4_p098
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+f.title = 'Wall of Yang Li'
+po.explicitlydeleted = FALSE
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 848
+
+-- p4_p099
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+po.length >= 0
+po.length <= 97
+chp.explicitlydeleted = FALSE
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 2430142
+
+-- p4_p100
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p_creator:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(f:Forum)-[fhm:forum_hasmember_person]->(p_member:Person)
+FILTER WHERE
+fhm.creationdate >= 1321789849404
+fhm.creationdate <= 1354857790702
+p_creator.language = 'pt;en'
+RETURN c, p_creator, po, f, p_member, chp, crp, fcp, fhm; -- || 216187

@@ -1,0 +1,4882 @@
+[
+  {
+    "query_id": "p6_p001",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Wall of Rahul Khan"
+        }
+      }
+    ],
+    "truecard": 1
+  },
+  {
+    "query_id": "p6_p002",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 70108
+  },
+  {
+    "query_id": "p6_p003",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1308052370341
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1352177414840
+        }
+      }
+    ],
+    "truecard": 136074
+  },
+  {
+    "query_id": "p6_p004",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 10505
+  },
+  {
+    "query_id": "p6_p005",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 10959
+  },
+  {
+    "query_id": "p6_p006",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Wall of Rahul Khan"
+        }
+      }
+    ],
+    "truecard": 1
+  },
+  {
+    "query_id": "p6_p007",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1308052370341
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1352177414840
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 4046
+  },
+  {
+    "query_id": "p6_p008",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "de;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 0
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 0
+        }
+      }
+    ],
+    "truecard": 3796
+  },
+  {
+    "query_id": "p6_p009",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 7551
+  },
+  {
+    "query_id": "p6_p010",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1351610285871
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 4,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 0
+        }
+      }
+    ],
+    "truecard": 3814
+  },
+  {
+    "query_id": "p6_p011",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 0
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 0
+        }
+      }
+    ],
+    "truecard": 60277
+  },
+  {
+    "query_id": "p6_p012",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 13565
+  },
+  {
+    "query_id": "p6_p013",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 45584
+  },
+  {
+    "query_id": "p6_p014",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "de;en"
+        }
+      }
+    ],
+    "truecard": 6711
+  },
+  {
+    "query_id": "p6_p015",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 71707
+  },
+  {
+    "query_id": "p6_p016",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1308052370341
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1352177414840
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "de;en"
+        }
+      }
+    ],
+    "truecard": 8713
+  },
+  {
+    "query_id": "p6_p017",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Wall of Rahul Khan"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 4
+  },
+  {
+    "query_id": "p6_p018",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1308052370341
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1352177414840
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 63531
+  },
+  {
+    "query_id": "p6_p019",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 7318
+  },
+  {
+    "query_id": "p6_p020",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 80223
+  },
+  {
+    "query_id": "p6_p021",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 32674
+  },
+  {
+    "query_id": "p6_p022",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 3670
+  },
+  {
+    "query_id": "p6_p023",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 21801
+  },
+  {
+    "query_id": "p6_p024",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 37553
+  },
+  {
+    "query_id": "p6_p025",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1308052370341
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1352177414840
+        }
+      }
+    ],
+    "truecard": 86468
+  },
+  {
+    "query_id": "p6_p026",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1308052370341
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1352177414840
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 6286
+  },
+  {
+    "query_id": "p6_p027",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 6290
+  },
+  {
+    "query_id": "p6_p028",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 3060
+  },
+  {
+    "query_id": "p6_p029",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 0
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 0
+        }
+      }
+    ],
+    "truecard": 3838
+  },
+  {
+    "query_id": "p6_p030",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Wall of Rahul Khan"
+        }
+      }
+    ],
+    "truecard": 4
+  },
+  {
+    "query_id": "p6_p031",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Album 1 of Karan Singh"
+        }
+      }
+    ],
+    "truecard": 6
+  },
+  {
+    "query_id": "p6_p032",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 11176
+  },
+  {
+    "query_id": "p6_p033",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "de;en"
+        }
+      }
+    ],
+    "truecard": 8666
+  },
+  {
+    "query_id": "p6_p034",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 46459
+  },
+  {
+    "query_id": "p6_p035",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 8864
+  },
+  {
+    "query_id": "p6_p036",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 126828
+  },
+  {
+    "query_id": "p6_p037",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1308052370341
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1352177414840
+        }
+      }
+    ],
+    "truecard": 71002
+  },
+  {
+    "query_id": "p6_p038",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1308052370341
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1352177414840
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 0
+        }
+      }
+    ],
+    "truecard": 79684
+  },
+  {
+    "query_id": "p6_p039",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 4441
+  },
+  {
+    "query_id": "p6_p040",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 0
+        }
+      }
+    ],
+    "truecard": 61703
+  },
+  {
+    "query_id": "p6_p041",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1308052370341
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1352177414840
+        }
+      }
+    ],
+    "truecard": 116214
+  },
+  {
+    "query_id": "p6_p042",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1308052370341
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1352177414840
+        }
+      }
+    ],
+    "truecard": 108054
+  },
+  {
+    "query_id": "p6_p043",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 8677
+  },
+  {
+    "query_id": "p6_p044",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "de;en"
+        }
+      }
+    ],
+    "truecard": 8297
+  },
+  {
+    "query_id": "p6_p045",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1351610285871
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 7928
+  },
+  {
+    "query_id": "p6_p046",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1308052370341
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1352177414840
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "de;en"
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 8359
+  },
+  {
+    "query_id": "p6_p047",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 0
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1308052370341
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1352177414840
+        }
+      }
+    ],
+    "truecard": 136074
+  },
+  {
+    "query_id": "p6_p048",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 5230
+  },
+  {
+    "query_id": "p6_p049",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 69845
+  },
+  {
+    "query_id": "p6_p050",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1351610285871
+        }
+      }
+    ],
+    "truecard": 95358
+  },
+  {
+    "query_id": "p6_p051",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 5689
+  },
+  {
+    "query_id": "p6_p052",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 0
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 0
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 2,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 56796
+  },
+  {
+    "query_id": "p6_p053",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 97909
+  },
+  {
+    "query_id": "p6_p054",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "de;en"
+        }
+      }
+    ],
+    "truecard": 8603
+  },
+  {
+    "query_id": "p6_p055",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 3442
+  },
+  {
+    "query_id": "p6_p056",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1351610285871
+        }
+      }
+    ],
+    "truecard": 70089
+  },
+  {
+    "query_id": "p6_p057",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Album 1 of Karan Singh"
+        }
+      }
+    ],
+    "truecard": 1
+  },
+  {
+    "query_id": "p6_p058",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1351610285871
+        }
+      }
+    ],
+    "truecard": 51426
+  },
+  {
+    "query_id": "p6_p059",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 83954
+  },
+  {
+    "query_id": "p6_p060",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 0
+        }
+      }
+    ],
+    "truecard": 106978
+  },
+  {
+    "query_id": "p6_p061",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 10400
+  },
+  {
+    "query_id": "p6_p062",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 0
+        }
+      }
+    ],
+    "truecard": 181863
+  },
+  {
+    "query_id": "p6_p063",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 8485
+  },
+  {
+    "query_id": "p6_p064",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 8642
+  },
+  {
+    "query_id": "p6_p065",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 106466
+  },
+  {
+    "query_id": "p6_p066",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 3119
+  },
+  {
+    "query_id": "p6_p067",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 14527
+  },
+  {
+    "query_id": "p6_p068",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 0
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 66843
+  },
+  {
+    "query_id": "p6_p069",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1308052370341
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1352177414840
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "de;en"
+        }
+      }
+    ],
+    "truecard": 7609
+  },
+  {
+    "query_id": "p6_p070",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 10661
+  },
+  {
+    "query_id": "p6_p071",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1308052370341
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1352177414840
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 8296
+  },
+  {
+    "query_id": "p6_p072",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 95985
+  },
+  {
+    "query_id": "p6_p073",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1308052370341
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1352177414840
+        }
+      }
+    ],
+    "truecard": 111944
+  },
+  {
+    "query_id": "p6_p074",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "de;en"
+        }
+      }
+    ],
+    "truecard": 11298
+  },
+  {
+    "query_id": "p6_p075",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 8747
+  },
+  {
+    "query_id": "p6_p076",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "de;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 629
+  },
+  {
+    "query_id": "p6_p077",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 0
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 0
+        }
+      }
+    ],
+    "truecard": 77133
+  },
+  {
+    "query_id": "p6_p078",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 8434
+  },
+  {
+    "query_id": "p6_p079",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 14554
+  },
+  {
+    "query_id": "p6_p080",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Album 1 of Karan Singh"
+        }
+      }
+    ],
+    "truecard": 3
+  },
+  {
+    "query_id": "p6_p081",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 6433
+  },
+  {
+    "query_id": "p6_p082",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1308052370341
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1352177414840
+        }
+      }
+    ],
+    "truecard": 52295
+  },
+  {
+    "query_id": "p6_p083",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 898
+  },
+  {
+    "query_id": "p6_p084",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 0
+        }
+      }
+    ],
+    "truecard": 103646
+  },
+  {
+    "query_id": "p6_p085",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1328021100728
+        }
+      }
+    ],
+    "truecard": 112333
+  },
+  {
+    "query_id": "p6_p086",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Wall of Rahul Khan"
+        }
+      }
+    ],
+    "truecard": 1
+  },
+  {
+    "query_id": "p6_p087",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 6356
+  },
+  {
+    "query_id": "p6_p088",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 29152
+  },
+  {
+    "query_id": "p6_p089",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Wall of Rahul Khan"
+        }
+      }
+    ],
+    "truecard": 3
+  },
+  {
+    "query_id": "p6_p090",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 62349
+  },
+  {
+    "query_id": "p6_p091",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 95796
+  },
+  {
+    "query_id": "p6_p092",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1351610285871
+        }
+      }
+    ],
+    "truecard": 110280
+  },
+  {
+    "query_id": "p6_p093",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 83954
+  },
+  {
+    "query_id": "p6_p094",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Album 1 of Karan Singh"
+        }
+      }
+    ],
+    "truecard": 1
+  },
+  {
+    "query_id": "p6_p095",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 10904
+  },
+  {
+    "query_id": "p6_p096",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 11178
+  },
+  {
+    "query_id": "p6_p097",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Album 1 of Karan Singh"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1328021100728
+        }
+      }
+    ],
+    "truecard": 6
+  },
+  {
+    "query_id": "p6_p098",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 2455
+  },
+  {
+    "query_id": "p6_p099",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 5985
+  },
+  {
+    "query_id": "p6_p100",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Forum"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Post"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Forum_Forum_container_of_Post",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 22062
+  }
+]

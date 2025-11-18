@@ -27,7 +27,7 @@ impl Property {
     #[inline]
     pub fn new(name: String, logical_type: LogicalType, nullable: bool) -> Self {
         Self {
-            name,
+            name: name.to_lowercase(),
             logical_type,
             nullable,
         }

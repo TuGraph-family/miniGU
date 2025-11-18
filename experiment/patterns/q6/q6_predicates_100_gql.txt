@@ -1,0 +1,1142 @@
+-- q6_p001
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+p3.language = 'pt;en'
+p2.language = 'es;en'
+t.name = 'Plato'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 761
+
+-- q6_p002
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p1.gender = 'male'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 13706330
+
+-- q6_p003
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p1.language = 'pt;en'
+p2.language = 'zh;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 53486
+
+-- q6_p004
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+t.name = 'Augustine_of_Hippo'
+p1.language = 'en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 10915
+
+-- q6_p005
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p1.language = 'es;en'
+t.name = 'Bill_Clinton'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 4799
+
+-- q6_p006
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1309845298772
+t.name = 'Jesus'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 152102
+
+-- q6_p007
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+t.name = 'Napoleon'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 113882
+
+-- q6_p008
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1309845298772
+t.name = 'Elizabeth_II'
+p2.gender = 'male'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 45366
+
+-- q6_p009
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+p2.language = 'pt;en'
+t.name = 'Augustine_of_Hippo'
+pk23.dst >= 252947
+pk23.dst <= 253760
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 5719
+
+-- q6_p010
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p2.gender = 'female'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 15386006
+
+-- q6_p011
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+p3.language = 'en'
+p2.gender = 'male'
+pk23.dst >= 252947
+pk23.dst <= 253760
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 1585053
+
+-- q6_p012
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p3.language = 'en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 2777679
+
+-- q6_p013
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p3.language = 'pt;en'
+phi.creationdate >= 1309845298772
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 904705
+
+-- q6_p014
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p3.gender = 'female'
+phi.creationdate >= 1309845298772
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 6321758
+
+-- q6_p015
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p1.language = 'zh;en'
+pk23.dst >= 252947
+pk23.dst <= 253760
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 2052886
+
+-- q6_p016
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p3.language = 'zh;en'
+p1.language = 'pt;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 84105
+
+-- q6_p017
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1309845298772
+p1.gender = 'female'
+pk12.src >= 252947
+pk12.src <= 253760
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 7162901
+
+-- q6_p018
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p1.language = 'pt;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 830254
+
+-- q6_p019
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p1.language = 'zh;en'
+t.name = 'John_F._Kennedy'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 13202
+
+-- q6_p020
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p3.gender = 'male'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 14213244
+
+-- q6_p021
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+t.name = 'Napoleon'
+pk12.src >= 252947
+pk12.src <= 253760
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 80833
+
+-- q6_p022
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+p1.language = 'pt;en'
+p2.language = 'zh;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 76244
+
+-- q6_p023
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p3.language = 'zh;en'
+p2.language = 'zh;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 1036611
+
+-- q6_p024
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1309845298772
+p2.language = 'zh;en'
+p1.gender = 'female'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 1386832
+
+-- q6_p025
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1309845298772
+t.name = 'William_Shakespeare'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 148997
+
+-- q6_p026
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+t.name = 'Plato'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 104133
+
+-- q6_p027
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p1.language = 'es;en'
+pk23.dst >= 252947
+pk23.dst <= 253760
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 768973
+
+-- q6_p028
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+t.name = 'Bill_Clinton'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 86280
+
+-- q6_p029
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p3.gender = 'male'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 13912632
+
+-- q6_p030
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p3.language = 'es;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 1187653
+
+-- q6_p031
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p3.language = 'es;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 1524400
+
+-- q6_p032
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p3.language = 'es;en'
+p1.language = 'en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 148071
+
+-- q6_p033
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p1.language = 'zh;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 4170734
+
+-- q6_p034
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p3.language = 'en'
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 2097333
+
+-- q6_p035
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+p3.language = 'pt;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 1505046
+
+-- q6_p036
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+t.name = 'Jesus'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 174719
+
+-- q6_p037
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+p3.language = 'es;en'
+p1.language = 'es;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 250498
+
+-- q6_p038
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p1.gender = 'male'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 13231262
+
+-- q6_p039
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+p1.gender = 'male'
+p3.language = 'en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 2063421
+
+-- q6_p040
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p2.language = 'es;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 1386107
+
+-- q6_p041
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1309845298772
+p1.gender = 'female'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 14371319
+
+-- q6_p042
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1309845298772
+p2.language = 'zh;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 2739640
+
+-- q6_p043
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1309845298772
+p2.gender = 'male'
+p1.language = 'zh;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 1709309
+
+-- q6_p044
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+p2.language = 'en'
+pk12.src >= 252947
+pk12.src <= 253760
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 2114585
+
+-- q6_p045
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+t.name = 'Jesus'
+p3.language = 'en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 5050
+
+-- q6_p046
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+t.name = 'John_F._Kennedy'
+p1.language = 'es;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 5560
+
+-- q6_p047
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p2.gender = 'female'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 15654261
+
+-- q6_p048
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p2.language = 'zh;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 2553069
+
+-- q6_p049
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+t.name = 'William_Shakespeare'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 131407
+
+-- q6_p050
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+t.name = 'Napoleon'
+p1.language = 'es;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 7043
+
+-- q6_p051
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+t.name = 'Plato'
+pk12.src >= 252947
+pk12.src <= 253760
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 68235
+
+-- q6_p052
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+p3.gender = 'female'
+p2.language = 'zh;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 2504042
+
+-- q6_p053
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+p1.gender = 'male'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 18152775
+
+-- q6_p054
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+t.name = 'Bill_Clinton'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 72044
+
+-- q6_p055
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1309845298772
+t.name = 'George_W._Bush'
+p3.gender = 'female'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 58729
+
+-- q6_p056
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+t.name = 'Bill_Clinton'
+phi.creationdate >= 1309845298772
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 47991
+
+-- q6_p057
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+t.name = 'Plato'
+pk23.dst >= 252947
+pk23.dst <= 253760
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 102387
+
+-- q6_p058
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1309845298772
+p1.gender = 'male'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 13840873
+
+-- q6_p059
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1309845298772
+p1.language = 'en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 2500905
+
+-- q6_p060
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+t.name = 'Napoleon'
+pk23.dst >= 252947
+pk23.dst <= 253760
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 111469
+
+-- q6_p061
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+p3.gender = 'female'
+p1.language = 'pt;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 673360
+
+-- q6_p062
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+p1.language = 'zh;en'
+t.name = 'Jesus'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 31938
+
+-- q6_p063
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+t.name = 'Plato'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 94017
+
+-- q6_p064
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p2.language = 'zh;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 2667732
+
+-- q6_p065
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1309845298772
+t.name = 'Augustine_of_Hippo'
+pk23.dst >= 252947
+pk23.dst <= 253760
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 54877
+
+-- q6_p066
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1309845298772
+t.name = 'John_F._Kennedy'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 102760
+
+-- q6_p067
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p1.gender = 'female'
+p2.gender = 'female'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 7832665
+
+-- q6_p068
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+t.name = 'Aristotle'
+p3.language = 'zh;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 33393
+
+-- q6_p069
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p3.gender = 'female'
+p2.gender = 'female'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 7535708
+
+-- q6_p070
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+t.name = 'Napoleon'
+p2.language = 'en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 16532
+
+-- q6_p071
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p3.language = 'en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 3320899
+
+-- q6_p072
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+t.name = 'John_F._Kennedy'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 89863
+
+-- q6_p073
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+t.name = 'Jesus'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 122765
+
+-- q6_p074
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1309845298772
+p1.language = 'pt;en'
+t.name = 'Bill_Clinton'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 4203
+
+-- q6_p075
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p1.language = 'en'
+pk23.dst >= 252947
+pk23.dst <= 253760
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 1304228
+
+-- q6_p076
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+p1.language = 'en'
+t.name = 'Bill_Clinton'
+p2.language = 'es;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 994
+
+-- q6_p077
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p1.language = 'zh;en'
+p2.language = 'pt;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 134533
+
+-- q6_p078
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p1.language = 'pt;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 1084666
+
+-- q6_p079
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p2.language = 'pt;en'
+p1.language = 'es;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 165702
+
+-- q6_p080
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1309845298772
+p2.language = 'es;en'
+pk23.dst >= 252947
+pk23.dst <= 253760
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 749589
+
+-- q6_p081
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p1.gender = 'female'
+p3.language = 'pt;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 620636
+
+-- q6_p082
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p1.gender = 'female'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 13741136
+
+-- q6_p083
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+t.name = 'Elizabeth_II'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 118851
+
+-- q6_p084
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p2.language = 'en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 3205111
+
+-- q6_p085
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+t.name = 'Aristotle'
+phi.creationdate >= 1309845298772
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 40648
+
+-- q6_p086
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p2.language = 'pt;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 2437766
+
+-- q6_p087
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p1.gender = 'male'
+t.name = 'Plato'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 51165
+
+-- q6_p088
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1309845298772
+p2.language = 'en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 3212809
+
+-- q6_p089
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p3.language = 'es;en'
+t.name = 'William_Shakespeare'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 6719
+
+-- q6_p090
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1309845298772
+p1.language = 'es;en'
+pk23.dst >= 252947
+pk23.dst <= 253760
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 835283
+
+-- q6_p091
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p1.gender = 'male'
+p3.language = 'es;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 778804
+
+-- q6_p092
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+t.name = 'John_F._Kennedy'
+p3.language = 'pt;en'
+pk12.src >= 252947
+pk12.src <= 253760
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 8722
+
+-- q6_p093
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1309845298772
+p2.gender = 'male'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 11948317
+
+-- q6_p094
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p3.language = 'zh;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 3808806
+
+-- q6_p095
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1309845298772
+t.name = 'Plato'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 85704
+
+-- q6_p096
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+t.name = 'Napoleon'
+pk12.src >= 252947
+pk12.src <= 253760
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 56822
+
+-- q6_p097
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1309845298772
+t.name = 'George_W._Bush'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 124604
+
+-- q6_p098
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+p1.language = 'es;en'
+p3.gender = 'male'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 1791500
+
+-- q6_p099
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+p1.language = 'es;en'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 2244764
+
+-- q6_p100
+MATCH 
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[phi:person_hasinterest_tag]->(t:Tag)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+t.name = 'Napoleon'
+RETURN p1, p2, p3, t, pk12, pk23, phi; -- || 116624

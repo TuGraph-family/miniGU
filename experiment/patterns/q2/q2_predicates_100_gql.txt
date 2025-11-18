@@ -1,0 +1,1200 @@
+-- q2_p001
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.dst >= 252947
+pkp.dst <= 253760
+p1.gender = 'female'
+chp.creationdate >= 1350093427787
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 6818
+
+-- q2_p002
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+chp.creationdate >= 1350093427787
+c.length <= 4
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 10069
+
+-- q2_p003
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+c.length <= 4
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 19661
+
+-- q2_p004
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+po.language = 'en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 26389
+
+-- q2_p005
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+po.creationdate >= 1328021100728
+pkp.src >= 252947
+pkp.src <= 253343
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 8062
+
+-- q2_p006
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+p1.gender = 'female'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 42507
+
+-- q2_p007
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253343
+p2.language = 'es;en'
+php.explicitlydeleted = FALSE
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 1614
+
+-- q2_p008
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+chp.creationdate >= 1350093427787
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+crp.explicitlydeleted = FALSE
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 22434
+
+-- q2_p009
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.src <= 253760
+p1.language = 'es;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 5135
+
+-- q2_p010
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+chp.creationdate >= 1350093427787
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 22814
+
+-- q2_p011
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+c.length >= 79
+po.language = 'en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 10375
+
+-- q2_p012
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 29900
+
+-- q2_p013
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.src <= 253760
+p1.language = 'en'
+chp.explicitlydeleted = FALSE
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 5272
+
+-- q2_p014
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+p1.gender = 'male'
+p2.gender = 'female'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 21433
+
+-- q2_p015
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.creationdate >= 1347725413194
+c.length >= 79
+php.explicitlydeleted = FALSE
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 8753
+
+-- q2_p016
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+c.length >= 5
+c.length <= 79
+crp.creationdate >= 1347725413194
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 8476
+
+-- q2_p017
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.creationdate >= 1347725413194
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+p2.language = 'pt;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 1411
+
+-- q2_p018
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+p1.language = 'zh;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 10609
+
+-- q2_p019
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+chp.creationdate >= 1350093427787
+p1.language = 'en'
+po.language = 'en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 1458
+
+-- q2_p020
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+p2.language = 'en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 7421
+
+-- q2_p021
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+c.length >= 5
+c.length <= 79
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 31582
+
+-- q2_p022
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+chp.explicitlydeleted = FALSE
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 29900
+
+-- q2_p023
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.creationdate >= 1347725413194
+c.length >= 5
+c.length <= 79
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 13392
+
+-- q2_p024
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.dst >= 252947
+pkp.dst <= 253760
+c.creationdate >= 1350093427787
+p1.gender = 'female'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 6818
+
+-- q2_p025
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+chp.creationdate >= 1350093427787
+p2.language = 'zh;en'
+p1.language = 'en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 318
+
+-- q2_p026
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+p1.language = 'zh;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 10790
+
+-- q2_p027
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+p2.language = 'es;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 7308
+
+-- q2_p028
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.creationdate >= 1347725413194
+po.creationdate >= 1308052370341
+po.creationdate <= 1343818164989
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 13992
+
+-- q2_p029
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+p1.gender = 'male'
+p2.language = 'es;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 3518
+
+-- q2_p030
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.creationdate >= 1347725413194
+p1.language = 'en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 3373
+
+-- q2_p031
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.dst >= 252947
+pkp.dst <= 253760
+p2.language = 'zh;en'
+crp.explicitlydeleted = FALSE
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 6030
+
+-- q2_p032
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+c.length <= 4
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 31122
+
+-- q2_p033
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.creationdate >= 1347725413194
+po.length > 0
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 34604
+
+-- q2_p034
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+p1.gender = 'male'
+po.length >= 0
+po.length <= 97
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 12072
+
+-- q2_p035
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+po.creationdate >= 1328021100728
+p2.language = 'pt;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 1323
+
+-- q2_p036
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.src <= 253760
+c.length >= 5
+c.length <= 79
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 24339
+
+-- q2_p037
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+p2.language = 'en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 7282
+
+-- q2_p038
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+p1.language = 'pt;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 2591
+
+-- q2_p039
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.src <= 253760
+c.creationdate >= 1350093427787
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 13512
+
+-- q2_p040
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.creationdate >= 1347725413194
+p1.language = 'pt;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 2009
+
+-- q2_p041
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+po.length > 0
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 81480
+
+-- q2_p042
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253343
+p2.language = 'pt;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 876
+
+-- q2_p043
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+p2.gender = 'female'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 43684
+
+-- q2_p044
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.dst >= 252947
+pkp.dst <= 253760
+p2.language = 'zh;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 6126
+
+-- q2_p045
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+po.length >= 0
+po.length <= 97
+crp.explicitlydeleted = FALSE
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 15245
+
+-- q2_p046
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253343
+c.length <= 4
+crp.creationdate >= 1347725413194
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 2198
+
+-- q2_p047
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+c.length <= 4
+p1.language = 'es;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 2511
+
+-- q2_p048
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.creationdate >= 1347725413194
+p1.language = 'zh;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 4695
+
+-- q2_p049
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253343
+po.explicitlydeleted = FALSE
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 20880
+
+-- q2_p050
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.src <= 253760
+p1.gender = 'male'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 29367
+
+-- q2_p051
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+p1.language = 'es;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 6461
+
+-- q2_p052
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+po.creationdate >= 1328021100728
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 32386
+
+-- q2_p053
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+p1.gender = 'male'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 39616
+
+-- q2_p054
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+p1.gender = 'female'
+po.creationdate >= 1328021100728
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 13951
+
+-- q2_p055
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+p2.gender = 'male'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 38420
+
+-- q2_p056
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+p2.language = 'pt;en'
+chp.explicitlydeleted = FALSE
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 3003
+
+-- q2_p057
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+c.explicitlydeleted = FALSE
+pkp.dst >= 252947
+pkp.dst <= 253760
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 33397
+
+-- q2_p058
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253343
+po.creationdate >= 1328021100728
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 8205
+
+-- q2_p059
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+chp.creationdate >= 1350093427787
+p1.gender = 'female'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 13154
+
+-- q2_p060
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.src <= 253760
+c.length <= 4
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 23511
+
+-- q2_p061
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+p2.language = 'zh;en'
+po.language = 'en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 2455
+
+-- q2_p062
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+po.explicitlydeleted = FALSE
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 52311
+
+-- q2_p063
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+po.creationdate >= 1308052370341
+po.creationdate <= 1343818164989
+p2.language = 'es;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 3474
+
+-- q2_p064
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253343
+po.length > 0
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 20882
+
+-- q2_p065
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+po.language = 'en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 40018
+
+-- q2_p066
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+po.explicitlydeleted = FALSE
+p2.gender = 'female'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 28043
+
+-- q2_p067
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+po.explicitlydeleted = FALSE
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 81474
+
+-- q2_p068
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253343
+p2.language = 'pt;en'
+crp.explicitlydeleted = FALSE
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 866
+
+-- q2_p069
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.src <= 253760
+p1.language = 'es;en'
+p2.gender = 'female'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 2747
+
+-- q2_p070
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.dst >= 252947
+pkp.dst <= 253760
+po.length > 0
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 41772
+
+-- q2_p071
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+po.language = 'en'
+p2.language = 'zh;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 3899
+
+-- q2_p072
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+po.creationdate >= 1308052370341
+po.creationdate <= 1343818164989
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 41526
+
+-- q2_p073
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.src <= 253760
+po.length >= 0
+po.length <= 97
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 18638
+
+-- q2_p074
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+p1.language = 'pt;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 4069
+
+-- q2_p075
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.dst >= 252947
+pkp.dst <= 253760
+c.length >= 5
+c.length <= 79
+p2.language = 'en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 1696
+
+-- q2_p076
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+po.creationdate >= 1328021100728
+crp.creationdate >= 1347725413194
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 14142
+
+-- q2_p077
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+po.length >= 0
+po.length <= 97
+c.length <= 4
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 5796
+
+-- q2_p078
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.src <= 253760
+p2.language = 'en'
+chp.creationdate >= 1350093427787
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 1278
+
+-- q2_p079
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+p1.language = 'pt;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 4005
+
+-- q2_p080
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253343
+c.length >= 5
+c.length <= 79
+chp.creationdate >= 1350093427787
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 1604
+
+-- q2_p081
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.creationdate >= 1347725413194
+p2.language = 'en'
+c.length <= 4
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 1258
+
+-- q2_p082
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+chp.creationdate >= 1350093427787
+p1.language = 'en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 2749
+
+-- q2_p083
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.creationdate >= 1347725413194
+po.explicitlydeleted = FALSE
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 34603
+
+-- q2_p084
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.dst >= 252947
+pkp.dst <= 253760
+p2.gender = 'male'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 20506
+
+-- q2_p085
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+c.length >= 5
+c.length <= 79
+po.language = 'en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 15807
+
+-- q2_p086
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.explicitlydeleted = FALSE
+p2.language = 'pt;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 3003
+
+-- q2_p087
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.dst >= 252947
+pkp.dst <= 253760
+p1.gender = 'male'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 20273
+
+-- q2_p088
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.creationdate >= 1347725413194
+p2.gender = 'male'
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 9798
+
+-- q2_p089
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+po.creationdate >= 1308052370341
+po.creationdate <= 1343818164989
+pkp.src <= 253760
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 31892
+
+-- q2_p090
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.src <= 253760
+po.creationdate >= 1328021100728
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 24385
+
+-- q2_p091
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+p1.language = 'es;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 6573
+
+-- q2_p092
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.src <= 253760
+p2.language = 'pt;en'
+c.length >= 79
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 553
+
+-- q2_p093
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.creationdate >= 1347725413194
+p2.language = 'en'
+chp.creationdate >= 1350093427787
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 2510
+
+-- q2_p094
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+po.creationdate >= 1308052370341
+po.creationdate <= 1343818164989
+p1.gender = 'male'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 20538
+
+-- q2_p095
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+crp.creationdate >= 1347725413194
+p1.gender = 'male'
+po.language = 'en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 9007
+
+-- q2_p096
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.creationdate >= 1308052370341
+php.creationdate <= 1352177414840
+p1.language = 'es;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 3992
+
+-- q2_p097
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+chp.creationdate >= 1350093427787
+po.length >= 0
+po.length <= 97
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 7895
+
+-- q2_p098
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+chp.creationdate >= 1350093427787
+c.length >= 79
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 6854
+
+-- q2_p099
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+pkp.dst >= 252947
+pkp.dst <= 253760
+po.length > 0
+c.creationdate >= 1350093427787
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 13701
+
+-- q2_p100
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(po:Post)-[php:post_hascreator_person]->(p2:Person),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post)
+FILTER WHERE
+php.explicitlydeleted = FALSE
+p2.language = 'pt;en'
+RETURN c, p1, p2, po, chp, pkp, php, crp; -- || 3049

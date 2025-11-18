@@ -1,0 +1,72 @@
+{
+  "vertices": [
+    {
+      "id": 1,
+      "label": "person"
+    },
+    {
+      "id": 2,
+      "label": "person"
+    },
+    {
+      "id": 3,
+      "label": "person"
+    },
+    {
+      "id": 4,
+      "label": "tag"
+    }
+  ],
+  "edges": [
+    {
+      "id": 1,
+      "label": "person_hasinterest_tag",
+      "src": 3,
+      "dst": 4
+    },
+    {
+      "id": 2,
+      "label": "person_knows_person",
+      "src": 1,
+      "dst": 2
+    },
+    {
+      "id": 3,
+      "label": "person_knows_person",
+      "src": 2,
+      "dst": 3
+    }
+  ],
+  "predicates": [
+    {
+      "predicate_id": 1,
+      "target": "edge",
+      "id": 2,
+      "property": "src",
+      "op": "ge",
+      "value": {
+        "Int64": 252947
+      }
+    },
+    {
+      "predicate_id": 2,
+      "target": "edge",
+      "id": 2,
+      "property": "src",
+      "op": "le",
+      "value": {
+        "Int64": 253760
+      }
+    },
+    {
+      "predicate_id": 3,
+      "target": "vertex",
+      "id": 1,
+      "property": "language",
+      "op": "eq",
+      "value": {
+        "String": "zh;en"
+      }
+    }
+  ]
+}

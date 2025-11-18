@@ -1,0 +1,74 @@
+{
+  "vertices": [
+    {
+      "id": 1,
+      "label": "comment"
+    },
+    {
+      "id": 2,
+      "label": "comment"
+    },
+    {
+      "id": 3,
+      "label": "person"
+    },
+    {
+      "id": 4,
+      "label": "person"
+    }
+  ],
+  "edges": [
+    {
+      "id": 1,
+      "label": "comment_hascreator_person",
+      "src": 1,
+      "dst": 4
+    },
+    {
+      "id": 2,
+      "label": "comment_hascreator_person",
+      "src": 2,
+      "dst": 3
+    },
+    {
+      "id": 3,
+      "label": "person_likes_comment",
+      "src": 3,
+      "dst": 1
+    },
+    {
+      "id": 4,
+      "label": "person_likes_comment",
+      "src": 4,
+      "dst": 2
+    },
+    {
+      "id": 5,
+      "label": "comment_replyof_comment",
+      "src": 1,
+      "dst": 2
+    }
+  ],
+  "predicates": [
+    {
+      "predicate_id": 1,
+      "target": "edge",
+      "id": 5,
+      "property": "creationdate",
+      "op": "ge",
+      "value": {
+        "Int64": 1351930981563
+      }
+    },
+    {
+      "predicate_id": 2,
+      "target": "vertex",
+      "id": 4,
+      "property": "gender",
+      "op": "eq",
+      "value": {
+        "String": "female"
+      }
+    }
+  ]
+}

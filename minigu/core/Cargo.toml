@@ -23,10 +23,13 @@ minigu-execution = { workspace = true }
 minigu-planner = { workspace = true }
 minigu-storage = { workspace = true }
 minigu-transaction = { workspace = true }
+rand = "0.8"
 rayon = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
+bincode = "1.3.3"
+ordered-float = "5.0.0"
 
 [lints]
 workspace = true

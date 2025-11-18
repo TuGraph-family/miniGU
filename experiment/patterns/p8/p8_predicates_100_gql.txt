@@ -1,0 +1,1389 @@
+-- p8_p001
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253760
+t.name = 'Muammar_Gaddafi'
+chp1.explicitlydeleted = FALSE
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 20
+
+-- p8_p002
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+cht2.creationdate >= 1338765911761
+cht2.creationdate <= 1356307644022
+t.name = 'Khalid_Sheikh_Mohammed'
+p1.gender = 'male'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 7
+
+-- p8_p003
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.explicitlydeleted = FALSE
+c1.length >= 5
+c1.length <= 79
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 2290
+
+-- p8_p004
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253760
+t.name = 'Wolfgang_Amadeus_Mozart'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 7
+
+-- p8_p005
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+cht1.creationdate >= 1338765911761
+cht1.creationdate <= 1356307644022
+p1.gender = 'male'
+c1.creationdate >= 1340327339000
+c1.creationdate <= 1356461058629
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 2476
+
+-- p8_p006
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1345196662740
+rcc.creationdate <= 1356577357333
+t.name = 'Maximilian_I,_Holy_Roman_Emperor'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 5
+
+-- p8_p007
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+cht1.creationdate >= 1338765911761
+cht1.creationdate <= 1356307644022
+p2.language = 'en'
+p1.gender = 'male'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 206
+
+-- p8_p008
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.explicitlydeleted = FALSE
+p1.language = 'de;en'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 548
+
+-- p8_p009
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+pkp.dst <= 253343
+t.name = 'Sonia_Gandhi'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 7
+
+-- p8_p010
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.creationdate >= 1340327339000
+chp2.creationdate <= 1356461058629
+t.name = 'Muammar_Gaddafi'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 14
+
+-- p8_p011
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.explicitlydeleted = FALSE
+t.name = 'Imelda_Marcos'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 16
+
+-- p8_p012
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1345196662740
+rcc.creationdate <= 1356577357333
+p2.gender = 'female'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 2533
+
+-- p8_p013
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+pkp.src >= 253343
+c2.length >= 79
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 2897
+
+-- p8_p014
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+cht2.creationdate >= 1338765911761
+cht2.creationdate <= 1356307644022
+c2.length >= 5
+c2.length <= 79
+p1.gender = 'male'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 621
+
+-- p8_p015
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.explicitlydeleted = FALSE
+p2.language = 'pt;en'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 411
+
+-- p8_p016
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.creationdate >= 1340327339000
+chp1.creationdate <= 1356461058629
+c1.explicitlydeleted = FALSE
+rcc.creationdate >= 1345196662740
+rcc.creationdate <= 1356577357333
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 4679
+
+-- p8_p017
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1345196662740
+rcc.creationdate <= 1356577357333
+t.name = 'Sonia_Gandhi'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 8
+
+-- p8_p018
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.explicitlydeleted = FALSE
+t.name = 'Augustine_of_Hippo'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 28
+
+-- p8_p019
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.creationdate >= 1340327339000
+chp1.creationdate <= 1356461058629
+p2.language = 'zh;en'
+chp2.explicitlydeleted = FALSE
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 721
+
+-- p8_p020
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.explicitlydeleted = FALSE
+c2.length >= 79
+pkp.src >= 252947
+pkp.src <= 253760
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 3052
+
+-- p8_p021
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+cht1.creationdate >= 1338765911761
+cht1.creationdate <= 1356307644022
+p1.language = 'en'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 381
+
+-- p8_p022
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.creationdate >= 1340327339000
+chp1.creationdate <= 1356461058629
+t.name = 'Mariano_Rivera'
+p1.language = 'en'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 1
+
+-- p8_p023
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+cht1.creationdate >= 1338765911761
+cht1.creationdate <= 1356307644022
+c1.creationdate >= 1350093427787
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 3319
+
+-- p8_p024
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+pkp.src >= 253343
+p2.language = 'pt;en'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 222
+
+-- p8_p025
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+cht2.creationdate >= 1338765911761
+cht2.creationdate <= 1356307644022
+c1.length >= 79
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 3404
+
+-- p8_p026
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.explicitlydeleted = FALSE
+t.name = 'Muammar_Gaddafi'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 34
+
+-- p8_p027
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1345196662740
+rcc.creationdate <= 1356577357333
+t.name = 'Adolf_Hitler'
+p1.gender = 'female'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 16
+
+-- p8_p028
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.explicitlydeleted = FALSE
+p1.gender = 'male'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 3737
+
+-- p8_p029
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.creationdate >= 1340327339000
+chp2.creationdate <= 1356461058629
+p1.language = 'zh;en'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 563
+
+-- p8_p030
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+p1.language = 'zh;en'
+c1.explicitlydeleted = FALSE
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 929
+
+-- p8_p031
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1345196662740
+rcc.creationdate <= 1356577357333
+p2.language = 'es;en'
+p1.gender = 'male'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 174
+
+-- p8_p032
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.creationdate >= 1340327339000
+chp2.creationdate <= 1356461058629
+c1.length >= 79
+cht2.creationdate >= 1338765911761
+cht2.creationdate <= 1356307644022
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 3210
+
+-- p8_p033
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.creationdate >= 1340327339000
+chp1.creationdate <= 1356461058629
+c2.creationdate >= 1350093427787
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 2389
+
+-- p8_p034
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253760
+c2.creationdate >= 1350093427787
+p1.language = 'pt;en'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 47
+
+-- p8_p035
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.explicitlydeleted = FALSE
+p1.gender = 'male'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 3669
+
+-- p8_p036
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.explicitlydeleted = FALSE
+c2.creationdate >= 1340327339000
+c2.creationdate <= 1356461058629
+t.name = 'Sonia_Gandhi'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 4
+
+-- p8_p037
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.creationdate >= 1340327339000
+chp1.creationdate <= 1356461058629
+p1.language = 'en'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 403
+
+-- p8_p038
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.creationdate >= 1340327339000
+chp2.creationdate <= 1356461058629
+p2.gender = 'female'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 2357
+
+-- p8_p039
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1351930981563
+c2.length >= 5
+c2.length <= 79
+cht1.creationdate >= 1338765911761
+cht1.creationdate <= 1356307644022
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 745
+
+-- p8_p040
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.explicitlydeleted = FALSE
+t.name = 'Mariano_Rivera'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 11
+
+-- p8_p041
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1351930981563
+t.name = 'Adolf_Hitler'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 18
+
+-- p8_p042
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+cht2.creationdate >= 1338765911761
+cht2.creationdate <= 1356307644022
+c1.creationdate >= 1350093427787
+c2.creationdate >= 1340327339000
+c2.creationdate <= 1356461058629
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 2959
+
+-- p8_p043
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+pkp.dst >= 252947
+pkp.dst <= 253760
+p2.language = 'pt;en'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 87
+
+-- p8_p044
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+cht1.creationdate >= 1338765911761
+cht1.creationdate <= 1356307644022
+p2.gender = 'female'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 2979
+
+-- p8_p045
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.creationdate >= 1340327339000
+chp1.creationdate <= 1356461058629
+c2.explicitlydeleted = FALSE
+chp2.creationdate >= 1340327339000
+chp2.creationdate <= 1356461058629
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 4324
+
+-- p8_p046
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+pkp.src >= 253343
+t.name = 'Genghis_Khan'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 6
+
+-- p8_p047
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+cht1.creationdate >= 1338765911761
+cht1.creationdate <= 1356307644022
+p1.language = 'es;en'
+chp1.explicitlydeleted = FALSE
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 480
+
+-- p8_p048
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+c1.length >= 79
+t.name = 'Adolf_Hitler'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 26
+
+-- p8_p049
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.explicitlydeleted = FALSE
+c2.creationdate >= 1350093427787
+c1.explicitlydeleted = FALSE
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 2836
+
+-- p8_p050
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.explicitlydeleted = FALSE
+p2.language = 'zh;en'
+p1.gender = 'male'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 433
+
+-- p8_p051
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1345196662740
+rcc.creationdate <= 1356577357333
+t.name = 'Wolfgang_Amadeus_Mozart'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 8
+
+-- p8_p052
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.creationdate >= 1340327339000
+chp1.creationdate <= 1356461058629
+c2.creationdate >= 1350093427787
+p2.gender = 'male'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 1123
+
+-- p8_p053
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.explicitlydeleted = FALSE
+t.name = 'Imelda_Marcos'
+chp1.creationdate >= 1340327339000
+chp1.creationdate <= 1356461058629
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 15
+
+-- p8_p054
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+cht1.creationdate >= 1338765911761
+cht1.creationdate <= 1356307644022
+p2.language = 'zh;en'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 719
+
+-- p8_p055
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1345196662740
+rcc.creationdate <= 1356577357333
+c1.length >= 79
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 3642
+
+-- p8_p056
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.creationdate >= 1340327339000
+chp1.creationdate <= 1356461058629
+t.name = 'Georg_Wilhelm_Friedrich_Hegel'
+p1.gender = 'female'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 2
+
+-- p8_p057
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1351930981563
+p1.language = 'zh;en'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 453
+
+-- p8_p058
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.creationdate >= 1340327339000
+chp2.creationdate <= 1356461058629
+t.name = 'Morocco'
+p2.language = 'pt;en'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 1
+
+-- p8_p059
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+cht2.creationdate >= 1338765911761
+cht2.creationdate <= 1356307644022
+p1.language = 'en'
+rcc.creationdate >= 1345196662740
+rcc.creationdate <= 1356577357333
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 259
+
+-- p8_p060
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.creationdate >= 1340327339000
+chp2.creationdate <= 1356461058629
+c2.length >= 5
+c2.length <= 79
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 1342
+
+-- p8_p061
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+pkp.dst >= 252947
+pkp.dst <= 253760
+c1.explicitlydeleted = FALSE
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 3973
+
+-- p8_p062
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+cht2.creationdate >= 1338765911761
+cht2.creationdate <= 1356307644022
+c1.explicitlydeleted = FALSE
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 4608
+
+-- p8_p063
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.creationdate >= 1340327339000
+chp2.creationdate <= 1356461058629
+c1.creationdate >= 1340327339000
+c1.creationdate <= 1356461058629
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 4324
+
+-- p8_p064
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+pkp.dst >= 252947
+pkp.dst <= 253760
+c2.creationdate >= 1350093427787
+c1.explicitlydeleted = FALSE
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 1247
+
+-- p8_p065
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+cht2.creationdate >= 1338765911761
+cht2.creationdate <= 1356307644022
+c2.length >= 5
+c2.length <= 79
+pkp.src >= 253343
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 673
+
+-- p8_p066
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+p2.browserused = 'Safari'
+c1.browserused = 'Opera'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 23
+
+-- p8_p067
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+c2.browserused = 'Safari'
+c1.browserused = 'Chrome'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 116
+
+-- p8_p068
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+c1.browserused = 'Safari'
+c2.browserused = 'Opera'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 24
+
+-- p8_p069
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+c2.browserused = 'Chrome'
+c1.browserused = 'Safari'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 125
+
+-- p8_p070
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+pkp.src >= 253343
+p1.browserused = 'Opera'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 122
+
+-- p8_p071
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+p2.browserused = 'Opera'
+c1.browserused = 'Opera'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 16
+
+-- p8_p072
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+cht2.creationdate >= 1338765911761
+cht2.creationdate <= 1356307644022
+c2.browserused = 'Internet Explorer'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 1444
+
+-- p8_p073
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+pkp.dst <= 253343
+p1.gender = 'male'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 1916
+
+-- p8_p074
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+c2.browserused = 'Opera'
+p2.browserused = 'Opera'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 239
+
+-- p8_p075
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+c1.browserused = 'Safari'
+p2.browserused = 'Chrome'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 125
+
+-- p8_p076
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+c2.browserused = 'Firefox'
+p2.browserused = 'Chrome'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 24
+
+-- p8_p077
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+p2.browserused = 'Firefox'
+c1.browserused = 'Safari'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 160
+
+-- p8_p078
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+p2.browserused = 'Opera'
+c1.browserused = 'Internet Explorer'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 66
+
+-- p8_p079
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+p2.browserused = 'Safari'
+c1.browserused = 'Chrome'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 118
+
+-- p8_p080
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+pkp.dst >= 252947
+pkp.dst <= 253760
+p1.browserused = 'Chrome'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 1096
+
+-- p8_p081
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+pkp.dst <= 253343
+p1.browserused = 'Chrome'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 979
+
+-- p8_p082
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+pkp.src >= 253343
+p1.browserused = 'Firefox'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 1443
+
+-- p8_p083
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+c2.browserused = 'Chrome'
+p2.browserused = 'Safari'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 2
+
+-- p8_p084
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+c2.browserused = 'Firefox'
+p2.browserused = 'Safari'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 3
+
+-- p8_p085
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+cht2.creationdate >= 1338765911761
+cht2.creationdate <= 1356307644022
+p2.browserused = 'Internet Explorer'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 1438
+
+-- p8_p086
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+c1.browserused = 'Opera'
+p2.gender = 'female'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 149
+
+-- p8_p087
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+p2.browserused = 'Chrome'
+c2.browserused = 'Firefox'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 24
+
+-- p8_p088
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+pkp.src >= 253343
+p1.browserused = 'Chrome'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 1046
+
+-- p8_p089
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+cht2.creationdate >= 1338765911761
+cht2.creationdate <= 1356307644022
+c2.browserused = 'Safari'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 235
+
+-- p8_p090
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+c2.browserused = 'Firefox'
+c1.browserused = 'Opera'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 87
+
+-- p8_p091
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+p2.browserused = 'Chrome'
+c1.browserused = 'Firefox'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 654
+
+-- p8_p092
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+p2.browserused = 'Internet Explorer'
+c1.browserused = 'Safari'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 214
+
+-- p8_p093
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+p2.browserused = 'Internet Explorer'
+c1.browserused = 'Chrome'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 612
+
+-- p8_p094
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+c2.browserused = 'Opera'
+c1.browserused = 'Safari'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 24
+
+-- p8_p095
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+c1.browserused = 'Internet Explorer'
+c2.browserused = 'Safari'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 146
+
+-- p8_p096
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.explicitlydeleted = FALSE
+c2.browserused = 'Internet Explorer'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 2332
+
+-- p8_p097
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+c1.browserused = 'Firefox'
+p2.browserused = 'Opera'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 90
+
+-- p8_p098
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+c2.browserused = 'Safari'
+p2.browserused = 'Internet Explorer'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 1
+
+-- p8_p099
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253760
+p1.browserused = 'Internet Explorer'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 1237
+
+-- p8_p100
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p2:Person),
+(c2:Comment)-[cht2:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[cht1:comment_hastag_tag]->(t:Tag),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+c2.browserused = 'Chrome'
+p2.browserused = 'Chrome'
+RETURN c1, p1, p2, c2, t, chp1, pkp, chp2, cht2, cht1, rcc; -- || 1894

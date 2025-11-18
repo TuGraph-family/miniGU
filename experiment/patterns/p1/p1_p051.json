@@ -1,0 +1,78 @@
+{
+  "vertices": [
+    {
+      "id": 1,
+      "label": "comment"
+    },
+    {
+      "id": 2,
+      "label": "person"
+    },
+    {
+      "id": 3,
+      "label": "tag"
+    }
+  ],
+  "edges": [
+    {
+      "id": 1,
+      "label": "comment_hascreator_person",
+      "src": 1,
+      "dst": 2
+    },
+    {
+      "id": 2,
+      "label": "comment_hastag_tag",
+      "src": 1,
+      "dst": 3
+    },
+    {
+      "id": 3,
+      "label": "person_hasinterest_tag",
+      "src": 2,
+      "dst": 3
+    }
+  ],
+  "predicates": [
+    {
+      "predicate_id": 1,
+      "target": "edge",
+      "id": 1,
+      "property": "explicitlydeleted",
+      "op": "eq",
+      "value": {
+        "Boolean": false
+      }
+    },
+    {
+      "predicate_id": 2,
+      "target": "vertex",
+      "id": 3,
+      "property": "name",
+      "op": "eq",
+      "value": {
+        "String": "Elizabeth_II"
+      }
+    },
+    {
+      "predicate_id": 3,
+      "target": "edge",
+      "id": 3,
+      "property": "creationdate",
+      "op": "ge",
+      "value": {
+        "Int64": 1285156166915
+      }
+    },
+    {
+      "predicate_id": 4,
+      "target": "edge",
+      "id": 3,
+      "property": "creationdate",
+      "op": "le",
+      "value": {
+        "Int64": 1348051459240
+      }
+    }
+  ]
+}

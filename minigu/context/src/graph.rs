@@ -89,6 +89,13 @@ pub struct GraphContainer {
     graph_storage: GraphStorage,
     index_catalog: Arc<dyn GraphIndexCatalog>,
     index_op_lock: Mutex<()>,
+    /// GCard: DegreeSeqGraphCompressed (type-erased; downcast in minigu core).
+    degree_seq_graph_compressed: RwLock<Option<Arc<dyn Any + Send + Sync>>>,
+    /// GCard: Statistic (type-erased; downcast in minigu core).
+    statistic: RwLock<Option<Arc<dyn Any + Send + Sync>>>,
+    /// GCard: pending lazy update log – inner type is `Arc<Mutex<GCardUpdateLog>>`
+    /// (type-erased; downcast in minigu core).
+    gcard_update_log: RwLock<Option<Arc<dyn Any + Send + Sync>>>,
 }
 
 impl GraphContainer {
@@ -98,6 +105,9 @@ impl GraphContainer {
             graph_storage,
             index_catalog: Arc::new(MemoryGraphIndexCatalog::default()),
             index_op_lock: Mutex::new(()),
+            degree_seq_graph_compressed: RwLock::new(None),
+            statistic: RwLock::new(None),
+            gcard_update_log: RwLock::new(None),
         }
     }
 
@@ -180,6 +190,52 @@ impl GraphContainer {
         }
 
         Ok(true)
+    }
+    /// GCard: set degree_seq_graph_compressed (persists with graph, not session).
+    pub fn set_degree_seq_graph_compressed(&self, v: Arc<dyn Any + Send + Sync>) {
+        *self
+            .degree_seq_graph_compressed
+            .write()
+            .expect("RwLock write") = Some(v);
+    }
+
+    /// GCard: get degree_seq_graph_compressed.
+    pub fn degree_seq_graph_compressed(&self) -> Option<Arc<dyn Any + Send + Sync>> {
+        self.degree_seq_graph_compressed
+            .read()
+            .expect("RwLock read")
+            .clone()
+    }
+
+    /// GCard: set statistic (persists with graph, not session).
+    pub fn set_statistic(&self, v: Arc<dyn Any + Send + Sync>) {
+        *self.statistic.write().expect("RwLock write") = Some(v);
+    }
+
+    /// GCard: get statistic.
+    pub fn statistic(&self) -> Option<Arc<dyn Any + Send + Sync>> {
+        self.statistic.read().expect("RwLock read").clone()
+    }
+
+    /// GCard: replace the lazy update log.  The value is `Arc<Mutex<GCardUpdateLog>>`
+    /// (type-erased so that `minigu-context` need not depend on `minigu-core`).
+    pub fn set_gcard_update_log(&self, v: Arc<dyn Any + Send + Sync>) {
+        *self.gcard_update_log.write().expect("RwLock write") = Some(v);
+    }
+
+    /// GCard: get the lazy update log Arc (downcast in `minigu-core`).
+    pub fn gcard_update_log(&self) -> Option<Arc<dyn Any + Send + Sync>> {
+        self.gcard_update_log.read().expect("RwLock read").clone()
+    }
+
+    /// GCard: clear all cached GCard data (statistic, compressed degree sequence, update log).
+    ///
+    /// Called at the start of `GCard_build` to ensure a clean slate before rebuilding,
+    /// discarding any stale log entries that belong to the previous statistic schema.
+    pub fn clear_gcard_data(&self) {
+        *self.degree_seq_graph_compressed.write().expect("RwLock write") = None;
+        *self.statistic.write().expect("RwLock write") = None;
+        *self.gcard_update_log.write().expect("RwLock write") = None;
     }
 }
 

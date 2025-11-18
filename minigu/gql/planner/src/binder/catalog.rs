@@ -27,9 +27,9 @@ impl Binder<'_> {
                 if statement.optional {
                     return not_implemented("optional catalog modifying statements", None);
                 }
-                if statement.schema().is_some() {
-                    return Err(BindError::NotCatalogProcedure(statement.name()));
-                }
+                // if statement.schema().is_some() {
+                //     return Err(BindError::NotCatalogProcedure(statement.name()));
+                // }
                 Ok(BoundCatalogModifyingStatement::Call(statement))
             }
             CatalogModifyingStatement::CreateSchema(statement) => self

@@ -1,0 +1,1472 @@
+-- q1_p001
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'zh;en'
+f.creationdate >= 1305589168419
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 392936
+
+-- q1_p002
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+f.title = 'Wall of Rahul Singh'
+co.name = 'Cameroon'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 736
+
+-- q1_p003
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'en'
+f.creationdate >= 1287486205605
+f.creationdate <= 1342670597313
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 384481
+
+-- q1_p004
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'pt;en'
+f.creationdate >= 1287486205605
+f.creationdate <= 1342670597313
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 181999
+
+-- q1_p005
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+f.explicitlydeleted = FALSE
+co.name = 'Cameroon'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 47857
+
+-- q1_p006
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'female'
+f.creationdate >= 1287486205605
+f.creationdate <= 1342670597313
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 2366616
+
+-- q1_p007
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'en'
+f.creationdate >= 1305589168419
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 214707
+
+-- q1_p008
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'es;en'
+f.creationdate >= 1287486205605
+f.creationdate <= 1342670597313
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 300785
+
+-- q1_p009
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'male'
+f.explicitlydeleted = FALSE
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 4261260
+
+-- q1_p010
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+f.creationdate >= 1305589168419
+co.name = 'Venezuela'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 5870
+
+-- q1_p011
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'pt;en'
+f.creationdate >= 1305589168419
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 98890
+
+-- q1_p012
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'pt;en'
+f.title = 'Wall of Rahul Singh'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 1050
+
+-- q1_p013
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'female'
+t.name = 'Mariano_Rivera'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 6796
+
+-- q1_p014
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'male'
+c.explicitlydeleted = FALSE
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 4209138
+
+-- q1_p015
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'pt;en'
+f.explicitlydeleted = FALSE
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 326435
+
+-- q1_p016
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'zh;en'
+f.title = 'Wall of Rahul Singh'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 35413
+
+-- q1_p017
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+f.creationdate >= 1287486205605
+f.creationdate <= 1342670597313
+co.name = 'Cameroon'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 27660
+
+-- q1_p018
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'male'
+f.creationdate >= 1305589168419
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 1346341
+
+-- q1_p019
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+f.explicitlydeleted = FALSE
+ci.name = 'Kochi'
+po.length >= 0
+po.length <= 97
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 968
+
+-- q1_p020
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+f.creationdate >= 1287486205605
+f.creationdate <= 1342670597313
+co.name = 'Italy'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 15108
+
+-- q1_p021
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'pt;en'
+f.title = 'Wall of Rahul Khan'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 60
+
+-- q1_p022
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'female'
+f.explicitlydeleted = FALSE
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 4459059
+
+-- q1_p023
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'male'
+f.explicitlydeleted = FALSE
+co.name = 'Burma'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 81817
+
+-- q1_p024
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'zh;en'
+f.title = 'Wall of Rahul Khan'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 84
+
+-- q1_p025
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'female'
+f.creationdate >= 1305589168419
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 1368663
+
+-- q1_p026
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'en'
+f.title = 'Wall of Rahul Singh'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 2777
+
+-- q1_p027
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+f.creationdate >= 1305589168419
+co.name = 'Cameroon'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 16678
+
+-- q1_p028
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'female'
+p.language = 'en;tl'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 34569
+
+-- q1_p029
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'male'
+p.language = 'es;en'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 299781
+
+-- q1_p030
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+f.explicitlydeleted = FALSE
+co.name = 'Burma'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 132420
+
+-- q1_p031
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'female'
+p.language = 'en'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 371302
+
+-- q1_p032
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+co.name = 'Venezuela'
+po.length >= 0
+po.length <= 97
+c.length >= 5
+c.length <= 79
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 992
+
+-- q1_p033
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'en'
+f.explicitlydeleted = FALSE
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 724027
+
+-- q1_p034
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'female'
+f.title = 'Wall of Rahul Singh'
+co.name = 'Cameroon'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 736
+
+-- q1_p035
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'male'
+tc.name = 'OfficeHolder'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 350276
+
+-- q1_p036
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'male'
+t.name = 'Sonia_Gandhi'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 21249
+
+-- q1_p037
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'male'
+co.name = 'Italy'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 16704
+
+-- q1_p038
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'male'
+f.creationdate >= 1287486205605
+f.creationdate <= 1342670597313
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 2313480
+
+-- q1_p039
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'es;en'
+f.explicitlydeleted = FALSE
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 569448
+
+-- q1_p040
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'es;en'
+f.title = 'Wall of Rahul Singh'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 1472
+
+-- q1_p041
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'zh;en'
+f.explicitlydeleted = FALSE
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 1291963
+
+-- q1_p042
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'female'
+t.name = 'Augustine_of_Hippo'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 12802
+
+-- q1_p043
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'female'
+ci.name = 'Thirthahalli'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 7926
+
+-- q1_p044
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+ci.name = 'Mérida'
+po.length > 0
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 4148
+
+-- q1_p045
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'zh;en'
+f.creationdate >= 1287486205605
+f.creationdate <= 1342670597313
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 723786
+
+-- q1_p046
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'pt;en'
+po.length > 0
+c.length >= 5
+c.length <= 79
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 94715
+
+-- q1_p047
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'male'
+fhm.creationdate >= 1338094917792
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 2486100
+
+-- q1_p048
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'en'
+f.title = 'Wall of Rahul Khan'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 782
+
+-- q1_p049
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'male'
+fcp.explicitlydeleted = FALSE
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 4274995
+
+-- q1_p050
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+f.creationdate >= 1305589168419
+tc.name = 'MusicalArtist'
+fhm.explicitlydeleted = FALSE
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 245138
+
+-- q1_p051
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+po.length >= 0
+po.length <= 97
+t.name = 'Charlemagne'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 3353
+
+-- q1_p052
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+f.creationdate >= 1305589168419
+co.name = 'Italy'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 6651
+
+-- q1_p053
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'male'
+ci.name = 'Gomel'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 3193
+
+-- q1_p054
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+f.creationdate >= 1287486205605
+f.creationdate <= 1342670597313
+co.name = 'Venezuela'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 8710
+
+-- q1_p055
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+c.creationdate >= 1350093427787
+t.name = 'Sonia_Gandhi'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 11417
+
+-- q1_p056
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'female'
+co.name = 'Czech_Republic'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 39837
+
+-- q1_p057
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+f.title = 'Wall of Rahul Khan'
+co.name = 'Burma'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 295
+
+-- q1_p058
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+po.creationdate >= 1328021100728
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 2991262
+
+-- q1_p059
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'female'
+f.creationdate >= 1305589168419
+co.name = 'Burma'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 9756
+
+-- q1_p060
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+f.creationdate >= 1305589168419
+po.creationdate >= 1308052370341
+po.creationdate <= 1343818164989
+c.length >= 5
+c.length <= 79
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 401932
+
+-- q1_p061
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'es;en'
+f.creationdate >= 1305589168419
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 182423
+
+-- q1_p062
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'female'
+f.explicitlydeleted = FALSE
+co.name = 'Cameroon'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 19712
+
+-- q1_p063
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+f.creationdate >= 1287486205605
+f.creationdate <= 1342670597313
+co.name = 'Burma'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 63050
+
+-- q1_p064
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+f.creationdate >= 1305589168419
+ci.name = 'Rạch_Giá'
+po.creationdate >= 1328021100728
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 2451
+
+-- q1_p065
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'es;en'
+f.creationdate >= 1305589168419
+co.name = 'Venezuela'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 5870
+
+-- q1_p066
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'male'
+f.explicitlydeleted = FALSE
+co.name = 'Italy'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 16700
+
+-- q1_p067
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.language = 'en'
+f.explicitlydeleted = FALSE
+co.name = 'Cameroon'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 16869
+
+-- q1_p068
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'female'
+f.creationdate >= 1305589168419
+co.name = 'Italy'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 2932
+
+-- q1_p069
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'male'
+crp.creationdate >= 1347725413194
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 2062702
+
+-- q1_p070
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+f.title = 'Wall of Rahul Khan'
+po.length > 0
+c.length >= 5
+c.length <= 79
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 2330
+
+-- q1_p071
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'female'
+f.explicitlydeleted = FALSE
+co.name = 'Venezuela'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 3986
+
+-- q1_p072
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'male'
+p.language = 'en'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 355105
+
+-- q1_p073
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'female'
+f.explicitlydeleted = FALSE
+co.name = 'Italy'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 12986
+
+-- q1_p074
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'female'
+f.explicitlydeleted = FALSE
+co.name = 'Burma'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 50603
+
+-- q1_p075
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'male'
+t.name = 'Charlemagne'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 5937
+
+-- q1_p076
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+po.creationdate >= 1308052370341
+po.creationdate <= 1343818164989
+c.length >= 5
+c.length <= 79
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 1169041
+
+-- q1_p077
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+f.explicitlydeleted = FALSE
+ci.name = 'Rạch_Giá'
+po.length >= 0
+po.length <= 97
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 3383
+
+-- q1_p078
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'female'
+f.creationdate >= 1305589168419
+co.name = 'Venezuela'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 2394
+
+-- q1_p079
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'male'
+po.creationdate >= 1328021100728
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 1977657
+
+-- q1_p080
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+p.gender = 'male'
+f.explicitlydeleted = FALSE
+co.name = 'Venezuela'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 7574
+
+-- q1_p081
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+po.length >= 0
+po.length <= 97
+tc.name = 'Single'
+fhm.creationdate >= 1338094917792
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 182120
+
+-- q1_p082
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+cipc.src_type = 'City'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 5221146
+
+-- q1_p083
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+plc.creationdate >= 1285358988937
+plc.creationdate <= 1347940587243
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+cipc.src_type = 'City'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 3460800
+
+-- q1_p084
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+cipc.src_type = 'City'
+tht.tagclassid IS NOT NULL
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 5221146
+
+-- q1_p085
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+plc.explicitlydeleted = FALSE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 5147930
+
+-- q1_p086
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+plc.explicitlydeleted = FALSE
+cipc.src_type = 'City'
+tht.tagclassid IS NOT NULL
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 8630018
+
+-- q1_p087
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+plc.creationdate >= 1285358988937
+plc.creationdate <= 1347940587243
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 3460800
+
+-- q1_p088
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+cipc.src_type = 'City'
+tht.tagclassid IS NOT NULL
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1343818164989
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 4082621
+
+-- q1_p089
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+plc.explicitlydeleted = FALSE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+cipc.src_type = 'City'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 5147930
+
+-- q1_p090
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+plc.creationdate >= 1285358988937
+plc.creationdate <= 1347940587243
+cipc.src_type = 'City'
+tht.tagclassid IS NOT NULL
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 5781797
+
+-- q1_p091
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+tht.tagclassid IS NOT NULL
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1343818164989
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 2150491
+
+-- q1_p092
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+cipc.src_type = 'City'
+plc.creationdate >= 1285358988937
+plc.creationdate <= 1347940587243
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 5781797
+
+-- q1_p093
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+plc.creationdate >= 1285358988937
+plc.creationdate <= 1347940587243
+tht.tagclassid IS NOT NULL
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1343818164989
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 2712479
+
+-- q1_p094
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+plc.creationdate >= 1285358988937
+plc.creationdate <= 1347940587243
+crp.creationdate >= 1347725413194
+tc.name = 'MusicalArtist'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 263537
+
+-- q1_p095
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+plc.explicitlydeleted = FALSE
+tht.tagclassid IS NOT NULL
+fcp.explicitlydeleted = FALSE
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 8628146
+
+-- q1_p096
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+crp.explicitlydeleted = FALSE
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 8611389
+
+-- q1_p097
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+cipc.src_type = 'City'
+tc.name = 'Song'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 134127
+
+-- q1_p098
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+tht.tagclassid IS NOT NULL
+fcp.explicitlydeleted = FALSE
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 8749614
+
+-- q1_p099
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+plc.creationdate >= 1285358988937
+plc.creationdate <= 1347940587243
+tht.tagclassid IS NOT NULL
+fcp.explicitlydeleted = FALSE
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 5780602
+
+-- q1_p100
+MATCH 
+(ci:City)-[cipc:city_ispartof_country]->(co:Country),
+(p:Person)-[plc:person_islocatedin_city]->(ci:City),
+(f:Forum)-[fhm:forum_hasmember_person]->(p:Person),
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(c:Comment)-[crp:comment_replyof_post]->(po:Post),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag),
+(t:Tag)-[tht:tag_hastype_tagclass]->(tc:Tagclass)
+FILTER WHERE
+cipc.src_type = 'City'
+po.language = 'en'
+RETURN ci, co, p, f, po, c, t, tc, cipc, plc, fhm, fcp, crp, cht, tht; -- || 4298822

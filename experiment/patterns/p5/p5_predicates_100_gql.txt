@@ -1,0 +1,1314 @@
+-- p5_p001
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.creationdate >= 1340327339000
+chp2.creationdate <= 1356461058629
+p2.gender = 'female'
+plc2.creationdate >= 1343776564773
+plc2.creationdate <= 1356763691590
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 4
+
+-- p5_p002
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.explicitlydeleted = FALSE
+p2.gender = 'female'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 9
+
+-- p5_p003
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1351930981563
+c2.creationdate >= 1340327339000
+c2.creationdate <= 1356461058629
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 7
+
+-- p5_p004
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.creationdate >= 1340327339000
+chp2.creationdate <= 1356461058629
+c1.creationdate >= 1350093427787
+plc2.explicitlydeleted = FALSE
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 8
+
+-- p5_p005
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.explicitlydeleted = FALSE
+c1.explicitlydeleted = FALSE
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 20
+
+-- p5_p006
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.explicitlydeleted = FALSE
+p2.gender = 'male'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 11
+
+-- p5_p007
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.explicitlydeleted = FALSE
+p1.language = 'zh;en'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 4
+
+-- p5_p008
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc2.creationdate >= 1351344255062
+p2.gender = 'male'
+c2.length >= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 6
+
+-- p5_p009
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.explicitlydeleted = FALSE
+c2.length >= 79
+plc1.creationdate >= 1343776564773
+plc1.creationdate <= 1356763691590
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 10
+
+-- p5_p010
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc2.creationdate >= 1343776564773
+plc2.creationdate <= 1356763691590
+c1.creationdate >= 1350093427787
+rcc.creationdate >= 1345196662740
+rcc.creationdate <= 1356577357333
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 8
+
+-- p5_p011
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc1.creationdate >= 1343776564773
+plc1.creationdate <= 1356763691590
+p2.language = 'en'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 3
+
+-- p5_p012
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1345196662740
+rcc.creationdate <= 1356577357333
+c2.creationdate >= 1340327339000
+c2.creationdate <= 1356461058629
+p1.gender = 'female'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 6
+
+-- p5_p013
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.explicitlydeleted = FALSE
+c1.creationdate >= 1350093427787
+plc2.creationdate >= 1343776564773
+plc2.creationdate <= 1356763691590
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 8
+
+-- p5_p014
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+c1.length >= 79
+p2.language = 'pt;en'
+plc2.creationdate >= 1343776564773
+plc2.creationdate <= 1356763691590
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 1
+
+-- p5_p015
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1345196662740
+rcc.creationdate <= 1356577357333
+c1.length >= 79
+c2.length >= 5
+c2.length <= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 3
+
+-- p5_p016
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+p1.language = 'pt;en'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 1
+
+-- p5_p017
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc1.creationdate >= 1343776564773
+plc1.creationdate <= 1356763691590
+c2.creationdate >= 1340327339000
+c2.creationdate <= 1356461058629
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 11
+
+-- p5_p018
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.explicitlydeleted = FALSE
+p1.gender = 'female'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 11
+
+-- p5_p019
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.explicitlydeleted = FALSE
+p1.language = 'es;en'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 1
+
+-- p5_p020
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+p2.gender = 'female'
+c1.length >= 5
+c1.length <= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 2
+
+-- p5_p021
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.explicitlydeleted = FALSE
+p2.language = 'zh;en'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 5
+
+-- p5_p022
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.explicitlydeleted = FALSE
+c2.length >= 5
+c2.length <= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 6
+
+-- p5_p023
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+p1.gender = 'female'
+c1.length >= 5
+c1.length <= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 3
+
+-- p5_p024
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.creationdate >= 1340327339000
+chp2.creationdate <= 1356461058629
+c2.explicitlydeleted = FALSE
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 12
+
+-- p5_p025
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.creationdate >= 1340327339000
+chp1.creationdate <= 1356461058629
+p2.language = 'pt;en'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 1
+
+-- p5_p026
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.explicitlydeleted = FALSE
+c1.creationdate >= 1350093427787
+c2.length >= 5
+c2.length <= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 3
+
+-- p5_p027
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.creationdate >= 1340327339000
+chp1.creationdate <= 1356461058629
+c2.length >= 5
+c2.length <= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 4
+
+-- p5_p028
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1345196662740
+rcc.creationdate <= 1356577357333
+c1.creationdate >= 1340327339000
+c1.creationdate <= 1356461058629
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 12
+
+-- p5_p029
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc2.creationdate >= 1351344255062
+c2.creationdate >= 1340327339000
+c2.creationdate <= 1356461058629
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 7
+
+-- p5_p030
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc1.creationdate >= 1343776564773
+plc1.creationdate <= 1356763691590
+c1.creationdate >= 1340327339000
+c1.creationdate <= 1356461058629
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 13
+
+-- p5_p031
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.creationdate >= 1340327339000
+chp2.creationdate <= 1356461058629
+p2.gender = 'female'
+plc2.creationdate >= 1351344255062
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 2
+
+-- p5_p032
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+c1.length >= 79
+c2.explicitlydeleted = FALSE
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 17
+
+-- p5_p033
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.explicitlydeleted = FALSE
+p1.language = 'es;en'
+c1.creationdate >= 1350093427787
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 1
+
+-- p5_p034
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc1.creationdate >= 1343776564773
+plc1.creationdate <= 1356763691590
+c1.length >= 5
+c1.length <= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 2
+
+-- p5_p035
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc1.creationdate >= 1351344255062
+c1.length >= 5
+c1.length <= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 1
+
+-- p5_p036
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.creationdate >= 1340327339000
+chp1.creationdate <= 1356461058629
+c1.explicitlydeleted = FALSE
+p2.gender = 'male'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 9
+
+-- p5_p037
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.creationdate >= 1340327339000
+chp2.creationdate <= 1356461058629
+c1.creationdate >= 1340327339000
+c1.creationdate <= 1356461058629
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 12
+
+-- p5_p038
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc1.creationdate >= 1343776564773
+plc1.creationdate <= 1356763691590
+c1.length >= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 12
+
+-- p5_p039
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+c1.explicitlydeleted = FALSE
+plc2.explicitlydeleted = FALSE
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 19
+
+-- p5_p040
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc2.creationdate >= 1343776564773
+plc2.creationdate <= 1356763691590
+p1.language = 'zh;en'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 2
+
+-- p5_p041
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1345196662740
+rcc.creationdate <= 1356577357333
+c2.creationdate >= 1340327339000
+c2.creationdate <= 1356461058629
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 10
+
+-- p5_p042
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.creationdate >= 1340327339000
+chp1.creationdate <= 1356461058629
+p1.gender = 'female'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 7
+
+-- p5_p043
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.explicitlydeleted = FALSE
+c2.length >= 5
+c2.length <= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 6
+
+-- p5_p044
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.explicitlydeleted = FALSE
+p2.language = 'zh;en'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 5
+
+-- p5_p045
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+p2.gender = 'male'
+rcc.creationdate >= 1345196662740
+rcc.creationdate <= 1356577357333
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 8
+
+-- p5_p046
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.creationdate >= 1340327339000
+chp1.creationdate <= 1356461058629
+p1.language = 'pt;en'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 1
+
+-- p5_p047
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.creationdate >= 1340327339000
+chp2.creationdate <= 1356461058629
+c2.creationdate >= 1340327339000
+c2.creationdate <= 1356461058629
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 12
+
+-- p5_p048
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1345196662740
+rcc.creationdate <= 1356577357333
+p1.gender = 'female'
+chp2.creationdate >= 1340327339000
+chp2.creationdate <= 1356461058629
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 6
+
+-- p5_p049
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+p2.gender = 'male'
+c1.explicitlydeleted = FALSE
+p1.gender = 'female'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 7
+
+-- p5_p050
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1351930981563
+p2.gender = 'female'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 4
+
+-- p5_p051
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1351930981563
+p2.language = 'en'
+plc2.creationdate >= 1351344255062
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 3
+
+-- p5_p052
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc1.creationdate >= 1351344255062
+p2.gender = 'male'
+rcc.creationdate >= 1351930981563
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 6
+
+-- p5_p053
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.explicitlydeleted = FALSE
+c1.creationdate >= 1340327339000
+c1.creationdate <= 1356461058629
+p2.language = 'zh;en'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 1
+
+-- p5_p054
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.creationdate >= 1340327339000
+chp1.creationdate <= 1356461058629
+p1.language = 'de;en'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 2
+
+-- p5_p055
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+c2.explicitlydeleted = FALSE
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 19
+
+-- p5_p056
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+p1.gender = 'female'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 10
+
+-- p5_p057
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.explicitlydeleted = FALSE
+p2.language = 'zh;en'
+plc1.creationdate >= 1351344255062
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 3
+
+-- p5_p058
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.creationdate >= 1340327339000
+chp2.creationdate <= 1356461058629
+c1.length >= 5
+c1.length <= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 1
+
+-- p5_p059
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.explicitlydeleted = FALSE
+c2.explicitlydeleted = FALSE
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 20
+
+-- p5_p060
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+c1.creationdate >= 1340327339000
+c1.creationdate <= 1356461058629
+plc1.creationdate >= 1351344255062
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 7
+
+-- p5_p061
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1351930981563
+p1.language = 'es;en'
+c1.length >= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 1
+
+-- p5_p062
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.explicitlydeleted = FALSE
+p1.language = 'es;en'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 1
+
+-- p5_p063
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+c1.length >= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 17
+
+-- p5_p064
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.explicitlydeleted = FALSE
+c1.creationdate >= 1340327339000
+c1.creationdate <= 1356461058629
+rcc.creationdate >= 1351930981563
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 7
+
+-- p5_p065
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.explicitlydeleted = FALSE
+p1.language = 'es;en'
+plc2.explicitlydeleted = FALSE
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 1
+
+-- p5_p066
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.explicitlydeleted = FALSE
+p2.language = 'en'
+plc1.explicitlydeleted = FALSE
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 3
+
+-- p5_p067
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+p1.language = 'es;en'
+p2.gender = 'female'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 1
+
+-- p5_p068
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.explicitlydeleted = FALSE
+p1.gender = 'female'
+chp2.explicitlydeleted = FALSE
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 11
+
+-- p5_p069
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+c2.creationdate >= 1350093427787
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 11
+
+-- p5_p070
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1351930981563
+c1.length >= 5
+c1.length <= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 1
+
+-- p5_p071
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+c1.length >= 5
+c1.length <= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 3
+
+-- p5_p072
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc1.creationdate >= 1351344255062
+p2.gender = 'male'
+p1.gender = 'male'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 2
+
+-- p5_p073
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc2.creationdate >= 1343776564773
+plc2.creationdate <= 1356763691590
+c1.explicitlydeleted = FALSE
+p2.gender = 'female'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 4
+
+-- p5_p074
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+c2.length >= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 16
+
+-- p5_p075
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc2.creationdate >= 1351344255062
+c1.creationdate >= 1340327339000
+c1.creationdate <= 1356461058629
+rcc.creationdate >= 1351930981563
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 7
+
+-- p5_p076
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc2.creationdate >= 1351344255062
+c1.length >= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 9
+
+-- p5_p077
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.explicitlydeleted = FALSE
+c1.creationdate >= 1340327339000
+c1.creationdate <= 1356461058629
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 14
+
+-- p5_p078
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.explicitlydeleted = FALSE
+c2.length >= 5
+c2.length <= 79
+rcc.creationdate >= 1345196662740
+rcc.creationdate <= 1356577357333
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 4
+
+-- p5_p079
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc1.creationdate >= 1343776564773
+plc1.creationdate <= 1356763691590
+p2.language = 'pt;en'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 1
+
+-- p5_p080
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc2.creationdate >= 1351344255062
+p2.language = 'en'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 3
+
+-- p5_p081
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1351930981563
+c1.length >= 79
+chp2.creationdate >= 1340327339000
+chp2.creationdate <= 1356461058629
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 7
+
+-- p5_p082
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+c1.explicitlydeleted = FALSE
+c2.explicitlydeleted = FALSE
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 20
+
+-- p5_p083
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.creationdate >= 1340327339000
+chp1.creationdate <= 1356461058629
+c2.creationdate >= 1350093427787
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 8
+
+-- p5_p084
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.explicitlydeleted = FALSE
+p1.language = 'de;en'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 3
+
+-- p5_p085
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+c2.length >= 79
+plc1.explicitlydeleted = FALSE
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 15
+
+-- p5_p086
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.creationdate >= 1340327339000
+chp1.creationdate <= 1356461058629
+p1.language = 'zh;en'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 3
+
+-- p5_p087
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+rcc.creationdate >= 1345196662740
+rcc.creationdate <= 1356577357333
+c1.explicitlydeleted = FALSE
+p1.language = 'zh;en'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 3
+
+-- p5_p088
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+c2.length >= 5
+c2.length <= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 6
+
+-- p5_p089
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+c2.creationdate >= 1340327339000
+c2.creationdate <= 1356461058629
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 12
+
+-- p5_p090
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.explicitlydeleted = FALSE
+p1.gender = 'female'
+c1.length >= 5
+c1.length <= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 4
+
+-- p5_p091
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc2.creationdate >= 1351344255062
+p1.gender = 'male'
+c2.length >= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 3
+
+-- p5_p092
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.creationdate >= 1340327339000
+chp1.creationdate <= 1356461058629
+c2.creationdate >= 1350093427787
+plc1.explicitlydeleted = FALSE
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 8
+
+-- p5_p093
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc2.creationdate >= 1343776564773
+plc2.creationdate <= 1356763691590
+p2.language = 'pt;en'
+c1.creationdate >= 1340327339000
+c1.creationdate <= 1356461058629
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 1
+
+-- p5_p094
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.explicitlydeleted = FALSE
+p2.gender = 'female'
+plc2.explicitlydeleted = FALSE
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 9
+
+-- p5_p095
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.creationdate >= 1340327339000
+chp2.creationdate <= 1356461058629
+p1.language = 'pt;en'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 1
+
+-- p5_p096
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+c1.explicitlydeleted = FALSE
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 19
+
+-- p5_p097
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp1.explicitlydeleted = FALSE
+c1.creationdate >= 1350093427787
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 12
+
+-- p5_p098
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+p1.language = 'de;en'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 3
+
+-- p5_p099
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+chp2.explicitlydeleted = FALSE
+p2.language = 'en'
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 3
+
+-- p5_p100
+MATCH 
+(c1:Comment)-[chp1:comment_hascreator_person]->(p2:Person),
+(p2:Person)-[plc2:person_likes_comment]->(c2:Comment),
+(c2:Comment)-[chp2:comment_hascreator_person]->(p1:Person),
+(p1:Person)-[plc1:person_likes_comment]->(c1:Comment),
+(c1:Comment)-[rcc:comment_replyof_comment]->(c2:Comment)
+FILTER WHERE
+plc2.creationdate >= 1343776564773
+plc2.creationdate <= 1356763691590
+c2.length >= 79
+RETURN c1, p2, c2, p1, chp1, plc2, chp2, plc1, rcc; -- || 9

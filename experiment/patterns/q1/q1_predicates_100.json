@@ -1,0 +1,6944 @@
+[
+  {
+    "query_id": "q1_p001",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      }
+    ],
+    "truecard": 392936
+  },
+  {
+    "query_id": "q1_p002",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Wall of Rahul Singh"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Cameroon"
+        }
+      }
+    ],
+    "truecard": 736
+  },
+  {
+    "query_id": "q1_p003",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1287486205605
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1342670597313
+        }
+      }
+    ],
+    "truecard": 384481
+  },
+  {
+    "query_id": "q1_p004",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1287486205605
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1342670597313
+        }
+      }
+    ],
+    "truecard": 181999
+  },
+  {
+    "query_id": "q1_p005",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Cameroon"
+        }
+      }
+    ],
+    "truecard": 47857
+  },
+  {
+    "query_id": "q1_p006",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1287486205605
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1342670597313
+        }
+      }
+    ],
+    "truecard": 2366616
+  },
+  {
+    "query_id": "q1_p007",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      }
+    ],
+    "truecard": 214707
+  },
+  {
+    "query_id": "q1_p008",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1287486205605
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1342670597313
+        }
+      }
+    ],
+    "truecard": 300785
+  },
+  {
+    "query_id": "q1_p009",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 4261260
+  },
+  {
+    "query_id": "q1_p010",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Venezuela"
+        }
+      }
+    ],
+    "truecard": 5870
+  },
+  {
+    "query_id": "q1_p011",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      }
+    ],
+    "truecard": 98890
+  },
+  {
+    "query_id": "q1_p012",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Wall of Rahul Singh"
+        }
+      }
+    ],
+    "truecard": 1050
+  },
+  {
+    "query_id": "q1_p013",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 7,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Mariano_Rivera"
+        }
+      }
+    ],
+    "truecard": 6796
+  },
+  {
+    "query_id": "q1_p014",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 4209138
+  },
+  {
+    "query_id": "q1_p015",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 326435
+  },
+  {
+    "query_id": "q1_p016",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Wall of Rahul Singh"
+        }
+      }
+    ],
+    "truecard": 35413
+  },
+  {
+    "query_id": "q1_p017",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1287486205605
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1342670597313
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Cameroon"
+        }
+      }
+    ],
+    "truecard": 27660
+  },
+  {
+    "query_id": "q1_p018",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      }
+    ],
+    "truecard": 1346341
+  },
+  {
+    "query_id": "q1_p019",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Kochi"
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 6,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 0
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 6,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 97
+        }
+      }
+    ],
+    "truecard": 968
+  },
+  {
+    "query_id": "q1_p020",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1287486205605
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1342670597313
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Italy"
+        }
+      }
+    ],
+    "truecard": 15108
+  },
+  {
+    "query_id": "q1_p021",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Wall of Rahul Khan"
+        }
+      }
+    ],
+    "truecard": 60
+  },
+  {
+    "query_id": "q1_p022",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 4459059
+  },
+  {
+    "query_id": "q1_p023",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Burma"
+        }
+      }
+    ],
+    "truecard": 81817
+  },
+  {
+    "query_id": "q1_p024",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Wall of Rahul Khan"
+        }
+      }
+    ],
+    "truecard": 84
+  },
+  {
+    "query_id": "q1_p025",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      }
+    ],
+    "truecard": 1368663
+  },
+  {
+    "query_id": "q1_p026",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Wall of Rahul Singh"
+        }
+      }
+    ],
+    "truecard": 2777
+  },
+  {
+    "query_id": "q1_p027",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Cameroon"
+        }
+      }
+    ],
+    "truecard": 16678
+  },
+  {
+    "query_id": "q1_p028",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en;tl"
+        }
+      }
+    ],
+    "truecard": 34569
+  },
+  {
+    "query_id": "q1_p029",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 299781
+  },
+  {
+    "query_id": "q1_p030",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Burma"
+        }
+      }
+    ],
+    "truecard": 132420
+  },
+  {
+    "query_id": "q1_p031",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 371302
+  },
+  {
+    "query_id": "q1_p032",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Venezuela"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 6,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 0
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 6,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 97
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 5
+        }
+      },
+      {
+        "predicate_id": 5,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 992
+  },
+  {
+    "query_id": "q1_p033",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 724027
+  },
+  {
+    "query_id": "q1_p034",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Wall of Rahul Singh"
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Cameroon"
+        }
+      }
+    ],
+    "truecard": 736
+  },
+  {
+    "query_id": "q1_p035",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 8,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "OfficeHolder"
+        }
+      }
+    ],
+    "truecard": 350276
+  },
+  {
+    "query_id": "q1_p036",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 7,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Sonia_Gandhi"
+        }
+      }
+    ],
+    "truecard": 21249
+  },
+  {
+    "query_id": "q1_p037",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Italy"
+        }
+      }
+    ],
+    "truecard": 16704
+  },
+  {
+    "query_id": "q1_p038",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1287486205605
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1342670597313
+        }
+      }
+    ],
+    "truecard": 2313480
+  },
+  {
+    "query_id": "q1_p039",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 569448
+  },
+  {
+    "query_id": "q1_p040",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Wall of Rahul Singh"
+        }
+      }
+    ],
+    "truecard": 1472
+  },
+  {
+    "query_id": "q1_p041",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 1291963
+  },
+  {
+    "query_id": "q1_p042",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 7,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Augustine_of_Hippo"
+        }
+      }
+    ],
+    "truecard": 12802
+  },
+  {
+    "query_id": "q1_p043",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Thirthahalli"
+        }
+      }
+    ],
+    "truecard": 7926
+  },
+  {
+    "query_id": "q1_p044",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Mérida"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 6,
+        "property": "length",
+        "op": "gt",
+        "value": {
+          "Int": 0
+        }
+      }
+    ],
+    "truecard": 4148
+  },
+  {
+    "query_id": "q1_p045",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1287486205605
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1342670597313
+        }
+      }
+    ],
+    "truecard": 723786
+  },
+  {
+    "query_id": "q1_p046",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 6,
+        "property": "length",
+        "op": "gt",
+        "value": {
+          "Int": 0
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 5
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 94715
+  },
+  {
+    "query_id": "q1_p047",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 2486100
+  },
+  {
+    "query_id": "q1_p048",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Wall of Rahul Khan"
+        }
+      }
+    ],
+    "truecard": 782
+  },
+  {
+    "query_id": "q1_p049",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 4274995
+  },
+  {
+    "query_id": "q1_p050",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 8,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "MusicalArtist"
+        }
+      }
+    ],
+    "truecard": 245138
+  },
+  {
+    "query_id": "q1_p051",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 0
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 6,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 97
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 7,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Charlemagne"
+        }
+      }
+    ],
+    "truecard": 3353
+  },
+  {
+    "query_id": "q1_p052",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Italy"
+        }
+      }
+    ],
+    "truecard": 6651
+  },
+  {
+    "query_id": "q1_p053",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Gomel"
+        }
+      }
+    ],
+    "truecard": 3193
+  },
+  {
+    "query_id": "q1_p054",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1287486205605
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1342670597313
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Venezuela"
+        }
+      }
+    ],
+    "truecard": 8710
+  },
+  {
+    "query_id": "q1_p055",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1350093427787
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 7,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Sonia_Gandhi"
+        }
+      }
+    ],
+    "truecard": 11417
+  },
+  {
+    "query_id": "q1_p056",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Czech_Republic"
+        }
+      }
+    ],
+    "truecard": 39837
+  },
+  {
+    "query_id": "q1_p057",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Wall of Rahul Khan"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Burma"
+        }
+      }
+    ],
+    "truecard": 295
+  },
+  {
+    "query_id": "q1_p058",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1328021100728
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      }
+    ],
+    "truecard": 2991262
+  },
+  {
+    "query_id": "q1_p059",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Burma"
+        }
+      }
+    ],
+    "truecard": 9756
+  },
+  {
+    "query_id": "q1_p060",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 6,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1308052370341
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 6,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1343818164989
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 5
+        }
+      },
+      {
+        "predicate_id": 5,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 401932
+  },
+  {
+    "query_id": "q1_p061",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      }
+    ],
+    "truecard": 182423
+  },
+  {
+    "query_id": "q1_p062",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Cameroon"
+        }
+      }
+    ],
+    "truecard": 19712
+  },
+  {
+    "query_id": "q1_p063",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1287486205605
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1342670597313
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Burma"
+        }
+      }
+    ],
+    "truecard": 63050
+  },
+  {
+    "query_id": "q1_p064",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Rạch_Giá"
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 6,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1328021100728
+        }
+      }
+    ],
+    "truecard": 2451
+  },
+  {
+    "query_id": "q1_p065",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Venezuela"
+        }
+      }
+    ],
+    "truecard": 5870
+  },
+  {
+    "query_id": "q1_p066",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Italy"
+        }
+      }
+    ],
+    "truecard": 16700
+  },
+  {
+    "query_id": "q1_p067",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Cameroon"
+        }
+      }
+    ],
+    "truecard": 16869
+  },
+  {
+    "query_id": "q1_p068",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Italy"
+        }
+      }
+    ],
+    "truecard": 2932
+  },
+  {
+    "query_id": "q1_p069",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 2062702
+  },
+  {
+    "query_id": "q1_p070",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "title",
+        "op": "eq",
+        "value": {
+          "String": "Wall of Rahul Khan"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 6,
+        "property": "length",
+        "op": "gt",
+        "value": {
+          "Int": 0
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 5
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 2330
+  },
+  {
+    "query_id": "q1_p071",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Venezuela"
+        }
+      }
+    ],
+    "truecard": 3986
+  },
+  {
+    "query_id": "q1_p072",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 355105
+  },
+  {
+    "query_id": "q1_p073",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Italy"
+        }
+      }
+    ],
+    "truecard": 12986
+  },
+  {
+    "query_id": "q1_p074",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Burma"
+        }
+      }
+    ],
+    "truecard": 50603
+  },
+  {
+    "query_id": "q1_p075",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 7,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Charlemagne"
+        }
+      }
+    ],
+    "truecard": 5937
+  },
+  {
+    "query_id": "q1_p076",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1308052370341
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 6,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1343818164989
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 5
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 1169041
+  },
+  {
+    "query_id": "q1_p077",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Rạch_Giá"
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 6,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 0
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 6,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 97
+        }
+      }
+    ],
+    "truecard": 3383
+  },
+  {
+    "query_id": "q1_p078",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1305589168419
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Venezuela"
+        }
+      }
+    ],
+    "truecard": 2394
+  },
+  {
+    "query_id": "q1_p079",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 6,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1328021100728
+        }
+      }
+    ],
+    "truecard": 1977657
+  },
+  {
+    "query_id": "q1_p080",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Venezuela"
+        }
+      }
+    ],
+    "truecard": 7574
+  },
+  {
+    "query_id": "q1_p081",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 0
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 6,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 97
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 8,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Single"
+        }
+      }
+    ],
+    "truecard": 182120
+  },
+  {
+    "query_id": "q1_p082",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      }
+    ],
+    "truecard": 5221146
+  },
+  {
+    "query_id": "q1_p083",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      }
+    ],
+    "truecard": 3460800
+  },
+  {
+    "query_id": "q1_p084",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      }
+    ],
+    "truecard": 5221146
+  },
+  {
+    "query_id": "q1_p085",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [],
+    "truecard": 5147930
+  },
+  {
+    "query_id": "q1_p086",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      }
+    ],
+    "truecard": 8630018
+  },
+  {
+    "query_id": "q1_p087",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [],
+    "truecard": 3460800
+  },
+  {
+    "query_id": "q1_p088",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      }
+    ],
+    "truecard": 4082621
+  },
+  {
+    "query_id": "q1_p089",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      }
+    ],
+    "truecard": 5147930
+  },
+  {
+    "query_id": "q1_p090",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      }
+    ],
+    "truecard": 5781797
+  },
+  {
+    "query_id": "q1_p091",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [],
+    "truecard": 2150491
+  },
+  {
+    "query_id": "q1_p092",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      }
+    ],
+    "truecard": 5781797
+  },
+  {
+    "query_id": "q1_p093",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [],
+    "truecard": 2712479
+  },
+  {
+    "query_id": "q1_p094",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 8,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "MusicalArtist"
+        }
+      }
+    ],
+    "truecard": 263537
+  },
+  {
+    "query_id": "q1_p095",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [],
+    "truecard": 8628146
+  },
+  {
+    "query_id": "q1_p096",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [],
+    "truecard": 8611389
+  },
+  {
+    "query_id": "q1_p097",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 8,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Song"
+        }
+      }
+    ],
+    "truecard": 134127
+  },
+  {
+    "query_id": "q1_p098",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [],
+    "truecard": 8749614
+  },
+  {
+    "query_id": "q1_p099",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [],
+    "truecard": 5780602
+  },
+  {
+    "query_id": "q1_p100",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Country"
+      },
+      {
+        "id": 4,
+        "label": "Forum"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Post"
+      },
+      {
+        "id": 7,
+        "label": "Tag"
+      },
+      {
+        "id": 8,
+        "label": "Tagclass"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 2,
+        "dst": 3
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 4298822
+  }
+]

@@ -1,6 +1,6 @@
 use minigu_common::types::LabelId;
 use serde::{Deserialize, Serialize};
-use smallvec::SmallVec;
+use smallvec::{smallvec, SmallVec};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct LabelSet(SmallVec<[LabelId; 4]>);
@@ -20,6 +20,11 @@ impl LabelSet {
     pub fn len(&self) -> usize {
         self.0.len()
     }
+    
+    #[inline]
+    pub fn first(&self) -> Option<LabelId> {
+        self.0.first().cloned()
+    }
 
     #[inline]
     pub fn first(&self) -> Option<LabelId> {
@@ -30,6 +35,11 @@ impl LabelSet {
     pub fn contains(&self, label: LabelId) -> bool {
         self.0.binary_search(&label).is_ok()
     }
+
+    #[inline]
+    pub fn from_label(label: LabelId) -> Self {
+        Self(smallvec![label])
+    }
 }
 
 impl FromIterator<LabelId> for LabelSet {
@@ -39,3 +49,5 @@ impl FromIterator<LabelId> for LabelSet {
         Self(set)
     }
 }
+
+

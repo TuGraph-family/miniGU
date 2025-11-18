@@ -1,0 +1,4982 @@
+[
+  {
+    "query_id": "p2_p001",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 268
+  },
+  {
+    "query_id": "p2_p002",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Rạch_Giá"
+        }
+      }
+    ],
+    "truecard": 2
+  },
+  {
+    "query_id": "p2_p003",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1350093427787
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 101
+  },
+  {
+    "query_id": "p2_p004",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 41
+  },
+  {
+    "query_id": "p2_p005",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 62
+  },
+  {
+    "query_id": "p2_p006",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 95
+  },
+  {
+    "query_id": "p2_p007",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      }
+    ],
+    "truecard": 1388
+  },
+  {
+    "query_id": "p2_p008",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 5
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 588
+  },
+  {
+    "query_id": "p2_p009",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 5
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 244
+  },
+  {
+    "query_id": "p2_p010",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 188
+  },
+  {
+    "query_id": "p2_p011",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 131
+  },
+  {
+    "query_id": "p2_p012",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 767
+  },
+  {
+    "query_id": "p2_p013",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 79
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 76
+  },
+  {
+    "query_id": "p2_p014",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 79
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 542
+  },
+  {
+    "query_id": "p2_p015",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1350093427787
+        }
+      }
+    ],
+    "truecard": 871
+  },
+  {
+    "query_id": "p2_p016",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 1112
+  },
+  {
+    "query_id": "p2_p017",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 184
+  },
+  {
+    "query_id": "p2_p018",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Rạch_Giá"
+        }
+      }
+    ],
+    "truecard": 2
+  },
+  {
+    "query_id": "p2_p019",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 49
+  },
+  {
+    "query_id": "p2_p020",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 2158
+  },
+  {
+    "query_id": "p2_p021",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      }
+    ],
+    "truecard": 98
+  },
+  {
+    "query_id": "p2_p022",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Intramuros"
+        }
+      }
+    ],
+    "truecard": 4
+  },
+  {
+    "query_id": "p2_p023",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 711
+  },
+  {
+    "query_id": "p2_p024",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 753
+  },
+  {
+    "query_id": "p2_p025",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 773
+  },
+  {
+    "query_id": "p2_p026",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 168
+  },
+  {
+    "query_id": "p2_p027",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 774
+  },
+  {
+    "query_id": "p2_p028",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1350093427787
+        }
+      }
+    ],
+    "truecard": 715
+  },
+  {
+    "query_id": "p2_p029",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Pontianak"
+        }
+      }
+    ],
+    "truecard": 1
+  },
+  {
+    "query_id": "p2_p030",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 148
+  },
+  {
+    "query_id": "p2_p031",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 188
+  },
+  {
+    "query_id": "p2_p032",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 21
+  },
+  {
+    "query_id": "p2_p033",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 467
+  },
+  {
+    "query_id": "p2_p034",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 5
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 591
+  },
+  {
+    "query_id": "p2_p035",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 1130
+  },
+  {
+    "query_id": "p2_p036",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 104
+  },
+  {
+    "query_id": "p2_p037",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Pontianak"
+        }
+      }
+    ],
+    "truecard": 1
+  },
+  {
+    "query_id": "p2_p038",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 61
+  },
+  {
+    "query_id": "p2_p039",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Intramuros"
+        }
+      }
+    ],
+    "truecard": 4
+  },
+  {
+    "query_id": "p2_p040",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 1016
+  },
+  {
+    "query_id": "p2_p041",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      }
+    ],
+    "truecard": 1426
+  },
+  {
+    "query_id": "p2_p042",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 167
+  },
+  {
+    "query_id": "p2_p043",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Rạch_Giá"
+        }
+      }
+    ],
+    "truecard": 1
+  },
+  {
+    "query_id": "p2_p044",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 1419
+  },
+  {
+    "query_id": "p2_p045",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 62
+  },
+  {
+    "query_id": "p2_p046",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 105
+  },
+  {
+    "query_id": "p2_p047",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 183
+  },
+  {
+    "query_id": "p2_p048",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Intramuros"
+        }
+      }
+    ],
+    "truecard": 4
+  },
+  {
+    "query_id": "p2_p049",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 669
+  },
+  {
+    "query_id": "p2_p050",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      }
+    ],
+    "truecard": 642
+  },
+  {
+    "query_id": "p2_p051",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 1462
+  },
+  {
+    "query_id": "p2_p052",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 95
+  },
+  {
+    "query_id": "p2_p053",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1350093427787
+        }
+      }
+    ],
+    "truecard": 1067
+  },
+  {
+    "query_id": "p2_p054",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      }
+    ],
+    "truecard": 781
+  },
+  {
+    "query_id": "p2_p055",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1350093427787
+        }
+      }
+    ],
+    "truecard": 692
+  },
+  {
+    "query_id": "p2_p056",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 49
+  },
+  {
+    "query_id": "p2_p057",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 2147
+  },
+  {
+    "query_id": "p2_p058",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 5
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 311
+  },
+  {
+    "query_id": "p2_p059",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 139
+  },
+  {
+    "query_id": "p2_p060",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 1103
+  },
+  {
+    "query_id": "p2_p061",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 270
+  },
+  {
+    "query_id": "p2_p062",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 21
+  },
+  {
+    "query_id": "p2_p063",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Rạch_Giá"
+        }
+      }
+    ],
+    "truecard": 2
+  },
+  {
+    "query_id": "p2_p064",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 117
+  },
+  {
+    "query_id": "p2_p065",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 671
+  },
+  {
+    "query_id": "p2_p066",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 212
+  },
+  {
+    "query_id": "p2_p067",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1350093427787
+        }
+      }
+    ],
+    "truecard": 1038
+  },
+  {
+    "query_id": "p2_p068",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 5
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 79
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Izmir"
+        }
+      }
+    ],
+    "truecard": 2
+  },
+  {
+    "query_id": "p2_p069",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 49
+  },
+  {
+    "query_id": "p2_p070",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Intramuros"
+        }
+      }
+    ],
+    "truecard": 2
+  },
+  {
+    "query_id": "p2_p071",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 1016
+  },
+  {
+    "query_id": "p2_p072",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Intramuros"
+        }
+      }
+    ],
+    "truecard": 4
+  },
+  {
+    "query_id": "p2_p073",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      }
+    ],
+    "truecard": 1022
+  },
+  {
+    "query_id": "p2_p074",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 1148
+  },
+  {
+    "query_id": "p2_p075",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 79
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Izmir"
+        }
+      }
+    ],
+    "truecard": 2
+  },
+  {
+    "query_id": "p2_p076",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 5
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 600
+  },
+  {
+    "query_id": "p2_p077",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "edge",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      }
+    ],
+    "truecard": 376
+  },
+  {
+    "query_id": "p2_p078",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 1432
+  },
+  {
+    "query_id": "p2_p079",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 536
+  },
+  {
+    "query_id": "p2_p080",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 777
+  },
+  {
+    "query_id": "p2_p081",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 91
+  },
+  {
+    "query_id": "p2_p082",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 506
+  },
+  {
+    "query_id": "p2_p083",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 706
+  },
+  {
+    "query_id": "p2_p084",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "ge",
+        "value": {
+          "Int": 1340327339000
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "creationdate",
+        "op": "le",
+        "value": {
+          "Int": 1356461058629
+        }
+      }
+    ],
+    "truecard": 1426
+  },
+  {
+    "query_id": "p2_p085",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Pontianak"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      }
+    ],
+    "truecard": 1
+  },
+  {
+    "query_id": "p2_p086",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 1011
+  },
+  {
+    "query_id": "p2_p087",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 780
+  },
+  {
+    "query_id": "p2_p088",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 775
+  },
+  {
+    "query_id": "p2_p089",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 1156
+  },
+  {
+    "query_id": "p2_p090",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 1125
+  },
+  {
+    "query_id": "p2_p091",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 49
+  },
+  {
+    "query_id": "p2_p092",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 1624
+  },
+  {
+    "query_id": "p2_p093",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 185
+  },
+  {
+    "query_id": "p2_p094",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 768
+  },
+  {
+    "query_id": "p2_p095",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 187
+  },
+  {
+    "query_id": "p2_p096",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "explicitlydeleted",
+        "op": "eq",
+        "value": {
+          "Bool": false
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 184
+  },
+  {
+    "query_id": "p2_p097",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "ge",
+        "value": {
+          "Int": 5
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "length",
+        "op": "le",
+        "value": {
+          "Int": 79
+        }
+      }
+    ],
+    "truecard": 244
+  },
+  {
+    "query_id": "p2_p098",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 131
+  },
+  {
+    "query_id": "p2_p099",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 772
+  },
+  {
+    "query_id": "p2_p100",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Comment"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Comment_Comment_has_creator_Person",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 101
+  }
+]

@@ -1430,6 +1430,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "arrow",
+ "bincode",
  "csv",
  "gql-parser",
  "itertools 0.14.0",
@@ -1441,6 +1442,8 @@ dependencies = [
  "minigu-planner",
  "minigu-storage",
  "minigu-transaction",
+ "ordered-float",
+ "rand 0.8.5",
  "rayon",
  "serde",
  "serde_json",

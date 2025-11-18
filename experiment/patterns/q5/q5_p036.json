@@ -1,0 +1,82 @@
+{
+  "vertices": [
+    {
+      "id": 1,
+      "label": "comment"
+    },
+    {
+      "id": 2,
+      "label": "post"
+    },
+    {
+      "id": 3,
+      "label": "tag"
+    },
+    {
+      "id": 4,
+      "label": "tag"
+    }
+  ],
+  "edges": [
+    {
+      "id": 1,
+      "label": "comment_hastag_tag",
+      "src": 1,
+      "dst": 4
+    },
+    {
+      "id": 2,
+      "label": "comment_replyof_post",
+      "src": 1,
+      "dst": 2
+    },
+    {
+      "id": 3,
+      "label": "post_hastag_tag",
+      "src": 2,
+      "dst": 3
+    }
+  ],
+  "predicates": [
+    {
+      "predicate_id": 1,
+      "target": "edge",
+      "id": 3,
+      "property": "creationdate",
+      "op": "ge",
+      "value": {
+        "Int64": 1301148754469
+      }
+    },
+    {
+      "predicate_id": 2,
+      "target": "edge",
+      "id": 3,
+      "property": "creationdate",
+      "op": "le",
+      "value": {
+        "Int64": 1349895389019
+      }
+    },
+    {
+      "predicate_id": 3,
+      "target": "vertex",
+      "id": 1,
+      "property": "length",
+      "op": "ge",
+      "value": {
+        "Int64": 5
+      }
+    },
+    {
+      "predicate_id": 4,
+      "target": "vertex",
+      "id": 1,
+      "property": "length",
+      "op": "le",
+      "value": {
+        "Int64": 79
+      }
+    }
+  ]
+}

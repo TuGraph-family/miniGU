@@ -1,0 +1,5312 @@
+[
+  {
+    "query_id": "q6_p001",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Plato"
+        }
+      }
+    ],
+    "truecard": 761
+  },
+  {
+    "query_id": "q6_p002",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 13706330
+  },
+  {
+    "query_id": "q6_p003",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 53486
+  },
+  {
+    "query_id": "q6_p004",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Augustine_of_Hippo"
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 10915
+  },
+  {
+    "query_id": "q6_p005",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Bill_Clinton"
+        }
+      }
+    ],
+    "truecard": 4799
+  },
+  {
+    "query_id": "q6_p006",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Jesus"
+        }
+      }
+    ],
+    "truecard": 152102
+  },
+  {
+    "query_id": "q6_p007",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Napoleon"
+        }
+      }
+    ],
+    "truecard": 113882
+  },
+  {
+    "query_id": "q6_p008",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Elizabeth_II"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 45366
+  },
+  {
+    "query_id": "q6_p009",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Augustine_of_Hippo"
+        }
+      }
+    ],
+    "truecard": 5719
+  },
+  {
+    "query_id": "q6_p010",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 15386006
+  },
+  {
+    "query_id": "q6_p011",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 1585053
+  },
+  {
+    "query_id": "q6_p012",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 2777679
+  },
+  {
+    "query_id": "q6_p013",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 904705
+  },
+  {
+    "query_id": "q6_p014",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 6321758
+  },
+  {
+    "query_id": "q6_p015",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 2052886
+  },
+  {
+    "query_id": "q6_p016",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 84105
+  },
+  {
+    "query_id": "q6_p017",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      }
+    ],
+    "truecard": 7162901
+  },
+  {
+    "query_id": "q6_p018",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 830254
+  },
+  {
+    "query_id": "q6_p019",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "John_F._Kennedy"
+        }
+      }
+    ],
+    "truecard": 13202
+  },
+  {
+    "query_id": "q6_p020",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 14213244
+  },
+  {
+    "query_id": "q6_p021",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Napoleon"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      }
+    ],
+    "truecard": 80833
+  },
+  {
+    "query_id": "q6_p022",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 76244
+  },
+  {
+    "query_id": "q6_p023",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 1036611
+  },
+  {
+    "query_id": "q6_p024",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 1386832
+  },
+  {
+    "query_id": "q6_p025",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "William_Shakespeare"
+        }
+      }
+    ],
+    "truecard": 148997
+  },
+  {
+    "query_id": "q6_p026",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Plato"
+        }
+      }
+    ],
+    "truecard": 104133
+  },
+  {
+    "query_id": "q6_p027",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 768973
+  },
+  {
+    "query_id": "q6_p028",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Bill_Clinton"
+        }
+      }
+    ],
+    "truecard": 86280
+  },
+  {
+    "query_id": "q6_p029",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 13912632
+  },
+  {
+    "query_id": "q6_p030",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 1187653
+  },
+  {
+    "query_id": "q6_p031",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 1524400
+  },
+  {
+    "query_id": "q6_p032",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 148071
+  },
+  {
+    "query_id": "q6_p033",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 4170734
+  },
+  {
+    "query_id": "q6_p034",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 2097333
+  },
+  {
+    "query_id": "q6_p035",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 1505046
+  },
+  {
+    "query_id": "q6_p036",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Jesus"
+        }
+      }
+    ],
+    "truecard": 174719
+  },
+  {
+    "query_id": "q6_p037",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 250498
+  },
+  {
+    "query_id": "q6_p038",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 13231262
+  },
+  {
+    "query_id": "q6_p039",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 2063421
+  },
+  {
+    "query_id": "q6_p040",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 1386107
+  },
+  {
+    "query_id": "q6_p041",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 14371319
+  },
+  {
+    "query_id": "q6_p042",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 2739640
+  },
+  {
+    "query_id": "q6_p043",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 1709309
+  },
+  {
+    "query_id": "q6_p044",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      }
+    ],
+    "truecard": 2114585
+  },
+  {
+    "query_id": "q6_p045",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Jesus"
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 5050
+  },
+  {
+    "query_id": "q6_p046",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "John_F._Kennedy"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 5560
+  },
+  {
+    "query_id": "q6_p047",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 2,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 15654261
+  },
+  {
+    "query_id": "q6_p048",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 2553069
+  },
+  {
+    "query_id": "q6_p049",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "William_Shakespeare"
+        }
+      }
+    ],
+    "truecard": 131407
+  },
+  {
+    "query_id": "q6_p050",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Napoleon"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 7043
+  },
+  {
+    "query_id": "q6_p051",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Plato"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      }
+    ],
+    "truecard": 68235
+  },
+  {
+    "query_id": "q6_p052",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 2504042
+  },
+  {
+    "query_id": "q6_p053",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 18152775
+  },
+  {
+    "query_id": "q6_p054",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Bill_Clinton"
+        }
+      }
+    ],
+    "truecard": 72044
+  },
+  {
+    "query_id": "q6_p055",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "George_W._Bush"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 58729
+  },
+  {
+    "query_id": "q6_p056",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Bill_Clinton"
+        }
+      }
+    ],
+    "truecard": 47991
+  },
+  {
+    "query_id": "q6_p057",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Plato"
+        }
+      }
+    ],
+    "truecard": 102387
+  },
+  {
+    "query_id": "q6_p058",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 13840873
+  },
+  {
+    "query_id": "q6_p059",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 2500905
+  },
+  {
+    "query_id": "q6_p060",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Napoleon"
+        }
+      }
+    ],
+    "truecard": 111469
+  },
+  {
+    "query_id": "q6_p061",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 673360
+  },
+  {
+    "query_id": "q6_p062",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Jesus"
+        }
+      }
+    ],
+    "truecard": 31938
+  },
+  {
+    "query_id": "q6_p063",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Plato"
+        }
+      }
+    ],
+    "truecard": 94017
+  },
+  {
+    "query_id": "q6_p064",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 2667732
+  },
+  {
+    "query_id": "q6_p065",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Augustine_of_Hippo"
+        }
+      }
+    ],
+    "truecard": 54877
+  },
+  {
+    "query_id": "q6_p066",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "John_F._Kennedy"
+        }
+      }
+    ],
+    "truecard": 102760
+  },
+  {
+    "query_id": "q6_p067",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 2,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 7832665
+  },
+  {
+    "query_id": "q6_p068",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Aristotle"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 33393
+  },
+  {
+    "query_id": "q6_p069",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 2,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 7535708
+  },
+  {
+    "query_id": "q6_p070",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Napoleon"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 16532
+  },
+  {
+    "query_id": "q6_p071",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 3320899
+  },
+  {
+    "query_id": "q6_p072",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "John_F._Kennedy"
+        }
+      }
+    ],
+    "truecard": 89863
+  },
+  {
+    "query_id": "q6_p073",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Jesus"
+        }
+      }
+    ],
+    "truecard": 122765
+  },
+  {
+    "query_id": "q6_p074",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Bill_Clinton"
+        }
+      }
+    ],
+    "truecard": 4203
+  },
+  {
+    "query_id": "q6_p075",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 1304228
+  },
+  {
+    "query_id": "q6_p076",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Bill_Clinton"
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 994
+  },
+  {
+    "query_id": "q6_p077",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 134533
+  },
+  {
+    "query_id": "q6_p078",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 1084666
+  },
+  {
+    "query_id": "q6_p079",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 165702
+  },
+  {
+    "query_id": "q6_p080",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 749589
+  },
+  {
+    "query_id": "q6_p081",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 620636
+  },
+  {
+    "query_id": "q6_p082",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 13741136
+  },
+  {
+    "query_id": "q6_p083",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Elizabeth_II"
+        }
+      }
+    ],
+    "truecard": 118851
+  },
+  {
+    "query_id": "q6_p084",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 3205111
+  },
+  {
+    "query_id": "q6_p085",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Aristotle"
+        }
+      }
+    ],
+    "truecard": 40648
+  },
+  {
+    "query_id": "q6_p086",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 2437766
+  },
+  {
+    "query_id": "q6_p087",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Plato"
+        }
+      }
+    ],
+    "truecard": 51165
+  },
+  {
+    "query_id": "q6_p088",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 3212809
+  },
+  {
+    "query_id": "q6_p089",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "William_Shakespeare"
+        }
+      }
+    ],
+    "truecard": 6719
+  },
+  {
+    "query_id": "q6_p090",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 835283
+  },
+  {
+    "query_id": "q6_p091",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 1,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 778804
+  },
+  {
+    "query_id": "q6_p092",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "John_F._Kennedy"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 4,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      }
+    ],
+    "truecard": 8722
+  },
+  {
+    "query_id": "q6_p093",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 11948317
+  },
+  {
+    "query_id": "q6_p094",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 3,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 3808806
+  },
+  {
+    "query_id": "q6_p095",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Plato"
+        }
+      }
+    ],
+    "truecard": 85704
+  },
+  {
+    "query_id": "q6_p096",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Napoleon"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      }
+    ],
+    "truecard": 56822
+  },
+  {
+    "query_id": "q6_p097",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "George_W._Bush"
+        }
+      }
+    ],
+    "truecard": 124604
+  },
+  {
+    "query_id": "q6_p098",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 1791500
+  },
+  {
+    "query_id": "q6_p099",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 2244764
+  },
+  {
+    "query_id": "q6_p100",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "Person"
+      },
+      {
+        "id": 2,
+        "label": "Person"
+      },
+      {
+        "id": 3,
+        "label": "Person"
+      },
+      {
+        "id": 4,
+        "label": "Tag"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "Person_Person_knows_Person",
+        "src": 1,
+        "dst": 2
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "ge",
+        "value": {
+          "Int": 252947
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src",
+        "op": "le",
+        "value": {
+          "Int": 253760
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Napoleon"
+        }
+      }
+    ],
+    "truecard": 116624
+  }
+]

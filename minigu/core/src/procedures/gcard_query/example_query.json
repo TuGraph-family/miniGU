@@ -1,0 +1,39 @@
+{
+  "vertices": [
+    { "id": 1, "label": "Person" },
+    { "id": 2, "label": "City" },
+    { "id": 3, "label": "Country" }
+  ],
+  "edges": [
+    {
+      "id": 1,
+      "label": "Person_isLocatedIn_City",
+      "src": 1,
+      "dst": 2
+    },
+    {
+      "id": 2,
+      "label": "City_isPartOf_Country",
+      "src": 2,
+      "dst": 3
+    }
+  ],
+  "predicates": [
+    {
+      "predicate_id": 1,
+      "target": "vertex",
+      "id": 1,
+      "property": "browserUsed",
+      "op": "eq",
+      "value": { "String": "Firefox" }
+    },
+    {
+      "predicate_id": 2,
+      "target": "vertex",
+      "id": 2,
+      "property": "name",
+      "op": "eq",
+      "value": { "String": "Shanghai" }
+    }
+  ]
+}

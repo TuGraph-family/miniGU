@@ -1,0 +1,5762 @@
+[
+  {
+    "query_id": "q3_p001",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 7,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 8303
+  },
+  {
+    "query_id": "q3_p002",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Cameroon"
+        }
+      }
+    ],
+    "truecard": 18
+  },
+  {
+    "query_id": "q3_p003",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Italy"
+        }
+      }
+    ],
+    "truecard": 4
+  },
+  {
+    "query_id": "q3_p004",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 710
+  },
+  {
+    "query_id": "q3_p005",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Burma"
+        }
+      }
+    ],
+    "truecard": 2
+  },
+  {
+    "query_id": "q3_p006",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 7,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 762
+  },
+  {
+    "query_id": "q3_p007",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 7,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 710
+  },
+  {
+    "query_id": "q3_p008",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 6590
+  },
+  {
+    "query_id": "q3_p009",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 1668
+  },
+  {
+    "query_id": "q3_p010",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 710
+  },
+  {
+    "query_id": "q3_p011",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Mérida"
+        }
+      }
+    ],
+    "truecard": 14
+  },
+  {
+    "query_id": "q3_p012",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 218
+  },
+  {
+    "query_id": "q3_p013",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 4644
+  },
+  {
+    "query_id": "q3_p014",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 1668
+  },
+  {
+    "query_id": "q3_p015",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 7,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 2190
+  },
+  {
+    "query_id": "q3_p016",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 710
+  },
+  {
+    "query_id": "q3_p017",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 7,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 336
+  },
+  {
+    "query_id": "q3_p018",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 710
+  },
+  {
+    "query_id": "q3_p019",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 15579
+  },
+  {
+    "query_id": "q3_p020",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Cameroon"
+        }
+      }
+    ],
+    "truecard": 6
+  },
+  {
+    "query_id": "q3_p021",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 7,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 8060
+  },
+  {
+    "query_id": "q3_p022",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 8000
+  },
+  {
+    "query_id": "q3_p023",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Intramuros"
+        }
+      }
+    ],
+    "truecard": 4
+  },
+  {
+    "query_id": "q3_p024",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 7,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 762
+  },
+  {
+    "query_id": "q3_p025",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 441
+  },
+  {
+    "query_id": "q3_p026",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 556
+  },
+  {
+    "query_id": "q3_p027",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 7,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      }
+    ],
+    "truecard": 762
+  },
+  {
+    "query_id": "q3_p028",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 6103
+  },
+  {
+    "query_id": "q3_p029",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 7,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 942
+  },
+  {
+    "query_id": "q3_p030",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Cameroon"
+        }
+      }
+    ],
+    "truecard": 30
+  },
+  {
+    "query_id": "q3_p031",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 762
+  },
+  {
+    "query_id": "q3_p032",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 7,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 15584
+  },
+  {
+    "query_id": "q3_p033",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 7,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 8346
+  },
+  {
+    "query_id": "q3_p034",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 7,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 8346
+  },
+  {
+    "query_id": "q3_p035",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 7,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 8000
+  },
+  {
+    "query_id": "q3_p036",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 7757
+  },
+  {
+    "query_id": "q3_p037",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 456
+  },
+  {
+    "query_id": "q3_p038",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 1668
+  },
+  {
+    "query_id": "q3_p039",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Burma"
+        }
+      }
+    ],
+    "truecard": 2
+  },
+  {
+    "query_id": "q3_p040",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      }
+    ],
+    "truecard": 1774
+  },
+  {
+    "query_id": "q3_p041",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 7,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 4646
+  },
+  {
+    "query_id": "q3_p042",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 7,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 710
+  },
+  {
+    "query_id": "q3_p043",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 449
+  },
+  {
+    "query_id": "q3_p044",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 378
+  },
+  {
+    "query_id": "q3_p045",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 8346
+  },
+  {
+    "query_id": "q3_p046",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 1668
+  },
+  {
+    "query_id": "q3_p047",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 7,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 15579
+  },
+  {
+    "query_id": "q3_p048",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 4070
+  },
+  {
+    "query_id": "q3_p049",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Izmir"
+        }
+      }
+    ],
+    "truecard": 13
+  },
+  {
+    "query_id": "q3_p050",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Intramuros"
+        }
+      }
+    ],
+    "truecard": 4
+  },
+  {
+    "query_id": "q3_p051",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 14869
+  },
+  {
+    "query_id": "q3_p052",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 2192
+  },
+  {
+    "query_id": "q3_p053",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 710
+  },
+  {
+    "query_id": "q3_p054",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 890
+  },
+  {
+    "query_id": "q3_p055",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 762
+  },
+  {
+    "query_id": "q3_p056",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Intramuros"
+        }
+      }
+    ],
+    "truecard": 4
+  },
+  {
+    "query_id": "q3_p057",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 4286
+  },
+  {
+    "query_id": "q3_p058",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 6,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 2923
+  },
+  {
+    "query_id": "q3_p059",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 2190
+  },
+  {
+    "query_id": "q3_p060",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 916
+  },
+  {
+    "query_id": "q3_p061",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 52
+  },
+  {
+    "query_id": "q3_p062",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Mérida"
+        }
+      }
+    ],
+    "truecard": 28
+  },
+  {
+    "query_id": "q3_p063",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 2985
+  },
+  {
+    "query_id": "q3_p064",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 1000
+  },
+  {
+    "query_id": "q3_p065",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 7,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 2192
+  },
+  {
+    "query_id": "q3_p066",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Italy"
+        }
+      }
+    ],
+    "truecard": 4
+  },
+  {
+    "query_id": "q3_p067",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 522
+  },
+  {
+    "query_id": "q3_p068",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 7,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 4045
+  },
+  {
+    "query_id": "q3_p069",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 15578
+  },
+  {
+    "query_id": "q3_p070",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Izmir"
+        }
+      }
+    ],
+    "truecard": 16
+  },
+  {
+    "query_id": "q3_p071",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 10646
+  },
+  {
+    "query_id": "q3_p072",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Intramuros"
+        }
+      }
+    ],
+    "truecard": 4
+  },
+  {
+    "query_id": "q3_p073",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 1668
+  },
+  {
+    "query_id": "q3_p074",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Mérida"
+        }
+      }
+    ],
+    "truecard": 28
+  },
+  {
+    "query_id": "q3_p075",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Intramuros"
+        }
+      }
+    ],
+    "truecard": 4
+  },
+  {
+    "query_id": "q3_p076",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 1000
+  },
+  {
+    "query_id": "q3_p077",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 2190
+  },
+  {
+    "query_id": "q3_p078",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Mérida"
+        }
+      }
+    ],
+    "truecard": 9
+  },
+  {
+    "query_id": "q3_p079",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "pt;en"
+        }
+      }
+    ],
+    "truecard": 306
+  },
+  {
+    "query_id": "q3_p080",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Izmir"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 6
+  },
+  {
+    "query_id": "q3_p081",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 6402
+  },
+  {
+    "query_id": "q3_p082",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Mérida"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 7,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 28
+  },
+  {
+    "query_id": "q3_p083",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Izmir"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 6,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 9
+  },
+  {
+    "query_id": "q3_p084",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Mérida"
+        }
+      }
+    ],
+    "truecard": 23
+  },
+  {
+    "query_id": "q3_p085",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 762
+  },
+  {
+    "query_id": "q3_p086",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 4,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Burma"
+        }
+      }
+    ],
+    "truecard": 12
+  },
+  {
+    "query_id": "q3_p087",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 944
+  },
+  {
+    "query_id": "q3_p088",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 11912
+  },
+  {
+    "query_id": "q3_p089",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 2,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Izmir"
+        }
+      }
+    ],
+    "truecard": 10
+  },
+  {
+    "query_id": "q3_p090",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 7,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 762
+  },
+  {
+    "query_id": "q3_p091",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 6,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 52
+  },
+  {
+    "query_id": "q3_p092",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 1,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Intramuros"
+        }
+      }
+    ],
+    "truecard": 4
+  },
+  {
+    "query_id": "q3_p093",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 7,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 12126
+  },
+  {
+    "query_id": "q3_p094",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 6,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "female"
+        }
+      }
+    ],
+    "truecard": 15579
+  },
+  {
+    "query_id": "q3_p095",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 7,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 372
+  },
+  {
+    "query_id": "q3_p096",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 7,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "zh;en"
+        }
+      }
+    ],
+    "truecard": 4286
+  },
+  {
+    "query_id": "q3_p097",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "edge",
+        "id": 1,
+        "property": "src_type",
+        "op": "eq",
+        "value": {
+          "String": "City"
+        }
+      },
+      {
+        "predicate_id": 2,
+        "target": "vertex",
+        "id": 1,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Mérida"
+        }
+      },
+      {
+        "predicate_id": 3,
+        "target": "vertex",
+        "id": 6,
+        "property": "gender",
+        "op": "eq",
+        "value": {
+          "String": "male"
+        }
+      }
+    ],
+    "truecard": 19
+  },
+  {
+    "query_id": "q3_p098",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 7,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "en"
+        }
+      }
+    ],
+    "truecard": 484
+  },
+  {
+    "query_id": "q3_p099",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 5,
+        "property": "language",
+        "op": "eq",
+        "value": {
+          "String": "es;en"
+        }
+      }
+    ],
+    "truecard": 2190
+  },
+  {
+    "query_id": "q3_p100",
+    "vertices": [
+      {
+        "id": 1,
+        "label": "City"
+      },
+      {
+        "id": 2,
+        "label": "City"
+      },
+      {
+        "id": 3,
+        "label": "City"
+      },
+      {
+        "id": 4,
+        "label": "Country"
+      },
+      {
+        "id": 5,
+        "label": "Person"
+      },
+      {
+        "id": 6,
+        "label": "Person"
+      },
+      {
+        "id": 7,
+        "label": "Person"
+      }
+    ],
+    "edges": [
+      {
+        "id": 1,
+        "label": "City_City_is_part_of_Country",
+        "src": 1,
+        "dst": 4
+      }
+    ],
+    "predicates": [
+      {
+        "predicate_id": 1,
+        "target": "vertex",
+        "id": 3,
+        "property": "name",
+        "op": "eq",
+        "value": {
+          "String": "Izmir"
+        }
+      }
+    ],
+    "truecard": 16
+  }
+]

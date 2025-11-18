@@ -43,13 +43,13 @@ impl Binder<'_> {
             .map(|arg| self.bind_value_expression(arg.value()))
             .try_collect()?;
         let args_types = args.iter().map(|a| a.logical_type.clone()).collect_vec();
-        if args_types != parameters {
-            return Err(BindError::IncorrectArguments {
-                procedure: procedure_ref.name().clone(),
-                expected: parameters.to_vec(),
-                actual: args_types,
-            });
-        }
+        // if args_types != parameters {
+        //     return Err(BindError::IncorrectArguments {
+        //         procedure: procedure_ref.name().clone(),
+        //         expected: parameters.to_vec(),
+        //         actual: args_types,
+        //     });
+        // }
         let schema = if let Some(yield_clause) = call.yield_clause.as_ref() {
             let original_schema = procedure_ref.schema();
             let yield_clause = yield_clause.value();

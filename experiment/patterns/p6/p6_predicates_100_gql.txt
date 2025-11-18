@@ -1,0 +1,1423 @@
+-- p6_p001
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253760
+f.title = 'Wall of Rahul Khan'
+fhm1.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 1
+
+-- p6_p002
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp1.explicitlydeleted = FALSE
+p2.gender = 'female'
+fhm1.creationdate >= 1321789849404
+fhm1.creationdate <= 1354857790702
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 70108
+
+-- p6_p003
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm2.explicitlydeleted = FALSE
+po.creationdate >= 1308052370341
+po.creationdate <= 1352177414840
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 136074
+
+-- p6_p004
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp2.creationdate >= 1321581133136
+plp2.creationdate <= 1354960011366
+p1.language = 'en'
+plp1.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 10505
+
+-- p6_p005
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+p2.language = 'es;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 10959
+
+-- p6_p006
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+p1.language = 'en'
+f.title = 'Wall of Rahul Khan'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 1
+
+-- p6_p007
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.dst <= 253343
+po.creationdate >= 1308052370341
+po.creationdate <= 1352177414840
+p1.language = 'pt;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 4046
+
+-- p6_p008
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+p1.language = 'de;en'
+po.length >= 0
+po.length <= 0
+pkp.dst >= 252947
+pkp.dst <= 253760
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 3796
+
+-- p6_p009
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm1.creationdate >= 1321789849404
+fhm1.creationdate <= 1354857790702
+p1.language = 'es;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 7551
+
+-- p6_p010
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+p2.language = 'pt;en'
+f.creationdate >= 1305589168419
+f.creationdate <= 1351610285871
+po.length <= 0
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 3814
+
+-- p6_p011
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253760
+po.length >= 0
+po.length <= 0
+plp1.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 60277
+
+-- p6_p012
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.dst <= 253343
+p2.language = 'zh;en'
+fhm1.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 13565
+
+-- p6_p013
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm2.explicitlydeleted = FALSE
+po.language = 'en'
+plp1.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 45584
+
+-- p6_p014
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.dst >= 252947
+pkp.dst <= 253760
+p1.language = 'de;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 6711
+
+-- p6_p015
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm1.creationdate >= 1321789849404
+fhm1.creationdate <= 1354857790702
+p2.gender = 'female'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 71707
+
+-- p6_p016
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1352177414840
+p1.language = 'de;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 8713
+
+-- p6_p017
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp2.explicitlydeleted = FALSE
+f.title = 'Wall of Rahul Khan'
+fcp.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 4
+
+-- p6_p018
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1352177414840
+p2.gender = 'male'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 63531
+
+-- p6_p019
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp2.creationdate >= 1321581133136
+plp2.creationdate <= 1354960011366
+po.explicitlydeleted = FALSE
+p2.language = 'es;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 7318
+
+-- p6_p020
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp2.explicitlydeleted = FALSE
+p2.gender = 'male'
+fcp.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 80223
+
+-- p6_p021
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp1.creationdate >= 1321581133136
+plp1.creationdate <= 1354960011366
+po.language = 'en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 32674
+
+-- p6_p022
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.src >= 253343
+p1.language = 'es;en'
+fhm2.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 3670
+
+-- p6_p023
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+p2.language = 'zh;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 21801
+
+-- p6_p024
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.dst <= 253343
+p1.gender = 'male'
+fhm1.creationdate >= 1321789849404
+fhm1.creationdate <= 1354857790702
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 37553
+
+-- p6_p025
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.dst <= 253343
+po.creationdate >= 1308052370341
+po.creationdate <= 1352177414840
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 86468
+
+-- p6_p026
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1352177414840
+p2.language = 'pt;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 6286
+
+-- p6_p027
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp1.creationdate >= 1321581133136
+plp1.creationdate <= 1354960011366
+p2.language = 'pt;en'
+fcp.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 6290
+
+-- p6_p028
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+p2.language = 'pt;en'
+pkp.src >= 253343
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 3060
+
+-- p6_p029
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp1.creationdate >= 1321581133136
+plp1.creationdate <= 1354960011366
+p2.language = 'pt;en'
+po.length >= 0
+po.length <= 0
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 3838
+
+-- p6_p030
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm1.explicitlydeleted = FALSE
+f.title = 'Wall of Rahul Khan'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 4
+
+-- p6_p031
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp1.explicitlydeleted = FALSE
+f.title = 'Album 1 of Karan Singh'
+fhm2.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 6
+
+-- p6_p032
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm1.explicitlydeleted = FALSE
+p2.language = 'es;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 11176
+
+-- p6_p033
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm2.creationdate >= 1321789849404
+fhm2.creationdate <= 1354857790702
+p2.language = 'de;en'
+plp2.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 8666
+
+-- p6_p034
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm1.explicitlydeleted = FALSE
+po.language = 'en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 46459
+
+-- p6_p035
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm2.explicitlydeleted = FALSE
+p2.language = 'pt;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 8864
+
+-- p6_p036
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp1.creationdate >= 1321581133136
+plp1.creationdate <= 1354960011366
+po.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 126828
+
+-- p6_p037
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253760
+po.creationdate >= 1308052370341
+po.creationdate <= 1352177414840
+fhm1.creationdate >= 1321789849404
+fhm1.creationdate <= 1354857790702
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 71002
+
+-- p6_p038
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1352177414840
+po.length <= 0
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 79684
+
+-- p6_p039
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp1.explicitlydeleted = FALSE
+p1.language = 'en'
+pkp.src >= 253343
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 4441
+
+-- p6_p040
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.dst >= 252947
+pkp.dst <= 253760
+po.length <= 0
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 61703
+
+-- p6_p041
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp2.creationdate >= 1321581133136
+plp2.creationdate <= 1354960011366
+po.creationdate >= 1308052370341
+po.creationdate <= 1352177414840
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 116214
+
+-- p6_p042
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm2.creationdate >= 1321789849404
+fhm2.creationdate <= 1354857790702
+po.explicitlydeleted = FALSE
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1352177414840
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 108054
+
+-- p6_p043
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp2.explicitlydeleted = FALSE
+p1.language = 'pt;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 8677
+
+-- p6_p044
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp1.creationdate >= 1321581133136
+plp1.creationdate <= 1354960011366
+p2.language = 'de;en'
+plp2.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 8297
+
+-- p6_p045
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp1.creationdate >= 1321581133136
+plp1.creationdate <= 1354960011366
+f.creationdate >= 1305589168419
+f.creationdate <= 1351610285871
+p1.language = 'en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 7928
+
+-- p6_p046
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1352177414840
+p1.language = 'de;en'
+po.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 8359
+
+-- p6_p047
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm1.explicitlydeleted = FALSE
+po.length >= 0
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1352177414840
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 136074
+
+-- p6_p048
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.dst >= 252947
+pkp.dst <= 253760
+p1.language = 'pt;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 5230
+
+-- p6_p049
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp1.creationdate >= 1321581133136
+plp1.creationdate <= 1354960011366
+p1.gender = 'female'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 69845
+
+-- p6_p050
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp1.creationdate >= 1321581133136
+plp1.creationdate <= 1354960011366
+f.creationdate >= 1305589168419
+f.creationdate <= 1351610285871
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 95358
+
+-- p6_p051
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.dst <= 253343
+p1.language = 'pt;en'
+fcp.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 5689
+
+-- p6_p052
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+po.length >= 0
+po.length <= 0
+p1.gender = 'female'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 56796
+
+-- p6_p053
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm2.explicitlydeleted = FALSE
+p2.gender = 'female'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 97909
+
+-- p6_p054
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp2.creationdate >= 1321581133136
+plp2.creationdate <= 1354960011366
+p1.language = 'de;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 8603
+
+-- p6_p055
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp2.explicitlydeleted = FALSE
+po.language = 'en'
+p2.language = 'en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 3442
+
+-- p6_p056
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.dst >= 252947
+pkp.dst <= 253760
+f.creationdate >= 1305589168419
+f.creationdate <= 1351610285871
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 70089
+
+-- p6_p057
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253760
+f.title = 'Album 1 of Karan Singh'
+plp2.creationdate >= 1321581133136
+plp2.creationdate <= 1354960011366
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 1
+
+-- p6_p058
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm1.creationdate >= 1321789849404
+fhm1.creationdate <= 1354857790702
+p2.gender = 'female'
+f.creationdate >= 1305589168419
+f.creationdate <= 1351610285871
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 51426
+
+-- p6_p059
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm1.explicitlydeleted = FALSE
+p1.gender = 'male'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 83954
+
+-- p6_p060
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253760
+po.length >= 0
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 106978
+
+-- p6_p061
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253760
+f.explicitlydeleted = FALSE
+p1.language = 'en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 10400
+
+-- p6_p062
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm2.explicitlydeleted = FALSE
+po.length >= 0
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 181863
+
+-- p6_p063
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253760
+p2.language = 'en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 8485
+
+-- p6_p064
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.src >= 253343
+p1.language = 'zh;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 8642
+
+-- p6_p065
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.dst >= 252947
+pkp.dst <= 253760
+f.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 106466
+
+-- p6_p066
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.src >= 253343
+p2.language = 'pt;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 3119
+
+-- p6_p067
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm1.explicitlydeleted = FALSE
+p2.language = 'en'
+fhm2.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 14527
+
+-- p6_p068
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.dst <= 253343
+po.length <= 0
+fcp.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 66843
+
+-- p6_p069
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm2.creationdate >= 1321789849404
+fhm2.creationdate <= 1354857790702
+po.creationdate >= 1308052370341
+po.creationdate <= 1352177414840
+p2.language = 'de;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 7609
+
+-- p6_p070
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp2.creationdate >= 1321581133136
+plp2.creationdate <= 1354960011366
+p2.language = 'en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 10661
+
+-- p6_p071
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fcp.creationdate >= 1308052370341
+fcp.creationdate <= 1352177414840
+p2.language = 'es;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 8296
+
+-- p6_p072
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm1.explicitlydeleted = FALSE
+p1.gender = 'female'
+plp1.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 95985
+
+-- p6_p073
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm2.creationdate >= 1321789849404
+fhm2.creationdate <= 1354857790702
+po.creationdate >= 1308052370341
+po.creationdate <= 1352177414840
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 111944
+
+-- p6_p074
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp2.explicitlydeleted = FALSE
+p2.language = 'de;en'
+fhm2.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 11298
+
+-- p6_p075
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+p2.language = 'pt;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 8747
+
+-- p6_p076
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp1.explicitlydeleted = FALSE
+p1.language = 'de;en'
+p2.language = 'zh;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 629
+
+-- p6_p077
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp1.creationdate >= 1321581133136
+plp1.creationdate <= 1354960011366
+po.length >= 0
+po.length <= 0
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 77133
+
+-- p6_p078
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253760
+p2.language = 'en'
+fhm1.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 8434
+
+-- p6_p079
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253760
+p2.language = 'zh;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 14554
+
+-- p6_p080
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.dst <= 253343
+f.title = 'Album 1 of Karan Singh'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 3
+
+-- p6_p081
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp2.creationdate >= 1321581133136
+plp2.creationdate <= 1354960011366
+p1.language = 'pt;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 6433
+
+-- p6_p082
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm2.creationdate >= 1321789849404
+fhm2.creationdate <= 1354857790702
+p2.gender = 'male'
+po.creationdate >= 1308052370341
+po.creationdate <= 1352177414840
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 52295
+
+-- p6_p083
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp2.explicitlydeleted = FALSE
+p2.language = 'en'
+p1.language = 'es;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 898
+
+-- p6_p084
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+po.length <= 0
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 103646
+
+-- p6_p085
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm2.creationdate >= 1321789849404
+fhm2.creationdate <= 1354857790702
+po.creationdate >= 1328021100728
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 112333
+
+-- p6_p086
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253760
+f.title = 'Wall of Rahul Khan'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 1
+
+-- p6_p087
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm1.creationdate >= 1321789849404
+fhm1.creationdate <= 1354857790702
+p2.language = 'pt;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 6356
+
+-- p6_p088
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.dst <= 253343
+po.language = 'en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 29152
+
+-- p6_p089
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm1.creationdate >= 1321789849404
+fhm1.creationdate <= 1354857790702
+f.title = 'Wall of Rahul Khan'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 3
+
+-- p6_p090
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm2.creationdate >= 1321789849404
+fhm2.creationdate <= 1354857790702
+p2.gender = 'male'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 62349
+
+-- p6_p091
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+p1.gender = 'female'
+fhm1.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 95796
+
+-- p6_p092
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fcp.explicitlydeleted = FALSE
+f.creationdate >= 1305589168419
+f.creationdate <= 1351610285871
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 110280
+
+-- p6_p093
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm2.explicitlydeleted = FALSE
+p2.gender = 'male'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 83954
+
+-- p6_p094
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.src >= 252947
+pkp.src <= 253760
+f.title = 'Album 1 of Karan Singh'
+fhm1.creationdate >= 1321789849404
+fhm1.creationdate <= 1354857790702
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 1
+
+-- p6_p095
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp1.explicitlydeleted = FALSE
+p1.language = 'es;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 10904
+
+-- p6_p096
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm1.explicitlydeleted = FALSE
+p1.language = 'es;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 11178
+
+-- p6_p097
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+plp1.creationdate >= 1321581133136
+plp1.creationdate <= 1354960011366
+f.title = 'Album 1 of Karan Singh'
+po.creationdate >= 1328021100728
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 6
+
+-- p6_p098
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.src >= 253343
+p1.language = 'pt;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 2455
+
+-- p6_p099
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+pkp.dst >= 252947
+pkp.dst <= 253760
+p1.language = 'es;en'
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 5985
+
+-- p6_p100
+MATCH 
+(f:Forum)-[fcp:forum_containerof_post]->(po:Post),
+(p1:Person)-[plp1:person_likes_post]->(po:Post),
+(f:Forum)-[fhm1:forum_hasmember_person]->(p1:Person),
+(f:Forum)-[fhm2:forum_hasmember_person]->(p2:Person),
+(p2:Person)-[plp2:person_likes_post]->(po:Post),
+(p1:Person)-[pkp:person_knows_person]->(p2:Person)
+FILTER WHERE
+fhm2.explicitlydeleted = FALSE
+p1.language = 'zh;en'
+f.explicitlydeleted = FALSE
+RETURN f, po, p1, p2, fcp, plp1, fhm1, fhm2, plp2, pkp; -- || 22062

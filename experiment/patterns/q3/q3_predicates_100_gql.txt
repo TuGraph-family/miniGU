@@ -1,0 +1,1689 @@
+-- q3_p001
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p3.gender = 'female'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 8303
+
+-- q3_p002
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc1.creationdate >= 1309571252085
+co.name = 'Cameroon'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 18
+
+-- q3_p003
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+co.name = 'Italy'
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 4
+
+-- q3_p004
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p2.language = 'pt;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 710
+
+-- q3_p005
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc1.creationdate >= 1309571252085
+co.name = 'Burma'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 2
+
+-- q3_p006
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+cipc1.src_type = 'City'
+p3.language = 'en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 762
+
+-- q3_p007
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p3.language = 'pt;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 710
+
+-- q3_p008
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+cipc1.src_type = 'City'
+p1.language = 'zh;en'
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 6590
+
+-- q3_p009
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+p1.language = 'pt;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 1668
+
+-- q3_p010
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc3.explicitlydeleted = FALSE
+p1.language = 'pt;en'
+pk12.src >= 252947
+pk12.src <= 253760
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 710
+
+-- q3_p011
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+ci1.name = 'Mérida'
+plc3.explicitlydeleted = FALSE
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 14
+
+-- q3_p012
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p2.language = 'en'
+pk12.src >= 252947
+pk12.src <= 253760
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 218
+
+-- q3_p013
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p1.language = 'zh;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 4644
+
+-- q3_p014
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+p1.language = 'pt;en'
+p2.language = 'pt;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 1668
+
+-- q3_p015
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+p3.language = 'es;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 2190
+
+-- q3_p016
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p1.language = 'pt;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 710
+
+-- q3_p017
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p2.language = 'pt;en'
+p3.gender = 'male'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 336
+
+-- q3_p018
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc3.explicitlydeleted = FALSE
+p1.language = 'pt;en'
+pk23.dst >= 252947
+pk23.dst <= 253760
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 710
+
+-- q3_p019
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+p1.gender = 'female'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 15579
+
+-- q3_p020
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc3.explicitlydeleted = FALSE
+p2.language = 'en'
+co.name = 'Cameroon'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 6
+
+-- q3_p021
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p3.gender = 'male'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 8060
+
+-- q3_p022
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p1.gender = 'female'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 8000
+
+-- q3_p023
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+ci2.name = 'Intramuros'
+pk23.dst >= 252947
+pk23.dst <= 253760
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 4
+
+-- q3_p024
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+p3.language = 'en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 762
+
+-- q3_p025
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+p2.gender = 'female'
+p1.language = 'en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 441
+
+-- q3_p026
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+cipc1.src_type = 'City'
+p2.language = 'en'
+plc3.creationdate <= 1333481787908
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 556
+
+-- q3_p027
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+p3.language = 'en'
+cipc1.src_type = 'City'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 762
+
+-- q3_p028
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+p2.gender = 'female'
+pk12.src >= 252947
+pk12.src <= 253760
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 6103
+
+-- q3_p029
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+p3.language = 'es;en'
+pk12.src >= 252947
+pk12.src <= 253760
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 942
+
+-- q3_p030
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+co.name = 'Cameroon'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 30
+
+-- q3_p031
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc3.explicitlydeleted = FALSE
+p2.language = 'en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 762
+
+-- q3_p032
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+cipc1.src_type = 'City'
+p3.gender = 'female'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 15584
+
+-- q3_p033
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+p3.language = 'zh;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 8346
+
+-- q3_p034
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc3.explicitlydeleted = FALSE
+p3.language = 'zh;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 8346
+
+-- q3_p035
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p3.gender = 'female'
+plc3.creationdate <= 1333481787908
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 8000
+
+-- q3_p036
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p2.gender = 'male'
+plc3.explicitlydeleted = FALSE
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 7757
+
+-- q3_p037
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p1.language = 'es;en'
+plc1.creationdate >= 1309571252085
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 456
+
+-- q3_p038
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+p1.language = 'pt;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 1668
+
+-- q3_p039
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+co.name = 'Burma'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 2
+
+-- q3_p040
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc3.creationdate <= 1333481787908
+p1.language = 'es;en'
+cipc1.src_type = 'City'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 1774
+
+-- q3_p041
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p3.language = 'zh;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 4646
+
+-- q3_p042
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p3.language = 'pt;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 710
+
+-- q3_p043
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p2.language = 'pt;en'
+plc3.creationdate <= 1333481787908
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 449
+
+-- q3_p044
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc1.creationdate >= 1309571252085
+p1.language = 'es;en'
+pk23.dst >= 252947
+pk23.dst <= 253760
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 378
+
+-- q3_p045
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+cipc1.src_type = 'City'
+p1.language = 'zh;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 8346
+
+-- q3_p046
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+cipc1.src_type = 'City'
+p2.language = 'pt;en'
+plc3.explicitlydeleted = FALSE
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 1668
+
+-- q3_p047
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+p3.gender = 'female'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 15579
+
+-- q3_p048
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+p2.gender = 'female'
+p1.language = 'zh;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 4070
+
+-- q3_p049
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc1.creationdate >= 1309571252085
+ci2.name = 'Izmir'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 13
+
+-- q3_p050
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+cipc1.src_type = 'City'
+ci3.name = 'Intramuros'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 4
+
+-- q3_p051
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc3.explicitlydeleted = FALSE
+p2.gender = 'male'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 14869
+
+-- q3_p052
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+cipc1.src_type = 'City'
+p2.language = 'es;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 2192
+
+-- q3_p053
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p2.language = 'pt;en'
+plc1.explicitlydeleted = FALSE
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 710
+
+-- q3_p054
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+cipc1.src_type = 'City'
+p1.language = 'pt;en'
+plc1.creationdate >= 1309571252085
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 890
+
+-- q3_p055
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+p1.language = 'en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 762
+
+-- q3_p056
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+ci3.name = 'Intramuros'
+pk23.dst >= 252947
+pk23.dst <= 253760
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 4
+
+-- q3_p057
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc1.creationdate >= 1309571252085
+p2.language = 'zh;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 4286
+
+-- q3_p058
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc3.creationdate <= 1333481787908
+p1.language = 'zh;en'
+p2.gender = 'female'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 2923
+
+-- q3_p059
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc3.explicitlydeleted = FALSE
+p2.language = 'es;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 2190
+
+-- q3_p060
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p1.language = 'es;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 916
+
+-- q3_p061
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+p2.language = 'en'
+p1.language = 'es;en'
+plc3.explicitlydeleted = FALSE
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 52
+
+-- q3_p062
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+cipc1.src_type = 'City'
+ci3.name = 'Mérida'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 28
+
+-- q3_p063
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc3.creationdate <= 1333481787908
+p1.gender = 'male'
+p2.language = 'zh;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 2985
+
+-- q3_p064
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc3.creationdate <= 1333481787908
+p1.language = 'pt;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 1000
+
+-- q3_p065
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+cipc1.src_type = 'City'
+p3.language = 'es;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 2192
+
+-- q3_p066
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+co.name = 'Italy'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 4
+
+-- q3_p067
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+p1.language = 'en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 522
+
+-- q3_p068
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc1.creationdate >= 1309571252085
+p3.gender = 'male'
+pk23.dst >= 252947
+pk23.dst <= 253760
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 4045
+
+-- q3_p069
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+p1.gender = 'female'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 15578
+
+-- q3_p070
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+cipc1.src_type = 'City'
+ci1.name = 'Izmir'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 16
+
+-- q3_p071
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+p2.gender = 'female'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 10646
+
+-- q3_p072
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+cipc1.src_type = 'City'
+ci1.name = 'Intramuros'
+pk23.dst >= 252947
+pk23.dst <= 253760
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 4
+
+-- q3_p073
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+cipc1.src_type = 'City'
+p1.language = 'pt;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 1668
+
+-- q3_p074
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+cipc1.src_type = 'City'
+ci2.name = 'Mérida'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 28
+
+-- q3_p075
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+ci1.name = 'Intramuros'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 4
+
+-- q3_p076
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc3.creationdate <= 1333481787908
+p2.language = 'pt;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 1000
+
+-- q3_p077
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+p2.language = 'es;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 2190
+
+-- q3_p078
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+p1.gender = 'female'
+ci3.name = 'Mérida'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 9
+
+-- q3_p079
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p2.language = 'pt;en'
+pk12.src >= 252947
+pk12.src <= 253760
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 306
+
+-- q3_p080
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+ci2.name = 'Izmir'
+p1.gender = 'female'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 6
+
+-- q3_p081
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+p1.gender = 'female'
+plc3.creationdate <= 1333481787908
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 6402
+
+-- q3_p082
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+ci3.name = 'Mérida'
+p3.gender = 'male'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 28
+
+-- q3_p083
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+ci1.name = 'Izmir'
+p2.gender = 'female'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 9
+
+-- q3_p084
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc2.creationdate >= 1285358988937
+plc2.creationdate <= 1347940587243
+ci1.name = 'Mérida'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 23
+
+-- q3_p085
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+cipc1.src_type = 'City'
+p2.language = 'en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 762
+
+-- q3_p086
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+co.name = 'Burma'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 12
+
+-- q3_p087
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+cipc1.src_type = 'City'
+p2.language = 'es;en'
+pk23.dst >= 252947
+pk23.dst <= 253760
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 944
+
+-- q3_p088
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc3.creationdate <= 1333481787908
+p1.gender = 'female'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 11912
+
+-- q3_p089
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk12.src >= 252947
+pk12.src <= 253760
+ci2.name = 'Izmir'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 10
+
+-- q3_p090
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+p3.language = 'en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 762
+
+-- q3_p091
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+cipc1.src_type = 'City'
+p2.language = 'en'
+p1.language = 'es;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 52
+
+-- q3_p092
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc3.creationdate <= 1333481787908
+ci1.name = 'Intramuros'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 4
+
+-- q3_p093
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+cipc1.src_type = 'City'
+p3.gender = 'female'
+plc3.creationdate <= 1333481787908
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 12126
+
+-- q3_p094
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc1.explicitlydeleted = FALSE
+p2.gender = 'female'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 15579
+
+-- q3_p095
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+pk23.dst >= 252947
+pk23.dst <= 253760
+p3.language = 'es;en'
+pk12.src >= 252947
+pk12.src <= 253760
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 372
+
+-- q3_p096
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc1.creationdate >= 1309571252085
+p3.language = 'zh;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 4286
+
+-- q3_p097
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+cipc1.src_type = 'City'
+ci1.name = 'Mérida'
+p2.gender = 'male'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 19
+
+-- q3_p098
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc3.creationdate <= 1333481787908
+p3.language = 'en'
+pk23.dst >= 252947
+pk23.dst <= 253760
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 484
+
+-- q3_p099
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+p1.language = 'es;en'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 2190
+
+-- q3_p100
+MATCH 
+(ci1:City)-[cipc1:city_ispartof_country]->(co:Country),
+(p1:Person)-[plc1:person_islocatedin_city]->(ci1:City),
+(p1:Person)-[pk12:person_knows_person]->(p2:Person),
+(p2:Person)-[pk23:person_knows_person]->(p3:Person),
+(p3:Person)-[plc3:person_islocatedin_city]->(ci3:City),
+(ci3:City)-[cipc3:city_ispartof_country]->(co:Country),
+(ci2:City)-[cipc2:city_ispartof_country]->(co:Country),
+(p2:Person)-[plc2:person_islocatedin_city]->(ci2:City),
+(p1:Person)-[pk13:person_knows_person]->(p3:Person)
+FILTER WHERE
+plc2.explicitlydeleted = FALSE
+ci3.name = 'Izmir'
+RETURN ci1, co, p1, p2, p3, ci3, ci2, cipc1, plc1, pk12, pk23, plc3, cipc3, cipc2, plc2, pk13; -- || 16

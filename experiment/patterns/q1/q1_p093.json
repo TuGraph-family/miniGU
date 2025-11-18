@@ -1,0 +1,132 @@
+{
+  "vertices": [
+    {
+      "id": 1,
+      "label": "comment"
+    },
+    {
+      "id": 2,
+      "label": "city"
+    },
+    {
+      "id": 3,
+      "label": "country"
+    },
+    {
+      "id": 4,
+      "label": "forum"
+    },
+    {
+      "id": 5,
+      "label": "person"
+    },
+    {
+      "id": 6,
+      "label": "post"
+    },
+    {
+      "id": 7,
+      "label": "tag"
+    },
+    {
+      "id": 8,
+      "label": "tagclass"
+    }
+  ],
+  "edges": [
+    {
+      "id": 1,
+      "label": "comment_hastag_tag",
+      "src": 1,
+      "dst": 7
+    },
+    {
+      "id": 2,
+      "label": "city_ispartof_country",
+      "src": 2,
+      "dst": 3
+    },
+    {
+      "id": 3,
+      "label": "comment_replyof_post",
+      "src": 1,
+      "dst": 6
+    },
+    {
+      "id": 4,
+      "label": "forum_containerof_post",
+      "src": 4,
+      "dst": 6
+    },
+    {
+      "id": 5,
+      "label": "forum_hasmember_person",
+      "src": 4,
+      "dst": 5
+    },
+    {
+      "id": 6,
+      "label": "person_islocatedin_city",
+      "src": 5,
+      "dst": 2
+    },
+    {
+      "id": 7,
+      "label": "tag_hastype_tagclass",
+      "src": 7,
+      "dst": 8
+    }
+  ],
+  "predicates": [
+    {
+      "predicate_id": 1,
+      "target": "edge",
+      "id": 6,
+      "property": "creationdate",
+      "op": "ge",
+      "value": {
+        "Int64": 1285358988937
+      }
+    },
+    {
+      "predicate_id": 2,
+      "target": "edge",
+      "id": 6,
+      "property": "creationdate",
+      "op": "le",
+      "value": {
+        "Int64": 1347940587243
+      }
+    },
+    {
+      "predicate_id": 3,
+      "target": "edge",
+      "id": 7,
+      "property": "tagclassid",
+      "op": "is_not_null",
+      "value": {
+        "String": ""
+      }
+    },
+    {
+      "predicate_id": 4,
+      "target": "edge",
+      "id": 4,
+      "property": "creationdate",
+      "op": "ge",
+      "value": {
+        "Int64": 1308052370341
+      }
+    },
+    {
+      "predicate_id": 5,
+      "target": "edge",
+      "id": 4,
+      "property": "creationdate",
+      "op": "le",
+      "value": {
+        "Int64": 1343818164989
+      }
+    }
+  ]
+}

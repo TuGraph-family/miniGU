@@ -1,0 +1,1155 @@
+-- p1_p001
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+chp.explicitlydeleted = FALSE
+RETURN c, p, t, chp, phi, cht; -- || 1468
+
+-- p1_p002
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+t.name = 'Augustine_of_Hippo'
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+RETURN c, p, t, chp, phi, cht; -- || 103
+
+-- p1_p003
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+p.language = 'pt;en'
+RETURN c, p, t, chp, phi, cht; -- || 99
+
+-- p1_p004
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+t.name = 'Plato'
+RETURN c, p, t, chp, phi, cht; -- || 23
+
+-- p1_p005
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+p.language = 'pt;en'
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+RETURN c, p, t, chp, phi, cht; -- || 63
+
+-- p1_p006
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+p.gender = 'male'
+RETURN c, p, t, chp, phi, cht; -- || 1180
+
+-- p1_p007
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+t.name = 'George_W._Bush'
+p.language = 'en'
+RETURN c, p, t, chp, phi, cht; -- || 1
+
+-- p1_p008
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+c.creationdate >= 1350093427787
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+RETURN c, p, t, chp, phi, cht; -- || 1234
+
+-- p1_p009
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+c.explicitlydeleted = FALSE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+RETURN c, p, t, chp, phi, cht; -- || 2150
+
+-- p1_p010
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+chp.explicitlydeleted = FALSE
+RETURN c, p, t, chp, phi, cht; -- || 2078
+
+-- p1_p011
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+p.gender = 'female'
+c.length >= 79
+RETURN c, p, t, chp, phi, cht; -- || 796
+
+-- p1_p012
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+p.language = 'en'
+RETURN c, p, t, chp, phi, cht; -- || 211
+
+-- p1_p013
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+c.explicitlydeleted = FALSE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+RETURN c, p, t, chp, phi, cht; -- || 2078
+
+-- p1_p014
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+RETURN c, p, t, chp, phi, cht; -- || 2109
+
+-- p1_p015
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+p.language = 'en'
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+RETURN c, p, t, chp, phi, cht; -- || 202
+
+-- p1_p016
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+t.name = 'George_W._Bush'
+RETURN c, p, t, chp, phi, cht; -- || 19
+
+-- p1_p017
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+p.language = 'zh;en'
+t.name = 'Jesus'
+RETURN c, p, t, chp, phi, cht; -- || 6
+
+-- p1_p018
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+t.name = 'Augustine_of_Hippo'
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+RETURN c, p, t, chp, phi, cht; -- || 106
+
+-- p1_p019
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+c.length >= 79
+RETURN c, p, t, chp, phi, cht; -- || 1636
+
+-- p1_p020
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+t.name = 'William_Shakespeare'
+RETURN c, p, t, chp, phi, cht; -- || 18
+
+-- p1_p021
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+t.name = 'Jesus'
+RETURN c, p, t, chp, phi, cht; -- || 21
+
+-- p1_p022
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+c.length >= 79
+RETURN c, p, t, chp, phi, cht; -- || 2513
+
+-- p1_p023
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+t.name = 'Elizabeth_II'
+c.explicitlydeleted = FALSE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+RETURN c, p, t, chp, phi, cht; -- || 13
+
+-- p1_p024
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+c.length >= 79
+t.name = 'Plato'
+RETURN c, p, t, chp, phi, cht; -- || 17
+
+-- p1_p025
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+t.name = 'Plato'
+RETURN c, p, t, chp, phi, cht; -- || 24
+
+-- p1_p026
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+p.language = 'es;en'
+RETURN c, p, t, chp, phi, cht; -- || 114
+
+-- p1_p027
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+p.language = 'zh;en'
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+RETURN c, p, t, chp, phi, cht; -- || 304
+
+-- p1_p028
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+p.gender = 'male'
+RETURN c, p, t, chp, phi, cht; -- || 1714
+
+-- p1_p029
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+p.language = 'es;en'
+RETURN c, p, t, chp, phi, cht; -- || 108
+
+-- p1_p030
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+t.name = 'Plato'
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+RETURN c, p, t, chp, phi, cht; -- || 18
+
+-- p1_p031
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+p.language = 'es;en'
+RETURN c, p, t, chp, phi, cht; -- || 101
+
+-- p1_p032
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+t.name = 'Plato'
+RETURN c, p, t, chp, phi, cht; -- || 24
+
+-- p1_p033
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+c.length >= 5
+c.length <= 79
+RETURN c, p, t, chp, phi, cht; -- || 610
+
+-- p1_p034
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+RETURN c, p, t, chp, phi, cht; -- || 2142
+
+-- p1_p035
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+p.language = 'zh;en'
+RETURN c, p, t, chp, phi, cht; -- || 399
+
+-- p1_p036
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+t.name = 'Jesus'
+p.gender = 'female'
+RETURN c, p, t, chp, phi, cht; -- || 8
+
+-- p1_p037
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+t.name = 'Jesus'
+RETURN c, p, t, chp, phi, cht; -- || 16
+
+-- p1_p038
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+t.name = 'William_Shakespeare'
+RETURN c, p, t, chp, phi, cht; -- || 14
+
+-- p1_p039
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+t.name = 'Elizabeth_II'
+RETURN c, p, t, chp, phi, cht; -- || 22
+
+-- p1_p040
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+p.language = 'es;en'
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+RETURN c, p, t, chp, phi, cht; -- || 74
+
+-- p1_p041
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+p.language = 'zh;en'
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+RETURN c, p, t, chp, phi, cht; -- || 304
+
+-- p1_p042
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+t.name = 'Aristotle'
+c.length >= 5
+c.length <= 79
+RETURN c, p, t, chp, phi, cht; -- || 2
+
+-- p1_p043
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+c.explicitlydeleted = FALSE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+RETURN c, p, t, chp, phi, cht; -- || 2169
+
+-- p1_p044
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+t.name = 'Elizabeth_II'
+RETURN c, p, t, chp, phi, cht; -- || 13
+
+-- p1_p045
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+p.language = 'pt;en'
+RETURN c, p, t, chp, phi, cht; -- || 143
+
+-- p1_p046
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+t.name = 'Napoleon'
+RETURN c, p, t, chp, phi, cht; -- || 18
+
+-- p1_p047
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+p.gender = 'female'
+RETURN c, p, t, chp, phi, cht; -- || 1023
+
+-- p1_p048
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+p.gender = 'male'
+RETURN c, p, t, chp, phi, cht; -- || 1207
+
+-- p1_p049
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+c.length >= 79
+p.gender = 'male'
+RETURN c, p, t, chp, phi, cht; -- || 1314
+
+-- p1_p050
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+p.language = 'pt;en'
+c.length >= 79
+RETURN c, p, t, chp, phi, cht; -- || 63
+
+-- p1_p051
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+t.name = 'Elizabeth_II'
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+RETURN c, p, t, chp, phi, cht; -- || 17
+
+-- p1_p052
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+p.language = 'zh;en'
+RETURN c, p, t, chp, phi, cht; -- || 579
+
+-- p1_p053
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+p.gender = 'female'
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+RETURN c, p, t, chp, phi, cht; -- || 982
+
+-- p1_p054
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+t.name = 'Jesus'
+RETURN c, p, t, chp, phi, cht; -- || 14
+
+-- p1_p055
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+t.name = 'Jesus'
+c.length >= 5
+c.length <= 79
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+RETURN c, p, t, chp, phi, cht; -- || 3
+
+-- p1_p056
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+p.gender = 'female'
+RETURN c, p, t, chp, phi, cht; -- || 976
+
+-- p1_p057
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+t.name = 'John_F._Kennedy'
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+RETURN c, p, t, chp, phi, cht; -- || 5
+
+-- p1_p058
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+t.name = 'Bill_Clinton'
+RETURN c, p, t, chp, phi, cht; -- || 9
+
+-- p1_p059
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+p.gender = 'female'
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+RETURN c, p, t, chp, phi, cht; -- || 662
+
+-- p1_p060
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+t.name = 'William_Shakespeare'
+chp.explicitlydeleted = FALSE
+RETURN c, p, t, chp, phi, cht; -- || 14
+
+-- p1_p061
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+c.explicitlydeleted = FALSE
+RETURN c, p, t, chp, phi, cht; -- || 2150
+
+-- p1_p062
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+c.creationdate >= 1350093427787
+RETURN c, p, t, chp, phi, cht; -- || 1234
+
+-- p1_p063
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+RETURN c, p, t, chp, phi, cht; -- || 2110
+
+-- p1_p064
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+c.length >= 79
+RETURN c, p, t, chp, phi, cht; -- || 1673
+
+-- p1_p065
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+c.explicitlydeleted = FALSE
+p.language = 'en'
+RETURN c, p, t, chp, phi, cht; -- || 319
+
+-- p1_p066
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+t.name = 'Napoleon'
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+RETURN c, p, t, chp, phi, cht; -- || 11
+
+-- p1_p067
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+t.name = 'William_Shakespeare'
+RETURN c, p, t, chp, phi, cht; -- || 26
+
+-- p1_p068
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+p.gender = 'male'
+c.explicitlydeleted = FALSE
+RETURN c, p, t, chp, phi, cht; -- || 1714
+
+-- p1_p069
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+c.creationdate >= 1350093427787
+chp.explicitlydeleted = FALSE
+RETURN c, p, t, chp, phi, cht; -- || 1215
+
+-- p1_p070
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+t.name = 'John_F._Kennedy'
+chp.explicitlydeleted = FALSE
+RETURN c, p, t, chp, phi, cht; -- || 13
+
+-- p1_p071
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+c.length >= 79
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+RETURN c, p, t, chp, phi, cht; -- || 1140
+
+-- p1_p072
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+t.name = 'Augustine_of_Hippo'
+RETURN c, p, t, chp, phi, cht; -- || 105
+
+-- p1_p073
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+t.name = 'Elizabeth_II'
+RETURN c, p, t, chp, phi, cht; -- || 17
+
+-- p1_p074
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+c.explicitlydeleted = FALSE
+RETURN c, p, t, chp, phi, cht; -- || 2169
+
+-- p1_p075
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+t.name = 'George_W._Bush'
+RETURN c, p, t, chp, phi, cht; -- || 18
+
+-- p1_p076
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+RETURN c, p, t, chp, phi, cht; -- || 2109
+
+-- p1_p077
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+p.language = 'zh;en'
+RETURN c, p, t, chp, phi, cht; -- || 454
+
+-- p1_p078
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+c.length >= 79
+p.gender = 'female'
+RETURN c, p, t, chp, phi, cht; -- || 796
+
+-- p1_p079
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+c.creationdate >= 1350093427787
+RETURN c, p, t, chp, phi, cht; -- || 974
+
+-- p1_p080
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+c.length >= 79
+p.language = 'es;en'
+RETURN c, p, t, chp, phi, cht; -- || 135
+
+-- p1_p081
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+p.gender = 'male'
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+RETURN c, p, t, chp, phi, cht; -- || 1127
+
+-- p1_p082
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+t.name = 'George_W._Bush'
+RETURN c, p, t, chp, phi, cht; -- || 28
+
+-- p1_p083
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+t.name = 'Augustine_of_Hippo'
+chp.explicitlydeleted = FALSE
+RETURN c, p, t, chp, phi, cht; -- || 106
+
+-- p1_p084
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+c.creationdate >= 1350093427787
+RETURN c, p, t, chp, phi, cht; -- || 1267
+
+-- p1_p085
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+p.language = 'zh;en'
+RETURN c, p, t, chp, phi, cht; -- || 378
+
+-- p1_p086
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+p.gender = 'female'
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+RETURN c, p, t, chp, phi, cht; -- || 1011
+
+-- p1_p087
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+t.name = 'George_W._Bush'
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+RETURN c, p, t, chp, phi, cht; -- || 19
+
+-- p1_p088
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+t.name = 'George_W._Bush'
+c.explicitlydeleted = FALSE
+RETURN c, p, t, chp, phi, cht; -- || 18
+
+-- p1_p089
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+c.explicitlydeleted = FALSE
+RETURN c, p, t, chp, phi, cht; -- || 2110
+
+-- p1_p090
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+t.name = 'Napoleon'
+RETURN c, p, t, chp, phi, cht; -- || 24
+
+-- p1_p091
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+p.gender = 'female'
+c.length >= 79
+RETURN c, p, t, chp, phi, cht; -- || 1220
+
+-- p1_p092
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.explicitlydeleted = FALSE
+t.name = 'Augustine_of_Hippo'
+RETURN c, p, t, chp, phi, cht; -- || 187
+
+-- p1_p093
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+c.explicitlydeleted = FALSE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+RETURN c, p, t, chp, phi, cht; -- || 1468
+
+-- p1_p094
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+p.gender = 'male'
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+RETURN c, p, t, chp, phi, cht; -- || 1127
+
+-- p1_p095
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+t.name = 'Jesus'
+RETURN c, p, t, chp, phi, cht; -- || 15
+
+-- p1_p096
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+chp.creationdate >= 1340327339000
+chp.creationdate <= 1356461058629
+t.name = 'John_F._Kennedy'
+RETURN c, p, t, chp, phi, cht; -- || 13
+
+-- p1_p097
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+c.length >= 79
+t.name = 'Augustine_of_Hippo'
+RETURN c, p, t, chp, phi, cht; -- || 101
+
+-- p1_p098
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+cht.creationdate >= 1338765911761
+cht.creationdate <= 1356307644022
+t.name = 'William_Shakespeare'
+chp.explicitlydeleted = FALSE
+RETURN c, p, t, chp, phi, cht; -- || 18
+
+-- p1_p099
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+p.language = 'en'
+RETURN c, p, t, chp, phi, cht; -- || 247
+
+-- p1_p100
+MATCH 
+(c:Comment)-[chp:comment_hascreator_person]->(p:Person),
+(p:Person)-[phi:person_hasinterest_tag]->(t:Tag),
+(c:Comment)-[cht:comment_hastag_tag]->(t:Tag)
+FILTER WHERE
+phi.creationdate >= 1285156166915
+phi.creationdate <= 1348051459240
+c.creationdate >= 1340327339000
+c.creationdate <= 1356461058629
+RETURN c, p, t, chp, phi, cht; -- || 1493

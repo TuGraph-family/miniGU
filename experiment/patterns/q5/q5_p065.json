@@ -1,0 +1,62 @@
+{
+  "vertices": [
+    {
+      "id": 1,
+      "label": "comment"
+    },
+    {
+      "id": 2,
+      "label": "post"
+    },
+    {
+      "id": 3,
+      "label": "tag"
+    },
+    {
+      "id": 4,
+      "label": "tag"
+    }
+  ],
+  "edges": [
+    {
+      "id": 1,
+      "label": "comment_hastag_tag",
+      "src": 1,
+      "dst": 4
+    },
+    {
+      "id": 2,
+      "label": "comment_replyof_post",
+      "src": 1,
+      "dst": 2
+    },
+    {
+      "id": 3,
+      "label": "post_hastag_tag",
+      "src": 2,
+      "dst": 3
+    }
+  ],
+  "predicates": [
+    {
+      "predicate_id": 1,
+      "target": "vertex",
+      "id": 4,
+      "property": "name",
+      "op": "eq",
+      "value": {
+        "String": "Augustine_of_Hippo"
+      }
+    },
+    {
+      "predicate_id": 2,
+      "target": "vertex",
+      "id": 1,
+      "property": "explicitlydeleted",
+      "op": "eq",
+      "value": {
+        "Boolean": false
+      }
+    }
+  ]
+}

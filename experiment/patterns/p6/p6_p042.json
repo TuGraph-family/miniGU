@@ -1,0 +1,110 @@
+{
+  "vertices": [
+    {
+      "id": 1,
+      "label": "forum"
+    },
+    {
+      "id": 2,
+      "label": "person"
+    },
+    {
+      "id": 3,
+      "label": "person"
+    },
+    {
+      "id": 4,
+      "label": "post"
+    }
+  ],
+  "edges": [
+    {
+      "id": 1,
+      "label": "forum_containerof_post",
+      "src": 1,
+      "dst": 4
+    },
+    {
+      "id": 2,
+      "label": "forum_hasmember_person",
+      "src": 1,
+      "dst": 2
+    },
+    {
+      "id": 3,
+      "label": "forum_hasmember_person",
+      "src": 1,
+      "dst": 3
+    },
+    {
+      "id": 4,
+      "label": "person_knows_person",
+      "src": 2,
+      "dst": 3
+    },
+    {
+      "id": 5,
+      "label": "person_likes_post",
+      "src": 2,
+      "dst": 4
+    },
+    {
+      "id": 6,
+      "label": "person_likes_post",
+      "src": 3,
+      "dst": 4
+    }
+  ],
+  "predicates": [
+    {
+      "predicate_id": 1,
+      "target": "edge",
+      "id": 3,
+      "property": "creationdate",
+      "op": "ge",
+      "value": {
+        "Int64": 1321789849404
+      }
+    },
+    {
+      "predicate_id": 2,
+      "target": "edge",
+      "id": 3,
+      "property": "creationdate",
+      "op": "le",
+      "value": {
+        "Int64": 1354857790702
+      }
+    },
+    {
+      "predicate_id": 3,
+      "target": "vertex",
+      "id": 4,
+      "property": "explicitlydeleted",
+      "op": "eq",
+      "value": {
+        "Boolean": false
+      }
+    },
+    {
+      "predicate_id": 4,
+      "target": "edge",
+      "id": 1,
+      "property": "creationdate",
+      "op": "ge",
+      "value": {
+        "Int64": 1308052370341
+      }
+    },
+    {
+      "predicate_id": 5,
+      "target": "edge",
+      "id": 1,
+      "property": "creationdate",
+      "op": "le",
+      "value": {
+        "Int64": 1352177414840
+      }
+    }
+  ]
+}
