@@ -1,0 +1,171 @@
+---
+source: minigu-test/parser_test.rs
+---
+Ok:
+  - activity:
+      - Transaction:
+          start: ~
+          procedure:
+            - at: ~
+              binding_variable_defs: []
+              statement:
+                - Utility:
+                    Explain:
+                      statement:
+                        - Query:
+                            Primary:
+                              Ambient:
+                                Parts:
+                                  parts:
+                                    - - Match:
+                                          Simple:
+                                            - pattern:
+                                                - match_mode: ~
+                                                  patterns:
+                                                    - - variable: ~
+                                                        prefix: ~
+                                                        expr:
+                                                          - Concat:
+                                                              - - Pattern:
+                                                                    Node:
+                                                                      variable:
+                                                                        - a
+                                                                        - start: 15
+                                                                          end: 16
+                                                                      label:
+                                                                        - Label: Articles
+                                                                        - start: 17
+                                                                          end: 25
+                                                                      predicate: ~
+                                                                - start: 14
+                                                                  end: 26
+                                                          - start: 14
+                                                            end: 26
+                                                      - start: 14
+                                                        end: 26
+                                                  keep: ~
+                                                  where_clause: ~
+                                                - start: 14
+                                                  end: 26
+                                              yield_clause: []
+                                            - start: 14
+                                              end: 26
+                                      - start: 8
+                                        end: 26
+                                  result:
+                                    - Return:
+                                        statement:
+                                          - quantifier: ~
+                                            items:
+                                              - Items:
+                                                  - - value:
+                                                        - Function:
+                                                            Vector:
+                                                              lhs:
+                                                                - Value:
+                                                                    Literal:
+                                                                      Vector:
+                                                                        elems:
+                                                                          - - Value:
+                                                                                Literal:
+                                                                                  Numeric:
+                                                                                    Integer:
+                                                                                      - kind: Decimal
+                                                                                        integer: "1"
+                                                                                      - start: 58
+                                                                                        end: 59
+                                                                            - start: 58
+                                                                              end: 59
+                                                                          - - Value:
+                                                                                Literal:
+                                                                                  Numeric:
+                                                                                    Float:
+                                                                                      - float: "2.3e-4"
+                                                                                      - start: 61
+                                                                                        end: 67
+                                                                            - start: 61
+                                                                              end: 67
+                                                                          - - Unary:
+                                                                                op:
+                                                                                  - Minus
+                                                                                  - start: 69
+                                                                                    end: 70
+                                                                                child:
+                                                                                  - Value:
+                                                                                      Literal:
+                                                                                        Numeric:
+                                                                                          Float:
+                                                                                            - float: "4.53"
+                                                                                            - start: 70
+                                                                                              end: 74
+                                                                                  - start: 70
+                                                                                    end: 74
+                                                                            - start: 69
+                                                                              end: 74
+                                                                - start: 50
+                                                                  end: 75
+                                                              rhs:
+                                                                - Property:
+                                                                    source:
+                                                                      - Variable: a
+                                                                      - start: 77
+                                                                        end: 78
+                                                                    trailing_names:
+                                                                      - - article_vector
+                                                                        - start: 79
+                                                                          end: 93
+                                                                - start: 77
+                                                                  end: 93
+                                                              metric:
+                                                                - L2
+                                                                - start: 95
+                                                                  end: 97
+                                                        - start: 34
+                                                          end: 98
+                                                      alias:
+                                                        - distance
+                                                        - start: 102
+                                                          end: 110
+                                                    - start: 34
+                                                      end: 110
+                                              - start: 34
+                                                end: 110
+                                            group_by: ~
+                                          - start: 27
+                                            end: 110
+                                        order_by:
+                                          - order_by:
+                                              - - key:
+                                                    - Variable: distance
+                                                    - start: 120
+                                                      end: 128
+                                                  ordering: ~
+                                                  null_ordering: ~
+                                                - start: 120
+                                                  end: 128
+                                            offset: ~
+                                            limit:
+                                              - count:
+                                                  Integer:
+                                                    kind: Decimal
+                                                    integer: "10"
+                                                approximate: false
+                                              - start: 129
+                                                end: 137
+                                          - start: 111
+                                            end: 137
+                                    - start: 27
+                                      end: 137
+                        - start: 8
+                          end: 137
+                - start: 0
+                  end: 137
+              next_statements: []
+            - start: 0
+              end: 137
+          end: ~
+      - start: 0
+        end: 137
+    session_close: false
+  - start: 0
+    end: 137

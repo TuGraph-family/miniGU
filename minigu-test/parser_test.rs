@@ -38,3 +38,12 @@ add_parser_tests!("opengql", [
     "session_set"
 ]);
 add_parser_tests!("gql_on_one_page", ["gql_on_one_page"]);
+add_parser_tests!("utility", [
+    "explain_call",
+    "explain_filter",
+    "explain_limit",
+    "explain_logical_match",
+    "explain_one_row",
+    "explain_sort",
+    "explain_vector_index_scan"
+]);

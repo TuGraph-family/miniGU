@@ -32,7 +32,17 @@ impl Planner {
             self.context.home_graph.clone(),
         );
         let bound = binder.bind(query)?;
-        let logical_plan = LogicalPlanner::new().create_logical_plan(bound)?;
-        Optimizer::new().create_physical_plan(&logical_plan)
+        let logical_plan = LogicalPlanner::new().create_logical_plan(bound.clone())?;
+        match &bound.statement {
+            crate::bound::BoundStatement::Utility(utility)
+                if matches!(
+                    utility.as_ref(),
+                    crate::bound::BoundUtilityStatement::Explain(_)
+                ) =>
+            {
+                Ok(logical_plan)
+            }
+            _ => Optimizer::new().create_physical_plan(&logical_plan),
+        }
     }
 }

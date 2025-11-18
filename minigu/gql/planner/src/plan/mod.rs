@@ -55,6 +55,15 @@ pub trait PlanData {
     fn children(&self) -> &[PlanNode] {
         self.base().children()
     }
+    // each node needs
+    fn explain(&self, indent: usize) -> Option<String> {
+        let indent_str = " ".repeat(indent * 2);
+        let mut output = format!("{}ERROR: explain() not implemented\n", indent_str);
+        for child in self.children() {
+            output.push_str(child.explain(indent + 1)?.as_str());
+        }
+        Some(output)
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -109,6 +118,28 @@ impl PlanData for PlanNode {
             PlanNode::LogicalVectorIndexScan(node) => node.base(),
             PlanNode::PhysicalVectorIndexScan(node) => node.base(),
             PlanNode::PhysicalExpand(node) => node.base(),
+        }
+    }
+
+    fn explain(&self, indent: usize) -> Option<String> {
+        match self {
+            PlanNode::LogicalMatch(node) => node.explain(indent),
+            PlanNode::LogicalFilter(node) => node.explain(indent),
+            PlanNode::LogicalProject(node) => node.explain(indent),
+            PlanNode::LogicalCall(node) => node.explain(indent),
+            PlanNode::LogicalOneRow(node) => node.explain(indent),
+            PlanNode::LogicalSort(node) => node.explain(indent),
+            PlanNode::LogicalLimit(node) => node.explain(indent),
+            PlanNode::LogicalVectorIndexScan(node) => node.explain(indent),
+
+            PlanNode::PhysicalFilter(node) => node.explain(indent),
+            PlanNode::PhysicalProject(node) => node.explain(indent),
+            PlanNode::PhysicalCall(node) => node.explain(indent),
+            PlanNode::PhysicalOneRow(node) => node.explain(indent),
+            PlanNode::PhysicalSort(node) => node.explain(indent),
+            PlanNode::PhysicalLimit(node) => node.explain(indent),
+            PlanNode::PhysicalVectorIndexScan(node) => node.explain(indent),
+            PlanNode::PhysicalNodeScan(node) => node.explain(indent),
         }
     }
 }

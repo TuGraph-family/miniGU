@@ -1,0 +1,15 @@
+---
+source: minigu-test/e2e_test.rs
+---
+Error: Plan(
+    Bind(
+        NotImplemented(
+            NotImplemented {
+                feature: "binary expression",
+                issue: TrackingIssue(
+                    None,
+                ),
+            },
+        ),
+    ),
+)

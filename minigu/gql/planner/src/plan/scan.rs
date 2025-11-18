@@ -40,4 +40,9 @@ impl PlanData for NodeIdScan {
     fn base(&self) -> &PlanBase {
         &self.base
     }
+
+    fn explain(&self, _indent: usize) -> Option<String> {
+        // PhysicalNodeScan does not need to be explained
+        None
+    }
 }
