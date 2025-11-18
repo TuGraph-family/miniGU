@@ -20,6 +20,11 @@ impl LabelSet {
     pub fn len(&self) -> usize {
         self.0.len()
     }
+    
+    #[inline]
+    pub fn first(&self) -> Option<LabelId> {
+        self.0.first().cloned()
+    }
 
     #[inline]
     pub fn contains(&self, label: LabelId) -> bool {
