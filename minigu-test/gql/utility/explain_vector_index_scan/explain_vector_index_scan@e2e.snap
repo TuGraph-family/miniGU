@@ -1,19 +1,8 @@
 ---
 source: minigu-test/e2e_test.rs
 ---
-Error: Parser(
-    InvalidToken(
-        TokenError {
-            input: "MATCH (a:Articles)
-RETURN VECTOR_DISTANCE([0.1, 0.2, 0.3], a.article_vector, L2) AS distance
-ORDER BY distance
-LIMIT 10;",
-            span: 119..120,
-            position: (
-                4,
-                9,
-            ),
-            kind: InvalidToken,
-        },
+Error: Plan(
+    Bind(
+        Unexpected,
     ),
 )

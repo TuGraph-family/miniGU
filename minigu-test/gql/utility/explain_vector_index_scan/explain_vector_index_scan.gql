@@ -1,4 +1,4 @@
-MATCH (a:Articles)
+EXPLAIN MATCH (a:Articles)
 RETURN VECTOR_DISTANCE(VECTOR [1, 2.3e-4, -4.53], a.article_vector, L2) AS distance
 ORDER BY distance
 LIMIT 10
