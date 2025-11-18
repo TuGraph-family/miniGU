@@ -401,7 +401,7 @@ mod tests {
             (Utf8, ["Alice", "Bob", "Carol", "David", "Eve"]),
             (Int64, [25, 30, 28, 32, 27])
         );
-        
+
         println!("=== Debug print without schema ===");
         chunk.debug_print();
 

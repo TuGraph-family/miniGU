@@ -5,7 +5,7 @@ use gql_parser::ast::{
     LabelExpr, MatchMode, PathMode, PathPattern, PathPatternExpr, PathPatternPrefix,
 };
 use minigu_common::data_type::{DataField, DataSchema, LogicalType};
-use minigu_common::error::{not_implemented, NotImplemented};
+use minigu_common::error::{NotImplemented, not_implemented};
 use minigu_common::types::LabelId;
 use smol_str::ToSmolStr;
 
@@ -251,7 +251,10 @@ impl Binder<'_> {
         };
 
         if f.predicate.is_some() {
-            return Err(BindError::NotImplemented(NotImplemented::new("predicate".to_string(), None.into())));
+            return Err(BindError::NotImplemented(NotImplemented::new(
+                "predicate".to_string(),
+                None.into(),
+            )));
         }
         let edge_ty =
             LogicalType::Edge(vec![DataField::new("id".into(), LogicalType::Int64, false)]);
@@ -309,9 +312,12 @@ impl Binder<'_> {
         self.register_variable_labels(var.as_str(), &label_set);
 
         if f.predicate.is_some() {
-            return Err(BindError::NotImplemented(NotImplemented::new("predicate".to_string(), None.into())));
+            return Err(BindError::NotImplemented(NotImplemented::new(
+                "predicate".to_string(),
+                None.into(),
+            )));
         }
-        
+
         let predicate = match &f.predicate {
             None => None,
             Some(sp) => None,
