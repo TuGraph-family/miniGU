@@ -97,4 +97,24 @@ impl PlanData for Expand {
     fn base(&self) -> &PlanBase {
         &self.base
     }
+
+    fn explain(&self, indent: usize) -> Option<String> {
+        let indent_str = " ".repeat(indent * 2);
+        let mut output = String::new();
+        output.push_str(&format!(
+            "{}Expand: direction={:?}, edge_labels={:?}, target_vertex_labels={:?}, output_var={:?}, target_vertex_var={:?}\n",
+            indent_str,
+            self.direction,
+            self.edge_labels,
+            self.target_vertex_labels,
+            self.output_var,
+            self.target_vertex_var
+        ));
+
+        for child in self.children() {
+            output.push_str(child.explain(indent + 1)?.as_str());
+        }
+
+        Some(output)
+    }
 }

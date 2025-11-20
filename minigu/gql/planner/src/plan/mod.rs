@@ -140,6 +140,7 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalLimit(node) => node.explain(indent),
             PlanNode::PhysicalVectorIndexScan(node) => node.explain(indent),
             PlanNode::PhysicalNodeScan(node) => node.explain(indent),
+            PlanNode::PhysicalExpand(node) => node.explain(indent),
         }
     }
 }
