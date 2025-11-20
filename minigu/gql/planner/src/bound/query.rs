@@ -94,6 +94,7 @@ pub struct BoundSortSpec {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct BoundVectorIndexScan {
+    pub input: Box<BoundSimpleQueryStatement>,
     pub binding: String,
     pub distance_alias: String,
     pub index_key: VectorIndexKey,

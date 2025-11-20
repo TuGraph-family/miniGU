@@ -191,8 +191,11 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
             Ok(PlanNode::PhysicalOffset(Arc::new(offset)))
         }
         PlanNode::LogicalVectorIndexScan(vector_scan) => {
-            assert!(children.is_empty());
-            Ok(PlanNode::PhysicalVectorIndexScan(vector_scan.clone()))
+            let [child] = children
+                .try_into()
+                .expect("vector index scan should have exactly one child");
+            let scan = vector_scan.clone().clone_with_child(child);
+            Ok(PlanNode::PhysicalVectorIndexScan(Arc::new(scan)))
         }
         PlanNode::LogicalExplain(explain) => Ok(PlanNode::PhysicalExplain(explain.clone())),
         PlanNode::LogicalCreateVectorIndex(create_index) => {

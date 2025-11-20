@@ -43,14 +43,19 @@ impl Binder<'_> {
         &mut self,
         statement: &LinearQueryStatement,
     ) -> BindResult<BoundLinearQueryStatement> {
-        match statement {
+        let mut statement = match statement {
             LinearQueryStatement::Focused(statement) => {
-                self.bind_focused_linear_query_statement(statement)
+                self.bind_focused_linear_query_statement(statement)?
             }
             LinearQueryStatement::Ambient(statement) => {
-                self.bind_ambient_linear_query_statement(statement)
+                self.bind_ambient_linear_query_statement(statement)?
             }
+        };
+        if let BoundLinearQueryStatement::Query { statements, result } = statement {
+            let (statements, result) = self.attach_vector_index_scan(statements, result)?;
+            statement = BoundLinearQueryStatement::Query { statements, result };
         }
+        Ok(statement)
     }
 
     pub fn bind_focused_linear_query_statement(
@@ -148,14 +153,11 @@ impl Binder<'_> {
         }
     }
 
-    // NOTE: `bind_vector_index_scan` is currently only invoked via placeholder wiring so executor
-    // and planner layers compile; once MATCH binding is implemented, vector scans will be
-    // produced inside the MATCH → ORDER BY → LIMIT APPROXIMATE pipeline (plain LIMIT keeps the
-    // exact distance path) rather than as a standalone simple statement.
-    #[allow(dead_code)]
     fn bind_vector_index_scan(
         &mut self,
-        _order_by: &OrderByAndPageStatement,
+        input: BoundSimpleQueryStatement,
+        _return_statement: &BoundReturnStatement,
+        _order_by: &BoundOrderByAndPageStatement,
     ) -> BindResult<BoundVectorIndexScan> {
         // TODO(minigu-vector-search): Enable vector index scan binding once MATCH is able to
         // provide the filtered candidate bitmap and schema context. Planned flow:
@@ -164,8 +166,49 @@ impl Binder<'_> {
         // 3. Capture LIMIT/APPROXIMATE information, the query vector expression, and the MATCH
         //    candidate bitmap so vector search can run against it.
         // 4. Append BoundVectorIndexScan so later phases can emit VectorIndexScan plan nodes.
-        let _ = (VectorIndexKey::new, VectorMetric::L2);
+        let _ = (VectorIndexKey::new, VectorMetric::L2, input);
         not_implemented("vector index scan binding", None)
+    }
+
+    fn attach_vector_index_scan(
+        &mut self,
+        mut statements: Vec<BoundSimpleQueryStatement>,
+        result: BoundResultStatement,
+    ) -> BindResult<(Vec<BoundSimpleQueryStatement>, BoundResultStatement)> {
+        let BoundResultStatement::Return {
+            statement: return_statement,
+            order_by_and_page,
+        } = &result
+        else {
+            return Ok((statements, result));
+        };
+        let Some(order_by_and_page) = order_by_and_page else {
+            return Ok((statements, result));
+        };
+        let Some(limit_clause) = &order_by_and_page.limit else {
+            return Ok((statements, result));
+        };
+        if !limit_clause.approximate || order_by_and_page.order_by.is_empty() {
+            return Ok((statements, result));
+        }
+        let Some(last_statement) = statements.pop() else {
+            return Ok((statements, result));
+        };
+        match last_statement {
+            BoundSimpleQueryStatement::Match(_) => {
+                let vector_scan = self.bind_vector_index_scan(
+                    last_statement,
+                    return_statement,
+                    order_by_and_page,
+                )?;
+                statements.push(BoundSimpleQueryStatement::VectorIndexScan(vector_scan));
+                Ok((statements, result))
+            }
+            other => {
+                statements.push(other);
+                Ok((statements, result))
+            }
+        }
     }
 
     pub fn bind_match_statement(
@@ -277,10 +320,6 @@ impl Binder<'_> {
         }
     }
 
-    // TODO(minigu-vector-search): Once MATCH binding is implemented, extend this method (or its
-    // caller) to detect ORDER BY VECTOR_DISTANCE ... LIMIT APPROXIMATE, preserve the MATCH
-    // bindings/bitmap, and append a BoundVectorIndexScan (via `bind_vector_index_scan`) so the
-    // vector search operates on the filtered candidate set instead of discarding it.
     pub fn bind_order_by_and_page_statement(
         &self,
         order_by_and_page: &OrderByAndPageStatement,

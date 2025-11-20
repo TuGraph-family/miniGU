@@ -1,8 +1,9 @@
 use std::io;
 use std::sync::Arc;
 
-use arrow::array::{ArrayRef, Float32Array, UInt64Array};
+use arrow::array::{ArrayRef, BooleanArray, Float32Array, UInt64Array};
 use minigu_common::data_chunk::DataChunk;
+use minigu_common::error::not_implemented;
 use minigu_common::value::{ScalarValue, VectorValue};
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::session::SessionContext;
@@ -20,17 +21,22 @@ const DEFAULT_L_VALUE: u32 = 100;
 ///
 /// TODO(minigu-vector-search): thread the MATCH-produced bitmap (and other execution hints) into
 /// this builder once the binder/planner can supply them
-#[derive(Debug)]
 pub struct VectorIndexScanBuilder {
     session_context: SessionContext,
     plan: Arc<VectorIndexScan>,
+    child: BoxedExecutor,
 }
 
 impl VectorIndexScanBuilder {
-    pub fn new(session_context: SessionContext, plan: Arc<VectorIndexScan>) -> Self {
+    pub fn new(
+        session_context: SessionContext,
+        plan: Arc<VectorIndexScan>,
+        child: BoxedExecutor,
+    ) -> Self {
         Self {
             session_context,
             plan,
+            child,
         }
     }
 
@@ -38,15 +44,16 @@ impl VectorIndexScanBuilder {
         Box::new(VectorIndexScanExecutor {
             session_context: self.session_context,
             plan: self.plan,
+            child: self.child,
             finished: false,
         })
     }
 }
 
-#[derive(Debug)]
 pub struct VectorIndexScanExecutor {
     session_context: SessionContext,
     plan: Arc<VectorIndexScan>,
+    child: BoxedExecutor,
     finished: bool,
 }
 
@@ -61,14 +68,15 @@ impl Executor for VectorIndexScanExecutor {
 }
 
 impl VectorIndexScanExecutor {
-    fn execute_scan(&self) -> ExecutionResult<DataChunk> {
+    fn execute_scan(&mut self) -> ExecutionResult<DataChunk> {
+        let candidate_bitmap = self.consume_child_bitmap()?;
         let graph = self.resolve_memory_graph()?;
         let txn = graph
             .txn_manager()
             .begin_transaction(IsolationLevel::Snapshot)
             .map_err(ExecutionError::from)?;
 
-        let result = self.scan_with_graph(graph.as_ref());
+        let result = self.scan_with_graph(graph.as_ref(), candidate_bitmap);
         match result {
             Ok(chunk) => {
                 txn.commit().map_err(ExecutionError::from)?;
@@ -102,7 +110,11 @@ impl VectorIndexScanExecutor {
         }
     }
 
-    fn scan_with_graph(&self, graph: &MemoryGraph) -> ExecutionResult<DataChunk> {
+    fn scan_with_graph(
+        &self,
+        graph: &MemoryGraph,
+        candidate_bitmap: Option<BooleanArray>,
+    ) -> ExecutionResult<DataChunk> {
         // TODO(minigu-vector-search): support parameter/column vector expressions once binder
         // permits.
         if self.plan.limit == 0 {
@@ -132,15 +144,14 @@ impl VectorIndexScanExecutor {
         }
 
         let l_value = DEFAULT_L_VALUE.max(self.plan.limit as u32);
-        // TODO(minigu-vector-search): thread bitmap filters from MATCH into this call once
-        // binder/executor can surface the candidate set.
+        let filter_bitmap = candidate_bitmap.as_ref();
         let results = graph
             .vector_search(
                 self.plan.index_key,
                 &vector_value,
                 self.plan.limit,
                 l_value,
-                None,
+                filter_bitmap,
                 false,
             )
             .map_err(ExecutionError::from)?;
@@ -159,4 +170,14 @@ fn extract_vector(value: ScalarValue) -> ExecutionResult<VectorValue> {
             "failed to extract vector from scalar value",
         )))
     })
+}
+
+impl VectorIndexScanExecutor {
+    fn consume_child_bitmap(&mut self) -> ExecutionResult<Option<BooleanArray>> {
+        let _ = &mut self.child;
+        not_implemented(
+            "vector index scan requires MATCH bitmap propagation (child bitmap generation)",
+            None,
+        )
+    }
 }

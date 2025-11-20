@@ -235,9 +235,14 @@ impl ExecutorBuilder {
                 Box::new(self.build_executor(&children[0]).offset(offset.offset))
             }
             PlanNode::PhysicalVectorIndexScan(vector_scan) => {
-                assert!(children.is_empty());
-                VectorIndexScanBuilder::new(self.session.clone(), vector_scan.clone())
-                    .into_executor()
+                assert_eq!(children.len(), 1);
+                let child_executor = self.build_executor(&children[0]);
+                VectorIndexScanBuilder::new(
+                    self.session.clone(),
+                    vector_scan.clone(),
+                    child_executor,
+                )
+                .into_executor()
             }
             PlanNode::PhysicalExplain(explain) => {
                 let explain_str = explain.explain(0).unwrap_or_default();

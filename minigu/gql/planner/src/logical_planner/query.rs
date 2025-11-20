@@ -95,15 +95,28 @@ impl LogicalPlanner {
         &self,
         statement: BoundVectorIndexScan,
     ) -> PlanResult<PlanNode> {
+        let BoundVectorIndexScan {
+            input,
+            binding,
+            distance_alias,
+            index_key,
+            query,
+            metric,
+            dimension,
+            limit,
+            approximate,
+        } = statement;
+        let child = self.plan_simple_query_statement(*input)?;
         let scan = VectorIndexScan::new(
-            statement.binding,
-            statement.distance_alias,
-            statement.index_key,
-            statement.query,
-            statement.metric,
-            statement.dimension,
-            statement.limit,
-            statement.approximate,
+            child,
+            binding,
+            distance_alias,
+            index_key,
+            query,
+            metric,
+            dimension,
+            limit,
+            approximate,
         );
         Ok(PlanNode::LogicalVectorIndexScan(Arc::new(scan)))
     }
