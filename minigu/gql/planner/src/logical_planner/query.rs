@@ -12,6 +12,7 @@ use crate::logical_planner::LogicalPlanner;
 use crate::plan::PlanNode;
 use crate::plan::limit::Limit;
 use crate::plan::logical_match::{LogicalMatch, MatchKind};
+use crate::plan::offset::Offset;
 use crate::plan::one_row::OneRow;
 use crate::plan::project::Project;
 use crate::plan::sort::Sort;
@@ -152,8 +153,9 @@ impl LogicalPlanner {
             let sort = Sort::new(plan, specs);
             plan = PlanNode::LogicalSort(Arc::new(sort));
         }
-        if statement.offset.is_some() {
-            return not_implemented("offset clause", None);
+        if let Some(offset) = statement.offset {
+            let offset = Offset::new(plan, offset);
+            plan = PlanNode::LogicalOffset(Arc::new(offset));
         }
         if let Some(limit_clause) = statement.limit {
             let limit = Limit::new(plan, limit_clause.count, limit_clause.approximate);
