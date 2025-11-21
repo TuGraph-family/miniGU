@@ -31,8 +31,8 @@ impl ExecutorBuilder {
         Self { session }
     }
 
-    pub fn build(self, physical_plan: &PlanNode) -> BoxedExecutor {
-        self.build_executor(physical_plan)
+    pub fn build(self, plan: &PlanNode) -> BoxedExecutor {
+        self.build_executor(plan)
     }
 
     fn build_executor(&self, physical_plan: &PlanNode) -> BoxedExecutor {
@@ -125,6 +125,14 @@ impl ExecutorBuilder {
                 assert!(children.is_empty());
                 VectorIndexScanBuilder::new(self.session.clone(), vector_scan.clone())
                     .into_executor()
+            }
+            PlanNode::PhysicalExplain(explain) => {
+                let explain_str = explain.explain(0).unwrap_or_default();
+                let lines: Vec<&str> = explain_str.lines().collect();
+                let string_array = arrow::array::StringArray::from_iter_values(lines);
+                let columns = vec![Arc::new(string_array) as _];
+                let chunk = DataChunk::new(columns);
+                Box::new([Ok(chunk)].into_executor())
             }
             _ => unreachable!(),
         }

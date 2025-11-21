@@ -169,6 +169,7 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
             assert!(children.is_empty());
             Ok(PlanNode::PhysicalVectorIndexScan(vector_scan.clone()))
         }
+        PlanNode::LogicalExplain(explain) => Ok(PlanNode::PhysicalExplain(explain.clone())),
         _ => unreachable!(),
     }
 }

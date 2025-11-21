@@ -1,4 +1,5 @@
 pub mod call;
+pub mod explain;
 pub mod filter;
 pub mod limit;
 pub mod logical_match;
@@ -14,6 +15,7 @@ use minigu_common::data_type::DataSchemaRef;
 use serde::Serialize;
 
 use crate::plan::call::Call;
+use crate::plan::explain::Explain;
 use crate::plan::filter::Filter;
 use crate::plan::limit::Limit;
 use crate::plan::logical_match::LogicalMatch;
@@ -77,6 +79,7 @@ pub enum PlanNode {
     LogicalSort(Arc<Sort>),
     LogicalLimit(Arc<Limit>),
     LogicalVectorIndexScan(Arc<VectorIndexScan>),
+    LogicalExplain(Arc<Explain>),
 
     PhysicalFilter(Arc<Filter>),
     PhysicalProject(Arc<Project>),
@@ -92,6 +95,7 @@ pub enum PlanNode {
     //  to improve performance and reduce unnecessary data loading.
     PhysicalNodeScan(Arc<PhysicalNodeScan>),
     // PhysicalCatalogModify(Arc<PhysicalCatalogModify>)
+    PhysicalExplain(Arc<Explain>),
 }
 
 impl PlanData for PlanNode {
@@ -104,6 +108,7 @@ impl PlanData for PlanNode {
             PlanNode::LogicalOneRow(node) => node.base(),
             PlanNode::LogicalSort(node) => node.base(),
             PlanNode::LogicalLimit(node) => node.base(),
+            PlanNode::LogicalExplain(node) => node.base(),
 
             PlanNode::PhysicalFilter(node) => node.base(),
             PlanNode::PhysicalProject(node) => node.base(),
@@ -114,6 +119,7 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalNodeScan(node) => node.base(),
             PlanNode::LogicalVectorIndexScan(node) => node.base(),
             PlanNode::PhysicalVectorIndexScan(node) => node.base(),
+            PlanNode::PhysicalExplain(node) => node.base(),
         }
     }
 
@@ -127,6 +133,7 @@ impl PlanData for PlanNode {
             PlanNode::LogicalSort(node) => node.explain(indent),
             PlanNode::LogicalLimit(node) => node.explain(indent),
             PlanNode::LogicalVectorIndexScan(node) => node.explain(indent),
+            PlanNode::LogicalExplain(node) => node.explain(indent),
 
             PlanNode::PhysicalFilter(node) => node.explain(indent),
             PlanNode::PhysicalProject(node) => node.explain(indent),
@@ -136,6 +143,7 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalLimit(node) => node.explain(indent),
             PlanNode::PhysicalVectorIndexScan(node) => node.explain(indent),
             PlanNode::PhysicalNodeScan(node) => node.explain(indent),
+            PlanNode::PhysicalExplain(node) => node.explain(indent),
         }
     }
 }
