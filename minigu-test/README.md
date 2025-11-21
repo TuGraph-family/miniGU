@@ -19,7 +19,7 @@ cargo test -p minigu-test
 cargo insta test -p minigu-test
 ```
 
-And then to review the diffs by
+And then to review the diffs by the command below if any snapshot changes
 
 ```
 cargo insta review/accept/reject

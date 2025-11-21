@@ -85,22 +85,6 @@ fn extract_string_value(array: &arrow::array::ArrayRef, row_idx: usize) -> Strin
     }
 }
 
-macro_rules! add_e2e_tests {
-    ($dataset:expr, [ $($query:expr),* ]) => {
-        paste! {
-            $(
-                #[test]
-                fn [<e2e_ $dataset _ $query>]() {
-                    let _guard = setup("e2e", concat!("../gql/", $dataset, "/"));
-                    let query_str = include_str!(concat!("../gql/", $dataset, "/", $query, ".gql"));
-                    let result = query_executor(query_str);
-                    assert_snapshot!($query, &result);
-                }
-            )*
-        }
-    }
-}
-
 macro_rules! add_tests {
     ($dataset:expr, [ $($query:expr),* ]) => {
         paste! {
@@ -135,7 +119,7 @@ add_tests!("opengql", [
     "session_set"
 ]);
 add_tests!("gql_on_one_page", ["gql_on_one_page"]);
-add_e2e_tests!("misc", [
+add_tests!("misc", [
     "ddl_drop",
     "ddl_truncate",
     "dml_dql",
