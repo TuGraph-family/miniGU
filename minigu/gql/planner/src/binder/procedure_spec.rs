@@ -43,4 +43,12 @@ impl Binder<'_> {
             },
         }
     }
+
+    pub fn bind_explain_statement(
+        &mut self,
+        explain: &gql_parser::ast::ExplainStatement,
+    ) -> BindResult<BoundUtilityStatement> {
+        let statement = self.bind_statement(explain.statement.value())?;
+        Ok(BoundUtilityStatement::Explain(Box::new(statement)))
+    }
 }

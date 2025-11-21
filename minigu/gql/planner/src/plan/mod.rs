@@ -146,4 +146,26 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalExplain(node) => node.explain(indent),
         }
     }
+
+    fn explain(&self, indent: usize) -> Option<String> {
+        match self {
+            PlanNode::LogicalMatch(node) => node.explain(indent),
+            PlanNode::LogicalFilter(node) => node.explain(indent),
+            PlanNode::LogicalProject(node) => node.explain(indent),
+            PlanNode::LogicalCall(node) => node.explain(indent),
+            PlanNode::LogicalOneRow(node) => node.explain(indent),
+            PlanNode::LogicalSort(node) => node.explain(indent),
+            PlanNode::LogicalLimit(node) => node.explain(indent),
+            PlanNode::LogicalVectorIndexScan(node) => node.explain(indent),
+
+            PlanNode::PhysicalFilter(node) => node.explain(indent),
+            PlanNode::PhysicalProject(node) => node.explain(indent),
+            PlanNode::PhysicalCall(node) => node.explain(indent),
+            PlanNode::PhysicalOneRow(node) => node.explain(indent),
+            PlanNode::PhysicalSort(node) => node.explain(indent),
+            PlanNode::PhysicalLimit(node) => node.explain(indent),
+            PlanNode::PhysicalVectorIndexScan(node) => node.explain(indent),
+            PlanNode::PhysicalNodeScan(node) => node.explain(indent),
+        }
+    }
 }
