@@ -91,8 +91,8 @@ macro_rules! add_e2e_tests {
             $(
                 #[test]
                 fn [<e2e_ $dataset _ $query>]() {
-                    let _guard = setup("e2e", concat!("gql/", $dataset, "/"));
-                    let query_str = include_str!(concat!("gql/", $dataset, "/", $query, ".gql"));
+                    let _guard = setup("e2e", concat!("../gql/", $dataset, "/"));
+                    let query_str = include_str!(concat!("../gql/", $dataset, "/", $query, ".gql"));
                     let result = query_executor(query_str);
                     assert_snapshot!($query, &result);
                 }
@@ -107,15 +107,15 @@ macro_rules! add_tests {
             $(
                 #[test]
                 fn [<parse_ $dataset _ $query>]() {
-                    let _guard = setup("parser", concat!("gql/", $dataset, "/"));
-                    let query_str = include_str!(concat!("gql/", $dataset, "/", $query, ".gql"));
+                    let _guard = setup("parser", concat!("../gql/", $dataset, "/"));
+                    let query_str = include_str!(concat!("../gql/", $dataset, "/", $query, ".gql"));
                     assert_yaml_snapshot!($query, parse_gql(query_str));
                 }
 
                 #[test]
                 fn [<e2e_ $dataset _ $query>]() {
-                    let _guard = setup("e2e", concat!("gql/", $dataset, "/"));
-                    let query_str = include_str!(concat!("gql/", $dataset, "/", $query, ".gql"));
+                    let _guard = setup("e2e", concat!("../gql/", $dataset, "/"));
+                    let query_str = include_str!(concat!("../gql/", $dataset, "/", $query, ".gql"));
                     let result = query_executor(query_str);
                     assert_snapshot!($query, &result);
                 }

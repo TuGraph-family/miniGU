@@ -30,11 +30,11 @@ workspace = true
 
 [[test]]
 name = "insta_test"
-path = "insta_test.rs"
+path = "src/insta_test.rs"
 
 [[test]]
 name = "sqllogictest"
-path = "sqllogictest.rs"
+path = "src/sqllogictest.rs"
 
 [[bench]]
 harness = false

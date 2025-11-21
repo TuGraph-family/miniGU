@@ -14,6 +14,8 @@ const PREFIX: &str = "gql";
 const BLOCKLIST: &[&str] = &["finbench/", "gql_on_one_page/", "misc/", "opengql/", "snb/"];
 
 fn discover_tests() -> Vec<PathBuf> {
+    eprintln!("Current dir: {:?}", std::env::current_dir());
+    eprintln!("Pattern: {}", PATTERN);
     glob::glob(PATTERN)
         .expect("failed to read glob pattern")
         .filter_map(|p| p.ok())
