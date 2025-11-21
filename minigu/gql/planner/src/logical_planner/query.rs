@@ -107,8 +107,8 @@ impl LogicalPlanner {
         Ok(PlanNode::LogicalVectorIndexScan(Arc::new(scan)))
     }
 
-    pub fn plan_explain_statement(&self, statement: &Box<BoundStatement>) -> PlanResult<PlanNode> {
-        let child_plan = self.plan_statement(statement.as_ref().clone())?;
+    pub fn plan_explain_statement(&self, statement: &BoundStatement) -> PlanResult<PlanNode> {
+        let child_plan = self.plan_statement(statement.clone())?;
         Ok(PlanNode::LogicalExplain(Arc::new(
             crate::plan::explain::Explain::new(child_plan),
         )))
