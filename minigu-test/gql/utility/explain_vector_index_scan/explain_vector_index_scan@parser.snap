@@ -149,23 +149,23 @@ Ok:
                                                   Integer:
                                                     kind: Decimal
                                                     integer: "10"
-                                                approximate: false
+                                                approximate: true
                                               - start: 129
-                                                end: 137
+                                                end: 149
                                           - start: 111
-                                            end: 137
+                                            end: 149
                                     - start: 27
-                                      end: 137
+                                      end: 149
                         - start: 8
-                          end: 137
+                          end: 149
                 - start: 0
-                  end: 137
+                  end: 149
               next_statements: []
             - start: 0
-              end: 137
+              end: 149
           end: ~
       - start: 0
-        end: 137
+        end: 149
     session_close: false
   - start: 0
-    end: 137
+    end: 149

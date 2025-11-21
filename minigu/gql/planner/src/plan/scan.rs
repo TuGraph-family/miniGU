@@ -41,8 +41,35 @@ impl PlanData for PhysicalNodeScan {
         &self.base
     }
 
-    fn explain(&self, _indent: usize) -> Option<String> {
-        // PhysicalNodeScan does not need to be explained
-        None
+    fn explain(&self, indent: usize) -> Option<String> {
+        let indent_str = "  ".repeat(indent);
+        let label_info = if self.labels.is_empty() || self.labels == vec![vec![]] {
+            "Any".to_string()
+        } else {
+            let label_groups: Vec<String> = self
+                .labels
+                .iter()
+                .map(|group| {
+                    if group.is_empty() {
+                        "Any".to_string()
+                    } else {
+                        format!(
+                            "[{}]",
+                            group
+                                .iter()
+                                .map(|id| id.to_string())
+                                .collect::<Vec<_>>()
+                                .join(",")
+                        )
+                    }
+                })
+                .collect();
+            label_groups.join(" OR ")
+        };
+
+        Some(format!(
+            "{}PhysicalNodeScan: var={}, labels={}, graph_id={}",
+            indent_str, self.var, label_info, self.graph_id
+        ))
     }
 }
