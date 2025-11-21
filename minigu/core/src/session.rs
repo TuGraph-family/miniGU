@@ -1,9 +1,10 @@
 use std::sync::Arc;
 use std::time::Instant;
 
+use arrow::array::create_array;
 use gql_parser::ast::{
-    GraphExpr, Procedure, ProgramActivity, SessionActivity, SessionResetArgs, SessionSet,
-    TransactionActivity,
+    EndTransaction, GraphExpr, Procedure, Program, ProgramActivity, SessionActivity,
+    SessionResetArgs, SessionSet, TransactionActivity,
 };
 use gql_parser::parse_gql;
 use itertools::Itertools;
@@ -107,12 +108,34 @@ impl Session {
         Ok(QueryResult::default())
     }
 
-    fn handle_transaction_activity(&self, activity: &TransactionActivity) -> Result<QueryResult> {
+    fn handle_transaction_activity(
+        &mut self,
+        activity: &TransactionActivity,
+    ) -> Result<QueryResult> {
         if activity.start.is_some() {
-            return not_implemented("start transaction", None);
+            self.context.begin_explicit_txn().map_err(|e| {
+                crate::error::Error::Catalog(minigu_catalog::error::CatalogError::External(
+                    Box::new(e),
+                ))
+            })?;
         }
-        if activity.end.is_some() {
-            return not_implemented("end transaction", None);
+        if let Some(end) = activity.end.as_ref() {
+            match end.value() {
+                EndTransaction::Commit => {
+                    self.context.commit_explicit_txn().map_err(|e| {
+                        crate::error::Error::Catalog(minigu_catalog::error::CatalogError::External(
+                            Box::new(e),
+                        ))
+                    })?;
+                }
+                EndTransaction::Rollback => {
+                    self.context.rollback_explicit_txn().map_err(|e| {
+                        crate::error::Error::Catalog(minigu_catalog::error::CatalogError::External(
+                            Box::new(e),
+                        ))
+                    })?;
+                }
+            }
         }
         let result = activity
             .procedure
@@ -123,52 +146,55 @@ impl Session {
         Ok(result)
     }
 
-    fn handle_procedure(&self, procedure: &Procedure) -> Result<QueryResult> {
-        let mut metrics = QueryMetrics::default();
+    fn handle_procedure(&mut self, procedure: &Procedure) -> Result<QueryResult> {
+        let session_snapshot = self.context.clone();
+        self.context.with_statement_result(|txn| {
+            let mut metrics = QueryMetrics::default();
 
-        let start = Instant::now();
-        let planner = Planner::new(self.context.clone());
-        let plan = planner.plan_query(procedure)?;
-        if matches!(
-            plan,
-            minigu_planner::plan::PlanNode::LogicalMatch(_)
-                | minigu_planner::plan::PlanNode::LogicalFilter(_)
-                | minigu_planner::plan::PlanNode::LogicalProject(_)
-                | minigu_planner::plan::PlanNode::LogicalSort(_)
-                | minigu_planner::plan::PlanNode::LogicalLimit(_)
-                | minigu_planner::plan::PlanNode::LogicalCall(_)
-                | minigu_planner::plan::PlanNode::LogicalOneRow(_)
-        ) {
-            let schema = Some(Arc::new(DataSchema::new(vec![DataField::new(
-                "EXPLAIN".to_string(),
-                LogicalType::String,
-                false,
-            )])));
+            let start = Instant::now();
+            let mut planner = Planner::new(session_snapshot.clone());
+            let plan = planner.plan_query(txn, procedure)?;
+            if matches!(
+                plan,
+                minigu_planner::plan::PlanNode::LogicalMatch(_)
+                    | minigu_planner::plan::PlanNode::LogicalFilter(_)
+                    | minigu_planner::plan::PlanNode::LogicalProject(_)
+                    | minigu_planner::plan::PlanNode::LogicalSort(_)
+                    | minigu_planner::plan::PlanNode::LogicalLimit(_)
+                    | minigu_planner::plan::PlanNode::LogicalCall(_)
+                    | minigu_planner::plan::PlanNode::LogicalOneRow(_)
+            ) {
+                let schema = Some(Arc::new(DataSchema::new(vec![DataField::new(
+                    "EXPLAIN".to_string(),
+                    LogicalType::String,
+                    false,
+                )])));
 
-            let chunks = vec![DataChunk::new(vec![Arc::new(
-                arrow::array::StringArray::from(vec![plan.explain(0).unwrap_or_default()]),
-            )])];
+                let chunks = vec![DataChunk::new(vec![Arc::new(
+                    arrow::array::StringArray::from(vec![plan.explain(0).unwrap_or_default()]),
+                )])];
 
-            return Ok(QueryResult {
+                return Ok(QueryResult {
+                    schema,
+                    metrics: QueryMetrics::default(),
+                    chunks,
+                });
+            }
+            metrics.planning_time = start.elapsed();
+
+            let schema = plan.schema().cloned();
+            let start = Instant::now();
+            let chunks: Vec<_> = session_snapshot.database().runtime().scope(|_| {
+                let mut executor = ExecutorBuilder::new(session_snapshot.clone()).build(&plan);
+                executor.into_iter().try_collect()
+            })?;
+            metrics.execution_time = start.elapsed();
+
+            Ok(QueryResult {
                 schema,
-                metrics: QueryMetrics::default(),
+                metrics,
                 chunks,
-            });
-        }
-        metrics.planning_time = start.elapsed();
-
-        let schema = plan.schema().cloned();
-        let start = Instant::now();
-        let chunks: Vec<_> = self.context.database().runtime().scope(|_| {
-            let mut executor = ExecutorBuilder::new(self.context.clone()).build(&plan);
-            executor.into_iter().try_collect()
-        })?;
-        metrics.execution_time = start.elapsed();
-
-        Ok(QueryResult {
-            schema,
-            metrics,
-            chunks,
+            })
         })
     }
 }

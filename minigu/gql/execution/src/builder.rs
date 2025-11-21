@@ -14,6 +14,7 @@ use crate::evaluator::BoxedEvaluator;
 use crate::evaluator::column_ref::ColumnRef;
 use crate::evaluator::constant::Constant;
 use crate::evaluator::vector_distance::VectorDistanceEvaluator;
+use crate::executor::catalog::CatalogDdlBuilder;
 use crate::executor::procedure_call::ProcedureCallBuilder;
 use crate::executor::sort::SortSpec;
 use crate::executor::vector_index_scan::VectorIndexScanBuilder;
@@ -31,11 +32,11 @@ impl ExecutorBuilder {
         Self { session }
     }
 
-    pub fn build(self, physical_plan: &PlanNode) -> BoxedExecutor {
+    pub fn build(mut self, physical_plan: &PlanNode) -> BoxedExecutor {
         self.build_executor(physical_plan)
     }
 
-    fn build_executor(&self, physical_plan: &PlanNode) -> BoxedExecutor {
+    fn build_executor(&mut self, physical_plan: &PlanNode) -> BoxedExecutor {
         let children = physical_plan.children();
         match physical_plan {
             PlanNode::PhysicalFilter(filter) => {
@@ -51,15 +52,28 @@ impl ExecutorBuilder {
             PlanNode::PhysicalNodeScan(_node_scan) => {
                 // NodeScan provide graph id and label, Handle in next pr.
                 assert_eq!(children.len(), 0);
+                // Resolve the graph within a statement-scoped txn (auto-commit when implicit)
                 let cur_schema = self
                     .session
                     .home_schema
                     .as_ref()
-                    .expect("there should be a home schema");
-                let cur_graph = cur_schema
-                    .get_graph("test".to_string().as_str())
-                    .expect("there should be a test graph")
-                    .unwrap();
+                    .expect("there should be a home schema")
+                    .clone();
+                let cur_graph = self
+                    .session
+                    .with_statement_txn(|txn| {
+                        cur_schema
+                            .get_graph("test".to_string().as_str(), txn)
+                            .map_err(|e| {
+                                minigu_catalog::txn::error::CatalogTxnError::External(Box::new(e))
+                            })?
+                            .ok_or_else(|| {
+                                minigu_catalog::txn::error::CatalogTxnError::IllegalState {
+                                    reason: "test graph not found".into(),
+                                }
+                            })
+                    })
+                    .expect("failed to resolve test graph");
                 let provider: &dyn GraphProvider = cur_graph.as_ref();
                 let container = provider
                     .as_any()
@@ -120,6 +134,13 @@ impl ExecutorBuilder {
             PlanNode::PhysicalLimit(limit) => {
                 assert_eq!(children.len(), 1);
                 Box::new(self.build_executor(&children[0]).limit(limit.limit))
+            }
+            PlanNode::PhysicalCatalogDdl(ddl) => {
+                assert!(children.is_empty());
+                Box::new(
+                    CatalogDdlBuilder::new(self.session.clone(), ddl.statement.clone())
+                        .into_executor(),
+                )
             }
             PlanNode::PhysicalVectorIndexScan(vector_scan) => {
                 assert!(children.is_empty());

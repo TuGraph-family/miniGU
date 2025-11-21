@@ -25,6 +25,11 @@ impl LabelSet {
     pub fn contains(&self, label: LabelId) -> bool {
         self.0.binary_search(&label).is_ok()
     }
+
+    #[inline]
+    pub fn iter(&self) -> impl Iterator<Item = LabelId> + '_ {
+        self.0.iter().copied()
+    }
 }
 
 impl FromIterator<LabelId> for LabelSet {
