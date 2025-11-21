@@ -71,7 +71,7 @@ where
                 let vertex_id = input_column.value(cur_idx);
                 let mut all_neighbor_columns: Vec<Vec<ArrayRef>> = vec![];
 
-                if let Some(neighbor_iter) = source.expand_from_vertex(vertex_id) {
+                if let Some(neighbor_iter) = source.expand_from_vertex(vertex_id, None, None) {
                     for neighbor_columns_res in neighbor_iter {
                         let neighbor_columns = gen_try!(neighbor_columns_res);
                         all_neighbor_columns.push(neighbor_columns);
