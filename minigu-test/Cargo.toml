@@ -31,7 +31,6 @@ workspace = true
 [[test]]
 name = "insta_test"
 path = "insta_test.rs"
-# required-features = ["std", "serde"]
 
 [[test]]
 name = "sqllogictest"

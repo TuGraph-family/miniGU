@@ -124,7 +124,6 @@ macro_rules! add_tests {
     }
 }
 
-
 add_tests!("finbench", ["tsr1", "tsr2", "tsr3", "tsr4", "tsr5", "tsr6"]);
 add_tests!("snb", ["is1", "is2", "is3", "is4", "is5", "is6", "is7"]);
 add_tests!("opengql", [
