@@ -17,6 +17,8 @@ use serde::{Deserialize, Serialize};
 use minigu_storage::tp::iterators::AdjacencyIterator;
 use minigu_transaction::GraphTxnManager;
 use minigu_transaction::IsolationLevel::Serializable;
+use rayon::prelude::*;
+use rayon::ThreadPoolBuilder;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Eq, Hash, PartialEq)]
 // 这个结构体，描述了一个短路径，边的类型，开始点的类型与结束点的类型
@@ -321,6 +323,20 @@ pub fn build_procedure() -> Procedure {
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("expecting string value for graph name"))?
             .to_string();
+
+        // 创建自定义线程池以提升并行性能
+        let num_threads = std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(8);
+        
+        let custom_pool = ThreadPoolBuilder::new()
+            .num_threads(num_threads)
+            .build()
+            .map_err(|e| anyhow::anyhow!("Failed to create thread pool: {}", e))?;
+        
+        println!("Using {} rayon threads (available parallelism: {})", 
+            num_threads, 
+            std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1));
         
         // 从 catalog 中获取 graph
         let schema = context
@@ -356,41 +372,71 @@ pub fn build_procedure() -> Procedure {
             .to_string();
         let paths = enumerate_schema_paths(graph_type_ref.as_ref(), path_len as usize);
         let txn = graph.txn_manager().begin_transaction(Serializable)?;
-        let mut results: PathDegreesMap = HashMap::new();
-        for current_len in 1..=path_len as usize {
-            let path_list: Vec<PathPattern> = paths
-                .iter()
-                .filter(|p| p.len() == current_len)
-                .cloned()
-                .collect();
-            for path in path_list {
-                let first = path.first_step();
-                let mut degrees: HashMap<VertexId, u64> = HashMap::new();
-                let vertices = iter_vertices_of_type(graph.clone(), first.src_type, &txn)?;
-                for v in vertices {
-                    let mut cnt: u64 = 0;
-                    if current_len == 1 {
-                        let neighs = neighbors_matching_step(graph.clone(), v, first, &txn);
-                        cnt = neighs.len() as u64;
-                    } else {
-                        let suffix = path.suffix().expect("suffix exists");
-                        let suffix_stats = results
-                            .get(&suffix)
-                            .unwrap_or_else(|| panic!("suffix error"));
-                        let neighs = neighbors_matching_step(graph.clone(), v, first, &txn);
-                        for u in neighs {
-                            let du = suffix_stats.degrees.get(&u).copied().unwrap_or(0);
-                            cnt += du;
-                        }
-                    }
-                    degrees.insert(v, cnt);
+        
+        // 在自定义线程池中执行所有并行操作
+        let results = custom_pool.install(|| -> Result<PathDegreesMap, Box<dyn std::error::Error + Send + Sync>> {
+            let mut local_results: PathDegreesMap = HashMap::new();
+            
+            for current_len in 1..=path_len as usize {
+                let path_list: Vec<PathPattern> = paths
+                    .iter()
+                    .filter(|p| p.len() == current_len)
+                    .cloned()
+                    .collect();
+                
+                // 并行处理每个路径
+                // 使用 Arc 共享 local_results 的只读访问（当 current_len > 1 时）
+                let results_ref = Arc::new(&local_results);
+                
+                let path_results: Result<Vec<(PathPattern, PathVertexDegrees)>, Box<dyn std::error::Error + Send + Sync>> = path_list
+                    .par_iter()
+                    .map(|path| {
+                        let first = path.first_step();
+                        let vertices = iter_vertices_of_type(graph.clone(), first.src_type, &txn)
+                            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?;
+                        
+                        // 并行处理每个顶点
+                        let degrees: HashMap<VertexId, u64> = vertices
+                            .par_iter()
+                            .map(|&v| {
+                                let cnt = if current_len == 1 {
+                                    // 长度为1的路径：直接计算邻居数量
+                                    let neighs = neighbors_matching_step(graph.clone(), v, first, &txn);
+                                    neighs.len() as u64
+                                } else {
+                                    // 长度大于1的路径：需要从之前的结果中获取 suffix 的度信息
+                                    let suffix = path.suffix().expect("suffix exists");
+                                    let suffix_stats = results_ref
+                                        .get(&suffix)
+                                        .unwrap_or_else(|| panic!("suffix error"));
+                                    let neighs = neighbors_matching_step(graph.clone(), v, first, &txn);
+                                    // 并行计算所有邻居的度之和
+                                    neighs.par_iter()
+                                        .map(|&u| {
+                                            suffix_stats.degrees.get(&u).copied().unwrap_or(0)
+                                        })
+                                        .sum()
+                                };
+                                (v, cnt)
+                            })
+                            .collect();
+                        
+                        Ok((path.clone(), PathVertexDegrees {
+                            pattern: path.clone(),
+                            degrees,
+                        }))
+                    })
+                    .collect();
+                
+                let path_results = path_results?;
+                
+                // 将并行计算的结果插入到 local_results 中
+                for (path, pvd) in path_results {
+                    local_results.insert(path, pvd);
                 }
-                results.insert(path.clone(), PathVertexDegrees {
-                    pattern: path.clone(),
-                    degrees,
-                });
             }
-        }
+            Ok(local_results)
+        })?;
         let to_serialize = agg_degree_sequence(&results, graph_type_ref.as_ref());
         save_type_path_degree_seq(&to_serialize, &PathBuf::from(out_put_dir));
         Ok(vec![])
