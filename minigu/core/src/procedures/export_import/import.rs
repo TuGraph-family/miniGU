@@ -25,7 +25,7 @@ use minigu_catalog::memory::graph_type::{
 };
 use minigu_catalog::property::Property;
 use minigu_catalog::provider::GraphTypeProvider;
-use minigu_common::data_type::{DataSchema, LogicalType};
+use minigu_common::data_type::LogicalType;
 use minigu_common::error::not_implemented;
 use minigu_common::types::VertexId;
 use minigu_common::value::ScalarValue;
@@ -47,37 +47,70 @@ fn build_manifest<P: AsRef<Path>>(manifest_path: P) -> Result<Manifest> {
 /// Convert a *string* coming from CSV into an owned [`ScalarValue`] according
 /// to a given property definition.
 fn property_to_scalar_value(property: &Property, value: &str) -> Result<ScalarValue> {
-    if value.is_empty() && property.nullable() {
-        return match property.logical_type() {
-            LogicalType::Int8 => Ok(ScalarValue::Int8(None)),
-            LogicalType::Int16 => Ok(ScalarValue::Int16(None)),
-            LogicalType::Int32 => Ok(ScalarValue::Int32(None)),
-            LogicalType::Int64 => Ok(ScalarValue::Int64(None)),
-            LogicalType::UInt8 => Ok(ScalarValue::UInt8(None)),
-            LogicalType::UInt16 => Ok(ScalarValue::UInt16(None)),
-            LogicalType::UInt32 => Ok(ScalarValue::UInt32(None)),
-            LogicalType::UInt64 => Ok(ScalarValue::UInt64(None)),
-            LogicalType::Boolean => Ok(ScalarValue::Boolean(None)),
-            LogicalType::Float32 => Ok(ScalarValue::Float32(None)),
-            LogicalType::Float64 => Ok(ScalarValue::Float64(None)),
-            LogicalType::String => Ok(ScalarValue::String(None)),
-            LogicalType::Null => Ok(ScalarValue::Null),
-            _ => not_implemented("", None),
-        };
+    // 如果值为空字符串，根据属性是否可空来处理
+    if value.is_empty() {
+        if property.nullable() {
+            return match property.logical_type() {
+                LogicalType::Int8 => Ok(ScalarValue::Int8(None)),
+                LogicalType::Int16 => Ok(ScalarValue::Int16(None)),
+                LogicalType::Int32 => Ok(ScalarValue::Int32(None)),
+                LogicalType::Int64 => Ok(ScalarValue::Int64(None)),
+                LogicalType::UInt8 => Ok(ScalarValue::UInt8(None)),
+                LogicalType::UInt16 => Ok(ScalarValue::UInt16(None)),
+                LogicalType::UInt32 => Ok(ScalarValue::UInt32(None)),
+                LogicalType::UInt64 => Ok(ScalarValue::UInt64(None)),
+                LogicalType::Boolean => Ok(ScalarValue::Boolean(None)),
+                LogicalType::Float32 => Ok(ScalarValue::Float32(None)),
+                LogicalType::Float64 => Ok(ScalarValue::Float64(None)),
+                LogicalType::String => Ok(ScalarValue::String(None)),
+                LogicalType::Null => Ok(ScalarValue::Null),
+                _ => not_implemented("", None),
+            };
+        } else {
+            // 属性不可为空，但值为空，返回错误
+            return Err(anyhow::anyhow!(
+                "Cannot parse empty string for non-nullable property '{}' of type {:?}",
+                property.name(),
+                property.logical_type()
+            ).into());
+        }
     }
 
+    // 值不为空，尝试解析
     match property.logical_type() {
-        LogicalType::Int8 => Ok(ScalarValue::Int8(Some(value.parse()?))),
-        LogicalType::Int16 => Ok(ScalarValue::Int16(Some(value.parse()?))),
-        LogicalType::Int32 => Ok(ScalarValue::Int32(Some(value.parse()?))),
-        LogicalType::Int64 => Ok(ScalarValue::Int64(Some(value.parse()?))),
-        LogicalType::UInt8 => Ok(ScalarValue::UInt8(Some(value.parse()?))),
-        LogicalType::UInt16 => Ok(ScalarValue::UInt16(Some(value.parse()?))),
-        LogicalType::UInt32 => Ok(ScalarValue::UInt32(Some(value.parse()?))),
-        LogicalType::UInt64 => Ok(ScalarValue::UInt64(Some(value.parse()?))),
-        LogicalType::Boolean => Ok(ScalarValue::Boolean(Some(value.parse()?))),
-        LogicalType::Float32 => Ok(ScalarValue::Float32(Some(value.parse()?))),
-        LogicalType::Float64 => Ok(ScalarValue::Float64(Some(value.parse()?))),
+        LogicalType::Int8 => Ok(ScalarValue::Int8(Some(value.parse().map_err(|e| {
+            anyhow::anyhow!("Cannot parse Int8 from '{}' for property '{}': {}", value, property.name(), e)
+        })?))),
+        LogicalType::Int16 => Ok(ScalarValue::Int16(Some(value.parse().map_err(|e| {
+            anyhow::anyhow!("Cannot parse Int16 from '{}' for property '{}': {}", value, property.name(), e)
+        })?))),
+        LogicalType::Int32 => Ok(ScalarValue::Int32(Some(value.parse().map_err(|e| {
+            anyhow::anyhow!("Cannot parse Int32 from '{}' for property '{}': {}", value, property.name(), e)
+        })?))),
+        LogicalType::Int64 => Ok(ScalarValue::Int64(Some(value.parse().map_err(|e| {
+            anyhow::anyhow!("Cannot parse Int64 from '{}' for property '{}': {}", value, property.name(), e)
+        })?))),
+        LogicalType::UInt8 => Ok(ScalarValue::UInt8(Some(value.parse().map_err(|e| {
+            anyhow::anyhow!("Cannot parse UInt8 from '{}' for property '{}': {}", value, property.name(), e)
+        })?))),
+        LogicalType::UInt16 => Ok(ScalarValue::UInt16(Some(value.parse().map_err(|e| {
+            anyhow::anyhow!("Cannot parse UInt16 from '{}' for property '{}': {}", value, property.name(), e)
+        })?))),
+        LogicalType::UInt32 => Ok(ScalarValue::UInt32(Some(value.parse().map_err(|e| {
+            anyhow::anyhow!("Cannot parse UInt32 from '{}' for property '{}': {}", value, property.name(), e)
+        })?))),
+        LogicalType::UInt64 => Ok(ScalarValue::UInt64(Some(value.parse().map_err(|e| {
+            anyhow::anyhow!("Cannot parse UInt64 from '{}' for property '{}': {}", value, property.name(), e)
+        })?))),
+        LogicalType::Boolean => Ok(ScalarValue::Boolean(Some(value.parse().map_err(|e| {
+            anyhow::anyhow!("Cannot parse Boolean from '{}' for property '{}': {}", value, property.name(), e)
+        })?))),
+        LogicalType::Float32 => Ok(ScalarValue::Float32(Some(value.parse().map_err(|e| {
+            anyhow::anyhow!("Cannot parse Float32 from '{}' for property '{}': {}", value, property.name(), e)
+        })?))),
+        LogicalType::Float64 => Ok(ScalarValue::Float64(Some(value.parse().map_err(|e| {
+            anyhow::anyhow!("Cannot parse Float64 from '{}' for property '{}': {}", value, property.name(), e)
+        })?))),
         LogicalType::String => Ok(ScalarValue::String(Some(value.to_string()))),
         LogicalType::Null => Err(anyhow::anyhow!("str isn't empty").into()),
         _ => not_implemented("", None),
@@ -123,7 +156,10 @@ pub(crate) fn import<P: AsRef<Path>>(
     let mut vid = 1;
     for vertex_spec in manifest.vertices.iter() {
         let path = manifest_parent_dir.join(&vertex_spec.file.path);
-        let mut rdr = ReaderBuilder::new().has_headers(false).from_path(path)?;
+        let mut rdr = ReaderBuilder::new()
+            .has_headers(true)
+            .delimiter(b'|')
+            .from_path(path)?;
 
         let label_id = graph_type
             .get_label_id(&vertex_spec.label)?
@@ -138,9 +174,29 @@ pub(crate) fn import<P: AsRef<Path>>(
                 .properties();
 
             assert_eq!(props_schema.len() + 1, record.len());
-            let old_vid: VertexId = record.get(0).expect("record to short").parse()?;
+            let old_vid_str = record.get(0).expect("record to short");
+            if old_vid_str.is_empty() {
+                eprintln!("Warning: Empty vertex ID in vertex '{}'. Skipping record.", vertex_spec.label);
+                continue;
+            }
+            let old_vid: VertexId = match old_vid_str.parse() {
+                Ok(vid) => vid,
+                Err(e) => {
+                    eprintln!("Warning: Cannot parse vertex ID '{}' in vertex '{}': {}. Skipping record.", 
+                        old_vid_str, vertex_spec.label, e);
+                    continue;
+                }
+            };
 
-            let props = build_properties(props_schema, record.iter().skip(1))?;
+            // 构建属性，如果失败则跳过该记录
+            let props = match build_properties(props_schema, record.iter().skip(1)) {
+                Ok(p) => p,
+                Err(e) => {
+                    eprintln!("Warning: Failed to build properties for vertex '{}' with ID '{}': {}. Skipping record.", 
+                        vertex_spec.label, old_vid, e);
+                    continue;
+                }
+            };
             let vertex = Vertex::new(vid, label_id, PropertyRecord::new(props));
 
             graph.create_vertex(&txn, vertex)?;
@@ -158,7 +214,7 @@ pub(crate) fn import<P: AsRef<Path>>(
             .get_label_id(&edge_spec.label)?
             .expect("label id not found");
 
-        let mut rdr = ReaderBuilder::new().has_headers(false).from_path(path)?;
+        let mut rdr = ReaderBuilder::new().has_headers(true).delimiter(b'|').from_path(path)?;
 
         for record in rdr.records() {
             let record = record?;
@@ -169,13 +225,71 @@ pub(crate) fn import<P: AsRef<Path>>(
                 .expect("edge type not found")
                 .properties();
 
-            assert_eq!(record.len() - 3, props.len());
-            let old_src_id = record.get(1).expect("record to short").parse()?;
-            let old_dst_id = record.get(2).expect("record to short").parse()?;
-            let src_id = vid_mapping.get(&old_src_id).expect("vid mapping not found");
-            let dst_id = vid_mapping.get(&old_dst_id).expect("vid mapping not found");
+            //assert_eq!(record.len() - 3, props.len());
+            
+            if record.len() < 3 {
+                eprintln!("Warning: Edge record too short in edge '{}'. Expected at least 3 columns, got {}. Skipping record.", 
+                    edge_spec.label, record.len());
+                eprintln!("  Record: {:?}", record.iter().collect::<Vec<_>>());
+                continue;
+            }
+            
+            let old_src_id_str = record.get(1).unwrap();
+            let old_dst_id_str = record.get(2).unwrap();
+            
+            if old_src_id_str.is_empty() || old_dst_id_str.is_empty() {
+                eprintln!("Warning: Empty source or destination ID in edge '{}'. Skipping record.", edge_spec.label);
+                eprintln!("  Record: {:?}", record.iter().collect::<Vec<_>>());
+                continue;
+            }
+            
+            let old_src_id: VertexId = match old_src_id_str.parse() {
+                Ok(id) => id,
+                Err(e) => {
+                    eprintln!("Warning: Cannot parse source ID '{}' in edge '{}': {}. Skipping record.", 
+                        old_src_id_str, edge_spec.label, e);
+                    eprintln!("  Record: {:?}", record.iter().collect::<Vec<_>>());
+                    continue;
+                }
+            };
+            
+            let old_dst_id: VertexId = match old_dst_id_str.parse() {
+                Ok(id) => id,
+                Err(e) => {
+                    eprintln!("Warning: Cannot parse destination ID '{}' in edge '{}': {}. Skipping record.", 
+                        old_dst_id_str, edge_spec.label, e);
+                    eprintln!("  Record: {:?}", record.iter().collect::<Vec<_>>());
+                    continue;
+                }
+            };
+            
+            let src_id = match vid_mapping.get(&old_src_id) {
+                Some(id) => id,
+                None => {
+                    eprintln!("Warning: Source vertex ID {} not found in mapping for edge '{}'. Skipping record.", 
+                        old_src_id, edge_spec.label);
+                    continue;
+                }
+            };
+            
+            let dst_id = match vid_mapping.get(&old_dst_id) {
+                Some(id) => id,
+                None => {
+                    eprintln!("Warning: Destination vertex ID {} not found in mapping for edge '{}'. Skipping record.", 
+                        old_dst_id, edge_spec.label);
+                    continue;
+                }
+            };
 
-            let props = build_properties(props, record.iter().skip(3))?;
+            // 构建属性，如果失败则跳过该记录
+            let props = match build_properties(props, record.iter().skip(3)) {
+                Ok(p) => p,
+                Err(e) => {
+                    eprintln!("Warning: Failed to build properties for edge '{}' (src: {}, dst: {}): {}. Skipping record.", 
+                        edge_spec.label, old_src_id, old_dst_id, e);
+                    continue;
+                }
+            };
 
             let edge = Edge::new(eid, *src_id, *dst_id, label_id, PropertyRecord::new(props));
             graph.create_edge(&txn, edge)?;
