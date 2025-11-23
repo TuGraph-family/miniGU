@@ -1,5 +1,6 @@
 mod GCard;
 mod build_ldbc_mainfest;
+mod convert_ldbc_edges;
 mod create_test_graph;
 mod create_test_graph_data;
 mod echo;
@@ -38,6 +39,10 @@ pub fn build_predefined_procedures() -> Vec<(String, Procedure)> {
         (
             "build_ldbc_manifest".to_string(),
             build_ldbc_mainfest::build_procedure(),
+        ),
+        (
+            "convert_ldbc_edges".to_string(),
+            convert_ldbc_edges::build_procedure(),
         ),
     ]
 }
