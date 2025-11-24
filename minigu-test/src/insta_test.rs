@@ -6,16 +6,17 @@
 //!
 //! Test cases can be found in `../../resources/gql`, and expected outputs can be found in
 //! `snapshots`.
+use gql_parser::parse_gql;
 use insta::internals::SettingsBindDropGuard;
-use insta::{Settings, assert_snapshot};
+use insta::{Settings, assert_snapshot, assert_yaml_snapshot};
 use minigu::database::{Database, DatabaseConfig};
 use minigu::result::QueryResult;
 use pastey::paste;
 
-fn setup(snapshot_path: &str) -> SettingsBindDropGuard {
+fn setup(suffix: &str, snapshot_path: &str) -> SettingsBindDropGuard {
     let mut settings = Settings::clone_current();
     settings.set_snapshot_path(snapshot_path);
-    settings.set_snapshot_suffix("e2e");
+    settings.set_snapshot_suffix(suffix);
     settings.set_omit_expression(true);
     settings.set_prepend_module_to_snapshot(false);
     settings.bind_to_scope()
@@ -84,14 +85,21 @@ fn extract_string_value(array: &arrow::array::ArrayRef, row_idx: usize) -> Strin
     }
 }
 
-macro_rules! add_e2e_tests {
+macro_rules! add_tests {
     ($dataset:expr, [ $($query:expr),* ]) => {
         paste! {
             $(
                 #[test]
+                fn [<parse_ $dataset _ $query>]() {
+                    let _guard = setup("parser", concat!("../gql/", $dataset, "/"));
+                    let query_str = include_str!(concat!("../gql/", $dataset, "/", $query, ".gql"));
+                    assert_yaml_snapshot!($query, parse_gql(query_str));
+                }
+
+                #[test]
                 fn [<e2e_ $dataset _ $query>]() {
-                    let _guard = setup(concat!("gql/", $dataset, "/", $query, "/"));
-                    let query_str = include_str!(concat!("gql/", $dataset, "/", $query, "/", $query, ".gql"));
+                    let _guard = setup("e2e", concat!("../gql/", $dataset, "/"));
+                    let query_str = include_str!(concat!("../gql/", $dataset, "/", $query, ".gql"));
                     let result = query_executor(query_str);
                     assert_snapshot!($query, &result);
                 }
@@ -100,9 +108,9 @@ macro_rules! add_e2e_tests {
     }
 }
 
-add_e2e_tests!("finbench", ["tsr1", "tsr2", "tsr3", "tsr4", "tsr5", "tsr6"]);
-add_e2e_tests!("snb", ["is1", "is2", "is3", "is4", "is5", "is6", "is7"]);
-add_e2e_tests!("opengql", [
+add_tests!("finbench", ["tsr1", "tsr2", "tsr3", "tsr4", "tsr5", "tsr6"]);
+add_tests!("snb", ["is1", "is2", "is3", "is4", "is5", "is6", "is7"]);
+add_tests!("opengql", [
     "create_graph",
     "create_schema",
     "insert",
@@ -110,14 +118,14 @@ add_e2e_tests!("opengql", [
     "match",
     "session_set"
 ]);
-add_e2e_tests!("gql_on_one_page", ["gql_on_one_page"]);
-add_e2e_tests!("misc", [
+add_tests!("gql_on_one_page", ["gql_on_one_page"]);
+add_tests!("misc", [
     "ddl_drop",
     "ddl_truncate",
     "dml_dql",
     "vector_index"
 ]);
-add_e2e_tests!("utility", [
+add_tests!("utility", [
     "explain_call",
     "explain_filter",
     "explain_limit",

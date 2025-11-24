@@ -29,17 +29,12 @@ pastey = { workspace = true }
 workspace = true
 
 [[test]]
-name = "parser_tests"
-path = "parser_test.rs"
-required-features = ["std", "serde"]
-
-[[test]]
-name = "e2e_test"
-path = "e2e_test.rs"
+name = "insta_test"
+path = "src/insta_test.rs"
 
 [[test]]
 name = "sqllogictest"
-path = "sqllogictest.rs"
+path = "src/sqllogictest.rs"
 
 [[bench]]
 harness = false

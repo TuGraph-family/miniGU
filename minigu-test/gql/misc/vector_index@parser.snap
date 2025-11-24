@@ -1,0 +1,13 @@
+---
+source: minigu-test/src/insta_test.rs
+---
+Err:
+  InvalidToken:
+    input: "CREATE GRAPH test_graph {\n  (Entity: EntityLabel {\n    id INT64,\n    embedding vector(4),\n    PRIMARY KEY (id)\n  }),\n  (Entity)-[Rel: RelLabel {\n    timestamp\tINT64,\n    PRIMARY KEY (SOURCE_PRIMARY_KEY, timestamp, DESTINATION_PRIMARY_KEY)\n  }]->(Entity),\n};\n\nUSE GRAPH test_graph;\nINSERT (n:Entity {id: 30001, embedding: VECTOR [1.0, -2.5, 3.14, -0.5]});\nMATCH  (n:Entity {id: 30001}) return n, n.embedding;"
+    span:
+      start: 256
+      end: 257
+    position:
+      - 11
+      - 2
+    kind: InvalidToken
