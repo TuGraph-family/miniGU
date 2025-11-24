@@ -1,1 +1,1 @@
-EXPLAIN CALL echo("hello world")
+EXPLAIN CALL echo("hello world");

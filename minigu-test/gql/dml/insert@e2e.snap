@@ -1,13 +1,12 @@
 ---
-source: minigu-test/e2e_test.rs
+source: minigu-test/src/insta_test.rs
 ---
 Error: Parser(
     Unexpected(
         UnexpectedError {
             input: "INSERT (:Person { firstname: 'Firstname', lastname: 'Lastname', joined: DATE '2023-01-01' })
         -[:MEMBER_SINCE { since: \"2023-03-20\" }]->
-        (:Team { name: 'Teamname' })
-",
+        (:Team { name: 'Teamname' })",
             span: 0..6,
             position: (
                 1,

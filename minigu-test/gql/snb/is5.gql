@@ -15,4 +15,4 @@ WHERE
 RETURN
     person.id AS personId,
     person.firstName AS firstName,
-    person.lastName AS lastName
+    person.lastName AS lastName;
