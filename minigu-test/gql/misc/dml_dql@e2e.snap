@@ -4,8 +4,7 @@ source: minigu-test/src/insta_test.rs
 Error: Parser(
     Unexpected(
         UnexpectedError {
-            input: "-- Case 1
-CREATE GRAPH test_graph {
+            input: "CREATE GRAPH test_graph {
   (Entity: EntityLabel {
     id STRING,
     entity_type STRING,
@@ -43,9 +42,9 @@ CREATE GRAPH test_graph {
     PRIMARY KEY (SOURCE_PRIMARY_KEY, timestamp, DESTINATION_PRIMARY_KEY)
   }]->(Entity),
 }",
-            span: 10..16,
+            span: 0..6,
             position: (
-                2,
+                1,
                 1,
             ),
         },

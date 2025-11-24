@@ -1,12 +1,61 @@
 ---
-source: minigu-test/parser_test.rs
+source: minigu-test/src/insta_test.rs
 ---
-Err:
-  Unexpected:
-    input: "SESSION SET GRAPH CURRENT_GRAPH\n\nSESSION SET GRAPH CURRENT_PROPERTY_GRAPH\n\nSESSION SET VALUE IF NOT EXISTS $exampleProperty = DATE '2022-10-10'\n\nSESSION SET TIME ZONE \"utc\"\n"
-    span:
-      start: 75
-      end: 82
-    position:
-      - 5
-      - 1
+- Ok:
+    - activity:
+        - Session:
+            set:
+              - - Graph:
+                    - Current
+                    - start: 18
+                      end: 31
+                - start: 0
+                  end: 31
+            reset: []
+        - start: 0
+          end: 31
+      session_close: false
+    - start: 0
+      end: 31
+- Ok:
+    - activity:
+        - Session:
+            set:
+              - - Graph:
+                    - Current
+                    - start: 18
+                      end: 40
+                - start: 0
+                  end: 40
+            reset: []
+        - start: 0
+          end: 40
+      session_close: false
+    - start: 0
+      end: 40
+- Err:
+    Unexpected:
+      input: "SESSION SET VALUE IF NOT EXISTS $exampleProperty = DATE '2022-10-10'"
+      span:
+        start: 8
+        end: 11
+      position:
+        - 1
+        - 9
+- Ok:
+    - activity:
+        - Session:
+            set:
+              - - TimeZone:
+                    - kind: Char
+                      literal: utc
+                    - start: 22
+                      end: 27
+                - start: 0
+                  end: 27
+            reset: []
+        - start: 0
+          end: 27
+      session_close: false
+    - start: 0
+      end: 27
