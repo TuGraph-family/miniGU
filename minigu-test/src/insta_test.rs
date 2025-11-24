@@ -89,7 +89,7 @@ fn query_e2e_test(statements: Vec<String>) -> String {
 
 fn result_to_string(result: &QueryResult) -> String {
     if result.iter().count() == 0 {
-        return "No results".to_string();
+        return "Statement OK. No results".to_string();
     }
     let mut output = String::new();
     if let Some(schema) = result.schema() {
