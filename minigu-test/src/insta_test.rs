@@ -25,38 +25,43 @@ fn setup(suffix: &str, snapshot_path: &str) -> SettingsBindDropGuard {
 fn preprocess_statements(input: &str) -> Vec<String> {
     let mut statements = Vec::new();
     let mut current_statement = String::new();
-    
+
     for line in input.lines() {
         let trimmed_line = line.trim();
-        
+
         // Skip comment lines starting with -- or //
-        if trimmed_line.starts_with(GQL_COMMENT_PREFIX) || trimmed_line.starts_with(FILE_COMMENT_PREFIX) {
+        if trimmed_line.starts_with(GQL_COMMENT_PREFIX)
+            || trimmed_line.starts_with(FILE_COMMENT_PREFIX)
+        {
             continue;
         }
-        
+
         // Add line to current statement
         if !current_statement.is_empty() {
             current_statement.push('\n');
         }
         current_statement.push_str(line);
-        
+
         // Check if statement is complete (ends with semicolon)
         if trimmed_line.ends_with(QUERY_END_SUFFIX) {
             // Remove trailing semicolon and trim
-            let statement = current_statement.trim_end_matches(QUERY_END_SUFFIX).trim().to_string();
+            let statement = current_statement
+                .trim_end_matches(QUERY_END_SUFFIX)
+                .trim()
+                .to_string();
             if !statement.is_empty() {
                 statements.push(statement);
             }
             current_statement.clear();
         }
     }
-    
+
     // Handle any remaining statement without semicolon
     let remaining = current_statement.trim();
     if !remaining.is_empty() {
         statements.push(remaining.to_string());
     }
-    
+
     statements
 }
 
@@ -71,7 +76,7 @@ fn query_e2e_test(statements: Vec<String>) -> String {
             output.push_str("\n---\n");
         }
 
-        match session.query(&statement) {
+        match session.query(statement) {
             Ok(result) => {
                 let result_str = result_to_string(&result);
                 output.push_str(&result_str);
