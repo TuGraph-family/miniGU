@@ -5,4 +5,4 @@ RETURN
     forum.title AS forumTitle,
     moderator.id AS moderatorId,
     moderator.firstName AS moderatorFirstName,
-    moderator.lastName AS moderatorLastName
+    moderator.lastName AS moderatorLastName;

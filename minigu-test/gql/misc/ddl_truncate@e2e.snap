@@ -1,9 +1,9 @@
 ---
-source: minigu-test/e2e_test.rs
+source: minigu-test/src/insta_test.rs
 ---
 Error: Parser(
-    InvalidToken(
-        TokenError {
+    Unexpected(
+        UnexpectedError {
             input: "CREATE GRAPH test_graph {
   (Entity: EntityLabel {
     id STRING,
@@ -32,47 +32,232 @@ Error: Parser(
     props\tSTRING,
     PRIMARY KEY (SOURCE_PRIMARY_KEY, timestamp, DESTINATION_PRIMARY_KEY)
   }]->(Entity),
-};
-
-USE GRAPH test_graph;
-
-INSERT (n:Entity {id:'table1001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table1001',status:1,props:'table1001',test1:1001,test2:1,test3:'table1001'});
-INSERT (n:Entity {id:'table10001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table1001',status:1,props:'table1001',test1:1001,test2:1,test3:'table1001'});
-MATCH (n:Entity{id:'table10001'}), (m:Entity{id:'table1001'})
-INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'table2table',gen_time:0,rel_chain:'0',dst_guid:'table1001',src_guid:'table10001',status:0,props:'table10001_table2table_table1001'}]->(m);
-
-
-MATCH (n:Entity  {id: 'table1001'}) RETURN n.id, n.name, n.entity_type;
-MATCH (n:Entity{id:'table10001'})-[b:Rel]->(m:Entity{id:'table1001'}) RETURN n.id, b.timestamp, b.dst_guid, b.src_guid,m.id;
-
-
-truncate edge Rel;
-MATCH (n:Entity{id:'table10001'})-[b:Rel]->(m:Entity{id:'table1001'}) RETURN n.id, b.timestamp, b.dst_guid, b.src_guid,m.id;
-
-
-truncate node Entity;
-MATCH (n:Entity{id:'table1001'}) RETURN n.id, n.name, n.entity_type;
-
-
-INSERT (n:Entity {id:'table2001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table2001',status:1,props:'table2001',test1:2001,test2:1,test3:'table2001'});
-INSERT (n:Entity {id:'table20001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table2001',status:1,props:'table2001',test1:2001,test2:1,test3:'table2001'});
-MATCH (n:Entity{id:'table20001'}), (m:Entity{id:'table2001'}) INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'table2table',gen_time:0,rel_chain:'0',dst_guid:'table2001',src_guid:'table20001',status:0,props:'table20001_table2table_table2001'}]->(m);
-MATCH (n:Entity{id:'table2001'}) RETURN n.id, n.name, n.entity_type;
-MATCH (n:Entity{id:'table20001'})-[b:Rel]->(m:Entity{id:'table2001'}) RETURN n.id, b.timestamp, b.dst_guid, b.src_guid,m.id;
-
-
-truncate graph test_graph;
-MATCH (n:Entity{id:'table2001'}) RETURN n.id, n.name, n.entity_type;
-MATCH (n:Entity{id:'table20001'})-[b:Rel]->(m:Entity{id:'table2001'}) RETURN n.id, b.timestamp, b.dst_guid, b.src_guid,m.id;
-
-drop graph test_graph;
-",
-            span: 599..600,
+}",
+            span: 0..6,
             position: (
-                29,
-                2,
+                1,
+                1,
             ),
-            kind: InvalidToken,
         },
+    ),
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "USE GRAPH test_graph",
+            span: 0..3,
+            position: (
+                1,
+                1,
+            ),
+        },
+    ),
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "INSERT (n:Entity {id:'table1001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table1001',status:1,props:'table1001',test1:1001,test2:1,test3:'table1001'})",
+            span: 0..6,
+            position: (
+                1,
+                1,
+            ),
+        },
+    ),
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "INSERT (n:Entity {id:'table10001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table1001',status:1,props:'table1001',test1:1001,test2:1,test3:'table1001'})",
+            span: 0..6,
+            position: (
+                1,
+                1,
+            ),
+        },
+    ),
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "MATCH (n:Entity{id:'table10001'}), (m:Entity{id:'table1001'})
+INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'table2table',gen_time:0,rel_chain:'0',dst_guid:'table1001',src_guid:'table10001',status:0,props:'table10001_table2table_table1001'}]->(m)",
+            span: 0..5,
+            position: (
+                1,
+                1,
+            ),
+        },
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        Unexpected,
+    ),
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "MATCH (n:Entity{id:'table10001'})-[b:Rel]->(m:Entity{id:'table1001'}) RETURN n.id, b.timestamp, b.dst_guid, b.src_guid,m.id",
+            span: 84..85,
+            position: (
+                1,
+                85,
+            ),
+        },
+    ),
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "truncate edge Rel",
+            span: 0..8,
+            position: (
+                1,
+                1,
+            ),
+        },
+    ),
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "MATCH (n:Entity{id:'table10001'})-[b:Rel]->(m:Entity{id:'table1001'}) RETURN n.id, b.timestamp, b.dst_guid, b.src_guid,m.id",
+            span: 84..85,
+            position: (
+                1,
+                85,
+            ),
+        },
+    ),
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "truncate node Entity",
+            span: 0..8,
+            position: (
+                1,
+                1,
+            ),
+        },
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        Unexpected,
+    ),
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "INSERT (n:Entity {id:'table2001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table2001',status:1,props:'table2001',test1:2001,test2:1,test3:'table2001'})",
+            span: 0..6,
+            position: (
+                1,
+                1,
+            ),
+        },
+    ),
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "INSERT (n:Entity {id:'table20001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table2001',status:1,props:'table2001',test1:2001,test2:1,test3:'table2001'})",
+            span: 0..6,
+            position: (
+                1,
+                1,
+            ),
+        },
+    ),
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "MATCH (n:Entity{id:'table20001'}), (m:Entity{id:'table2001'}) INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'table2table',gen_time:0,rel_chain:'0',dst_guid:'table2001',src_guid:'table20001',status:0,props:'table20001_table2table_table2001'}]->(m)",
+            span: 0..5,
+            position: (
+                1,
+                1,
+            ),
+        },
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        Unexpected,
+    ),
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "MATCH (n:Entity{id:'table20001'})-[b:Rel]->(m:Entity{id:'table2001'}) RETURN n.id, b.timestamp, b.dst_guid, b.src_guid,m.id",
+            span: 84..85,
+            position: (
+                1,
+                85,
+            ),
+        },
+    ),
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "truncate graph test_graph",
+            span: 0..8,
+            position: (
+                1,
+                1,
+            ),
+        },
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        Unexpected,
+    ),
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "MATCH (n:Entity{id:'table20001'})-[b:Rel]->(m:Entity{id:'table2001'}) RETURN n.id, b.timestamp, b.dst_guid, b.src_guid,m.id",
+            span: 84..85,
+            position: (
+                1,
+                85,
+            ),
+        },
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        NotImplemented(
+            NotImplemented {
+                feature: "drop graph statement",
+                issue: TrackingIssue(
+                    None,
+                ),
+            },
+        ),
     ),
 )

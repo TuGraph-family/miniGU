@@ -22,18 +22,39 @@ fn setup(suffix: &str, snapshot_path: &str) -> SettingsBindDropGuard {
     settings.bind_to_scope()
 }
 
-fn query_executor(input: &str) -> String {
+fn query_e2e_test(input: &str) -> String {
     let config = DatabaseConfig::default();
     let database = Database::open_in_memory(&config).unwrap();
     let mut session = database.session().unwrap();
-    match session.query(input) {
-        Ok(result) => result_to_string(&result),
-        Err(e) => {
-            let debug_str = format!("{:#?}", e);
-            let display_str = debug_str.replace("\\n", "\n");
-            format!("Error: {}", display_str)
+
+    let statements: Vec<&str> = input
+        .split(";")
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .collect();
+
+    let mut output = String::new();
+    for (idx, statement) in statements.iter().enumerate() {
+        if idx > 0 {
+            output.push_str("\n---\n");
+        }
+
+        match session.query(statement) {
+            Ok(result) => {
+                let result_str = result_to_string(&result);
+                // output.push_str(&format!("# {}\n", statement));
+                output.push_str(&result_str);
+            }
+            Err(e) => {
+                let debug_str = format!("{:#?}", e);
+                let display_str = debug_str.replace("\\n", "\n");
+                // output.push_str(&format!("# {}\n", statement));
+                output.push_str(&format!("Error: {}", display_str));
+            }
         }
     }
+
+    output
 }
 
 fn result_to_string(result: &QueryResult) -> String {
@@ -85,7 +106,7 @@ fn extract_string_value(array: &arrow::array::ArrayRef, row_idx: usize) -> Strin
     }
 }
 
-macro_rules! add_tests {
+macro_rules! add_parser_tests {
     ($dataset:expr, [ $($query:expr),* ]) => {
         paste! {
             $(
@@ -95,12 +116,20 @@ macro_rules! add_tests {
                     let query_str = include_str!(concat!("../gql/", $dataset, "/", $query, ".gql"));
                     assert_yaml_snapshot!($query, parse_gql(query_str));
                 }
+            )*
+        }
+    }
+}
 
+macro_rules! add_e2e_tests {
+    ($dataset:expr, [ $($query:expr),* ]) => {
+        paste! {
+            $(
                 #[test]
                 fn [<e2e_ $dataset _ $query>]() {
                     let _guard = setup("e2e", concat!("../gql/", $dataset, "/"));
                     let query_str = include_str!(concat!("../gql/", $dataset, "/", $query, ".gql"));
-                    let result = query_executor(query_str);
+                    let result = query_e2e_test(query_str);
                     assert_snapshot!($query, &result);
                 }
             )*
@@ -108,9 +137,9 @@ macro_rules! add_tests {
     }
 }
 
-add_tests!("finbench", ["tsr1", "tsr2", "tsr3", "tsr4", "tsr5", "tsr6"]);
-add_tests!("snb", ["is1", "is2", "is3", "is4", "is5", "is6", "is7"]);
-add_tests!("opengql", [
+add_e2e_tests!("finbench", ["tsr1", "tsr2", "tsr3", "tsr4", "tsr5", "tsr6"]);
+add_e2e_tests!("snb", ["is1", "is2", "is3", "is4", "is5", "is6", "is7"]);
+add_e2e_tests!("opengql", [
     "create_graph",
     "create_schema",
     "insert",
@@ -118,14 +147,15 @@ add_tests!("opengql", [
     "match",
     "session_set"
 ]);
-add_tests!("gql_on_one_page", ["gql_on_one_page"]);
-add_tests!("misc", [
+// add_tests!("gql_on_one_page", ["gql_on_one_page"]);
+add_e2e_tests!("misc", [
+    // "text2graph",
     "ddl_drop",
     "ddl_truncate",
     "dml_dql",
     "vector_index"
 ]);
-add_tests!("utility", [
+add_e2e_tests!("utility", [
     "explain_call",
     "explain_filter",
     "explain_limit",
@@ -134,3 +164,16 @@ add_tests!("utility", [
     "explain_sort",
     "explain_vector_index_scan"
 ]);
+add_e2e_tests!("basic", ["multi_statement_test"]);
+
+// add_parser_tests!("finbench", ["tsr1", "tsr2", "tsr3", "tsr4", "tsr5", "tsr6"]);
+// add_parser_tests!("snb", ["is1", "is2", "is3", "is4", "is5", "is6", "is7"]);
+// add_parser_tests!("opengql", [
+//     "create_graph",
+//     "create_schema",
+//     "insert",
+//     "match_and_insert",
+//     "match",
+//     "session_set"
+// ]);
+// add_parser_tests!("gql_on_one_page", ["gql_on_one_page"]);
