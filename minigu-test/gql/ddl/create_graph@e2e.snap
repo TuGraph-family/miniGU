@@ -1,119 +1,63 @@
 ---
 source: minigu-test/src/insta_test.rs
+assertion_line: 182
+---
+Statement OK. No results
+---
+Error: Execution(
+    Custom(
+        IllegalState {
+            reason: "graph already exists",
+        },
+    ),
+)
 ---
 Error: Plan(
     Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "create graph statement",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
+        GraphTypeNotFound(
+            "mygraphtype",
         ),
     ),
 )
 ---
 Error: Plan(
     Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "create graph statement",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
+        NotSchema(
+            "/",
         ),
     ),
 )
 ---
 Error: Plan(
     Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "create graph statement",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
+        GraphNotFound(
+            "mysrcgraph",
         ),
     ),
 )
 ---
 Error: Plan(
     Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "create graph statement",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
+        GraphNotFound(
+            "mysrcgraph",
         ),
     ),
 )
 ---
 Error: Plan(
     Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "create graph statement",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
+        GraphTypeNotFound(
+            "socialNetworkGraphType",
         ),
     ),
 )
 ---
 Error: Plan(
     Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "create graph statement",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
+        GraphTypeNotFound(
+            "socialNetworkGraphType",
         ),
     ),
 )
 ---
-Error: Plan(
-    Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "create graph statement",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
-    ),
-)
----
-Error: Plan(
-    Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "create graph statement",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
-    ),
-)
----
-Error: Plan(
-    Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "create graph statement",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
-    ),
-)
+Statement OK. No results

@@ -1459,6 +1459,12 @@ version = "0.1.0"
 dependencies = [
  "downcast-rs",
  "minigu-common",
+ "minigu-context",
+ "minigu-execution",
+ "minigu-planner",
+ "minigu-storage",
+ "minigu-transaction",
+ "rayon",
  "serde",
  "smallvec",
  "smol_str",

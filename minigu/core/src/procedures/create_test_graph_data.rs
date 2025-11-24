@@ -36,7 +36,7 @@ pub fn build_procedure() -> Procedure {
 
         let schema = context
             .current_schema
-            .as_ref()
+            .clone()
             .ok_or_else(|| anyhow::anyhow!("current schema not set"))?;
 
         let graph = MemoryGraph::new();
@@ -45,8 +45,10 @@ pub fn build_procedure() -> Procedure {
             graph_type.clone(),
             GraphStorage::Memory(graph.clone()),
         ));
-
-        if !schema.add_graph(graph_name.clone(), container.clone()) {
+        let add_res = context.with_statement_txn(|txn| {
+            schema.add_graph_txn(graph_name.clone(), container.clone(), txn)
+        });
+        if add_res.is_err() {
             return Err(anyhow::anyhow!("graph `{graph_name}` already exists").into());
         }
 

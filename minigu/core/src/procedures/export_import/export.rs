@@ -19,6 +19,8 @@ use std::sync::Arc;
 
 use csv::{Writer, WriterBuilder};
 use minigu_catalog::provider::{GraphProvider, GraphTypeProvider, SchemaProvider};
+use minigu_catalog::txn::catalog_txn;
+use minigu_catalog::txn::catalog_txn::CatalogTxn;
 use minigu_common::data_type::LogicalType;
 use minigu_common::error::not_implemented;
 use minigu_common::types::{EdgeId, LabelId, VertexId};
@@ -30,6 +32,7 @@ use minigu_storage::tp::MemoryGraph;
 use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
 
 use crate::procedures::export_import::{Manifest, RecordType, Result, SchemaMetadata};
+use crate::session;
 
 /// Convert a [`ScalarValue`] back into a *CSV‑ready* string. `NULL` becomes an
 /// empty string.
@@ -107,7 +110,13 @@ impl VerticesBuilder {
 
     fn dump(&mut self) -> Result<()> {
         for (label_id, records) in self.records.iter() {
-            let w = self.writers.get_mut(label_id).expect("writer not found");
+            let Some(w) = self.writers.get_mut(label_id) else {
+                return Err(anyhow::anyhow!(
+                    "writer not found for vertex label id {}",
+                    label_id.get()
+                )
+                .into());
+            };
 
             for (_, record) in records.iter() {
                 w.write_record(record)?;
@@ -162,7 +171,13 @@ impl EdgesBuilder {
 
     fn dump(&mut self) -> Result<()> {
         for (label_id, records) in self.records.iter() {
-            let w = self.writers.get_mut(label_id).expect("writers not found");
+            let Some(w) = self.writers.get_mut(label_id) else {
+                return Err(anyhow::anyhow!(
+                    "writer not found for edge label id {}",
+                    label_id.get()
+                )
+                .into());
+            };
 
             for (_, record) in records.iter() {
                 w.write_record(record)?;
@@ -178,6 +193,7 @@ pub(crate) fn export<P: AsRef<Path>>(
     dir: P,
     manifest_rel_path: P, // relative path
     graph_type: Arc<dyn GraphTypeProvider>,
+    catalog_txn: &CatalogTxn,
 ) -> Result<()> {
     let txn = graph
         .txn_manager()
@@ -187,7 +203,7 @@ pub(crate) fn export<P: AsRef<Path>>(
     let dir = dir.as_ref();
     std::fs::create_dir_all(dir)?;
 
-    let metadata = SchemaMetadata::from_schema(Arc::clone(&graph_type))?;
+    let metadata = SchemaMetadata::from_schema(Arc::clone(&graph_type), catalog_txn)?;
 
     let mut vertice_builder = VerticesBuilder::new(dir, &metadata.label_map)?;
     let mut edges_builder = EdgesBuilder::new(dir, &metadata.label_map)?;
@@ -224,7 +240,7 @@ pub fn build_procedure() -> Procedure {
         LogicalType::String,
     ];
 
-    Procedure::new(parameters, None, |context, args| {
+    Procedure::new(parameters, None, |mut context, args| {
         assert_eq!(args.len(), 3);
         let graph_name = args[0]
             .try_as_string()
@@ -244,14 +260,29 @@ pub fn build_procedure() -> Procedure {
 
         let schema = context
             .current_schema
+            .clone()
             .ok_or_else(|| anyhow::anyhow!("current schema not set"))?;
-        let graph_container = schema
-            .get_graph(&graph_name)?
-            .ok_or_else(|| anyhow::anyhow!("graph type named with {} not found", graph_name))?;
-        let graph_type = graph_container.graph_type();
-        let graph = get_graph_from_graph_container(graph_container)?;
 
-        export(graph, dir_path, manifest_rel_path, graph_type)?;
+        let (graph, graph_type) = context.with_statement_txn(|txn| {
+            let graph_container = schema
+                .get_graph(&graph_name, txn)
+                .map_err(|e| minigu_catalog::txn::error::CatalogTxnError::External(Box::new(e)))?
+                .ok_or_else(
+                    || minigu_catalog::txn::error::CatalogTxnError::IllegalState {
+                        reason: format!("graph type named with {} not found", graph_name),
+                    },
+                )?;
+            let graph_type = graph_container.graph_type();
+            let graph = get_graph_from_graph_container(graph_container)
+                .map_err(minigu_catalog::txn::error::CatalogTxnError::External)?;
+            Ok((graph, graph_type))
+        })?;
+
+        context.with_statement_txn(|txn| {
+            export(graph, dir_path, manifest_rel_path, graph_type, txn)
+                .map_err(minigu_catalog::txn::error::CatalogTxnError::External)?;
+            Ok(())
+        })?;
 
         Ok(vec![])
     })

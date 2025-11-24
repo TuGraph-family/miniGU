@@ -1,4 +1,5 @@
 use gql_parser::ast::Procedure;
+use minigu_catalog::txn::catalog_txn::CatalogTxn;
 use minigu_context::session::SessionContext;
 
 use crate::binder::Binder;
@@ -6,7 +7,6 @@ use crate::error::PlanResult;
 use crate::logical_planner::LogicalPlanner;
 use crate::optimizer::Optimizer;
 use crate::plan::PlanNode;
-
 pub mod binder;
 pub mod bound;
 pub mod error;
@@ -23,13 +23,20 @@ impl Planner {
         Self { context }
     }
 
-    pub fn plan_query(&self, query: &Procedure) -> PlanResult<PlanNode> {
+    pub fn plan_query(&mut self, txn: &CatalogTxn, query: &Procedure) -> PlanResult<PlanNode> {
+        let catalog = self.context.database().catalog();
+        let current_schema = self.context.current_schema.clone().map(|s| s as _);
+        let home_schema = self.context.home_schema.clone().map(|s| s as _);
+        let current_graph = self.context.current_graph.clone();
+        let home_graph = self.context.home_graph.clone();
+
         let binder = Binder::new(
-            self.context.database().catalog(),
-            self.context.current_schema.clone().map(|s| s as _),
-            self.context.home_schema.clone().map(|s| s as _),
-            self.context.current_graph.clone(),
-            self.context.home_graph.clone(),
+            catalog,
+            current_schema,
+            home_schema,
+            current_graph,
+            home_graph,
+            txn,
         );
         let bound = binder.bind(query)?;
         let logical_plan = LogicalPlanner::new().create_logical_plan(bound.clone())?;
