@@ -6,8 +6,10 @@
 //!
 //! Test cases can be found in `../../resources/gql`, and expected outputs can be found in
 //! `snapshots`.
+#[allow(unused_imports)]
 use gql_parser::parse_gql;
 use insta::internals::SettingsBindDropGuard;
+#[allow(unused_imports)]
 use insta::{Settings, assert_snapshot, assert_yaml_snapshot};
 use minigu::database::{Database, DatabaseConfig};
 use minigu::result::QueryResult;
@@ -106,6 +108,7 @@ fn extract_string_value(array: &arrow::array::ArrayRef, row_idx: usize) -> Strin
     }
 }
 
+#[allow(unused_macros)]
 macro_rules! add_parser_tests {
     ($dataset:expr, [ $($query:expr),* ]) => {
         paste! {
