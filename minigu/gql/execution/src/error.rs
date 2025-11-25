@@ -1,6 +1,7 @@
 use std::error::Error;
 
 use miette::Diagnostic;
+use minigu_catalog::error::CatalogError;
 use minigu_common::error::NotImplemented;
 use minigu_storage::error::StorageError;
 use thiserror::Error;
@@ -19,6 +20,9 @@ pub enum ExecutionError {
 
     #[error("storage error")]
     Storage(#[from] StorageError),
+
+    #[error("catalog error")]
+    Catalog(#[from] CatalogError),
 }
 
 pub type ExecutionResult<T> = Result<T, ExecutionError>;

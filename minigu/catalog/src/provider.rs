@@ -4,7 +4,9 @@ use std::sync::Arc;
 
 use downcast_rs::{DowncastSync, impl_downcast};
 use minigu_common::data_type::{DataSchemaRef, LogicalType};
-use minigu_common::types::{LabelId, PropertyId};
+use minigu_common::types::{LabelId, PropertyId, VectorIndexKey, VectorMetric};
+use serde::Serialize;
+use smol_str::SmolStr;
 
 use crate::error::CatalogResult;
 use crate::label_set::LabelSet;
@@ -17,6 +19,8 @@ pub type GraphTypeRef = Arc<dyn GraphTypeProvider>;
 pub type VertexTypeRef = Arc<dyn VertexTypeProvider>;
 pub type EdgeTypeRef = Arc<dyn EdgeTypeProvider>;
 pub type ProcedureRef = Arc<dyn ProcedureProvider>;
+pub type VectorIndexDefinitions = Vec<VectorIndexMetadata>;
+pub type GraphIndexCatalogRef = Arc<dyn GraphIndexCatalog>;
 
 /// The top-level catalog provider, responsible for managing multiple directories and schemas,
 /// resembling a UNIX filesystem.
@@ -62,12 +66,34 @@ pub trait SchemaProvider: Debug + Send + Sync + DowncastSync {
 
 impl_downcast!(sync SchemaProvider);
 
+/// Catalog responsible for managing index metadata.
+pub trait GraphIndexCatalog: Debug + Send + Sync {
+    /// Returns the metadata of a vector index by key, if present.
+    fn get_vector_index(&self, key: VectorIndexKey) -> CatalogResult<Option<VectorIndexMetadata>>;
+
+    /// Inserts a vector index metadata entry.
+    ///
+    /// Returns `false` if an index on the same `(label_id, property_id)` already exists.
+    fn insert_vector_index(&self, meta: VectorIndexMetadata) -> CatalogResult<bool>;
+
+    /// Removes a vector index metadata entry by key. Returns true if removed.
+    fn remove_vector_index(&self, key: VectorIndexKey) -> CatalogResult<bool>;
+
+    /// Returns all registered vector indices on the graph.
+    fn list_vector_indices(&self) -> CatalogResult<VectorIndexDefinitions>;
+}
+
 /// Represents a graph, which is an instance of a graph type.
 ///
 /// Use [`Arc::downcast`] to cast the trait object into the concrete type.
 pub trait GraphProvider: Debug + Send + Sync + Any {
     /// Returns the graph type of the graph.
     fn graph_type(&self) -> GraphTypeRef;
+
+    /// Returns the index catalog of the graph, if available.
+    fn index_catalog(&self) -> Option<GraphIndexCatalogRef> {
+        None
+    }
 
     /// Returns a reference to the underlying graph.
     fn as_any(&self) -> &dyn Any;
@@ -132,6 +158,14 @@ pub trait ProcedureProvider: Debug + Send + Sync + Any {
 
     /// Returns a reference to the underlying procedure.
     fn as_any(&self) -> &dyn Any;
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct VectorIndexMetadata {
+    pub name: SmolStr,
+    pub key: VectorIndexKey,
+    pub metric: VectorMetric,
+    pub dimension: usize,
 }
 
 #[derive(Debug, Clone)]
