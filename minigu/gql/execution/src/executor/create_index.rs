@@ -119,6 +119,7 @@ impl CreateIndexExecutor {
                 IndexCatalogError::Storage(e) => ExecutionError::from(e),
             })?;
         if !created && self.plan.if_not_exists {
+            // Another session may have created the same index between binding and execution.
             return Ok(());
         } else if !created {
             return Err(ExecutionError::Custom(Box::new(io::Error::new(

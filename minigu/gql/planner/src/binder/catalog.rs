@@ -142,6 +142,7 @@ impl Binder<'_> {
             name: statement.name.value().clone(),
             if_not_exists: statement.if_not_exists,
             index_key,
+            // Currently default to L2; parser/AST does not expose custom metrics yet.
             metric: VectorMetric::L2,
             dimension,
             label: label_name,
