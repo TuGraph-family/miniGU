@@ -100,6 +100,31 @@ pub enum BindError {
     #[error("invalid float literal: {0}")]
     InvalidFloatLiteral(String),
 
+    #[error("label {label} not found in current graph")]
+    LabelNotFound { label: SmolStr },
+
+    #[error("property {property} on label {label} not found")]
+    PropertyNotFound { label: SmolStr, property: SmolStr },
+
+    #[error("property binding {property_binding} must match index binding {binding}")]
+    CreateIndexBindingMismatch {
+        binding: SmolStr,
+        property_binding: SmolStr,
+    },
+
+    #[error("property {property} on label {label} must be a vector type, found {ty}")]
+    PropertyNotVector {
+        label: SmolStr,
+        property: SmolStr,
+        ty: LogicalType,
+    },
+
+    #[error("vector index on label {label} property {property} already exists")]
+    VectorIndexAlreadyExists { label: SmolStr, property: SmolStr },
+
+    #[error("vector index {name} not found")]
+    VectorIndexNotFound { name: SmolStr },
+
     // TODO: Remove this error variant
     #[error("unexpected bind error")]
     Unexpected,

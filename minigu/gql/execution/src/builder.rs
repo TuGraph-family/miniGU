@@ -14,6 +14,8 @@ use crate::evaluator::BoxedEvaluator;
 use crate::evaluator::column_ref::ColumnRef;
 use crate::evaluator::constant::Constant;
 use crate::evaluator::vector_distance::VectorDistanceEvaluator;
+use crate::executor::create_index::CreateIndexBuilder;
+use crate::executor::drop_index::DropIndexBuilder;
 use crate::executor::procedure_call::ProcedureCallBuilder;
 use crate::executor::sort::SortSpec;
 use crate::executor::vector_index_scan::VectorIndexScanBuilder;
@@ -38,6 +40,14 @@ impl ExecutorBuilder {
     fn build_executor(&self, physical_plan: &PlanNode) -> BoxedExecutor {
         let children = physical_plan.children();
         match physical_plan {
+            PlanNode::LogicalCreateIndex(create_index) => {
+                assert!(children.is_empty());
+                CreateIndexBuilder::new(self.session.clone(), create_index.clone()).into_executor()
+            }
+            PlanNode::LogicalDropIndex(drop_index) => {
+                assert!(children.is_empty());
+                DropIndexBuilder::new(self.session.clone(), drop_index.clone()).into_executor()
+            }
             PlanNode::PhysicalFilter(filter) => {
                 assert_eq!(children.len(), 1);
                 let schema = children[0].schema().expect("child should have a schema");
@@ -125,6 +135,14 @@ impl ExecutorBuilder {
                 assert!(children.is_empty());
                 VectorIndexScanBuilder::new(self.session.clone(), vector_scan.clone())
                     .into_executor()
+            }
+            PlanNode::PhysicalCreateIndex(create_index) => {
+                assert!(children.is_empty());
+                CreateIndexBuilder::new(self.session.clone(), create_index.clone()).into_executor()
+            }
+            PlanNode::PhysicalDropIndex(drop_index) => {
+                assert!(children.is_empty());
+                DropIndexBuilder::new(self.session.clone(), drop_index.clone()).into_executor()
             }
             _ => unreachable!(),
         }

@@ -508,6 +508,8 @@ pub enum TokenKind<'a> {
     Instant,
     #[token("infinity", ignore(case))]
     Infinity,
+    #[token("index", ignore(case))]
+    Index,
     #[token("number", ignore(case))]
     Number,
     #[token("numeric", ignore(case))]
@@ -1145,6 +1147,7 @@ impl TokenKind<'_> {
                 | Self::Grant
                 | Self::Instant
                 | Self::Infinity
+                | Self::Index
                 | Self::Number
                 | Self::Numeric
                 | Self::On

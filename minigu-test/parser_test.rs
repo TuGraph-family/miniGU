@@ -45,5 +45,7 @@ add_parser_tests!("utility", [
     "explain_logical_match",
     "explain_one_row",
     "explain_sort",
-    "explain_vector_index_scan"
+    "explain_create_index",
+    "explain_vector_index_scan",
+    "explain_drop_index"
 ]);

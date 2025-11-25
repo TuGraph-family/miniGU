@@ -1,15 +1,19 @@
 use gql_parser::ast::{
     CatalogModifyingStatement, CreateGraphStatement, CreateGraphTypeStatement,
-    CreateSchemaStatement, DropGraphStatement, DropGraphTypeStatement, DropSchemaStatement,
+    CreateIndexStatement, CreateSchemaStatement, DropGraphStatement, DropGraphTypeStatement,
+    DropIndexStatement, DropSchemaStatement,
 };
+use minigu_catalog::label_set::LabelSet;
+use minigu_common::data_type::LogicalType;
 use minigu_common::error::not_implemented;
+use minigu_common::types::{VectorIndexKey, VectorMetric};
 
 use super::Binder;
 use super::error::{BindError, BindResult};
 use crate::bound::{
     BoundCatalogModifyingStatement, BoundCreateGraphStatement, BoundCreateGraphTypeStatement,
-    BoundCreateSchemaStatement, BoundDropGraphStatement, BoundDropGraphTypeStatement,
-    BoundDropSchemaStatement,
+    BoundCreateIndexStatement, BoundCreateSchemaStatement, BoundDropGraphStatement,
+    BoundDropGraphTypeStatement, BoundDropIndexStatement, BoundDropSchemaStatement,
 };
 
 impl Binder<'_> {
@@ -40,6 +44,12 @@ impl Binder<'_> {
             CatalogModifyingStatement::DropGraph(statement) => self
                 .bind_drop_graph_statement(statement)
                 .map(BoundCatalogModifyingStatement::DropGraph),
+            CatalogModifyingStatement::CreateIndex(statement) => self
+                .bind_create_index_statement(statement)
+                .map(BoundCatalogModifyingStatement::CreateIndex),
+            CatalogModifyingStatement::DropIndex(statement) => self
+                .bind_drop_index_statement(statement)
+                .map(BoundCatalogModifyingStatement::DropIndex),
             CatalogModifyingStatement::CreateGraphType(statement) => self
                 .bind_create_graph_type_statement(statement)
                 .map(BoundCatalogModifyingStatement::CreateGraphType),
@@ -61,6 +71,120 @@ impl Binder<'_> {
         statement: &DropSchemaStatement,
     ) -> BindResult<BoundDropSchemaStatement> {
         not_implemented("drop schema statement", None)
+    }
+
+    pub fn bind_create_index_statement(
+        &mut self,
+        statement: &CreateIndexStatement,
+    ) -> BindResult<BoundCreateIndexStatement> {
+        if statement.binding.value() != statement.property_binding.value() {
+            return Err(BindError::CreateIndexBindingMismatch {
+                binding: statement.binding.value().clone(),
+                property_binding: statement.property_binding.value().clone(),
+            });
+        }
+
+        let graph = self
+            .current_graph
+            .clone()
+            .ok_or(BindError::CurrentGraphNotSpecified)?;
+        let graph_type = graph.graph_type();
+
+        let label_name = statement.label.value().clone();
+        let label_id = graph_type
+            .get_label_id(label_name.as_str())?
+            .ok_or_else(|| BindError::LabelNotFound {
+                label: label_name.clone(),
+            })?;
+
+        let vertex_type = graph_type
+            .get_vertex_type(&LabelSet::from_iter([label_id]))?
+            .ok_or_else(|| BindError::LabelNotFound {
+                label: label_name.clone(),
+            })?;
+
+        let property_name = statement.property.value().clone();
+        let (property_id, property) = vertex_type
+            .get_property(property_name.as_str())?
+            .ok_or_else(|| BindError::PropertyNotFound {
+                label: label_name.clone(),
+                property: property_name.clone(),
+            })?;
+
+        let dimension = match property.logical_type() {
+            LogicalType::Vector(dimension) => *dimension,
+            ty => {
+                return Err(BindError::PropertyNotVector {
+                    label: label_name.clone(),
+                    property: property_name.clone(),
+                    ty: ty.clone(),
+                });
+            }
+        };
+
+        let index_key = VectorIndexKey::new(label_id, property_id);
+
+        // Consult the graph's index metadata via index_catalog.
+        let existing = graph
+            .index_catalog()
+            .map(|c| c.get_vector_index(index_key))
+            .transpose()?
+            .flatten();
+        let no_op = existing.is_some() && statement.if_not_exists;
+        if existing.is_some() && !statement.if_not_exists {
+            return Err(BindError::VectorIndexAlreadyExists {
+                label: label_name.clone(),
+                property: property_name.clone(),
+            });
+        }
+
+        Ok(BoundCreateIndexStatement {
+            name: statement.name.value().clone(),
+            if_not_exists: statement.if_not_exists,
+            index_key,
+            metric: VectorMetric::L2,
+            dimension,
+            label: label_name,
+            property: property_name,
+            no_op,
+        })
+    }
+
+    pub fn bind_drop_index_statement(
+        &mut self,
+        statement: &DropIndexStatement,
+    ) -> BindResult<BoundDropIndexStatement> {
+        let graph = self
+            .current_graph
+            .clone()
+            .ok_or(BindError::CurrentGraphNotSpecified)?;
+        let indices = graph
+            .index_catalog()
+            .map(|c| c.list_vector_indices())
+            .transpose()?
+            .unwrap_or_default();
+        let found = indices
+            .iter()
+            .find(|m| m.name.as_str() == statement.name.value());
+        match found {
+            Some(meta) => Ok(BoundDropIndexStatement {
+                name: statement.name.value().clone(),
+                if_exists: statement.if_exists,
+                index_key: Some(meta.key),
+                metadata: Some(meta.clone()),
+                no_op: false,
+            }),
+            None if statement.if_exists => Ok(BoundDropIndexStatement {
+                name: statement.name.value().clone(),
+                if_exists: true,
+                index_key: None,
+                metadata: None,
+                no_op: true,
+            }),
+            None => Err(BindError::VectorIndexNotFound {
+                name: statement.name.value().clone(),
+            }),
+        }
     }
 
     pub fn bind_create_graph_statement(

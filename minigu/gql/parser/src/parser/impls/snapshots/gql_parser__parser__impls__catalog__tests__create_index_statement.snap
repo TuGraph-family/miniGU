@@ -1,0 +1,29 @@
+---
+source: minigu/gql/parser/src/parser/impls/catalog.rs
+assertion_line: 385
+expression: parsed
+---
+- CreateIndex:
+    name:
+      - idx_embeddings
+      - start: 26
+        end: 40
+    if_not_exists: true
+    binding:
+      - n
+      - start: 72
+        end: 73
+    label:
+      - Movie
+      - start: 74
+        end: 79
+    property_binding:
+      - n
+      - start: 97
+        end: 98
+    property:
+      - embedding
+      - start: 99
+        end: 108
+- start: 13
+  end: 109

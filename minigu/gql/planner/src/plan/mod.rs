@@ -1,4 +1,6 @@
 pub mod call;
+pub mod create_index;
+pub mod drop_index;
 pub mod filter;
 pub mod limit;
 pub mod logical_match;
@@ -14,6 +16,8 @@ use minigu_common::data_type::DataSchemaRef;
 use serde::Serialize;
 
 use crate::plan::call::Call;
+use crate::plan::create_index::CreateIndex;
+use crate::plan::drop_index::DropIndex;
 use crate::plan::filter::Filter;
 use crate::plan::limit::Limit;
 use crate::plan::logical_match::LogicalMatch;
@@ -77,6 +81,8 @@ pub enum PlanNode {
     LogicalSort(Arc<Sort>),
     LogicalLimit(Arc<Limit>),
     LogicalVectorIndexScan(Arc<VectorIndexScan>),
+    LogicalCreateIndex(Arc<CreateIndex>),
+    LogicalDropIndex(Arc<DropIndex>),
 
     PhysicalFilter(Arc<Filter>),
     PhysicalProject(Arc<Project>),
@@ -92,6 +98,8 @@ pub enum PlanNode {
     //  to improve performance and reduce unnecessary data loading.
     PhysicalNodeScan(Arc<PhysicalNodeScan>),
     // PhysicalCatalogModify(Arc<PhysicalCatalogModify>)
+    PhysicalCreateIndex(Arc<CreateIndex>),
+    PhysicalDropIndex(Arc<DropIndex>),
 }
 
 impl PlanData for PlanNode {
@@ -104,6 +112,9 @@ impl PlanData for PlanNode {
             PlanNode::LogicalOneRow(node) => node.base(),
             PlanNode::LogicalSort(node) => node.base(),
             PlanNode::LogicalLimit(node) => node.base(),
+            PlanNode::LogicalVectorIndexScan(node) => node.base(),
+            PlanNode::LogicalCreateIndex(node) => node.base(),
+            PlanNode::LogicalDropIndex(node) => node.base(),
 
             PlanNode::PhysicalFilter(node) => node.base(),
             PlanNode::PhysicalProject(node) => node.base(),
@@ -112,8 +123,9 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalSort(node) => node.base(),
             PlanNode::PhysicalLimit(node) => node.base(),
             PlanNode::PhysicalNodeScan(node) => node.base(),
-            PlanNode::LogicalVectorIndexScan(node) => node.base(),
             PlanNode::PhysicalVectorIndexScan(node) => node.base(),
+            PlanNode::PhysicalCreateIndex(node) => node.base(),
+            PlanNode::PhysicalDropIndex(node) => node.base(),
         }
     }
 
@@ -127,6 +139,8 @@ impl PlanData for PlanNode {
             PlanNode::LogicalSort(node) => node.explain(indent),
             PlanNode::LogicalLimit(node) => node.explain(indent),
             PlanNode::LogicalVectorIndexScan(node) => node.explain(indent),
+            PlanNode::LogicalCreateIndex(node) => node.explain(indent),
+            PlanNode::LogicalDropIndex(node) => node.explain(indent),
 
             PlanNode::PhysicalFilter(node) => node.explain(indent),
             PlanNode::PhysicalProject(node) => node.explain(indent),
@@ -136,6 +150,8 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalLimit(node) => node.explain(indent),
             PlanNode::PhysicalVectorIndexScan(node) => node.explain(indent),
             PlanNode::PhysicalNodeScan(node) => node.explain(indent),
+            PlanNode::PhysicalCreateIndex(node) => node.explain(indent),
+            PlanNode::PhysicalDropIndex(node) => node.explain(indent),
         }
     }
 }
