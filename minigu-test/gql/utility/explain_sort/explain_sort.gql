@@ -1,1 +1,0 @@
-EXPLAIN MATCH (n) RETURN n ORDER BY n.age

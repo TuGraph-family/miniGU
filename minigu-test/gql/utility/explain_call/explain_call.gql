@@ -1,1 +1,0 @@
-EXPLAIN CALL echo("hello world")

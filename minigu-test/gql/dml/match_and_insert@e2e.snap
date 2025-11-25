@@ -1,0 +1,16 @@
+---
+source: minigu-test/src/insta_test.rs
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "MATCH (a { firstname: 'Robert' }), (b { lastname: 'Kowalski' })
+INSERT (a)-[:GRADUATED]->(b)",
+            span: 0..5,
+            position: (
+                1,
+                1,
+            ),
+        },
+    ),
+)

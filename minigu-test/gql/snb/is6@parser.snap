@@ -1,0 +1,288 @@
+---
+source: minigu-test/src/insta_test.rs
+---
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - m
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label: ~
+                                                                predicate:
+                                                                  - Where:
+                                                                      - Binary:
+                                                                          op:
+                                                                            - Eq
+                                                                            - start: 20
+                                                                              end: 21
+                                                                          left:
+                                                                            - Property:
+                                                                                source:
+                                                                                  - Variable: m
+                                                                                  - start: 15
+                                                                                    end: 16
+                                                                                trailing_names:
+                                                                                  - - id
+                                                                                    - start: 17
+                                                                                      end: 19
+                                                                            - start: 15
+                                                                              end: 19
+                                                                          right:
+                                                                            - Value:
+                                                                                Literal:
+                                                                                  Numeric:
+                                                                                    Integer:
+                                                                                      - kind: Decimal
+                                                                                        integer: "274877907096"
+                                                                                      - start: 22
+                                                                                        end: 34
+                                                                            - start: 22
+                                                                              end: 34
+                                                                      - start: 15
+                                                                        end: 34
+                                                                  - start: 9
+                                                                    end: 34
+                                                          - start: 6
+                                                            end: 35
+                                                        - - Quantified:
+                                                              path:
+                                                                - Pattern:
+                                                                    Edge:
+                                                                      kind: Right
+                                                                      filler:
+                                                                        variable:
+                                                                          - e1
+                                                                          - start: 37
+                                                                            end: 39
+                                                                        label:
+                                                                          - Label: replyOf
+                                                                          - start: 40
+                                                                            end: 47
+                                                                        predicate: ~
+                                                                - start: 35
+                                                                  end: 50
+                                                              quantifier:
+                                                                - Asterisk
+                                                                - start: 50
+                                                                  end: 51
+                                                          - start: 35
+                                                            end: 51
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - p
+                                                                  - start: 52
+                                                                    end: 53
+                                                                label:
+                                                                  - Label: Post
+                                                                  - start: 54
+                                                                    end: 58
+                                                                predicate: ~
+                                                          - start: 51
+                                                            end: 59
+                                                        - - Pattern:
+                                                              Edge:
+                                                                kind: Left
+                                                                filler:
+                                                                  variable:
+                                                                    - e2
+                                                                    - start: 62
+                                                                      end: 64
+                                                                  label:
+                                                                    - Label: containerOf
+                                                                    - start: 65
+                                                                      end: 76
+                                                                  predicate: ~
+                                                          - start: 59
+                                                            end: 78
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - forum
+                                                                  - start: 79
+                                                                    end: 84
+                                                                label:
+                                                                  - Label: Forum
+                                                                  - start: 85
+                                                                    end: 90
+                                                                predicate: ~
+                                                          - start: 78
+                                                            end: 91
+                                                        - - Pattern:
+                                                              Edge:
+                                                                kind: Right
+                                                                filler:
+                                                                  variable:
+                                                                    - e3
+                                                                    - start: 93
+                                                                      end: 95
+                                                                  label:
+                                                                    - Label: hasModerator
+                                                                    - start: 96
+                                                                      end: 108
+                                                                  predicate: ~
+                                                          - start: 91
+                                                            end: 111
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - moderator
+                                                                  - start: 112
+                                                                    end: 121
+                                                                label:
+                                                                  - Label: Person
+                                                                  - start: 122
+                                                                    end: 128
+                                                                predicate: ~
+                                                          - start: 111
+                                                            end: 129
+                                                    - start: 6
+                                                      end: 129
+                                                - start: 6
+                                                  end: 129
+                                            keep: ~
+                                            where_clause: ~
+                                          - start: 6
+                                            end: 129
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 129
+                                - start: 0
+                                  end: 129
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: forum
+                                                        - start: 141
+                                                          end: 146
+                                                      trailing_names:
+                                                        - - id
+                                                          - start: 147
+                                                            end: 149
+                                                  - start: 141
+                                                    end: 149
+                                                alias:
+                                                  - forumId
+                                                  - start: 153
+                                                    end: 160
+                                              - start: 141
+                                                end: 160
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: forum
+                                                        - start: 166
+                                                          end: 171
+                                                      trailing_names:
+                                                        - - title
+                                                          - start: 172
+                                                            end: 177
+                                                  - start: 166
+                                                    end: 177
+                                                alias:
+                                                  - forumTitle
+                                                  - start: 181
+                                                    end: 191
+                                              - start: 166
+                                                end: 191
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: moderator
+                                                        - start: 197
+                                                          end: 206
+                                                      trailing_names:
+                                                        - - id
+                                                          - start: 207
+                                                            end: 209
+                                                  - start: 197
+                                                    end: 209
+                                                alias:
+                                                  - moderatorId
+                                                  - start: 213
+                                                    end: 224
+                                              - start: 197
+                                                end: 224
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: moderator
+                                                        - start: 230
+                                                          end: 239
+                                                      trailing_names:
+                                                        - - firstName
+                                                          - start: 240
+                                                            end: 249
+                                                  - start: 230
+                                                    end: 249
+                                                alias:
+                                                  - moderatorFirstName
+                                                  - start: 253
+                                                    end: 271
+                                              - start: 230
+                                                end: 271
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: moderator
+                                                        - start: 277
+                                                          end: 286
+                                                      trailing_names:
+                                                        - - lastName
+                                                          - start: 287
+                                                            end: 295
+                                                  - start: 277
+                                                    end: 295
+                                                alias:
+                                                  - moderatorLastName
+                                                  - start: 299
+                                                    end: 316
+                                              - start: 277
+                                                end: 316
+                                        - start: 141
+                                          end: 316
+                                      group_by: ~
+                                    - start: 130
+                                      end: 316
+                                  order_by: ~
+                              - start: 130
+                                end: 316
+                  - start: 0
+                    end: 316
+                next_statements: []
+              - start: 0
+                end: 316
+            end: ~
+        - start: 0
+          end: 316
+      session_close: false
+    - start: 0
+      end: 316

@@ -1,0 +1,42 @@
+---
+source: minigu-test/src/insta_test.rs
+---
+Error: NotImplemented(
+    NotImplemented {
+        feature: "not allowed there",
+        issue: TrackingIssue(
+            None,
+        ),
+    },
+)
+---
+Error: NotImplemented(
+    NotImplemented {
+        feature: "not allowed there",
+        issue: TrackingIssue(
+            None,
+        ),
+    },
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "SESSION SET VALUE IF NOT EXISTS $exampleProperty = DATE '2022-10-10'",
+            span: 8..11,
+            position: (
+                1,
+                9,
+            ),
+        },
+    ),
+)
+---
+Error: NotImplemented(
+    NotImplemented {
+        feature: "not implemented ",
+        issue: TrackingIssue(
+            None,
+        ),
+    },
+)
