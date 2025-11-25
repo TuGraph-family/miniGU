@@ -52,7 +52,7 @@ impl PlanData for CreateIndex {
     fn explain(&self, indent: usize) -> Option<String> {
         let indent_str = " ".repeat(indent * 2);
         let mut output = format!(
-            "{}CreateIndex: name={}, binding=({}:{}) metric={:?} dim={} if_not_exists={} no_op={}",
+            "{}CreateIndex: name={}, binding=({}:{}) metric={:?} dim={} if_not_exists={} no_op={}\n",
             indent_str,
             self.name,
             self.label,

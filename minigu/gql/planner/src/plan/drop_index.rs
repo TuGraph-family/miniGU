@@ -43,7 +43,7 @@ impl PlanData for DropIndex {
     fn explain(&self, indent: usize) -> Option<String> {
         let indent_str = " ".repeat(indent * 2);
         let mut output = format!(
-            "{}DropIndex: name={} if_exists={} no_op={} key_present={}",
+            "{}DropIndex: name={} if_exists={} no_op={} key_present={}\n",
             indent_str,
             self.name,
             self.if_exists,

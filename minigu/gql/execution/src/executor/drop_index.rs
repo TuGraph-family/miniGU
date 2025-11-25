@@ -7,7 +7,6 @@ use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::session::SessionContext;
 use minigu_planner::plan::drop_index::DropIndex;
 use minigu_storage::tp::MemoryGraph;
-use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
 
 use super::{BoxedExecutor, Executor};
 use crate::error::{ExecutionError, ExecutionResult};
@@ -79,22 +78,8 @@ impl DropIndexExecutor {
         let graph = match container.graph_storage() {
             GraphStorage::Memory(graph) => Arc::clone(graph),
         };
-        let txn = graph
-            .txn_manager()
-            .begin_transaction(IsolationLevel::Serializable)
-            .map_err(ExecutionError::from)?;
 
-        let result = self.drop_index(graph.as_ref(), container);
-        match result {
-            Ok(()) => {
-                txn.commit().map_err(ExecutionError::from)?;
-                Ok(())
-            }
-            Err(err) => {
-                let _ = txn.abort();
-                Err(err)
-            }
-        }
+        self.drop_index(graph.as_ref(), container)
     }
 
     fn drop_index(&self, graph: &MemoryGraph, container: &GraphContainer) -> ExecutionResult<()> {

@@ -40,14 +40,6 @@ impl ExecutorBuilder {
     fn build_executor(&self, physical_plan: &PlanNode) -> BoxedExecutor {
         let children = physical_plan.children();
         match physical_plan {
-            PlanNode::LogicalCreateIndex(create_index) => {
-                assert!(children.is_empty());
-                CreateIndexBuilder::new(self.session.clone(), create_index.clone()).into_executor()
-            }
-            PlanNode::LogicalDropIndex(drop_index) => {
-                assert!(children.is_empty());
-                DropIndexBuilder::new(self.session.clone(), drop_index.clone()).into_executor()
-            }
             PlanNode::PhysicalFilter(filter) => {
                 assert_eq!(children.len(), 1);
                 let schema = children[0].schema().expect("child should have a schema");

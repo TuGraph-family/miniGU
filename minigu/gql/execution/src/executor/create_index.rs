@@ -1,7 +1,7 @@
 use std::io;
 use std::sync::Arc;
 
-use minigu_catalog::provider::{GraphIndexCatalogRef, VectorIndexMetadata};
+use minigu_catalog::provider::VectorIndexMetadata;
 use minigu_common::data_chunk::DataChunk;
 use minigu_context::error::IndexCatalogError;
 use minigu_context::graph::{GraphContainer, GraphStorage};
@@ -82,18 +82,12 @@ impl CreateIndexExecutor {
         let graph = match container.graph_storage() {
             GraphStorage::Memory(graph) => Arc::clone(graph),
         };
-        let index_catalog = provider.index_catalog().ok_or_else(|| {
-            ExecutionError::Custom(Box::new(io::Error::new(
-                io::ErrorKind::InvalidData,
-                "index catalog is not available for current graph",
-            )))
-        })?;
         let txn = graph
             .txn_manager()
             .begin_transaction(IsolationLevel::Serializable)
             .map_err(ExecutionError::from)?;
 
-        let result = self.build_index(graph.as_ref(), &txn, container, index_catalog);
+        let result = self.build_index(graph.as_ref(), &txn, container);
         match result {
             Ok(()) => {
                 txn.commit().map_err(ExecutionError::from)?;
@@ -111,24 +105,7 @@ impl CreateIndexExecutor {
         graph: &MemoryGraph,
         txn: &Arc<MemTransaction>,
         container: &GraphContainer,
-        index_catalog: GraphIndexCatalogRef,
     ) -> ExecutionResult<()> {
-        if index_catalog
-            .get_vector_index(self.plan.index_key)?
-            .is_some()
-        {
-            if self.plan.if_not_exists {
-                return Ok(());
-            }
-            return Err(ExecutionError::Custom(Box::new(io::Error::new(
-                io::ErrorKind::AlreadyExists,
-                format!(
-                    "vector index on label {} property {} already exists",
-                    self.plan.label, self.plan.property
-                ),
-            ))));
-        }
-
         let meta = VectorIndexMetadata {
             name: self.plan.name.clone(),
             key: self.plan.index_key,
