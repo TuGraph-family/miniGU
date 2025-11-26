@@ -28,10 +28,7 @@ impl LogicalPlanner {
             }
             BoundStatement::Query(statement) => self.plan_composite_query_statement(statement),
             BoundStatement::Utility(utility) => match utility.as_ref() {
-                BoundUtilityStatement::Explain(explain) => {
-                    let plan = self.plan_statement(*explain.clone())?;
-                    Ok(plan)
-                }
+                BoundUtilityStatement::Explain(explain) => self.plan_explain_statement(explain),
             },
         }
     }
