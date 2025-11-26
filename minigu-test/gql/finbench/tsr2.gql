@@ -28,4 +28,4 @@ RETURN
     numEdge1,
     round(sumEdge2Amount * 1000) / 1000 as sumEdge2Amount,
     CASE WHEN maxEdge2Amount < 0 THEN -1 ELSE round(maxEdge2Amount * 1000) / 1000 END as maxEdge2Amount,
-    numEdge2
+    numEdge2;

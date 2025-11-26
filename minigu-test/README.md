@@ -4,7 +4,9 @@ This crate contains system-level tests for miniGU.
 
 ## Test Framework
 
-We integrated two test framework in this crate: `insta` and `sqllogictest`. Generally, `insta` is more flexible and customizable. It also has command line `cargo insta` for reviewing and testing, which is more friendly when coding for new queries.
+We integrated two test framework in this crate: `insta` and `sqllogictest`. Generally, `insta` is more flexible and customizable. It also has command line `cargo insta` for reviewing and testing, which is more friendly when coding for new queries. `sqllogictest` is also a nice framework but is more suitable for a system with complete DSL implementation.
+
+In short, we use `insta` for 
 
 ## Insta Usage
 

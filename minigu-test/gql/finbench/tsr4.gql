@@ -14,4 +14,4 @@ RETURN
     dstId,
     numEdges,
     round(sumAmount * 1000) / 1000 as sumAmount
-ORDER BY sumAmount DESC, dstId ASC
+ORDER BY sumAmount DESC, dstId ASC;

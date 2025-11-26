@@ -1,2 +1,2 @@
 MATCH (a { firstname: 'Robert' }), (b { lastname: 'Kowalski' })
-INSERT (a)-[:GRADUATED]->(b)
+INSERT (a)-[:GRADUATED]->(b);

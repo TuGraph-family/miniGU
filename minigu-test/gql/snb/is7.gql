@@ -12,4 +12,4 @@ RETURN
     p.id AS replyAuthorId, p.firstName AS replyAuthorFirstName,
     p.lastName AS replyAuthorLastName,
     CASE WHEN r=null THEN false ELSE true END AS replyAuthorKnowsOriginalMessageAuthor
-ORDER BY commentCreationDate DESC, replyAuthorId
+ORDER BY commentCreationDate DESC, replyAuthorId;
