@@ -16,7 +16,7 @@ use minigu_storage::tp::MemoryGraph;
 use minigu_transaction::IsolationLevel::Serializable;
 use minigu_transaction::{GraphTxnManager, Transaction};
 
-/// Create a test graph data with the given name in the current schema.
+/// Creates a test graph with multiple vertex types (PERSON, COMPANY, CITY) and edge types (FRIEND, WORKS_AT, LOCATED_IN) with sample data.
 pub fn build_procedure() -> Procedure {
     let parameters = vec![LogicalType::String, LogicalType::Int8];
 
