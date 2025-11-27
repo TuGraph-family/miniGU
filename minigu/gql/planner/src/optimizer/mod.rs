@@ -77,7 +77,12 @@ fn extract_path_pattern(
                         let direction = match e.kind {
                             BoundEdgePatternKind::Right => ExpandDirection::Outgoing,
                             BoundEdgePatternKind::Left => ExpandDirection::Incoming,
-                            _ => unreachable!(),
+                            _ => {
+                                return not_implemented(
+                                    &format!("edge direction {:?} is not supported in path pattern", e.kind),
+                                    None,
+                                );
+                            }
                         };
                         edges.push((e.var.clone(), edge_labels, direction));
                     }
