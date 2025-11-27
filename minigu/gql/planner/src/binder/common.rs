@@ -185,7 +185,7 @@ impl Binder<'_> {
             ElementPattern::Edge { kind, filler } => match kind {
                 EdgePatternKind::Any => not_implemented("any edge pattern", None),
                 EdgePatternKind::Left => not_implemented("left edge pattern", None),
-                EdgePatternKind::LeftRight => not_implemented("left edge pattern", None),
+                EdgePatternKind::LeftRight => not_implemented("left-right edge pattern", None),
                 EdgePatternKind::LeftUndirected => {
                     not_implemented("left undirected edge pattern", None)
                 }
