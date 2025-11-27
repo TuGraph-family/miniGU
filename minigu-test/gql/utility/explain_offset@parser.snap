@@ -1,0 +1,102 @@
+---
+source: minigu-test/src/insta_test.rs
+---
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Utility:
+                      Explain:
+                        statement:
+                          - Query:
+                              Primary:
+                                Ambient:
+                                  Parts:
+                                    parts:
+                                      - - Match:
+                                            Simple:
+                                              - pattern:
+                                                  - match_mode: ~
+                                                    patterns:
+                                                      - - variable: ~
+                                                          prefix: ~
+                                                          expr:
+                                                            - Concat:
+                                                                - - Pattern:
+                                                                      Node:
+                                                                        variable:
+                                                                          - n
+                                                                          - start: 15
+                                                                            end: 16
+                                                                        label: ~
+                                                                        predicate: ~
+                                                                  - start: 14
+                                                                    end: 17
+                                                            - start: 14
+                                                              end: 17
+                                                        - start: 14
+                                                          end: 17
+                                                    keep: ~
+                                                    where_clause: ~
+                                                  - start: 14
+                                                    end: 17
+                                                yield_clause: []
+                                              - start: 14
+                                                end: 17
+                                        - start: 8
+                                          end: 17
+                                    result:
+                                      - Return:
+                                          statement:
+                                            - quantifier: ~
+                                              items:
+                                                - Items:
+                                                    - - value:
+                                                          - Variable: n
+                                                          - start: 25
+                                                            end: 26
+                                                        alias: ~
+                                                      - start: 25
+                                                        end: 26
+                                                - start: 25
+                                                  end: 26
+                                              group_by: ~
+                                            - start: 18
+                                              end: 26
+                                          order_by:
+                                            - order_by: []
+                                              offset:
+                                                - Integer:
+                                                    kind: Decimal
+                                                    integer: "2"
+                                                - start: 34
+                                                  end: 35
+                                              limit:
+                                                - count:
+                                                    Integer:
+                                                      kind: Decimal
+                                                      integer: "3"
+                                                  approximate: false
+                                                - start: 36
+                                                  end: 43
+                                            - start: 27
+                                              end: 43
+                                      - start: 18
+                                        end: 43
+                          - start: 8
+                            end: 43
+                  - start: 0
+                    end: 43
+                next_statements: []
+              - start: 0
+                end: 43
+            end: ~
+        - start: 0
+          end: 43
+      session_close: false
+    - start: 0
+      end: 43

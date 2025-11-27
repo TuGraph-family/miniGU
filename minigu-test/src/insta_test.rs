@@ -214,6 +214,7 @@ add_parser_tests!("utility", [
     "explain_call",
     "explain_filter",
     "explain_limit",
+    "explain_offset",
     "explain_logical_match",
     "explain_one_row",
     "explain_sort",
