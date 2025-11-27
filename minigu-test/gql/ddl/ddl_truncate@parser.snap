@@ -1,0 +1,710 @@
+---
+source: minigu-test/src/insta_test.rs
+---
+- Err:
+    Unexpected:
+      input: "CREATE GRAPH test_graph {\n  (Entity: EntityLabel {\n    id STRING,\n    entity_type STRING,\n    deleted INT64,\n    gen_time INT64,\n    name STRING,\n    guid STRING,\n    status INT64,\n    props STRING,\n    test1 INT64,\n    test2 INT64,\n    test3 STRING,\n    PRIMARY KEY (id)\n  }),\n  (Entity)-[Rel: RelLabel {\n    timestamp\tINT64,\n    deleted\tINT64,\n    rel_scene\tSTRING,\n    rel_type\tSTRING,\n    gen_time\tINT64,\n    rel_chain\tSTRING,\n    dst_guid\tSTRING,\n    src_guid\tSTRING,\n    status\tINT64,\n    props\tSTRING,\n    PRIMARY KEY (SOURCE_PRIMARY_KEY, timestamp, DESTINATION_PRIMARY_KEY)\n  }]->(Entity),\n}"
+      span:
+        start: 0
+        end: 6
+      position:
+        - 1
+        - 1
+- Err:
+    Unexpected:
+      input: USE GRAPH test_graph
+      span:
+        start: 0
+        end: 3
+      position:
+        - 1
+        - 1
+- Err:
+    Unexpected:
+      input: "INSERT (n:Entity {id:'table1001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table1001',status:1,props:'table1001',test1:1001,test2:1,test3:'table1001'})"
+      span:
+        start: 0
+        end: 6
+      position:
+        - 1
+        - 1
+- Err:
+    Unexpected:
+      input: "INSERT (n:Entity {id:'table10001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table1001',status:1,props:'table1001',test1:1001,test2:1,test3:'table1001'})"
+      span:
+        start: 0
+        end: 6
+      position:
+        - 1
+        - 1
+- Err:
+    Unexpected:
+      input: "MATCH (n:Entity{id:'table10001'}), (m:Entity{id:'table1001'})\nINSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'table2table',gen_time:0,rel_chain:'0',dst_guid:'table1001',src_guid:'table10001',status:0,props:'table10001_table2table_table1001'}]->(m)"
+      span:
+        start: 0
+        end: 5
+      position:
+        - 1
+        - 1
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - n
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: Entity
+                                                                  - start: 9
+                                                                    end: 15
+                                                                predicate:
+                                                                  - Property:
+                                                                      - - name:
+                                                                            - id
+                                                                            - start: 18
+                                                                              end: 20
+                                                                          value:
+                                                                            - Value:
+                                                                                Literal:
+                                                                                  String:
+                                                                                    kind: Char
+                                                                                    literal: table1001
+                                                                            - start: 22
+                                                                              end: 33
+                                                                        - start: 18
+                                                                          end: 33
+                                                                  - start: 17
+                                                                    end: 34
+                                                          - start: 6
+                                                            end: 35
+                                                    - start: 6
+                                                      end: 35
+                                                - start: 6
+                                                  end: 35
+                                            keep: ~
+                                            where_clause: ~
+                                          - start: 6
+                                            end: 35
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 35
+                                - start: 0
+                                  end: 35
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: n
+                                                        - start: 43
+                                                          end: 44
+                                                      trailing_names:
+                                                        - - id
+                                                          - start: 45
+                                                            end: 47
+                                                  - start: 43
+                                                    end: 47
+                                                alias: ~
+                                              - start: 43
+                                                end: 47
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: n
+                                                        - start: 49
+                                                          end: 50
+                                                      trailing_names:
+                                                        - - name
+                                                          - start: 51
+                                                            end: 55
+                                                  - start: 49
+                                                    end: 55
+                                                alias: ~
+                                              - start: 49
+                                                end: 55
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: n
+                                                        - start: 57
+                                                          end: 58
+                                                      trailing_names:
+                                                        - - entity_type
+                                                          - start: 59
+                                                            end: 70
+                                                  - start: 57
+                                                    end: 70
+                                                alias: ~
+                                              - start: 57
+                                                end: 70
+                                        - start: 43
+                                          end: 70
+                                      group_by: ~
+                                    - start: 36
+                                      end: 70
+                                  order_by: ~
+                              - start: 36
+                                end: 70
+                  - start: 0
+                    end: 70
+                next_statements: []
+              - start: 0
+                end: 70
+            end: ~
+        - start: 0
+          end: 70
+      session_close: false
+    - start: 0
+      end: 70
+- Err:
+    Unexpected:
+      input: "MATCH (n:Entity{id:'table10001'})-[b:Rel]->(m:Entity{id:'table1001'}) RETURN n.id, b.timestamp, b.dst_guid, b.src_guid,m.id"
+      span:
+        start: 84
+        end: 85
+      position:
+        - 1
+        - 85
+- Err:
+    Unexpected:
+      input: truncate edge Rel
+      span:
+        start: 0
+        end: 8
+      position:
+        - 1
+        - 1
+- Err:
+    Unexpected:
+      input: "MATCH (n:Entity{id:'table10001'})-[b:Rel]->(m:Entity{id:'table1001'}) RETURN n.id, b.timestamp, b.dst_guid, b.src_guid,m.id"
+      span:
+        start: 84
+        end: 85
+      position:
+        - 1
+        - 85
+- Err:
+    Unexpected:
+      input: truncate node Entity
+      span:
+        start: 0
+        end: 8
+      position:
+        - 1
+        - 1
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - n
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: Entity
+                                                                  - start: 9
+                                                                    end: 15
+                                                                predicate:
+                                                                  - Property:
+                                                                      - - name:
+                                                                            - id
+                                                                            - start: 16
+                                                                              end: 18
+                                                                          value:
+                                                                            - Value:
+                                                                                Literal:
+                                                                                  String:
+                                                                                    kind: Char
+                                                                                    literal: table1001
+                                                                            - start: 19
+                                                                              end: 30
+                                                                        - start: 16
+                                                                          end: 30
+                                                                  - start: 15
+                                                                    end: 31
+                                                          - start: 6
+                                                            end: 32
+                                                    - start: 6
+                                                      end: 32
+                                                - start: 6
+                                                  end: 32
+                                            keep: ~
+                                            where_clause: ~
+                                          - start: 6
+                                            end: 32
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 32
+                                - start: 0
+                                  end: 32
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: n
+                                                        - start: 40
+                                                          end: 41
+                                                      trailing_names:
+                                                        - - id
+                                                          - start: 42
+                                                            end: 44
+                                                  - start: 40
+                                                    end: 44
+                                                alias: ~
+                                              - start: 40
+                                                end: 44
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: n
+                                                        - start: 46
+                                                          end: 47
+                                                      trailing_names:
+                                                        - - name
+                                                          - start: 48
+                                                            end: 52
+                                                  - start: 46
+                                                    end: 52
+                                                alias: ~
+                                              - start: 46
+                                                end: 52
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: n
+                                                        - start: 54
+                                                          end: 55
+                                                      trailing_names:
+                                                        - - entity_type
+                                                          - start: 56
+                                                            end: 67
+                                                  - start: 54
+                                                    end: 67
+                                                alias: ~
+                                              - start: 54
+                                                end: 67
+                                        - start: 40
+                                          end: 67
+                                      group_by: ~
+                                    - start: 33
+                                      end: 67
+                                  order_by: ~
+                              - start: 33
+                                end: 67
+                  - start: 0
+                    end: 67
+                next_statements: []
+              - start: 0
+                end: 67
+            end: ~
+        - start: 0
+          end: 67
+      session_close: false
+    - start: 0
+      end: 67
+- Err:
+    Unexpected:
+      input: "INSERT (n:Entity {id:'table2001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table2001',status:1,props:'table2001',test1:2001,test2:1,test3:'table2001'})"
+      span:
+        start: 0
+        end: 6
+      position:
+        - 1
+        - 1
+- Err:
+    Unexpected:
+      input: "INSERT (n:Entity {id:'table20001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table2001',status:1,props:'table2001',test1:2001,test2:1,test3:'table2001'})"
+      span:
+        start: 0
+        end: 6
+      position:
+        - 1
+        - 1
+- Err:
+    Unexpected:
+      input: "MATCH (n:Entity{id:'table20001'}), (m:Entity{id:'table2001'}) INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'table2table',gen_time:0,rel_chain:'0',dst_guid:'table2001',src_guid:'table20001',status:0,props:'table20001_table2table_table2001'}]->(m)"
+      span:
+        start: 0
+        end: 5
+      position:
+        - 1
+        - 1
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - n
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: Entity
+                                                                  - start: 9
+                                                                    end: 15
+                                                                predicate:
+                                                                  - Property:
+                                                                      - - name:
+                                                                            - id
+                                                                            - start: 16
+                                                                              end: 18
+                                                                          value:
+                                                                            - Value:
+                                                                                Literal:
+                                                                                  String:
+                                                                                    kind: Char
+                                                                                    literal: table2001
+                                                                            - start: 19
+                                                                              end: 30
+                                                                        - start: 16
+                                                                          end: 30
+                                                                  - start: 15
+                                                                    end: 31
+                                                          - start: 6
+                                                            end: 32
+                                                    - start: 6
+                                                      end: 32
+                                                - start: 6
+                                                  end: 32
+                                            keep: ~
+                                            where_clause: ~
+                                          - start: 6
+                                            end: 32
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 32
+                                - start: 0
+                                  end: 32
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: n
+                                                        - start: 40
+                                                          end: 41
+                                                      trailing_names:
+                                                        - - id
+                                                          - start: 42
+                                                            end: 44
+                                                  - start: 40
+                                                    end: 44
+                                                alias: ~
+                                              - start: 40
+                                                end: 44
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: n
+                                                        - start: 46
+                                                          end: 47
+                                                      trailing_names:
+                                                        - - name
+                                                          - start: 48
+                                                            end: 52
+                                                  - start: 46
+                                                    end: 52
+                                                alias: ~
+                                              - start: 46
+                                                end: 52
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: n
+                                                        - start: 54
+                                                          end: 55
+                                                      trailing_names:
+                                                        - - entity_type
+                                                          - start: 56
+                                                            end: 67
+                                                  - start: 54
+                                                    end: 67
+                                                alias: ~
+                                              - start: 54
+                                                end: 67
+                                        - start: 40
+                                          end: 67
+                                      group_by: ~
+                                    - start: 33
+                                      end: 67
+                                  order_by: ~
+                              - start: 33
+                                end: 67
+                  - start: 0
+                    end: 67
+                next_statements: []
+              - start: 0
+                end: 67
+            end: ~
+        - start: 0
+          end: 67
+      session_close: false
+    - start: 0
+      end: 67
+- Err:
+    Unexpected:
+      input: "MATCH (n:Entity{id:'table20001'})-[b:Rel]->(m:Entity{id:'table2001'}) RETURN n.id, b.timestamp, b.dst_guid, b.src_guid,m.id"
+      span:
+        start: 84
+        end: 85
+      position:
+        - 1
+        - 85
+- Err:
+    Unexpected:
+      input: truncate graph test_graph
+      span:
+        start: 0
+        end: 8
+      position:
+        - 1
+        - 1
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - n
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: Entity
+                                                                  - start: 9
+                                                                    end: 15
+                                                                predicate:
+                                                                  - Property:
+                                                                      - - name:
+                                                                            - id
+                                                                            - start: 16
+                                                                              end: 18
+                                                                          value:
+                                                                            - Value:
+                                                                                Literal:
+                                                                                  String:
+                                                                                    kind: Char
+                                                                                    literal: table2001
+                                                                            - start: 19
+                                                                              end: 30
+                                                                        - start: 16
+                                                                          end: 30
+                                                                  - start: 15
+                                                                    end: 31
+                                                          - start: 6
+                                                            end: 32
+                                                    - start: 6
+                                                      end: 32
+                                                - start: 6
+                                                  end: 32
+                                            keep: ~
+                                            where_clause: ~
+                                          - start: 6
+                                            end: 32
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 32
+                                - start: 0
+                                  end: 32
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: n
+                                                        - start: 40
+                                                          end: 41
+                                                      trailing_names:
+                                                        - - id
+                                                          - start: 42
+                                                            end: 44
+                                                  - start: 40
+                                                    end: 44
+                                                alias: ~
+                                              - start: 40
+                                                end: 44
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: n
+                                                        - start: 46
+                                                          end: 47
+                                                      trailing_names:
+                                                        - - name
+                                                          - start: 48
+                                                            end: 52
+                                                  - start: 46
+                                                    end: 52
+                                                alias: ~
+                                              - start: 46
+                                                end: 52
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: n
+                                                        - start: 54
+                                                          end: 55
+                                                      trailing_names:
+                                                        - - entity_type
+                                                          - start: 56
+                                                            end: 67
+                                                  - start: 54
+                                                    end: 67
+                                                alias: ~
+                                              - start: 54
+                                                end: 67
+                                        - start: 40
+                                          end: 67
+                                      group_by: ~
+                                    - start: 33
+                                      end: 67
+                                  order_by: ~
+                              - start: 33
+                                end: 67
+                  - start: 0
+                    end: 67
+                next_statements: []
+              - start: 0
+                end: 67
+            end: ~
+        - start: 0
+          end: 67
+      session_close: false
+    - start: 0
+      end: 67
+- Err:
+    Unexpected:
+      input: "MATCH (n:Entity{id:'table20001'})-[b:Rel]->(m:Entity{id:'table2001'}) RETURN n.id, b.timestamp, b.dst_guid, b.src_guid,m.id"
+      span:
+        start: 84
+        end: 85
+      position:
+        - 1
+        - 85
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - DropGraph:
+                            path:
+                              - schema: ~
+                                objects:
+                                  - - test_graph
+                                    - start: 11
+                                      end: 21
+                              - start: 11
+                                end: 21
+                            if_exists: false
+                        - start: 0
+                          end: 21
+                  - start: 0
+                    end: 21
+                next_statements: []
+              - start: 0
+                end: 21
+            end: ~
+        - start: 0
+          end: 21
+      session_close: false
+    - start: 0
+      end: 21

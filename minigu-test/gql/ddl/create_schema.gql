@@ -1,0 +1,5 @@
+CREATE SCHEMA /myschema;
+
+CREATE SCHEMA /foo/myschema;
+
+CREATE SCHEMA /foo NEXT CREATE SCHEMA /fee;

@@ -7,4 +7,4 @@ RETURN
     knows.creationDate AS creationDate
 ORDER BY
     creationDate DESC,
-    friendLastName ASC
+    friendLastName ASC;

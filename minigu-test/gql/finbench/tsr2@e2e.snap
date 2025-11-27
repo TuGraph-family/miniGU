@@ -1,11 +1,10 @@
 ---
-source: minigu-test/e2e_test.rs
+source: minigu-test/src/insta_test.rs
 ---
 Error: Parser(
     Unexpected(
         UnexpectedError {
-            input: "-- simple read 2
-MATCH (n:Account{id:12}) RETURN n NEXT
+            input: "MATCH (n:Account{id:12}) RETURN n NEXT
 OPTIONAL MATCH (n)-[e:transfer]->(m:Account)
 WHERE
     e.ts > 45
@@ -35,9 +34,9 @@ RETURN
     round(sumEdge2Amount * 1000) / 1000 as sumEdge2Amount,
     CASE WHEN maxEdge2Amount < 0 THEN -1 ELSE round(maxEdge2Amount * 1000) / 1000 END as maxEdge2Amount,
     numEdge2",
-            span: 569..570,
+            span: 552..553,
             position: (
-                26,
+                25,
                 58,
             ),
         },

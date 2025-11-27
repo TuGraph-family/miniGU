@@ -15,4 +15,4 @@ RETURN
     originalPoster.firstName AS originalPosterFirstName,
     originalPoster.lastName AS originalPosterLastName
 ORDER BY messageCreationDate DESC, messageId DESC
-LIMIT 10
+LIMIT 10;

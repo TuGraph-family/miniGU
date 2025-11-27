@@ -8,4 +8,4 @@ RETURN
     person.browserUsed AS personBrowserUsed,
     city.id AS cityId,
     person.gender AS personGender,
-    person.creationDate AS personCreationDate
+    person.creationDate AS personCreationDate;

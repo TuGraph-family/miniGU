@@ -11,4 +11,4 @@ WHERE
     AND e2.ts < 70
 RETURN
     DISTINCT dst.id as dstId
-ORDER BY dstId ASC
+ORDER BY dstId ASC;
