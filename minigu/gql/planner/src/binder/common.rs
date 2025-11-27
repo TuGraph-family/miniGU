@@ -49,7 +49,7 @@ pub fn lower_label_expr_to_specs(expr: &BoundLabelExpr) -> Vec<Vec<LabelId>> {
             }
             out
         }
-        Negation(_) => Vec::new(),
+        Negation(_) => not_implemented("Label negation is not supported in lower_label_expr_to_specs"),
     }
 }
 
