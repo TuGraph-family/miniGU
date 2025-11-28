@@ -1,11 +1,11 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, OnceLock, RwLock};
 
-use dashmap::DashSet;
+use dashmap::{DashMap, DashSet};
 use minigu_common::types::{EdgeId, VertexId};
 use minigu_transaction::{
-    GraphTxnManager, Transaction, UndoEntry as GenericUndoEntry, UndoPtr as GenericUndoPtr,
-    global_timestamp_generator,
+    GraphTxnManager, LockStrategy, Transaction, UndoEntry as GenericUndoEntry,
+    UndoPtr as GenericUndoPtr, global_timestamp_generator,
 };
 pub use minigu_transaction::{IsolationLevel, Timestamp};
 
@@ -28,6 +28,7 @@ pub struct MemTransaction {
 
     // ---- Transaction Config ----
     isolation_level: IsolationLevel, // Isolation level of the transaction
+    lock_strategy: LockStrategy,     // Locking strategy (pessimistic or optimistic)
 
     // ---- Timestamp management ----
     /// Start timestamp assigned when the transaction begins
@@ -38,6 +39,10 @@ pub struct MemTransaction {
     // ---- Read sets ----
     pub(super) vertex_reads: DashSet<VertexId>, // Set of vertices read by this transaction
     pub(super) edge_reads: DashSet<EdgeId>,     // Set of edges read by this transaction
+
+    // ---- Write sets (for optimistic lock validation) ----
+    write_set_vertices: DashMap<VertexId, Timestamp>, // Expected versions for touched vertices
+    write_set_edges: DashMap<EdgeId, Timestamp>,      // Expected versions for touched edges
 
     // ---- Undo logs ----
     pub(super) undo_buffer: RwLock<Vec<Arc<UndoEntry>>>,
@@ -84,15 +89,19 @@ impl MemTransaction {
         txn_id: Timestamp,
         start_ts: Timestamp,
         isolation_level: IsolationLevel,
+        lock_strategy: LockStrategy,
     ) -> Self {
         Self {
             graph,
             isolation_level,
+            lock_strategy,
             start_ts,
             commit_ts: OnceLock::new(),
             txn_id,
             vertex_reads: DashSet::new(),
             edge_reads: DashSet::new(),
+            write_set_vertices: DashMap::new(),
+            write_set_edges: DashMap::new(),
             undo_buffer: RwLock::new(Vec::new()),
             redo_buffer: RwLock::new(Vec::new()),
             is_handled: Arc::new(AtomicBool::new(false)),
@@ -165,6 +174,84 @@ impl MemTransaction {
         &self.graph
     }
 
+    /// Returns the configured lock strategy.
+    pub fn lock_strategy(&self) -> LockStrategy {
+        self.lock_strategy
+    }
+
+    /// Records the expected version for a vertex write when using optimistic locking.
+    pub(super) fn record_vertex_write_guard(&self, vid: VertexId, expected: Timestamp) {
+        self.write_set_vertices.insert(vid, expected);
+    }
+
+    /// Records the expected version for an edge write when using optimistic locking.
+    pub(super) fn record_edge_write_guard(&self, eid: EdgeId, expected: Timestamp) {
+        self.write_set_edges.insert(eid, expected);
+    }
+
+    /// Validates the write sets for optimistic locking to ensure no unseen commits were
+    /// overwritten between snapshot and commit.
+    pub(super) fn validate_write_sets(&self) -> StorageResult<()> {
+        // Helper to build a conflict error with consistent wording.
+        let build_conflict_err = |msg: String| -> StorageError {
+            StorageError::Transaction(TransactionError::WriteWriteConflict(msg))
+        };
+
+        for guard in self.write_set_vertices.iter() {
+            let vid = *guard.key();
+            let expected = *guard.value();
+            let entry = self
+                .graph
+                .vertices()
+                .get(&vid)
+                .ok_or_else(|| build_conflict_err(format!("Vertex {} disappeared", vid)))?;
+            let current = entry.chain.current.read().unwrap();
+
+            // Ensure this transaction still owns the latest uncommitted version.
+            if current.commit_ts != self.txn_id() {
+                return Err(build_conflict_err(format!(
+                    "Vertex {} was modified by {:?}",
+                    vid, current.commit_ts
+                )));
+            }
+
+            // If the base version was committed after this txn started, treat it as a conflict.
+            if expected.is_commit_ts() && expected > self.start_ts {
+                return Err(build_conflict_err(format!(
+                    "Vertex {} changed after txn start (base {:?} > start {:?})",
+                    vid, expected, self.start_ts
+                )));
+            }
+        }
+
+        for guard in self.write_set_edges.iter() {
+            let eid = *guard.key();
+            let expected = *guard.value();
+            let entry = self
+                .graph
+                .edges()
+                .get(&eid)
+                .ok_or_else(|| build_conflict_err(format!("Edge {} disappeared", eid)))?;
+            let current = entry.chain.current.read().unwrap();
+
+            if current.commit_ts != self.txn_id() {
+                return Err(build_conflict_err(format!(
+                    "Edge {} was modified by {:?}",
+                    eid, current.commit_ts
+                )));
+            }
+
+            if expected.is_commit_ts() && expected > self.start_ts {
+                return Err(build_conflict_err(format!(
+                    "Edge {} changed after txn start (base {:?} > start {:?})",
+                    eid, expected, self.start_ts
+                )));
+            }
+        }
+
+        Ok(())
+    }
+
     /// Returns a reference to the undo buffer for garbage collection.
     pub fn undo_buffer(&self) -> &RwLock<Vec<Arc<UndoEntry>>> {
         &self.undo_buffer
@@ -219,6 +306,14 @@ impl MemTransaction {
 
         // Acquire the global commit lock to enforce serial execution of commits.
         let _guard = self.graph.txn_manager.commit_lock.lock().unwrap();
+
+        // Optional Step: Validate optimistic write set to detect late conflicts.
+        if !skip_wal && matches!(self.lock_strategy, LockStrategy::Optimistic) {
+            if let Err(e) = self.validate_write_sets() {
+                self.abort()?;
+                return Err(e);
+            }
+        }
 
         // Step 1: Validate serializability if isolution level is Serializable.
         if let IsolationLevel::Serializable = self.isolation_level {

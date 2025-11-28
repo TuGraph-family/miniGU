@@ -15,7 +15,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use crc32fast::Hasher;
 use minigu_common::types::{EdgeId, VertexId};
-use minigu_transaction::Timestamp;
+use minigu_transaction::{Timestamp, TxnOptions};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -300,7 +300,19 @@ impl GraphCheckpoint {
         checkpoint_config: CheckpointManagerConfig,
         wal_config: WalManagerConfig,
     ) -> StorageResult<Arc<MemoryGraph>> {
-        let graph = MemoryGraph::with_config_fresh(checkpoint_config, wal_config);
+        self.restore_with_options(checkpoint_config, wal_config, Default::default())
+    }
+
+    /// Restores a new [`MemoryGraph`] instance from this checkpoint snapshot using custom
+    /// transaction options.
+    pub fn restore_with_options(
+        &self,
+        checkpoint_config: CheckpointManagerConfig,
+        wal_config: WalManagerConfig,
+        txn_options: TxnOptions,
+    ) -> StorageResult<Arc<MemoryGraph>> {
+        let graph =
+            MemoryGraph::with_config_fresh_with_options(checkpoint_config, wal_config, txn_options);
 
         // Set the LSN to the checkpoint's LSN
         graph.wal_manager.set_next_lsn(self.metadata.lsn);
@@ -714,6 +726,19 @@ impl MemoryGraph {
         checkpoint_config: CheckpointManagerConfig,
         wal_config: WalManagerConfig,
     ) -> StorageResult<Arc<Self>> {
+        Self::recover_from_checkpoint_and_wal_with_options(
+            checkpoint_config,
+            wal_config,
+            Default::default(),
+        )
+    }
+
+    /// Recovers a [`MemoryGraph`] with explicit TP transaction options (e.g., lock strategy).
+    pub fn recover_from_checkpoint_and_wal_with_options(
+        checkpoint_config: CheckpointManagerConfig,
+        wal_config: WalManagerConfig,
+        txn_options: TxnOptions,
+    ) -> StorageResult<Arc<Self>> {
         // Create checkpoint directory if it doesn't exist
         fs::create_dir_all(&checkpoint_config.checkpoint_dir)
             .map_err(|e| StorageError::Checkpoint(CheckpointError::Io(e)))?;
@@ -723,7 +748,11 @@ impl MemoryGraph {
 
         // If no checkpoint found, create a new empty graph
         if checkpoint_path.is_none() {
-            let graph = Self::with_config_fresh(checkpoint_config.clone(), wal_config.clone());
+            let graph = Self::with_config_fresh_with_options(
+                checkpoint_config.clone(),
+                wal_config.clone(),
+                txn_options,
+            );
             graph.recover_from_wal()?;
             return Ok(graph);
         }
@@ -731,7 +760,7 @@ impl MemoryGraph {
         // Restore from checkpoint
         let checkpoint = GraphCheckpoint::load_from_file(checkpoint_path.unwrap())?;
         let checkpoint_lsn = checkpoint.metadata.lsn;
-        let graph = checkpoint.restore(checkpoint_config, wal_config)?;
+        let graph = checkpoint.restore_with_options(checkpoint_config, wal_config, txn_options)?;
 
         // Read WAL entries with LSN >= checkpoint_lsn
         let all_entries = graph.wal_manager.wal().read().unwrap().read_all()?;
