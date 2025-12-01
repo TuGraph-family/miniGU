@@ -1,0 +1,11 @@
+CALL import(
+  'import_basic_graph',
+  'data/import_basic',
+  'manifest.json'
+);
+
+CALL export(
+  'import_basic_graph',
+  'data/export_basic',
+  'manifest.json'
+);
