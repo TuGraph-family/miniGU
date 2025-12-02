@@ -200,6 +200,11 @@ impl Completer for ShellCompleter {
         pos: usize,
         ctx: &Context,
     ) -> Result<(usize, Vec<Self::Candidate>)> {
+        // If the command is `cd`, we should perform filename completion
+        if line.trim_start().starts_with(":cd") {
+            return self.filename_completer.complete(line, pos, ctx);
+        }
+
         if line.trim_start().starts_with(":") {
             let cmd = line
                 .trim_start()

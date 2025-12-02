@@ -1,0 +1,17 @@
+---
+source: minigu-cli/tests/shell_test.rs
+assertion_line: 46
+info:
+  program: minigu
+  args:
+    - shell
+  stdin: "[STDIN REDACTED]"
+---
+success: true
+exit_code: 0
+----- stdout -----
+Enter ":help" for usage hints.
+  × [TEMP_DIR]: not a directory
+
+
+----- stderr -----

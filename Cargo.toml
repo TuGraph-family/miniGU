@@ -70,7 +70,7 @@ divan = "0.1.21"
 glob = "0.3"
 half = "2.2.1"
 hashbrown = "0.13.2"
-insta = { version = "1.43.1", features = ["yaml"] }
+insta = { version = "1.43.1", features = ["yaml", "filters", "redactions"] }
 insta-cmd = "0.6.0"
 itertools = { version = "0.14.0", default-features = false, features = [
     "use_alloc",
