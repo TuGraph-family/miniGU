@@ -123,6 +123,10 @@ impl ExecutorBuilder {
                 assert_eq!(children.len(), 1);
                 Box::new(self.build_executor(&children[0]).limit(limit.limit))
             }
+            PlanNode::PhysicalOffset(offset) => {
+                assert_eq!(children.len(), 1);
+                Box::new(self.build_executor(&children[0]).offset(offset.offset))
+            }
             PlanNode::PhysicalVectorIndexScan(vector_scan) => {
                 assert!(children.is_empty());
                 VectorIndexScanBuilder::new(self.session.clone(), vector_scan.clone())
