@@ -1,3 +1,6 @@
+use std::env;
+use std::path::Path;
+
 use insta::internals::Redaction;
 use insta_cmd::assert_cmd_snapshot;
 mod common;
@@ -23,9 +26,14 @@ fn shell_command_cd_redaction() -> Redaction {
 
 #[test]
 fn test_shell_command_cd_dir() {
+    // Create a dir, <temp_dir>/foo😄
+    let temp_dir = tempfile::tempdir().unwrap();
+    let dirname = Path::new("foo😄");
+    std::fs::create_dir(temp_dir.path().join(dirname)).unwrap();
+
     let mut cmd = common::run_cli();
-    let dir = tempfile::tempdir().unwrap();
-    let prompt = format!(":cd {}", dir.path().display());
+    cmd.current_dir(temp_dir.path());
+    let prompt = format!(":cd {}", dirname.display());
 
     insta::with_settings!({
         redactions => vec![
@@ -64,9 +72,15 @@ fn test_shell_command_cd_too_many_arg() {
 
 #[test]
 fn test_shell_command_cd_file() {
+    // Create a file, <temp_dir>/foo😄
+    let temp_dir = tempfile::tempdir().unwrap();
+
+    let filename = Path::new("foo😄");
+    std::fs::File::create(temp_dir.path().join(filename)).unwrap();
+
     let mut cmd = common::run_cli();
-    let file = tempfile::NamedTempFile::new().unwrap();
-    let prompt = format!(":cd {}", file.path().display());
+    cmd.current_dir(temp_dir.path());
+    let prompt = format!(":cd {}", filename.display());
 
     insta::with_settings!({
         filters => vec![
@@ -82,10 +96,15 @@ fn test_shell_command_cd_file() {
 
 #[test]
 fn test_shell_command_cd_non_existent_dir() {
+    // Create a file, <temp_dir>/foo😄
+    let temp_dir = tempfile::tempdir().unwrap();
+
+    let non_existent_dir = Path::new("foo😄");
+    assert!(!temp_dir.path().join(non_existent_dir).exists());
+
     let mut cmd = common::run_cli();
-    let dirname = "😅";
-    let dir = tempfile::tempdir().unwrap();
-    let prompt = format!(":cd {}", dir.path().join(dirname).display());
+    cmd.current_dir(temp_dir.path());
+    let prompt = format!(":cd {}", non_existent_dir.display());
 
     insta::with_settings!({
         filters => vec![
