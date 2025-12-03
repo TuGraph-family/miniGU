@@ -59,14 +59,11 @@ impl Expand {
         // Add target vertex variable if specified
         if let Some(vertex_var) = &target_vertex_var {
             // Check if vertex variable already exists in schema
+            // Here just append its id.
             if !new_fields.iter().any(|f| f.name() == vertex_var) {
                 let vertex_field = DataField::new(
                     vertex_var.clone(),
-                    LogicalType::Vertex(vec![DataField::new(
-                        "id".into(),
-                        LogicalType::Int64,
-                        false,
-                    )]),
+                    LogicalType::Int64,
                     false,
                 );
                 new_fields.push(vertex_field);

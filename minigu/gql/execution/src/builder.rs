@@ -173,7 +173,6 @@ impl ExecutorBuilder {
                                     ));
                                 }
                                 updated_schema = Arc::new(DataSchema::new(new_fields));
-                                break;
                             }
                         }
                     }
