@@ -1,11 +1,11 @@
 ---
 source: minigu-cli/tests/shell_test.rs
-assertion_line: 37
+assertion_line: 31
 info:
   program: minigu
   args:
     - shell
-  stdin: "[STDIN REDACTED]"
+  stdin: ":cd foo"
 ---
 success: true
 exit_code: 0

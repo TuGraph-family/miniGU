@@ -1,17 +1,17 @@
 ---
 source: minigu-cli/tests/shell_test.rs
-assertion_line: 46
+assertion_line: 60
 info:
   program: minigu
   args:
     - shell
-  stdin: "[STDIN REDACTED]"
+  stdin: ":cd foo"
 ---
 success: true
 exit_code: 0
 ----- stdout -----
 Enter ":help" for usage hints.
-  × [TEMP_DIR]: Not a directory
+  × foo: Not a directory
 
 
 ----- stderr -----

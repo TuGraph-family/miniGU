@@ -1,6 +1,6 @@
 ---
 source: minigu-cli/tests/shell_test.rs
-assertion_line: 118
+assertion_line: 81
 info:
   program: minigu
   args:
@@ -11,7 +11,7 @@ success: true
 exit_code: 0
 ----- stdout -----
 Enter ":help" for usage hints.
-  × [TEMP_DIR]: The system cannot find the file specified. (os error 2)
+  × foo: The system cannot find the file specified. (os error 2)
 
 
 ----- stderr -----
