@@ -1,6 +1,6 @@
 ---
 source: minigu-test/src/insta_test.rs
 ---
-EXPLAIN
-Project: Int8(Some(1))
-  OneRow
+Explain:
+  Project: Int8(Some(1))
+    OneRow

@@ -1,6 +1,3 @@
-use std::sync::Arc;
-
-use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 use serde::Serialize;
 
 use crate::plan::{PlanBase, PlanData, PlanNode};
@@ -12,13 +9,8 @@ pub struct Explain {
 
 impl Explain {
     pub fn new(child: PlanNode) -> Self {
-        let schema = Some(Arc::new(DataSchema::new(vec![DataField::new(
-            "EXPLAIN".to_string(),
-            LogicalType::String,
-            false,
-        )])));
         let base = PlanBase {
-            schema,
+            schema: None,
             children: vec![child],
         };
         Self { base }
@@ -31,10 +23,12 @@ impl PlanData for Explain {
     }
 
     fn explain(&self, indent: usize) -> Option<String> {
+        let indent_str = " ".repeat(indent * 2);
         let mut output = String::new();
+        output.push_str(&format!("{}Explain:\n", indent_str));
 
         for child in self.children() {
-            output.push_str(child.explain(indent)?.as_str());
+            output.push_str(child.explain(indent + 1)?.as_str());
         }
 
         Some(output)
