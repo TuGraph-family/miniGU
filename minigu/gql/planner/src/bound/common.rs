@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use gql_parser::ast::EdgePatternKind;
 use minigu_common::data_type::DataSchema;
-use minigu_common::types::{GraphId, LabelId};
+use minigu_common::types::LabelId;
 use serde::Serialize;
 
 use crate::bound::BoundExpr;
@@ -63,12 +63,10 @@ pub enum PathPatternInfo {
     SingleVertex {
         var: String,
         label_specs: Vec<Vec<LabelId>>,
-        graph_id: GraphId,
     },
     Path {
         vertices: Vec<(String, Vec<Vec<LabelId>>)>,
         edges: Vec<(Option<String>, Vec<Vec<LabelId>>, ExpandDirection)>,
-        graph_id: GraphId,
     },
 }
 

@@ -76,7 +76,7 @@ impl Session {
                 }
                 SessionSet::Graph(sp_ref) => match sp_ref.value() {
                     GraphExpr::Name(graph_name) => {
-                        self.context.set_current_graph(graph_name.to_string());
+                        self.context.set_current_graph(graph_name.to_string())?;
                     }
                     _ => {
                         return not_implemented("not allowed there", None);

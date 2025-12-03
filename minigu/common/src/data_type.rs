@@ -188,10 +188,6 @@ impl DataSchema {
     }
 
     pub fn set_var_label(&mut self, var: String, labels: Vec<Vec<LabelId>>) {
-        // TODO: Refine this.
-        if !self.fields.iter().any(|f| f.name == var) {
-            return;
-        }
         self.var_labels.insert(var, labels);
     }
 

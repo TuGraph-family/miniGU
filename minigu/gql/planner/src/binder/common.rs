@@ -49,7 +49,8 @@ pub fn lower_label_expr_to_specs(expr: &BoundLabelExpr) -> Vec<Vec<LabelId>> {
             }
             out
         }
-        Negation(_) => not_implemented("Label negation is not supported in lower_label_expr_to_specs"),
+        // TODO: Support Negation Label
+        Negation(_) => unreachable!()
     }
 }
 
@@ -294,11 +295,7 @@ impl Binder<'_> {
                 format!("__n{idx}")
             }
         };
-
-        let vertex_ty =
-            LogicalType::Vertex(vec![DataField::new("id".into(), LogicalType::Int64, false)]);
-        self.register_variable(var.as_str(), vertex_ty, false)?;
-
+        
         let label = match &f.label {
             Some(sp) => Some(self.bind_label_expr(sp.value())?),
             None => None,
@@ -308,7 +305,9 @@ impl Binder<'_> {
         } else {
             vec![vec![]]
         };
-
+        let vertex_ty =
+            LogicalType::Vertex(vec![]);
+        self.register_variable(var.as_str(), vertex_ty, false)?;
         self.register_variable_labels(var.as_str(), &label_set);
 
         if f.predicate.is_some() {
@@ -368,11 +367,9 @@ impl Binder<'_> {
         if self.active_data_schema.is_none() {
             return Err(BindError::Unexpected);
         }
-        let mut schema = self
-            .active_data_schema
-            .clone()
-            .expect("schema should be initialized");
-        schema.set_var_label(name.to_string(), labels.to_owned());
+        if let Some(ref mut schema) = self.active_data_schema {
+            schema.set_var_label(name.to_string(), labels.to_owned());
+        }
         Ok(())
     }
 }

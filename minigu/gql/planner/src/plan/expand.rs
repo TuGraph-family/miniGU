@@ -1,4 +1,4 @@
-use minigu_common::types::{GraphId, LabelId};
+use minigu_common::types::LabelId;
 use serde::Serialize;
 
 use crate::plan::{PlanBase, PlanData, PlanNode};
@@ -19,7 +19,6 @@ pub struct Expand {
     pub output_var: Option<String>, // Edge variable name (e.g., "f")
     pub target_vertex_var: Option<String>, // Target vertex variable name (e.g., "n")
     pub direction: ExpandDirection,
-    pub graph_id: GraphId,
 }
 
 impl Expand {
@@ -32,7 +31,6 @@ impl Expand {
         output_var: Option<String>,
         target_vertex_var: Option<String>,
         direction: ExpandDirection,
-        graph_id: GraphId,
     ) -> Self {
         use std::sync::Arc;
 
@@ -88,7 +86,6 @@ impl Expand {
             output_var,
             target_vertex_var,
             direction,
-            graph_id,
         }
     }
 }

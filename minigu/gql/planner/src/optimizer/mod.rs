@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use itertools::Itertools;
 use minigu_common::error::not_implemented;
-use minigu_common::types::{GraphId, LabelId};
+use minigu_common::types::LabelId;
 
 use crate::bound::{
     BoundEdgePatternKind, BoundElementPattern, BoundGraphPattern, BoundPathPatternExpr,
@@ -31,8 +31,7 @@ impl Optimizer {
 }
 
 fn extract_path_pattern_from_graph_pattern(
-    g: &BoundGraphPattern,
-    graph_id: GraphId,
+    g: &BoundGraphPattern
 ) -> PlanResult<PathPatternInfo> {
     if g.predicate.is_some() {
         return not_implemented("MATCH with predicate (WHERE) is not supported yet", Some(1));
@@ -41,12 +40,11 @@ fn extract_path_pattern_from_graph_pattern(
         return not_implemented("multiple paths in MATCH are not supported yet", Some(1));
     }
 
-    extract_path_pattern(&g.paths[0].expr, graph_id)
+    extract_path_pattern(&g.paths[0].expr)
 }
 
 fn extract_path_pattern(
-    expr: &BoundPathPatternExpr,
-    graph_id: GraphId,
+    expr: &BoundPathPatternExpr
 ) -> PlanResult<PathPatternInfo> {
     use BoundPathPatternExpr::*;
     match expr {
@@ -55,8 +53,7 @@ fn extract_path_pattern(
             let label_specs: Vec<Vec<LabelId>> = v.label.clone();
             Ok(PathPatternInfo::SingleVertex {
                 var,
-                label_specs,
-                graph_id,
+                label_specs
             })
         }
         Concat(parts) => {
@@ -97,7 +94,6 @@ fn extract_path_pattern(
             Ok(PathPatternInfo::Path {
                 vertices,
                 edges,
-                graph_id,
             })
         }
 
@@ -126,20 +122,17 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
         .try_collect()?;
     match logical_plan {
         PlanNode::LogicalMatch(m) => {
-            let graph_id: GraphId = 1;
-            match extract_path_pattern_from_graph_pattern(&m.pattern, graph_id)? {
+            match extract_path_pattern_from_graph_pattern(&m.pattern)? {
                 PathPatternInfo::SingleVertex {
                     var,
                     label_specs,
-                    graph_id,
                 } => {
-                    let node = NodeIdScan::new(var.as_str(), label_specs, graph_id);
+                    let node = NodeIdScan::new(var.as_str(), label_specs);
                     Ok(PlanNode::PhysicalNodeScan(Arc::new(node)))
                 }
                 PathPatternInfo::Path {
                     vertices,
                     edges,
-                    graph_id,
                 } => {
                     if vertices.is_empty() {
                         return not_implemented("empty path patterns", None);
@@ -148,7 +141,6 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
                     let mut current_plan = PlanNode::PhysicalNodeScan(Arc::new(NodeIdScan::new(
                         first_var.as_str(),
                         first_labels,
-                        graph_id,
                     )));
                     for (edge_info, next_vertex) in edges.iter().zip(vertices.iter().skip(1)) {
                         let (edge_var, edge_labels, direction) = edge_info;
@@ -161,7 +153,6 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
                             edge_var.clone(),
                             Some(next_var.clone()),
                             direction.clone(),
-                            graph_id,
                         );
                         current_plan = PlanNode::PhysicalExpand(Arc::new(expand));
                     }

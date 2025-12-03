@@ -1,9 +1,6 @@
 use std::sync::Arc;
 
-use arrow::array::{
-    ArrayRef, BooleanArray, Float32Array, Float64Array, Int8Array, Int16Array, Int32Array,
-    Int64Array, UInt8Array, UInt16Array, UInt32Array, UInt64Array,
-};
+use arrow::array::{ArrayRef, BooleanArray, Float32Array, Float64Array, Int8Array, Int16Array, Int32Array, Int64Array, UInt8Array, UInt16Array, UInt32Array, UInt64Array, StringArray};
 use minigu_common::types::{PropertyId, VertexIdArray};
 use minigu_common::value::ScalarValue;
 use minigu_context::graph::{GraphContainer, GraphStorage};
@@ -148,6 +145,14 @@ impl VertexPropertySource for GraphContainer {
                         ScalarValue::Boolean,
                         BooleanArray,
                         bool
+                    )
+                }
+                ScalarValue::String(_) => {
+                    convert_scalar_values_to_array!(
+                        values,
+                        ScalarValue::String,
+                        StringArray,
+                        String
                     )
                 }
                 ScalarValue::Null => {

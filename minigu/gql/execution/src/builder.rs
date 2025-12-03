@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use arrow::array::{AsArray, Int32Array};
 use minigu_catalog::label_set::LabelSet;
-use minigu_catalog::provider::{GraphTypeProvider, SchemaProvider};
+use minigu_catalog::provider::GraphTypeProvider;
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 use minigu_common::types::VertexIdArray;
@@ -53,17 +53,16 @@ impl ExecutorBuilder {
             PlanNode::PhysicalNodeScan(_node_scan) => {
                 // NodeScan provide graph id and label, Handle in next pr.
                 assert_eq!(children.len(), 0);
-                let cur_schema = self
+                let container: Arc<GraphContainer> = self
                     .session
-                    .home_schema
-                    .as_ref()
-                    .expect("there should be a home schema");
-                let cur_graph = cur_schema
-                    .get_graph("test".to_string().as_str())
-                    .expect("there should be a test graph")
-                    .unwrap();
-                let container: Arc<GraphContainer> =
-                    cur_graph.downcast_arc::<GraphContainer>().unwrap();
+                    .current_graph
+                    .clone()
+                    .expect("current graph should be set")
+                    .object()
+                    .clone()
+                    .downcast_arc::<GraphContainer>()
+                    .expect("failed to downcast to GraphContainer");
+
                 let batches = container
                     .vertex_source(&Some(_node_scan.labels.clone()), 1024)
                     .expect("failed to create vertex source");
@@ -73,17 +72,15 @@ impl ExecutorBuilder {
             PlanNode::PhysicalExpand(expand) => {
                 assert_eq!(children.len(), 1);
                 let child = self.build_executor(&children[0]);
-                let cur_schema = self
+                let container: Arc<GraphContainer> = self
                     .session
-                    .home_schema
-                    .as_ref()
-                    .expect("there should be a home schema");
-                let cur_graph = cur_schema
-                    .get_graph("test".to_string().as_str())
-                    .expect("there should be a test graph")
-                    .unwrap();
-                let container: Arc<GraphContainer> =
-                    cur_graph.downcast_arc::<GraphContainer>().unwrap();
+                    .current_graph
+                    .clone()
+                    .expect("current graph should be set")
+                    .object()
+                    .clone()
+                    .downcast_arc::<GraphContainer>()
+                    .expect("failed to downcast to GraphContainer");
 
                 // Get the number of columns before expand
                 let child_schema = children[0].schema().expect("child should have a schema");
@@ -127,17 +124,15 @@ impl ExecutorBuilder {
                                     .get_field_index_by_name(var_name)
                                     .expect("variable should be present in child schema");
 
-                                let cur_schema = self
+                                let container: Arc<GraphContainer> = self
                                     .session
-                                    .home_schema
-                                    .as_ref()
-                                    .expect("there should be a home schema");
-                                let cur_graph = cur_schema
-                                    .get_graph("test".to_string().as_str())
-                                    .expect("there should be a test graph")
-                                    .unwrap();
-                                let container: Arc<GraphContainer> =
-                                    cur_graph.downcast_arc::<GraphContainer>().unwrap();
+                                    .current_graph
+                                    .clone()
+                                    .expect("current graph should be set")
+                                    .object()
+                                    .clone()
+                                    .downcast_arc::<GraphContainer>()
+                                    .expect("failed to downcast to GraphContainer");
 
                                 let property_list = if let Some(label_specs) =
                                     output_schema.get_var_label(var_name.as_str())
