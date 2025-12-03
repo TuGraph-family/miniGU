@@ -42,7 +42,7 @@ impl PlanData for PhysicalNodeScan {
     }
 
     fn explain(&self, indent: usize) -> Option<String> {
-        let indent_str = "  ".repeat(indent);
+        let indent_str = "  ".repeat(indent * 2);
         let label_info = if self.labels.is_empty() || self.labels == vec![vec![]] {
             "Any".to_string()
         } else {

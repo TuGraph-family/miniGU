@@ -1,0 +1,9 @@
+---
+source: minigu-test/e2e_test.rs
+assertion_line: 120
+---
+EXPLAIN
+Limit: 3
+  Offset: 2
+    Project: n
+      LogicalMatch

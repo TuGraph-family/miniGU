@@ -1,8 +1,7 @@
 ---
-source: minigu-test/e2e_test.rs
+source: minigu-test/src/insta_test.rs
 ---
 EXPLAIN
-Explain:
-  Limit: 10
-    Project: n
-      LogicalMatch
+Limit: 10
+  Project: n
+    LogicalMatch

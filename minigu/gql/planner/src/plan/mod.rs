@@ -3,6 +3,7 @@ pub mod explain;
 pub mod filter;
 pub mod limit;
 pub mod logical_match;
+pub mod offset;
 pub mod one_row;
 pub mod project;
 pub mod scan;
@@ -19,6 +20,7 @@ use crate::plan::explain::Explain;
 use crate::plan::filter::Filter;
 use crate::plan::limit::Limit;
 use crate::plan::logical_match::LogicalMatch;
+use crate::plan::offset::Offset;
 use crate::plan::one_row::OneRow;
 use crate::plan::project::Project;
 use crate::plan::scan::PhysicalNodeScan;
@@ -78,6 +80,7 @@ pub enum PlanNode {
     // (by inserting PhysicalSort).
     LogicalSort(Arc<Sort>),
     LogicalLimit(Arc<Limit>),
+    LogicalOffset(Arc<Offset>),
     LogicalVectorIndexScan(Arc<VectorIndexScan>),
     LogicalExplain(Arc<Explain>),
 
@@ -87,6 +90,7 @@ pub enum PlanNode {
     PhysicalOneRow(Arc<OneRow>),
     PhysicalSort(Arc<Sort>),
     PhysicalLimit(Arc<Limit>),
+    PhysicalOffset(Arc<Offset>),
     PhysicalVectorIndexScan(Arc<VectorIndexScan>),
     //  PhysicalNodeScan retrieves node ids based on labels during the scan phase,
     //  without immediately materializing full node attributes.
@@ -109,6 +113,7 @@ impl PlanData for PlanNode {
             PlanNode::LogicalSort(node) => node.base(),
             PlanNode::LogicalLimit(node) => node.base(),
             PlanNode::LogicalExplain(node) => node.base(),
+            PlanNode::LogicalOffset(node) => node.base(),
 
             PlanNode::PhysicalFilter(node) => node.base(),
             PlanNode::PhysicalProject(node) => node.base(),
@@ -116,6 +121,7 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalOneRow(node) => node.base(),
             PlanNode::PhysicalSort(node) => node.base(),
             PlanNode::PhysicalLimit(node) => node.base(),
+            PlanNode::PhysicalOffset(node) => node.base(),
             PlanNode::PhysicalNodeScan(node) => node.base(),
             PlanNode::LogicalVectorIndexScan(node) => node.base(),
             PlanNode::PhysicalVectorIndexScan(node) => node.base(),
@@ -132,6 +138,7 @@ impl PlanData for PlanNode {
             PlanNode::LogicalOneRow(node) => node.explain(indent),
             PlanNode::LogicalSort(node) => node.explain(indent),
             PlanNode::LogicalLimit(node) => node.explain(indent),
+            PlanNode::LogicalOffset(node) => node.explain(indent),
             PlanNode::LogicalVectorIndexScan(node) => node.explain(indent),
             PlanNode::LogicalExplain(node) => node.explain(indent),
 
@@ -141,6 +148,7 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalOneRow(node) => node.explain(indent),
             PlanNode::PhysicalSort(node) => node.explain(indent),
             PlanNode::PhysicalLimit(node) => node.explain(indent),
+            PlanNode::PhysicalOffset(node) => node.explain(indent),
             PlanNode::PhysicalVectorIndexScan(node) => node.explain(indent),
             PlanNode::PhysicalNodeScan(node) => node.explain(indent),
             PlanNode::PhysicalExplain(node) => node.explain(indent),
