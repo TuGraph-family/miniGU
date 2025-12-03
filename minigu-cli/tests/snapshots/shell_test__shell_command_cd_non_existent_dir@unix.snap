@@ -1,6 +1,6 @@
 ---
 source: minigu-cli/tests/shell_test.rs
-assertion_line: 74
+assertion_line: 118
 info:
   program: minigu
   args:

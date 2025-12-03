@@ -219,7 +219,7 @@ fn cd(_ctx: &mut ShellContext, path: PathBuf) -> Result<()> {
         .map_err(|e| miette::diagnostic!("{}: {}", path.display(), e))?;
 
     if !metadata.is_dir() {
-        Err(miette::diagnostic!("{}: not a directory", path.display()))?;
+        Err(miette::diagnostic!("{}: Not a directory", path.display()))?;
     }
 
     env::set_current_dir(&path).map_err(|e| miette::diagnostic!("{}: {}", path.display(), e))?;

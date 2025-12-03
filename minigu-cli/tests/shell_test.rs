@@ -26,9 +26,9 @@ fn shell_command_cd_redaction() -> Redaction {
 
 #[test]
 fn test_shell_command_cd_dir() {
-    // Create a dir, <temp_dir>/foo😄
+    // Create a dir, <temp_dir>/foo
     let temp_dir = tempfile::tempdir().unwrap();
-    let dirname = Path::new("foo😄");
+    let dirname = Path::new("foo");
     std::fs::create_dir(temp_dir.path().join(dirname)).unwrap();
 
     let mut cmd = common::run_cli();
@@ -72,10 +72,10 @@ fn test_shell_command_cd_too_many_arg() {
 
 #[test]
 fn test_shell_command_cd_file() {
-    // Create a file, <temp_dir>/foo😄
+    // Create a file, <temp_dir>/foo
     let temp_dir = tempfile::tempdir().unwrap();
 
-    let filename = Path::new("foo😄");
+    let filename = Path::new("foo");
     std::fs::File::create(temp_dir.path().join(filename)).unwrap();
 
     let mut cmd = common::run_cli();
@@ -84,7 +84,7 @@ fn test_shell_command_cd_file() {
 
     insta::with_settings!({
         filters => vec![
-            (r#"(\s+× )[^:\n]+(: not a directory)"#, r#"$1[TEMP_DIR]$2"#),
+            (r#"(\s+× )[^:\n]+(: Not a directory)"#, r#"$1[TEMP_DIR]$2"#),
         ],
         redactions => vec![
           (".stdin", shell_command_cd_redaction())
@@ -96,19 +96,33 @@ fn test_shell_command_cd_file() {
 
 #[test]
 fn test_shell_command_cd_non_existent_dir() {
-    // Create a file, <temp_dir>/foo😄
+    // Create a file, <temp_dir>/foo
     let temp_dir = tempfile::tempdir().unwrap();
 
-    let non_existent_dir = Path::new("foo😄");
+    let non_existent_dir = Path::new("foo");
     assert!(!temp_dir.path().join(non_existent_dir).exists());
 
     let mut cmd = common::run_cli();
     cmd.current_dir(temp_dir.path());
     let prompt = format!(":cd {}", non_existent_dir.display());
 
+    // Makes windows happy
+    let (suffix, re) = if cfg!(windows) {
+        (
+            "windows",
+            r#"(\s+× )[^:\n]+(: The system cannot find the file specified\. \(os error 2\))"#,
+        )
+    } else {
+        (
+            "unix",
+            r#"(\s+× )[^:\n]+(: No such file or directory \(os error 2\))"#,
+        )
+    };
+
     insta::with_settings!({
+        snapshot_suffix => suffix,
         filters => vec![
-            (r#"(\s+× )[^:\n]+(: No such file or directory \(os error 2\))"#, r#"$1[TEMP_DIR]$2"#),
+            (re, r#"$1[TEMP_DIR]$2"#),
         ],
         redactions => vec![
           (".stdin", shell_command_cd_redaction())
