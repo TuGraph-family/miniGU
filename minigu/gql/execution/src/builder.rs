@@ -133,7 +133,8 @@ impl ExecutorBuilder {
                                     .clone()
                                     .downcast_arc::<GraphContainer>()
                                     .expect("failed to downcast to GraphContainer");
-
+                                
+                                let mut property_name = Vec::new();
                                 let property_list = if let Some(label_specs) =
                                     output_schema.get_var_label(var_name.as_str())
                                 {
@@ -143,10 +144,11 @@ impl ExecutorBuilder {
                                         if let Ok(Some(vertex_type)) = graph_type.get_vertex_type(
                                             &LabelSet::from_iter(first_label_set.clone()),
                                         ) {
-                                            for (idx, _) in
-                                                vertex_type.properties().iter().enumerate()
+                                            for property in
+                                                vertex_type.properties().iter()
                                             {
-                                                property_ids.push(idx as u32);
+                                                property_ids.push(property[0] as usize);
+                                                property_name.push(property);
                                             }
                                         }
                                     }

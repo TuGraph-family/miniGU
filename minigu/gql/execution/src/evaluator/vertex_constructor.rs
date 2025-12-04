@@ -89,6 +89,7 @@ impl Evaluator for VertexConstructor {
         let mut struct_arrays = Vec::new();
 
         let vid_values: Vec<u64> = vid_array.values().iter().copied().collect();
+        
         let vid_u64_array: ArrayRef = Arc::new(UInt64Array::from_iter_values(vid_values));
         struct_arrays.push(vid_u64_array);
 

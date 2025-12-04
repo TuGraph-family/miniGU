@@ -58,7 +58,6 @@ where
                 let input_column = input_column.as_primitive();
                 let properties = gen_try!(source.scan_vertex_properties(input_column, &properties));
                 chunk.append_columns(properties);
-                chunk.debug_print();
                 yield Ok(chunk);
             }
         }
