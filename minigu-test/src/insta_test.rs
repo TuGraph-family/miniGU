@@ -4,11 +4,10 @@
 //! `snapshots`.
 
 use std::fmt::Write;
-use std::process::Output;
 
 use gql_parser::parse_gql;
 use insta::internals::SettingsBindDropGuard;
-use insta::{assert_snapshot, assert_yaml_snapshot, Settings};
+use insta::{Settings, assert_snapshot, assert_yaml_snapshot};
 use minigu::common::data_chunk::display::{TableBuilder, TableOptions};
 use minigu::database::{Database, DatabaseConfig};
 use minigu::result::QueryResult;
@@ -107,9 +106,8 @@ fn result_to_string(result: &QueryResult) -> String {
         let mut builder = TableBuilder::new(Some(schema.clone()), options);
         let mut num_rows = 0;
         for chunk in result.iter() {
-            let chunk = chunk;
             num_rows += chunk.cardinality();
-            builder = builder.append_chunk(&chunk);
+            builder = builder.append_chunk(chunk);
         }
         let table = builder.build();
 
@@ -117,24 +115,6 @@ fn result_to_string(result: &QueryResult) -> String {
         writeln!(&mut output, "{num_rows} rows").unwrap();
     };
     output
-}
-
-fn extract_string_value(array: &arrow::array::ArrayRef, row_idx: usize) -> String {
-    use arrow::array::*;
-
-    if let Some(string_array) = array.as_any().downcast_ref::<StringArray>() {
-        string_array.value(row_idx).to_string()
-    } else if let Some(string_array) = array.as_any().downcast_ref::<LargeStringArray>() {
-        string_array.value(row_idx).to_string()
-    } else if let Some(int_array) = array.as_any().downcast_ref::<Int64Array>() {
-        int_array.value(row_idx).to_string()
-    } else if let Some(double_array) = array.as_any().downcast_ref::<Float64Array>() {
-        double_array.value(row_idx).to_string()
-    } else if let Some(bool_array) = array.as_any().downcast_ref::<BooleanArray>() {
-        bool_array.value(row_idx).to_string()
-    } else {
-        format!("{:?}", array.to_data())
-    }
 }
 
 // #[allow(unused_macros)]
