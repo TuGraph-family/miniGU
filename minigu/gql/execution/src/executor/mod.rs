@@ -3,6 +3,7 @@ pub mod expand;
 pub mod factorized_filter;
 pub mod filter;
 pub mod flatten;
+pub mod offset;
 pub mod procedure_call;
 
 // TODO: Implement join executor.
@@ -31,6 +32,7 @@ use filter::FilterBuilder;
 use flatten::FlattenBuilder;
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::types::{LabelId, PropertyId};
+use offset::OffsetBuilder;
 use project::ProjectBuilder;
 use sort::{SortBuilder, SortSpec};
 use vertex_property_scan::VertexPropertyScanBuilder;
@@ -184,6 +186,13 @@ pub trait Executor {
         Self: Sized,
     {
         LimitBuilder::new(self, limit).into_executor()
+    }
+
+    fn offset(self, offset: usize) -> impl Executor
+    where
+        Self: Sized,
+    {
+        OffsetBuilder::new(self, offset).into_executor()
     }
 
     /// Convert this Executor into a FactorizedExecutor.

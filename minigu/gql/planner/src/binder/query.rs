@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
 use gql_parser::ast::{
-    AmbientLinearQueryStatement, CompositeQueryStatement, FocusedLinearQueryStatement,
-    FocusedLinearQueryStatementPart, LinearQueryStatement, MatchStatement,
-    NullOrdering as AstNullOrdering, OrderByAndPageStatement, Ordering, QueryConjunction,
-    ResultStatement, Return, ReturnStatement, SetOp, SetOpKind, SetQuantifier,
-    SimpleQueryStatement, SortSpec,
+    AmbientLinearQueryStatement, CompositeQueryStatement, ExplainStatement,
+    FocusedLinearQueryStatement, FocusedLinearQueryStatementPart, LinearQueryStatement,
+    MatchStatement, NullOrdering as AstNullOrdering, OrderByAndPageStatement, Ordering,
+    QueryConjunction, ResultStatement, Return, ReturnStatement, SetOp, SetOpKind, SetQuantifier,
+    SimpleQueryStatement, SortSpec, UtilityStatement,
 };
 use itertools::Itertools;
 use minigu_common::data_type::{DataField, DataSchema, DataSchemaRef, LogicalType};
@@ -19,7 +19,8 @@ use crate::bound::{
     BoundCompositeQueryStatement, BoundExpr, BoundExprKind, BoundLimitClause,
     BoundLinearQueryStatement, BoundMatchStatement, BoundOrderByAndPageStatement,
     BoundQueryConjunction, BoundResultStatement, BoundReturnStatement, BoundSetOp, BoundSetOpKind,
-    BoundSetQuantifier, BoundSimpleQueryStatement, BoundSortSpec, BoundVectorIndexScan,
+    BoundSetQuantifier, BoundSimpleQueryStatement, BoundSortSpec, BoundUtilityStatement,
+    BoundVectorIndexScan,
 };
 
 impl Binder<'_> {
@@ -178,6 +179,14 @@ impl Binder<'_> {
             }
             MatchStatement::Optional(_) => not_implemented("optional match statement", None),
         }
+    }
+
+    pub fn bind_explain_statement(
+        &mut self,
+        statement: &ExplainStatement,
+    ) -> BindResult<BoundUtilityStatement> {
+        let next_statement = self.bind_statement(statement.statement.value())?;
+        Ok(BoundUtilityStatement::Explain(Box::new(next_statement)))
     }
 
     pub fn bind_result_statement(

@@ -5,13 +5,14 @@ use minigu_common::error::not_implemented;
 use crate::bound::{
     BoundCompositeQueryStatement, BoundLinearQueryStatement, BoundMatchStatement,
     BoundOrderByAndPageStatement, BoundResultStatement, BoundReturnStatement,
-    BoundSimpleQueryStatement, BoundVectorIndexScan,
+    BoundSimpleQueryStatement, BoundStatement, BoundVectorIndexScan,
 };
 use crate::error::PlanResult;
 use crate::logical_planner::LogicalPlanner;
 use crate::plan::PlanNode;
 use crate::plan::limit::Limit;
 use crate::plan::logical_match::{LogicalMatch, MatchKind};
+use crate::plan::offset::Offset;
 use crate::plan::one_row::OneRow;
 use crate::plan::project::Project;
 use crate::plan::sort::Sort;
@@ -107,6 +108,13 @@ impl LogicalPlanner {
         Ok(PlanNode::LogicalVectorIndexScan(Arc::new(scan)))
     }
 
+    pub fn plan_explain_statement(&self, statement: &BoundStatement) -> PlanResult<PlanNode> {
+        let child_plan = self.plan_statement(statement.clone())?;
+        Ok(PlanNode::LogicalExplain(Arc::new(
+            crate::plan::explain::Explain::new(child_plan),
+        )))
+    }
+
     pub fn plan_result_statement(
         &self,
         statement: BoundResultStatement,
@@ -152,8 +160,9 @@ impl LogicalPlanner {
             let sort = Sort::new(plan, specs);
             plan = PlanNode::LogicalSort(Arc::new(sort));
         }
-        if statement.offset.is_some() {
-            return not_implemented("offset clause", None);
+        if let Some(offset) = statement.offset {
+            let offset = Offset::new(plan, offset);
+            plan = PlanNode::LogicalOffset(Arc::new(offset));
         }
         if let Some(limit_clause) = statement.limit {
             let limit = Limit::new(plan, limit_clause.count, limit_clause.approximate);

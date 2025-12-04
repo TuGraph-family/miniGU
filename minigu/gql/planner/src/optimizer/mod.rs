@@ -12,6 +12,7 @@ use crate::error::PlanResult;
 use crate::plan::expand::{Expand, ExpandDirection};
 use crate::plan::filter::Filter;
 use crate::plan::limit::Limit;
+use crate::plan::offset::Offset;
 use crate::plan::project::Project;
 use crate::plan::scan::NodeIdScan;
 use crate::plan::sort::Sort;
@@ -197,10 +198,18 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
             let limit = Limit::new(child, limit.limit, limit.approximate);
             Ok(PlanNode::PhysicalLimit(Arc::new(limit)))
         }
+        PlanNode::LogicalOffset(offset) => {
+            let [child] = children
+                .try_into()
+                .expect("offset should have exactly one child");
+            let offset = Offset::new(child, offset.offset);
+            Ok(PlanNode::PhysicalOffset(Arc::new(offset)))
+        }
         PlanNode::LogicalVectorIndexScan(vector_scan) => {
             assert!(children.is_empty());
             Ok(PlanNode::PhysicalVectorIndexScan(vector_scan.clone()))
         }
+        PlanNode::LogicalExplain(explain) => Ok(PlanNode::PhysicalExplain(explain.clone())),
         _ => unreachable!(),
     }
 }
