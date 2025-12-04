@@ -1,76 +1,10 @@
 ---
 source: minigu-test/src/insta_test.rs
+assertion_line: 167
 ---
 Error: Plan(
     Bind(
         CurrentGraphNotSpecified,
-    ),
-)
----
-Error: Plan(
-    Bind(
-        CurrentGraphNotSpecified,
-    ),
-)
----
-Error: Plan(
-    Bind(
-        CurrentGraphNotSpecified,
-    ),
-)
----
-Error: Plan(
-    Bind(
-        CurrentGraphNotSpecified,
-    ),
-)
----
-Error: Plan(
-    Bind(
-        CurrentGraphNotSpecified,
-    ),
-)
----
-Error: Plan(
-    Bind(
-        CurrentGraphNotSpecified,
-    ),
-)
----
-Error: Plan(
-    Bind(
-        CurrentGraphNotSpecified,
-    ),
-)
----
-Error: Plan(
-    Bind(
-        CurrentGraphNotSpecified,
-    ),
-)
----
-Error: Plan(
-    Bind(
-        CurrentGraphNotSpecified,
-    ),
-)
----
-Error: Plan(
-    Bind(
-        CurrentGraphNotSpecified,
-    ),
-)
----
-Error: Plan(
-    Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "quantified expression",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
     ),
 )
 ---
@@ -190,14 +124,67 @@ Error: Plan(
 ---
 Error: Plan(
     Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "binary expression",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
@@ -283,14 +270,7 @@ Error: Plan(
 ---
 Error: Plan(
     Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "generic function expression",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
+        CurrentGraphNotSpecified,
     ),
 )
 ---
@@ -521,14 +501,7 @@ Error: Plan(
 ---
 Error: Plan(
     Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "quantified expression",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
+        CurrentGraphNotSpecified,
     ),
 )
 ---
