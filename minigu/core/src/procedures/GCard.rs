@@ -1,25 +1,22 @@
 use std::collections::HashMap;
-use std::fs;
 use std::fs::File;
-use std::num::{NonZero, NonZeroU32};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::fs;
 
-use minigu_catalog::memory::graph_type::MemoryGraphTypeCatalog;
 use minigu_catalog::provider::{GraphProvider, GraphTypeProvider, SchemaProvider};
-use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_common::data_type::LogicalType;
 use minigu_common::types::{LabelId, VertexId};
+use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::procedure::Procedure;
 use minigu_storage::error::StorageResult;
 use minigu_storage::iterators::AdjacencyIteratorTrait;
 use minigu_storage::tp::{MemTransaction, MemoryGraph};
-use serde::{Deserialize, Serialize};
-use minigu_storage::tp::iterators::AdjacencyIterator;
 use minigu_transaction::GraphTxnManager;
 use minigu_transaction::IsolationLevel::Serializable;
 use rayon::prelude::*;
 use rayon::ThreadPoolBuilder;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Eq, Hash, PartialEq)]
 // 这个结构体，描述了一个短路径，边的类型，开始点的类型与结束点的类型
@@ -41,6 +38,10 @@ impl PathPattern {
         self.steps.len()
     }
 
+    pub fn print(&self) {
+        println!("{:?}", self.steps);
+    }
+
     pub fn is_empty(&self) -> bool {
         self.steps.is_empty()
     }
@@ -48,7 +49,7 @@ impl PathPattern {
     pub fn first_step(&self) -> &PathStep {
         &self.steps[0]
     }
-    
+
     pub fn src_label_id(&self) -> LabelId {
         self.steps[0].src_type
     }
@@ -198,10 +199,9 @@ fn neighbors_matching_step(
     vertex_id: VertexId,
     step: &PathStep,
     txn: &Arc<MemTransaction>,
-    label_map: Option<&Arc<HashMap<LabelId, String>>>,
 ) -> Vec<VertexId> {
     // 在这个函数中，可以给定一个路径，给定一个起始点，获取他的邻居的id
-    
+
     // 获取当前顶点的信息
     let current_vertex = match graph.get_vertex(&txn, vertex_id) {
         Ok(v) => v,
@@ -210,46 +210,28 @@ fn neighbors_matching_step(
             return Vec::new();
         }
     };
-    
-    // 获取当前顶点的label名称
-    let current_label_name = label_map
-        .and_then(|map| map.get(&current_vertex.label_id).cloned())
-        .unwrap_or_else(|| format!("Unknown_{}", current_vertex.label_id));
-    
-    println!("neighbors_matching_step: Processing vertex_id={}, label_id={}, label_name={}, step_edge_type={}, step_dst_type={}", 
-        vertex_id, current_vertex.label_id, current_label_name, step.edge_type, step.dst_type);
-    
     let mut adj_iter = txn.iter_adjacency_outgoing(vertex_id);
     adj_iter = AdjacencyIteratorTrait::filter(adj_iter, move |neighbor| {
         neighbor.label_id() == step.edge_type
     });
-    
+
     let mut matching_neighbors = Vec::new();
-    let mut checked_count = 0;
-    
+
     for neighbor_result in adj_iter {
-        checked_count += 1;
         match neighbor_result {
             Ok(neighbor) => {
                 let neighbor_id = neighbor.neighbor_id();
                 match graph.get_vertex(&txn, neighbor_id) {
                     Ok(neighbor_vertex) => {
-                        let neighbor_label_name = label_map
-                            .and_then(|map| map.get(&neighbor_vertex.label_id).cloned())
-                            .unwrap_or_else(|| format!("Unknown_{}", neighbor_vertex.label_id));
-                        
-                        println!("  Checking neighbor: neighbor_id={}, neighbor_label_id={}, neighbor_label_name={}, required_dst_type={}, match={}", 
-                            neighbor_id, neighbor_vertex.label_id, neighbor_label_name, step.dst_type, 
-                            neighbor_vertex.label_id == step.dst_type);
-                        
                         if neighbor_vertex.label_id == step.dst_type {
                             matching_neighbors.push(neighbor_vertex.vid);
-                            println!("  ✓ Matched neighbor added: neighbor_id={}, neighbor_label_name={}", 
-                                neighbor_id, neighbor_label_name);
                         }
                     }
                     Err(_) => {
-                        println!("  Failed to get neighbor vertex: neighbor_id={}", neighbor_id);
+                        println!(
+                            "  Failed to get neighbor vertex: neighbor_id={}",
+                            neighbor_id
+                        );
                         continue;
                     }
                 }
@@ -260,15 +242,11 @@ fn neighbors_matching_step(
             }
         }
     }
-    
-    println!("neighbors_matching_step completed: vertex_id={}, checked_neighbors={}, matched_neighbors={}", 
-        vertex_id, checked_count, matching_neighbors.len());
-    
     matching_neighbors
 }
 
-
-// PathDegreesMap 存储了这样的信息： 路径信息，以及路径开始的label_id 的节点，以及该节点连接到的路径尾部的数量。
+// PathDegreesMap 存储了这样的信息： 路径信息，以及路径开始的label_id
+// 的节点，以及该节点连接到的路径尾部的数量。
 fn agg_degree_sequence(
     path_degree: &PathDegreesMap,
     graph_type: &dyn GraphTypeProvider,
@@ -276,7 +254,7 @@ fn agg_degree_sequence(
     use std::collections::hash_map::Entry;
     // 这里存储的是： (label id && 路径) -> degree  信息。
     let mut agg: HashMap<(LabelId, PathPattern), Vec<u64>> = HashMap::new();
-    
+
     // 这里把 vertex id 的信息去掉了，只保留了频率信息。
     for (pattern, pvd) in path_degree {
         for (vid, d) in &pvd.degrees {
@@ -289,7 +267,7 @@ fn agg_degree_sequence(
             }
         }
     }
-    
+
     // 构建 label_id 到 name 的映射缓存
     let mut label_id_to_name_map: HashMap<LabelId, String> = HashMap::new();
     for name in graph_type.label_names() {
@@ -297,7 +275,7 @@ fn agg_degree_sequence(
             label_id_to_name_map.insert(id, name);
         }
     }
-    
+
     // 辅助函数：将 LabelId 转换为名称
     let label_id_to_name = |label_id: LabelId| -> String {
         label_id_to_name_map
@@ -305,23 +283,25 @@ fn agg_degree_sequence(
             .cloned()
             .unwrap_or_else(|| format!("Unknown_{}", label_id))
     };
-    
+
     // 这里进行排序，并进一步保存了： label name + path + degree sequence(排序后)
     let mut out = Vec::new();
     for ((label_id, path), mut seq) in agg {
         seq.sort_unstable_by(|a, b| b.cmp(a)); // 从大到小排序
         let dst_label_id = path.steps.last().unwrap().dst_type.clone();
         let len = path.steps.len();
-        
+
         // 将 PathPattern 转换为 PathPatternWithName
-        let steps_with_name: Vec<PathStepWithName> = path.steps.iter().map(|step| {
-            PathStepWithName {
+        let steps_with_name: Vec<PathStepWithName> = path
+            .steps
+            .iter()
+            .map(|step| PathStepWithName {
                 edge_type: label_id_to_name(step.edge_type),
                 src_type: label_id_to_name(step.src_type),
                 dst_type: label_id_to_name(step.dst_type),
-            }
-        }).collect();
-        
+            })
+            .collect();
+
         out.push(TypePathDegreeSeq {
             src_node_type: label_id_to_name(label_id),
             dst_node_type: label_id_to_name(dst_label_id),
@@ -363,16 +343,20 @@ pub fn build_procedure() -> Procedure {
 
         // 创建自定义线程池以提升并行性能
         let num_threads = 1;
-        
+
         let custom_pool = ThreadPoolBuilder::new()
             .num_threads(num_threads)
             .build()
             .map_err(|e| anyhow::anyhow!("Failed to create thread pool: {}", e))?;
-        
-        println!("Using {} rayon threads (available parallelism: {})", 
-            num_threads, 
-            std::thread::available_parallelism().map(|n| n.get()).unwrap_or(1));
-        
+
+        println!(
+            "Using {} rayon threads (available parallelism: {})",
+            num_threads,
+            std::thread::available_parallelism()
+                .map(|n| n.get())
+                .unwrap_or(1)
+        );
+
         // 从 catalog 中获取 graph
         let schema = context
             .current_schema
@@ -380,18 +364,20 @@ pub fn build_procedure() -> Procedure {
         let graph_container = schema
             .get_graph(&graph_name)?
             .ok_or_else(|| anyhow::anyhow!("graph named '{}' not found", graph_name))?;
-        
+
         // 获取 graph_type 和 graph
         let graph_type_ref = graph_container.graph_type();
         let graph_container = graph_container
             .downcast_ref::<GraphContainer>()
             .ok_or_else(|| anyhow::anyhow!("graph '{}' container type mismatch", graph_name))?;
-        
+
         let graph = match graph_container.graph_storage() {
             GraphStorage::Memory(g) => Arc::clone(&g),
-            _ => return Err(anyhow::anyhow!("graph '{}' is not a memory graph", graph_name).into()),
+            _ => {
+                return Err(anyhow::anyhow!("graph '{}' is not a memory graph", graph_name).into());
+            }
         };
-        
+
         // 直接使用 graph_type_ref 作为 GraphTypeProvider
         // graph_type_ref 是 Arc<dyn GraphTypeProvider>，可以直接使用
         let path_len = args[1]
@@ -407,7 +393,7 @@ pub fn build_procedure() -> Procedure {
             .to_string();
         let paths = enumerate_schema_paths(graph_type_ref.as_ref(), path_len as usize);
         let txn = graph.txn_manager().begin_transaction(Serializable)?;
-        
+
         // 构建 label_id 到 name 的映射
         let mut label_id_to_name_map: HashMap<LabelId, String> = HashMap::new();
         for name in graph_type_ref.label_names() {
@@ -415,90 +401,92 @@ pub fn build_procedure() -> Procedure {
                 label_id_to_name_map.insert(id, name);
             }
         }
-        let label_id_to_name_map = Arc::new(label_id_to_name_map);
-        
+        let mut label_id_to_name_map = Arc::new(label_id_to_name_map);
+
         let mut count = 0;
-        for path in &paths {
-            for path_item in &path.steps {
-                println!("{}:{}-{}->{}", count, label_id_to_name_map[&path_item.src_type], label_id_to_name_map[&path_item.edge_type], label_id_to_name_map[&path_item.dst_type]);
-                count += 1;
-            }
-        };
-        
         // 在自定义线程池中执行所有并行操作
-        let results = custom_pool.install(|| -> Result<PathDegreesMap, Box<dyn std::error::Error + Send + Sync>> {
-            let mut local_results: PathDegreesMap = HashMap::new();
-            let label_map = Arc::clone(&label_id_to_name_map);
-            
-            for current_len in 1..=path_len as usize {
-                let path_list: Vec<PathPattern> = paths
-                    .iter()
-                    .filter(|p| p.len() == current_len)
-                    .cloned()
-                    .collect();
-                
-                // 并行处理每个路径
-                // 使用 Arc 共享 local_results 的只读访问（当 current_len > 1 时）
-                let results_ref = Arc::new(&local_results);
-                
-                let path_results: Result<Vec<(PathPattern, PathVertexDegrees)>, Box<dyn std::error::Error + Send + Sync>> = path_list
-                    .par_iter()
-                    .map(|path| {
-                        let first = path.first_step();
-                        let vertices = iter_vertices_of_type(graph.clone(), first.src_type, &txn)
-                            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?;
-                        // 并行处理每个顶点
-                        let label_map_clone = Arc::clone(&label_map);
-                        let degrees: HashMap<VertexId, u64> = vertices
-                            .par_iter()
-                            .map(|&v| {
-                                // 获取顶点的 label_id 和 label name
-                                if let Ok(vertex) = graph.get_vertex(&txn, v) {
-                                    let label_id = vertex.label_id;
-                                    let label_name = label_map_clone
-                                        .get(&label_id)
-                                        .cloned()
-                                        .unwrap_or_else(|| format!("Unknown_{}", label_id));
-                                }
-                                
-                                let cnt = if current_len == 1 {
-                                    // 长度为1的路径：直接计算邻
-                                    let neighs = neighbors_matching_step(graph.clone(), v, first, &txn, Some(&label_map_clone));
-                                    neighs.len() as u64
-                                } else {
-                                    // 长度大于1的路径：需要从之前的结果中获取 suffix 的度信息
-                                    let suffix = path.suffix().expect("suffix exists");
-                                    let suffix_stats = results_ref
-                                        .get(&suffix)
-                                        .unwrap_or_else(|| panic!("suffix error"));
-                                    let neighs = neighbors_matching_step(graph.clone(), v, first, &txn, Some(&label_map_clone));
-                                    // 并行计算所有邻居的度之和
-                                    neighs.par_iter()
-                                        .map(|&u| {
-                                            suffix_stats.degrees.get(&u).copied().unwrap_or(0)
-                                        })
-                                        .sum()
-                                };
-                                (v, cnt)
-                            })
-                            .collect();
-                        
-                        Ok((path.clone(), PathVertexDegrees {
-                            pattern: path.clone(),
-                            degrees,
-                        }))
-                    })
-                    .collect();
-                
-                let path_results = path_results?;
-                
-                // 将并行计算的结果插入到 local_results 中
-                for (path, pvd) in path_results {
-                    local_results.insert(path, pvd);
+        let results = custom_pool.install(
+            || -> Result<PathDegreesMap, Box<dyn std::error::Error + Send + Sync>> {
+                let mut local_results: PathDegreesMap = HashMap::new();
+                let label_map = Arc::clone(&label_id_to_name_map);
+
+                for current_len in 1..=path_len as usize {
+                    let path_list: Vec<PathPattern> = paths
+                        .iter()
+                        .filter(|p| p.len() == current_len)
+                        .cloned()
+                        .collect();
+                    // 并行处理每个路径
+                    // 使用 Arc 共享 local_results 的只读访问（当 current_len > 1 时）
+                    let results_ref = Arc::new(&local_results);
+
+                    let path_results: Result<
+                        Vec<(PathPattern, PathVertexDegrees)>,
+                        Box<dyn std::error::Error + Send + Sync>,
+                    > = path_list
+                        .par_iter()
+                        .map(|path| {
+                            let first = path.first_step();
+                            let vertices =
+                                iter_vertices_of_type(graph.clone(), first.src_type, &txn)
+                                    .map_err(|e| {
+                                        Box::new(e) as Box<dyn std::error::Error + Send + Sync>
+                                    })?;
+                            // 并行处理每个顶点
+                            let label_map_clone = Arc::clone(&label_map);
+                            let degrees: HashMap<VertexId, u64> = vertices
+                                .par_iter()
+                                .map(|&v| {
+                                    let cnt = if current_len == 1 {
+                                        // 长度为1的路径：直接计算邻
+                                        let neighs = neighbors_matching_step(
+                                            graph.clone(),
+                                            v,
+                                            first,
+                                            &txn,
+                                        );
+                                        neighs.len() as u64
+                                    } else {
+                                        // 长度大于1的路径：需要从之前的结果中获取 suffix 的度信息
+                                        let suffix = path.suffix().expect("suffix exists");
+                                        let suffix_stats = results_ref
+                                            .get(&suffix)
+                                            .unwrap_or_else(|| panic!("suffix error"));
+                                        let neighs = neighbors_matching_step(
+                                            graph.clone(),
+                                            v,
+                                            first,
+                                            &txn,
+                                        );
+                                        // 并行计算所有邻居的度之和
+                                        neighs
+                                            .par_iter()
+                                            .map(|&u| {
+                                                suffix_stats.degrees.get(&u).copied().unwrap_or(0)
+                                            })
+                                            .sum()
+                                    };
+                                    (v, cnt)
+                                })
+                                .collect();
+
+                            Ok((path.clone(), PathVertexDegrees {
+                                pattern: path.clone(),
+                                degrees,
+                            }))
+                        })
+                        .collect();
+
+                    let path_results = path_results?;
+
+                    // 将并行计算的结果插入到 local_results 中
+                    for (path, pvd) in path_results {
+                        local_results.insert(path, pvd);
+                    }
                 }
-            }
-            Ok(local_results)
-        })?;
+                Ok(local_results)
+            },
+        )?;
         let to_serialize = agg_degree_sequence(&results, graph_type_ref.as_ref());
         save_type_path_degree_seq(&to_serialize, &PathBuf::from(out_put_dir));
         Ok(vec![])

@@ -27,7 +27,7 @@ use minigu_catalog::property::Property;
 use minigu_catalog::provider::GraphTypeProvider;
 use minigu_common::data_type::LogicalType;
 use minigu_common::error::not_implemented;
-use minigu_common::types::VertexId;
+use minigu_common::types::{LabelId, VertexId};
 use minigu_common::value::ScalarValue;
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::procedure::Procedure;
@@ -150,7 +150,7 @@ pub(crate) fn import<P: AsRef<Path>>(
         )
     })?;
     // Map each original vertex ID to it's newly assigned ID.
-    let mut vid_mapping = HashMap::new();
+    let mut vid_mapping: HashMap<LabelId, HashMap<VertexId, VertexId>> = HashMap::new();
 
     // 1. Vertices
     let mut vid = 1;
@@ -201,7 +201,10 @@ pub(crate) fn import<P: AsRef<Path>>(
 
             graph.create_vertex(&txn, vertex)?;
             // Update vid mapping
-            vid_mapping.insert(old_vid, vid);
+            let entry = vid_mapping.entry(label_id).or_default();
+            if entry.insert(old_vid, vid).is_some() {
+                print!("conflict");
+            }
             vid += 1;
         }
     }
@@ -262,8 +265,10 @@ pub(crate) fn import<P: AsRef<Path>>(
                     continue;
                 }
             };
+            let src_label_id = graph_type.get_label_id(&edge_spec.src_label)?.expect("label id not found");
+            let end_label_id = graph_type.get_label_id(&edge_spec.dst_label)?.expect("label id not found");
             
-            let src_id = match vid_mapping.get(&old_src_id) {
+            let src_id = match vid_mapping.get(&src_label_id).expect("should not null").get(&old_src_id) {
                 Some(id) => id,
                 None => {
                     eprintln!("Warning: Source vertex ID {} not found in mapping for edge '{}'. Skipping record.", 
@@ -271,8 +276,8 @@ pub(crate) fn import<P: AsRef<Path>>(
                     continue;
                 }
             };
-            
-            let dst_id = match vid_mapping.get(&old_dst_id) {
+
+            let dst_id = match vid_mapping.get(&end_label_id).expect("should not null").get(&old_dst_id) {
                 Some(id) => id,
                 None => {
                     eprintln!("Warning: Destination vertex ID {} not found in mapping for edge '{}'. Skipping record.", 
@@ -280,6 +285,12 @@ pub(crate) fn import<P: AsRef<Path>>(
                     continue;
                 }
             };
+
+            let vertex = graph.get_vertex(&txn,*src_id)?;
+            let src_label_name = graph_type.get_vertex_type(&LabelSet::from_label(vertex.label_id))?.expect("vertex label not found");
+
+            let vertex2 = graph.get_vertex(&txn,*dst_id)?;
+            let dst_label_name = graph_type.get_vertex_type(&LabelSet::from_label(vertex2.label_id))?;
 
             // 构建属性，如果失败则跳过该记录
             let props = match build_properties(props, record.iter().skip(3)) {
