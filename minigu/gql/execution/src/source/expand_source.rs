@@ -125,10 +125,11 @@ impl ExpandSource for GraphContainer {
             }
         }
 
+        // TODO:Should add GlobalConfig to determine the batch_size;
         Some(GraphExpandIter {
             neighbors,
             offset: 0,
-            batch_size: 64, // Default batch size
+            batch_size: 64,
             _graph_storage: match self.graph_storage() {
                 GraphStorage::Memory(m) => GraphStorage::Memory(Arc::clone(m)),
             },

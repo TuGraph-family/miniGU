@@ -7,7 +7,7 @@ use gql_parser::ast::{
 use minigu_catalog::label_set::LabelSet;
 use minigu_catalog::provider::GraphTypeProvider;
 use minigu_common::data_type::{DataField, DataSchema, LogicalType};
-use minigu_common::error::{not_implemented, NotImplemented};
+use minigu_common::error::{NotImplemented, not_implemented};
 use minigu_common::types::LabelId;
 use minigu_context::graph::GraphContainer;
 use smol_str::ToSmolStr;

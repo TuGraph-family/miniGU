@@ -1,5 +1,3 @@
-mod GCard;
-mod build_ldbc_mainfest;
 mod create_test_graph;
 mod create_test_graph_data;
 mod echo;
@@ -33,11 +31,6 @@ pub fn build_predefined_procedures() -> Vec<(String, Procedure)> {
         (
             "export".to_string(),
             export_import::export::build_procedure(),
-        ),
-        ("GCard_build".to_string(), GCard::build_procedure()),
-        (
-            "build_ldbc_manifest".to_string(),
-            build_ldbc_mainfest::build_procedure(),
         ),
     ]
 }

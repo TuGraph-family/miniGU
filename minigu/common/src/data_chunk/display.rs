@@ -59,12 +59,12 @@ impl TableOptions {
         self.null_str = null_str;
         self
     }
-    
+
     #[inline]
     pub fn style_for_test() -> Self {
         Self {
             style: TableStyle::Modern,
-            type_info:true,
+            type_info: true,
             null_str: "".into(),
         }
     }

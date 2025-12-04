@@ -63,6 +63,7 @@ impl ExecutorBuilder {
                     .downcast_arc::<GraphContainer>()
                     .expect("failed to downcast to GraphContainer");
 
+                // TODO:Should add GlobalConfig to determine the batch_size in vertex_source;
                 let batches = container
                     .vertex_source(&Some(node_scan.labels.clone()), 1024)
                     .expect("failed to create vertex source");
@@ -133,7 +134,7 @@ impl ExecutorBuilder {
                                     .clone()
                                     .downcast_arc::<GraphContainer>()
                                     .expect("failed to downcast to GraphContainer");
-                                
+
                                 let mut property_names = Vec::new();
                                 let property_list = if let Some(label_specs) =
                                     output_schema.get_var_label(var_name.as_str())
@@ -144,9 +145,7 @@ impl ExecutorBuilder {
                                         if let Ok(Some(vertex_type)) = graph_type.get_vertex_type(
                                             &LabelSet::from_iter(first_label_set.clone()),
                                         ) {
-                                            for property in
-                                                vertex_type.properties().iter()
-                                            {
+                                            for property in vertex_type.properties().iter() {
                                                 property_ids.push(property.0);
                                                 property_names.push(property.1.name().to_string());
                                             }
@@ -162,14 +161,15 @@ impl ExecutorBuilder {
                                     property_list.clone(),
                                     container,
                                 ));
-                                
-                                // Format: {var_name}_{prop_name} to handle cases where multiple variables
+
+                                // Format: {var_name}_{prop_name} to handle cases where multiple
+                                // variables
                                 let mut new_fields = updated_schema.fields().to_vec();
                                 for prop_name in property_names.iter() {
                                     let qualified_name = format!("{}_{}", var_name, prop_name);
                                     new_fields.push(DataField::new(
                                         qualified_name,
-                                        LogicalType::String, 
+                                        LogicalType::String,
                                         true,
                                     ));
                                 }
