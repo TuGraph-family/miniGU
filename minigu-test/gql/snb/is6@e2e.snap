@@ -1,15 +1,9 @@
 ---
 source: minigu-test/src/insta_test.rs
+assertion_line: 191
 ---
 Error: Plan(
     Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "predicate",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
+        CurrentGraphNotSpecified,
     ),
 )

@@ -1,11 +1,9 @@
 ---
 source: minigu-test/src/insta_test.rs
-assertion_line: 203
+assertion_line: 202
 ---
-Statement OK. No results
----
-Statement OK. No results
----
-Explain:
-  Project: n
-    LogicalMatch
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
