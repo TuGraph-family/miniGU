@@ -12,6 +12,7 @@ serde = []
 std = []
 
 [dependencies]
+arrow = { workspace = true }
 cmake = { workspace = true, optional = true }
 glob = { workspace = true }
 gql-parser = { workspace = true, features = ["std", "serde"] }

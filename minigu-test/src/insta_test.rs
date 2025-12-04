@@ -7,7 +7,7 @@ use std::fmt::Write;
 
 use gql_parser::parse_gql;
 use insta::internals::SettingsBindDropGuard;
-use insta::{Settings, assert_snapshot, assert_yaml_snapshot};
+use insta::{assert_snapshot, assert_yaml_snapshot, Settings};
 use minigu::common::data_chunk::display::{TableBuilder, TableOptions};
 use minigu::database::{Database, DatabaseConfig};
 use minigu::result::QueryResult;
@@ -113,8 +113,42 @@ fn result_to_string(result: &QueryResult) -> String {
 
         writeln!(&mut output, "{table}").unwrap();
         writeln!(&mut output, "{num_rows} rows").unwrap();
-    };
+    } else {
+        // Handle result sets without a schema (e.g. EXPLAIN output).
+        for chunk in result.iter() {
+            let rows_count = chunk.cardinality();
+            let column = chunk.columns();
+            for row_idx in 0..rows_count {
+                let row_values: Vec<String> = (0..column.len())
+                    .map(|col_idx| {
+                        let array = &column[col_idx];
+                        extract_string_value(array, row_idx)
+                    })
+                    .collect();
+                output.push_str(&row_values.join("\t"));
+                output.push('\n');
+            }
+        }
+    }
     output
+}
+
+fn extract_string_value(array: &arrow::array::ArrayRef, row_idx: usize) -> String {
+    use arrow::array::*;
+
+    if let Some(string_array) = array.as_any().downcast_ref::<StringArray>() {
+        string_array.value(row_idx).to_string()
+    } else if let Some(string_array) = array.as_any().downcast_ref::<LargeStringArray>() {
+        string_array.value(row_idx).to_string()
+    } else if let Some(int_array) = array.as_any().downcast_ref::<Int64Array>() {
+        int_array.value(row_idx).to_string()
+    } else if let Some(double_array) = array.as_any().downcast_ref::<Float64Array>() {
+        double_array.value(row_idx).to_string()
+    } else if let Some(bool_array) = array.as_any().downcast_ref::<BooleanArray>() {
+        bool_array.value(row_idx).to_string()
+    } else {
+        format!("{:?}", array.to_data())
+    }
 }
 
 // #[allow(unused_macros)]
