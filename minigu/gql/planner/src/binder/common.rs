@@ -50,7 +50,7 @@ pub fn lower_label_expr_to_specs(expr: &BoundLabelExpr) -> Vec<Vec<LabelId>> {
             out
         }
         // TODO: Support Negation Label
-        Negation(_) => unreachable!()
+        Negation(_) => unreachable!(),
     }
 }
 
@@ -295,7 +295,7 @@ impl Binder<'_> {
                 format!("__n{idx}")
             }
         };
-        
+
         let label = match &f.label {
             Some(sp) => Some(self.bind_label_expr(sp.value())?),
             None => None,
@@ -305,8 +305,7 @@ impl Binder<'_> {
         } else {
             vec![vec![]]
         };
-        let vertex_ty =
-            LogicalType::Vertex(vec![]);
+        let vertex_ty = LogicalType::Vertex(vec![]);
         self.register_variable(var.as_str(), vertex_ty, false)?;
         self.register_variable_labels(var.as_str(), &label_set);
 

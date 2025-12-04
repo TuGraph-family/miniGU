@@ -66,8 +66,8 @@ impl PlanData for NodeIdScan {
         };
 
         Some(format!(
-            "{}PhysicalNodeScan: var={}, labels={}, graph_id={}",
-            indent_str, self.var, label_info, self.graph_id
+            "{}PhysicalNodeScan: var={}, labels={}",
+            indent_str, self.var, label_info
         ))
     }
 }
