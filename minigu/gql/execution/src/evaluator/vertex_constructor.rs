@@ -21,6 +21,8 @@ pub struct VertexConstructor {
     vid_column_index: usize,
     /// Indices of property columns
     property_column_indices: Vec<usize>,
+    /// Property names corresponding to property columns
+    property_names: Vec<String>,
     /// Label specifications from schema (if available)
     label_specs: Option<Vec<Vec<LabelId>>>,
 }
@@ -29,11 +31,13 @@ impl VertexConstructor {
     pub fn new(
         vid_column_index: usize,
         property_column_indices: Vec<usize>,
+        property_names: Vec<String>,
         label_specs: Option<Vec<Vec<LabelId>>>,
     ) -> Self {
         Self {
             vid_column_index,
             property_column_indices,
+            property_names,
             label_specs,
         }
     }
@@ -112,10 +116,15 @@ impl Evaluator for VertexConstructor {
         ];
 
         for (idx, prop_array) in property_arrays.iter().enumerate() {
+            let prop_name = if idx < self.property_names.len() {
+                self.property_names[idx].clone()
+            } else {
+                format!("prop_{}", idx)
+            };
             let arrow_field = arrow::datatypes::Field::new(
-                format!("prop_{}", idx),
+                prop_name,
                 prop_array.data_type().clone(),
-                true, // properties can be null
+                true,
             );
             struct_fields.push(Arc::new(arrow_field));
         }

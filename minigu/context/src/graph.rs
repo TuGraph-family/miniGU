@@ -87,6 +87,10 @@ impl GraphContainer {
             }
         }
 
+        // TODO(Colin): Sort IDs to ensure deterministic output in tests.
+        // Remove once ORDER BY is supported.
+        ids.sort_unstable();
+
         let mut pos = 0usize;
         let iter = std::iter::from_fn(move || {
             if pos >= ids.len() {

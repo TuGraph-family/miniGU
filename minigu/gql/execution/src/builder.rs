@@ -50,7 +50,7 @@ impl ExecutorBuilder {
                         .map(|a| a.into_array().as_boolean().clone())
                 }))
             }
-            PlanNode::PhysicalNodeScan(_node_scan) => {
+            PlanNode::PhysicalNodeScan(node_scan) => {
                 // NodeScan provide graph id and label, Handle in next pr.
                 assert_eq!(children.len(), 0);
                 let container: Arc<GraphContainer> = self
@@ -64,7 +64,7 @@ impl ExecutorBuilder {
                     .expect("failed to downcast to GraphContainer");
 
                 let batches = container
-                    .vertex_source(&Some(_node_scan.labels.clone()), 1024)
+                    .vertex_source(&Some(node_scan.labels.clone()), 1024)
                     .expect("failed to create vertex source");
                 let source = batches.map(|arr: Arc<VertexIdArray>| Ok(arr));
                 Box::new(source.scan_vertex())
@@ -134,7 +134,7 @@ impl ExecutorBuilder {
                                     .downcast_arc::<GraphContainer>()
                                     .expect("failed to downcast to GraphContainer");
                                 
-                                let mut property_name = Vec::new();
+                                let mut property_names = Vec::new();
                                 let property_list = if let Some(label_specs) =
                                     output_schema.get_var_label(var_name.as_str())
                                 {
@@ -147,8 +147,8 @@ impl ExecutorBuilder {
                                             for property in
                                                 vertex_type.properties().iter()
                                             {
-                                                property_ids.push(property[0] as usize);
-                                                property_name.push(property);
+                                                property_ids.push(property.0);
+                                                property_names.push(property.1.name().to_string());
                                             }
                                         }
                                     }
@@ -162,16 +162,15 @@ impl ExecutorBuilder {
                                     property_list.clone(),
                                     container,
                                 ));
-
-                                // Update schema: add property columns with
-                                // __{var_name}_prop_{index} naming
+                                
+                                // Format: {var_name}_{prop_name} to handle cases where multiple variables
                                 let mut new_fields = updated_schema.fields().to_vec();
-                                for (idx, _) in property_list.iter().enumerate() {
+                                for prop_name in property_names.iter() {
+                                    let qualified_name = format!("{}_{}", var_name, prop_name);
                                     new_fields.push(DataField::new(
-                                        format!("__{}_prop_{}", var_name, idx),
-                                        LogicalType::String, /* Type will be determined from
-                                                              * actual data */
-                                        true, // nullable
+                                        qualified_name,
+                                        LogicalType::String, 
+                                        true,
                                     ));
                                 }
                                 updated_schema = Arc::new(DataSchema::new(new_fields));
@@ -255,7 +254,7 @@ impl ExecutorBuilder {
             BoundExprKind::Value(value) => Box::new(Constant::new(value.clone())),
             BoundExprKind::Variable(variable) => {
                 // Check if this is a Vertex type that needs to be constructed
-                if let LogicalType::Vertex(_vertex_fields) = &expr.logical_type {
+                if let LogicalType::Vertex(vertex_fields) = &expr.logical_type {
                     // Find the vertex ID column
                     let vid_index = schema
                         .get_field_index_by_name(variable)
@@ -263,19 +262,23 @@ impl ExecutorBuilder {
 
                     let label_specs = schema.get_var_label(variable);
 
+                    // Find property columns by their names: {var_name}_{prop_name}
                     let mut property_column_indices = Vec::new();
-                    for i in 0.. {
-                        let prop_name = format!("__{}_prop_{}", variable, i);
-                        if let Some(prop_idx) = schema.get_field_index_by_name(&prop_name) {
+                    let mut property_names = Vec::new();
+                    for field in vertex_fields {
+                        let prop_name = field.name();
+                        // Look for qualified name: {variable}_{prop_name}
+                        let qualified_name = format!("{}_{}", variable, prop_name);
+                        if let Some(prop_idx) = schema.get_field_index_by_name(&qualified_name) {
                             property_column_indices.push(prop_idx);
-                        } else {
-                            break;
+                            property_names.push(prop_name.to_string());
                         }
                     }
 
                     return Box::new(VertexConstructor::new(
                         vid_index,
                         property_column_indices,
+                        property_names,
                         label_specs,
                     ));
                 }

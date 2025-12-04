@@ -4,9 +4,12 @@ use gql_parser::ast::{
     EdgePatternKind, ElementPattern, ElementPatternFiller, GraphPattern, GraphPatternBindingTable,
     LabelExpr, MatchMode, PathMode, PathPattern, PathPatternExpr, PathPatternPrefix,
 };
+use minigu_catalog::label_set::LabelSet;
+use minigu_catalog::provider::GraphTypeProvider;
 use minigu_common::data_type::{DataField, DataSchema, LogicalType};
-use minigu_common::error::{NotImplemented, not_implemented};
+use minigu_common::error::{not_implemented, NotImplemented};
 use minigu_common::types::LabelId;
+use minigu_context::graph::GraphContainer;
 use smol_str::ToSmolStr;
 
 use super::error::{BindError, BindResult};
@@ -300,14 +303,41 @@ impl Binder<'_> {
             Some(sp) => Some(self.bind_label_expr(sp.value())?),
             None => None,
         };
-        let label_set = if let Some(label_val) = label.as_ref() {
+        let label_set_vec = if let Some(label_val) = label.as_ref() {
             lower_label_expr_to_specs(label_val)
         } else {
             vec![vec![]]
         };
-        let vertex_ty = LogicalType::Vertex(vec![]);
+        let container: Arc<GraphContainer> = self
+            .current_graph
+            .as_ref()
+            .ok_or_else(|| BindError::CurrentGraphNotSpecified)?
+            .object()
+            .clone()
+            .downcast_arc::<GraphContainer>()
+            .expect("failed to downcast to GraphContainer");
+        let graph_type = container.graph_type();
+        let vertex_properties = if let Ok(Some(vertex_type)) =
+            graph_type.get_vertex_type(&LabelSet::from_iter(label_set_vec[0].clone()))
+        {
+            vertex_type
+                .properties()
+                .iter()
+                .map(|(_, property)| {
+                    DataField::new(
+                        property.name().to_string(),
+                        property.logical_type().clone(),
+                        property.nullable(),
+                    )
+                })
+                .collect()
+        } else {
+            Vec::new()
+        };
+
+        let vertex_ty = LogicalType::Vertex(vertex_properties);
         self.register_variable(var.as_str(), vertex_ty, false)?;
-        self.register_variable_labels(var.as_str(), &label_set);
+        self.register_variable_labels(var.as_str(), &label_set_vec);
 
         if f.predicate.is_some() {
             return Err(BindError::NotImplemented(NotImplemented::new(
@@ -323,7 +353,7 @@ impl Binder<'_> {
 
         Ok(BoundVertexPattern {
             var,
-            label: label_set,
+            label: label_set_vec,
             predicate,
         })
     }
