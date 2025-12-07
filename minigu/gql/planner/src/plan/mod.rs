@@ -1,4 +1,5 @@
 pub mod call;
+pub mod expand;
 pub mod explain;
 pub mod filter;
 pub mod limit;
@@ -16,6 +17,7 @@ use minigu_common::data_type::DataSchemaRef;
 use serde::Serialize;
 
 use crate::plan::call::Call;
+use crate::plan::expand::Expand;
 use crate::plan::explain::Explain;
 use crate::plan::filter::Filter;
 use crate::plan::limit::Limit;
@@ -23,7 +25,7 @@ use crate::plan::logical_match::LogicalMatch;
 use crate::plan::offset::Offset;
 use crate::plan::one_row::OneRow;
 use crate::plan::project::Project;
-use crate::plan::scan::PhysicalNodeScan;
+use crate::plan::scan::NodeIdScan;
 use crate::plan::sort::Sort;
 use crate::plan::vector_index_scan::VectorIndexScan;
 
@@ -97,8 +99,9 @@ pub enum PlanNode {
     //  During subsequent matching and computation, these ids are lazily expanded
     //  into complete attribute representations (ArrayRefs) only when required,
     //  to improve performance and reduce unnecessary data loading.
-    PhysicalNodeScan(Arc<PhysicalNodeScan>),
+    PhysicalNodeScan(Arc<NodeIdScan>),
     // PhysicalCatalogModify(Arc<PhysicalCatalogModify>)
+    PhysicalExpand(Arc<Expand>),
     PhysicalExplain(Arc<Explain>),
 }
 
@@ -125,6 +128,7 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalNodeScan(node) => node.base(),
             PlanNode::LogicalVectorIndexScan(node) => node.base(),
             PlanNode::PhysicalVectorIndexScan(node) => node.base(),
+            PlanNode::PhysicalExpand(node) => node.base(),
             PlanNode::PhysicalExplain(node) => node.base(),
         }
     }
@@ -151,6 +155,7 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalOffset(node) => node.explain(indent),
             PlanNode::PhysicalVectorIndexScan(node) => node.explain(indent),
             PlanNode::PhysicalNodeScan(node) => node.explain(indent),
+            PlanNode::PhysicalExpand(node) => node.explain(indent),
             PlanNode::PhysicalExplain(node) => node.explain(indent),
         }
     }

@@ -1526,7 +1526,10 @@ dependencies = [
  "minigu-planner",
  "minigu-storage",
  "minigu-transaction",
+ "ordered-float",
  "rayon",
+ "temp-dir",
+ "temp-file",
  "thiserror",
 ]
 

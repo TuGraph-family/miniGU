@@ -7,7 +7,7 @@ use serde::Serialize;
 use crate::plan::{PlanBase, PlanData};
 
 #[derive(Debug, Clone, Serialize)]
-pub struct PhysicalNodeScan {
+pub struct NodeIdScan {
     pub base: PlanBase,
     pub var: String,
     // DNF: outer OR, inner AND
@@ -15,11 +15,10 @@ pub struct PhysicalNodeScan {
     // labels = [ [A,B] ] LabelA and LabelB
     // labels = [ [A], [B] ] LabelA or LabelB
     pub labels: Vec<Vec<LabelId>>,
-    pub graph_id: i64,
 }
 
-impl PhysicalNodeScan {
-    pub fn new(var: &str, labels: Vec<Vec<LabelId>>, graph_id: i64) -> Self {
+impl NodeIdScan {
+    pub fn new(var: &str, labels: Vec<Vec<LabelId>>) -> Self {
         // For Single Node Scan, We just assume the id is only needed.
         let field = DataField::new(var.to_string(), LogicalType::Int64, false);
         let schema = DataSchema::new(vec![field]);
@@ -31,12 +30,11 @@ impl PhysicalNodeScan {
             base,
             var: var.to_string(),
             labels,
-            graph_id,
         }
     }
 }
 
-impl PlanData for PhysicalNodeScan {
+impl PlanData for NodeIdScan {
     fn base(&self) -> &PlanBase {
         &self.base
     }
@@ -68,8 +66,8 @@ impl PlanData for PhysicalNodeScan {
         };
 
         Some(format!(
-            "{}PhysicalNodeScan: var={}, labels={}, graph_id={}",
-            indent_str, self.var, label_info, self.graph_id
+            "{}PhysicalNodeScan: var={}, labels={}",
+            indent_str, self.var, label_info
         ))
     }
 }

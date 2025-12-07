@@ -4,7 +4,7 @@ use arrow::array::{Array, AsArray, ListArray};
 use arrow::buffer::OffsetBuffer;
 use arrow::datatypes::Field;
 use itertools::Itertools;
-use minigu_common::types::VertexIdArray;
+use minigu_common::types::{LabelId, VertexIdArray};
 
 use super::utils::gen_try;
 use super::{Executor, IntoExecutor};
@@ -14,14 +14,24 @@ use crate::source::ExpandSource;
 pub struct ExpandBuilder<E, S> {
     child: E,
     input_column_index: usize,
+    edge_labels: Option<Vec<Vec<LabelId>>>,
+    target_vertex_labels: Option<Vec<Vec<LabelId>>>,
     source: S,
 }
 
 impl<E, S> ExpandBuilder<E, S> {
-    pub fn new(child: E, input_column_index: usize, source: S) -> Self {
+    pub fn new(
+        child: E,
+        input_column_index: usize,
+        edge_labels: Option<Vec<Vec<LabelId>>>,
+        target_vertex_labels: Option<Vec<Vec<LabelId>>>,
+        source: S,
+    ) -> Self {
         Self {
             child,
             input_column_index,
+            edge_labels,
+            target_vertex_labels,
             source,
         }
     }
@@ -39,6 +49,8 @@ where
             let ExpandBuilder {
                 child,
                 input_column_index,
+                edge_labels,
+                target_vertex_labels,
                 source,
             } = self;
             for chunk in child.into_iter() {
@@ -65,7 +77,11 @@ where
                     let vertex = input_column.value(i);
                     // Slice the chunk to the current row.
                     let chunk = chunk.slice(i, 1);
-                    let expand_iter = if let Some(expand_iter) = source.expand_from_vertex(vertex) {
+                    let expand_iter = if let Some(expand_iter) = source.expand_from_vertex(
+                        vertex,
+                        edge_labels.clone(),
+                        target_vertex_labels.clone(),
+                    ) {
                         expand_iter
                     } else {
                         continue;
@@ -125,7 +141,7 @@ mod tests {
         );
         let chunk: DataChunk = [Ok(chunk)]
             .into_executor()
-            .expand(0, build_test_source())
+            .expand(0, None, None, build_test_source())
             .into_iter()
             .try_collect()
             .unwrap();

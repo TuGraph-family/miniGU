@@ -1,6 +1,9 @@
 ---
 source: minigu-test/src/insta_test.rs
+assertion_line: 202
 ---
-Explain:
-  Project: n
-    LogicalMatch
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)

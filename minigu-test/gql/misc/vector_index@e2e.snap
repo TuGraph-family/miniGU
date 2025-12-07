@@ -52,6 +52,6 @@ Error: Parser(
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )

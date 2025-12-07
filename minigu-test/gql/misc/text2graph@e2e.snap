@@ -1,251 +1,238 @@
 ---
 source: minigu-test/src/insta_test.rs
+assertion_line: 167
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "quantified expression",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "binary expression",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
@@ -277,92 +264,85 @@ Error: Parser(
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "edge pattern",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
@@ -394,19 +374,19 @@ Error: Parser(
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
@@ -425,110 +405,103 @@ Error: Parser(
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
 ---
 Error: Plan(
     Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "quantified expression",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
+        CurrentGraphNotSpecified,
     ),
 )
 ---
