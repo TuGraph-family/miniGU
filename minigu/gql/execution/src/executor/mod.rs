@@ -3,6 +3,7 @@ pub mod expand;
 pub mod factorized_filter;
 pub mod filter;
 pub mod flatten;
+pub mod offset;
 pub mod procedure_call;
 
 // TODO: Implement join executor.
@@ -30,6 +31,8 @@ use factorized_filter::FactorizedFilterBuilder;
 use filter::FilterBuilder;
 use flatten::FlattenBuilder;
 use minigu_common::data_chunk::DataChunk;
+use minigu_common::types::{LabelId, PropertyId};
+use offset::OffsetBuilder;
 use project::ProjectBuilder;
 use sort::{SortBuilder, SortSpec};
 use vertex_property_scan::VertexPropertyScanBuilder;
@@ -89,20 +92,38 @@ pub trait Executor {
         FactorizedFilterBuilder::new(self, predicate, unflat_column_indices).into_executor()
     }
 
-    fn expand<S>(self, input_column_index: usize, source: S) -> impl Executor
+    fn expand<S>(
+        self,
+        input_column_index: usize,
+        edge_labels: Option<Vec<Vec<LabelId>>>,
+        target_vertex_labels: Option<Vec<Vec<LabelId>>>,
+        source: S,
+    ) -> impl Executor
     where
         Self: Sized,
         S: ExpandSource,
     {
-        ExpandBuilder::new(self, input_column_index, source).into_executor()
+        ExpandBuilder::new(
+            self,
+            input_column_index,
+            edge_labels,
+            target_vertex_labels,
+            source,
+        )
+        .into_executor()
     }
 
-    fn scan_vertex_property<S>(self, input_column_index: usize, source: S) -> impl Executor
+    fn scan_vertex_property<S>(
+        self,
+        input_column_index: usize,
+        properties: Vec<PropertyId>,
+        source: S,
+    ) -> impl Executor
     where
         Self: Sized,
         S: VertexPropertySource,
     {
-        VertexPropertyScanBuilder::new(self, input_column_index, source).into_executor()
+        VertexPropertyScanBuilder::new(self, input_column_index, properties, source).into_executor()
     }
 
     fn scan_vertex<S>(self, source: S) -> impl Executor
@@ -165,6 +186,13 @@ pub trait Executor {
         Self: Sized,
     {
         LimitBuilder::new(self, limit).into_executor()
+    }
+
+    fn offset(self, offset: usize) -> impl Executor
+    where
+        Self: Sized,
+    {
+        OffsetBuilder::new(self, offset).into_executor()
     }
 
     /// Convert this Executor into a FactorizedExecutor.

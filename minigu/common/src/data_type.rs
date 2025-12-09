@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt;
 use std::sync::{Arc, LazyLock};
 
@@ -11,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use crate::constants::{
     DST_FIELD_NAME, EID_FIELD_NAME, LABEL_FIELD_NAME, SRC_FIELD_NAME, VID_FIELD_NAME,
 };
+use crate::types::LabelId;
 
 pub(crate) struct PredefinedFields;
 
@@ -159,42 +161,56 @@ impl fmt::Display for LogicalType {
 pub type DataSchemaRef = Arc<DataSchema>;
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct DataSchema(Vec<DataField>);
+pub struct DataSchema {
+    fields: Vec<DataField>,
+    var_labels: HashMap<String, Vec<Vec<LabelId>>>,
+}
 
 impl DataSchema {
     #[inline]
     pub fn new(fields: Vec<DataField>) -> Self {
-        Self(fields)
+        Self {
+            fields,
+            var_labels: HashMap::new(),
+        }
     }
 
     pub fn size(&self) -> usize {
-        self.0.len()
+        self.fields.len()
     }
 
     pub fn append(&mut self, schema: &DataSchema) {
-        self.0.extend(schema.0.iter().cloned());
+        self.fields.extend(schema.fields.iter().cloned());
     }
 
     pub fn push_back(&mut self, field: &DataField) {
-        self.0.push(field.clone());
+        self.fields.push(field.clone());
+    }
+
+    pub fn set_var_label(&mut self, var: String, labels: Vec<Vec<LabelId>>) {
+        self.var_labels.insert(var, labels);
+    }
+
+    pub fn get_var_label(&self, var: &str) -> Option<Vec<Vec<LabelId>>> {
+        self.var_labels.get(var).cloned()
     }
 
     pub fn get_field_by_name(&self, name: &str) -> Option<&DataField> {
-        self.0.iter().find(|field| field.name() == name)
+        self.fields.iter().find(|field| field.name() == name)
     }
 
     pub fn get_field_index_by_name(&self, name: &str) -> Option<usize> {
-        self.0.iter().position(|field| field.name() == name)
+        self.fields.iter().position(|field| field.name() == name)
     }
 
     #[inline]
     pub fn fields(&self) -> &[DataField] {
-        &self.0
+        &self.fields
     }
 
     #[inline]
     pub fn to_arrow_schema(&self) -> ArrowSchema {
-        let fields: ArrowFields = self.0.iter().map(DataField::to_arrow_field).collect();
+        let fields: ArrowFields = self.fields.iter().map(DataField::to_arrow_field).collect();
         ArrowSchema::new(fields)
     }
 }

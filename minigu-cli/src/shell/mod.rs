@@ -1,7 +1,7 @@
 mod command;
 mod context;
 mod editor;
-mod output;
+pub mod output;
 
 use std::path::PathBuf;
 

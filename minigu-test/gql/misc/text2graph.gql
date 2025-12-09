@@ -1,0 +1,255 @@
+// ========== Category 1: Basic Node Matching ==========
+// Simple property match
+MATCH (a:Author{author_id:'A001'}) RETURN a;
+
+// Node without property filter
+MATCH (m:Movie) RETURN m LIMIT 5;
+
+// Multiple node labels
+MATCH (p:Person) RETURN p.name ORDER BY p.born DESC LIMIT 3;
+
+// ========== Category 2: Single Relationship Traversal ==========
+// Basic relationship
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie) RETURN p.name, m.title;
+
+// Relationship with property
+MATCH (c1:Character)-[r:INTERACTS{weight:5}]->(c2:Character) RETURN c1.name, c2.name;
+
+// Bidirectional relationship
+MATCH (p:Person)<-[:HAS_CEO]-(o:Organization) RETURN p.name, o.name;
+
+// ========== Category 3: Multi-hop Traversal ==========
+// 2-hop traversal
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)<-[:DIRECTED]-(d:Person) RETURN p.name, m.title, d.name;
+
+// 3-hop traversal
+MATCH (o:Organization)-[:HAS_CEO]->(p:Person)-[:HAS_CHILD]->(child:Person) RETURN o.name, p.name, child.name;
+
+// Complex multi-relationship pattern
+MATCH (u:User)-[:WROTE]->(r:Review)-[:REVIEWS]->(b:Business)-[:IN_CATEGORY]->(c:Category) RETURN u.name, b.name, c.name;
+
+// ========== Category 4: Variable-Length Paths ==========
+// Unbounded variable path
+MATCH (a:Author)-[]->{1,}(d:Document) RETURN count(p);
+
+// Fixed multi-hop path
+MATCH (a)-[]->{2,2}(b) RETURN count(p);
+
+// Range variable path
+MATCH (c:Character)-[:INTERACTS]-{1,5}(other:Character) RETURN c.name, other.name;
+
+// ========== Category 5: Aggregation Functions ==========
+// COUNT
+MATCH (m:Movie) RETURN COUNT(m) AS movie_count;
+
+// AVG
+MATCH (p:Person) RETURN AVG(p.born) AS average_birth_year;
+
+// SUM
+MATCH (m:Movie) RETURN SUM(m.budget) AS total_budget;
+
+// MAX/MIN
+MATCH (m:Movie) RETURN MAX(m.released) AS latest_year, MIN(m.released) AS earliest_year;
+
+// Multiple aggregations
+MATCH (s:Stream) RETURN COUNT(s) AS total, AVG(s.followers) AS avg_followers, MAX(s.total_view_count) AS max_views;
+
+// ========== Category 6: WHERE Clause Filtering ==========
+// Property comparison
+MATCH (m:Movie) WHERE m.budget > 100000000 RETURN m.title;
+
+// String comparison
+MATCH (p:Person) WHERE p.name = 'Keanu Reeves' RETURN p;
+
+// Multiple conditions
+MATCH (q:Question) WHERE q.answer_count > 2 AND q.score > 5 RETURN q.title;
+
+// Property existence check
+MATCH (m:Movie) WHERE m.budget > 0 AND m.released < 2000 RETURN m.title;
+
+// ========== Category 7: Result Operations ==========
+// ORDER BY single field
+MATCH (m:Movie) RETURN m.title, m.released ORDER BY m.released DESC;
+
+// ORDER BY multiple fields
+MATCH (r:Review) RETURN r.stars, r.`date` ORDER BY r.stars DESC, r.`date` ASC;
+
+// LIMIT
+MATCH (s:Stream) RETURN s.name ORDER BY s.followers DESC LIMIT 5;
+
+// DISTINCT
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie) RETURN DISTINCT p.name;
+
+// SKIP (if supported)
+MATCH (m:Movie) RETURN m.title ORDER BY m.released SKIP 10 LIMIT 5;
+
+// ========== Category 8: Aggregation with Grouping ==========
+// Grouping with COUNT
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie) RETURN p.name, COUNT(m) AS movie_count ORDER BY movie_count DESC;
+
+// Grouping with AVG
+MATCH (u:User)-[r:RATED]->(m:Movie) RETURN u.name, AVG(r.rating) AS avg_rating ORDER BY avg_rating DESC;
+
+// Grouping with multiple aggregations
+MATCH (s:Stream)-[:PLAYS]->(g:Game) RETURN g.name, COUNT(s) AS stream_count, AVG(s.followers) AS avg_followers ORDER BY stream_count DESC;
+
+// ========== Category 9: Property and Label Introspection ==========
+// properties() function
+MATCH (n:Movie) RETURN properties(n) AS props LIMIT 3;
+
+// labels() function
+MATCH (n) WHERE n.name = 'Neo4j' RETURN labels(n);
+
+// Property counting
+MATCH (n:Publication) RETURN COUNT(n.Publication_Date);
+
+// ========== Category 10: NEXT Query Chaining ==========
+// Simple NEXT
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie) RETURN p, COUNT(m) AS movie_count NEXT RETURN p.name, movie_count ORDER BY movie_count DESC LIMIT 3;
+
+// Multi-stage NEXT
+MATCH (q:Question) RETURN q ORDER BY q.view_count DESC LIMIT 1 NEXT MATCH (u:User)-[:ASKED]->(q) RETURN u.display_name;
+
+// NEXT with aggregation
+MATCH (s:Stream)-[:PLAYS]->(g:Game) RETURN g, COUNT(s) AS stream_count NEXT RETURN g.name, stream_count ORDER BY stream_count DESC LIMIT 5;
+
+// ========== Category 11: Complex Patterns ==========
+// Multiple MATCH clauses
+MATCH (m:Movie{title:'The Matrix'}) MATCH (p:Person)-[:ACTED_IN]->(m) RETURN p.name;
+
+// Pattern with multiple relationships
+MATCH (u:User)-[:POSTS]->(t:Tweet)-[:MENTIONS]->(mentioned:User) RETURN u.screen_name, mentioned.screen_name;
+
+// Diamond pattern
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)<-[:DIRECTED]-(d:Director) MATCH (a)-[:ACTED_IN]->(m2:Movie)<-[:DIRECTED]-(d) RETURN a.name, d.name, COUNT(m) AS collaborations;
+
+// Relationship type with properties in pattern
+MATCH (p:Person)-[:CREW_FOR{job:'Director'}]->(m:Movie) RETURN p.name, m.title;
+
+// ========== Category 12: Subquery Patterns (EXISTS/NOT EXISTS if supported) ==========
+// Filter with relationship existence
+MATCH (m:Movie) WHERE (m)<-[:ACTED_IN]-(:Person{name:'Tom Hanks'}) RETURN m.title;
+
+// Complex existence check
+MATCH (s:Stream) WHERE (s)-[:HAS_LANGUAGE]->(:Language{name:'en'}) AND (s)-[:PLAYS]->(:Game{name:'Rust'}) RETURN s.name;
+
+// ========== Category 13: Path Operations ==========
+// Length of path
+MATCH p=(a:Character)-[:INTERACTS]->{1,}(b:Character) RETURN a.name, b.name, LENGTH(p) ORDER BY LENGTH(p) DESC LIMIT 1;
+
+// nodes() and relationships() functions
+MATCH p=(a)-[]->(b)-[]->(c) RETURN nodes(p), relationships(p) LIMIT 3;
+
+// ========== Category 14: Statistical Aggregations with Filters ==========
+// Conditional aggregation
+MATCH (u:User)-[:WROTE]->(r:Review)-[:REVIEWS]->(b:Business) WHERE r.stars >= 4 RETURN b.name, COUNT(r) AS high_ratings ORDER BY high_ratings DESC LIMIT 5;
+
+// Multi-level aggregation
+MATCH (pc:ProductionCompany)<-[:PRODUCED_BY]-(m:Movie) RETURN pc.name, COUNT(m) AS movie_count, SUM(m.budget) AS total_budget, AVG(m.revenue) AS avg_revenue ORDER BY total_budget DESC LIMIT 5;
+
+// Aggregation with relationship properties
+MATCH (p:Person)-[r:REVIEWED]->(m:Movie) RETURN m.title, AVG(r.rating) AS avg_rating, COUNT(r) AS review_count ORDER BY avg_rating DESC;
+
+// ========== Category 15: Multi-label and Multi-type Patterns ==========
+// Multiple node types in pattern
+MATCH (s:Stream)-[:MODERATOR]->(u:User)-[:VIP]->(s2:Stream) RETURN s.name, u.name, s2.name;
+
+// Union-like pattern (multiple relationship types)
+MATCH (p:Person)-[:ACTED_IN|DIRECTED|PRODUCED]->(m:Movie) RETURN p.name, m.title, type(r) AS relationship_type;
+
+// ========== Category 16: Temporal/Data Type Specific Operations ==========
+// Date comparisons
+MATCH (m:Movie) WHERE m.released >= 2000 AND m.released <= 2010 RETURN m.title, m.released;
+
+// Numeric ranges
+MATCH (m:Movie) WHERE m.budget > 50000000 AND m.budget < 150000000 RETURN m.title, m.budget;
+
+// String operations (if supported)
+MATCH (r:Review) WHERE r.summary = 'Pretty funny at times' RETURN r.text, r.rating;
+
+// ========== Category 17: Bidirectional and Complex Relationship Patterns ==========
+// Bidirectional pattern
+MATCH (u1:User)-[:FOLLOWS]->(u2:User)-[:FOLLOWS]->(u1) RETURN u1.name, u2.name;
+
+// Triangular pattern
+MATCH (a:User)-[:FOLLOWS]->(b:User)-[:FOLLOWS]->(c:User)-[:FOLLOWS]->(a) RETURN a.name, b.name, c.name;
+
+// Self-referential pattern
+MATCH (s:Storm)-[:AFFECTS]->(r1:Region)<-[:AFFECTS]-(s)-[:AFFECTS]->(r2:Region) WHERE r1 <> r2 RETURN s.Name, r1.Region_name, r2.Region_name;
+
+// ========== Category 18: Collecting and List Operations ==========
+// collect() function
+MATCH (m:Movie)-[:IN_GENRE]->(g:Genre) RETURN m.title, collect(g.name) AS genres;
+
+// size() on collections
+MATCH (q:Question)-[:TAGGED]->(t:Tag) RETURN q.title, size(collect(t.name)) AS tag_count ORDER BY tag_count DESC;
+
+// collect with DISTINCT
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)-[:IN_GENRE]->(g:Genre) RETURN p.name, collect(DISTINCT g.name) AS genres;
+
+// ========== Category 19: Comparative and Ranking Queries ==========
+// Finding maximum
+MATCH (m:Movie) RETURN m ORDER BY m.budget DESC LIMIT 1 NEXT RETURN m.title, m.budget;
+
+// Top-N with ties handling
+MATCH (s:Stream) RETURN s.name, s.followers ORDER BY s.followers DESC LIMIT 10;
+
+// Percentile/ranking (using ORDER + LIMIT)
+MATCH (u:User)-[:ASKED]->(q:Question) RETURN u.display_name, COUNT(q) AS question_count ORDER BY question_count DESC LIMIT 10;
+
+// ========== Category 20: Complex Multi-Stage Analysis ==========
+// Multi-stage with filtering and aggregation
+MATCH (u:User)-[:WROTE]->(r:Review)-[:REVIEWS]->(b:Business)-[:IN_CATEGORY]->(c:Category{name:'Restaurants'}) RETURN b.name, AVG(r.stars) AS avg_rating, COUNT(r) AS review_count WHERE review_count > 5 ORDER BY avg_rating DESC LIMIT 10;
+
+// Network analysis pattern
+MATCH (s:Stream)-[:MODERATOR]->(u:User)-[:VIP]->(s2:Stream) RETURN s.name, COUNT(DISTINCT s2) AS vip_stream_count ORDER BY vip_stream_count DESC;
+
+// Hierarchical aggregation
+MATCH (parent:Organization)-[:HAS_SUBSIDIARY]->(sub:Organization) RETURN parent.name, COUNT(sub) AS subsidiary_count, SUM(sub.revenue) AS total_revenue ORDER BY subsidiary_count DESC;
+
+// ========== Category 21: Graph Algorithm Patterns ==========
+// PageRank-like ordering
+MATCH (c:Character) RETURN c.name, c.book1PageRank ORDER BY c.book1PageRank DESC LIMIT 10;
+
+// Degree centrality
+MATCH (c:Character)-[r:INTERACTS]-() RETURN c.name, COUNT(r) AS degree ORDER BY degree DESC LIMIT 10;
+
+// Betweenness centrality
+MATCH (u:User) RETURN u.name, u.betweenness ORDER BY u.betweenness DESC LIMIT 5;
+
+// ========== Category 22: Schema Diversity ==========
+// Cross-domain pattern (testing different schemas)
+MATCH (a:Author)-[:WROTE]->(p:Publication) RETURN a.name, p.title;
+MATCH (s:Student)-[:ENROLLED_IN]->(c:Course) RETURN s.name, c.name;
+MATCH (e:Employee)-[:WORKS_FOR]->(d:Department) RETURN e.name, d.name;
+MATCH (pr:Process)-[:LISTENS]->(port:Port) RETURN pr.name, port.port;
+
+// ========== Category 23: Negative Conditions ==========
+// NOT EQUAL
+MATCH (r:Region) WHERE r.Region_name <> 'Denmark' RETURN r.Region_name;
+
+// Property absence
+MATCH (m:Movie) WHERE m.budget = 0 OR m.revenue = 0 RETURN m.title;
+
+// Exclusion patterns
+MATCH (u:User)-[:MODERATOR]->(s:Stream)-[:HAS_LANGUAGE]->(l:Language) WHERE l.name <> 'en' RETURN u.name LIMIT 5;
+
+// ========== Category 24: Edge Cases and Special Values ==========
+// NULL handling
+MATCH (q:Question) WHERE q.answer_count = 0 RETURN q.title LIMIT 3;
+
+// Boolean properties
+MATCH (o:Organization) WHERE o.isPublic = true RETURN o.name;
+
+// Empty collections
+MATCH (m:Movie) WHERE m.runtime = 0 RETURN m.title;
+
+// ========== Category 25: Performance Testing Patterns ==========
+// Large result set
+MATCH (m:Movie) RETURN m;
+
+// Deep traversal
+MATCH (a)-[]->{1,}(b) RETURN a, b LIMIT 100;
+
+// Cartesian product (intentional for testing)
+MATCH (a:Author), (b:Book) WHERE a.birth_year > 1900 AND b.year > 2000 RETURN a.name, b.title LIMIT 10;

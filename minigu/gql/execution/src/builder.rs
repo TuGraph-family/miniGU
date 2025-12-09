@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
 use arrow::array::{AsArray, Int32Array};
-use minigu_catalog::provider::{GraphProvider, SchemaProvider};
+use minigu_catalog::label_set::LabelSet;
+use minigu_catalog::provider::GraphTypeProvider;
 use minigu_common::data_chunk::DataChunk;
-use minigu_common::data_type::{DataSchema, LogicalType};
+use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 use minigu_common::types::VertexIdArray;
 use minigu_context::graph::GraphContainer;
 use minigu_context::session::SessionContext;
@@ -14,6 +15,7 @@ use crate::evaluator::BoxedEvaluator;
 use crate::evaluator::column_ref::ColumnRef;
 use crate::evaluator::constant::Constant;
 use crate::evaluator::vector_distance::VectorDistanceEvaluator;
+use crate::evaluator::vertex_constructor::VertexConstructor;
 use crate::executor::procedure_call::ProcedureCallBuilder;
 use crate::executor::sort::SortSpec;
 use crate::executor::vector_index_scan::VectorIndexScanBuilder;
@@ -31,8 +33,8 @@ impl ExecutorBuilder {
         Self { session }
     }
 
-    pub fn build(self, physical_plan: &PlanNode) -> BoxedExecutor {
-        self.build_executor(physical_plan)
+    pub fn build(self, plan: &PlanNode) -> BoxedExecutor {
+        self.build_executor(plan)
     }
 
     fn build_executor(&self, physical_plan: &PlanNode) -> BoxedExecutor {
@@ -48,38 +50,142 @@ impl ExecutorBuilder {
                         .map(|a| a.into_array().as_boolean().clone())
                 }))
             }
-            PlanNode::PhysicalNodeScan(_node_scan) => {
+            PlanNode::PhysicalNodeScan(node_scan) => {
                 // NodeScan provide graph id and label, Handle in next pr.
                 assert_eq!(children.len(), 0);
-                let cur_schema = self
+                let container: Arc<GraphContainer> = self
                     .session
-                    .home_schema
-                    .as_ref()
-                    .expect("there should be a home schema");
-                let cur_graph = cur_schema
-                    .get_graph("test".to_string().as_str())
-                    .expect("there should be a test graph")
-                    .unwrap();
-                let provider: &dyn GraphProvider = cur_graph.as_ref();
-                let container = provider
-                    .as_any()
-                    .downcast_ref::<GraphContainer>()
-                    .expect("current graph must be GraphContainer");
+                    .current_graph
+                    .clone()
+                    .expect("current graph should be set")
+                    .object()
+                    .clone()
+                    .downcast_arc::<GraphContainer>()
+                    .expect("failed to downcast to GraphContainer");
+
+                // TODO:Should add GlobalConfig to determine the batch_size in vertex_source;
                 let batches = container
-                    .vertex_source(&[], 1024)
+                    .vertex_source(&Some(node_scan.labels.clone()), 1024)
                     .expect("failed to create vertex source");
                 let source = batches.map(|arr: Arc<VertexIdArray>| Ok(arr));
                 Box::new(source.scan_vertex())
             }
+            PlanNode::PhysicalExpand(expand) => {
+                assert_eq!(children.len(), 1);
+                let child = self.build_executor(&children[0]);
+                let container: Arc<GraphContainer> = self
+                    .session
+                    .current_graph
+                    .clone()
+                    .expect("current graph should be set")
+                    .object()
+                    .clone()
+                    .downcast_arc::<GraphContainer>()
+                    .expect("failed to downcast to GraphContainer");
+
+                // Get the number of columns before expand
+                let child_schema = children[0].schema().expect("child should have a schema");
+                let num_child_columns = child_schema.fields().len();
+
+                // Expand adds new columns (as ListArray) that need to be flattened.
+                // ExpandSource returns 2 columns: edge IDs and target vertex IDs
+                // We need to flatten both columns at indices num_child_columns and
+                // num_child_columns + 1
+                let expand_executor = child.expand(
+                    expand.input_column_index,
+                    Some(expand.edge_labels.clone()),
+                    expand.target_vertex_labels.clone(),
+                    container,
+                );
+                let column_indices_to_flatten: Vec<usize> =
+                    (num_child_columns..num_child_columns + 2).collect();
+                Box::new(expand_executor.flatten(column_indices_to_flatten))
+            }
             PlanNode::PhysicalProject(project) => {
                 assert_eq!(children.len(), 1);
-                let schema = children[0].schema().expect("child should have a schema");
+                let child_schema = children[0].schema().expect("child should have a schema");
+                let mut child_executor = self.build_executor(&children[0]);
+                let output_schema = physical_plan.schema().expect("there should be a schema");
+
+                let mut updated_schema = child_schema.clone();
+
+                // Check if any expression is a Vertex type that needs properties
+                // If output type is Vertex, we need to scan properties
+                for expr in &project.exprs {
+                    if let LogicalType::Vertex(_) = &expr.logical_type {
+                        if let BoundExprKind::Variable(var_name) = &expr.kind {
+                            // Check child schema to see if this variable only has id (Int64)
+                            let child_field = child_schema
+                                .get_field_by_name(var_name)
+                                .expect("variable should be present in child schema");
+
+                            // If child schema only has id (Int64), need to add VertexPropertyScan
+                            if matches!(child_field.ty(), LogicalType::Int64) {
+                                let vid_index = child_schema
+                                    .get_field_index_by_name(var_name)
+                                    .expect("variable should be present in child schema");
+
+                                let container: Arc<GraphContainer> = self
+                                    .session
+                                    .current_graph
+                                    .clone()
+                                    .expect("current graph should be set")
+                                    .object()
+                                    .clone()
+                                    .downcast_arc::<GraphContainer>()
+                                    .expect("failed to downcast to GraphContainer");
+
+                                let mut property_names = Vec::new();
+                                let property_list = if let Some(label_specs) =
+                                    output_schema.get_var_label(var_name.as_str())
+                                {
+                                    let graph_type = container.graph_type();
+                                    let mut property_ids = Vec::new();
+                                    if let Some(first_label_set) = label_specs.first() {
+                                        if let Ok(Some(vertex_type)) = graph_type.get_vertex_type(
+                                            &LabelSet::from_iter(first_label_set.clone()),
+                                        ) {
+                                            for property in vertex_type.properties().iter() {
+                                                property_ids.push(property.0);
+                                                property_names.push(property.1.name().to_string());
+                                            }
+                                        }
+                                    }
+                                    property_ids
+                                } else {
+                                    Vec::new()
+                                };
+
+                                child_executor = Box::new(child_executor.scan_vertex_property(
+                                    vid_index,
+                                    property_list.clone(),
+                                    container,
+                                ));
+
+                                // Format: {var_name}_{prop_name} to handle cases where multiple
+                                // variables
+                                let mut new_fields = updated_schema.fields().to_vec();
+                                for prop_name in property_names.iter() {
+                                    let qualified_name = format!("{}_{}", var_name, prop_name);
+                                    new_fields.push(DataField::new(
+                                        qualified_name,
+                                        LogicalType::String,
+                                        true,
+                                    ));
+                                }
+                                updated_schema = Arc::new(DataSchema::new(new_fields));
+                            }
+                        }
+                    }
+                }
+
+                // Build evaluators with updated schema
                 let evaluators = project
                     .exprs
                     .iter()
-                    .map(|e| self.build_evaluator(e, schema))
+                    .map(|e| self.build_evaluator(e, &updated_schema))
                     .collect();
-                Box::new(self.build_executor(&children[0]).project(evaluators))
+                Box::new(child_executor.project(evaluators))
             }
             PlanNode::PhysicalCall(call) => {
                 assert!(children.is_empty());
@@ -121,10 +227,22 @@ impl ExecutorBuilder {
                 assert_eq!(children.len(), 1);
                 Box::new(self.build_executor(&children[0]).limit(limit.limit))
             }
+            PlanNode::PhysicalOffset(offset) => {
+                assert_eq!(children.len(), 1);
+                Box::new(self.build_executor(&children[0]).offset(offset.offset))
+            }
             PlanNode::PhysicalVectorIndexScan(vector_scan) => {
                 assert!(children.is_empty());
                 VectorIndexScanBuilder::new(self.session.clone(), vector_scan.clone())
                     .into_executor()
+            }
+            PlanNode::PhysicalExplain(explain) => {
+                let explain_str = explain.explain(0).unwrap_or_default();
+                let lines: Vec<&str> = explain_str.lines().collect();
+                let string_array = arrow::array::StringArray::from_iter_values(lines);
+                let columns = vec![Arc::new(string_array) as _];
+                let chunk = DataChunk::new(columns);
+                Box::new([Ok(chunk)].into_executor())
             }
             _ => unreachable!(),
         }
@@ -135,6 +253,37 @@ impl ExecutorBuilder {
         match &expr.kind {
             BoundExprKind::Value(value) => Box::new(Constant::new(value.clone())),
             BoundExprKind::Variable(variable) => {
+                // Check if this is a Vertex type that needs to be constructed
+                if let LogicalType::Vertex(vertex_fields) = &expr.logical_type {
+                    // Find the vertex ID column
+                    let vid_index = schema
+                        .get_field_index_by_name(variable)
+                        .expect("variable should be present in the schema");
+
+                    let label_specs = schema.get_var_label(variable);
+
+                    // Find property columns by their names: {var_name}_{prop_name}
+                    let mut property_column_indices = Vec::new();
+                    let mut property_names = Vec::new();
+                    for field in vertex_fields {
+                        let prop_name = field.name();
+                        // Look for qualified name: {variable}_{prop_name}
+                        let qualified_name = format!("{}_{}", variable, prop_name);
+                        if let Some(prop_idx) = schema.get_field_index_by_name(&qualified_name) {
+                            property_column_indices.push(prop_idx);
+                            property_names.push(prop_name.to_string());
+                        }
+                    }
+
+                    return Box::new(VertexConstructor::new(
+                        vid_index,
+                        property_column_indices,
+                        property_names,
+                        label_specs,
+                    ));
+                }
+
+                // Default: just return the column reference
                 let index = schema
                     .get_field_index_by_name(variable)
                     .expect("variable should be present in the schema");

@@ -1,5 +1,7 @@
 //! AST definitions for *procedure specification*.
 
+extern crate alloc;
+
 use super::{
     BindingTableVariableDef, CompositeQueryStatement, GraphVariableDef,
     LinearCatalogModifyingStatement, LinearDataModifyingStatement, SchemaRef, ValueVariableDef,
@@ -17,10 +19,22 @@ pub struct Procedure {
 }
 
 #[apply(base)]
+pub struct ExplainStatement {
+    pub statement: alloc::boxed::Box<Spanned<Statement>>,
+    // reserved for future Utility operations
+}
+
+#[apply(base)]
+pub enum UtilityStatement {
+    Explain(ExplainStatement),
+}
+
+#[apply(base)]
 pub enum Statement {
     Catalog(LinearCatalogModifyingStatement),
     Query(CompositeQueryStatement),
     Data(LinearDataModifyingStatement),
+    Utility(UtilityStatement),
 }
 
 #[apply(base)]

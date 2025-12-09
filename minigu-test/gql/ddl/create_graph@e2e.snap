@@ -1,0 +1,120 @@
+---
+source: minigu-test/src/insta_test.rs
+assertion_line: 178
+---
+Error: Plan(
+    Bind(
+        NotImplemented(
+            NotImplemented {
+                feature: "create graph statement",
+                issue: TrackingIssue(
+                    None,
+                ),
+            },
+        ),
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        NotImplemented(
+            NotImplemented {
+                feature: "create graph statement",
+                issue: TrackingIssue(
+                    None,
+                ),
+            },
+        ),
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        NotImplemented(
+            NotImplemented {
+                feature: "create graph statement",
+                issue: TrackingIssue(
+                    None,
+                ),
+            },
+        ),
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        NotImplemented(
+            NotImplemented {
+                feature: "create graph statement",
+                issue: TrackingIssue(
+                    None,
+                ),
+            },
+        ),
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        NotImplemented(
+            NotImplemented {
+                feature: "create graph statement",
+                issue: TrackingIssue(
+                    None,
+                ),
+            },
+        ),
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        NotImplemented(
+            NotImplemented {
+                feature: "create graph statement",
+                issue: TrackingIssue(
+                    None,
+                ),
+            },
+        ),
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        NotImplemented(
+            NotImplemented {
+                feature: "create graph statement",
+                issue: TrackingIssue(
+                    None,
+                ),
+            },
+        ),
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        NotImplemented(
+            NotImplemented {
+                feature: "create graph statement",
+                issue: TrackingIssue(
+                    None,
+                ),
+            },
+        ),
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        NotImplemented(
+            NotImplemented {
+                feature: "create graph statement",
+                issue: TrackingIssue(
+                    None,
+                ),
+            },
+        ),
+    ),
+)

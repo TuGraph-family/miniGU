@@ -8,6 +8,8 @@ use gql_parser::ast::{
 use gql_parser::parse_gql;
 use itertools::Itertools;
 use minigu_catalog::memory::schema::MemorySchemaCatalog;
+use minigu_common::data_chunk::DataChunk;
+use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 use minigu_common::error::not_implemented;
 use minigu_context::database::DatabaseContext;
 use minigu_context::session::SessionContext;
@@ -74,7 +76,7 @@ impl Session {
                 }
                 SessionSet::Graph(sp_ref) => match sp_ref.value() {
                     GraphExpr::Name(graph_name) => {
-                        self.context.set_current_graph(graph_name.to_string());
+                        self.context.set_current_graph(graph_name.to_string())?;
                     }
                     _ => {
                         return not_implemented("not allowed there", None);
@@ -126,13 +128,13 @@ impl Session {
 
         let start = Instant::now();
         let planner = Planner::new(self.context.clone());
-        let physical_plan = planner.plan_query(procedure)?;
+        let plan = planner.plan_query(procedure)?;
         metrics.planning_time = start.elapsed();
 
-        let schema = physical_plan.schema().cloned();
+        let schema = plan.schema().cloned();
         let start = Instant::now();
         let chunks: Vec<_> = self.context.database().runtime().scope(|_| {
-            let mut executor = ExecutorBuilder::new(self.context.clone()).build(&physical_plan);
+            let mut executor = ExecutorBuilder::new(self.context.clone()).build(&plan);
             executor.into_iter().try_collect()
         })?;
         metrics.execution_time = start.elapsed();

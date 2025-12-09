@@ -75,4 +75,26 @@ impl PlanData for VectorIndexScan {
     fn base(&self) -> &PlanBase {
         &self.base
     }
+
+    fn explain(&self, indent: usize) -> Option<String> {
+        let indent_str = " ".repeat(indent * 2);
+        let mut output = String::new();
+        output.push_str(&format!(
+            "{}VectorIndexScan: binding={}, distance_alias={}, index_key={:?}, metric={:?}, dimension={}, limit={}, approximate={}",
+            indent_str,
+            self.binding,
+            self.distance_alias,
+            self.index_key,
+            self.metric,
+            self.dimension,
+            self.limit,
+            self.approximate
+        ));
+
+        for child in self.children() {
+            output.push_str(child.explain(indent + 1)?.as_str());
+        }
+
+        Some(output)
+    }
 }

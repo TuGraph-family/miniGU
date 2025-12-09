@@ -1,0 +1,265 @@
+---
+source: minigu-test/src/insta_test.rs
+---
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - person
+                                                                  - start: 7
+                                                                    end: 13
+                                                                label:
+                                                                  - Label: Person
+                                                                  - start: 14
+                                                                    end: 20
+                                                                predicate:
+                                                                  - Property:
+                                                                      - - name:
+                                                                            - id
+                                                                            - start: 22
+                                                                              end: 24
+                                                                          value:
+                                                                            - Value:
+                                                                                Literal:
+                                                                                  Numeric:
+                                                                                    Integer:
+                                                                                      - kind: Decimal
+                                                                                        integer: "4194"
+                                                                                      - start: 26
+                                                                                        end: 30
+                                                                            - start: 26
+                                                                              end: 30
+                                                                        - start: 22
+                                                                          end: 30
+                                                                  - start: 21
+                                                                    end: 31
+                                                          - start: 6
+                                                            end: 32
+                                                        - - Pattern:
+                                                              Edge:
+                                                                kind: Right
+                                                                filler:
+                                                                  variable:
+                                                                    - e
+                                                                    - start: 34
+                                                                      end: 35
+                                                                  label:
+                                                                    - Label: personIsLocatedIn
+                                                                    - start: 36
+                                                                      end: 53
+                                                                  predicate: ~
+                                                          - start: 32
+                                                            end: 56
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - city
+                                                                  - start: 57
+                                                                    end: 61
+                                                                label: ~
+                                                                predicate: ~
+                                                          - start: 56
+                                                            end: 62
+                                                    - start: 6
+                                                      end: 62
+                                                - start: 6
+                                                  end: 62
+                                            keep: ~
+                                            where_clause: ~
+                                          - start: 6
+                                            end: 62
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 62
+                                - start: 0
+                                  end: 62
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: person
+                                                        - start: 74
+                                                          end: 80
+                                                      trailing_names:
+                                                        - - firstName
+                                                          - start: 81
+                                                            end: 90
+                                                  - start: 74
+                                                    end: 90
+                                                alias:
+                                                  - personFirstName
+                                                  - start: 94
+                                                    end: 109
+                                              - start: 74
+                                                end: 109
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: person
+                                                        - start: 115
+                                                          end: 121
+                                                      trailing_names:
+                                                        - - lastName
+                                                          - start: 122
+                                                            end: 130
+                                                  - start: 115
+                                                    end: 130
+                                                alias:
+                                                  - personLastName
+                                                  - start: 134
+                                                    end: 148
+                                              - start: 115
+                                                end: 148
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: person
+                                                        - start: 154
+                                                          end: 160
+                                                      trailing_names:
+                                                        - - birthday
+                                                          - start: 161
+                                                            end: 169
+                                                  - start: 154
+                                                    end: 169
+                                                alias:
+                                                  - personBirthday
+                                                  - start: 173
+                                                    end: 187
+                                              - start: 154
+                                                end: 187
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: person
+                                                        - start: 193
+                                                          end: 199
+                                                      trailing_names:
+                                                        - - locationIP
+                                                          - start: 200
+                                                            end: 210
+                                                  - start: 193
+                                                    end: 210
+                                                alias:
+                                                  - personLocationIP
+                                                  - start: 214
+                                                    end: 230
+                                              - start: 193
+                                                end: 230
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: person
+                                                        - start: 236
+                                                          end: 242
+                                                      trailing_names:
+                                                        - - browserUsed
+                                                          - start: 243
+                                                            end: 254
+                                                  - start: 236
+                                                    end: 254
+                                                alias:
+                                                  - personBrowserUsed
+                                                  - start: 258
+                                                    end: 275
+                                              - start: 236
+                                                end: 275
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: city
+                                                        - start: 281
+                                                          end: 285
+                                                      trailing_names:
+                                                        - - id
+                                                          - start: 286
+                                                            end: 288
+                                                  - start: 281
+                                                    end: 288
+                                                alias:
+                                                  - cityId
+                                                  - start: 292
+                                                    end: 298
+                                              - start: 281
+                                                end: 298
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: person
+                                                        - start: 304
+                                                          end: 310
+                                                      trailing_names:
+                                                        - - gender
+                                                          - start: 311
+                                                            end: 317
+                                                  - start: 304
+                                                    end: 317
+                                                alias:
+                                                  - personGender
+                                                  - start: 321
+                                                    end: 333
+                                              - start: 304
+                                                end: 333
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: person
+                                                        - start: 339
+                                                          end: 345
+                                                      trailing_names:
+                                                        - - creationDate
+                                                          - start: 346
+                                                            end: 358
+                                                  - start: 339
+                                                    end: 358
+                                                alias:
+                                                  - personCreationDate
+                                                  - start: 362
+                                                    end: 380
+                                              - start: 339
+                                                end: 380
+                                        - start: 74
+                                          end: 380
+                                      group_by: ~
+                                    - start: 63
+                                      end: 380
+                                  order_by: ~
+                              - start: 63
+                                end: 380
+                  - start: 0
+                    end: 380
+                next_statements: []
+              - start: 0
+                end: 380
+            end: ~
+        - start: 0
+          end: 380
+      session_close: false
+    - start: 0
+      end: 380
