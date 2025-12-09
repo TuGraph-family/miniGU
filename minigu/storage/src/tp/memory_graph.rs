@@ -27,6 +27,7 @@ macro_rules! update_properties {
     ($self:expr, $id:expr, $entry:expr, $txn:expr, $indices:expr, $props:expr, $op:ident) => {{
         // Acquire the lock to modify the properties of the vertex/edge
         let mut current = $entry.chain.current.write().unwrap();
+        check_write_conflict(current.commit_ts, $txn)?;
 
         let delta_props = $indices
             .iter()
@@ -114,6 +115,10 @@ impl VersionedVertex {
         }
     }
     // TODO:You need to improve this MVCC
+    pub fn get_visible(&self, _txn: &MemTransaction) -> StorageResult<Vertex> {
+        let current_version = self.chain.current.read().unwrap();
+        Ok(current_version.data.clone())
+    }
 }
 
 #[derive(Debug)]
@@ -159,6 +164,10 @@ impl VersionedEdge {
         }
     }
     // TODO:You need to improve this MVCC
+    pub fn get_visible(&self, _txn: &MemTransaction) -> StorageResult<Edge> {
+        let current_version = self.chain.current.read().unwrap();
+        Ok(current_version.data.clone())
+    }
 }
 
 #[derive(Debug)]
@@ -494,6 +503,7 @@ impl MemoryGraph {
             .or_insert_with(|| VersionedVertex::with_txn_id(vertex.clone(), txn.txn_id()));
 
         let current = entry.chain.current.read().unwrap();
+        check_write_conflict(current.commit_ts, txn)?;
 
         // Record the vertex creation in the transaction
         let delta = DeltaOp::DelVertex(vid);
@@ -537,6 +547,7 @@ impl MemoryGraph {
             .or_insert_with(|| VersionedEdge::with_modified_ts(edge.clone(), txn.txn_id()));
 
         let current = entry.chain.current.read().unwrap();
+        check_write_conflict(current.commit_ts, txn)?;
 
         // Record the edge creation in the transaction
         let delta_edge = DeltaOp::DelEdge(eid);
@@ -579,6 +590,7 @@ impl MemoryGraph {
         ))?;
 
         let mut current = entry.chain.current.write().unwrap();
+        check_write_conflict(current.commit_ts, txn)?;
 
         // Delete all edges associated with the vertex
         if let Some(adjacency_container) = self.adjacency_list.get(&vid) {
@@ -627,6 +639,7 @@ impl MemoryGraph {
         ))?;
 
         let mut current = entry.chain.current.write().unwrap();
+        check_write_conflict(current.commit_ts, txn)?;
 
         // Record the edge deletion in the transaction
         let delta = DeltaOp::CreateEdge(current.data.clone());

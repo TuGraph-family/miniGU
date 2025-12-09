@@ -26,11 +26,12 @@ impl Iterator for EdgeIterator<'_> {
     /// Retrieves the next visible edge that satisfies all filters.
     fn next(&mut self) -> Option<Self::Item> {
         for entry in self.inner.by_ref() {
-            let edge = entry.value().data();
+            let eid = *entry.key();
 
-            if edge.is_tombstone() {
-                continue;
-            }
+            let edge = match entry.value().get_visible(self.txn) {
+                Ok(e) => e,
+                _ => continue,
+            };
 
             // Apply all filtering conditions
             if self.filters.iter().all(|f| f(&edge)) {

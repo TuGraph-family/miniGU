@@ -28,11 +28,10 @@ impl Iterator for VertexIterator<'_> {
         for entry in self.inner.by_ref() {
             let vid = *entry.key();
 
-            let vertex = entry.value().data();
-
-            if vertex.is_tombstone() {
-                continue;
-            }
+            let vertex = match entry.value().get_visible(self.txn) {
+                Ok(v) => v,
+                _ => continue,
+            };
 
             // Apply all filtering conditions
             if self.filters.iter().all(|f| f(&vertex)) {
