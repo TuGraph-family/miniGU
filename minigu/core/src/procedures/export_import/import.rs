@@ -120,7 +120,7 @@ pub(crate) fn import<P: AsRef<Path>>(
     let mut vid_mapping = HashMap::new();
 
     // 1. Vertices
-    let mut vid = 1;
+    let mut vid = 0;
     for vertex_spec in manifest.vertices.iter() {
         let path = manifest_parent_dir.join(&vertex_spec.file.path);
         let mut rdr = ReaderBuilder::new().has_headers(false).from_path(path)?;
@@ -151,7 +151,7 @@ pub(crate) fn import<P: AsRef<Path>>(
     }
 
     // 2. Edges
-    let mut eid = 1;
+    let mut eid = 0;
     for edge_spec in manifest.edges.iter() {
         let path = manifest_parent_dir.join(&edge_spec.file.path);
         let label_id = graph_type

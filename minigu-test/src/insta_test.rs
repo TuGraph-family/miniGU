@@ -187,6 +187,8 @@ macro_rules! add_e2e_tests {
 }
 
 add_e2e_tests!("basic", ["multi_statement_test"]);
+add_e2e_tests!("basic", ["import_basic_test"]);
+add_e2e_tests!("basic", ["export_basic_test"]);
 add_e2e_tests!("finbench", ["tsr1", "tsr2", "tsr3", "tsr4", "tsr5", "tsr6"]);
 add_e2e_tests!("snb", ["is1", "is2", "is3", "is4", "is5", "is6", "is7"]);
 add_e2e_tests!(
@@ -211,6 +213,8 @@ add_e2e_tests!(
 );
 
 add_parser_tests!("basic", ["multi_statement_test"]);
+add_parser_tests!("basic", ["import_basic_test"]);
+add_parser_tests!("basic", ["export_basic_test"]);
 add_parser_tests!("finbench", ["tsr1", "tsr2", "tsr3", "tsr4", "tsr5", "tsr6"]);
 add_parser_tests!("snb", ["is1", "is2", "is3", "is4", "is5", "is6", "is7"]);
 add_parser_tests!(

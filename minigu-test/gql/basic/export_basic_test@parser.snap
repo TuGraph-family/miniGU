@@ -1,0 +1,124 @@
+---
+source: minigu-test/src/insta_test.rs
+assertion_line: 208
+---
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - Call:
+                            optional: false
+                            procedure:
+                              - Named:
+                                  name:
+                                    - Ref:
+                                        schema: ~
+                                        objects:
+                                          - - import
+                                            - start: 5
+                                              end: 11
+                                    - start: 5
+                                      end: 11
+                                  args:
+                                    - - Value:
+                                          Literal:
+                                            String:
+                                              kind: Char
+                                              literal: import_basic_graph
+                                      - start: 15
+                                        end: 35
+                                    - - Value:
+                                          Literal:
+                                            String:
+                                              kind: Char
+                                              literal: data/import_basic
+                                      - start: 39
+                                        end: 58
+                                    - - Value:
+                                          Literal:
+                                            String:
+                                              kind: Char
+                                              literal: manifest.json
+                                      - start: 62
+                                        end: 77
+                                  yield_clause: ~
+                              - start: 5
+                                end: 79
+                        - start: 0
+                          end: 79
+                  - start: 0
+                    end: 79
+                next_statements: []
+              - start: 0
+                end: 79
+            end: ~
+        - start: 0
+          end: 79
+      session_close: false
+    - start: 0
+      end: 79
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - Call:
+                            optional: false
+                            procedure:
+                              - Named:
+                                  name:
+                                    - Ref:
+                                        schema: ~
+                                        objects:
+                                          - - export
+                                            - start: 5
+                                              end: 11
+                                    - start: 5
+                                      end: 11
+                                  args:
+                                    - - Value:
+                                          Literal:
+                                            String:
+                                              kind: Char
+                                              literal: import_basic_graph
+                                      - start: 15
+                                        end: 35
+                                    - - Value:
+                                          Literal:
+                                            String:
+                                              kind: Char
+                                              literal: data/export_basic
+                                      - start: 39
+                                        end: 58
+                                    - - Value:
+                                          Literal:
+                                            String:
+                                              kind: Char
+                                              literal: manifest.json
+                                      - start: 62
+                                        end: 77
+                                  yield_clause: ~
+                              - start: 5
+                                end: 79
+                        - start: 0
+                          end: 79
+                  - start: 0
+                    end: 79
+                next_statements: []
+              - start: 0
+                end: 79
+            end: ~
+        - start: 0
+          end: 79
+      session_close: false
+    - start: 0
+      end: 79

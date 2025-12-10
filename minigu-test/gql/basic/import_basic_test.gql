@@ -1,0 +1,5 @@
+CALL import(
+  'import_basic_graph',
+  'data/import_basic',
+  'manifest.json'
+);
