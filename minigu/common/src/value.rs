@@ -866,7 +866,7 @@ impl VectorValue {
         self.data.len()
     }
 
-    /// Converts to a Vec<f32>
+    /// Converts to a `Vec<f32>`
     pub fn to_f32_vec(&self) -> Vec<f32> {
         self.data.iter().map(|f| f.into_inner()).collect()
     }
@@ -1072,7 +1072,7 @@ impl ScalarValue {
         }
     }
 
-    /// Returns the vector data as Vec<F32>
+    /// Returns the vector data as `Vec<F32>`
     pub fn get_vector_data(&self) -> Result<Vec<F32>, String> {
         match self.get_vector() {
             Ok(vector_value) => Ok(vector_value.data().to_vec()),

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use arrow::array::{Array, ArrayRef, StringArray};
-use minigu_common::types::{VertexId, VertexIdArray};
+use minigu_common::types::{PropertyId, VertexId, VertexIdArray};
 
 use super::{ExpandSource, VertexPropertySource};
 use crate::error::ExecutionResult;
@@ -90,7 +90,13 @@ impl Iterator for ExpandIter {
 impl ExpandSource for MockExpandSource {
     type ExpandIter = ExpandIter;
 
-    fn expand_from_vertex(&self, vertex: VertexId) -> Option<Self::ExpandIter> {
+    fn expand_from_vertex(
+        &self,
+        vertex: VertexId,
+        _edge_labels: Option<Vec<Vec<minigu_common::types::LabelId>>>,
+        _target_vertex_labels: Option<Vec<Vec<minigu_common::types::LabelId>>>,
+    ) -> Option<Self::ExpandIter> {
+        // Mock implementation ignores label filters for simplicity
         self.adj_lists.get(&vertex).map(|adj_list| ExpandIter {
             neighbors_props: adj_list.clone(),
             offset: 0,
@@ -117,7 +123,11 @@ impl MockVertexPropertySource {
 }
 
 impl VertexPropertySource for MockVertexPropertySource {
-    fn scan_vertex_properties(&self, vertices: &VertexIdArray) -> ExecutionResult<Vec<ArrayRef>> {
+    fn scan_vertex_properties(
+        &self,
+        vertices: &VertexIdArray,
+        _property_id: &[PropertyId],
+    ) -> ExecutionResult<Vec<ArrayRef>> {
         assert!(!vertices.is_nullable());
         let properties = StringArray::from_iter(
             vertices

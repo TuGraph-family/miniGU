@@ -57,7 +57,6 @@ fn scalar_value_to_string(scalar_value: &ScalarValue) -> Result<String> {
 
 fn get_graph_from_graph_container(container: Arc<dyn GraphProvider>) -> Result<Arc<MemoryGraph>> {
     let container = container
-        .as_any()
         .downcast_ref::<GraphContainer>()
         .ok_or_else(|| anyhow::anyhow!("downcast failed"))?;
 

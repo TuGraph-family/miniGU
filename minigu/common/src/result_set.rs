@@ -115,11 +115,11 @@ impl ResultSet {
         let mut num_tuples = 1u64;
 
         for &data_chunk_pos in data_chunks_pos_in_scope {
-            if let Some(chunk) = self.data_chunks.get(data_chunk_pos.0) {
-                if chunk.is_unflat() {
-                    // Only unflat chunks participate in Cartesian product
-                    num_tuples *= chunk.cardinality() as u64;
-                }
+            if let Some(chunk) = self.data_chunks.get(data_chunk_pos.0)
+                && chunk.is_unflat()
+            {
+                // Only unflat chunks participate in Cartesian product
+                num_tuples *= chunk.cardinality() as u64;
                 // Flat chunks are ignored - they don't contribute to tuple count
             }
         }

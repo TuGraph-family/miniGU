@@ -1,15 +1,9 @@
 ---
-source: minigu-test/e2e_test.rs
+source: minigu-test/src/insta_test.rs
+assertion_line: 203
 ---
 Error: Plan(
     Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "binary expression",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
+        CurrentGraphNotSpecified,
     ),
 )

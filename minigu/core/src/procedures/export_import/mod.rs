@@ -333,25 +333,41 @@ mod tests {
             .begin_transaction(IsolationLevel::Serializable)
             .unwrap();
 
-        let alice = create_vertex(1, PERSON, vec![
-            ScalarValue::String(Some("Alice".to_string())),
-            ScalarValue::Int32(Some(25)),
-        ]);
+        let alice = create_vertex(
+            1,
+            PERSON,
+            vec![
+                ScalarValue::String(Some("Alice".to_string())),
+                ScalarValue::Int32(Some(25)),
+            ],
+        );
 
-        let bob = create_vertex(2, PERSON, vec![
-            ScalarValue::String(Some("Bob".to_string())),
-            ScalarValue::Int32(Some(28)),
-        ]);
+        let bob = create_vertex(
+            2,
+            PERSON,
+            vec![
+                ScalarValue::String(Some("Bob".to_string())),
+                ScalarValue::Int32(Some(28)),
+            ],
+        );
 
-        let carol = create_vertex(3, PERSON, vec![
-            ScalarValue::String(Some("Carol".to_string())),
-            ScalarValue::Int32(Some(24)),
-        ]);
+        let carol = create_vertex(
+            3,
+            PERSON,
+            vec![
+                ScalarValue::String(Some("Carol".to_string())),
+                ScalarValue::Int32(Some(24)),
+            ],
+        );
 
-        let david = create_vertex(4, PERSON, vec![
-            ScalarValue::String(Some("David".to_string())),
-            ScalarValue::Int32(Some(27)),
-        ]);
+        let david = create_vertex(
+            4,
+            PERSON,
+            vec![
+                ScalarValue::String(Some("David".to_string())),
+                ScalarValue::Int32(Some(27)),
+            ],
+        );
 
         // Add vertices to the graph
         graph.create_vertex(&txn, alice).unwrap();
@@ -360,22 +376,38 @@ mod tests {
         graph.create_vertex(&txn, david).unwrap();
 
         // Create friend edges
-        let friend1 = create_edge(1, 1, 2, FRIEND, vec![ScalarValue::String(Some(
-            "2020-01-01".to_string(),
-        ))]);
+        let friend1 = create_edge(
+            1,
+            1,
+            2,
+            FRIEND,
+            vec![ScalarValue::String(Some("2020-01-01".to_string()))],
+        );
 
-        let friend2 = create_edge(2, 2, 3, FRIEND, vec![ScalarValue::String(Some(
-            "2021-03-15".to_string(),
-        ))]);
+        let friend2 = create_edge(
+            2,
+            2,
+            3,
+            FRIEND,
+            vec![ScalarValue::String(Some("2021-03-15".to_string()))],
+        );
 
         // Create follow edges
-        let follow1 = create_edge(3, 1, 3, FOLLOW, vec![ScalarValue::String(Some(
-            "2022-06-01".to_string(),
-        ))]);
+        let follow1 = create_edge(
+            3,
+            1,
+            3,
+            FOLLOW,
+            vec![ScalarValue::String(Some("2022-06-01".to_string()))],
+        );
 
-        let follow2 = create_edge(4, 4, 1, FOLLOW, vec![ScalarValue::String(Some(
-            "2022-07-15".to_string(),
-        ))]);
+        let follow2 = create_edge(
+            4,
+            4,
+            1,
+            FOLLOW,
+            vec![ScalarValue::String(Some("2022-07-15".to_string()))],
+        );
 
         // Add edges to the graph
         graph.create_edge(&txn, friend1).unwrap();

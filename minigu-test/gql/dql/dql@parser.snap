@@ -1,0 +1,928 @@
+---
+source: minigu-test/src/insta_test.rs
+assertion_line: 209
+---
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - Call:
+                            optional: false
+                            procedure:
+                              - Named:
+                                  name:
+                                    - Ref:
+                                        schema: ~
+                                        objects:
+                                          - - create_test_graph_data
+                                            - start: 5
+                                              end: 27
+                                    - start: 5
+                                      end: 27
+                                  args:
+                                    - - Value:
+                                          Literal:
+                                            String:
+                                              kind: Char
+                                              literal: test1
+                                      - start: 28
+                                        end: 35
+                                    - - Value:
+                                          Literal:
+                                            Numeric:
+                                              Integer:
+                                                - kind: Decimal
+                                                  integer: "5"
+                                                - start: 37
+                                                  end: 38
+                                      - start: 37
+                                        end: 38
+                                  yield_clause: ~
+                              - start: 5
+                                end: 39
+                        - start: 0
+                          end: 39
+                  - start: 0
+                    end: 39
+                next_statements: []
+              - start: 0
+                end: 39
+            end: ~
+        - start: 0
+          end: 39
+      session_close: false
+    - start: 0
+      end: 39
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - Call:
+                            optional: false
+                            procedure:
+                              - Named:
+                                  name:
+                                    - Ref:
+                                        schema: ~
+                                        objects:
+                                          - - create_test_graph_data
+                                            - start: 5
+                                              end: 27
+                                    - start: 5
+                                      end: 27
+                                  args:
+                                    - - Value:
+                                          Literal:
+                                            String:
+                                              kind: Char
+                                              literal: test2
+                                      - start: 28
+                                        end: 35
+                                    - - Value:
+                                          Literal:
+                                            Numeric:
+                                              Integer:
+                                                - kind: Decimal
+                                                  integer: "10"
+                                                - start: 37
+                                                  end: 39
+                                      - start: 37
+                                        end: 39
+                                  yield_clause: ~
+                              - start: 5
+                                end: 40
+                        - start: 0
+                          end: 40
+                  - start: 0
+                    end: 40
+                next_statements: []
+              - start: 0
+                end: 40
+            end: ~
+        - start: 0
+          end: 40
+      session_close: false
+    - start: 0
+      end: 40
+- Ok:
+    - activity:
+        - Session:
+            set:
+              - - Graph:
+                    - Name: test1
+                    - start: 18
+                      end: 23
+                - start: 0
+                  end: 23
+            reset: []
+        - start: 0
+          end: 23
+      session_close: false
+    - start: 0
+      end: 23
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - n
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: PERSON
+                                                                  - start: 9
+                                                                    end: 15
+                                                                predicate: ~
+                                                          - start: 6
+                                                            end: 16
+                                                    - start: 6
+                                                      end: 16
+                                                - start: 6
+                                                  end: 16
+                                            keep: ~
+                                            where_clause: ~
+                                          - start: 6
+                                            end: 16
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 16
+                                - start: 0
+                                  end: 16
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Variable: n
+                                                  - start: 24
+                                                    end: 25
+                                                alias: ~
+                                              - start: 24
+                                                end: 25
+                                        - start: 24
+                                          end: 25
+                                      group_by: ~
+                                    - start: 17
+                                      end: 25
+                                  order_by: ~
+                              - start: 17
+                                end: 25
+                  - start: 0
+                    end: 25
+                next_statements: []
+              - start: 0
+                end: 25
+            end: ~
+        - start: 0
+          end: 25
+      session_close: false
+    - start: 0
+      end: 25
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - c
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: COMPANY
+                                                                  - start: 9
+                                                                    end: 16
+                                                                predicate: ~
+                                                          - start: 6
+                                                            end: 17
+                                                    - start: 6
+                                                      end: 17
+                                                - start: 6
+                                                  end: 17
+                                            keep: ~
+                                            where_clause: ~
+                                          - start: 6
+                                            end: 17
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 17
+                                - start: 0
+                                  end: 17
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Variable: c
+                                                  - start: 25
+                                                    end: 26
+                                                alias: ~
+                                              - start: 25
+                                                end: 26
+                                        - start: 25
+                                          end: 26
+                                      group_by: ~
+                                    - start: 18
+                                      end: 26
+                                  order_by: ~
+                              - start: 18
+                                end: 26
+                  - start: 0
+                    end: 26
+                next_statements: []
+              - start: 0
+                end: 26
+            end: ~
+        - start: 0
+          end: 26
+      session_close: false
+    - start: 0
+      end: 26
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - n
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: PERSON
+                                                                  - start: 9
+                                                                    end: 15
+                                                                predicate: ~
+                                                          - start: 6
+                                                            end: 16
+                                                        - - Pattern:
+                                                              Edge:
+                                                                kind: Right
+                                                                filler:
+                                                                  variable:
+                                                                    - w
+                                                                    - start: 18
+                                                                      end: 19
+                                                                  label:
+                                                                    - Label: WORKS_AT
+                                                                    - start: 20
+                                                                      end: 28
+                                                                  predicate: ~
+                                                          - start: 16
+                                                            end: 31
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - c
+                                                                  - start: 32
+                                                                    end: 33
+                                                                label:
+                                                                  - Label: COMPANY
+                                                                  - start: 34
+                                                                    end: 41
+                                                                predicate: ~
+                                                          - start: 31
+                                                            end: 42
+                                                    - start: 6
+                                                      end: 42
+                                                - start: 6
+                                                  end: 42
+                                            keep: ~
+                                            where_clause: ~
+                                          - start: 6
+                                            end: 42
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 42
+                                - start: 0
+                                  end: 42
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Variable: n
+                                                  - start: 50
+                                                    end: 51
+                                                alias: ~
+                                              - start: 50
+                                                end: 51
+                                            - - value:
+                                                  - Variable: c
+                                                  - start: 52
+                                                    end: 53
+                                                alias: ~
+                                              - start: 52
+                                                end: 53
+                                        - start: 50
+                                          end: 53
+                                      group_by: ~
+                                    - start: 43
+                                      end: 53
+                                  order_by: ~
+                              - start: 43
+                                end: 53
+                  - start: 0
+                    end: 53
+                next_statements: []
+              - start: 0
+                end: 53
+            end: ~
+        - start: 0
+          end: 53
+      session_close: false
+    - start: 0
+      end: 53
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - n
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: PERSON
+                                                                  - start: 9
+                                                                    end: 15
+                                                                predicate: ~
+                                                          - start: 6
+                                                            end: 16
+                                                        - - Pattern:
+                                                              Edge:
+                                                                kind: Right
+                                                                filler:
+                                                                  variable:
+                                                                    - f
+                                                                    - start: 18
+                                                                      end: 19
+                                                                  label:
+                                                                    - Label: FRIEND
+                                                                    - start: 20
+                                                                      end: 26
+                                                                  predicate: ~
+                                                          - start: 16
+                                                            end: 29
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - m
+                                                                  - start: 30
+                                                                    end: 31
+                                                                label:
+                                                                  - Label: PERSON
+                                                                  - start: 32
+                                                                    end: 38
+                                                                predicate: ~
+                                                          - start: 29
+                                                            end: 39
+                                                    - start: 6
+                                                      end: 39
+                                                - start: 6
+                                                  end: 39
+                                            keep: ~
+                                            where_clause: ~
+                                          - start: 6
+                                            end: 39
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 39
+                                - start: 0
+                                  end: 39
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Variable: n
+                                                  - start: 47
+                                                    end: 48
+                                                alias: ~
+                                              - start: 47
+                                                end: 48
+                                            - - value:
+                                                  - Variable: m
+                                                  - start: 49
+                                                    end: 50
+                                                alias: ~
+                                              - start: 49
+                                                end: 50
+                                        - start: 47
+                                          end: 50
+                                      group_by: ~
+                                    - start: 40
+                                      end: 50
+                                  order_by: ~
+                              - start: 40
+                                end: 50
+                  - start: 0
+                    end: 50
+                next_statements: []
+              - start: 0
+                end: 50
+            end: ~
+        - start: 0
+          end: 50
+      session_close: false
+    - start: 0
+      end: 50
+- Ok:
+    - activity:
+        - Session:
+            set:
+              - - Graph:
+                    - Name: test2
+                    - start: 18
+                      end: 23
+                - start: 0
+                  end: 23
+            reset: []
+        - start: 0
+          end: 23
+      session_close: false
+    - start: 0
+      end: 23
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - n
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: PERSON
+                                                                  - start: 9
+                                                                    end: 15
+                                                                predicate: ~
+                                                          - start: 6
+                                                            end: 16
+                                                    - start: 6
+                                                      end: 16
+                                                - start: 6
+                                                  end: 16
+                                            keep: ~
+                                            where_clause: ~
+                                          - start: 6
+                                            end: 16
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 16
+                                - start: 0
+                                  end: 16
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Variable: n
+                                                  - start: 24
+                                                    end: 25
+                                                alias: ~
+                                              - start: 24
+                                                end: 25
+                                        - start: 24
+                                          end: 25
+                                      group_by: ~
+                                    - start: 17
+                                      end: 25
+                                  order_by: ~
+                              - start: 17
+                                end: 25
+                  - start: 0
+                    end: 25
+                next_statements: []
+              - start: 0
+                end: 25
+            end: ~
+        - start: 0
+          end: 25
+      session_close: false
+    - start: 0
+      end: 25
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - c
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: COMPANY
+                                                                  - start: 9
+                                                                    end: 16
+                                                                predicate: ~
+                                                          - start: 6
+                                                            end: 17
+                                                    - start: 6
+                                                      end: 17
+                                                - start: 6
+                                                  end: 17
+                                            keep: ~
+                                            where_clause: ~
+                                          - start: 6
+                                            end: 17
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 17
+                                - start: 0
+                                  end: 17
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Variable: c
+                                                  - start: 25
+                                                    end: 26
+                                                alias: ~
+                                              - start: 25
+                                                end: 26
+                                        - start: 25
+                                          end: 26
+                                      group_by: ~
+                                    - start: 18
+                                      end: 26
+                                  order_by: ~
+                              - start: 18
+                                end: 26
+                  - start: 0
+                    end: 26
+                next_statements: []
+              - start: 0
+                end: 26
+            end: ~
+        - start: 0
+          end: 26
+      session_close: false
+    - start: 0
+      end: 26
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - n
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: PERSON
+                                                                  - start: 9
+                                                                    end: 15
+                                                                predicate: ~
+                                                          - start: 6
+                                                            end: 16
+                                                        - - Pattern:
+                                                              Edge:
+                                                                kind: Right
+                                                                filler:
+                                                                  variable:
+                                                                    - w
+                                                                    - start: 18
+                                                                      end: 19
+                                                                  label:
+                                                                    - Label: WORKS_AT
+                                                                    - start: 20
+                                                                      end: 28
+                                                                  predicate: ~
+                                                          - start: 16
+                                                            end: 31
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - c
+                                                                  - start: 32
+                                                                    end: 33
+                                                                label:
+                                                                  - Label: COMPANY
+                                                                  - start: 34
+                                                                    end: 41
+                                                                predicate: ~
+                                                          - start: 31
+                                                            end: 42
+                                                    - start: 6
+                                                      end: 42
+                                                - start: 6
+                                                  end: 42
+                                            keep: ~
+                                            where_clause: ~
+                                          - start: 6
+                                            end: 42
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 42
+                                - start: 0
+                                  end: 42
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Variable: n
+                                                  - start: 50
+                                                    end: 51
+                                                alias: ~
+                                              - start: 50
+                                                end: 51
+                                            - - value:
+                                                  - Variable: c
+                                                  - start: 52
+                                                    end: 53
+                                                alias: ~
+                                              - start: 52
+                                                end: 53
+                                        - start: 50
+                                          end: 53
+                                      group_by: ~
+                                    - start: 43
+                                      end: 53
+                                  order_by: ~
+                              - start: 43
+                                end: 53
+                  - start: 0
+                    end: 53
+                next_statements: []
+              - start: 0
+                end: 53
+            end: ~
+        - start: 0
+          end: 53
+      session_close: false
+    - start: 0
+      end: 53
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - n
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: PERSON
+                                                                  - start: 9
+                                                                    end: 15
+                                                                predicate: ~
+                                                          - start: 6
+                                                            end: 16
+                                                        - - Pattern:
+                                                              Edge:
+                                                                kind: Right
+                                                                filler:
+                                                                  variable:
+                                                                    - f
+                                                                    - start: 18
+                                                                      end: 19
+                                                                  label:
+                                                                    - Label: FRIEND
+                                                                    - start: 20
+                                                                      end: 26
+                                                                  predicate: ~
+                                                          - start: 16
+                                                            end: 29
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - m
+                                                                  - start: 30
+                                                                    end: 31
+                                                                label:
+                                                                  - Label: PERSON
+                                                                  - start: 32
+                                                                    end: 38
+                                                                predicate: ~
+                                                          - start: 29
+                                                            end: 39
+                                                    - start: 6
+                                                      end: 39
+                                                - start: 6
+                                                  end: 39
+                                            keep: ~
+                                            where_clause: ~
+                                          - start: 6
+                                            end: 39
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 39
+                                - start: 0
+                                  end: 39
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Variable: n
+                                                  - start: 47
+                                                    end: 48
+                                                alias: ~
+                                              - start: 47
+                                                end: 48
+                                            - - value:
+                                                  - Variable: m
+                                                  - start: 49
+                                                    end: 50
+                                                alias: ~
+                                              - start: 49
+                                                end: 50
+                                        - start: 47
+                                          end: 50
+                                      group_by: ~
+                                    - start: 40
+                                      end: 50
+                                  order_by: ~
+                              - start: 40
+                                end: 50
+                  - start: 0
+                    end: 50
+                next_statements: []
+              - start: 0
+                end: 50
+            end: ~
+        - start: 0
+          end: 50
+      session_close: false
+    - start: 0
+      end: 50

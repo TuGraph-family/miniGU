@@ -2,6 +2,7 @@ use super::{
     CallProcedureStatement, Expr, GraphExpr, GraphPatternBindingTable, Ident, NonNegativeInteger,
     Procedure, SetQuantifier,
 };
+use crate::imports::Box;
 use crate::macros::base;
 use crate::span::{BoxSpanned, OptSpanned, Spanned, VecSpanned};
 
@@ -112,7 +113,7 @@ pub struct SetOp {
 
 #[apply(base)]
 pub enum MatchStatement {
-    Simple(Spanned<GraphPatternBindingTable>),
+    Simple(Box<Spanned<GraphPatternBindingTable>>),
     Optional(VecSpanned<MatchStatement>),
 }
 

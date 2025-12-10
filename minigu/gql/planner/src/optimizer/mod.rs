@@ -4,13 +4,17 @@ use itertools::Itertools;
 use minigu_common::error::not_implemented;
 use minigu_common::types::LabelId;
 
-use crate::bound::{BoundElementPattern, BoundGraphPattern, BoundLabelExpr, BoundPathPatternExpr};
+use crate::bound::{
+    BoundEdgePatternKind, BoundElementPattern, BoundGraphPattern, BoundPathPatternExpr,
+    PathPatternInfo,
+};
 use crate::error::PlanResult;
+use crate::plan::expand::{Expand, ExpandDirection};
 use crate::plan::filter::Filter;
 use crate::plan::limit::Limit;
 use crate::plan::offset::Offset;
 use crate::plan::project::Project;
-use crate::plan::scan::PhysicalNodeScan;
+use crate::plan::scan::NodeIdScan;
 use crate::plan::sort::Sort;
 use crate::plan::{PlanData, PlanNode};
 
@@ -27,79 +31,67 @@ impl Optimizer {
     }
 }
 
-fn extract_single_vertex_from_graph_pattern(
-    g: &BoundGraphPattern,
-) -> PlanResult<(String, Vec<Vec<LabelId>>, i64)> {
+fn extract_path_pattern_from_graph_pattern(g: &BoundGraphPattern) -> PlanResult<PathPatternInfo> {
     if g.predicate.is_some() {
         return not_implemented("MATCH with predicate (WHERE) is not supported yet", Some(1));
     }
     if g.paths.len() != 1 {
         return not_implemented("multiple paths in MATCH are not supported yet", Some(1));
     }
-    let graph_id = 1;
 
-    extract_single_vertex_from_path(&g.paths[0].expr, graph_id)
+    extract_path_pattern(&g.paths[0].expr)
 }
 
-fn lower_label_expr_to_specs(expr: &BoundLabelExpr) -> PlanResult<Vec<Vec<LabelId>>> {
-    use BoundLabelExpr::*;
-    match expr {
-        Any => Ok(vec![vec![]]),
-        Label(id) => Ok(vec![vec![*id]]),
-
-        // Disjunction => concatenate routes
-        Disjunction(lhs, rhs) => {
-            let mut a = lower_label_expr_to_specs(lhs)?;
-            let mut b = lower_label_expr_to_specs(rhs)?;
-            a.append(&mut b);
-            Ok(a)
-        }
-
-        // Conjunction => distributive product of routes, merging inner AND sets
-        Conjunction(lhs, rhs) => {
-            let left = lower_label_expr_to_specs(lhs)?;
-            let right = lower_label_expr_to_specs(rhs)?;
-            let mut out: Vec<Vec<LabelId>> = Vec::with_capacity(left.len() * right.len());
-            for l in &left {
-                for r in &right {
-                    let mut merged = Vec::with_capacity(l.len() + r.len());
-                    merged.extend_from_slice(l);
-                    merged.extend_from_slice(r);
-                    merged.sort_unstable();
-                    merged.dedup();
-                    out.push(merged);
-                }
-            }
-            Ok(out)
-        }
-        Negation(_) => not_implemented("label negation is not supported yet", None),
-    }
-}
-
-fn extract_single_vertex_from_path(
-    expr: &BoundPathPatternExpr,
-    graph_id: i64,
-) -> PlanResult<(String, Vec<Vec<LabelId>>, i64)> {
+fn extract_path_pattern(expr: &BoundPathPatternExpr) -> PlanResult<PathPatternInfo> {
     use BoundPathPatternExpr::*;
     match expr {
         Pattern(BoundElementPattern::Vertex(v)) => {
             let var = v.var.clone();
-            let label_specs: Vec<Vec<LabelId>> = match &v.label {
-                None => vec![vec![]],
-                Some(lbl) => lower_label_expr_to_specs(lbl)?,
-            };
-            Ok((var, label_specs, graph_id))
+            let label_specs: Vec<Vec<LabelId>> = v.label.clone();
+            Ok(PathPatternInfo::SingleVertex { var, label_specs })
         }
-        Concat(parts) => match parts.len() {
-            0 => not_implemented("empty concat in path pattern", None),
-            1 => extract_single_vertex_from_path(&parts[0], graph_id),
-            _ => not_implemented(
-                "concat with edges/nodes (length > 1) is not supported yet",
-                None,
-            ),
-        },
+        Concat(parts) => {
+            if parts.is_empty() {
+                return not_implemented("empty concat in path pattern", None);
+            }
+            let mut vertices = Vec::new();
+            let mut edges = Vec::new();
+            for part in parts.iter() {
+                match part {
+                    Pattern(BoundElementPattern::Vertex(v)) => {
+                        let var = v.var.clone();
+                        let label_specs: Vec<Vec<LabelId>> = v.label.clone();
+                        vertices.push((var, label_specs));
+                    }
+                    Pattern(BoundElementPattern::Edge(e)) => {
+                        let edge_labels: Vec<Vec<LabelId>> = e.label.clone();
+                        let direction = match e.kind {
+                            BoundEdgePatternKind::Right => ExpandDirection::Outgoing,
+                            BoundEdgePatternKind::Left => ExpandDirection::Incoming,
+                            _ => {
+                                return not_implemented(
+                                    format!(
+                                        "edge direction {:?} is not supported in path pattern",
+                                        e.kind
+                                    ),
+                                    None,
+                                );
+                            }
+                        };
+                        edges.push((e.var.clone(), edge_labels, direction));
+                    }
+                    _ => {
+                        return not_implemented(
+                            "complex nest patterns in concat is not supported yet",
+                            None,
+                        );
+                    }
+                }
+            }
+            Ok(PathPatternInfo::Path { vertices, edges })
+        }
 
-        Subpath(sp) => extract_single_vertex_from_path(&sp.expr, graph_id),
+        Subpath(_) => not_implemented("sub path is not supported", None),
         Alternation(_) => not_implemented(
             "alternation (A|B) in path pattern is not supported yet",
             None,
@@ -123,12 +115,37 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
         .map(create_physical_plan_impl)
         .try_collect()?;
     match logical_plan {
-        PlanNode::LogicalMatch(m) => {
-            assert!(children.is_empty());
-            let (var, labels, graph_id) = extract_single_vertex_from_graph_pattern(&m.pattern)?;
-            let node = PhysicalNodeScan::new(var.as_str(), labels, graph_id);
-            Ok(PlanNode::PhysicalNodeScan(Arc::new(node)))
-        }
+        PlanNode::LogicalMatch(m) => match extract_path_pattern_from_graph_pattern(&m.pattern)? {
+            PathPatternInfo::SingleVertex { var, label_specs } => {
+                let node = NodeIdScan::new(var.as_str(), label_specs);
+                Ok(PlanNode::PhysicalNodeScan(Arc::new(node)))
+            }
+            PathPatternInfo::Path { vertices, edges } => {
+                if vertices.is_empty() {
+                    return not_implemented("empty path patterns", None);
+                }
+                let (first_var, first_labels) = vertices[0].clone();
+                let mut current_plan = PlanNode::PhysicalNodeScan(Arc::new(NodeIdScan::new(
+                    first_var.as_str(),
+                    first_labels,
+                )));
+                for (edge_info, next_vertex) in edges.iter().zip(vertices.iter().skip(1)) {
+                    let (edge_var, edge_labels, direction) = edge_info;
+                    let (next_var, next_labels) = next_vertex;
+                    let expand = Expand::new(
+                        current_plan.clone(),
+                        0,
+                        edge_labels.clone(),
+                        Some(next_labels.clone()),
+                        edge_var.clone(),
+                        Some(next_var.clone()),
+                        direction.clone(),
+                    );
+                    current_plan = PlanNode::PhysicalExpand(Arc::new(expand));
+                }
+                Ok(current_plan)
+            }
+        },
         PlanNode::LogicalFilter(filter) => {
             let [child] = children
                 .try_into()
@@ -177,6 +194,7 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
             assert!(children.is_empty());
             Ok(PlanNode::PhysicalVectorIndexScan(vector_scan.clone()))
         }
+        PlanNode::LogicalExplain(explain) => Ok(PlanNode::PhysicalExplain(explain.clone())),
         _ => unreachable!(),
     }
 }

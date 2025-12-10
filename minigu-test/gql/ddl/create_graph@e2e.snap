@@ -1,5 +1,6 @@
 ---
 source: minigu-test/src/insta_test.rs
+assertion_line: 178
 ---
 Error: Plan(
     Bind(

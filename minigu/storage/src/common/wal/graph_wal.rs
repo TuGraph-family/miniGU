@@ -398,13 +398,16 @@ mod tests {
     fn test_walentry_serialization() {
         // Create a WalEntry with SetVertexProps operation
         let txn_id = Timestamp::with_ts(100);
-        let delta = DeltaOp::SetVertexProps(42, SetPropsOp {
-            indices: vec![0, 1],
-            props: vec![
-                ScalarValue::Int32(10.into()),
-                ScalarValue::String("test".to_string().into()),
-            ],
-        });
+        let delta = DeltaOp::SetVertexProps(
+            42,
+            SetPropsOp {
+                indices: vec![0, 1],
+                props: vec![
+                    ScalarValue::Int32(10.into()),
+                    ScalarValue::String("test".to_string().into()),
+                ],
+            },
+        );
         let entry = RedoEntry {
             lsn: 0,
             txn_id,
@@ -423,10 +426,13 @@ mod tests {
             Operation::Delta(DeltaOp::SetVertexProps(vid, SetPropsOp { indices, props })) => {
                 assert_eq!(*vid, 42);
                 assert_eq!(*indices, vec![0, 1]);
-                assert_eq!(*props, vec![
-                    ScalarValue::Int32(10.into()),
-                    ScalarValue::String("test".to_string().into())
-                ]);
+                assert_eq!(
+                    *props,
+                    vec![
+                        ScalarValue::Int32(10.into()),
+                        ScalarValue::String("test".to_string().into())
+                    ]
+                );
             }
             _ => panic!("Expected Delta(SetVertexProps) operation"),
         }
