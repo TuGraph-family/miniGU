@@ -21,7 +21,7 @@
 //! <eid>,<src‑vid>,<dst‑vid>,<prop‑1>,<prop‑2>, ...
 //! ```
 //!
-//! call export(<graph_name>, <dir_path>, <manifest_relative_path>);
+//! call export_graph(<graph_name>, <dir_path>, <manifest_relative_path>);
 //!
 //! Export the in-memory graph `<graph_name>` to CSV files plus a JSON `manifest.json` on disk.
 //!
@@ -402,7 +402,7 @@ mod tests {
     use walkdir::WalkDir;
 
     use super::*;
-    use crate::procedures::import::import_internal;
+    use crate::procedures::import_graph::import_internal;
 
     const PERSON: LabelId = LabelId::new(1).unwrap();
     const FRIEND: LabelId = LabelId::new(2).unwrap();

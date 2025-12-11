@@ -21,7 +21,7 @@
 //! <eid>,<src‑vid>,<dst‑vid>,<prop‑1>,<prop‑2>, ...
 //! ```
 //!
-//! call import(<graph_name>, <manifest_path>);
+//! call import_graph(<graph_name>, <manifest_path>);
 //!
 //! Import a graph from CSV files plus a JSON `manifest.json` on disk into an in-memory graph,
 //! then register it in the current schema under `<graph_name>`.

@@ -2,8 +2,8 @@ mod common;
 mod create_test_graph;
 mod create_test_graph_data;
 mod echo;
-mod export;
-mod import;
+mod export_graph;
+mod import_graph;
 mod show_graph;
 mod show_procedures;
 
@@ -26,7 +26,7 @@ pub fn build_predefined_procedures() -> Vec<(String, Procedure)> {
         ),
         // Show graph in current schema.
         ("show_graph".to_string(), show_graph::build_procedure()),
-        ("import".to_string(), import::build_procedure()),
-        ("export".to_string(), export::build_procedure()),
+        ("import_graph".to_string(), import_graph::build_procedure()),
+        ("export_graph".to_string(), export_graph::build_procedure()),
     ]
 }
