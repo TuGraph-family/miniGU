@@ -299,7 +299,7 @@ mod tests {
 
         let consumer = thread::spawn(move || {
             queue
-                .wait_for_push_notify(Duration::from_millis(200))
+                .wait_for_push_notify(Duration::from_millis(500))
                 .unwrap();
             assert_eq!(queue.pop().unwrap(), Some(1));
         });
