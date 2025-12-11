@@ -15,7 +15,6 @@ use crate::common::{ANNError, ANNResult};
 /// Query scratch data structures
 pub struct ConcurrentQueue<T> {
     q: Mutex<VecDeque<T>>,
-    c: Mutex<bool>,
     push_cv: Condvar,
 }
 
@@ -30,7 +29,6 @@ impl<T> ConcurrentQueue<T> {
     pub fn new() -> Self {
         Self {
             q: Mutex::new(VecDeque::new()),
-            c: Mutex::new(false),
             push_cv: Condvar::new(),
         }
     }
@@ -98,15 +96,17 @@ impl<T> ConcurrentQueue<T> {
 
     /// register for push notifications
     pub fn wait_for_push_notify(&self, wait_time: Duration) -> ANNResult<()> {
-        let guard_lock = lock(&self.c)?;
+        // Wait on the queue mutex with a predicate to guard against spurious wakeups.
+        let guard = lock(&self.q)?;
         let _ = self
             .push_cv
-            .wait_timeout(guard_lock, wait_time)
+            .wait_timeout_while(guard, wait_time, |queue| queue.is_empty())
             .map_err(|err| {
                 ANNError::log_lock_poison_error(format!(
                     "ConcurrentQueue Lock is poisoned, err={err}"
                 ))
             })?;
+
         Ok(())
     }
 }
