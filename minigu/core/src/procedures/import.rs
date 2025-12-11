@@ -1,3 +1,26 @@
+//! Graph import/export utilities for `MemoryGraph`
+//! # File layout produced by `export_graph`
+//!
+//! ```text
+//! <output‑dir>/
+//! ├── person.csv        #  vertex records labelled "person"
+//! ├── friend.csv        #  edge records labelled "friend"
+//! ├── follow.csv        #  edge records labelled "follow"
+//! └── manifest.json       #  manifest generated from `Manifest`
+//! ```
+//!
+//! Each vertex CSV row encodes
+//!
+//! ```csv
+//! <vid>,<prop‑1>,<prop‑2>, ...
+//! ```
+//!
+//! while edges are encoded as
+//!
+//! ```csv
+//! <eid>,<src‑vid>,<dst‑vid>,<prop‑1>,<prop‑2>, ...
+//! ```
+//!
 //! call import(<graph_name>, <manifest_path>);
 //!
 //! Import a graph from CSV files plus a JSON `manifest.json` on disk into an in-memory graph,
@@ -34,7 +57,11 @@ use minigu_storage::common::{Edge, PropertyRecord, Vertex};
 use minigu_storage::tp::MemoryGraph;
 use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
 
-use crate::procedures::export_import::{Manifest, Result};
+use super::common::{EdgeSpec, FileSpec, Manifest, RecordType, Result, VertexSpec};
+
+// ============================================================================
+// Import-specific implementation
+// ============================================================================
 
 fn build_manifest<P: AsRef<Path>>(manifest_path: P) -> Result<Manifest> {
     let data = std::fs::read(manifest_path)?;

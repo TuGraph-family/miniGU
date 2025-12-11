@@ -1,7 +1,9 @@
+mod common;
 mod create_test_graph;
 mod create_test_graph_data;
 mod echo;
-mod export_import;
+mod export;
+mod import;
 mod show_graph;
 mod show_procedures;
 
@@ -26,11 +28,11 @@ pub fn build_predefined_procedures() -> Vec<(String, Procedure)> {
         ("show_graph".to_string(), show_graph::build_procedure()),
         (
             "import".to_string(),
-            export_import::import::build_procedure(),
+            import::build_procedure(),
         ),
         (
             "export".to_string(),
-            export_import::export::build_procedure(),
+            export::build_procedure(),
         ),
     ]
 }
