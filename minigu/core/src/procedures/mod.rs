@@ -26,13 +26,7 @@ pub fn build_predefined_procedures() -> Vec<(String, Procedure)> {
         ),
         // Show graph in current schema.
         ("show_graph".to_string(), show_graph::build_procedure()),
-        (
-            "import".to_string(),
-            import::build_procedure(),
-        ),
-        (
-            "export".to_string(),
-            export::build_procedure(),
-        ),
+        ("import".to_string(), import::build_procedure()),
+        ("export".to_string(), export::build_procedure()),
     ]
 }
