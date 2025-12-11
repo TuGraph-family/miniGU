@@ -180,30 +180,6 @@ impl Manifest {
 // Export-specific implementation
 // ============================================================================
 
-/// Convert a [`ScalarValue`] back into a *CSV‑ready* string. `NULL` becomes an
-/// empty string.
-fn scalar_value_to_string(scalar_value: &ScalarValue) -> Result<String> {
-    match scalar_value {
-        ScalarValue::Int8(value) => Ok(value.map_or(String::new(), |inner| inner.to_string())),
-        ScalarValue::Int16(value) => Ok(value.map_or(String::new(), |inner| inner.to_string())),
-        ScalarValue::Int32(value) => Ok(value.map_or(String::new(), |inner| inner.to_string())),
-        ScalarValue::Int64(value) => Ok(value.map_or(String::new(), |inner| inner.to_string())),
-        ScalarValue::UInt8(value) => Ok(value.map_or(String::new(), |inner| inner.to_string())),
-        ScalarValue::UInt16(value) => Ok(value.map_or(String::new(), |inner| inner.to_string())),
-        ScalarValue::UInt32(value) => Ok(value.map_or(String::new(), |inner| inner.to_string())),
-        ScalarValue::UInt64(value) => Ok(value.map_or(String::new(), |inner| inner.to_string())),
-        ScalarValue::Boolean(value) => Ok(value.map_or(String::new(), |inner| inner.to_string())),
-        ScalarValue::Float32(value) => Ok(value.map_or(String::new(), |inner| inner.to_string())),
-        ScalarValue::Float64(value) => Ok(value.map_or(String::new(), |inner| inner.to_string())),
-        ScalarValue::String(value) => Ok(value.clone().unwrap_or_default()),
-        ScalarValue::Null => Ok(String::new()),
-        _ => not_implemented(
-            "convert `ScalarValue::Vertex`/`ScalarValue::Edge` to string",
-            None,
-        ),
-    }
-}
-
 fn get_graph_from_graph_container(container: Arc<dyn GraphProvider>) -> Result<Arc<MemoryGraph>> {
     let container = container
         .downcast_ref::<GraphContainer>()
@@ -242,7 +218,8 @@ impl VerticesBuilder {
         record.push(v.vid().to_string());
 
         for prop in v.properties() {
-            record.push(scalar_value_to_string(prop)?);
+            let value_str = prop.to_string().unwrap_or_default();
+            record.push(value_str);
         }
 
         self.records
@@ -298,7 +275,8 @@ impl EdgesBuilder {
         ]);
 
         for prop in e.properties() {
-            record.push(scalar_value_to_string(prop)?);
+            let value_str = prop.to_string().unwrap_or_default();
+            record.push(value_str);
         }
 
         self.records
