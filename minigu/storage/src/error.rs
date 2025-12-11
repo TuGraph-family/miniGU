@@ -13,6 +13,10 @@ pub enum StorageError {
     VertexNotFound(#[from] VertexNotFoundError),
     #[error("EdgeNotFoundError: {0}")]
     EdgeNotFound(#[from] EdgeNotFoundError),
+    #[error("VertexAlreadyExistsError: {0}")]
+    VertexAlreadyExists(#[from] VertexAlreadyExistsError),
+    #[error("EdgeAlreadyExistsError: {0}")]
+    EdgeAlreadyExists(#[from] EdgeAlreadyExistsError),
     #[error("Schema error: {0}")]
     Schema(#[from] SchemaError),
     #[error("WAL error: {0}")]
@@ -73,6 +77,18 @@ pub enum EdgeNotFoundError {
     EdgeNotFound(String),
     #[error("Edge {0} is tombstone")]
     EdgeTombstone(String),
+}
+
+#[derive(Error, Debug)]
+pub enum VertexAlreadyExistsError {
+    #[error("Vertex {0} already exists")]
+    VertexAlreadyExists(String),
+}
+
+#[derive(Error, Debug)]
+pub enum EdgeAlreadyExistsError {
+    #[error("Edge {0} already exists")]
+    EdgeAlreadyExists(String),
 }
 
 #[derive(Error, Debug)]

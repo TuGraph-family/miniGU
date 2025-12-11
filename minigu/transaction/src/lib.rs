@@ -18,7 +18,7 @@ pub use timestamp::{
     global_transaction_id_generator, init_global_timestamp_generator,
     init_global_transaction_id_generator,
 };
-pub use transaction::{IsolationLevel, Transaction};
+pub use transaction::{IsolationLevel, LockStrategy, Transaction, TxnOptions};
 
 /// A generic undo log entry for multi-version concurrency control.
 /// This abstraction can be used by both storage and catalog layers.
