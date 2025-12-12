@@ -150,6 +150,56 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
             let [child] = children
                 .try_into()
                 .expect("filter should have exactly one child");
+
+            // ============================================================
+            // LAB3 TODO: Implement predicate pushdown optimization
+            // ============================================================
+            //
+            // Predicate pushdown is an important technology for database query optimization.
+            // Pushing the Filter condition closer to the data source can reduce the amount of intermediate data.
+            // ## Optimization goal
+            // Before optimization:
+            // Filter(n.id = 1)
+            // └── NodeScan(n)
+            //
+            // After optimization:
+            // NodeScanById(n, id=1)
+            //
+            // ## Task description
+            // 1. Check whether the child node is PhysicalNodeScan
+            // 2. Analyze whether the predicate is ID equivalence comparison (such as n.id = 1)
+            // 3. If the conditions are met, create a NodeScanById node to replace Filter + NodeScan
+            //
+            // ## Reference code
+            // ```
+            // // Attempt predicate pushdown
+            // if let PlanNode::PhysicalNodeScan(node_scan) = &child {
+            //     if let Some(id_value) = try_extract_id_predicate(&filter.predicate, &node_scan.var) {
+            // Create NodeScanById instead of Filter + NodeScan
+            //         let scan_by_id = NodeScanById::new(
+            //             node_scan.var.clone(),
+            //             node_scan.labels.clone(),
+            //             id_value,
+            //         );
+            //         return Ok(PlanNode::PhysicalNodeScanById(Arc::new(scan_by_id)));
+            //     }
+            // }
+            // ```
+            //
+            // Note: You need to implement the try_extract_id_predicate function and NodeScanById node first
+            //
+            // Please implement below:
+            // ============================================================
+
+            // YOUR CODE HERE (optional advanced experiments)
+            // If the pushdown is successful, return the optimized node directly.
+            // Otherwise, continue to use the default Filter processing
+
+            // ============================================================
+            // END LAB3 TODO
+            // ============================================================
+
+            //Default behavior: Create PhysicalFilter (no optimization)
             let predicate = filter.predicate.clone();
             let filter = Filter::new(child, predicate);
             Ok(PlanNode::PhysicalFilter(Arc::new(filter)))

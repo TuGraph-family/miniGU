@@ -36,6 +36,18 @@ path = "src/insta_test.rs"
 name = "sqllogictest"
 path = "src/sqllogictest.rs"
 
+[[test]]
+name = "lab1_filter_test"
+path = "src/lab1_filter_test.rs"
+
+[[test]]
+name = "lab2_executor_test"
+path = "src/lab2_executor_test.rs"
+
+[[test]]
+name = "lab3_optimizer_test"
+path = "src/lab3_optimizer_test.rs"
+
 [[bench]]
 harness = false
 name = "alloc"

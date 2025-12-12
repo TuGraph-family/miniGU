@@ -10,6 +10,7 @@ use crate::bound::{
 use crate::error::PlanResult;
 use crate::logical_planner::LogicalPlanner;
 use crate::plan::PlanNode;
+use crate::plan::filter::Filter;
 use crate::plan::limit::Limit;
 use crate::plan::logical_match::{LogicalMatch, MatchKind};
 use crate::plan::offset::Offset;
@@ -76,16 +77,54 @@ impl LogicalPlanner {
         }
     }
 
+    /// Generate a logical plan for the MATCH statement
+    ///
+    /// # Experiment 1: Filter support
+    ///
+    /// ## Task description
+    /// When the MATCH statement contains a WHERE clause, a LogicalFilter node needs to be added to the logical plan.
+    ///
+    /// ## Example
+    /// - Input: `MATCH (n) RETURN n`
+    /// - Output: `LogicalMatch(n)`
+    ///
+    /// - Input: `MATCH (n) WHERE n.age > 18 RETURN n`
+    /// - Output: `LogicalFilter(n.age > 18) -> LogicalMatch(n)`
+    ///
+    /// ## hint
+    /// 1. Check whether `binding.pattern.predicate` is `Some`
+    /// 2. If there is a predicate, use `Filter::new(plan, predicate)` to create a Filter node
+    /// 3. Wrap plan as `PlanNode::LogicalFilter(Arc::new(filter))`
     pub fn plan_match_statement(&self, statement: BoundMatchStatement) -> PlanResult<PlanNode> {
         match statement {
             BoundMatchStatement::Simple(binding) => {
-                let node = LogicalMatch::new(
+                let match_node = LogicalMatch::new(
                     MatchKind::Simple,
-                    binding.pattern,
+                    binding.pattern.clone(),
                     binding.yield_clause,
                     binding.output_schema,
                 );
-                Ok(PlanNode::LogicalMatch(Arc::new(node)))
+                let mut plan = PlanNode::LogicalMatch(Arc::new(match_node));
+
+                // ============================================================
+                // LAB1 TODO: Add Filter node support
+                // ============================================================
+                //
+                // If binding.pattern contains predicate (WHERE condition), required:
+                // 1. Check whether binding.pattern.predicate is Some
+                // 2. If there is a predicate, create a Filter node to wrap the current plan
+                // 3. Update plan to the packaged node
+                //
+                // Please implement below:
+                // ============================================================
+
+                // YOUR CODE HERE
+
+                // ============================================================
+                // END LAB1 TODO
+                // ============================================================
+
+                Ok(plan)
             }
             BoundMatchStatement::Optional => not_implemented("match statement optional", None),
         }
