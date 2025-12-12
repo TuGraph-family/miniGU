@@ -17,6 +17,7 @@ Usage hints:
   :history  Show command history
   :mode     Set output mode
   :metrics  Set if query metrics should be printed
+  :cd       Change the current working directory
 
 Enter ":help <COMMAND>" for more information about a command.
 
