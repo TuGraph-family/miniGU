@@ -216,7 +216,7 @@ impl Binder<'_> {
                     .ok_or_else(|| BindError::CurrentGraphNotSpecified)?;
                 let id = graph
                     .graph_type()
-                    .get_label_id(name)?
+                    .get_label_id(name, self.txn)?
                     .ok_or_else(|| BindError::LabelNotFound(name.to_smolstr()))?;
                 Ok(BoundLabelExpr::Label(id))
             }
@@ -318,7 +318,7 @@ impl Binder<'_> {
             .expect("failed to downcast to GraphContainer");
         let graph_type = container.graph_type();
         let vertex_properties = if let Ok(Some(vertex_type)) =
-            graph_type.get_vertex_type(&LabelSet::from_iter(label_set_vec[0].clone()))
+            graph_type.get_vertex_type(&LabelSet::from_iter(label_set_vec[0].clone()), self.txn)
         {
             vertex_type
                 .properties()

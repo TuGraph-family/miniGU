@@ -1,5 +1,6 @@
 ---
 source: minigu-test/src/insta_test.rs
+assertion_line: 189
 ---
 Error: Parser(
     Unexpected(
@@ -129,16 +130,11 @@ Error: Parser(
     ),
 )
 ---
-Error: Plan(
-    Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "drop graph statement",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
+Error: Execution(
+    Custom(
+        IllegalState {
+            reason: "graph not found",
+        },
     ),
 )
 ---
@@ -1319,15 +1315,10 @@ Error: Parser(
     ),
 )
 ---
-Error: Plan(
-    Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "drop graph statement",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
+Error: Execution(
+    Custom(
+        IllegalState {
+            reason: "graph not found",
+        },
     ),
 )

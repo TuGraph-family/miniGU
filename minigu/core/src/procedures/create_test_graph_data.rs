@@ -6,6 +6,7 @@ use minigu_catalog::memory::graph_type::{
 };
 use minigu_catalog::named_ref::NamedGraphRef;
 use minigu_catalog::property::Property;
+use minigu_catalog::txn::manager::CatalogTxnManager;
 use minigu_common::data_type::LogicalType;
 use minigu_common::types::{EdgeId, VertexId};
 use minigu_common::value::ScalarValue;
@@ -41,19 +42,33 @@ pub fn build_procedure() -> Procedure {
 
         let schema = context
             .current_schema
-            .as_ref()
+            .clone()
             .ok_or_else(|| anyhow::anyhow!("current schema not set"))?;
 
         let graph = MemoryGraph::with_config_fresh(Default::default(), Default::default());
-        let mut graph_type = MemoryGraphTypeCatalog::new();
+        let graph_type = MemoryGraphTypeCatalog::new();
+        let catalog_txn_manager = CatalogTxnManager::new();
+        let catalog_txn = catalog_txn_manager.begin_transaction(Serializable).unwrap();
 
         // Add labels
-        let person_label_id = graph_type.add_label("PERSON".to_string()).unwrap();
-        let company_label_id = graph_type.add_label("COMPANY".to_string()).unwrap();
-        let city_label_id = graph_type.add_label("CITY".to_string()).unwrap();
-        let friend_label_id = graph_type.add_label("FRIEND".to_string()).unwrap();
-        let works_at_label_id = graph_type.add_label("WORKS_AT".to_string()).unwrap();
-        let located_in_label_id = graph_type.add_label("LOCATED_IN".to_string()).unwrap();
+        let person_label_id = graph_type
+            .add_label("PERSON".to_string(), &catalog_txn)
+            .unwrap();
+        let company_label_id = graph_type
+            .add_label("COMPANY".to_string(), &catalog_txn)
+            .unwrap();
+        let city_label_id = graph_type
+            .add_label("CITY".to_string(), &catalog_txn)
+            .unwrap();
+        let friend_label_id = graph_type
+            .add_label("FRIEND".to_string(), &catalog_txn)
+            .unwrap();
+        let works_at_label_id = graph_type
+            .add_label("WORKS_AT".to_string(), &catalog_txn)
+            .unwrap();
+        let located_in_label_id = graph_type
+            .add_label("LOCATED_IN".to_string(), &catalog_txn)
+            .unwrap();
 
         // Create vertex types
         let person_label_set: LabelSet = vec![person_label_id].into_iter().collect();
@@ -120,18 +135,33 @@ pub fn build_procedure() -> Procedure {
             )],
         ));
 
-        graph_type.add_vertex_type(person_label_set, person);
-        graph_type.add_vertex_type(company_label_set, company);
-        graph_type.add_vertex_type(city_label_set, city);
-        graph_type.add_edge_type(friend_label_set, friend);
-        graph_type.add_edge_type(works_at_label_set, works_at);
-        graph_type.add_edge_type(located_in_label_set, located_in);
+        graph_type
+            .add_vertex_type(person_label_set, person, &catalog_txn)
+            .unwrap();
+        graph_type
+            .add_vertex_type(company_label_set, company, &catalog_txn)
+            .unwrap();
+        graph_type
+            .add_vertex_type(city_label_set, city, &catalog_txn)
+            .unwrap();
+        graph_type
+            .add_edge_type(friend_label_set, friend, &catalog_txn)
+            .unwrap();
+        graph_type
+            .add_edge_type(works_at_label_set, works_at, &catalog_txn)
+            .unwrap();
+        graph_type
+            .add_edge_type(located_in_label_set, located_in, &catalog_txn)
+            .unwrap();
+        catalog_txn.commit().unwrap();
         let container = Arc::new(GraphContainer::new(
             Arc::new(graph_type),
             GraphStorage::Memory(graph.clone()),
         ));
-
-        if !schema.add_graph(graph_name.clone(), container.clone()) {
+        let add_res = context.with_statement_txn(|txn| {
+            schema.add_graph_txn(graph_name.clone(), container.clone(), txn)
+        });
+        if add_res.is_err() {
             return Err(anyhow::anyhow!("graph `{graph_name}` already exists").into());
         }
 

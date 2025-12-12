@@ -3,6 +3,7 @@ use std::sync::Arc;
 use arrow::array::{AsArray, Int32Array};
 use minigu_catalog::label_set::LabelSet;
 use minigu_catalog::provider::GraphTypeProvider;
+use minigu_catalog::txn::catalog_txn::CatalogTxn;
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 use minigu_common::types::VertexIdArray;
@@ -16,6 +17,7 @@ use crate::evaluator::column_ref::ColumnRef;
 use crate::evaluator::constant::Constant;
 use crate::evaluator::vector_distance::VectorDistanceEvaluator;
 use crate::evaluator::vertex_constructor::VertexConstructor;
+use crate::executor::catalog::CatalogDdlBuilder;
 use crate::executor::procedure_call::ProcedureCallBuilder;
 use crate::executor::sort::SortSpec;
 use crate::executor::vector_index_scan::VectorIndexScanBuilder;
@@ -24,20 +26,29 @@ use crate::source::VertexSource;
 
 const DEFAULT_CHUNK_SIZE: usize = 2048;
 
-pub struct ExecutorBuilder {
+pub struct ExecutorBuilder<'a> {
     session: SessionContext,
+    txn: Option<&'a CatalogTxn>,
 }
 
-impl ExecutorBuilder {
+impl<'a> ExecutorBuilder<'a> {
     pub fn new(session: SessionContext) -> Self {
-        Self { session }
+        Self { session, txn: None }
     }
 
-    pub fn build(self, plan: &PlanNode) -> BoxedExecutor {
+    pub fn with_txn(mut self, txn: &'a CatalogTxn) -> Self {
+        self.txn = Some(txn);
+        self
+    }
+
+    pub fn build(mut self, plan: &PlanNode) -> BoxedExecutor {
         self.build_executor(plan)
     }
 
-    fn build_executor(&self, physical_plan: &PlanNode) -> BoxedExecutor {
+    fn build_executor(&mut self, physical_plan: &PlanNode) -> BoxedExecutor {
+        let txn = self
+            .txn
+            .expect("transaction must be set before building executor");
         let children = physical_plan.children();
         match physical_plan {
             PlanNode::PhysicalFilter(filter) => {
@@ -145,6 +156,7 @@ impl ExecutorBuilder {
                                 if let Some(first_label_set) = label_specs.first()
                                     && let Ok(Some(vertex_type)) = graph_type.get_vertex_type(
                                         &LabelSet::from_iter(first_label_set.clone()),
+                                        txn,
                                     )
                                 {
                                     for property in vertex_type.properties().iter() {
@@ -227,6 +239,13 @@ impl ExecutorBuilder {
             PlanNode::PhysicalLimit(limit) => {
                 assert_eq!(children.len(), 1);
                 Box::new(self.build_executor(&children[0]).limit(limit.limit))
+            }
+            PlanNode::PhysicalCatalogDdl(ddl) => {
+                assert!(children.is_empty());
+                Box::new(
+                    CatalogDdlBuilder::new(self.session.clone(), ddl.statement.clone())
+                        .into_executor(),
+                )
             }
             PlanNode::PhysicalOffset(offset) => {
                 assert_eq!(children.len(), 1);

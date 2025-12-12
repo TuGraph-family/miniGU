@@ -13,12 +13,12 @@ mod value_expr;
 use gql_parser::ast::Procedure;
 use minigu_catalog::named_ref::NamedGraphRef;
 use minigu_catalog::provider::{CatalogProvider, SchemaRef};
+use minigu_catalog::txn::catalog_txn::CatalogTxn;
 use minigu_common::data_type::DataSchema;
 
 use crate::binder::error::BindResult;
 use crate::bound::BoundProcedure;
 
-#[derive(Debug)]
 pub struct Binder<'a> {
     catalog: &'a dyn CatalogProvider,
 
@@ -28,6 +28,7 @@ pub struct Binder<'a> {
     home_graph: Option<NamedGraphRef>,
 
     active_data_schema: Option<DataSchema>,
+    txn: &'a CatalogTxn,
 }
 
 impl<'a> Binder<'a> {
@@ -37,6 +38,7 @@ impl<'a> Binder<'a> {
         home_schema: Option<SchemaRef>,
         current_graph: Option<NamedGraphRef>,
         home_graph: Option<NamedGraphRef>,
+        txn: &'a CatalogTxn,
     ) -> Self {
         Binder {
             catalog,
@@ -45,6 +47,7 @@ impl<'a> Binder<'a> {
             current_graph,
             home_graph,
             active_data_schema: None,
+            txn,
         }
     }
 

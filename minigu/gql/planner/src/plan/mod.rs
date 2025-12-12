@@ -1,4 +1,5 @@
 pub mod call;
+pub mod ddl;
 pub mod expand;
 pub mod explain;
 pub mod filter;
@@ -17,6 +18,7 @@ use minigu_common::data_type::DataSchemaRef;
 use serde::Serialize;
 
 use crate::plan::call::Call;
+use crate::plan::ddl::CatalogDdl;
 use crate::plan::expand::Expand;
 use crate::plan::explain::Explain;
 use crate::plan::filter::Filter;
@@ -82,6 +84,7 @@ pub enum PlanNode {
     // (by inserting PhysicalSort).
     LogicalSort(Arc<Sort>),
     LogicalLimit(Arc<Limit>),
+    LogicalCatalogDdl(Arc<CatalogDdl>),
     LogicalOffset(Arc<Offset>),
     LogicalVectorIndexScan(Arc<VectorIndexScan>),
     LogicalExplain(Arc<Explain>),
@@ -92,6 +95,7 @@ pub enum PlanNode {
     PhysicalOneRow(Arc<OneRow>),
     PhysicalSort(Arc<Sort>),
     PhysicalLimit(Arc<Limit>),
+    PhysicalCatalogDdl(Arc<CatalogDdl>),
     PhysicalOffset(Arc<Offset>),
     PhysicalVectorIndexScan(Arc<VectorIndexScan>),
     //  PhysicalNodeScan retrieves node ids based on labels during the scan phase,
@@ -115,6 +119,7 @@ impl PlanData for PlanNode {
             PlanNode::LogicalOneRow(node) => node.base(),
             PlanNode::LogicalSort(node) => node.base(),
             PlanNode::LogicalLimit(node) => node.base(),
+            PlanNode::LogicalCatalogDdl(node) => node.base(),
             PlanNode::LogicalExplain(node) => node.base(),
             PlanNode::LogicalOffset(node) => node.base(),
 
@@ -124,6 +129,7 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalOneRow(node) => node.base(),
             PlanNode::PhysicalSort(node) => node.base(),
             PlanNode::PhysicalLimit(node) => node.base(),
+            PlanNode::PhysicalCatalogDdl(node) => node.base(),
             PlanNode::PhysicalOffset(node) => node.base(),
             PlanNode::PhysicalNodeScan(node) => node.base(),
             PlanNode::LogicalVectorIndexScan(node) => node.base(),
@@ -144,6 +150,7 @@ impl PlanData for PlanNode {
             PlanNode::LogicalLimit(node) => node.explain(indent),
             PlanNode::LogicalOffset(node) => node.explain(indent),
             PlanNode::LogicalVectorIndexScan(node) => node.explain(indent),
+            PlanNode::LogicalCatalogDdl(node) => node.explain(indent),
             PlanNode::LogicalExplain(node) => node.explain(indent),
 
             PlanNode::PhysicalFilter(node) => node.explain(indent),
@@ -155,6 +162,7 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalOffset(node) => node.explain(indent),
             PlanNode::PhysicalVectorIndexScan(node) => node.explain(indent),
             PlanNode::PhysicalNodeScan(node) => node.explain(indent),
+            PlanNode::PhysicalCatalogDdl(node) => node.explain(indent),
             PlanNode::PhysicalExpand(node) => node.explain(indent),
             PlanNode::PhysicalExplain(node) => node.explain(indent),
         }

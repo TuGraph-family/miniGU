@@ -2,7 +2,7 @@ use gql_parser::ast::{
     GraphRef, PredefinedSchemaRef, ProcedureRef as AstProcedureRef, SchemaPath, SchemaPathSegment,
     SchemaRef as AstSchemaRef,
 };
-use minigu_catalog::named_ref::{NamedGraphRef, NamedProcedureRef};
+use minigu_catalog::named_ref::{NamedGraphRef, NamedGraphTypeRef, NamedProcedureRef};
 use minigu_catalog::provider::{CatalogProvider, DirectoryOrSchema, SchemaRef};
 use minigu_common::error::not_implemented;
 
@@ -22,7 +22,25 @@ impl Binder<'_> {
     }
 
     pub fn bind_absolute_schema_path(&self, schema_path: &SchemaPath) -> BindResult<SchemaRef> {
-        bind_absolute_schema_path(self.catalog, schema_path)
+        let mut current = self.catalog.get_root()?;
+        let mut current_path = vec![];
+        for segment in schema_path {
+            let name = match segment.value() {
+                SchemaPathSegment::Name(name) => name,
+                SchemaPathSegment::Parent => unreachable!(),
+            };
+            let current_dir = current
+                .into_directory()
+                .ok_or_else(|| BindError::NotDirectory(path_to_string::<true>(&current_path)))?;
+            current_path.push(segment.value());
+            let child = current_dir.get_child(name, self.txn)?.ok_or_else(|| {
+                BindError::DirectoryOrSchemaNotFound(path_to_string::<true>(&current_path))
+            })?;
+            current = child;
+        }
+        current
+            .into_schema()
+            .ok_or_else(|| BindError::NotSchema(path_to_string::<true>(&current_path)))
     }
 
     pub fn bind_relative_schema_path(&self, schema_path: &SchemaPath) -> BindResult<SchemaRef> {
@@ -30,7 +48,31 @@ impl Binder<'_> {
             .current_schema
             .clone()
             .ok_or(BindError::CurrentSchemaNotSpecified)?;
-        bind_relative_schema_path(current_schema, schema_path)
+        let mut current = DirectoryOrSchema::Schema(current_schema);
+        let mut current_path = vec![];
+        for segment in schema_path {
+            match segment.value() {
+                SchemaPathSegment::Name(name) => {
+                    let current_dir = current.into_directory().ok_or_else(|| {
+                        BindError::NotDirectory(path_to_string::<false>(&current_path))
+                    })?;
+                    current_path.push(segment.value());
+                    let child = current_dir.get_child(name, self.txn)?.ok_or_else(|| {
+                        BindError::DirectoryOrSchemaNotFound(path_to_string::<false>(&current_path))
+                    })?;
+                    current = child;
+                }
+                SchemaPathSegment::Parent => {
+                    current_path.push(segment.value());
+                    if let Some(parent_dir) = current.parent() {
+                        current = DirectoryOrSchema::Directory(parent_dir);
+                    }
+                }
+            }
+        }
+        current
+            .into_schema()
+            .ok_or_else(|| BindError::NotSchema(path_to_string::<false>(&current_path)))
     }
 
     pub fn bind_predefined_schema_ref(
@@ -67,7 +109,7 @@ impl Binder<'_> {
                     [name] => {
                         let name = name.value();
                         let procedure = schema
-                            .get_procedure(name)?
+                            .get_procedure(name, self.txn)?
                             .ok_or_else(|| BindError::ProcedureNotFound(name.clone()))?;
                         Ok(NamedProcedureRef::new(name.clone(), procedure))
                     }
@@ -90,7 +132,7 @@ impl Binder<'_> {
                     .as_ref()
                     .ok_or(BindError::CurrentSchemaNotSpecified)?;
                 let graph = schema
-                    .get_graph(name)?
+                    .get_graph(name, self.txn)?
                     .ok_or_else(|| BindError::GraphNotFound(name.clone()))?;
                 Ok(NamedGraphRef::new(name.clone(), graph))
             }
@@ -110,7 +152,7 @@ impl Binder<'_> {
                     [name] => {
                         let name = name.value();
                         let graph = schema
-                            .get_graph(name)?
+                            .get_graph(name, self.txn)?
                             .ok_or_else(|| BindError::GraphNotFound(name.clone()))?;
                         Ok(NamedGraphRef::new(name.clone(), graph))
                     }
@@ -125,62 +167,39 @@ impl Binder<'_> {
                 .ok_or(BindError::HomeGraphNotSpecified),
         }
     }
-}
 
-pub fn bind_absolute_schema_path(
-    catalog: &dyn CatalogProvider,
-    path: &SchemaPath,
-) -> BindResult<SchemaRef> {
-    let mut current = catalog.get_root()?;
-    let mut current_path = vec![];
-    for segment in path {
-        let name = match segment.value() {
-            SchemaPathSegment::Name(name) => name,
-            SchemaPathSegment::Parent => unreachable!(),
-        };
-        let current_dir = current
-            .into_directory()
-            .ok_or_else(|| BindError::NotDirectory(path_to_string::<true>(&current_path)))?;
-        current_path.push(segment.value());
-        let child = current_dir.get_child(name)?.ok_or_else(|| {
-            BindError::DirectoryOrSchemaNotFound(path_to_string::<true>(&current_path))
-        })?;
-        current = child;
-    }
-    current
-        .into_schema()
-        .ok_or_else(|| BindError::NotSchema(path_to_string::<true>(&current_path)))
-}
-
-pub fn bind_relative_schema_path(
-    current_schema: SchemaRef,
-    schema_path: &SchemaPath,
-) -> BindResult<SchemaRef> {
-    let mut current = DirectoryOrSchema::Schema(current_schema);
-    let mut current_path = vec![];
-    for segment in schema_path {
-        match segment.value() {
-            SchemaPathSegment::Name(name) => {
-                let current_dir = current.into_directory().ok_or_else(|| {
-                    BindError::NotDirectory(path_to_string::<false>(&current_path))
-                })?;
-                current_path.push(segment.value());
-                let child = current_dir.get_child(name)?.ok_or_else(|| {
-                    BindError::DirectoryOrSchemaNotFound(path_to_string::<false>(&current_path))
-                })?;
-                current = child;
-            }
-            SchemaPathSegment::Parent => {
-                current_path.push(segment.value());
-                if let Some(parent_dir) = current.parent() {
-                    current = DirectoryOrSchema::Directory(parent_dir);
+    pub fn bind_graph_type_ref(
+        &self,
+        graph_type_ref: &gql_parser::ast::GraphTypeRef,
+    ) -> BindResult<NamedGraphTypeRef> {
+        match graph_type_ref {
+            gql_parser::ast::GraphTypeRef::Ref(catalog_object_ref) => {
+                let schema = if let Some(schema) = &catalog_object_ref.schema {
+                    self.bind_schema_ref(schema.value())?
+                } else {
+                    self.current_schema
+                        .clone()
+                        .ok_or(BindError::CurrentSchemaNotSpecified)?
+                };
+                match catalog_object_ref.objects.as_slice() {
+                    [] => unreachable!(),
+                    [name] => {
+                        let name = name.value();
+                        let graph_type = schema
+                            .get_graph_type(name, self.txn)?
+                            .ok_or_else(|| BindError::GraphTypeNotFound(name.clone()))?;
+                        Ok(NamedGraphTypeRef::new(name.clone(), graph_type))
+                    }
+                    objects => Err(BindError::InvalidObjectReference(
+                        objects.iter().map(|o| o.value().clone()).collect(),
+                    )),
                 }
+            }
+            gql_parser::ast::GraphTypeRef::Parameter(_) => {
+                not_implemented("graph type reference parameter".to_string(), None)
             }
         }
     }
-    current
-        .into_schema()
-        .ok_or_else(|| BindError::NotSchema(path_to_string::<false>(&current_path)))
 }
 
 fn path_to_string<const ABS: bool>(path: &[&SchemaPathSegment]) -> String {

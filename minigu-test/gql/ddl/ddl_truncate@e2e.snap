@@ -250,15 +250,10 @@ Error: Parser(
     ),
 )
 ---
-Error: Plan(
-    Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "drop graph statement",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
+Error: Execution(
+    Custom(
+        IllegalState {
+            reason: "graph not found",
+        },
     ),
 )

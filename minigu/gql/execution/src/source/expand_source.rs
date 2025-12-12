@@ -148,6 +148,7 @@ mod tests {
         MemoryEdgeTypeCatalog, MemoryGraphTypeCatalog, MemoryVertexTypeCatalog,
     };
     use minigu_catalog::property::Property;
+    use minigu_catalog::txn::manager::CatalogTxnManager;
     use minigu_common::data_type::LogicalType;
     use minigu_common::types::LabelId;
     use minigu_common::value::ScalarValue;
@@ -188,11 +189,19 @@ mod tests {
         let wal_config = WalManagerConfig { wal_path: wal_file };
 
         let graph = MemoryGraph::with_config_fresh(checkpoint_config, wal_config);
-        let mut graph_type = MemoryGraphTypeCatalog::new();
+        let graph_type = MemoryGraphTypeCatalog::new();
+        let catalog_txn_manager = CatalogTxnManager::new();
+        let catalog_txn = catalog_txn_manager
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
 
         // Add labels
-        let person_label_id = graph_type.add_label("PERSON".to_string()).unwrap();
-        let friend_label_id = graph_type.add_label("FRIEND".to_string()).unwrap();
+        let person_label_id = graph_type
+            .add_label("PERSON".to_string(), &catalog_txn)
+            .unwrap();
+        let friend_label_id = graph_type
+            .add_label("FRIEND".to_string(), &catalog_txn)
+            .unwrap();
 
         // Create vertex type
         let person_label_set: LabelSet = vec![person_label_id].into_iter().collect();
@@ -217,8 +226,13 @@ mod tests {
             )],
         ));
 
-        graph_type.add_vertex_type(person_label_set, person);
-        graph_type.add_edge_type(friend_label_set, friend);
+        graph_type
+            .add_vertex_type(person_label_set, person, &catalog_txn)
+            .unwrap();
+        graph_type
+            .add_edge_type(friend_label_set, friend, &catalog_txn)
+            .unwrap();
+        catalog_txn.commit().unwrap();
 
         GraphContainer::new(Arc::new(graph_type), GraphStorage::Memory(graph))
     }
