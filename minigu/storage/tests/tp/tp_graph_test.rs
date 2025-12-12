@@ -378,9 +378,12 @@ fn test_graph_update_nonexistent_edge_property() -> StorageResult<()> {
         .unwrap();
 
     // Try to update property of non-existent edge
-    let result = graph.set_edge_property(&txn, 999, vec![0], vec![ScalarValue::String(Some(
-        "test".to_string(),
-    ))]);
+    let result = graph.set_edge_property(
+        &txn,
+        999,
+        vec![0],
+        vec![ScalarValue::String(Some("test".to_string()))],
+    );
     assert!(result.is_err());
 
     txn.abort()?;

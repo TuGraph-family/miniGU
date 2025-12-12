@@ -455,34 +455,34 @@ pub fn vector_distance_function(input: &mut TokenStream) -> ModalResult<Spanned<
 }
 
 pub fn char_length_function(input: &mut TokenStream) -> ModalResult<Spanned<NumericFunction>> {
-    predefined_value_function!(
+    (predefined_value_function!(
         one_of((TokenKind::CharLength, TokenKind::CharacterLength)),
         value_expression,
         |a| NumericFunction::CharLength(Box::new(a))
-    )
+    ))
     .parse_next(input)
 }
 
 pub fn byte_length_function(input: &mut TokenStream) -> ModalResult<Spanned<NumericFunction>> {
-    predefined_value_function!(
+    (predefined_value_function!(
         one_of((TokenKind::ByteLength, TokenKind::OctetLength)),
         value_expression,
         |a| NumericFunction::ByteLength(Box::new(a))
-    )
+    ))
     .parse_next(input)
 }
 
 pub fn path_length_function(input: &mut TokenStream) -> ModalResult<Spanned<NumericFunction>> {
-    predefined_value_function!(TokenKind::PathLength, value_expression, |a| {
+    (predefined_value_function!(TokenKind::PathLength, value_expression, |a| {
         NumericFunction::PathLength(Box::new(a))
-    })
+    }))
     .parse_next(input)
 }
 
 pub fn absolute_value_function(input: &mut TokenStream) -> ModalResult<Spanned<NumericFunction>> {
-    predefined_value_function!(TokenKind::Abs, value_expression, |a| {
+    (predefined_value_function!(TokenKind::Abs, value_expression, |a| {
         NumericFunction::Absolute(Box::new(a))
-    })
+    }))
     .parse_next(input)
 }
 

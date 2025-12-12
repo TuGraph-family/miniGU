@@ -5,7 +5,7 @@ use minigu_common::error::not_implemented;
 use crate::bound::{
     BoundCompositeQueryStatement, BoundLinearQueryStatement, BoundMatchStatement,
     BoundOrderByAndPageStatement, BoundResultStatement, BoundReturnStatement,
-    BoundSimpleQueryStatement, BoundVectorIndexScan,
+    BoundSimpleQueryStatement, BoundStatement, BoundVectorIndexScan,
 };
 use crate::error::PlanResult;
 use crate::logical_planner::LogicalPlanner;
@@ -106,6 +106,13 @@ impl LogicalPlanner {
             statement.approximate,
         );
         Ok(PlanNode::LogicalVectorIndexScan(Arc::new(scan)))
+    }
+
+    pub fn plan_explain_statement(&self, statement: &BoundStatement) -> PlanResult<PlanNode> {
+        let child_plan = self.plan_statement(statement.clone())?;
+        Ok(PlanNode::LogicalExplain(Arc::new(
+            crate::plan::explain::Explain::new(child_plan),
+        )))
     }
 
     pub fn plan_result_statement(

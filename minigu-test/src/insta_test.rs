@@ -2,9 +2,13 @@
 //!
 //! Test cases can be found in `../../resources/gql`, and expected outputs can be found in
 //! `snapshots`.
+
+use std::fmt::Write;
+
 use gql_parser::parse_gql;
 use insta::internals::SettingsBindDropGuard;
 use insta::{Settings, assert_snapshot, assert_yaml_snapshot};
+use minigu::common::data_chunk::display::{TableBuilder, TableOptions};
 use minigu::database::{Database, DatabaseConfig};
 use minigu::result::QueryResult;
 use pastey::paste;
@@ -97,30 +101,36 @@ fn result_to_string(result: &QueryResult) -> String {
         return "Statement OK. No results".to_string();
     }
     let mut output = String::new();
+    let options = TableOptions::style_for_test();
     if let Some(schema) = result.schema() {
-        let headers: Vec<String> = schema
-            .fields()
-            .iter()
-            .map(|f| f.name().to_string())
-            .collect();
-        output.push_str(&headers.join("\t"));
-        output.push('\n');
-    }
-    for chunk in result.iter() {
-        let rows_count = chunk.cardinality();
-        let column = chunk.columns();
-        for row_idx in 0..rows_count {
-            let row_values: Vec<String> = (0..column.len())
-                .map(|col_idx| {
-                    let array = &column[col_idx];
-                    extract_string_value(array, row_idx)
-                })
-                .collect();
-            output.push_str(&row_values.join("\t"));
-            output.push('\n');
+        let mut builder = TableBuilder::new(Some(schema.clone()), options);
+        let mut num_rows = 0;
+        for chunk in result.iter() {
+            num_rows += chunk.cardinality();
+            builder = builder.append_chunk(chunk);
+        }
+        let table = builder.build();
+
+        writeln!(&mut output, "{table}").unwrap();
+        writeln!(&mut output, "{num_rows} rows").unwrap();
+    } else {
+        // Handle result sets without a schema (e.g. EXPLAIN output).
+        for chunk in result.iter() {
+            let rows_count = chunk.cardinality();
+            let column = chunk.columns();
+            for row_idx in 0..rows_count {
+                let row_values: Vec<String> = (0..column.len())
+                    .map(|col_idx| {
+                        let array = &column[col_idx];
+                        extract_string_value(array, row_idx)
+                    })
+                    .collect();
+                output.push_str(&row_values.join("\t"));
+                output.push('\n');
+            }
         }
     }
-    output.trim_end().to_string()
+    output
 }
 
 fn extract_string_value(array: &arrow::array::ArrayRef, row_idx: usize) -> String {
@@ -179,44 +189,48 @@ macro_rules! add_e2e_tests {
 add_e2e_tests!("basic", ["multi_statement_test"]);
 add_e2e_tests!("finbench", ["tsr1", "tsr2", "tsr3", "tsr4", "tsr5", "tsr6"]);
 add_e2e_tests!("snb", ["is1", "is2", "is3", "is4", "is5", "is6", "is7"]);
-add_e2e_tests!("ddl", [
-    "create_graph",
-    "create_schema",
-    "ddl_drop",
-    "ddl_truncate"
-]);
+add_e2e_tests!(
+    "ddl",
+    ["create_graph", "create_schema", "ddl_drop", "ddl_truncate"]
+);
+add_e2e_tests!("dql", ["dql"]);
 add_e2e_tests!("dcl", ["session_set"]);
 add_e2e_tests!("dml", ["insert", "match_and_insert", "match", "dml_dql"]);
 add_e2e_tests!("misc", ["text2graph", "vector_index"]);
-add_e2e_tests!("utility", [
-    "explain_call",
-    "explain_filter",
-    "explain_limit",
-    "explain_logical_match",
-    "explain_one_row",
-    "explain_sort",
-    "explain_vector_index_scan"
-]);
+add_e2e_tests!(
+    "utility",
+    [
+        "explain_call",
+        "explain_filter",
+        "explain_limit",
+        "explain_logical_match",
+        "explain_one_row",
+        "explain_sort",
+        "explain_vector_index_scan"
+    ]
+);
 
 add_parser_tests!("basic", ["multi_statement_test"]);
 add_parser_tests!("finbench", ["tsr1", "tsr2", "tsr3", "tsr4", "tsr5", "tsr6"]);
 add_parser_tests!("snb", ["is1", "is2", "is3", "is4", "is5", "is6", "is7"]);
-add_parser_tests!("ddl", [
-    "create_graph",
-    "create_schema",
-    "ddl_drop",
-    "ddl_truncate"
-]);
+add_parser_tests!(
+    "ddl",
+    ["create_graph", "create_schema", "ddl_drop", "ddl_truncate"]
+);
+add_parser_tests!("dql", ["dql"]);
 add_parser_tests!("dcl", ["session_set"]);
 add_parser_tests!("dml", ["insert", "match_and_insert", "match", "dml_dql"]);
 add_parser_tests!("misc", ["text2graph", "vector_index"]);
-add_parser_tests!("utility", [
-    "explain_call",
-    "explain_filter",
-    "explain_limit",
-    "explain_offset",
-    "explain_logical_match",
-    "explain_one_row",
-    "explain_sort",
-    "explain_vector_index_scan"
-]);
+add_parser_tests!(
+    "utility",
+    [
+        "explain_call",
+        "explain_filter",
+        "explain_limit",
+        "explain_offset",
+        "explain_logical_match",
+        "explain_one_row",
+        "explain_sort",
+        "explain_vector_index_scan"
+    ]
+);

@@ -19,11 +19,11 @@ impl FilterMask {
         let mut valid_candidates = 0;
 
         for &vector_id in &candidates {
-            if let Some(mut bit) = bitmap.get_mut(vector_id as usize) {
-                if !*bit {
-                    bit.set(true);
-                    valid_candidates += 1;
-                }
+            if let Some(mut bit) = bitmap.get_mut(vector_id as usize)
+                && !*bit
+            {
+                bit.set(true);
+                valid_candidates += 1;
             }
         }
 

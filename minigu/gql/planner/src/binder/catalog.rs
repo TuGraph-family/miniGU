@@ -93,15 +93,11 @@ impl Binder<'_> {
         let label_name = statement.label.value().clone();
         let label_id = graph_type
             .get_label_id(label_name.as_str())?
-            .ok_or_else(|| BindError::LabelNotFound {
-                label: label_name.clone(),
-            })?;
+            .ok_or_else(|| BindError::LabelNotFound(label_name.clone()))?;
 
         let vertex_type = graph_type
             .get_vertex_type(&LabelSet::from_iter([label_id]))?
-            .ok_or_else(|| BindError::LabelNotFound {
-                label: label_name.clone(),
-            })?;
+            .ok_or_else(|| BindError::LabelNotFound(label_name.clone()))?;
 
         let property_name = statement.property.value().clone();
         let (property_id, property) = vertex_type

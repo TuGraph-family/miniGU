@@ -85,8 +85,12 @@ pub trait GraphIndexCatalog: Debug + Send + Sync {
 
 /// Represents a graph, which is an instance of a graph type.
 ///
+/// The [`DowncastSync`] bound is added to allow safely downcasting
+/// `Arc<dyn GraphProvider>` back to its concrete implementation type at runtime
+/// using [`Arc::downcast`]. Without it, users would not be able to recover the
+/// concrete type from a trait object safely.
 /// Use [`Arc::downcast`] to cast the trait object into the concrete type.
-pub trait GraphProvider: Debug + Send + Sync + Any {
+pub trait GraphProvider: Debug + Send + Sync + Any + DowncastSync {
     /// Returns the graph type of the graph.
     fn graph_type(&self) -> GraphTypeRef;
 
@@ -98,6 +102,8 @@ pub trait GraphProvider: Debug + Send + Sync + Any {
     /// Returns a reference to the underlying graph.
     fn as_any(&self) -> &dyn Any;
 }
+
+impl_downcast!(sync GraphProvider);
 
 /// Represents a graph type, which defines the structure of a graph.
 /// It contains vertex types and edge types.

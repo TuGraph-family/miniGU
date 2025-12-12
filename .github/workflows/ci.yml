@@ -98,9 +98,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        components: rust-src
     - run: rustup target add aarch64-unknown-none
     - uses: Swatinem/rust-cache@v2
-    - run: cargo build -p gql-parser --target aarch64-unknown-none --no-default-features
+    - run: cargo build -p gql-parser --target aarch64-unknown-none --no-default-features -Zbuild-std=core,alloc
 
   test:
     needs: [ typos, toml, fmt, clippy, machete, deny ]

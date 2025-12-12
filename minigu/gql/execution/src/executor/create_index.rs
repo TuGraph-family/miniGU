@@ -1,7 +1,7 @@
 use std::io;
 use std::sync::Arc;
 
-use minigu_catalog::provider::VectorIndexMetadata;
+use minigu_catalog::provider::{GraphProvider, VectorIndexMetadata};
 use minigu_common::data_chunk::DataChunk;
 use minigu_context::error::IndexCatalogError;
 use minigu_context::graph::{GraphContainer, GraphStorage};
@@ -70,8 +70,7 @@ impl CreateIndexExecutor {
             )))
         })?;
         let provider = graph_ref.object().clone();
-        let container = provider
-            .as_any()
+        let container = GraphProvider::as_any(provider.as_ref())
             .downcast_ref::<GraphContainer>()
             .ok_or_else(|| {
                 ExecutionError::Custom(Box::new(io::Error::new(

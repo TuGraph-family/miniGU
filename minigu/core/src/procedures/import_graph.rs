@@ -1,13 +1,34 @@
-//! call import(<graph_name>, <dir_path>, <manifest_relative_path>);
+//! Graph import/export utilities for `MemoryGraph`
+//! # File layout produced by `export_graph`
+//!
+//! ```text
+//! <output‑dir>/
+//! ├── person.csv        #  vertex records labelled "person"
+//! ├── friend.csv        #  edge records labelled "friend"
+//! ├── follow.csv        #  edge records labelled "follow"
+//! └── manifest.json       #  manifest generated from `Manifest`
+//! ```
+//!
+//! Each vertex CSV row encodes
+//!
+//! ```csv
+//! <vid>,<prop‑1>,<prop‑2>, ...
+//! ```
+//!
+//! while edges are encoded as
+//!
+//! ```csv
+//! <eid>,<src‑vid>,<dst‑vid>,<prop‑1>,<prop‑2>, ...
+//! ```
+//!
+//! call import_graph(<graph_name>, <manifest_path>);
 //!
 //! Import a graph from CSV files plus a JSON `manifest.json` on disk into an in-memory graph,
 //! then register it in the current schema under `<graph_name>`.
 //!
 //! ## Inputs
 //! * `<graph_name>` – Name to register the imported graph under in the current schema.
-//! * `<dir_path>` – Directory that contains the CSV files and the manifest.
-//! * `<manifest_relative_path>` – File name or relative path (inside `dir_path`) to
-//!   `manifest.json`.
+//! * `<manifest_path>` – `manifest.json` path.
 //!
 //! ## Output
 //! * Returns nothing. On success the graph is added to the current schema. Errors (missing files,
@@ -31,11 +52,16 @@ use minigu_common::types::VertexId;
 use minigu_common::value::ScalarValue;
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::procedure::Procedure;
+use minigu_context::session::SessionContext;
 use minigu_storage::common::{Edge, PropertyRecord, Vertex};
 use minigu_storage::tp::MemoryGraph;
 use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
 
-use crate::procedures::export_import::{Manifest, Result};
+use super::common::{EdgeSpec, FileSpec, Manifest, RecordType, Result, VertexSpec};
+
+// ============================================================================
+// Import-specific implementation
+// ============================================================================
 
 fn build_manifest<P: AsRef<Path>>(manifest_path: P) -> Result<Manifest> {
     let data = std::fs::read(manifest_path)?;
@@ -97,7 +123,30 @@ fn build_properties<'a>(
     Ok(props)
 }
 
-pub(crate) fn import<P: AsRef<Path>>(
+pub fn import<P: AsRef<Path>>(
+    context: SessionContext,
+    graph_name: impl Into<String>,
+    manifest_path: P,
+) -> Result<()> {
+    let graph_name = graph_name.into();
+
+    let schema = context
+        .current_schema
+        .ok_or_else(|| anyhow::anyhow!("current schema not set"))?;
+    let (graph, graph_type) = import_internal(manifest_path)?;
+    let container = GraphContainer::new(
+        Arc::clone(&graph_type),
+        GraphStorage::Memory(Arc::clone(&graph)),
+    );
+
+    if !schema.add_graph(graph_name.clone(), Arc::new(container)) {
+        return Err(anyhow::anyhow!("graph {graph_name} already exists").into());
+    }
+
+    Ok(())
+}
+
+pub(crate) fn import_internal<P: AsRef<Path>>(
     manifest_path: P,
 ) -> Result<(Arc<MemoryGraph>, Arc<MemoryGraphTypeCatalog>)> {
     // Graph type
@@ -235,45 +284,23 @@ fn get_graph_type_from_manifest(manifest: &Manifest) -> Result<Arc<MemoryGraphTy
 
 pub fn build_procedure() -> Procedure {
     // Name, directory path, Manifest relative path
-    let parameters = vec![
-        LogicalType::String,
-        LogicalType::String,
-        LogicalType::String,
-    ];
+    let parameters = vec![LogicalType::String, LogicalType::String];
 
     Procedure::new(parameters, None, |context, args| {
-        assert_eq!(args.len(), 3);
+        assert_eq!(args.len(), 2);
         let graph_name = args[0]
             .try_as_string()
             .expect("graph name must be a string")
             .clone()
             .expect("graph name can't be empty");
-        let dir_path = args[1]
+        let manifest_path = args[1]
             .try_as_string()
-            .expect("directory path must be a string")
+            .expect("manifest path must be a string")
             .clone()
-            .expect("directory path can't be empty");
-        let manifest_rel_path = args[2]
-            .try_as_string()
-            .expect("manifest relative path must be a string")
-            .clone()
-            .expect("manifest relative path can't be empty");
+            .expect("manifest path can't be empty");
 
-        let manifest_path = (dir_path.as_ref() as &Path).join(manifest_rel_path);
-        let schema = context
-            .current_schema
-            .ok_or_else(|| anyhow::anyhow!("current schema not set"))?;
+        import(context, graph_name, manifest_path)?;
 
-        let (graph, graph_type) = import(manifest_path)?;
-
-        let container = GraphContainer::new(
-            Arc::clone(&graph_type),
-            GraphStorage::Memory(Arc::clone(&graph)),
-        );
-
-        if !schema.add_graph(graph_name.clone(), Arc::new(container)) {
-            return Err(anyhow::anyhow!("graph {graph_name} already exists").into());
-        }
         Ok(vec![])
     })
 }

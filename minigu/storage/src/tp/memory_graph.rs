@@ -34,10 +34,13 @@ macro_rules! update_properties {
             .iter()
             .map(|i| current.data.properties.get(*i).unwrap().clone())
             .collect();
-        let delta = DeltaOp::$op($id, SetPropsOp {
-            indices: $indices,
-            props: delta_props,
-        });
+        let delta = DeltaOp::$op(
+            $id,
+            SetPropsOp {
+                indices: $indices,
+                props: delta_props,
+            },
+        );
 
         let undo_ptr = $entry.chain.undo_ptr.read().unwrap().clone();
         let mut undo_buffer = $txn.undo_buffer.write().unwrap();
@@ -900,23 +903,23 @@ impl MemoryGraph {
             return None;
         }
 
-        if let Ok(property_idx) = usize::try_from(index_key.property_id) {
-            if let Some(property_value) = vertex.properties().get(property_idx) {
-                match property_value {
-                    ScalarValue::Vector {
-                        value: Some(vector_value),
-                        ..
-                    } => {
-                        return Some(vector_value.clone());
-                    }
-                    ScalarValue::Vector { value: None, .. } => {
-                        // Skip null vector values
-                        return None;
-                    }
-                    _ => {
-                        // Property exists but is not a vector - skip
-                        return None;
-                    }
+        if let Ok(property_idx) = usize::try_from(index_key.property_id)
+            && let Some(property_value) = vertex.properties().get(property_idx)
+        {
+            match property_value {
+                ScalarValue::Vector {
+                    value: Some(vector_value),
+                    ..
+                } => {
+                    return Some(vector_value.clone());
+                }
+                ScalarValue::Vector { value: None, .. } => {
+                    // Skip null vector values
+                    return None;
+                }
+                _ => {
+                    // Property exists but is not a vector - skip
+                    return None;
                 }
             }
         }
@@ -934,10 +937,10 @@ impl MemoryGraph {
 
         for &node_id in node_ids {
             // Try to get vertex, skip if not found
-            if let Ok(vertex) = self.get_vertex(txn, node_id) {
-                if let Some(vector_value) = Self::extract_vector_from_vertex(&vertex, index_key) {
-                    vectors.push((node_id, vector_value));
-                }
+            if let Ok(vertex) = self.get_vertex(txn, node_id)
+                && let Some(vector_value) = Self::extract_vector_from_vertex(&vertex, index_key)
+            {
+                vectors.push((node_id, vector_value));
             }
             // Note: We silently skip nodes that don't exist or don't have the required vector
             // property This allows bulk operations to be more forgiving
@@ -1340,25 +1343,41 @@ pub mod tests {
             .begin_transaction(IsolationLevel::Serializable)
             .unwrap();
 
-        let alice = create_vertex(1, PERSON, vec![
-            ScalarValue::String(Some("Alice".to_string())),
-            ScalarValue::Int32(Some(25)),
-        ]);
+        let alice = create_vertex(
+            1,
+            PERSON,
+            vec![
+                ScalarValue::String(Some("Alice".to_string())),
+                ScalarValue::Int32(Some(25)),
+            ],
+        );
 
-        let bob = create_vertex(2, PERSON, vec![
-            ScalarValue::String(Some("Bob".to_string())),
-            ScalarValue::Int32(Some(28)),
-        ]);
+        let bob = create_vertex(
+            2,
+            PERSON,
+            vec![
+                ScalarValue::String(Some("Bob".to_string())),
+                ScalarValue::Int32(Some(28)),
+            ],
+        );
 
-        let carol = create_vertex(3, PERSON, vec![
-            ScalarValue::String(Some("Carol".to_string())),
-            ScalarValue::Int32(Some(24)),
-        ]);
+        let carol = create_vertex(
+            3,
+            PERSON,
+            vec![
+                ScalarValue::String(Some("Carol".to_string())),
+                ScalarValue::Int32(Some(24)),
+            ],
+        );
 
-        let david = create_vertex(4, PERSON, vec![
-            ScalarValue::String(Some("David".to_string())),
-            ScalarValue::Int32(Some(27)),
-        ]);
+        let david = create_vertex(
+            4,
+            PERSON,
+            vec![
+                ScalarValue::String(Some("David".to_string())),
+                ScalarValue::Int32(Some(27)),
+            ],
+        );
 
         // Add vertices to the graph
         graph.create_vertex(&txn, alice).unwrap();
@@ -1367,22 +1386,38 @@ pub mod tests {
         graph.create_vertex(&txn, david).unwrap();
 
         // Create friend edges
-        let friend1 = create_edge(1, 1, 2, FRIEND, vec![ScalarValue::String(Some(
-            "2020-01-01".to_string(),
-        ))]);
+        let friend1 = create_edge(
+            1,
+            1,
+            2,
+            FRIEND,
+            vec![ScalarValue::String(Some("2020-01-01".to_string()))],
+        );
 
-        let friend2 = create_edge(2, 2, 3, FRIEND, vec![ScalarValue::String(Some(
-            "2021-03-15".to_string(),
-        ))]);
+        let friend2 = create_edge(
+            2,
+            2,
+            3,
+            FRIEND,
+            vec![ScalarValue::String(Some("2021-03-15".to_string()))],
+        );
 
         // Create follow edges
-        let follow1 = create_edge(3, 1, 3, FOLLOW, vec![ScalarValue::String(Some(
-            "2022-06-01".to_string(),
-        ))]);
+        let follow1 = create_edge(
+            3,
+            1,
+            3,
+            FOLLOW,
+            vec![ScalarValue::String(Some("2022-06-01".to_string()))],
+        );
 
-        let follow2 = create_edge(4, 4, 1, FOLLOW, vec![ScalarValue::String(Some(
-            "2022-07-15".to_string(),
-        ))]);
+        let follow2 = create_edge(
+            4,
+            4,
+            1,
+            FOLLOW,
+            vec![ScalarValue::String(Some("2022-07-15".to_string()))],
+        );
 
         // Add edges to the graph
         graph.create_edge(&txn, friend1).unwrap();
@@ -1395,23 +1430,35 @@ pub mod tests {
     }
 
     fn create_vertex_eve() -> Vertex {
-        create_vertex(5, PERSON, vec![
-            ScalarValue::String(Some("Eve".to_string())),
-            ScalarValue::Int32(Some(24)),
-        ])
+        create_vertex(
+            5,
+            PERSON,
+            vec![
+                ScalarValue::String(Some("Eve".to_string())),
+                ScalarValue::Int32(Some(24)),
+            ],
+        )
     }
 
     fn create_vertex_frank() -> Vertex {
-        create_vertex(6, PERSON, vec![
-            ScalarValue::String(Some("Frank".to_string())),
-            ScalarValue::Int32(Some(25)),
-        ])
+        create_vertex(
+            6,
+            PERSON,
+            vec![
+                ScalarValue::String(Some("Frank".to_string())),
+                ScalarValue::Int32(Some(25)),
+            ],
+        )
     }
 
     fn create_edge_alice_to_eve() -> Edge {
-        create_edge(5, 1, 5, FRIEND, vec![ScalarValue::String(Some(
-            "2025-03-31".to_string(),
-        ))])
+        create_edge(
+            5,
+            1,
+            5,
+            FRIEND,
+            vec![ScalarValue::String(Some("2025-03-31".to_string()))],
+        )
     }
 
     /// Creates a test vertex with vector embedding
@@ -3139,9 +3186,10 @@ pub mod tests {
         )?);
 
         // Delete the vector
-        graph.delete_from_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID), &[
-            *target_id,
-        ])?;
+        graph.delete_from_vector_index(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            &[*target_id],
+        )?;
 
         // Verify index size decreased (soft delete should reduce active count)
         let new_size = graph
@@ -3459,9 +3507,10 @@ pub mod tests {
         assert!(search_results.iter().any(|(id, _)| *id == *new_id));
 
         // 3. Delete the inserted vector
-        graph.delete_from_vector_index(VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID), &[
-            *new_id,
-        ])?;
+        graph.delete_from_vector_index(
+            VectorIndexKey::new(PERSON, EMBEDDING_PROPERTY_ID),
+            &[*new_id],
+        )?;
 
         // 4. Search again - should not find deleted vector
         assert!(verify_vector_not_in_search_results(

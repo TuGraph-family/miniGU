@@ -150,9 +150,15 @@ mod tests {
     }
 
     fn create_edge_schema() -> EdgeSchema {
-        EdgeSchema::new(LabelId::new(1).unwrap(), LabelId::new(2).unwrap(), vec![
-            DataField::new("from".to_string(), LogicalType::Int32, false),
-        ])
+        EdgeSchema::new(
+            LabelId::new(1).unwrap(),
+            LabelId::new(2).unwrap(),
+            vec![DataField::new(
+                "from".to_string(),
+                LogicalType::Int32,
+                false,
+            )],
+        )
     }
 
     #[test]

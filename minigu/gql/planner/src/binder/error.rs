@@ -50,6 +50,9 @@ pub enum BindError {
     #[error("variable not found: {0}")]
     VariableNotFound(SmolStr),
 
+    #[error("label not found: {0}")]
+    LabelNotFound(SmolStr),
+
     #[error("invalid integer: {0}")]
     InvalidInteger(SmolStr),
 
@@ -99,9 +102,6 @@ pub enum BindError {
 
     #[error("invalid float literal: {0}")]
     InvalidFloatLiteral(String),
-
-    #[error("label {label} not found in current graph")]
-    LabelNotFound { label: SmolStr },
 
     #[error("property {property} on label {label} not found")]
     PropertyNotFound { label: SmolStr, property: SmolStr },

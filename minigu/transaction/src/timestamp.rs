@@ -30,7 +30,7 @@ impl Timestamp {
 
     /// Returns the maximum possible commit timestamp.
     pub fn max_commit_ts() -> Self {
-        Self(u64::MAX & !Self::TXN_ID_START)
+        Self(!Self::TXN_ID_START)
     }
 
     /// Returns true if the timestamp is a transaction ID.

@@ -87,6 +87,11 @@ impl GraphContainer {
     }
 
     #[inline]
+    pub fn graph_type(&self) -> Arc<MemoryGraphTypeCatalog> {
+        self.graph_type.clone()
+    }
+
+    #[inline]
     pub fn index_catalog(&self) -> &Arc<dyn GraphIndexCatalog> {
         &self.index_catalog
     }
@@ -151,20 +156,30 @@ fn vertex_has_all_labels(
     _mem: &Arc<MemoryGraph>,
     _txn: &Arc<minigu_storage::tp::transaction::MemTransaction>,
     _vid: u64,
-    _label_ids: &[LabelId],
+    _label_ids: &Option<Vec<Vec<LabelId>>>,
 ) -> StorageResult<bool> {
-    for label_id in _label_ids {
-        if _mem.get_vertex(_txn, _vid)?.label_id != *label_id {
-            return Ok(false);
+    let Some(label_specs) = _label_ids else {
+        return Ok(true);
+    };
+
+    let vertex = _mem.get_vertex(_txn, _vid)?;
+    let vertex_label = vertex.label_id;
+
+    for and_labels in label_specs {
+        if and_labels.is_empty() {
+            return Ok(true);
+        }
+        if and_labels.contains(&vertex_label) {
+            return Ok(true);
         }
     }
-    Ok(true)
+    Ok(false)
 }
 
 impl GraphContainer {
     pub fn vertex_source(
         &self,
-        label_ids: &[LabelId],
+        label_ids: &Option<Vec<Vec<LabelId>>>,
         batch_size: usize,
     ) -> StorageResult<Box<dyn Iterator<Item = Arc<VertexIdArray>> + Send + 'static>> {
         let mem = match self.graph_storage() {
@@ -179,11 +194,15 @@ impl GraphContainer {
             for v in it {
                 let v = v?;
                 let vid = v.vid();
-                if label_ids.is_empty() || vertex_has_all_labels(&mem, &txn, vid, label_ids)? {
+                if vertex_has_all_labels(&mem, &txn, vid, label_ids)? {
                     ids.push(vid);
                 }
             }
         }
+
+        // TODO(Colin): Sort IDs to ensure deterministic output in tests.
+        // Remove once ORDER BY is supported.
+        ids.sort_unstable();
 
         let mut pos = 0usize;
         let iter = std::iter::from_fn(move || {

@@ -1,8 +1,8 @@
 ---
-source: minigu-test/e2e_test.rs
+source: minigu-test/src/insta_test.rs
 ---
 Error: Plan(
     Bind(
-        Unexpected,
+        CurrentGraphNotSpecified,
     ),
 )
