@@ -201,6 +201,8 @@ add_e2e_tests!(
     "utility",
     [
         "explain_call",
+        "explain_create_vector_index",
+        "explain_drop_vector_index",
         "explain_filter",
         "explain_limit",
         "explain_logical_match",
@@ -225,6 +227,8 @@ add_parser_tests!(
     "utility",
     [
         "explain_call",
+        "explain_create_vector_index",
+        "explain_drop_vector_index",
         "explain_filter",
         "explain_limit",
         "explain_offset",

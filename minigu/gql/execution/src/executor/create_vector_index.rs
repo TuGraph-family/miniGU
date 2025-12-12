@@ -6,7 +6,7 @@ use minigu_common::data_chunk::DataChunk;
 use minigu_context::error::IndexCatalogError;
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::session::SessionContext;
-use minigu_planner::plan::create_index::CreateIndex;
+use minigu_planner::plan::create_vector_index::CreateVectorIndex;
 use minigu_storage::tp::{MemTransaction, MemoryGraph};
 use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
 
@@ -14,13 +14,13 @@ use super::{BoxedExecutor, Executor};
 use crate::error::{ExecutionError, ExecutionResult};
 
 #[derive(Debug)]
-pub struct CreateIndexBuilder {
+pub struct CreateVectorIndexBuilder {
     session_context: SessionContext,
-    plan: Arc<CreateIndex>,
+    plan: Arc<CreateVectorIndex>,
 }
 
-impl CreateIndexBuilder {
-    pub fn new(session_context: SessionContext, plan: Arc<CreateIndex>) -> Self {
+impl CreateVectorIndexBuilder {
+    pub fn new(session_context: SessionContext, plan: Arc<CreateVectorIndex>) -> Self {
         Self {
             session_context,
             plan,
@@ -28,7 +28,7 @@ impl CreateIndexBuilder {
     }
 
     pub fn into_executor(self) -> BoxedExecutor {
-        Box::new(CreateIndexExecutor {
+        Box::new(CreateVectorIndexExecutor {
             session_context: self.session_context,
             plan: self.plan,
             finished: false,
@@ -37,13 +37,13 @@ impl CreateIndexBuilder {
 }
 
 #[derive(Debug)]
-pub struct CreateIndexExecutor {
+pub struct CreateVectorIndexExecutor {
     session_context: SessionContext,
-    plan: Arc<CreateIndex>,
+    plan: Arc<CreateVectorIndex>,
     finished: bool,
 }
 
-impl Executor for CreateIndexExecutor {
+impl Executor for CreateVectorIndexExecutor {
     fn next_chunk(&mut self) -> Option<ExecutionResult<DataChunk>> {
         if self.finished {
             return None;
@@ -56,7 +56,7 @@ impl Executor for CreateIndexExecutor {
     }
 }
 
-impl CreateIndexExecutor {
+impl CreateVectorIndexExecutor {
     fn execute(&self) -> ExecutionResult<()> {
         // IF NOT EXISTS and already present => no-op.
         if self.plan.no_op {
@@ -75,7 +75,7 @@ impl CreateIndexExecutor {
             .ok_or_else(|| {
                 ExecutionError::Custom(Box::new(io::Error::new(
                     io::ErrorKind::InvalidData,
-                    "only in-memory graphs support create index",
+                    "only in-memory graphs support create vector index",
                 )))
             })?;
         let graph = match container.graph_storage() {

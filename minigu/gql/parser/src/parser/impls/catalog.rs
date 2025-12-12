@@ -42,11 +42,11 @@ pub fn primitive_catalog_modifying_statement(
         (TokenKind::Drop, TokenKind::Schema) => {
             drop_schema_statement.map_inner(CatalogModifyingStatement::DropSchema)
         },
-        (TokenKind::Drop, TokenKind::Index) => {
-            drop_index_statement.map_inner(CatalogModifyingStatement::DropIndex)
+        (TokenKind::Drop, TokenKind::Vector) => {
+            drop_vector_index_statement.map_inner(CatalogModifyingStatement::DropVectorIndex)
         },
-        (TokenKind::Create, TokenKind::Index) => {
-            create_index_statement.map_inner(CatalogModifyingStatement::CreateIndex)
+        (TokenKind::Create, TokenKind::Vector) => {
+            create_vector_index_statement.map_inner(CatalogModifyingStatement::CreateVectorIndex)
         },
         (TokenKind::Create, TokenKind::Property | TokenKind::Graph | TokenKind::Or) => {
             alt((
@@ -183,11 +183,11 @@ pub fn create_graph_statement(
     .parse_next(input)
 }
 
-pub fn create_index_statement(
+pub fn create_vector_index_statement(
     input: &mut TokenStream,
-) -> ModalResult<Spanned<CreateIndexStatement>> {
-    seq! {CreateIndexStatement {
-        _: (TokenKind::Create, TokenKind::Index),
+) -> ModalResult<Spanned<CreateVectorIndexStatement>> {
+    seq! {CreateVectorIndexStatement {
+        _: (TokenKind::Create, TokenKind::Vector, TokenKind::Index),
         name: identifier,
         if_not_exists: opt(if_not_exists).map(|o| o.is_some()),
         _: (TokenKind::For, TokenKind::LeftParen),
@@ -204,9 +204,11 @@ pub fn create_index_statement(
     .parse_next(input)
 }
 
-pub fn drop_index_statement(input: &mut TokenStream) -> ModalResult<Spanned<DropIndexStatement>> {
-    seq! {DropIndexStatement {
-        _: (TokenKind::Drop, TokenKind::Index),
+pub fn drop_vector_index_statement(
+    input: &mut TokenStream,
+) -> ModalResult<Spanned<DropVectorIndexStatement>> {
+    seq! {DropVectorIndexStatement {
+        _: (TokenKind::Drop, TokenKind::Vector, TokenKind::Index),
         name: identifier,
         if_exists: opt(if_exists).map(|o| o.is_some()),
     }}
@@ -386,11 +388,11 @@ mod tests {
     }
 
     #[test]
-    fn test_create_index_statement() {
+    fn test_create_vector_index_statement() {
         let parsed = parse!(
             simple_catalog_modifying_statement,
             r#"
-            CREATE INDEX idx_embeddings IF NOT EXISTS
+            CREATE VECTOR INDEX idx_embeddings IF NOT EXISTS
             FOR (n:Movie)
             ON (n.embedding)
             "#
@@ -399,11 +401,11 @@ mod tests {
     }
 
     #[test]
-    fn test_drop_index_statement() {
+    fn test_drop_vector_index_statement() {
         let parsed = parse!(
             simple_catalog_modifying_statement,
             r#"
-            DROP INDEX idx_embeddings
+            DROP VECTOR INDEX idx_embeddings
             "#
         );
         assert_yaml_snapshot!(parsed);
@@ -411,10 +413,10 @@ mod tests {
         let parsed_if_exists = parse!(
             simple_catalog_modifying_statement,
             r#"
-            DROP INDEX idx_embeddings IF EXISTS
+            DROP VECTOR INDEX idx_embeddings IF EXISTS
             "#
         );
-        assert_yaml_snapshot!("drop_index_if_exists", parsed_if_exists);
+        assert_yaml_snapshot!("drop_vector_index_if_exists", parsed_if_exists);
     }
 
     #[test]

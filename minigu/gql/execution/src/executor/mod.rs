@@ -1,6 +1,6 @@
 pub mod aggregate;
-pub mod create_index;
-pub mod drop_index;
+pub mod create_vector_index;
+pub mod drop_vector_index;
 pub mod expand;
 pub mod factorized_filter;
 pub mod filter;

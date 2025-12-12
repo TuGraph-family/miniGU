@@ -106,8 +106,8 @@ pub enum BindError {
     #[error("property {property} on label {label} not found")]
     PropertyNotFound { label: SmolStr, property: SmolStr },
 
-    #[error("property binding {property_binding} must match index binding {binding}")]
-    CreateIndexBindingMismatch {
+    #[error("property binding {property_binding} must match vector index binding {binding}")]
+    CreateVectorIndexBindingMismatch {
         binding: SmolStr,
         property_binding: SmolStr,
     },

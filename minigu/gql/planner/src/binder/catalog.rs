@@ -1,7 +1,7 @@
 use gql_parser::ast::{
     CatalogModifyingStatement, CreateGraphStatement, CreateGraphTypeStatement,
-    CreateIndexStatement, CreateSchemaStatement, DropGraphStatement, DropGraphTypeStatement,
-    DropIndexStatement, DropSchemaStatement,
+    CreateSchemaStatement, CreateVectorIndexStatement, DropGraphStatement, DropGraphTypeStatement,
+    DropSchemaStatement, DropVectorIndexStatement,
 };
 use minigu_catalog::label_set::LabelSet;
 use minigu_common::data_type::LogicalType;
@@ -12,8 +12,8 @@ use super::Binder;
 use super::error::{BindError, BindResult};
 use crate::bound::{
     BoundCatalogModifyingStatement, BoundCreateGraphStatement, BoundCreateGraphTypeStatement,
-    BoundCreateIndexStatement, BoundCreateSchemaStatement, BoundDropGraphStatement,
-    BoundDropGraphTypeStatement, BoundDropIndexStatement, BoundDropSchemaStatement,
+    BoundCreateSchemaStatement, BoundCreateVectorIndexStatement, BoundDropGraphStatement,
+    BoundDropGraphTypeStatement, BoundDropSchemaStatement, BoundDropVectorIndexStatement,
 };
 
 impl Binder<'_> {
@@ -44,12 +44,12 @@ impl Binder<'_> {
             CatalogModifyingStatement::DropGraph(statement) => self
                 .bind_drop_graph_statement(statement)
                 .map(BoundCatalogModifyingStatement::DropGraph),
-            CatalogModifyingStatement::CreateIndex(statement) => self
-                .bind_create_index_statement(statement)
-                .map(BoundCatalogModifyingStatement::CreateIndex),
-            CatalogModifyingStatement::DropIndex(statement) => self
-                .bind_drop_index_statement(statement)
-                .map(BoundCatalogModifyingStatement::DropIndex),
+            CatalogModifyingStatement::CreateVectorIndex(statement) => self
+                .bind_create_vector_index_statement(statement)
+                .map(BoundCatalogModifyingStatement::CreateVectorIndex),
+            CatalogModifyingStatement::DropVectorIndex(statement) => self
+                .bind_drop_vector_index_statement(statement)
+                .map(BoundCatalogModifyingStatement::DropVectorIndex),
             CatalogModifyingStatement::CreateGraphType(statement) => self
                 .bind_create_graph_type_statement(statement)
                 .map(BoundCatalogModifyingStatement::CreateGraphType),
@@ -73,12 +73,12 @@ impl Binder<'_> {
         not_implemented("drop schema statement", None)
     }
 
-    pub fn bind_create_index_statement(
+    pub fn bind_create_vector_index_statement(
         &mut self,
-        statement: &CreateIndexStatement,
-    ) -> BindResult<BoundCreateIndexStatement> {
+        statement: &CreateVectorIndexStatement,
+    ) -> BindResult<BoundCreateVectorIndexStatement> {
         if statement.binding.value() != statement.property_binding.value() {
-            return Err(BindError::CreateIndexBindingMismatch {
+            return Err(BindError::CreateVectorIndexBindingMismatch {
                 binding: statement.binding.value().clone(),
                 property_binding: statement.property_binding.value().clone(),
             });
@@ -134,7 +134,7 @@ impl Binder<'_> {
             });
         }
 
-        Ok(BoundCreateIndexStatement {
+        Ok(BoundCreateVectorIndexStatement {
             name: statement.name.value().clone(),
             if_not_exists: statement.if_not_exists,
             index_key,
@@ -147,10 +147,10 @@ impl Binder<'_> {
         })
     }
 
-    pub fn bind_drop_index_statement(
+    pub fn bind_drop_vector_index_statement(
         &mut self,
-        statement: &DropIndexStatement,
-    ) -> BindResult<BoundDropIndexStatement> {
+        statement: &DropVectorIndexStatement,
+    ) -> BindResult<BoundDropVectorIndexStatement> {
         let graph = self
             .current_graph
             .clone()
@@ -164,14 +164,14 @@ impl Binder<'_> {
             .iter()
             .find(|m| m.name.as_str() == statement.name.value());
         match found {
-            Some(meta) => Ok(BoundDropIndexStatement {
+            Some(meta) => Ok(BoundDropVectorIndexStatement {
                 name: statement.name.value().clone(),
                 if_exists: statement.if_exists,
                 index_key: Some(meta.key),
                 metadata: Some(meta.clone()),
                 no_op: false,
             }),
-            None if statement.if_exists => Ok(BoundDropIndexStatement {
+            None if statement.if_exists => Ok(BoundDropVectorIndexStatement {
                 name: statement.name.value().clone(),
                 if_exists: true,
                 index_key: None,

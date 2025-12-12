@@ -14,8 +14,8 @@ pub enum CatalogModifyingStatement {
     Call(CallProcedureStatement),
     CreateSchema(CreateSchemaStatement),
     DropSchema(DropSchemaStatement),
-    CreateIndex(CreateIndexStatement),
-    DropIndex(DropIndexStatement),
+    CreateVectorIndex(CreateVectorIndexStatement),
+    DropVectorIndex(DropVectorIndexStatement),
     CreateGraph(CreateGraphStatement),
     DropGraph(DropGraphStatement),
     CreateGraphType(CreateGraphTypeStatement),
@@ -70,7 +70,7 @@ pub struct DropGraphTypeStatement {
 }
 
 #[apply(base)]
-pub struct CreateIndexStatement {
+pub struct CreateVectorIndexStatement {
     pub name: Spanned<Ident>,
     pub if_not_exists: bool,
     pub binding: Spanned<Ident>,
@@ -80,7 +80,7 @@ pub struct CreateIndexStatement {
 }
 
 #[apply(base)]
-pub struct DropIndexStatement {
+pub struct DropVectorIndexStatement {
     pub name: Spanned<Ident>,
     pub if_exists: bool,
 }

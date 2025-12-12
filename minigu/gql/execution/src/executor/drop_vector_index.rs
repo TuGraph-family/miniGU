@@ -6,20 +6,20 @@ use minigu_common::data_chunk::DataChunk;
 use minigu_context::error::IndexCatalogError;
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::session::SessionContext;
-use minigu_planner::plan::drop_index::DropIndex;
+use minigu_planner::plan::drop_vector_index::DropVectorIndex;
 use minigu_storage::tp::MemoryGraph;
 
 use super::{BoxedExecutor, Executor};
 use crate::error::{ExecutionError, ExecutionResult};
 
 #[derive(Debug)]
-pub struct DropIndexBuilder {
+pub struct DropVectorIndexBuilder {
     session_context: SessionContext,
-    plan: Arc<DropIndex>,
+    plan: Arc<DropVectorIndex>,
 }
 
-impl DropIndexBuilder {
-    pub fn new(session_context: SessionContext, plan: Arc<DropIndex>) -> Self {
+impl DropVectorIndexBuilder {
+    pub fn new(session_context: SessionContext, plan: Arc<DropVectorIndex>) -> Self {
         Self {
             session_context,
             plan,
@@ -27,7 +27,7 @@ impl DropIndexBuilder {
     }
 
     pub fn into_executor(self) -> BoxedExecutor {
-        Box::new(DropIndexExecutor {
+        Box::new(DropVectorIndexExecutor {
             session_context: self.session_context,
             plan: self.plan,
             finished: false,
@@ -36,13 +36,13 @@ impl DropIndexBuilder {
 }
 
 #[derive(Debug)]
-pub struct DropIndexExecutor {
+pub struct DropVectorIndexExecutor {
     session_context: SessionContext,
-    plan: Arc<DropIndex>,
+    plan: Arc<DropVectorIndex>,
     finished: bool,
 }
 
-impl Executor for DropIndexExecutor {
+impl Executor for DropVectorIndexExecutor {
     fn next_chunk(&mut self) -> Option<ExecutionResult<DataChunk>> {
         if self.finished {
             return None;
@@ -58,7 +58,7 @@ impl Executor for DropIndexExecutor {
     }
 }
 
-impl DropIndexExecutor {
+impl DropVectorIndexExecutor {
     fn execute(&self) -> ExecutionResult<()> {
         let graph_ref = self.session_context.current_graph.clone().ok_or_else(|| {
             ExecutionError::Custom(Box::new(io::Error::new(
@@ -72,7 +72,7 @@ impl DropIndexExecutor {
             .ok_or_else(|| {
                 ExecutionError::Custom(Box::new(io::Error::new(
                     io::ErrorKind::InvalidData,
-                    "only in-memory graphs support drop index",
+                    "only in-memory graphs support drop vector index",
                 )))
             })?;
         let graph = match container.graph_storage() {

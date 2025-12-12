@@ -12,8 +12,8 @@ pub enum BoundCatalogModifyingStatement {
     CreateSchema(BoundCreateSchemaStatement),
     DropSchema(BoundDropSchemaStatement),
     CreateGraph(BoundCreateGraphStatement),
-    CreateIndex(BoundCreateIndexStatement),
-    DropIndex(BoundDropIndexStatement),
+    CreateVectorIndex(BoundCreateVectorIndexStatement),
+    DropVectorIndex(BoundDropVectorIndexStatement),
     DropGraph(BoundDropGraphStatement),
     CreateGraphType(BoundCreateGraphTypeStatement),
     DropGraphType(BoundDropGraphTypeStatement),
@@ -70,7 +70,7 @@ pub struct BoundDropGraphTypeStatement {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct BoundCreateIndexStatement {
+pub struct BoundCreateVectorIndexStatement {
     pub name: SmolStr,
     pub if_not_exists: bool,
     pub index_key: VectorIndexKey,
@@ -84,7 +84,7 @@ pub struct BoundCreateIndexStatement {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct BoundDropIndexStatement {
+pub struct BoundDropVectorIndexStatement {
     pub name: SmolStr,
     pub if_exists: bool,
     pub index_key: Option<VectorIndexKey>,

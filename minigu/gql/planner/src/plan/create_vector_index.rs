@@ -5,7 +5,7 @@ use smol_str::SmolStr;
 use crate::plan::{PlanBase, PlanData};
 
 #[derive(Debug, Clone, Serialize)]
-pub struct CreateIndex {
+pub struct CreateVectorIndex {
     pub base: PlanBase,
     pub name: SmolStr,
     pub if_not_exists: bool,
@@ -17,7 +17,7 @@ pub struct CreateIndex {
     pub no_op: bool,
 }
 
-impl CreateIndex {
+impl CreateVectorIndex {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         name: SmolStr,
@@ -44,7 +44,7 @@ impl CreateIndex {
     }
 }
 
-impl PlanData for CreateIndex {
+impl PlanData for CreateVectorIndex {
     fn base(&self) -> &PlanBase {
         &self.base
     }
@@ -52,7 +52,7 @@ impl PlanData for CreateIndex {
     fn explain(&self, indent: usize) -> Option<String> {
         let indent_str = " ".repeat(indent * 2);
         let mut output = format!(
-            "{}CreateIndex: name={}, binding=({}:{}) metric={:?} dim={} if_not_exists={} no_op={}\n",
+            "{}CreateVectorIndex: name={}, binding=({}:{}) metric={:?} dim={} if_not_exists={} no_op={}\n",
             indent_str,
             self.name,
             self.label,

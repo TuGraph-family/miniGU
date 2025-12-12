@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
 use crate::bound::{
-    BoundCatalogModifyingStatement, BoundCreateIndexStatement, BoundDropIndexStatement,
+    BoundCatalogModifyingStatement, BoundCreateVectorIndexStatement, BoundDropVectorIndexStatement,
 };
 use crate::error::PlanResult;
 use crate::logical_planner::LogicalPlanner;
 use crate::plan::PlanNode;
-use crate::plan::create_index::CreateIndex;
-use crate::plan::drop_index::DropIndex;
+use crate::plan::create_vector_index::CreateVectorIndex;
+use crate::plan::drop_vector_index::DropVectorIndex;
 
 impl LogicalPlanner {
     pub fn plan_catalog_modifying_statement(
@@ -16,8 +16,8 @@ impl LogicalPlanner {
     ) -> PlanResult<PlanNode> {
         match statement {
             BoundCatalogModifyingStatement::Call(call) => self.plan_call_procedure_statement(call),
-            BoundCatalogModifyingStatement::CreateIndex(statement) => {
-                let BoundCreateIndexStatement {
+            BoundCatalogModifyingStatement::CreateVectorIndex(statement) => {
+                let BoundCreateVectorIndexStatement {
                     name,
                     if_not_exists,
                     index_key,
@@ -27,7 +27,7 @@ impl LogicalPlanner {
                     property,
                     no_op,
                 } = statement;
-                let plan = CreateIndex::new(
+                let plan = CreateVectorIndex::new(
                     name,
                     if_not_exists,
                     index_key,
@@ -37,18 +37,18 @@ impl LogicalPlanner {
                     property,
                     no_op,
                 );
-                Ok(PlanNode::LogicalCreateIndex(Arc::new(plan)))
+                Ok(PlanNode::LogicalCreateVectorIndex(Arc::new(plan)))
             }
-            BoundCatalogModifyingStatement::DropIndex(statement) => {
-                let BoundDropIndexStatement {
+            BoundCatalogModifyingStatement::DropVectorIndex(statement) => {
+                let BoundDropVectorIndexStatement {
                     name,
                     if_exists,
                     index_key,
                     metadata,
                     no_op,
                 } = statement;
-                let plan = DropIndex::new(name, if_exists, index_key, metadata, no_op);
-                Ok(PlanNode::LogicalDropIndex(Arc::new(plan)))
+                let plan = DropVectorIndex::new(name, if_exists, index_key, metadata, no_op);
+                Ok(PlanNode::LogicalDropVectorIndex(Arc::new(plan)))
             }
             _ => todo!(),
         }

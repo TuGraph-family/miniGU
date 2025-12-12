@@ -6,7 +6,7 @@ use smol_str::SmolStr;
 use crate::plan::{PlanBase, PlanData};
 
 #[derive(Debug, Clone, Serialize)]
-pub struct DropIndex {
+pub struct DropVectorIndex {
     pub base: PlanBase,
     pub name: SmolStr,
     pub if_exists: bool,
@@ -15,7 +15,7 @@ pub struct DropIndex {
     pub no_op: bool,
 }
 
-impl DropIndex {
+impl DropVectorIndex {
     pub fn new(
         name: SmolStr,
         if_exists: bool,
@@ -35,7 +35,7 @@ impl DropIndex {
     }
 }
 
-impl PlanData for DropIndex {
+impl PlanData for DropVectorIndex {
     fn base(&self) -> &PlanBase {
         &self.base
     }
@@ -43,7 +43,7 @@ impl PlanData for DropIndex {
     fn explain(&self, indent: usize) -> Option<String> {
         let indent_str = " ".repeat(indent * 2);
         let mut output = format!(
-            "{}DropIndex: name={} if_exists={} no_op={} key_present={}\n",
+            "{}DropVectorIndex: name={} if_exists={} no_op={} key_present={}\n",
             indent_str,
             self.name,
             self.if_exists,

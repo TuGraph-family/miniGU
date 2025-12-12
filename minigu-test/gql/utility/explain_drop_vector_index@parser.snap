@@ -1,0 +1,37 @@
+---
+source: minigu-test/src/insta_test.rs
+assertion_line: 226
+---
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Utility:
+                      Explain:
+                        statement:
+                          - Catalog:
+                              - - DropVectorIndex:
+                                    name:
+                                      - test_index
+                                      - start: 26
+                                        end: 36
+                                    if_exists: false
+                                - start: 8
+                                  end: 36
+                          - start: 8
+                            end: 36
+                  - start: 0
+                    end: 36
+                next_statements: []
+              - start: 0
+                end: 36
+            end: ~
+        - start: 0
+          end: 36
+      session_close: false
+    - start: 0
+      end: 36
