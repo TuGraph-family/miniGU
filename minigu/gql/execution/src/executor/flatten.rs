@@ -80,8 +80,8 @@ where
                     total_flat_value_count += flat_value_count.unwrap();
                 }
                 let mut builder = UInt64Builder::with_capacity(total_flat_value_count);
-                for i in 0..chunk.len() {
-                    let flat_value_count = flat_column_segments[0][i].len();
+                for (i, segment) in flat_column_segments[0].iter().enumerate().take(chunk.len()) {
+                    let flat_value_count = segment.len();
                     builder.append_value_n(i as _, flat_value_count);
                 }
                 let indices = builder.finish();

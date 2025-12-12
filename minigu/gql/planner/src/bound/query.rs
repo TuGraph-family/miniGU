@@ -116,7 +116,7 @@ pub enum BoundSimpleQueryStatement {
 
 #[derive(Debug, Clone, Serialize)]
 pub enum BoundMatchStatement {
-    Simple(BoundGraphPatternBindingTable),
+    Simple(Box<BoundGraphPatternBindingTable>),
     Optional,
 }
 

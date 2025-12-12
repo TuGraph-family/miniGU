@@ -60,9 +60,12 @@ fn test_serializable_prevents_dirty_read_edge() {
         .begin_transaction(IsolationLevel::Serializable)
         .unwrap();
     graph
-        .set_edge_property(&txn2, 1, vec![0], vec![ScalarValue::String(Some(
-            "2024-02-01".to_string(),
-        ))])
+        .set_edge_property(
+            &txn2,
+            1,
+            vec![0],
+            vec![ScalarValue::String(Some("2024-02-01".to_string()))],
+        )
         .unwrap();
 
     let edge_v2 = graph.get_edge(&txn1, 1).unwrap();
@@ -159,9 +162,12 @@ fn test_serializable_prevents_non_repeatable_read_edge() {
         .begin_transaction(IsolationLevel::Serializable)
         .unwrap();
     graph
-        .set_edge_property(&txn2, 1, vec![0], vec![ScalarValue::String(Some(
-            "2024-02-01".to_string(),
-        ))])
+        .set_edge_property(
+            &txn2,
+            1,
+            vec![0],
+            vec![ScalarValue::String(Some("2024-02-01".to_string()))],
+        )
         .unwrap();
     txn2.commit().unwrap();
 
@@ -314,17 +320,23 @@ fn test_serializable_write_write_conflict_edge() {
 
     // Transaction 1 modifies the edge
     graph
-        .set_edge_property(&txn1, 1, vec![0], vec![ScalarValue::String(Some(
-            "2024-02-01".to_string(),
-        ))])
+        .set_edge_property(
+            &txn1,
+            1,
+            vec![0],
+            vec![ScalarValue::String(Some("2024-02-01".to_string()))],
+        )
         .unwrap();
 
     // Transaction 2 tries to modify the same edge, should fail
     assert!(
         graph
-            .set_edge_property(&txn2, 1, vec![0], vec![ScalarValue::String(Some(
-                "2024-03-01".to_string(),
-            ))])
+            .set_edge_property(
+                &txn2,
+                1,
+                vec![0],
+                vec![ScalarValue::String(Some("2024-03-01".to_string(),))]
+            )
             .is_err()
     );
 
@@ -374,9 +386,12 @@ fn test_serializable_delete_edge_conflict() {
 
     // Transaction 1 modifies the edge
     graph
-        .set_edge_property(&txn1, 1, vec![0], vec![ScalarValue::String(Some(
-            "2024-02-01".to_string(),
-        ))])
+        .set_edge_property(
+            &txn1,
+            1,
+            vec![0],
+            vec![ScalarValue::String(Some("2024-02-01".to_string()))],
+        )
         .unwrap();
 
     // Transaction 2 tries to delete the same edge, should fail
@@ -746,9 +761,12 @@ fn test_read_only_transaction_consistency_under_concurrent_writes() {
                 .begin_transaction(IsolationLevel::Serializable)
                 .unwrap();
             if graph_clone1
-                .set_vertex_property(&write_txn, 1, vec![1], vec![ScalarValue::Int32(Some(
-                    26 + i,
-                ))])
+                .set_vertex_property(
+                    &write_txn,
+                    1,
+                    vec![1],
+                    vec![ScalarValue::Int32(Some(26 + i))],
+                )
                 .is_ok()
             {
                 let _ = write_txn.commit();
@@ -766,9 +784,12 @@ fn test_read_only_transaction_consistency_under_concurrent_writes() {
                 .begin_transaction(IsolationLevel::Serializable)
                 .unwrap();
             if graph_clone2
-                .set_vertex_property(&write_txn, 2, vec![1], vec![ScalarValue::Int32(Some(
-                    31 + i,
-                ))])
+                .set_vertex_property(
+                    &write_txn,
+                    2,
+                    vec![1],
+                    vec![ScalarValue::Int32(Some(31 + i))],
+                )
                 .is_ok()
             {
                 let _ = write_txn.commit();
@@ -788,9 +809,12 @@ fn test_read_only_transaction_consistency_under_concurrent_writes() {
 
             // Update edge property
             if graph_clone3
-                .set_edge_property(&write_txn, 1, vec![0], vec![ScalarValue::String(Some(
-                    format!("2024-0{}-01", i + 2),
-                ))])
+                .set_edge_property(
+                    &write_txn,
+                    1,
+                    vec![0],
+                    vec![ScalarValue::String(Some(format!("2024-0{}-01", i + 2)))],
+                )
                 .is_ok()
             {
                 // Create new vertex
@@ -1154,9 +1178,12 @@ fn test_serializable_multiple_property_updates() {
         .set_vertex_property(&txn, 1, vec![1], vec![ScalarValue::Int32(Some(26))])
         .unwrap();
     graph
-        .set_vertex_property(&txn, 1, vec![0], vec![ScalarValue::String(Some(
-            "Alicia".to_string(),
-        ))])
+        .set_vertex_property(
+            &txn,
+            1,
+            vec![0],
+            vec![ScalarValue::String(Some("Alicia".to_string()))],
+        )
         .unwrap();
 
     let alice = graph.get_vertex(&txn, 1).unwrap();
@@ -1180,10 +1207,15 @@ fn test_serializable_batch_property_updates() {
 
     // Update multiple properties at once
     graph
-        .set_vertex_property(&txn, 1, vec![0, 1], vec![
-            ScalarValue::String(Some("Alicia".to_string())),
-            ScalarValue::Int32(Some(26)),
-        ])
+        .set_vertex_property(
+            &txn,
+            1,
+            vec![0, 1],
+            vec![
+                ScalarValue::String(Some("Alicia".to_string())),
+                ScalarValue::Int32(Some(26)),
+            ],
+        )
         .unwrap();
 
     let alice = graph.get_vertex(&txn, 1).unwrap();

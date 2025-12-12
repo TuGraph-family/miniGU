@@ -189,46 +189,48 @@ macro_rules! add_e2e_tests {
 add_e2e_tests!("basic", ["multi_statement_test"]);
 add_e2e_tests!("finbench", ["tsr1", "tsr2", "tsr3", "tsr4", "tsr5", "tsr6"]);
 add_e2e_tests!("snb", ["is1", "is2", "is3", "is4", "is5", "is6", "is7"]);
-add_e2e_tests!("ddl", [
-    "create_graph",
-    "create_schema",
-    "ddl_drop",
-    "ddl_truncate"
-]);
+add_e2e_tests!(
+    "ddl",
+    ["create_graph", "create_schema", "ddl_drop", "ddl_truncate"]
+);
 add_e2e_tests!("dql", ["dql"]);
 add_e2e_tests!("dcl", ["session_set"]);
 add_e2e_tests!("dml", ["insert", "match_and_insert", "match", "dml_dql"]);
 add_e2e_tests!("misc", ["text2graph", "vector_index"]);
-add_e2e_tests!("utility", [
-    "explain_call",
-    "explain_filter",
-    "explain_limit",
-    "explain_logical_match",
-    "explain_one_row",
-    "explain_sort",
-    "explain_vector_index_scan"
-]);
+add_e2e_tests!(
+    "utility",
+    [
+        "explain_call",
+        "explain_filter",
+        "explain_limit",
+        "explain_logical_match",
+        "explain_one_row",
+        "explain_sort",
+        "explain_vector_index_scan"
+    ]
+);
 
 add_parser_tests!("basic", ["multi_statement_test"]);
 add_parser_tests!("finbench", ["tsr1", "tsr2", "tsr3", "tsr4", "tsr5", "tsr6"]);
 add_parser_tests!("snb", ["is1", "is2", "is3", "is4", "is5", "is6", "is7"]);
-add_parser_tests!("ddl", [
-    "create_graph",
-    "create_schema",
-    "ddl_drop",
-    "ddl_truncate"
-]);
+add_parser_tests!(
+    "ddl",
+    ["create_graph", "create_schema", "ddl_drop", "ddl_truncate"]
+);
 add_parser_tests!("dql", ["dql"]);
 add_parser_tests!("dcl", ["session_set"]);
 add_parser_tests!("dml", ["insert", "match_and_insert", "match", "dml_dql"]);
 add_parser_tests!("misc", ["text2graph", "vector_index"]);
-add_parser_tests!("utility", [
-    "explain_call",
-    "explain_filter",
-    "explain_limit",
-    "explain_offset",
-    "explain_logical_match",
-    "explain_one_row",
-    "explain_sort",
-    "explain_vector_index_scan"
-]);
+add_parser_tests!(
+    "utility",
+    [
+        "explain_call",
+        "explain_filter",
+        "explain_limit",
+        "explain_offset",
+        "explain_logical_match",
+        "explain_one_row",
+        "explain_sort",
+        "explain_vector_index_scan"
+    ]
+);

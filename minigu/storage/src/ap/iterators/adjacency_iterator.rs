@@ -42,10 +42,10 @@ impl Iterator for AdjacencyIterator<'_> {
             // Move to next block
             if self.offset == BLOCK_CAPACITY {
                 self.offset = 0;
-                self.block_idx = if block.pre_block_index.is_none() {
-                    usize::MAX
+                self.block_idx = if let Some(idx) = block.pre_block_index {
+                    idx
                 } else {
-                    block.pre_block_index.unwrap()
+                    usize::MAX
                 };
                 continue;
             }
@@ -55,10 +55,10 @@ impl Iterator for AdjacencyIterator<'_> {
                 // Scan next block once scanned empty edge
                 if raw.label_id == NonZeroU32::new(1) && raw.dst_id == 1 {
                     self.offset = 0;
-                    self.block_idx = if block.pre_block_index.is_none() {
-                        usize::MAX
+                    self.block_idx = if let Some(idx) = block.pre_block_index {
+                        idx
                     } else {
-                        block.pre_block_index.unwrap()
+                        usize::MAX
                     };
                     continue;
                 }
@@ -93,10 +93,10 @@ impl Iterator for AdjacencyIterator<'_> {
                 self.offset += 1;
                 return Some(Ok(edge));
             }
-            self.block_idx = if block.pre_block_index.is_none() {
-                usize::MAX
+            self.block_idx = if let Some(idx) = block.pre_block_index {
+                idx
             } else {
-                block.pre_block_index.unwrap()
+                usize::MAX
             };
         }
         None

@@ -164,57 +164,57 @@ impl AggregateState {
                 count,
                 distinct_values,
             } => {
-                if let Some(val) = value {
-                    if !is_null_value(&val) {
-                        if let Some(distinct_set) = distinct_values {
-                            let key = format!("{:?}", val);
-                            distinct_set.insert(key, true);
-                        } else {
-                            *count += 1;
-                        }
+                if let Some(val) = value
+                    && !is_null_value(&val)
+                {
+                    if let Some(distinct_set) = distinct_values {
+                        let key = format!("{:?}", val);
+                        distinct_set.insert(key, true);
+                    } else {
+                        *count += 1;
                     }
                 }
             }
             AggregateState::Sum {
                 distinct_values, ..
             } => {
-                if let Some(val) = value {
-                    if !is_null_value(&val) {
-                        if let Some(distinct_set) = distinct_values {
-                            let key = format!("{:?}", val);
-                            distinct_set.insert(key, true);
-                        } else {
-                            self.update_sum_aggregate(&val)?;
-                        }
+                if let Some(val) = value
+                    && !is_null_value(&val)
+                {
+                    if let Some(distinct_set) = distinct_values {
+                        let key = format!("{:?}", val);
+                        distinct_set.insert(key, true);
+                    } else {
+                        self.update_sum_aggregate(&val)?;
                     }
                 }
             }
             AggregateState::Avg {
                 distinct_values, ..
             } => {
-                if let Some(val) = value {
-                    if !is_null_value(&val) {
-                        if let Some(distinct_set) = distinct_values {
-                            let key = format!("{:?}", val);
-                            distinct_set.insert(key, true);
-                        } else {
-                            self.update_sum_aggregate(&val)?;
-                        }
+                if let Some(val) = value
+                    && !is_null_value(&val)
+                {
+                    if let Some(distinct_set) = distinct_values {
+                        let key = format!("{:?}", val);
+                        distinct_set.insert(key, true);
+                    } else {
+                        self.update_sum_aggregate(&val)?;
                     }
                 }
             }
             AggregateState::Min { .. } => {
-                if let Some(val) = value {
-                    if !is_null_value(&val) {
-                        self.update_min_aggregate(&val)?;
-                    }
+                if let Some(val) = value
+                    && !is_null_value(&val)
+                {
+                    self.update_min_aggregate(&val)?;
                 }
             }
             AggregateState::Max { .. } => {
-                if let Some(val) = value {
-                    if !is_null_value(&val) {
-                        self.update_max_aggregate(&val)?;
-                    }
+                if let Some(val) = value
+                    && !is_null_value(&val)
+                {
+                    self.update_max_aggregate(&val)?;
                 }
             }
         }

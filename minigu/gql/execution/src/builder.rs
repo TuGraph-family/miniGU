@@ -112,69 +112,70 @@ impl ExecutorBuilder {
                 // Check if any expression is a Vertex type that needs properties
                 // If output type is Vertex, we need to scan properties
                 for expr in &project.exprs {
-                    if let LogicalType::Vertex(_) = &expr.logical_type {
-                        if let BoundExprKind::Variable(var_name) = &expr.kind {
-                            // Check child schema to see if this variable only has id (Int64)
-                            let child_field = child_schema
-                                .get_field_by_name(var_name)
+                    if let LogicalType::Vertex(_) = &expr.logical_type
+                        && let BoundExprKind::Variable(var_name) = &expr.kind
+                    {
+                        // Check child schema to see if this variable only has id (Int64)
+                        let child_field = child_schema
+                            .get_field_by_name(var_name)
+                            .expect("variable should be present in child schema");
+
+                        // If child schema only has id (Int64), need to add VertexPropertyScan
+                        if matches!(child_field.ty(), LogicalType::Int64) {
+                            let vid_index = child_schema
+                                .get_field_index_by_name(var_name)
                                 .expect("variable should be present in child schema");
 
-                            // If child schema only has id (Int64), need to add VertexPropertyScan
-                            if matches!(child_field.ty(), LogicalType::Int64) {
-                                let vid_index = child_schema
-                                    .get_field_index_by_name(var_name)
-                                    .expect("variable should be present in child schema");
+                            let container: Arc<GraphContainer> = self
+                                .session
+                                .current_graph
+                                .clone()
+                                .expect("current graph should be set")
+                                .object()
+                                .clone()
+                                .downcast_arc::<GraphContainer>()
+                                .expect("failed to downcast to GraphContainer");
 
-                                let container: Arc<GraphContainer> = self
-                                    .session
-                                    .current_graph
-                                    .clone()
-                                    .expect("current graph should be set")
-                                    .object()
-                                    .clone()
-                                    .downcast_arc::<GraphContainer>()
-                                    .expect("failed to downcast to GraphContainer");
-
-                                let mut property_names = Vec::new();
-                                let property_list = if let Some(label_specs) =
-                                    output_schema.get_var_label(var_name.as_str())
+                            let mut property_names = Vec::new();
+                            let property_list = if let Some(label_specs) =
+                                output_schema.get_var_label(var_name.as_str())
+                            {
+                                let graph_type = container.graph_type();
+                                let mut property_ids = Vec::new();
+                                if let Some(first_label_set) = label_specs.first()
+                                    && let Ok(Some(vertex_type)) = graph_type.get_vertex_type(
+                                        &LabelSet::from_iter(first_label_set.clone()),
+                                    )
                                 {
-                                    let graph_type = container.graph_type();
-                                    let mut property_ids = Vec::new();
-                                    if let Some(first_label_set) = label_specs.first() {
-                                        if let Ok(Some(vertex_type)) = graph_type.get_vertex_type(
-                                            &LabelSet::from_iter(first_label_set.clone()),
-                                        ) {
-                                            for property in vertex_type.properties().iter() {
-                                                property_ids.push(property.0);
-                                                property_names.push(property.1.name().to_string());
-                                            }
-                                        }
+                                    for property in vertex_type.properties().iter() {
+                                        property_ids.push(property.0);
+                                        property_names.push(property.1.name().to_string());
                                     }
-                                    property_ids
-                                } else {
-                                    Vec::new()
-                                };
-
-                                child_executor = Box::new(child_executor.scan_vertex_property(
-                                    vid_index,
-                                    property_list.clone(),
-                                    container,
-                                ));
-
-                                // Format: {var_name}_{prop_name} to handle cases where multiple
-                                // variables
-                                let mut new_fields = updated_schema.fields().to_vec();
-                                for prop_name in property_names.iter() {
-                                    let qualified_name = format!("{}_{}", var_name, prop_name);
-                                    new_fields.push(DataField::new(
-                                        qualified_name,
-                                        LogicalType::String,
-                                        true,
-                                    ));
                                 }
-                                updated_schema = Arc::new(DataSchema::new(new_fields));
+
+                                property_ids
+                            } else {
+                                Vec::new()
+                            };
+
+                            child_executor = Box::new(child_executor.scan_vertex_property(
+                                vid_index,
+                                property_list.clone(),
+                                container,
+                            ));
+
+                            // Format: {var_name}_{prop_name} to handle cases where multiple
+                            // variables
+                            let mut new_fields = updated_schema.fields().to_vec();
+                            for prop_name in property_names.iter() {
+                                let qualified_name = format!("{}_{}", var_name, prop_name);
+                                new_fields.push(DataField::new(
+                                    qualified_name,
+                                    LogicalType::String,
+                                    true,
+                                ));
                             }
+                            updated_schema = Arc::new(DataSchema::new(new_fields));
                         }
                     }
                 }

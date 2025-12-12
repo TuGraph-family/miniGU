@@ -74,10 +74,10 @@ impl GraphTxnManager for MemTxnManager {
             self.update_watermark();
 
             // Trigger GC if threshold is reached
-            if self.committed_txns.len() >= GC_TRIGGER_THRESHOLD {
-                if let Some(graph) = self.graph.upgrade() {
-                    let _ = self.garbage_collect(&graph);
-                }
+            if self.committed_txns.len() >= GC_TRIGGER_THRESHOLD
+                && let Some(graph) = self.graph.upgrade()
+            {
+                let _ = self.garbage_collect(&graph);
             }
 
             return Ok(());

@@ -85,10 +85,9 @@ impl Evaluator for VertexConstructor {
         } else {
             0
         };
-
-        let label_array: ArrayRef = Arc::new(UInt32Array::from_iter_values(
-            std::iter::repeat(label_id).take(len),
-        ));
+        let label_array: ArrayRef = Arc::new(UInt32Array::from_iter_values(std::iter::repeat_n(
+            label_id, len,
+        )));
 
         let mut struct_arrays = Vec::new();
 

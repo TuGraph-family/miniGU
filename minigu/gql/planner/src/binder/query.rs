@@ -175,7 +175,7 @@ impl Binder<'_> {
         match statement {
             MatchStatement::Simple(table) => {
                 let stmt = self.bind_graph_pattern_binding_table(table.value())?;
-                Ok(BoundMatchStatement::Simple(stmt))
+                Ok(BoundMatchStatement::Simple(Box::new(stmt)))
             }
             MatchStatement::Optional(_) => not_implemented("optional match statement", None),
         }
@@ -249,15 +249,14 @@ impl Binder<'_> {
                         expr.nullable,
                     ));
 
-                    if let LogicalType::Vertex(_) = &expr.logical_type {
-                        if let BoundExprKind::Variable(var_name) = &expr.kind {
-                            if let Some(active_schema) = &self.active_data_schema {
-                                if let Some(label_set) = active_schema.get_var_label(var_name) {
-                                    schema.set_var_label(var_name.clone(), label_set);
-                                }
-                            }
-                        }
+                    if let LogicalType::Vertex(_) = &expr.logical_type
+                        && let BoundExprKind::Variable(var_name) = &expr.kind
+                        && let Some(active_schema) = &self.active_data_schema
+                        && let Some(label_set) = active_schema.get_var_label(var_name)
+                    {
+                        schema.set_var_label(var_name.clone(), label_set);
                     }
+
                     exprs.push(expr);
                 }
                 for field in &fields {

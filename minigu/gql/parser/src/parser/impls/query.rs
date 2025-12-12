@@ -286,10 +286,10 @@ def_parser_alias!(
 
 pub fn match_statement(input: &mut TokenStream) -> ModalResult<Spanned<MatchStatement>> {
     dispatch! {peek(any);
-        TokenKind::Match => simple_match_statement.map(MatchStatement::Simple),
-        TokenKind::Optional => {
-            optional_match_statement.map(MatchStatement::Optional)
-        },
+        TokenKind::Match =>
+            simple_match_statement.map(|t| MatchStatement::Simple(Box::new(t))),
+        TokenKind::Optional =>
+            optional_match_statement.map(MatchStatement::Optional),
         _ => fail
     }
     .spanned()
@@ -308,7 +308,7 @@ pub fn optional_match_statement(
     let operand = dispatch! {peek(any);
         TokenKind::Match => {
             simple_match_statement
-                .map(MatchStatement::Simple)
+                .map(|t| MatchStatement::Simple(Box::new(t)))
                 .spanned()
                 .map(|simple| [simple].into())
         },

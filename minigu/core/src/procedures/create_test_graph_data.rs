@@ -75,10 +75,13 @@ pub fn build_procedure() -> Procedure {
         ));
 
         let city_label_set: LabelSet = vec![city_label_id].into_iter().collect();
-        let city = Arc::new(MemoryVertexTypeCatalog::new(city_label_set.clone(), vec![
-            Property::new("name".to_string(), LogicalType::String, false),
-            Property::new("population".to_string(), LogicalType::Int32, false),
-        ]));
+        let city = Arc::new(MemoryVertexTypeCatalog::new(
+            city_label_set.clone(),
+            vec![
+                Property::new("name".to_string(), LogicalType::String, false),
+                Property::new("population".to_string(), LogicalType::Int32, false),
+            ],
+        ));
 
         // Create edge types
         let friend_label_set: LabelSet = vec![friend_label_id].into_iter().collect();
