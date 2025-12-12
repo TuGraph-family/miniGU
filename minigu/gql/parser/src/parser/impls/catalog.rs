@@ -1,6 +1,7 @@
 use winnow::combinator::{alt, dispatch, fail, opt, peek, preceded, repeat, seq};
 use winnow::{ModalResult, Parser};
 
+use super::lexical::{binding_variable, identifier, label_name, property_name};
 use super::object_expr::graph_expression;
 use super::object_ref::*;
 use super::procedure_call::call_procedure_statement;
@@ -40,6 +41,12 @@ pub fn primitive_catalog_modifying_statement(
         },
         (TokenKind::Drop, TokenKind::Schema) => {
             drop_schema_statement.map_inner(CatalogModifyingStatement::DropSchema)
+        },
+        (TokenKind::Drop, TokenKind::Index) => {
+            drop_index_statement.map_inner(CatalogModifyingStatement::DropIndex)
+        },
+        (TokenKind::Create, TokenKind::Index) => {
+            create_index_statement.map_inner(CatalogModifyingStatement::CreateIndex)
         },
         (TokenKind::Create, TokenKind::Property | TokenKind::Graph | TokenKind::Or) => {
             alt((
@@ -171,6 +178,37 @@ pub fn create_graph_statement(
         path: catalog_graph_parent_and_name,
         graph_type: alt((open_graph_type, of_graph_type)),
         source: opt(graph_source)
+    }}
+    .spanned()
+    .parse_next(input)
+}
+
+pub fn create_index_statement(
+    input: &mut TokenStream,
+) -> ModalResult<Spanned<CreateIndexStatement>> {
+    seq! {CreateIndexStatement {
+        _: (TokenKind::Create, TokenKind::Index),
+        name: identifier,
+        if_not_exists: opt(if_not_exists).map(|o| o.is_some()),
+        _: (TokenKind::For, TokenKind::LeftParen),
+        binding: binding_variable,
+        _: TokenKind::Colon,
+        label: label_name,
+        _: (TokenKind::RightParen, TokenKind::On, TokenKind::LeftParen),
+        property_binding: binding_variable,
+        _: TokenKind::Period,
+        property: property_name,
+        _: TokenKind::RightParen,
+    }}
+    .spanned()
+    .parse_next(input)
+}
+
+pub fn drop_index_statement(input: &mut TokenStream) -> ModalResult<Spanned<DropIndexStatement>> {
+    seq! {DropIndexStatement {
+        _: (TokenKind::Drop, TokenKind::Index),
+        name: identifier,
+        if_exists: opt(if_exists).map(|o| o.is_some()),
     }}
     .spanned()
     .parse_next(input)
@@ -345,6 +383,38 @@ mod tests {
             "drop property graph type if exists /a/b/c"
         );
         assert_yaml_snapshot!(parsed);
+    }
+
+    #[test]
+    fn test_create_index_statement() {
+        let parsed = parse!(
+            simple_catalog_modifying_statement,
+            r#"
+            CREATE INDEX idx_embeddings IF NOT EXISTS
+            FOR (n:Movie)
+            ON (n.embedding)
+            "#
+        );
+        assert_yaml_snapshot!(parsed);
+    }
+
+    #[test]
+    fn test_drop_index_statement() {
+        let parsed = parse!(
+            simple_catalog_modifying_statement,
+            r#"
+            DROP INDEX idx_embeddings
+            "#
+        );
+        assert_yaml_snapshot!(parsed);
+
+        let parsed_if_exists = parse!(
+            simple_catalog_modifying_statement,
+            r#"
+            DROP INDEX idx_embeddings IF EXISTS
+            "#
+        );
+        assert_yaml_snapshot!("drop_index_if_exists", parsed_if_exists);
     }
 
     #[test]

@@ -1,4 +1,6 @@
 pub mod call;
+pub mod create_index;
+pub mod drop_index;
 pub mod expand;
 pub mod explain;
 pub mod filter;
@@ -17,6 +19,8 @@ use minigu_common::data_type::DataSchemaRef;
 use serde::Serialize;
 
 use crate::plan::call::Call;
+use crate::plan::create_index::CreateIndex;
+use crate::plan::drop_index::DropIndex;
 use crate::plan::expand::Expand;
 use crate::plan::explain::Explain;
 use crate::plan::filter::Filter;
@@ -85,6 +89,8 @@ pub enum PlanNode {
     LogicalOffset(Arc<Offset>),
     LogicalVectorIndexScan(Arc<VectorIndexScan>),
     LogicalExplain(Arc<Explain>),
+    LogicalCreateIndex(Arc<CreateIndex>),
+    LogicalDropIndex(Arc<DropIndex>),
 
     PhysicalFilter(Arc<Filter>),
     PhysicalProject(Arc<Project>),
@@ -103,6 +109,8 @@ pub enum PlanNode {
     // PhysicalCatalogModify(Arc<PhysicalCatalogModify>)
     PhysicalExpand(Arc<Expand>),
     PhysicalExplain(Arc<Explain>),
+    PhysicalCreateIndex(Arc<CreateIndex>),
+    PhysicalDropIndex(Arc<DropIndex>),
 }
 
 impl PlanData for PlanNode {
@@ -116,6 +124,9 @@ impl PlanData for PlanNode {
             PlanNode::LogicalSort(node) => node.base(),
             PlanNode::LogicalLimit(node) => node.base(),
             PlanNode::LogicalExplain(node) => node.base(),
+            PlanNode::LogicalVectorIndexScan(node) => node.base(),
+            PlanNode::LogicalCreateIndex(node) => node.base(),
+            PlanNode::LogicalDropIndex(node) => node.base(),
             PlanNode::LogicalOffset(node) => node.base(),
 
             PlanNode::PhysicalFilter(node) => node.base(),
@@ -126,10 +137,11 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalLimit(node) => node.base(),
             PlanNode::PhysicalOffset(node) => node.base(),
             PlanNode::PhysicalNodeScan(node) => node.base(),
-            PlanNode::LogicalVectorIndexScan(node) => node.base(),
             PlanNode::PhysicalVectorIndexScan(node) => node.base(),
             PlanNode::PhysicalExpand(node) => node.base(),
             PlanNode::PhysicalExplain(node) => node.base(),
+            PlanNode::PhysicalCreateIndex(node) => node.base(),
+            PlanNode::PhysicalDropIndex(node) => node.base(),
         }
     }
 
@@ -145,6 +157,8 @@ impl PlanData for PlanNode {
             PlanNode::LogicalOffset(node) => node.explain(indent),
             PlanNode::LogicalVectorIndexScan(node) => node.explain(indent),
             PlanNode::LogicalExplain(node) => node.explain(indent),
+            PlanNode::LogicalCreateIndex(node) => node.explain(indent),
+            PlanNode::LogicalDropIndex(node) => node.explain(indent),
 
             PlanNode::PhysicalFilter(node) => node.explain(indent),
             PlanNode::PhysicalProject(node) => node.explain(indent),
@@ -157,6 +171,8 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalNodeScan(node) => node.explain(indent),
             PlanNode::PhysicalExpand(node) => node.explain(indent),
             PlanNode::PhysicalExplain(node) => node.explain(indent),
+            PlanNode::PhysicalCreateIndex(node) => node.explain(indent),
+            PlanNode::PhysicalDropIndex(node) => node.explain(indent),
         }
     }
 }

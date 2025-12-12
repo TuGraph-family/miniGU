@@ -1,4 +1,5 @@
 use minigu_catalog::named_ref::NamedGraphRef;
+use minigu_common::types::{VectorIndexKey, VectorMetric};
 use serde::Serialize;
 use smol_str::SmolStr;
 
@@ -11,6 +12,8 @@ pub enum BoundCatalogModifyingStatement {
     CreateSchema(BoundCreateSchemaStatement),
     DropSchema(BoundDropSchemaStatement),
     CreateGraph(BoundCreateGraphStatement),
+    CreateIndex(BoundCreateIndexStatement),
+    DropIndex(BoundDropIndexStatement),
     DropGraph(BoundDropGraphStatement),
     CreateGraphType(BoundCreateGraphTypeStatement),
     DropGraphType(BoundDropGraphTypeStatement),
@@ -64,4 +67,27 @@ pub struct BoundDropGraphTypeStatement {
     //  pub schema: NamedSchemaRef,
     pub name: SmolStr,
     pub if_exists: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct BoundCreateIndexStatement {
+    pub name: SmolStr,
+    pub if_not_exists: bool,
+    pub index_key: VectorIndexKey,
+    pub metric: VectorMetric,
+    pub dimension: usize,
+    pub label: SmolStr,
+    pub property: SmolStr,
+    /// If true, planner/executor should treat this statement as a no-op (because IF NOT EXISTS was
+    /// specified and the index already exists).
+    pub no_op: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct BoundDropIndexStatement {
+    pub name: SmolStr,
+    pub if_exists: bool,
+    pub index_key: Option<VectorIndexKey>,
+    pub metadata: Option<minigu_catalog::provider::VectorIndexMetadata>,
+    pub no_op: bool,
 }
