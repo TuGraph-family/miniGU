@@ -3,7 +3,9 @@
 //! Test cases can be found in `../../resources/gql`, and expected outputs can be found in
 //! `snapshots`.
 
+use std::env;
 use std::fmt::Write;
+use std::path::Path;
 
 use gql_parser::parse_gql;
 use insta::internals::SettingsBindDropGuard;
@@ -11,11 +13,17 @@ use insta::{Settings, assert_snapshot, assert_yaml_snapshot};
 use minigu::common::data_chunk::display::{TableBuilder, TableOptions};
 use minigu::database::{Database, DatabaseConfig};
 use minigu::result::QueryResult;
+use minigu::session::Session;
 use pastey::paste;
 
 const GQL_COMMENT_PREFIX: &str = "--";
 const FILE_COMMENT_PREFIX: &str = "//";
 const QUERY_END_SUFFIX: &str = ";";
+
+struct SessionGuard {
+    session: Session,
+    // _temp_dir: TempDir
+}
 
 fn setup(suffix: &str, snapshot_path: &str) -> SettingsBindDropGuard {
     let mut settings = Settings::clone_current();
@@ -69,11 +77,30 @@ fn preprocess_statements(input: &str) -> Vec<String> {
     statements
 }
 
-fn query_e2e_test(statements: Vec<String>) -> String {
+// For simplicity, `path` is the manifest directory, i.e. the manifest file is
+// `Path::new(path).join("manifest.json")`.
+fn setup_db_with_data(graph_name: &str, path: &str) -> SessionGuard {
+    let mut guard = setup_database();
+    let manifest_path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join(path)
+        .join("manifest.json");
+    guard
+        .session
+        .import_graph(graph_name, manifest_path)
+        .unwrap();
+
+    guard
+}
+
+fn setup_database() -> SessionGuard {
     let config = DatabaseConfig::default();
     let database = Database::open_in_memory(&config).unwrap();
-    let mut session = database.session().unwrap();
+    SessionGuard {
+        session: database.session().unwrap(),
+    }
+}
 
+fn query_e2e_test(mut session: Session, statements: Vec<String>) -> String {
     let mut output = String::new();
     for (idx, statement) in statements.iter().enumerate() {
         if idx > 0 {
@@ -178,7 +205,23 @@ macro_rules! add_e2e_tests {
                     let _guard = setup("e2e", concat!("../gql/", $dataset, "/"));
                     let test_cases = include_str!(concat!("../gql/", $dataset, "/", $query, ".gql"));
                     let statements = preprocess_statements(test_cases);
-                    let result = query_e2e_test(statements);
+                    let session_guard = setup_database();
+                    let result = query_e2e_test(session_guard.session, statements);
+                    assert_snapshot!($query, &result);
+                }
+            )*
+        }
+    };
+    ($dataset:expr, [ $($query:expr),* ], ($graph_name:expr, $manifest_dir:expr)) => {
+        paste! {
+            $(
+                #[test]
+                fn [<e2e_ $dataset _ $query>]() {
+                    let _guard = setup("e2e", concat!("../gql/", $dataset, "/"));
+                    let test_cases = include_str!(concat!("../gql/", $dataset, "/", $query, ".gql"));
+                    let statements = preprocess_statements(test_cases);
+                    let session_guard = setup_db_with_data($graph_name, $manifest_dir);
+                    let result = query_e2e_test(session_guard.session, statements);
                     assert_snapshot!($query, &result);
                 }
             )*
@@ -187,6 +230,11 @@ macro_rules! add_e2e_tests {
 }
 
 add_e2e_tests!("basic", ["multi_statement_test"]);
+add_e2e_tests!(
+    "basic",
+    ["data_setup_example"],
+    ("test", "data/import_basic")
+);
 add_e2e_tests!("finbench", ["tsr1", "tsr2", "tsr3", "tsr4", "tsr5", "tsr6"]);
 add_e2e_tests!("snb", ["is1", "is2", "is3", "is4", "is5", "is6", "is7"]);
 add_e2e_tests!(

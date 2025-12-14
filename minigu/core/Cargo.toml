@@ -5,6 +5,10 @@ name = "minigu"
 repository.workspace = true
 version.workspace = true
 
+[features]
+# Helpers intended for integration/system tests in other crates (e.g. `minigu-test`).
+test-utils = []
+
 [dev-dependencies]
 tempfile = { workspace = true }
 walkdir = { workspace = true }

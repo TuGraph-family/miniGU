@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -20,6 +21,8 @@ use minigu_planner::plan::PlanData;
 
 use crate::error::{Error, Result};
 use crate::metrics::QueryMetrics;
+#[cfg(feature = "test-utils")]
+use crate::procedures::import;
 use crate::result::QueryResult;
 
 pub struct Session {
@@ -144,5 +147,18 @@ impl Session {
             metrics,
             chunks,
         })
+    }
+
+    // Test-only helper (enabled by `minigu/test-utils`).
+    #[cfg(feature = "test-utils")]
+    pub fn import_graph<P: AsRef<Path>>(
+        &mut self,
+        graph_name: &str,
+        manifest_path: P,
+    ) -> Result<()> {
+        import(self.context.clone(), graph_name, manifest_path).unwrap();
+        // For simplicity, set the current graph to `graph_name`.
+        self.context.set_current_graph(graph_name.to_string())?;
+        Ok(())
     }
 }
