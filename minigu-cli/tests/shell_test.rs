@@ -1,4 +1,3 @@
-use std::env;
 use std::path::Path;
 
 use insta_cmd::assert_cmd_snapshot;

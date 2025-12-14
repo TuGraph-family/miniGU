@@ -59,7 +59,8 @@ pub enum ShellCommand {
 
     /// Change the current working directory
     #[command(name = ":cd")]
-    Cd { path: PathBuf },
+    #[strum(serialize = "cd")]
+    CdDirectory { path: PathBuf },
 }
 
 #[derive(Debug, Clone, ValueEnum, Display)]
@@ -99,7 +100,7 @@ impl ShellCommand {
             ShellCommand::Help { command } => help(ctx, command),
             ShellCommand::Quit => quit(ctx),
             ShellCommand::History => history(ctx),
-            ShellCommand::Cd { path } => cd(ctx, path),
+            ShellCommand::CdDirectory { path } => cd(ctx, path),
             Self::Mode { mode_to_change } => mode(ctx, mode_to_change),
             Self::Metrics { status } => metrics(ctx, status),
         }
