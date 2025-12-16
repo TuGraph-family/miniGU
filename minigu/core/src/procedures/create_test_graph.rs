@@ -10,6 +10,8 @@ use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::procedure::Procedure;
 use minigu_storage::tp::MemoryGraph;
 
+use crate::procedures::common::{create_ckpt_config, create_wal_config};
+
 /// Create a test graph with the given name in the current schema.
 pub fn build_procedure() -> Procedure {
     let parameters = vec![LogicalType::String];
@@ -21,8 +23,15 @@ pub fn build_procedure() -> Procedure {
             .ok_or_else(|| anyhow::anyhow!("graph name cannot be null"))?;
         let schema = context
             .current_schema
+            .as_ref()
             .ok_or_else(|| anyhow::anyhow!("current schema not set"))?;
-        let graph = MemoryGraph::new();
+
+        let ckpt_dir = context.database().config().checkpoint_dir.as_path();
+        let wal_path = context.database().config().wal_path.as_path();
+        let graph = MemoryGraph::with_config_fresh(
+            create_ckpt_config(ckpt_dir),
+            create_wal_config(wal_path),
+        );
         let mut graph_type = MemoryGraphTypeCatalog::new();
         let container = GraphContainer::new(Arc::new(graph_type), GraphStorage::Memory(graph));
         if !schema.add_graph(graph_name.clone(), Arc::new(container)) {

@@ -15,6 +15,7 @@ use minigu::database::{Database, DatabaseConfig};
 use minigu::result::QueryResult;
 use minigu::session::Session;
 use pastey::paste;
+use tempfile::{TempDir, tempdir};
 
 const GQL_COMMENT_PREFIX: &str = "--";
 const FILE_COMMENT_PREFIX: &str = "//";
@@ -22,7 +23,7 @@ const QUERY_END_SUFFIX: &str = ";";
 
 struct SessionGuard {
     session: Session,
-    // _temp_dir: TempDir
+    _temp_dir: TempDir,
 }
 
 fn setup(suffix: &str, snapshot_path: &str) -> SettingsBindDropGuard {
@@ -77,6 +78,22 @@ fn preprocess_statements(input: &str) -> Vec<String> {
     statements
 }
 
+fn setup_database() -> SessionGuard {
+    let temp_dir = tempdir().unwrap();
+    let temp_dir_path = temp_dir.path();
+
+    let config = DatabaseConfig {
+        num_threads: 1,
+        checkpoint_dir: temp_dir_path.join(".checkpoint"),
+        wal_path: temp_dir_path.join(".wal"),
+    };
+    let database = Database::open_in_memory(config).unwrap();
+    SessionGuard {
+        session: database.session().unwrap(),
+        _temp_dir: temp_dir,
+    }
+}
+
 // For simplicity, `path` is the manifest directory, i.e. the manifest file is
 // `Path::new(path).join("manifest.json")`.
 fn setup_db_with_data(graph_name: &str, path: &str) -> SessionGuard {
@@ -90,14 +107,6 @@ fn setup_db_with_data(graph_name: &str, path: &str) -> SessionGuard {
         .unwrap();
 
     guard
-}
-
-fn setup_database() -> SessionGuard {
-    let config = DatabaseConfig::default();
-    let database = Database::open_in_memory(&config).unwrap();
-    SessionGuard {
-        session: database.session().unwrap(),
-    }
 }
 
 fn query_e2e_test(mut session: Session, statements: Vec<String>) -> String {
@@ -230,11 +239,7 @@ macro_rules! add_e2e_tests {
 }
 
 add_e2e_tests!("basic", ["multi_statement_test"]);
-add_e2e_tests!(
-    "basic",
-    ["data_setup_example"],
-    ("test", "data/import_basic")
-);
+add_e2e_tests!("basic", ["data_setup_example"], ("test", "data/basic"));
 add_e2e_tests!("finbench", ["tsr1", "tsr2", "tsr3", "tsr4", "tsr5", "tsr6"]);
 add_e2e_tests!("snb", ["is1", "is2", "is3", "is4", "is5", "is6", "is7"]);
 add_e2e_tests!(
