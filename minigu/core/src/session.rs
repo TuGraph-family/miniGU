@@ -148,7 +148,9 @@ impl Session {
         })
     }
 
-    // Test-only helper.
+    // Test-harness helper: import a graph from an export manifest, then set it as current graph.
+    //
+    // This is intended for integration/system tests (e.g. `minigu-test`)
     pub fn import_graph<P: AsRef<Path>>(
         &mut self,
         graph_name: &str,

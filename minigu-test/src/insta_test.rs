@@ -2,6 +2,41 @@
 //!
 //! Test cases can be found in `../../resources/gql`, and expected outputs can be found in
 //! `snapshots`.
+//!
+//! # How to add an E2E test
+//!
+//! 1. Add a test case file:
+//! - `minigu-test/gql/<dataset>/<query>.gql`
+//! - You can write multiple statements; statements are split by a trailing `;` on a line.
+//! - Full-line comments starting with `--` or `//` are skipped.
+//!
+//! 2. Register the test at the bottom of this file using `add_e2e_tests!`:
+//! - No preloaded data:
+//!   `add_e2e_tests!("<dataset>", ["<query>"]);`
+//! - With preloaded graph data (import manifest + set current graph):
+//!   `add_e2e_tests!("<dataset>", ["<query>"], ("<graph_name>", "<manifest_dir>"));`
+//!
+//! 3. Run the test (and optionally update snapshots):
+//! - Single test:
+//!   `cargo test --offline -p minigu-test e2e_<dataset>_<query> -- --nocapture`
+//! - Update snapshots:
+//!   `INSTA_UPDATE=always cargo test --offline -p minigu-test e2e_<dataset>_<query>`
+//!
+//! # Parameters and data layout
+//!
+//! `add_e2e_tests!("<dataset>", ["<query>"])`:
+//! - `<dataset>` maps to directory `minigu-test/gql/<dataset>/`
+//! - `<query>` maps to file `minigu-test/gql/<dataset>/<query>.gql`
+//!
+//! `add_e2e_tests!(..., ("<graph_name>", "<manifest_dir>"))` additionally:
+//! - `<graph_name>` is the name to register the imported graph under; the test also sets it as the
+//!   current graph for convenience.
+//! - `<manifest_dir>` is a directory (relative to this crate root, resolved via `CARGO_MANIFEST_DIR`)
+//!   that must contain `manifest.json`.
+//! - Paths inside `manifest.json` (e.g. `person.csv`) are interpreted relative to `<manifest_dir>`.
+//!
+//! NOTE: The harness always creates a per-test temp directory and routes checkpoint/WAL writes into
+//! it (see `setup_database()`), to avoid polluting the repo and to prevent cross-test interference.
 
 use std::env;
 use std::fmt::Write;
@@ -23,6 +58,7 @@ const QUERY_END_SUFFIX: &str = ";";
 
 struct SessionGuard {
     session: Session,
+    // Hold the temp dir for the whole test so checkpoint/WAL paths remain valid and are cleaned up.
     _temp_dir: TempDir,
 }
 
@@ -84,6 +120,7 @@ fn setup_database() -> SessionGuard {
 
     let config = DatabaseConfig {
         num_threads: 1,
+        // Ensure checkpoint/WAL writes are test-scoped (no repo pollution, no cross-test clashes).
         checkpoint_dir: temp_dir_path.join(".checkpoint"),
         wal_path: temp_dir_path.join(".wal"),
     };
@@ -98,6 +135,7 @@ fn setup_database() -> SessionGuard {
 // `Path::new(path).join("manifest.json")`.
 fn setup_db_with_data(graph_name: &str, path: &str) -> SessionGuard {
     let mut guard = setup_database();
+    // Resolve test data relative to this crate so tests are independent of process CWD.
     let manifest_path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join(path)
         .join("manifest.json");
