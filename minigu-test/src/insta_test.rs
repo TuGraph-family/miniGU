@@ -11,16 +11,14 @@
 //! - Full-line comments starting with `--` or `//` are skipped.
 //!
 //! 2. Register the test at the bottom of this file using `add_e2e_tests!`:
-//! - No preloaded data:
-//!   `add_e2e_tests!("<dataset>", ["<query>"]);`
-//! - With preloaded graph data (import manifest + set current graph):
-//!   `add_e2e_tests!("<dataset>", ["<query>"], ("<graph_name>", "<manifest_dir>"));`
+//! - No preloaded data: `add_e2e_tests!("<dataset>", ["<query>"]);`
+//! - With preloaded graph data (import manifest + set current graph): `add_e2e_tests!("<dataset>",
+//!   ["<query>"], ("<graph_name>", "<manifest_dir>"));`
 //!
 //! 3. Run the test (and optionally update snapshots):
-//! - Single test:
-//!   `cargo test --offline -p minigu-test e2e_<dataset>_<query> -- --nocapture`
-//! - Update snapshots:
-//!   `INSTA_UPDATE=always cargo test --offline -p minigu-test e2e_<dataset>_<query>`
+//! - Single test: `cargo test --offline -p minigu-test e2e_<dataset>_<query> -- --nocapture`
+//! - Update snapshots: `INSTA_UPDATE=always cargo test --offline -p minigu-test
+//!   e2e_<dataset>_<query>`
 //!
 //! # Parameters and data layout
 //!
@@ -31,8 +29,8 @@
 //! `add_e2e_tests!(..., ("<graph_name>", "<manifest_dir>"))` additionally:
 //! - `<graph_name>` is the name to register the imported graph under; the test also sets it as the
 //!   current graph for convenience.
-//! - `<manifest_dir>` is a directory (relative to this crate root, resolved via `CARGO_MANIFEST_DIR`)
-//!   that must contain `manifest.json`.
+//! - `<manifest_dir>` is a directory (relative to this crate root, resolved via
+//!   `CARGO_MANIFEST_DIR`) that must contain `manifest.json`.
 //! - Paths inside `manifest.json` (e.g. `person.csv`) are interpreted relative to `<manifest_dir>`.
 //!
 //! NOTE: The harness always creates a per-test temp directory and routes checkpoint/WAL writes into
@@ -58,7 +56,8 @@ const QUERY_END_SUFFIX: &str = ";";
 
 struct SessionGuard {
     session: Session,
-    // Hold the temp dir for the whole test so checkpoint/WAL paths remain valid and are cleaned up.
+    // Hold the temp dir for the whole test so checkpoint/WAL paths remain valid and are cleaned
+    // up.
     _temp_dir: TempDir,
 }
 
