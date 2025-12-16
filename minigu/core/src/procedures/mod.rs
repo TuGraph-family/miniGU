@@ -7,7 +7,6 @@ mod import_graph;
 mod show_graph;
 mod show_procedures;
 
-#[cfg(feature = "test-utils")]
 pub(crate) use import_graph::import;
 use minigu_context::procedure::Procedure;
 

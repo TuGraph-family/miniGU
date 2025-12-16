@@ -21,7 +21,6 @@ use minigu_planner::plan::PlanData;
 
 use crate::error::{Error, Result};
 use crate::metrics::QueryMetrics;
-#[cfg(feature = "test-utils")]
 use crate::procedures::import;
 use crate::result::QueryResult;
 
@@ -149,14 +148,13 @@ impl Session {
         })
     }
 
-    // Test-only helper (enabled by `minigu/test-utils`).
-    #[cfg(feature = "test-utils")]
+    // Test-only helper.
     pub fn import_graph<P: AsRef<Path>>(
         &mut self,
         graph_name: &str,
         manifest_path: P,
-    ) -> Result<()> {
-        import(self.context.clone(), graph_name, manifest_path).unwrap();
+    ) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+        import(self.context.clone(), graph_name, manifest_path)?;
         // For simplicity, set the current graph to `graph_name`.
         self.context.set_current_graph(graph_name.to_string())?;
         Ok(())

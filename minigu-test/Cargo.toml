@@ -17,7 +17,7 @@ cmake = { workspace = true, optional = true }
 glob = { workspace = true }
 gql-parser = { workspace = true, features = ["std", "serde"] }
 libtest-mimic = { workspace = true }
-minigu = { workspace = true, features = ["test-utils"] }
+minigu = { workspace = true }
 sqllogictest = { workspace = true }
 
 [dev-dependencies]
