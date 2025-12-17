@@ -24,6 +24,7 @@ sqllogictest = { workspace = true }
 divan = { workspace = true }
 insta = { workspace = true }
 pastey = { workspace = true }
+tempfile = { workspace = true }
 
 [lints]
 workspace = true

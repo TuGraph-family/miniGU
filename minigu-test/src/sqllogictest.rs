@@ -78,7 +78,7 @@ fn run_locally(files: &[PathBuf]) {
 
 /// Run a single .slt file.
 fn run_one(path: impl AsRef<Path>) -> Result<()> {
-    let db = minigu::database::Database::open_in_memory(&Default::default())?;
+    let db = minigu::database::Database::open_in_memory(Default::default())?;
     let records = sqllogictest::parse_file(path.as_ref())?;
     let mut runner = sqllogictest::Runner::new(|| async {
         let session = db.session()?;

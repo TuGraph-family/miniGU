@@ -656,6 +656,7 @@ mod tests {
 
     #[test]
     fn test_export_and_import() {
+        let temp_dir = tempfile::tempdir().unwrap();
         let export_dir1 = tempfile::tempdir().unwrap();
         let export_dir2 = tempfile::tempdir().unwrap();
 
@@ -679,7 +680,12 @@ mod tests {
 
         {
             let manifest_path = export_dir1.join(manifest_rel_path);
-            let (graph, graph_type) = import_internal(manifest_path).unwrap();
+            let (graph, graph_type) = import_internal(
+                temp_dir.path().join(".checkpoint"),
+                temp_dir.path().join(".wal"),
+                manifest_path,
+            )
+            .unwrap();
 
             export(
                 graph,
