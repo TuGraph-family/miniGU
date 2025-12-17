@@ -16,9 +16,7 @@
 //!   ["<query>"], ("<graph_name>", "<manifest_dir>"));`
 //!
 //! 3. Run the test (and optionally update snapshots):
-//! - Single test: `cargo test --offline -p minigu-test e2e_<dataset>_<query> -- --nocapture`
-//! - Update snapshots: `INSTA_UPDATE=always cargo test --offline -p minigu-test
-//!   e2e_<dataset>_<query>`
+//! - Single test: `cargo test -p minigu-test e2e_<dataset>_<query> -- --nocapture`
 //!
 //! # Parameters and data layout
 //!
@@ -54,14 +52,14 @@ const GQL_COMMENT_PREFIX: &str = "--";
 const FILE_COMMENT_PREFIX: &str = "//";
 const QUERY_END_SUFFIX: &str = ";";
 
-struct SessionGuard {
+struct SessionDropGuard {
     session: Session,
     // Hold the temp dir for the whole test so checkpoint/WAL paths remain valid and are cleaned
     // up.
     _temp_dir: TempDir,
 }
 
-fn setup(suffix: &str, snapshot_path: &str) -> SettingsBindDropGuard {
+fn setup_insta_settings(suffix: &str, snapshot_path: &str) -> SettingsBindDropGuard {
     let mut settings = Settings::clone_current();
     settings.set_snapshot_path(snapshot_path);
     settings.set_snapshot_suffix(suffix);
@@ -113,18 +111,19 @@ fn preprocess_statements(input: &str) -> Vec<String> {
     statements
 }
 
-fn setup_database() -> SessionGuard {
+// Setup a database and create a tmp directory to store checkpoints and wal.
+fn setup_database() -> SessionDropGuard {
     let temp_dir = tempdir().unwrap();
     let temp_dir_path = temp_dir.path();
 
     let config = DatabaseConfig {
-        num_threads: 1,
         // Ensure checkpoint/WAL writes are test-scoped (no repo pollution, no cross-test clashes).
         checkpoint_dir: temp_dir_path.join(".checkpoint"),
         wal_path: temp_dir_path.join(".wal"),
+        ..Default::default()
     };
     let database = Database::open_in_memory(config).unwrap();
-    SessionGuard {
+    SessionDropGuard {
         session: database.session().unwrap(),
         _temp_dir: temp_dir,
     }
@@ -132,7 +131,7 @@ fn setup_database() -> SessionGuard {
 
 // For simplicity, `path` is the manifest directory, i.e. the manifest file is
 // `Path::new(path).join("manifest.json")`.
-fn setup_db_with_data(graph_name: &str, path: &str) -> SessionGuard {
+fn setup_db_with_data(graph_name: &str, path: &str) -> SessionDropGuard {
     let mut guard = setup_database();
     // Resolve test data relative to this crate so tests are independent of process CWD.
     let manifest_path = Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -224,14 +223,13 @@ fn extract_string_value(array: &arrow::array::ArrayRef, row_idx: usize) -> Strin
     }
 }
 
-// #[allow(unused_macros)]
 macro_rules! add_parser_tests {
     ($dataset:expr, [ $($query:expr),* ]) => {
         paste! {
             $(
                 #[test]
                 fn [<parse_ $dataset _ $query>]() {
-                    let _guard = setup("parser", concat!("../gql/", $dataset, "/"));
+                    let _guard = setup_insta_settings("parser", concat!("../gql/", $dataset, "/"));
                     let test_cases = include_str!(concat!("../gql/", $dataset, "/", $query, ".gql"));
                     let statements = preprocess_statements(test_cases);
                     let results: Vec<_> = statements.iter().map(|statement| parse_gql(statement)).collect();
@@ -248,7 +246,7 @@ macro_rules! add_e2e_tests {
             $(
                 #[test]
                 fn [<e2e_ $dataset _ $query>]() {
-                    let _guard = setup("e2e", concat!("../gql/", $dataset, "/"));
+                    let _guard = setup_insta_settings("e2e", concat!("../gql/", $dataset, "/"));
                     let test_cases = include_str!(concat!("../gql/", $dataset, "/", $query, ".gql"));
                     let statements = preprocess_statements(test_cases);
                     let session_guard = setup_database();
@@ -263,7 +261,7 @@ macro_rules! add_e2e_tests {
             $(
                 #[test]
                 fn [<e2e_ $dataset _ $query>]() {
-                    let _guard = setup("e2e", concat!("../gql/", $dataset, "/"));
+                    let _guard = setup_insta_settings("e2e", concat!("../gql/", $dataset, "/"));
                     let test_cases = include_str!(concat!("../gql/", $dataset, "/", $query, ".gql"));
                     let statements = preprocess_statements(test_cases);
                     let session_guard = setup_db_with_data($graph_name, $manifest_dir);
