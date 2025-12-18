@@ -25,7 +25,7 @@ Statement OK. No results
 Error: Plan(
     Bind(
         VectorIndexNotFound {
-            name: "vec_idx",
+            name: "person_vec",
         },
     ),
 )

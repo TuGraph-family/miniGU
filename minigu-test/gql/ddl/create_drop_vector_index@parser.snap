@@ -84,39 +84,39 @@ source: minigu-test/src/insta_test.rs
                   - Catalog:
                       - - CreateVectorIndex:
                             name:
-                              - vec_idx
+                              - person_vec
                               - start: 20
-                                end: 27
+                                end: 30
                             if_not_exists: false
                             binding:
                               - n
-                              - start: 33
-                                end: 34
+                              - start: 36
+                                end: 37
                             label:
                               - PERSON
-                              - start: 35
-                                end: 41
+                              - start: 38
+                                end: 44
                             property_binding:
                               - n
-                              - start: 47
-                                end: 48
+                              - start: 50
+                                end: 51
                             property:
                               - embedding
-                              - start: 49
-                                end: 58
+                              - start: 52
+                                end: 61
                         - start: 0
-                          end: 59
+                          end: 62
                   - start: 0
-                    end: 59
+                    end: 62
                 next_statements: []
               - start: 0
-                end: 59
+                end: 62
             end: ~
         - start: 0
-          end: 59
+          end: 62
       session_close: false
     - start: 0
-      end: 59
+      end: 62
 - Ok:
     - activity:
         - Transaction:
@@ -128,39 +128,39 @@ source: minigu-test/src/insta_test.rs
                   - Catalog:
                       - - CreateVectorIndex:
                             name:
-                              - vec_idx
+                              - person_vec
                               - start: 20
-                                end: 27
+                                end: 30
                             if_not_exists: false
                             binding:
                               - n
-                              - start: 33
-                                end: 34
+                              - start: 36
+                                end: 37
                             label:
                               - PERSON
-                              - start: 35
-                                end: 41
+                              - start: 38
+                                end: 44
                             property_binding:
                               - n
-                              - start: 47
-                                end: 48
+                              - start: 50
+                                end: 51
                             property:
                               - embedding
-                              - start: 49
-                                end: 58
+                              - start: 52
+                                end: 61
                         - start: 0
-                          end: 59
+                          end: 62
                   - start: 0
-                    end: 59
+                    end: 62
                 next_statements: []
               - start: 0
-                end: 59
+                end: 62
             end: ~
         - start: 0
-          end: 59
+          end: 62
       session_close: false
     - start: 0
-      end: 59
+      end: 62
 - Ok:
     - activity:
         - Transaction:
@@ -172,39 +172,39 @@ source: minigu-test/src/insta_test.rs
                   - Catalog:
                       - - CreateVectorIndex:
                             name:
-                              - vec_idx
+                              - person_vec
                               - start: 20
-                                end: 27
+                                end: 30
                             if_not_exists: true
                             binding:
                               - n
-                              - start: 47
-                                end: 48
+                              - start: 50
+                                end: 51
                             label:
                               - PERSON
-                              - start: 49
-                                end: 55
+                              - start: 52
+                                end: 58
                             property_binding:
                               - n
-                              - start: 61
-                                end: 62
+                              - start: 64
+                                end: 65
                             property:
                               - embedding
-                              - start: 63
-                                end: 72
+                              - start: 66
+                                end: 75
                         - start: 0
-                          end: 73
+                          end: 76
                   - start: 0
-                    end: 73
+                    end: 76
                 next_statements: []
               - start: 0
-                end: 73
+                end: 76
             end: ~
         - start: 0
-          end: 73
+          end: 76
       session_close: false
     - start: 0
-      end: 73
+      end: 76
 - Ok:
     - activity:
         - Transaction:
@@ -216,23 +216,23 @@ source: minigu-test/src/insta_test.rs
                   - Catalog:
                       - - DropVectorIndex:
                             name:
-                              - vec_idx
+                              - person_vec
                               - start: 18
-                                end: 25
+                                end: 28
                             if_exists: false
                         - start: 0
-                          end: 25
+                          end: 28
                   - start: 0
-                    end: 25
+                    end: 28
                 next_statements: []
               - start: 0
-                end: 25
+                end: 28
             end: ~
         - start: 0
-          end: 25
+          end: 28
       session_close: false
     - start: 0
-      end: 25
+      end: 28
 - Ok:
     - activity:
         - Transaction:
@@ -244,23 +244,23 @@ source: minigu-test/src/insta_test.rs
                   - Catalog:
                       - - DropVectorIndex:
                             name:
-                              - vec_idx
+                              - person_vec
                               - start: 18
-                                end: 25
+                                end: 28
                             if_exists: true
                         - start: 0
-                          end: 35
+                          end: 38
                   - start: 0
-                    end: 35
+                    end: 38
                 next_statements: []
               - start: 0
-                end: 35
+                end: 38
             end: ~
         - start: 0
-          end: 35
+          end: 38
       session_close: false
     - start: 0
-      end: 35
+      end: 38
 - Ok:
     - activity:
         - Transaction:
@@ -272,20 +272,20 @@ source: minigu-test/src/insta_test.rs
                   - Catalog:
                       - - DropVectorIndex:
                             name:
-                              - vec_idx
+                              - person_vec
                               - start: 18
-                                end: 25
+                                end: 28
                             if_exists: false
                         - start: 0
-                          end: 25
+                          end: 28
                   - start: 0
-                    end: 25
+                    end: 28
                 next_statements: []
               - start: 0
-                end: 25
+                end: 28
             end: ~
         - start: 0
-          end: 25
+          end: 28
       session_close: false
     - start: 0
-      end: 25
+      end: 28
