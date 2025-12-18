@@ -126,6 +126,17 @@ impl Binder<'_> {
             .map(|c| c.get_vector_index(index_key))
             .transpose()?
             .flatten();
+        let name = statement.name.value().clone();
+        let existing_by_name = graph
+            .index_catalog()
+            .map(|c| c.get_vector_index_by_name(name.as_str()))
+            .transpose()?
+            .flatten();
+        if let Some(meta) = existing_by_name
+            && meta.key != index_key
+        {
+            return Err(BindError::VectorIndexNameAlreadyExists { name });
+        }
         let no_op = existing.is_some() && statement.if_not_exists;
         if existing.is_some() && !statement.if_not_exists {
             return Err(BindError::VectorIndexAlreadyExists {
@@ -135,7 +146,7 @@ impl Binder<'_> {
         }
 
         Ok(BoundCreateVectorIndexStatement {
-            name: statement.name.value().clone(),
+            name,
             if_not_exists: statement.if_not_exists,
             index_key,
             // Currently default to L2; parser/AST does not expose custom metrics yet.
@@ -155,32 +166,28 @@ impl Binder<'_> {
             .current_graph
             .clone()
             .ok_or(BindError::CurrentGraphNotSpecified)?;
-        let indices = graph
+        let name = statement.name.value().clone();
+        let found = graph
             .index_catalog()
-            .map(|c| c.list_vector_indices())
+            .map(|c| c.get_vector_index_by_name(name.as_str()))
             .transpose()?
-            .unwrap_or_default();
-        let found = indices
-            .iter()
-            .find(|m| m.name.as_str() == statement.name.value());
+            .flatten();
         match found {
             Some(meta) => Ok(BoundDropVectorIndexStatement {
-                name: statement.name.value().clone(),
+                name,
                 if_exists: statement.if_exists,
                 index_key: Some(meta.key),
-                metadata: Some(meta.clone()),
+                metadata: Some(meta),
                 no_op: false,
             }),
             None if statement.if_exists => Ok(BoundDropVectorIndexStatement {
-                name: statement.name.value().clone(),
+                name,
                 if_exists: true,
                 index_key: None,
                 metadata: None,
                 no_op: true,
             }),
-            None => Err(BindError::VectorIndexNotFound {
-                name: statement.name.value().clone(),
-            }),
+            None => Err(BindError::VectorIndexNotFound { name }),
         }
     }
 

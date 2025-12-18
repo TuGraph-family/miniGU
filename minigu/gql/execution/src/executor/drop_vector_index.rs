@@ -96,6 +96,15 @@ impl DropVectorIndexExecutor {
             .map_err(|err| match err {
                 IndexCatalogError::Catalog(e) => ExecutionError::from(e),
                 IndexCatalogError::Storage(e) => ExecutionError::from(e),
+                IndexCatalogError::NameAlreadyExists(name) => {
+                    ExecutionError::Custom(Box::new(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        format!(
+                            "unexpected name conflict while dropping vector index {}",
+                            name
+                        ),
+                    )))
+                }
             })?;
         if !removed && !self.plan.if_exists {
             return Err(ExecutionError::Custom(Box::new(io::Error::new(

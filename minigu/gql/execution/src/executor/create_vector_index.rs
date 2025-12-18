@@ -116,6 +116,12 @@ impl CreateVectorIndexExecutor {
             .map_err(|err| match err {
                 IndexCatalogError::Catalog(e) => ExecutionError::from(e),
                 IndexCatalogError::Storage(e) => ExecutionError::from(e),
+                IndexCatalogError::NameAlreadyExists(name) => {
+                    ExecutionError::Custom(Box::new(io::Error::new(
+                        io::ErrorKind::AlreadyExists,
+                        format!("vector index name {} already exists", name),
+                    )))
+                }
             })?;
         if !created && self.plan.if_not_exists {
             // Another session may have created the same index between binding and execution.

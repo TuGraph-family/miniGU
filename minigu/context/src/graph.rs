@@ -16,51 +16,65 @@ use minigu_storage::tp::MemoryGraph;
 use minigu_storage::tp::transaction::{IsolationLevel, MemTransaction};
 use minigu_transaction::manager::GraphTxnManager;
 
-use crate::error::IndexCatalogResult;
+use crate::error::{IndexCatalogError, IndexCatalogResult};
 
 pub enum GraphStorage {
     Memory(Arc<MemoryGraph>),
 }
 
 #[derive(Debug, Default)]
+struct IndexCatalogState {
+    entries: HashMap<VectorIndexKey, VectorIndexMetadata>,
+    name_to_index: HashMap<String, VectorIndexKey>,
+}
+
+#[derive(Debug, Default)]
 struct MemoryGraphIndexCatalog {
-    entries: RwLock<HashMap<VectorIndexKey, VectorIndexMetadata>>,
+    state: RwLock<IndexCatalogState>,
 }
 
 impl GraphIndexCatalog for MemoryGraphIndexCatalog {
     fn get_vector_index(&self, key: VectorIndexKey) -> CatalogResult<Option<VectorIndexMetadata>> {
-        Ok(self
-            .entries
-            .read()
-            .expect("index map should be readable")
-            .get(&key)
-            .cloned())
+        let state = self.state.read().expect("index catalog should be readable");
+        Ok(state.entries.get(&key).cloned())
+    }
+
+    fn get_vector_index_by_name(&self, name: &str) -> CatalogResult<Option<VectorIndexMetadata>> {
+        let state = self.state.read().expect("index catalog should be readable");
+        let key = state.name_to_index.get(name).copied();
+        Ok(key.and_then(|key| state.entries.get(&key).cloned()))
     }
 
     fn insert_vector_index(&self, meta: VectorIndexMetadata) -> CatalogResult<bool> {
-        let mut guard = self.entries.write().expect("index map should be writable");
-        match guard.entry(meta.key) {
+        let mut state = self
+            .state
+            .write()
+            .expect("index catalog should be writable");
+        match state.entries.entry(meta.key) {
             Entry::Occupied(_) => Ok(false),
             Entry::Vacant(v) => {
-                v.insert(meta);
+                v.insert(meta.clone());
+                state.name_to_index.insert(meta.name.to_string(), meta.key);
                 Ok(true)
             }
         }
     }
 
     fn remove_vector_index(&self, key: VectorIndexKey) -> CatalogResult<bool> {
-        let mut guard = self.entries.write().expect("index map should be writable");
-        Ok(guard.remove(&key).is_some())
+        let mut state = self
+            .state
+            .write()
+            .expect("index catalog should be writable");
+        let removed = state.entries.remove(&key);
+        if let Some(meta) = removed.as_ref() {
+            state.name_to_index.remove(meta.name.as_str());
+        }
+        Ok(removed.is_some())
     }
 
     fn list_vector_indices(&self) -> CatalogResult<VectorIndexDefinitions> {
-        Ok(self
-            .entries
-            .read()
-            .expect("index map should be readable")
-            .values()
-            .cloned()
-            .collect())
+        let state = self.state.read().expect("index catalog should be readable");
+        Ok(state.entries.values().cloned().collect())
     }
 }
 
@@ -109,6 +123,16 @@ impl GraphContainer {
 
         if self.index_catalog.get_vector_index(meta.key)?.is_some() {
             return Ok(false);
+        }
+
+        if let Some(existing) = self
+            .index_catalog
+            .get_vector_index_by_name(meta.name.as_str())?
+        {
+            if existing.key == meta.key {
+                return Ok(false);
+            }
+            return Err(IndexCatalogError::NameAlreadyExists(meta.name.to_string()));
         }
 
         let inserted = self.index_catalog.insert_vector_index(meta.clone())?;
@@ -279,6 +303,29 @@ mod tests {
             ]);
             graph
                 .create_vertex(txn, Vertex::new(i + 1, label, properties))
+                .unwrap();
+        }
+    }
+
+    fn insert_vertices_with_start(
+        graph: &Arc<MemoryGraph>,
+        txn: &Arc<MemTransaction>,
+        label: LabelId,
+        dimension: usize,
+        count: usize,
+        start_id: u64,
+    ) {
+        for i in 0..count as u64 {
+            let mut data = vec![F32::from(0.0); dimension];
+            data[0] = F32::from((start_id + i) as f32);
+            data[1] = F32::from(((start_id + i) % 10) as f32);
+            let vector = VectorValue::new(data, dimension).unwrap();
+            let properties = PropertyRecord::new(vec![
+                ScalarValue::String(Some(format!("v{}", start_id + i))),
+                ScalarValue::new_vector(dimension, Some(vector)),
+            ]);
+            graph
+                .create_vertex(txn, Vertex::new(start_id + i, label, properties))
                 .unwrap();
         }
     }
@@ -491,5 +538,93 @@ mod tests {
                 .is_none()
         );
         assert!(graph.get_vector_index(key).is_none());
+    }
+
+    #[test]
+    fn duplicate_vector_index_name() {
+        let (container, graph) = build_container();
+        let txn = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+
+        let label_one = LabelId::new(1).unwrap();
+        let label_two = LabelId::new(2).unwrap();
+        let dimension = 104usize;
+        insert_vertices(&graph, &txn, label_one, dimension, 10);
+        insert_vertices_with_start(&graph, &txn, label_two, dimension, 10, 100);
+
+        let key_one = VectorIndexKey::new(label_one, 1);
+        let key_two = VectorIndexKey::new(label_two, 1);
+        let meta_one = VectorIndexMetadata {
+            name: "dup_name".into(),
+            key: key_one,
+            metric: VectorMetric::L2,
+            dimension,
+        };
+        let meta_two = VectorIndexMetadata {
+            name: "dup_name".into(),
+            key: key_two,
+            metric: VectorMetric::L2,
+            dimension,
+        };
+
+        assert!(
+            container
+                .create_vector_index(graph.as_ref(), &txn, meta_one)
+                .unwrap()
+        );
+        let err = container
+            .create_vector_index(graph.as_ref(), &txn, meta_two)
+            .unwrap_err();
+        assert!(matches!(
+            err,
+            crate::error::IndexCatalogError::NameAlreadyExists(_)
+        ));
+    }
+
+    #[test]
+    fn vector_index_name_lookup_updates_on_create_and_drop() {
+        let (container, graph) = build_container();
+        let txn = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+
+        let label = LabelId::new(1).unwrap();
+        let dimension = 104usize;
+        insert_vertices(&graph, &txn, label, dimension, 10);
+
+        let key = VectorIndexKey::new(label, 1);
+        let meta = VectorIndexMetadata {
+            name: "name_lookup".into(),
+            key,
+            metric: VectorMetric::L2,
+            dimension,
+        };
+
+        assert!(
+            container
+                .create_vector_index(graph.as_ref(), &txn, meta.clone())
+                .unwrap()
+        );
+
+        let found = container
+            .index_catalog()
+            .get_vector_index_by_name("name_lookup")
+            .unwrap();
+        assert!(found.is_some());
+
+        assert!(
+            container
+                .drop_vector_index(graph.as_ref(), key, Some(meta))
+                .unwrap()
+        );
+
+        let found = container
+            .index_catalog()
+            .get_vector_index_by_name("name_lookup")
+            .unwrap();
+        assert!(found.is_none());
     }
 }

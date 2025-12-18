@@ -122,6 +122,9 @@ pub enum BindError {
     #[error("vector index on label {label} property {property} already exists")]
     VectorIndexAlreadyExists { label: SmolStr, property: SmolStr },
 
+    #[error("vector index name {name} already exists")]
+    VectorIndexNameAlreadyExists { name: SmolStr },
+
     #[error("vector index {name} not found")]
     VectorIndexNotFound { name: SmolStr },
 

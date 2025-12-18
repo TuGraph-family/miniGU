@@ -71,6 +71,9 @@ pub trait GraphIndexCatalog: Debug + Send + Sync {
     /// Returns the metadata of a vector index by key, if present.
     fn get_vector_index(&self, key: VectorIndexKey) -> CatalogResult<Option<VectorIndexMetadata>>;
 
+    /// Returns the metadata of a vector index by name, if present.
+    fn get_vector_index_by_name(&self, name: &str) -> CatalogResult<Option<VectorIndexMetadata>>;
+
     /// Inserts a vector index metadata entry.
     ///
     /// Returns `false` if an index on the same `(label_id, property_id)` already exists.

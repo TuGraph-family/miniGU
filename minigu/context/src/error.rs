@@ -26,6 +26,8 @@ pub enum IndexCatalogError {
     Catalog(#[from] CatalogError),
     #[error(transparent)]
     Storage(#[from] StorageError),
+    #[error("vector index name already exists: {0}")]
+    NameAlreadyExists(String),
 }
 
 pub type IndexCatalogResult<T> = std::result::Result<T, IndexCatalogError>;
