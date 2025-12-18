@@ -16,6 +16,8 @@ use crate::evaluator::column_ref::ColumnRef;
 use crate::evaluator::constant::Constant;
 use crate::evaluator::vector_distance::VectorDistanceEvaluator;
 use crate::evaluator::vertex_constructor::VertexConstructor;
+use crate::executor::create_vector_index::CreateVectorIndexBuilder;
+use crate::executor::drop_vector_index::DropVectorIndexBuilder;
 use crate::executor::procedure_call::ProcedureCallBuilder;
 use crate::executor::sort::SortSpec;
 use crate::executor::vector_index_scan::VectorIndexScanBuilder;
@@ -244,6 +246,16 @@ impl ExecutorBuilder {
                 let columns = vec![Arc::new(string_array) as _];
                 let chunk = DataChunk::new(columns);
                 Box::new([Ok(chunk)].into_executor())
+            }
+            PlanNode::PhysicalCreateVectorIndex(create_index) => {
+                assert!(children.is_empty());
+                CreateVectorIndexBuilder::new(self.session.clone(), create_index.clone())
+                    .into_executor()
+            }
+            PlanNode::PhysicalDropVectorIndex(drop_index) => {
+                assert!(children.is_empty());
+                DropVectorIndexBuilder::new(self.session.clone(), drop_index.clone())
+                    .into_executor()
             }
             _ => unreachable!(),
         }

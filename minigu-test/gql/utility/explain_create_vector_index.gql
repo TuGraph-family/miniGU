@@ -1,0 +1,3 @@
+EXPLAIN CREATE VECTOR INDEX test_index IF NOT EXISTS
+FOR (n:Movie)
+ON (n.embedding)
