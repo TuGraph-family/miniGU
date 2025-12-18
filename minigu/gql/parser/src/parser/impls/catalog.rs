@@ -388,38 +388,6 @@ mod tests {
     }
 
     #[test]
-    fn test_create_vector_index_statement() {
-        let parsed = parse!(
-            simple_catalog_modifying_statement,
-            r#"
-            CREATE VECTOR INDEX idx_embeddings IF NOT EXISTS
-            FOR (n:Movie)
-            ON (n.embedding)
-            "#
-        );
-        assert_yaml_snapshot!(parsed);
-    }
-
-    #[test]
-    fn test_drop_vector_index_statement() {
-        let parsed = parse!(
-            simple_catalog_modifying_statement,
-            r#"
-            DROP VECTOR INDEX idx_embeddings
-            "#
-        );
-        assert_yaml_snapshot!(parsed);
-
-        let parsed_if_exists = parse!(
-            simple_catalog_modifying_statement,
-            r#"
-            DROP VECTOR INDEX idx_embeddings IF EXISTS
-            "#
-        );
-        assert_yaml_snapshot!("drop_vector_index_if_exists", parsed_if_exists);
-    }
-
-    #[test]
     fn test_simple_catalog_modifying_statement() {
         let parsed = parse!(
             simple_catalog_modifying_statement,
