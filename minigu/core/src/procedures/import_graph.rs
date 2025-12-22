@@ -46,6 +46,7 @@ use minigu_catalog::memory::graph_type::{
 };
 use minigu_catalog::property::Property;
 use minigu_catalog::provider::GraphTypeProvider;
+use minigu_common::IsolationLevel;
 use minigu_common::data_type::{DataSchema, LogicalType};
 use minigu_common::error::not_implemented;
 use minigu_common::types::VertexId;
@@ -55,7 +56,6 @@ use minigu_context::procedure::Procedure;
 use minigu_context::session::SessionContext;
 use minigu_storage::common::{Edge, PropertyRecord, Vertex};
 use minigu_storage::tp::MemoryGraph;
-use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
 
 use super::common::{EdgeSpec, FileSpec, Manifest, RecordType, Result, VertexSpec};
 

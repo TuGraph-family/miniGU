@@ -1,13 +1,10 @@
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, OnceLock, RwLock};
+use std::sync::{Arc, OnceLock, RwLock, Weak};
 
 use dashmap::DashSet;
+use minigu_common::timestamp::global_timestamp_generator;
 use minigu_common::types::{EdgeId, VertexId};
-use minigu_transaction::{
-    GraphTxnManager, Transaction, UndoEntry as GenericUndoEntry, UndoPtr as GenericUndoPtr,
-    global_timestamp_generator,
-};
-pub use minigu_transaction::{IsolationLevel, Timestamp};
+pub use minigu_common::{IsolationLevel, Timestamp};
 
 use super::memory_graph::MemoryGraph;
 use crate::common::wal::StorageWal;
@@ -18,10 +15,55 @@ use crate::error::{
 };
 
 /// Type alias for storage-specific undo entry
+#[derive(Debug, Clone)]
+pub struct GenericUndoEntry<T> {
+    delta: T,
+    timestamp: Timestamp,
+    next: GenericUndoPtr<T>,
+}
+
+/// Weak pointer to an undo entry, used to build undo chains
+pub type GenericUndoPtr<T> = Weak<GenericUndoEntry<T>>;
+
+impl<T> GenericUndoEntry<T> {
+    pub fn new(delta: T, timestamp: Timestamp, next: GenericUndoPtr<T>) -> Self {
+        Self {
+            delta,
+            timestamp,
+            next,
+        }
+    }
+
+    pub fn delta(&self) -> &T {
+        &self.delta
+    }
+
+    pub fn timestamp(&self) -> Timestamp {
+        self.timestamp
+    }
+
+    pub fn next(&self) -> GenericUndoPtr<T> {
+        self.next.clone()
+    }
+}
+
+/// Type alias for storage-specific undo entry
 pub type UndoEntry = GenericUndoEntry<DeltaOp>;
 
 /// Type alias for storage-specific undo pointer
 pub type UndoPtr = GenericUndoPtr<DeltaOp>;
+
+/// Lightweight view trait so callers can pass either raw `Arc<MemTransaction>` or higher-level
+/// transaction wrappers.
+pub trait GraphTxnView {
+    fn mem_txn(&self) -> &Arc<MemTransaction>;
+}
+
+impl GraphTxnView for Arc<MemTransaction> {
+    fn mem_txn(&self) -> &Arc<MemTransaction> {
+        self
+    }
+}
 
 pub struct MemTransaction {
     graph: Arc<MemoryGraph>, // Reference to the associated in-memory graph
@@ -50,35 +92,31 @@ pub struct MemTransaction {
     is_handled: Arc<AtomicBool>,
 }
 
-impl Transaction for MemTransaction {
-    type Error = StorageError;
-
-    fn txn_id(&self) -> Timestamp {
+impl MemTransaction {
+    pub fn txn_id(&self) -> Timestamp {
         self.txn_id
     }
 
-    fn start_ts(&self) -> Timestamp {
+    pub fn start_ts(&self) -> Timestamp {
         self.start_ts
     }
 
-    fn commit_ts(&self) -> Option<Timestamp> {
+    pub fn commit_ts(&self) -> Option<Timestamp> {
         self.commit_ts.get().copied()
     }
 
-    fn isolation_level(&self) -> &IsolationLevel {
+    pub fn isolation_level(&self) -> &IsolationLevel {
         &self.isolation_level
     }
 
-    fn commit(&self) -> Result<Timestamp, Self::Error> {
+    pub fn commit(&self) -> StorageResult<Timestamp> {
         self.commit_at(None, false)
     }
 
-    fn abort(&self) -> Result<(), Self::Error> {
+    pub fn abort(&self) -> StorageResult<()> {
         self.abort_at(false)
     }
-}
 
-impl MemTransaction {
     pub(super) fn with_memgraph(
         graph: Arc<MemoryGraph>,
         txn_id: Timestamp,
@@ -466,7 +504,7 @@ impl Drop for MemTransaction {
 
 #[cfg(test)]
 mod tests {
-    use minigu_transaction::{GraphTxnManager, IsolationLevel};
+    use minigu_common::IsolationLevel;
 
     use super::*;
     use crate::tp::memory_graph;

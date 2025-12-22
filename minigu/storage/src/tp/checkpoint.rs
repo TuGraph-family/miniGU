@@ -14,8 +14,8 @@ use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crc32fast::Hasher;
+use minigu_common::timestamp::Timestamp;
 use minigu_common::types::{EdgeId, VertexId};
-use minigu_transaction::Timestamp;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -845,8 +845,8 @@ mod tests {
     use std::io::Seek;
     use std::{env, fs};
 
+    use minigu_common::IsolationLevel;
     use minigu_common::value::ScalarValue;
-    use minigu_transaction::{GraphTxnManager, IsolationLevel};
 
     use super::*;
     use crate::error::CheckpointError;

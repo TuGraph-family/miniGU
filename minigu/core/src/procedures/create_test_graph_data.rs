@@ -6,6 +6,7 @@ use minigu_catalog::memory::graph_type::{
 };
 use minigu_catalog::named_ref::NamedGraphRef;
 use minigu_catalog::property::Property;
+use minigu_common::IsolationLevel::Serializable;
 use minigu_common::data_type::LogicalType;
 use minigu_common::types::{EdgeId, VertexId};
 use minigu_common::value::ScalarValue;
@@ -13,8 +14,6 @@ use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::procedure::Procedure;
 use minigu_storage::common::{Edge, PropertyRecord, Vertex};
 use minigu_storage::tp::MemoryGraph;
-use minigu_transaction::IsolationLevel::Serializable;
-use minigu_transaction::{GraphTxnManager, Transaction};
 
 /// Creates a test graph with multiple vertex types (PERSON, COMPANY, CITY) and edge types (FRIEND,
 /// WORKS_AT, LOCATED_IN) with sample data.
