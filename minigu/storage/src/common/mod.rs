@@ -5,6 +5,7 @@ pub mod wal;
 // Re-export commonly used types
 use minigu_common::types::{EdgeId, LabelId, VertexId};
 use minigu_common::value::ScalarValue;
+use minigu_transaction::Timestamp;
 pub use model::edge::*;
 pub use model::properties::*;
 pub use model::schema::*;
@@ -31,4 +32,17 @@ pub enum DeltaOp {
     SetEdgeProps(EdgeId, SetPropsOp),
     AddLabel(LabelId),
     RemoveLabel(LabelId),
+    // AP-specific undo variants (used by AP storage transaction implementation)
+    CreateEdgeAp(Edge),
+    /// Re-create a previously deleted edge: (src_id, label_id, dst_id, properties, commit_ts)
+    DelEdgeAp(
+        VertexId,
+        Option<LabelId>,
+        VertexId,
+        PropertyRecord,
+        Timestamp,
+    ),
+    /// Restore previous properties: (src_id, label_id, SetPropsOp(old_indices, old_props),
+    /// old_commit_ts)
+    SetEdgePropsAp(VertexId, Option<LabelId>, SetPropsOp, Timestamp),
 }
