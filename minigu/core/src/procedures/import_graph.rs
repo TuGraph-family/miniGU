@@ -154,7 +154,7 @@ pub(crate) fn import_internal<P: AsRef<Path>>(
     let graph_type = get_graph_type_from_manifest(&manifest)?;
 
     // Graph
-    let graph = MemoryGraph::with_config_fresh(Default::default(), Default::default());
+    let graph = MemoryGraph::in_memory();
     let txn = graph
         .txn_manager()
         .begin_transaction(IsolationLevel::Serializable)?;

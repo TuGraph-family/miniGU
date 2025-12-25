@@ -6,7 +6,7 @@ use crate::common::*;
 #[test]
 fn test_graph_basic_operations() -> StorageResult<()> {
     // 1. Create MemGraph
-    let (graph, _cleaner) = create_empty_graph();
+    let graph = create_empty_graph();
 
     // 2. Open transaction
     let txn = graph
@@ -202,7 +202,7 @@ fn test_graph_basic_operations() -> StorageResult<()> {
 
 #[test]
 fn test_graph_vertex_not_found() -> StorageResult<()> {
-    let (graph, _cleaner) = create_empty_graph();
+    let graph = create_empty_graph();
     let txn = graph
         .txn_manager()
         .begin_transaction(IsolationLevel::Serializable)
@@ -216,7 +216,7 @@ fn test_graph_vertex_not_found() -> StorageResult<()> {
 
 #[test]
 fn test_graph_edge_not_found() -> StorageResult<()> {
-    let (graph, _cleaner) = create_empty_graph();
+    let graph = create_empty_graph();
     let txn = graph
         .txn_manager()
         .begin_transaction(IsolationLevel::Serializable)
@@ -230,7 +230,7 @@ fn test_graph_edge_not_found() -> StorageResult<()> {
 
 #[test]
 fn test_graph_duplicate_vertex_id() -> StorageResult<()> {
-    let (graph, _cleaner) = create_empty_graph();
+    let graph = create_empty_graph();
     let txn1 = graph
         .txn_manager()
         .begin_transaction(IsolationLevel::Serializable)
@@ -263,7 +263,7 @@ fn test_graph_duplicate_vertex_id() -> StorageResult<()> {
 
 #[test]
 fn test_graph_duplicate_edge_id() -> StorageResult<()> {
-    let (graph, _cleaner) = create_empty_graph();
+    let graph = create_empty_graph();
     let txn1 = graph
         .txn_manager()
         .begin_transaction(IsolationLevel::Serializable)
@@ -302,7 +302,7 @@ fn test_graph_duplicate_edge_id() -> StorageResult<()> {
 
 #[test]
 fn test_graph_edge_with_nonexistent_vertices() -> StorageResult<()> {
-    let (graph, _cleaner) = create_empty_graph();
+    let graph = create_empty_graph();
     let txn = graph
         .txn_manager()
         .begin_transaction(IsolationLevel::Serializable)
@@ -319,7 +319,7 @@ fn test_graph_edge_with_nonexistent_vertices() -> StorageResult<()> {
 
 #[test]
 fn test_graph_delete_nonexistent_vertex() -> StorageResult<()> {
-    let (graph, _cleaner) = create_empty_graph();
+    let graph = create_empty_graph();
     let txn = graph
         .txn_manager()
         .begin_transaction(IsolationLevel::Serializable)
@@ -335,7 +335,7 @@ fn test_graph_delete_nonexistent_vertex() -> StorageResult<()> {
 
 #[test]
 fn test_graph_delete_nonexistent_edge() -> StorageResult<()> {
-    let (graph, _cleaner) = create_empty_graph();
+    let graph = create_empty_graph();
     let txn = graph
         .txn_manager()
         .begin_transaction(IsolationLevel::Serializable)
@@ -353,7 +353,7 @@ fn test_graph_delete_nonexistent_edge() -> StorageResult<()> {
 fn test_graph_update_nonexistent_vertex_property() -> StorageResult<()> {
     use minigu_common::value::ScalarValue;
 
-    let (graph, _cleaner) = create_empty_graph();
+    let graph = create_empty_graph();
     let txn = graph
         .txn_manager()
         .begin_transaction(IsolationLevel::Serializable)
@@ -371,7 +371,7 @@ fn test_graph_update_nonexistent_vertex_property() -> StorageResult<()> {
 fn test_graph_update_nonexistent_edge_property() -> StorageResult<()> {
     use minigu_common::value::ScalarValue;
 
-    let (graph, _cleaner) = create_empty_graph();
+    let graph = create_empty_graph();
     let txn = graph
         .txn_manager()
         .begin_transaction(IsolationLevel::Serializable)
@@ -392,7 +392,7 @@ fn test_graph_update_nonexistent_edge_property() -> StorageResult<()> {
 
 #[test]
 fn test_graph_empty_adjacency_list() -> StorageResult<()> {
-    let (graph, _cleaner) = create_empty_graph();
+    let graph = create_empty_graph();
     let txn = graph
         .txn_manager()
         .begin_transaction(IsolationLevel::Serializable)
@@ -412,7 +412,7 @@ fn test_graph_empty_adjacency_list() -> StorageResult<()> {
 
 #[test]
 fn test_graph_self_loop_edge() -> StorageResult<()> {
-    let (graph, _cleaner) = create_empty_graph();
+    let graph = create_empty_graph();
     let txn = graph
         .txn_manager()
         .begin_transaction(IsolationLevel::Serializable)
@@ -436,7 +436,7 @@ fn test_graph_self_loop_edge() -> StorageResult<()> {
 
 #[test]
 fn test_graph_bidirectional_edges() -> StorageResult<()> {
-    let (graph, _cleaner) = create_empty_graph();
+    let graph = create_empty_graph();
     let txn = graph
         .txn_manager()
         .begin_transaction(IsolationLevel::Serializable)
@@ -467,7 +467,7 @@ fn test_graph_bidirectional_edges() -> StorageResult<()> {
 
 #[test]
 fn test_graph_multiple_edge_types() -> StorageResult<()> {
-    let (graph, _cleaner) = create_empty_graph();
+    let graph = create_empty_graph();
     let txn = graph
         .txn_manager()
         .begin_transaction(IsolationLevel::Serializable)
@@ -506,7 +506,7 @@ fn test_graph_property_value_types() -> StorageResult<()> {
     use minigu_storage::model::properties::PropertyRecord;
     use minigu_storage::model::vertex::Vertex;
 
-    let (graph, _cleaner) = create_empty_graph();
+    let graph = create_empty_graph();
     let txn = graph
         .txn_manager()
         .begin_transaction(IsolationLevel::Serializable)
@@ -549,7 +549,7 @@ fn test_graph_null_property_values() -> StorageResult<()> {
     use minigu_storage::model::properties::PropertyRecord;
     use minigu_storage::model::vertex::Vertex;
 
-    let (graph, _cleaner) = create_empty_graph();
+    let graph = create_empty_graph();
     let txn = graph
         .txn_manager()
         .begin_transaction(IsolationLevel::Serializable)
@@ -572,7 +572,7 @@ fn test_graph_null_property_values() -> StorageResult<()> {
 
 #[test]
 fn test_graph_vertex_count() -> StorageResult<()> {
-    let (graph, _cleaner) = create_empty_graph();
+    let graph = create_empty_graph();
     let txn = graph
         .txn_manager()
         .begin_transaction(IsolationLevel::Serializable)
@@ -593,7 +593,7 @@ fn test_graph_vertex_count() -> StorageResult<()> {
 
 #[test]
 fn test_graph_edge_count() -> StorageResult<()> {
-    let (graph, _cleaner) = create_empty_graph();
+    let graph = create_empty_graph();
     let txn = graph
         .txn_manager()
         .begin_transaction(IsolationLevel::Serializable)
@@ -620,7 +620,7 @@ fn test_graph_edge_count() -> StorageResult<()> {
 
 #[test]
 fn test_graph_clear_all_data() -> StorageResult<()> {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     // Delete all
     let txn = graph

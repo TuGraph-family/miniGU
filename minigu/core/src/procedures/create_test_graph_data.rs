@@ -44,7 +44,7 @@ pub fn build_procedure() -> Procedure {
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("current schema not set"))?;
 
-        let graph = MemoryGraph::with_config_fresh(Default::default(), Default::default());
+        let graph = MemoryGraph::in_memory();
         let mut graph_type = MemoryGraphTypeCatalog::new();
 
         // Add labels
