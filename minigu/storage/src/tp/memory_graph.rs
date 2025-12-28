@@ -494,7 +494,6 @@ impl MemoryGraph {
                             }
                             DeltaOp::AddLabel(_) => todo!(),
                             DeltaOp::RemoveLabel(_) => todo!(),
-                            _ => {}
                         }
                     }
                 }

@@ -27,7 +27,9 @@ const PATH: &str = "";
 pub fn mock_olap_graph(property_cnt: u64) -> OlapStorage {
     let storage = OlapStorage {
         logic_id_counter: AtomicU64::new(0),
+        edge_id_counter: AtomicU64::new(0),
         dense_id_map: DashMap::new(),
+        edge_id_map: DashMap::new(),
         vertices: RwLock::new(Vec::new()),
         edges: RwLock::new(Vec::new()),
         property_columns: RwLock::new(Vec::new()),
@@ -162,7 +164,7 @@ fn test_create_edge_sets_timestamps() {
 
     // Inspect block header and edge
     let edges = storage.edges.read().unwrap();
-    let block = edges.get(0).unwrap();
+    let block = edges.first().unwrap();
     // Initial block timestamps should be initialized as max/min sentinel
     assert_eq!(block.min_ts, Timestamp::max_commit_ts());
     assert_eq!(block.max_ts, Timestamp::with_ts(0));
@@ -213,6 +215,7 @@ fn get_edge_test() {
     let storage = Arc::new(mock_olap_graph(1));
     let txn = mock_transaction(storage.clone());
     // Insert vertex
+    let mut label_to_eid: HashMap<u64, minigu_common::types::EdgeId> = HashMap::new();
     for i in 1..=5 {
         let _result = storage.create_vertex(
             &txn,
@@ -224,26 +227,30 @@ fn get_edge_test() {
         );
 
         for j in 1..=(400 - i * 10) {
-            let _result1 = storage.create_edge(
-                &txn,
-                OlapEdge {
-                    label_id: NonZeroU32::new(i * 10000 + j),
-                    src_id: i as u64,
-                    dst_id: (j * (i + 1)) as u64,
-                    properties: OlapPropertyStore::new(vec![Some(ScalarValue::String(Some(
-                        "hello".to_string(),
-                    )))]),
-                },
-            );
+            let label_num = (i * 10000 + j) as u64;
+            let eid = storage
+                .create_edge(
+                    &txn,
+                    OlapEdge {
+                        label_id: NonZeroU32::new((i * 10000 + j) as u32),
+                        src_id: i as u64,
+                        dst_id: (j * (i + 1)) as u64,
+                        properties: OlapPropertyStore::new(vec![Some(ScalarValue::String(Some(
+                            "hello".to_string(),
+                        )))]),
+                    },
+                )
+                .unwrap();
+            label_to_eid.insert(label_num, eid);
         }
     }
 
-    let result1 = storage.get_edge(&txn, NonZeroU32::new(30099));
+    let result1 = storage.get_edge(&txn, *label_to_eid.get(&30099u64).unwrap());
     println!("{result1:?}");
     assert!(result1.is_ok());
     assert_eq!(result1.unwrap().dst_id, 396);
 
-    let result2 = storage.get_edge(&txn, NonZeroU32::new(20333));
+    let result2 = storage.get_edge(&txn, *label_to_eid.get(&20333u64).unwrap());
     assert!(result2.is_ok());
     assert_eq!(result2.unwrap().label_id, NonZeroU32::new(20333));
 }
@@ -342,7 +349,7 @@ fn adjacency_iterator_test() {
             let _result1 = storage.create_edge(
                 &txn,
                 OlapEdge {
-                    label_id: NonZeroU32::new(i * 10000 + j),
+                    label_id: NonZeroU32::new((i * 10000 + j) as u32),
                     src_id: i as VertexId,
                     dst_id: (j * (i + 1)) as VertexId,
                     properties: OlapPropertyStore::new(vec![Option::from(ScalarValue::String(
@@ -444,6 +451,7 @@ fn set_vertex_properties_test() {
 fn set_edge_properties_test() {
     let storage = Arc::new(mock_olap_graph(3));
     let txn = mock_transaction(storage.clone());
+    let mut label_to_eid: HashMap<u64, minigu_common::types::EdgeId> = HashMap::new();
     for i in 0..2 {
         let _result = storage.create_vertex(
             &txn,
@@ -454,31 +462,35 @@ fn set_edge_properties_test() {
             },
         );
         for j in 0..3 {
-            let _result1 = storage.create_edge(
-                &txn,
-                OlapEdge {
-                    label_id: NonZeroU32::new(i * 10000 + j),
-                    src_id: i as VertexId,
-                    dst_id: (j + i) as VertexId,
-                    properties: OlapPropertyStore::new(vec![
-                        Some(ScalarValue::UInt32(Some(j * 10))),
-                        Some(ScalarValue::String(Some("hello".to_string()))),
-                        Some(ScalarValue::Boolean(Some(true))),
-                    ]),
-                },
-            );
+            let label_num = (i * 10000 + j) as u64;
+            let eid = storage
+                .create_edge(
+                    &txn,
+                    OlapEdge {
+                        label_id: NonZeroU32::new((i * 10000 + j) as u32),
+                        src_id: i as VertexId,
+                        dst_id: (j + i) as VertexId,
+                        properties: OlapPropertyStore::new(vec![
+                            Some(ScalarValue::UInt32(Some((j * 10) as u32))),
+                            Some(ScalarValue::String(Some("hello".to_string()))),
+                            Some(ScalarValue::Boolean(Some(true))),
+                        ]),
+                    },
+                )
+                .unwrap();
+            label_to_eid.insert(label_num, eid);
         }
     }
 
     let _ = storage.set_edge_property(
         &txn,
-        NonZeroU32::new(10001),
+        *label_to_eid.get(&10001u64).unwrap(),
         vec![0],
         vec![ScalarValue::Int32(Some(10086))],
     );
     let _ = storage.set_edge_property(
         &txn,
-        NonZeroU32::new(10002),
+        *label_to_eid.get(&10002u64).unwrap(),
         vec![1, 2],
         vec![
             ScalarValue::String(Some("No hello".to_string())),
@@ -487,14 +499,14 @@ fn set_edge_properties_test() {
     );
 
     let store1 = storage
-        .get_edge(&txn, NonZeroU32::new(10001))
+        .get_edge(&txn, *label_to_eid.get(&10001u64).unwrap())
         .unwrap()
         .properties;
     let clone1 = store1.properties.first().unwrap().clone();
     assert_eq!(clone1.unwrap(), ScalarValue::Int32(Some(10086)));
 
     let store2 = storage
-        .get_edge(&txn, NonZeroU32::new(10002))
+        .get_edge(&txn, *label_to_eid.get(&10002u64).unwrap())
         .unwrap()
         .properties;
     let clone2 = store2.properties.get(1).unwrap().clone();
@@ -524,7 +536,7 @@ fn delete_vertex_test() {
             let _result1 = storage.create_edge(
                 &txn,
                 OlapEdge {
-                    label_id: NonZeroU32::new(i * 10000 + j),
+                    label_id: NonZeroU32::new((i * 10000 + j) as u32),
                     src_id: i as VertexId,
                     dst_id: (j + i) as VertexId,
                     properties: OlapPropertyStore::default(),
@@ -558,25 +570,30 @@ fn delete_property_test() {
         },
     );
 
+    let mut label_to_eid: HashMap<u64, minigu_common::types::EdgeId> = HashMap::new();
     for i in 1..=5 {
-        let _result1 = storage.create_edge(
-            &txn,
-            OlapEdge {
-                label_id: NonZeroU32::new(i),
-                src_id: 1 as VertexId,
-                dst_id: (10000 + i) as VertexId,
-                properties: OlapPropertyStore::new(vec![
-                    Some(ScalarValue::UInt32(Some(i * 10))),
-                    Some(ScalarValue::String(Some("hello".to_string()))),
-                    Some(ScalarValue::Boolean(Some(true))),
-                    Some(ScalarValue::Float32(Some(F32::from(0.5) + i as f32))),
-                    Some(ScalarValue::String(Some("another hello".to_string()))),
-                ]),
-            },
-        );
+        let label_num = i as u64;
+        let eid = storage
+            .create_edge(
+                &txn,
+                OlapEdge {
+                    label_id: NonZeroU32::new(i),
+                    src_id: 1 as VertexId,
+                    dst_id: (10000 + i) as VertexId,
+                    properties: OlapPropertyStore::new(vec![
+                        Some(ScalarValue::UInt32(Some(i * 10))),
+                        Some(ScalarValue::String(Some("hello".to_string()))),
+                        Some(ScalarValue::Boolean(Some(true))),
+                        Some(ScalarValue::Float32(Some(F32::from(0.5) + i as f32))),
+                        Some(ScalarValue::String(Some("another hello".to_string()))),
+                    ]),
+                },
+            )
+            .unwrap();
+        label_to_eid.insert(label_num, eid);
     }
 
-    let _ = storage.delete_edge(&txn, NonZeroU32::new(2));
+    let _ = storage.delete_edge(&txn, *label_to_eid.get(&2u64).unwrap());
 
     {
         let binding = storage.edges.read().unwrap();
@@ -597,10 +614,10 @@ fn delete_property_test() {
         );
     }
 
-    let _ = storage.delete_edge(&txn, NonZeroU32::new(1));
-    let _ = storage.delete_edge(&txn, NonZeroU32::new(3));
-    let _ = storage.delete_edge(&txn, NonZeroU32::new(4));
-    let _ = storage.delete_edge(&txn, NonZeroU32::new(5));
+    let _ = storage.delete_edge(&txn, *label_to_eid.get(&1u64).unwrap());
+    let _ = storage.delete_edge(&txn, *label_to_eid.get(&3u64).unwrap());
+    let _ = storage.delete_edge(&txn, *label_to_eid.get(&4u64).unwrap());
+    let _ = storage.delete_edge(&txn, *label_to_eid.get(&5u64).unwrap());
 
     assert_eq!(
         storage.edges.read().unwrap().first().unwrap().edge_counter,
@@ -628,7 +645,7 @@ fn compress_edge_test() {
             let _result1 = storage.create_edge(
                 &txn,
                 OlapEdge {
-                    label_id: NonZeroU32::new(i * 10000 + j),
+                    label_id: NonZeroU32::new((i * 10000 + j) as u32),
                     src_id: i as u64,
                     dst_id: (j + i) as u64,
                     properties: Default::default(),
@@ -675,11 +692,11 @@ fn compress_property_test() {
             let _result1 = storage.create_edge(
                 &txn,
                 OlapEdge {
-                    label_id: NonZeroU32::new(i * 10000 + j),
+                    label_id: NonZeroU32::new((i * 10000 + j) as u32),
                     src_id: i as u64,
                     dst_id: (j * (i + 1)) as u64,
                     properties: OlapPropertyStore::new(vec![
-                        Option::from(ScalarValue::UInt32(Some(j))),
+                        Option::from(ScalarValue::UInt32(Some(j.try_into().unwrap()))),
                         None,
                     ]),
                 },
@@ -690,7 +707,7 @@ fn compress_property_test() {
             let _result1 = storage.create_edge(
                 &txn,
                 OlapEdge {
-                    label_id: NonZeroU32::new(i * 2 * 10000 + j),
+                    label_id: NonZeroU32::new((i * 2 * 10000 + j) as u32),
                     src_id: i as u64,
                     dst_id: (j * (i * 2 + 1)) as u64,
                     properties: OlapPropertyStore::new(vec![

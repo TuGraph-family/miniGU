@@ -266,7 +266,6 @@ impl MemTransaction {
                     DeltaOp::SetEdgeProps(eid, _) => update_commit_ts!(self, edges, eid),
                     DeltaOp::AddLabel(_) => todo!(),
                     DeltaOp::RemoveLabel(_) => todo!(),
-                    _ => {}
                 }
             }
         }
@@ -418,7 +417,6 @@ impl MemTransaction {
                 }
                 DeltaOp::AddLabel(_) => todo!(),
                 DeltaOp::RemoveLabel(_) => todo!(),
-                _ => {}
             }
         }
 

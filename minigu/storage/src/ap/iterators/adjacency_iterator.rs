@@ -25,45 +25,39 @@ impl Iterator for AdjacencyIterator<'_> {
     fn next(&mut self) -> Option<Self::Item> {
         while self.block_idx != usize::MAX {
             let temporary = self.storage.edges.read().unwrap();
-            let option = temporary.get(self.block_idx);
-
-            // Return if none,should not happen
-            let _v = option?;
-
-            let block = option.unwrap();
-            // Return if tombstone
-            if block.is_tombstone {
-                if option?.pre_block_index.is_none() {
+            let block = match temporary.get(self.block_idx) {
+                Some(block) => block,
+                None => {
                     self.block_idx = usize::MAX;
                     return None;
                 }
+            };
 
+            // Return if tombstone
+            if block.is_tombstone {
+                if block.pre_block_index.is_none() {
+                    self.block_idx = usize::MAX;
+                    return None;
+                }
                 self.block_idx = block.pre_block_index.unwrap();
                 continue;
             }
+
             // Move to next block
             if self.offset == BLOCK_CAPACITY {
                 self.offset = 0;
-                self.block_idx = if let Some(idx) = block.pre_block_index {
-                    idx
-                } else {
-                    usize::MAX
-                };
+                self.block_idx = block.pre_block_index.unwrap_or(usize::MAX);
                 continue;
             }
 
             if self.offset < BLOCK_CAPACITY {
                 let raw: &OlapStorageEdge = &block.edges[self.offset];
-                // Scan next block once scanned empty edge
                 if raw.label_id == NonZeroU32::new(1) && raw.dst_id == 1 {
                     self.offset = 0;
-                    self.block_idx = if let Some(idx) = block.pre_block_index {
-                        idx
-                    } else {
-                        usize::MAX
-                    };
+                    self.block_idx = block.pre_block_index.unwrap_or(usize::MAX);
                     continue;
                 }
+
                 // Build edge result
                 let edge = OlapEdge {
                     label_id: raw.label_id,
@@ -95,11 +89,7 @@ impl Iterator for AdjacencyIterator<'_> {
                 self.offset += 1;
                 return Some(Ok(edge));
             }
-            self.block_idx = if let Some(idx) = block.pre_block_index {
-                idx
-            } else {
-                usize::MAX
-            };
+            self.block_idx = block.pre_block_index.unwrap_or(usize::MAX);
         }
         None
     }
@@ -123,41 +113,36 @@ impl Iterator for AdjacencyIteratorAtTs<'_> {
     fn next(&mut self) -> Option<Self::Item> {
         while self.block_idx != usize::MAX {
             let temporary = self.storage.edges.read().unwrap();
-            let option = temporary.get(self.block_idx);
-
-            // Return if none,should not happen
-            let _v = option?;
-
-            let block = option.unwrap();
-            // Return if tombstone
-            if block.is_tombstone {
-                if option?.pre_block_index.is_none() {
+            let block = match temporary.get(self.block_idx) {
+                Some(block) => block,
+                None => {
                     self.block_idx = usize::MAX;
                     return None;
                 }
+            };
 
+            // Return if tombstone
+            if block.is_tombstone {
+                if block.pre_block_index.is_none() {
+                    self.block_idx = usize::MAX;
+                    return None;
+                }
                 self.block_idx = block.pre_block_index.unwrap();
                 continue;
             }
+
             if let Some(ts) = self.txn_id
                 && ts.raw() < block.min_ts.raw()
             {
-                self.block_idx = if let Some(idx) = block.pre_block_index {
-                    idx
-                } else {
-                    usize::MAX
-                };
+                self.block_idx = block.pre_block_index.unwrap_or(usize::MAX);
                 self.offset = 0;
                 continue;
             }
+
             // Move to next block
             if self.offset == BLOCK_CAPACITY {
                 self.offset = 0;
-                self.block_idx = if let Some(idx) = block.pre_block_index {
-                    idx
-                } else {
-                    usize::MAX
-                };
+                self.block_idx = block.pre_block_index.unwrap_or(usize::MAX);
                 continue;
             }
 
@@ -166,13 +151,10 @@ impl Iterator for AdjacencyIteratorAtTs<'_> {
                 // Scan next block once scanned empty edge
                 if raw.label_id == NonZeroU32::new(1) && raw.dst_id == 1 {
                     self.offset = 0;
-                    self.block_idx = if let Some(idx) = block.pre_block_index {
-                        idx
-                    } else {
-                        usize::MAX
-                    };
+                    self.block_idx = block.pre_block_index.unwrap_or(usize::MAX);
                     continue;
                 }
+
                 // Visibility filtering by edge commit_ts when target_ts is provided
                 if let Some(target) = self.commit_ts.get() {
                     if raw.commit_ts.is_txn_id() {
@@ -190,6 +172,7 @@ impl Iterator for AdjacencyIteratorAtTs<'_> {
                         continue;
                     }
                 }
+
                 // Build edge result
                 let edge = OlapEdge {
                     label_id: raw.label_id,
@@ -197,7 +180,6 @@ impl Iterator for AdjacencyIteratorAtTs<'_> {
                     dst_id: raw.dst_id,
                     properties: {
                         let mut props = OlapPropertyStore::default();
-
                         for (col_idx, column) in self
                             .storage
                             .property_columns
@@ -221,11 +203,8 @@ impl Iterator for AdjacencyIteratorAtTs<'_> {
                 self.offset += 1;
                 return Some(Ok(edge));
             }
-            self.block_idx = if let Some(idx) = block.pre_block_index {
-                idx
-            } else {
-                usize::MAX
-            };
+
+            self.block_idx = block.pre_block_index.unwrap_or(usize::MAX);
         }
         None
     }

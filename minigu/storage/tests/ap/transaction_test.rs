@@ -130,7 +130,7 @@ fn test_ap_commit_replaces_txn_id() {
     let commit_ts = edge2_txn.commit_at(None).expect("commit should succeed");
 
     let edges = arc_storage.edges.read().unwrap();
-    let block = edges.get(0).unwrap();
+    let block = edges.first().unwrap();
 
     assert_eq!(block.edges[0].commit_ts, commit_ts);
     assert_eq!(block.min_ts, edge1_txn_id);
@@ -184,17 +184,17 @@ fn test_iter_edges_at_ts_filters() {
 
     // Test visibility at different target timestamps
     // At ts 50 (before any commits) - should see nothing
-    let mut iter50 = arc_storage.iter_edges_at_ts(&txn50).unwrap();
+    let iter50 = arc_storage.iter_edges_at_ts(&txn50).unwrap();
     let mut count50 = 0;
-    while let Some(_result) = iter50.next() {
+    for _result in iter50 {
         count50 += 1;
     }
     assert_eq!(count50, 0, "Should see no edges at ts 50");
 
     // At ts 150 (after first commit, before second) - should see only first batch
-    let mut iter150 = arc_storage.iter_edges_at_ts(&txn150).unwrap();
+    let iter150 = arc_storage.iter_edges_at_ts(&txn150).unwrap();
     let mut count150 = 0;
-    while let Some(_) = iter150.next() {
+    for _ in iter150 {
         count150 += 1;
     }
     assert_eq!(
@@ -203,9 +203,9 @@ fn test_iter_edges_at_ts_filters() {
     );
 
     // At ts 250 (after both commits) - should see all edges
-    let mut iter250 = arc_storage.iter_edges_at_ts(&txn250).unwrap();
+    let iter250 = arc_storage.iter_edges_at_ts(&txn250).unwrap();
     let mut count250 = 0;
-    while let Some(_) = iter250.next() {
+    for _ in iter250 {
         count250 += 1;
     }
     assert_eq!(
@@ -247,18 +247,20 @@ fn test_uncommitted_data_isolation() {
     );
 
     // Insert edge in transaction A (uncommitted)
-    let _ = arc_storage2.create_edge_in_txn(
-        &txn_a,
-        OlapEdge {
-            label_id: NonZeroU32::new(500),
-            src_id: 1,
-            dst_id: 100,
-            properties: OlapPropertyStore::default(),
-        },
-    );
+    let eid = arc_storage2
+        .create_edge_in_txn(
+            &txn_a,
+            OlapEdge {
+                label_id: NonZeroU32::new(500),
+                src_id: 1,
+                dst_id: 100,
+                properties: OlapPropertyStore::default(),
+            },
+        )
+        .unwrap();
 
     // Transaction A should see its own uncommitted edge
-    let edge_result = arc_storage2.get_edge_at_ts(&txn_a, NonZeroU32::new(500));
+    let edge_result = arc_storage2.get_edge_at_ts(&txn_a, eid);
     assert!(edge_result.is_ok(), "Transaction A should see its own edge");
     assert!(
         edge_result.unwrap().is_some(),
@@ -273,22 +275,22 @@ fn test_uncommitted_data_isolation() {
         txn_b_id,
         IsolationLevel::Snapshot,
     );
-    let edge_result_b = arc_storage2.get_edge_at_ts(&txn_b, NonZeroU32::new(500));
-    if edge_result_b.is_ok() {
+    let edge_result_b = arc_storage2.get_edge_at_ts(&txn_b, eid);
+    if let Ok(item) = edge_result_b {
         assert!(
-            edge_result_b.unwrap().is_none(),
+            item.is_none(),
             "Transaction B should not see transaction A's edge"
         );
     }
     // Test iter_edges_at_ts with uncommitted data
-    let mut iter_a = arc_storage2.iter_edges_at_ts(&txn_a).unwrap();
+    let iter_a = arc_storage2.iter_edges_at_ts(&txn_a).unwrap();
     let mut found_in_a = false;
-    while let Some(edge) = iter_a.next() {
-        if let Ok(e) = edge {
-            if e.label_id == NonZeroU32::new(500) {
-                found_in_a = true;
-                break;
-            }
+    for edge in iter_a {
+        if let Ok(e) = edge
+            && e.label_id == NonZeroU32::new(500)
+        {
+            found_in_a = true;
+            break;
         }
     }
     assert!(
@@ -296,14 +298,14 @@ fn test_uncommitted_data_isolation() {
         "Transaction A should find its own edge in iterator"
     );
 
-    let mut iter_b = arc_storage2.iter_edges_at_ts(&txn_b).unwrap();
+    let iter_b = arc_storage2.iter_edges_at_ts(&txn_b).unwrap();
     let mut found_in_b = false;
-    while let Some(edge) = iter_b.next() {
-        if let Ok(e) = edge {
-            if e.label_id == NonZeroU32::new(500) {
-                found_in_b = true;
-                break;
-            }
+    for edge in iter_b {
+        if let Ok(e) = edge
+            && e.label_id == NonZeroU32::new(500)
+        {
+            found_in_b = true;
+            break;
         }
     }
     assert!(
@@ -334,18 +336,20 @@ fn test_set_edge_property_in_txn_basic() {
         },
     );
 
-    let _ = arc_storage.create_edge_in_txn(
-        &txn_1,
-        OlapEdge {
-            label_id: NonZeroU32::new(100),
-            src_id: 1,
-            dst_id: 10,
-            properties: OlapPropertyStore::new(vec![
-                Some(ScalarValue::Int32(Some(42))),
-                Some(ScalarValue::String(Some("hello".to_string()))),
-            ]),
-        },
-    );
+    let eid = arc_storage
+        .create_edge_in_txn(
+            &txn_1,
+            OlapEdge {
+                label_id: NonZeroU32::new(100),
+                src_id: 1,
+                dst_id: 10,
+                properties: OlapPropertyStore::new(vec![
+                    Some(ScalarValue::Int32(Some(42))),
+                    Some(ScalarValue::String(Some("hello".to_string()))),
+                ]),
+            },
+        )
+        .unwrap();
     txn_1.commit_at(None).expect("Commit should succeed");
 
     // Test setting a single property
@@ -358,7 +362,7 @@ fn test_set_edge_property_in_txn_basic() {
     );
     let result = arc_storage.set_edge_property_in_txn(
         &txn_2,
-        NonZeroU32::new(100),
+        eid,
         vec![0],
         vec![ScalarValue::Int32(Some(10086))],
     );
@@ -374,9 +378,7 @@ fn test_set_edge_property_in_txn_basic() {
         IsolationLevel::Snapshot,
     );
     get_txn.commit_at(None).expect("Commit should succeed");
-    let edge = arc_storage
-        .get_edge_at_ts(&get_txn, NonZeroU32::new(100))
-        .unwrap();
+    let edge = arc_storage.get_edge_at_ts(&get_txn, eid).unwrap();
     assert_eq!(
         edge.as_ref().unwrap().properties.get(0),
         Some(ScalarValue::Int32(Some(10086))),
@@ -411,19 +413,21 @@ fn test_set_edge_property_in_txn_multiple_properties() {
         },
     );
 
-    let _ = arc_storage.create_edge_in_txn(
-        &txn_1,
-        OlapEdge {
-            label_id: NonZeroU32::new(100),
-            src_id: 1,
-            dst_id: 10,
-            properties: OlapPropertyStore::new(vec![
-                Some(ScalarValue::Int32(Some(42))),
-                Some(ScalarValue::String(Some("hello".to_string()))),
-                Some(ScalarValue::Boolean(Some(true))),
-            ]),
-        },
-    );
+    let eid = arc_storage
+        .create_edge_in_txn(
+            &txn_1,
+            OlapEdge {
+                label_id: NonZeroU32::new(100),
+                src_id: 1,
+                dst_id: 10,
+                properties: OlapPropertyStore::new(vec![
+                    Some(ScalarValue::Int32(Some(42))),
+                    Some(ScalarValue::String(Some("hello".to_string()))),
+                    Some(ScalarValue::Boolean(Some(true))),
+                ]),
+            },
+        )
+        .unwrap();
     txn_1.commit_at(None).expect("Commit should succeed");
 
     // Test setting multiple properties
@@ -436,7 +440,7 @@ fn test_set_edge_property_in_txn_multiple_properties() {
     );
     let result = arc_storage.set_edge_property_in_txn(
         &txn_2,
-        NonZeroU32::new(100),
+        eid,
         vec![0, 2],
         vec![
             ScalarValue::Int32(Some(10086)),
@@ -458,9 +462,7 @@ fn test_set_edge_property_in_txn_multiple_properties() {
         IsolationLevel::Snapshot,
     );
     get_txn.commit_at(None).expect("Commit should succeed");
-    let edge = arc_storage
-        .get_edge_at_ts(&get_txn, NonZeroU32::new(100))
-        .unwrap();
+    let edge = arc_storage.get_edge_at_ts(&get_txn, eid).unwrap();
     assert_eq!(
         edge.as_ref().unwrap().properties.get(0),
         Some(ScalarValue::Int32(Some(10086))),
@@ -492,7 +494,7 @@ fn test_set_edge_property_in_txn_nonexistent_edge() {
     // Try to set property on non-existent edge
     let result = arc_storage.set_edge_property_in_txn(
         &txn,
-        NonZeroU32::new(999),
+        999u64,
         vec![0],
         vec![ScalarValue::Int32(Some(10086))],
     );
@@ -525,15 +527,17 @@ fn test_set_edge_property_in_txn_transaction_rollback() {
         },
     );
 
-    let _ = arc_storage.create_edge_in_txn(
-        &txn_1,
-        OlapEdge {
-            label_id: NonZeroU32::new(100),
-            src_id: 1,
-            dst_id: 10,
-            properties: OlapPropertyStore::new(vec![Some(ScalarValue::Int32(Some(42)))]),
-        },
-    );
+    let eid = arc_storage
+        .create_edge_in_txn(
+            &txn_1,
+            OlapEdge {
+                label_id: NonZeroU32::new(100),
+                src_id: 1,
+                dst_id: 10,
+                properties: OlapPropertyStore::new(vec![Some(ScalarValue::Int32(Some(42)))]),
+            },
+        )
+        .unwrap();
     txn_1.commit_at(None).expect("Commit should succeed");
 
     // Start a transaction to set property
@@ -546,7 +550,7 @@ fn test_set_edge_property_in_txn_transaction_rollback() {
     );
     let _ = arc_storage.set_edge_property_in_txn(
         &txn_2,
-        NonZeroU32::new(100),
+        eid,
         vec![0],
         vec![ScalarValue::Int32(Some(10086))],
     );
@@ -563,9 +567,7 @@ fn test_set_edge_property_in_txn_transaction_rollback() {
         IsolationLevel::Snapshot,
     );
     get_txn.commit_at(None).expect("Commit should succeed");
-    let edge = arc_storage
-        .get_edge_at_ts(&get_txn, NonZeroU32::new(100))
-        .unwrap();
+    let edge = arc_storage.get_edge_at_ts(&get_txn, eid).unwrap();
     assert_eq!(
         edge.as_ref().unwrap().properties.get(0),
         Some(ScalarValue::Int32(Some(42))),
@@ -595,15 +597,17 @@ fn test_delete_edge_in_txn_basic() {
         },
     );
 
-    let _ = arc_storage.create_edge_in_txn(
-        &txn,
-        OlapEdge {
-            label_id: NonZeroU32::new(100),
-            src_id: 1,
-            dst_id: 10,
-            properties: OlapPropertyStore::new(vec![Some(ScalarValue::Int32(Some(42)))]),
-        },
-    );
+    let eid = arc_storage
+        .create_edge_in_txn(
+            &txn,
+            OlapEdge {
+                label_id: NonZeroU32::new(100),
+                src_id: 1,
+                dst_id: 10,
+                properties: OlapPropertyStore::new(vec![Some(ScalarValue::Int32(Some(42)))]),
+            },
+        )
+        .unwrap();
     txn.commit_at(None).expect("Commit should succeed");
 
     // Test deleting the edge
@@ -615,7 +619,7 @@ fn test_delete_edge_in_txn_basic() {
         IsolationLevel::Snapshot,
     );
     delete_txn.commit_at(None).expect("Commit should succeed");
-    let result = arc_storage.delete_edge_in_txn(&delete_txn, NonZeroU32::new(100));
+    let result = arc_storage.delete_edge_in_txn(&delete_txn, eid);
     assert!(result.is_ok(), "Deleting edge should succeed");
 
     // Verify the edge is gone
@@ -627,7 +631,7 @@ fn test_delete_edge_in_txn_basic() {
         IsolationLevel::Snapshot,
     );
     get_txn.commit_at(None).expect("Commit should succeed");
-    let edge = arc_storage.get_edge_at_ts(&get_txn, NonZeroU32::new(100));
+    let edge = arc_storage.get_edge_at_ts(&get_txn, eid);
     assert!(
         matches!(edge, Ok(None)),
         "Edge should not be found after deletion, got: {:?}",
@@ -692,17 +696,17 @@ fn test_iter_adjacency_at_ts_filters() {
 
     // Test visibility at different target timestamps
     // At ts 50 (before any commits) - should see nothing
-    let mut iter50 = arc_storage.iter_adjacency_at_ts(&txn50, 1).unwrap();
+    let iter50 = arc_storage.iter_adjacency_at_ts(&txn50, 1).unwrap();
     let mut count50 = 0;
-    while let Some(_result) = iter50.next() {
+    for _result in iter50 {
         count50 += 1;
     }
     assert_eq!(count50, 0, "Should see no edges at ts 50");
 
     // At ts 150 (after first commit, before second) - should see only first batch
-    let mut iter150 = arc_storage.iter_adjacency_at_ts(&txn150, 1).unwrap();
+    let iter150 = arc_storage.iter_adjacency_at_ts(&txn150, 1).unwrap();
     let mut count150 = 0;
-    while let Some(_) = iter150.next() {
+    for _ in iter150 {
         count150 += 1;
     }
     assert_eq!(
@@ -711,9 +715,9 @@ fn test_iter_adjacency_at_ts_filters() {
     );
 
     // At ts 250 (after both commits) - should see all edges
-    let mut iter250 = arc_storage.iter_adjacency_at_ts(&txn250, 1).unwrap();
+    let iter250 = arc_storage.iter_adjacency_at_ts(&txn250, 1).unwrap();
     let mut count250 = 0;
-    while let Some(_) = iter250.next() {
+    for _ in iter250 {
         count250 += 1;
     }
     assert_eq!(
@@ -744,15 +748,17 @@ fn test_delete_edge_in_txn_transaction_rollback() {
         },
     );
 
-    let _ = arc_storage.create_edge_in_txn(
-        &txn,
-        OlapEdge {
-            label_id: NonZeroU32::new(100),
-            src_id: 1,
-            dst_id: 10,
-            properties: OlapPropertyStore::new(vec![Some(ScalarValue::Int32(Some(42)))]),
-        },
-    );
+    let eid = arc_storage
+        .create_edge_in_txn(
+            &txn,
+            OlapEdge {
+                label_id: NonZeroU32::new(100),
+                src_id: 1,
+                dst_id: 10,
+                properties: OlapPropertyStore::new(vec![Some(ScalarValue::Int32(Some(42)))]),
+            },
+        )
+        .unwrap();
     txn.commit_at(None).expect("Commit should succeed");
 
     // Start a transaction to delete edge
@@ -763,7 +769,7 @@ fn test_delete_edge_in_txn_transaction_rollback() {
         delete_txn_id,
         IsolationLevel::Snapshot,
     );
-    let _ = arc_storage.delete_edge_in_txn(&delete_txn, NonZeroU32::new(100));
+    let _ = arc_storage.delete_edge_in_txn(&delete_txn, eid);
 
     // Rollback the transaction
     delete_txn.abort().expect("Rollback should succeed");
@@ -777,9 +783,7 @@ fn test_delete_edge_in_txn_transaction_rollback() {
         IsolationLevel::Snapshot,
     );
     get_txn.commit_at(None).expect("Commit should succeed");
-    let edge = arc_storage
-        .get_edge_at_ts(&get_txn, NonZeroU32::new(100))
-        .unwrap();
+    let edge = arc_storage.get_edge_at_ts(&get_txn, eid).unwrap();
     assert_eq!(
         edge.as_ref().unwrap().properties.get(0),
         Some(ScalarValue::Int32(Some(42))),
@@ -800,7 +804,7 @@ fn test_delete_edge_in_txn_nonexistent_edge() {
     );
 
     // Try to delete non-existent edge
-    let result = arc_storage.delete_edge_in_txn(&txn, NonZeroU32::new(999));
+    let result = arc_storage.delete_edge_in_txn(&txn, 999u64);
     assert!(result.is_err(), "Should return error for non-existent edge");
     assert!(
         matches!(result.unwrap_err(), StorageError::EdgeNotFound(_)),
@@ -830,18 +834,20 @@ fn test_delete_edge_in_txn_with_properties() {
         },
     );
 
-    let _ = arc_storage.create_edge_in_txn(
-        &txn_1,
-        OlapEdge {
-            label_id: NonZeroU32::new(100),
-            src_id: 1,
-            dst_id: 10,
-            properties: OlapPropertyStore::new(vec![
-                Some(ScalarValue::Int32(Some(42))),
-                Some(ScalarValue::String(Some("hello".to_string()))),
-            ]),
-        },
-    );
+    let eid = arc_storage
+        .create_edge_in_txn(
+            &txn_1,
+            OlapEdge {
+                label_id: NonZeroU32::new(100),
+                src_id: 1,
+                dst_id: 10,
+                properties: OlapPropertyStore::new(vec![
+                    Some(ScalarValue::Int32(Some(42))),
+                    Some(ScalarValue::String(Some("hello".to_string()))),
+                ]),
+            },
+        )
+        .unwrap();
     txn_1.commit_at(None).expect("Commit should succeed");
 
     // Test deleting the edge
@@ -853,7 +859,7 @@ fn test_delete_edge_in_txn_with_properties() {
         IsolationLevel::Snapshot,
     );
     delete_txn.commit_at(None).expect("Commit should succeed");
-    let result = arc_storage.delete_edge_in_txn(&delete_txn, NonZeroU32::new(100));
+    let result = arc_storage.delete_edge_in_txn(&delete_txn, eid);
     assert!(
         result.is_ok(),
         "Deleting edge with properties should succeed"
@@ -868,7 +874,7 @@ fn test_delete_edge_in_txn_with_properties() {
         IsolationLevel::Snapshot,
     );
     get_txn.commit_at(None).expect("Commit should succeed");
-    let edge = arc_storage.get_edge_at_ts(&get_txn, NonZeroU32::new(100));
+    let edge = arc_storage.get_edge_at_ts(&get_txn, eid);
     assert!(
         matches!(edge, Ok(None)),
         "Edge should not be found after deletion, got: {:?}",

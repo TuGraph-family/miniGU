@@ -3,7 +3,7 @@ use std::sync::{Arc, OnceLock};
 
 use minigu_transaction::{IsolationLevel, Timestamp, Transaction, global_timestamp_generator};
 
-use crate::ap::olap_graph::{BLOCK_CAPACITY, OlapStorage, OlapStorageEdge};
+use crate::ap::olap_graph::{OlapStorage, OlapStorageEdge};
 use crate::common::DeltaOp;
 use crate::error::{StorageError, StorageResult, TransactionError};
 
@@ -61,21 +61,49 @@ impl MemTransaction {
 
         // Walk undo buffer and for create/set/del edge ops, replace commit_ts markers
         let undo_entries = self.undo_buffer.read().clone();
-        for (op, _ts) in undo_entries.iter() {
+        for (op, _ts) in undo_entries.into_iter() {
             match op {
                 DeltaOp::CreateEdge(edge) => {
-                    let src = edge.src_id;
-                    self.replace_edge_commit_ts_by_label(src, Some(edge.label_id), commit_ts);
+                    // Use EdgeId mapping to find and update commit_ts
+                    if let Some(loc) = self.storage.edge_id_map.get(&edge.eid()) {
+                        let (block_idx, offset) = *loc.value();
+                        let mut edges = self.storage.edges.write().unwrap();
+                        if let Some(block) = edges.get_mut(block_idx)
+                            && offset < block.edge_counter
+                            && block.edges[offset].eid == edge.eid()
+                            && block.edges[offset].commit_ts == self.txn_id
+                        {
+                            block.edges[offset].commit_ts = commit_ts;
+                        }
+                    }
                 }
-                DeltaOp::CreateEdgeAp(edge) => {
-                    let src = edge.src_id;
-                    self.replace_edge_commit_ts_by_label(src, Some(edge.label_id), commit_ts);
+                DeltaOp::SetEdgeProps(eid, _) => {
+                    // Use EdgeId mapping to find and update commit_ts
+                    if let Some(loc) = self.storage.edge_id_map.get(&eid) {
+                        let (block_idx, offset) = *loc.value();
+                        let mut edges = self.storage.edges.write().unwrap();
+                        if let Some(block) = edges.get_mut(block_idx)
+                            && offset < block.edge_counter
+                            && block.edges[offset].eid == eid
+                            && block.edges[offset].commit_ts == self.txn_id
+                        {
+                            block.edges[offset].commit_ts = commit_ts;
+                        }
+                    }
                 }
-                DeltaOp::SetEdgePropsAp(src, label, _setop, _old_ts) => {
-                    self.replace_edge_commit_ts_by_label(*src, *label, commit_ts);
-                }
-                DeltaOp::DelEdgeAp(src, label, _dst, _props, _old_ts) => {
-                    self.replace_edge_commit_ts_by_label(*src, *label, commit_ts);
+                DeltaOp::DelEdge(eid) => {
+                    // Use EdgeId mapping to find and update commit_ts
+                    if let Some(loc) = self.storage.edge_id_map.get(&eid) {
+                        let (block_idx, offset) = *loc.value();
+                        let mut edges = self.storage.edges.write().unwrap();
+                        if let Some(block) = edges.get_mut(block_idx)
+                            && offset < block.edge_counter
+                            && block.edges[offset].eid == eid
+                            && block.edges[offset].commit_ts == self.txn_id
+                        {
+                            block.edges[offset].commit_ts = commit_ts;
+                        }
+                    }
                 }
                 _ => {}
             }
@@ -84,178 +112,91 @@ impl MemTransaction {
         Ok(commit_ts)
     }
 
-    fn replace_edge_commit_ts_by_label(
-        &self,
-        src_id: u64,
-        label: Option<std::num::NonZeroU32>,
-        commit_ts: Timestamp,
-    ) {
-        let mut edges = self.storage.edges.write().unwrap();
-        // iterate all blocks for simplicity; optimize later
-        for block in edges.iter_mut() {
-            if block.is_tombstone {
-                continue;
-            }
-            if block.src_id != src_id {
-                continue;
-            }
-            // update block-level min/max
-            for i in 0..block.edge_counter {
-                if block.edges[i].label_id == label && block.edges[i].commit_ts == self.txn_id {
-                    block.edges[i].commit_ts = commit_ts;
-                }
-            }
-        }
-    }
-
     pub fn abort(&self) -> StorageResult<()> {
         // Apply undo entries in reverse order
         let mut buffer = self.undo_buffer.write();
         let entries = buffer.clone();
-        for (op, _ts) in entries.iter().rev() {
+        for (op, old_ts) in entries.into_iter().rev() {
             match op {
-                DeltaOp::CreateEdge(edge) | DeltaOp::CreateEdgeAp(edge) => {
-                    // Undo a creation -> remove the created edge
-                    let src = edge.src_id;
-                    let label = Some(edge.label_id);
-                    let dst = edge.dst_id;
-                    let mut edges = self.storage.edges.write().unwrap();
-                    for block in edges.iter_mut() {
-                        if block.is_tombstone || block.src_id != src {
-                            continue;
-                        }
-                        // find matching entry
-                        for i in 0..block.edge_counter {
-                            if block.edges[i].label_id == label
-                                && block.edges[i].dst_id == dst
-                                && block.edges[i].commit_ts == self.txn_id
-                            {
-                                // remove it
-                                for j in i..block.edge_counter - 1 {
-                                    block.edges[j] = block.edges[j + 1];
-                                }
-                                block.edge_counter -= 1;
-                                block.edges[block.edge_counter] = OlapStorageEdge {
-                                    label_id: NonZeroU32::new(1),
-                                    dst_id: 1,
-                                    commit_ts: Timestamp::with_ts(0),
-                                };
-                                break;
+                DeltaOp::CreateEdge(edge) => {
+                    // Undo a creation -> remove the created edge using EdgeId
+                    let eid = edge.eid();
+                    if let Some(loc) = self.storage.edge_id_map.get(&eid) {
+                        let (block_idx, offset) = *loc.value();
+                        let mut edges = self.storage.edges.write().unwrap();
+                        if let Some(block) = edges.get_mut(block_idx)
+                            && offset < block.edge_counter
+                            && block.edges[offset].eid == eid
+                            && block.edges[offset].commit_ts == self.txn_id
+                        {
+                            // remove it
+                            for j in offset..block.edge_counter - 1 {
+                                block.edges[j] = block.edges[j + 1];
                             }
-                        }
-                    }
-                }
-                DeltaOp::DelEdgeAp(src, label, dst, props, old_ts) => {
-                    // Undo a deletion -> re-insert the old edge and restore properties
-                    let mut edges = self.storage.edges.write().unwrap();
-                    // find block for src (use first block matching src)
-                    let mut block_idx_opt: Option<usize> = None;
-                    for (idx, block) in edges.iter().enumerate() {
-                        if !block.is_tombstone && block.src_id == *src {
-                            block_idx_opt = Some(idx);
-                            break;
-                        }
-                    }
-                    // if not found, create new block
-                    if block_idx_opt.is_none() {
-                        let idx = edges.len();
-                        edges.push(crate::ap::olap_graph::EdgeBlock {
-                            pre_block_index: None,
-                            cur_block_index: idx,
-                            is_tombstone: false,
-                            max_label_id: NonZeroU32::new(1),
-                            min_label_id: NonZeroU32::new(u32::MAX),
-                            max_dst_id: 0,
-                            min_dst_id: u64::MAX,
-                            min_ts: *old_ts,
-                            max_ts: *old_ts,
-                            src_id: *src,
-                            edge_counter: 0,
-                            edges: [OlapStorageEdge {
+                            block.edge_counter -= 1;
+                            block.edges[block.edge_counter] = OlapStorageEdge {
+                                eid: 0,
                                 label_id: NonZeroU32::new(1),
                                 dst_id: 1,
                                 commit_ts: Timestamp::with_ts(0),
-                            }; BLOCK_CAPACITY],
-                        });
-                        block_idx_opt = Some(idx);
-                    }
-                    let block_idx = block_idx_opt.unwrap();
-                    let block = &mut edges[block_idx];
-                    // insert in order by dst,label
-                    let mut insert_pos = block.edge_counter;
-                    for i in 0..block.edge_counter {
-                        if (block.edges[i].dst_id, block.edges[i].label_id) > (*dst, *label) {
-                            insert_pos = i;
-                            break;
-                        }
-                    }
-                    for i in (insert_pos..block.edge_counter).rev() {
-                        block.edges[i + 1] = block.edges[i];
-                    }
-                    block.edge_counter += 1;
-                    block.edges[insert_pos] = crate::ap::olap_graph::OlapStorageEdge {
-                        label_id: *label,
-                        dst_id: *dst,
-                        commit_ts: *old_ts,
-                    };
-                    // restore properties
-                    let mut prop_cols = self.storage.property_columns.write().unwrap();
-                    for (col_idx, col) in prop_cols.iter_mut().enumerate() {
-                        if col.blocks.get(block_idx).is_none() {
-                            col.blocks.insert(
-                                block_idx,
-                                crate::ap::olap_graph::PropertyBlock {
-                                    values: vec![None; crate::ap::olap_graph::BLOCK_CAPACITY],
-                                    min_ts: *old_ts,
-                                    max_ts: *old_ts,
-                                },
-                            );
-                        }
-                        let pb = &mut col.blocks[block_idx];
-                        // copy from props (PropertyRecord)
-                        if let Some(val) = props.get(col_idx) {
-                            pb.values[insert_pos] = Some(val.clone());
-                        } else {
-                            pb.values[insert_pos] = None;
+                            };
+                            // Remove from mapping
+                            self.storage.edge_id_map.remove(&eid);
                         }
                     }
                 }
-                DeltaOp::SetEdgePropsAp(src, label, setop, old_ts) => {
-                    // restore old property values and commit_ts
-                    let mut edges = self.storage.edges.write().unwrap();
-                    for block in edges.iter_mut() {
-                        if block.is_tombstone || block.src_id != *src {
-                            continue;
+                DeltaOp::DelEdge(eid) => {
+                    // Undo a deletion -> restore the old edge commit_ts
+                    // Edge data and properties are still in storage, only commit_ts was marked
+                    // old_commit_ts is obtained from undo entry's timestamp
+                    if let Some(loc) = self.storage.edge_id_map.get(&eid) {
+                        let (block_idx, offset) = *loc.value();
+                        let mut edges = self.storage.edges.write().unwrap();
+                        if let Some(block) = edges.get_mut(block_idx)
+                            && offset < block.edge_counter
+                            && block.edges[offset].eid == eid
+                        {
+                            // Restore edge commit_ts (properties are still in storage)
+                            block.edges[offset].commit_ts = old_ts;
                         }
-                        for i in 0..block.edge_counter {
-                            if block.edges[i].label_id == *label {
-                                // restore props
-                                let mut prop_cols = self.storage.property_columns.write().unwrap();
-                                for (k, idx) in setop.indices.iter().enumerate() {
-                                    if prop_cols.get(*idx).is_none() {
-                                        continue;
-                                    }
-                                    let column = &mut prop_cols[*idx];
-                                    if column.blocks.get(block.cur_block_index).is_none() {
-                                        column.blocks.insert(
-                                            block.cur_block_index,
-                                            crate::ap::olap_graph::PropertyBlock {
-                                                values: vec![
-                                                    None;
-                                                    crate::ap::olap_graph::BLOCK_CAPACITY
-                                                ],
-                                                min_ts: *old_ts,
-                                                max_ts: *old_ts,
-                                            },
-                                        );
-                                    }
-                                    let pb = &mut column.blocks[block.cur_block_index];
-                                    let old_val = setop.props[k].clone();
-                                    pb.values[i] = Some(old_val);
+                    }
+                }
+                DeltaOp::SetEdgeProps(eid, props_op) => {
+                    // Restore old property values and commit_ts using EdgeId
+                    // old_commit_ts is obtained from undo entry's timestamp
+                    if let Some(loc) = self.storage.edge_id_map.get(&eid) {
+                        let (block_idx, offset) = *loc.value();
+                        let mut edges = self.storage.edges.write().unwrap();
+                        if let Some(block) = edges.get_mut(block_idx)
+                            && offset < block.edge_counter
+                            && block.edges[offset].eid == eid
+                        {
+                            // Restore props
+                            let mut prop_cols = self.storage.property_columns.write().unwrap();
+                            for (k, idx) in props_op.indices.iter().enumerate() {
+                                if prop_cols.get(*idx).is_none() {
+                                    continue;
                                 }
-                                // restore commit_ts
-                                block.edges[i].commit_ts = *old_ts;
+                                let column = &mut prop_cols[*idx];
+                                if column.blocks.get(block_idx).is_none() {
+                                    column.blocks.insert(
+                                        block_idx,
+                                        crate::ap::olap_graph::PropertyBlock {
+                                            values: vec![
+                                                None;
+                                                crate::ap::olap_graph::BLOCK_CAPACITY
+                                            ],
+                                            min_ts: old_ts,
+                                            max_ts: old_ts,
+                                        },
+                                    );
+                                }
+                                let pb = &mut column.blocks[block_idx];
+                                let old_val = props_op.props[k].clone();
+                                pb.values[offset] = Some(old_val);
                             }
+                            // Restore commit_ts
+                            block.edges[offset].commit_ts = old_ts;
                         }
                     }
                 }
