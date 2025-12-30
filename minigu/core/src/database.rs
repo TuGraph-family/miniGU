@@ -1,4 +1,5 @@
-use std::path::Path;
+use std::env;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use minigu_catalog::memory::MemoryCatalog;
@@ -6,6 +7,7 @@ use minigu_catalog::memory::directory::MemoryDirectoryCatalog;
 use minigu_catalog::memory::schema::MemorySchemaCatalog;
 use minigu_catalog::provider::{CatalogProvider, DirectoryOrSchema, SchemaRef};
 use minigu_common::constants::DEFAULT_SCHEMA_NAME;
+pub use minigu_context::database::DatabaseConfig;
 use minigu_context::database::DatabaseContext;
 use rayon::ThreadPoolBuilder;
 
@@ -13,33 +15,22 @@ use crate::error::Result;
 use crate::procedures::build_predefined_procedures;
 use crate::session::Session;
 
-#[derive(Debug, Clone)]
-pub struct DatabaseConfig {
-    pub num_threads: usize,
-}
-
-impl Default for DatabaseConfig {
-    fn default() -> Self {
-        Self { num_threads: 1 }
-    }
-}
-
 pub struct Database {
     context: Arc<DatabaseContext>,
     default_schema: Arc<MemorySchemaCatalog>,
 }
 
 impl Database {
-    pub fn open<P: AsRef<Path>>(_path: P, _config: &DatabaseConfig) -> Result<Self> {
+    pub fn open<P: AsRef<Path>>(_path: P, _config: DatabaseConfig) -> Result<Self> {
         todo!("on-disk database is not implemented yet")
     }
 
-    pub fn open_in_memory(config: &DatabaseConfig) -> Result<Self> {
+    pub fn open_in_memory(config: DatabaseConfig) -> Result<Self> {
         let (catalog, default_schema) = init_memory_catalog()?;
         let runtime = ThreadPoolBuilder::new()
             .num_threads(config.num_threads)
             .build()?;
-        let context = Arc::new(DatabaseContext::new(catalog, runtime));
+        let context = Arc::new(DatabaseContext::new(catalog, runtime, config));
         Ok(Self {
             context,
             default_schema,
