@@ -97,10 +97,10 @@ impl ShellCommand {
         let cmd = Self::from_arg_matches(&matches).into_diagnostic()?;
 
         match cmd {
-            ShellCommand::Help { command } => help(ctx, command),
-            ShellCommand::Quit => quit(ctx),
-            ShellCommand::History => history(ctx),
-            ShellCommand::CdDirectory { path } => cd(ctx, path),
+            Self::Help { command } => help(ctx, command),
+            Self::Quit => quit(ctx),
+            Self::History => history(ctx),
+            Self::CdDirectory { path } => cd(path),
             Self::Mode { mode_to_change } => mode(ctx, mode_to_change),
             Self::Metrics { status } => metrics(ctx, status),
         }
@@ -214,7 +214,7 @@ fn metrics(ctx: &mut ShellContext, status: Option<CliStatus>) -> Result<()> {
     Ok(())
 }
 
-fn cd(_ctx: &mut ShellContext, path: PathBuf) -> Result<()> {
+fn cd(path: PathBuf) -> Result<()> {
     let metadata = path
         .metadata()
         .map_err(|e| miette::diagnostic!("{}: {}", path.display(), e))?;
