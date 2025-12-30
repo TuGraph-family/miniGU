@@ -80,4 +80,4 @@ fn test_shell_command_cd_non_existent_dir() {
     });
 }
 
-// TODO add test for `:cd "foo bar"` and `:cd foo\ bar`
+// TODO(support paths that include whitespace like `:cd "foo bar"` or `:cd foo\ bar`)
