@@ -16,6 +16,8 @@ use minigu_storage::tp::MemoryGraph;
 use minigu_transaction::IsolationLevel::Serializable;
 use minigu_transaction::{GraphTxnManager, Transaction};
 
+use crate::procedures::common::{create_ckpt_config, create_wal_config};
+
 /// Creates a test graph with multiple vertex types (PERSON, COMPANY, CITY) and edge types (FRIEND,
 /// WORKS_AT, LOCATED_IN) with sample data.
 pub fn build_procedure() -> Procedure {
@@ -44,7 +46,12 @@ pub fn build_procedure() -> Procedure {
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("current schema not set"))?;
 
-        let graph = MemoryGraph::with_config_fresh(Default::default(), Default::default());
+        let ckpt_dir = context.database().config().checkpoint_dir.as_path();
+        let wal_path = context.database().config().wal_path.as_path();
+        let graph = MemoryGraph::with_config_fresh(
+            create_ckpt_config(ckpt_dir),
+            create_wal_config(wal_path),
+        );
         let mut graph_type = MemoryGraphTypeCatalog::new();
 
         // Add labels

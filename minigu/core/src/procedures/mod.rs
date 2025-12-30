@@ -7,6 +7,7 @@ mod import_graph;
 mod show_graph;
 mod show_procedures;
 
+pub(crate) use import_graph::import;
 use minigu_context::procedure::Procedure;
 
 pub fn build_predefined_procedures() -> Vec<(String, Procedure)> {
