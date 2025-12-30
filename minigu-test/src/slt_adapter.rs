@@ -289,7 +289,7 @@ mod tests {
     fn test_session_wrapper_creation() {
         // Test that SessionWrapper can be created successfully
         let config = minigu::database::DatabaseConfig::default();
-        let database = minigu::database::Database::open_in_memory(&config).unwrap();
+        let database = minigu::database::Database::open_in_memory(config).unwrap();
         let session = database.session().unwrap();
         let _wrapper = SessionWrapper::new(session);
     }
@@ -298,7 +298,7 @@ mod tests {
     fn test_session_wrapper_basic_query() {
         // Test that SessionWrapper can execute basic queries
         let config = minigu::database::DatabaseConfig::default();
-        let database = minigu::database::Database::open_in_memory(&config).unwrap();
+        let database = minigu::database::Database::open_in_memory(config).unwrap();
         let session = database.session().unwrap();
         let mut wrapper = SessionWrapper::new(session);
         // Use a simple query that should work
@@ -313,7 +313,7 @@ mod tests {
     fn test_session_wrapper_session_persistence() {
         // Test that session state is maintained across multiple queries
         let config = minigu::database::DatabaseConfig::default();
-        let database = minigu::database::Database::open_in_memory(&config).unwrap();
+        let database = minigu::database::Database::open_in_memory(config).unwrap();
         let session = database.session().unwrap();
         let mut wrapper = SessionWrapper::new(session);
 
