@@ -20,7 +20,6 @@ crossbeam-skiplist = { workspace = true }
 dashmap = { workspace = true }
 diskann = { workspace = true }
 minigu-common = { workspace = true }
-minigu-transaction = { workspace = true }
 ordered-float = { workspace = true }
 parking_lot = { workspace = true }
 postcard = { workspace = true, features = ["alloc"] }
@@ -29,6 +28,9 @@ temp-dir = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"] }
 vector = { workspace = true }
+
+[features]
+test-utils = []
 
 [lints]
 workspace = true

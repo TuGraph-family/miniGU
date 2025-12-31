@@ -46,6 +46,7 @@ use minigu_catalog::memory::graph_type::{
 };
 use minigu_catalog::property::Property;
 use minigu_catalog::provider::{GraphTypeProvider, SchemaProvider};
+use minigu_common::IsolationLevel;
 use minigu_common::data_type::{DataSchema, LogicalType};
 use minigu_common::error::not_implemented;
 use minigu_common::types::VertexId;
@@ -57,7 +58,6 @@ use minigu_storage::common::wal::graph_wal::WalManagerConfig;
 use minigu_storage::common::{Edge, PropertyRecord, Vertex};
 use minigu_storage::tp::MemoryGraph;
 use minigu_storage::tp::checkpoint::CheckpointManagerConfig;
-use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
 
 use super::common::{EdgeSpec, FileSpec, Manifest, RecordType, Result, VertexSpec};
 use crate::procedures::common::{create_ckpt_config, create_wal_config};

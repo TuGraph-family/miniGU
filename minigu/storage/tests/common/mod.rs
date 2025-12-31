@@ -1,6 +1,7 @@
 use std::fs;
 use std::sync::Arc;
 
+use minigu_common::IsolationLevel;
 use minigu_common::types::{EdgeId, LabelId, VertexId};
 use minigu_common::value::ScalarValue;
 use minigu_storage::model::edge::Edge;
@@ -9,7 +10,6 @@ use minigu_storage::model::vertex::Vertex;
 use minigu_storage::tp::MemoryGraph;
 use minigu_storage::tp::checkpoint::CheckpointManagerConfig;
 use minigu_storage::wal::graph_wal::WalManagerConfig;
-use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
 
 pub const PERSON_LABEL_ID: LabelId = LabelId::new(1).unwrap();
 pub const FRIEND_LABEL_ID: LabelId = LabelId::new(1).unwrap();

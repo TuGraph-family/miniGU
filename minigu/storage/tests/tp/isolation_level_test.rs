@@ -1,10 +1,10 @@
 use std::thread;
 
+use minigu_common::IsolationLevel;
 use minigu_common::value::ScalarValue;
 use minigu_storage::model::edge::Edge;
 use minigu_storage::model::properties::PropertyRecord;
 use minigu_storage::model::vertex::Vertex;
-use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
 
 use crate::common::*;
 

@@ -3,11 +3,10 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, Weak};
 
 use crossbeam_skiplist::SkipMap;
-use minigu_common::types::{EdgeId, VertexId};
-use minigu_transaction::{
-    GraphTxnManager, Timestamp, Transaction, global_timestamp_generator,
-    global_transaction_id_generator,
+use minigu_common::timestamp::{
+    Timestamp, global_timestamp_generator, global_transaction_id_generator,
 };
+use minigu_common::types::{EdgeId, VertexId};
 
 use super::memory_graph::MemoryGraph;
 use super::transaction::{IsolationLevel, MemTransaction, UndoEntry};
@@ -51,19 +50,15 @@ impl Default for MemTxnManager {
     }
 }
 
-impl GraphTxnManager for MemTxnManager {
-    type Error = StorageError;
-    type GraphContext = MemoryGraph;
-    type Transaction = MemTransaction;
-
-    fn begin_transaction(
+impl MemTxnManager {
+    pub fn begin_transaction(
         &self,
         isolation_level: IsolationLevel,
-    ) -> Result<Arc<Self::Transaction>, Self::Error> {
+    ) -> Result<Arc<MemTransaction>, StorageError> {
         self.begin_transaction_at(None, None, isolation_level, false)
     }
 
-    fn finish_transaction(&self, txn: &Self::Transaction) -> Result<(), Self::Error> {
+    pub fn finish_transaction(&self, txn: &MemTransaction) -> Result<(), StorageError> {
         let txn_entry = self.active_txns.remove(&txn.txn_id());
         if let Some(txn_arc) = txn_entry {
             // Check if the transaction has been committed (by checking if it has a commit_ts)
@@ -88,7 +83,7 @@ impl GraphTxnManager for MemTxnManager {
         ))
     }
 
-    fn garbage_collect(&self, graph: &Self::GraphContext) -> Result<(), Self::Error> {
+    pub fn garbage_collect(&self, graph: &MemoryGraph) -> Result<(), StorageError> {
         let min_read_ts = self.low_watermark().raw();
         let mut expired_txns = Vec::new();
         let mut expired_undo_entries = Vec::new();
@@ -124,12 +119,10 @@ impl GraphTxnManager for MemTxnManager {
         Ok(())
     }
 
-    fn low_watermark(&self) -> Timestamp {
+    pub fn low_watermark(&self) -> Timestamp {
         Timestamp::with_ts(self.watermark.load(Ordering::Acquire))
     }
-}
 
-impl MemTxnManager {
     /// Create a new MemTxnManager
     pub fn new() -> Self {
         Self::default()

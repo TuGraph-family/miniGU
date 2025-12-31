@@ -25,7 +25,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, RwLock};
 
 use crc32fast::Hasher;
-use minigu_transaction::{IsolationLevel, Timestamp};
+use minigu_common::{IsolationLevel, Timestamp};
 use serde::{Deserialize, Serialize};
 
 use super::{LogRecord, StorageWal};

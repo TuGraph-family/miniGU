@@ -5,11 +5,11 @@ use crossbeam_skiplist::SkipSet;
 use dashmap::DashMap;
 use minigu_common::types::{EdgeId, VectorIndexKey, VertexId};
 use minigu_common::value::{ScalarValue, VectorValue};
-use minigu_transaction::{IsolationLevel, Timestamp, Transaction};
+use minigu_common::{IsolationLevel, Timestamp};
 
 use super::checkpoint::{CheckpointManager, CheckpointManagerConfig};
-use super::transaction::{MemTransaction, UndoEntry, UndoPtr};
-use super::txn_manager::MemTxnManager;
+use super::manager::MemTxnManager;
+use super::transaction::{GraphTxnView, MemTransaction, UndoEntry, UndoPtr};
 use super::vector_index::filter::create_filter_mask;
 use super::vector_index::in_mem_diskann::create_vector_index_config;
 use super::vector_index::{InMemANNAdapter, VectorIndex};
@@ -519,7 +519,8 @@ impl MemoryGraph {
 
     // ===== Read-only graph methods =====
     /// Retrieves a vertex by its ID within the context of a transaction.
-    pub fn get_vertex(&self, txn: &Arc<MemTransaction>, vid: VertexId) -> StorageResult<Vertex> {
+    pub fn get_vertex(&self, txn: &impl GraphTxnView, vid: VertexId) -> StorageResult<Vertex> {
+        let txn = txn.mem_txn();
         // Step 1: Atomically retrieve the versioned vertex (check existence).
         let versioned_vertex = self.vertices.get(&vid).ok_or(StorageError::VertexNotFound(
             VertexNotFoundError::VertexNotFound(vid.to_string()),
@@ -568,7 +569,8 @@ impl MemoryGraph {
     }
 
     /// Retrieves an edge by its ID within the context of a transaction.
-    pub fn get_edge(&self, txn: &Arc<MemTransaction>, eid: EdgeId) -> StorageResult<Edge> {
+    pub fn get_edge(&self, txn: &impl GraphTxnView, eid: EdgeId) -> StorageResult<Edge> {
+        let txn = txn.mem_txn();
         // Step 1: Atomically retrieve the versioned edge (check existence).
         let versioned_edge = self.edges.get(&eid).ok_or(StorageError::EdgeNotFound(
             EdgeNotFoundError::EdgeNotFound(eid.to_string()),
@@ -619,25 +621,28 @@ impl MemoryGraph {
     /// Returns an iterator over all vertices within a transaction.
     pub fn iter_vertices<'a>(
         &'a self,
-        txn: &'a Arc<MemTransaction>,
+        txn: &'a impl GraphTxnView,
     ) -> StorageResult<Box<dyn Iterator<Item = StorageResult<Vertex>> + 'a>> {
+        let txn = txn.mem_txn();
         Ok(Box::new(txn.iter_vertices()))
     }
 
     /// Returns an iterator over all edges within a transaction.
     pub fn iter_edges<'a>(
         &'a self,
-        txn: &'a Arc<MemTransaction>,
+        txn: &'a impl GraphTxnView,
     ) -> StorageResult<Box<dyn Iterator<Item = StorageResult<Edge>> + 'a>> {
+        let txn = txn.mem_txn();
         Ok(Box::new(txn.iter_edges()))
     }
 
     /// Returns an iterator over the adjacency list of a vertex in a given direction.
     pub fn iter_adjacency<'a>(
         &'a self,
-        txn: &'a Arc<MemTransaction>,
+        txn: &'a impl GraphTxnView,
         vid: VertexId,
     ) -> StorageResult<Box<dyn Iterator<Item = StorageResult<Neighbor>> + 'a>> {
+        let txn = txn.mem_txn();
         Ok(Box::new(txn.iter_adjacency(vid)))
     }
 
@@ -645,9 +650,10 @@ impl MemoryGraph {
     /// Inserts a new vertex into the graph within a transaction.
     pub fn create_vertex(
         &self,
-        txn: &Arc<MemTransaction>,
+        txn: &impl GraphTxnView,
         vertex: Vertex,
     ) -> StorageResult<VertexId> {
+        let txn = txn.mem_txn();
         let vid = vertex.vid();
         let entry = self
             .vertices
@@ -683,7 +689,8 @@ impl MemoryGraph {
     }
 
     /// Inserts a new edge into the graph within a transaction.
-    pub fn create_edge(&self, txn: &Arc<MemTransaction>, edge: Edge) -> StorageResult<EdgeId> {
+    pub fn create_edge(&self, txn: &impl GraphTxnView, edge: Edge) -> StorageResult<EdgeId> {
+        let txn = txn.mem_txn();
         let eid = edge.eid();
         let src_id = edge.src_id();
         let dst_id = edge.dst_id();
@@ -737,7 +744,8 @@ impl MemoryGraph {
     }
 
     /// Deletes a vertex from the graph within a transaction.
-    pub fn delete_vertex(&self, txn: &Arc<MemTransaction>, vid: VertexId) -> StorageResult<()> {
+    pub fn delete_vertex(&self, txn: &impl GraphTxnView, vid: VertexId) -> StorageResult<()> {
+        let txn = txn.mem_txn();
         // Atomically retrieve the versioned vertex (check existence).
         let entry = self.vertices.get(&vid).ok_or(StorageError::VertexNotFound(
             VertexNotFoundError::VertexNotFound(vid.to_string()),
@@ -786,7 +794,8 @@ impl MemoryGraph {
     }
 
     /// Deletes an edge from the graph within a transaction.
-    pub fn delete_edge(&self, txn: &Arc<MemTransaction>, eid: EdgeId) -> StorageResult<()> {
+    pub fn delete_edge(&self, txn: &impl GraphTxnView, eid: EdgeId) -> StorageResult<()> {
+        let txn = txn.mem_txn();
         // Atomically retrieve the versioned edge (check existence).
         let entry = self.edges.get(&eid).ok_or(StorageError::EdgeNotFound(
             EdgeNotFoundError::EdgeNotFound(eid.to_string()),
@@ -823,11 +832,12 @@ impl MemoryGraph {
     /// Updates the properties of a vertex within a transaction.
     pub fn set_vertex_property(
         &self,
-        txn: &Arc<MemTransaction>,
+        txn: &impl GraphTxnView,
         vid: VertexId,
         indices: Vec<usize>,
         props: Vec<ScalarValue>,
     ) -> StorageResult<()> {
+        let txn = txn.mem_txn();
         // Atomically retrieve the versioned vertex (check existence).
         let entry = self.vertices.get(&vid).ok_or(StorageError::VertexNotFound(
             VertexNotFoundError::VertexNotFound(vid.to_string()),
@@ -858,11 +868,12 @@ impl MemoryGraph {
     /// Updates the properties of an edge within a transaction.
     pub fn set_edge_property(
         &self,
-        txn: &Arc<MemTransaction>,
+        txn: &impl GraphTxnView,
         eid: EdgeId,
         indices: Vec<usize>,
         props: Vec<ScalarValue>,
     ) -> StorageResult<()> {
+        let txn = txn.mem_txn();
         // Atomically retrieve the versioned edge (check existence).
         let entry = self.edges.get(&eid).ok_or(StorageError::EdgeNotFound(
             EdgeNotFoundError::EdgeNotFound(eid.to_string()),
@@ -929,10 +940,11 @@ impl MemoryGraph {
     /// Collect vectors from specified node IDs for the given index key
     fn collect_vectors_from_nodes(
         &self,
-        txn: &Arc<MemTransaction>,
+        txn: &impl GraphTxnView,
         index_key: VectorIndexKey,
         node_ids: &[u64],
     ) -> StorageResult<Vec<(u64, VectorValue)>> {
+        let txn = txn.mem_txn();
         let mut vectors = Vec::new();
 
         for &node_id in node_ids {
@@ -952,9 +964,10 @@ impl MemoryGraph {
     /// Collect vectors from graph nodes for the specified vector index
     fn collect_vectors_for_index(
         &self,
-        txn: &Arc<MemTransaction>,
+        txn: &impl GraphTxnView,
         index_key: VectorIndexKey,
     ) -> StorageResult<Vec<(u64, VectorValue)>> {
+        let txn = txn.mem_txn();
         let mut vectors = Vec::new();
 
         // Iterate through all vertices in the graph
@@ -975,9 +988,10 @@ impl MemoryGraph {
     /// Build a vector index for the specified property within a specific label
     pub fn build_vector_index(
         &self,
-        txn: &Arc<MemTransaction>,
+        txn: &impl GraphTxnView,
         index_key: VectorIndexKey,
     ) -> StorageResult<()> {
+        let txn = txn.mem_txn();
         let vectors = self.collect_vectors_for_index(txn, index_key)?;
         if vectors.is_empty() {
             return Err(StorageError::VectorIndex(VectorIndexError::EmptyDataset));
@@ -1123,10 +1137,11 @@ impl MemoryGraph {
     /// Insert vectors into the specified vector index
     pub fn insert_into_vector_index(
         &self,
-        txn: &Arc<MemTransaction>,
+        txn: &impl GraphTxnView,
         index_key: VectorIndexKey,
         node_ids: &[u64],
     ) -> StorageResult<()> {
+        let txn = txn.mem_txn();
         if node_ids.is_empty() {
             return Ok(());
         }
@@ -1221,13 +1236,14 @@ fn check_write_conflict(commit_ts: Timestamp, txn: &Arc<MemTransaction>) -> Stor
     }
 }
 
-#[cfg(test)]
+#[cfg(any(test, feature = "test-utils"))]
+#[cfg_attr(feature = "test-utils", allow(dead_code))]
 pub mod tests {
     use std::fs;
 
+    use minigu_common::IsolationLevel;
     use minigu_common::types::{LabelId, PropertyId};
     use minigu_common::value::{F32, ScalarValue, VectorValue};
-    use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
     use {Edge, Vertex};
 
     use super::*;
@@ -1276,19 +1292,18 @@ pub mod tests {
     }
 
     pub fn mock_wal_config() -> WalManagerConfig {
-        let temp_file = temp_file::TempFileBuilder::new()
-            .prefix("test_wal_")
-            .suffix(".log")
-            .build()
-            .unwrap();
-        let path = temp_file.path().to_owned();
-        // TODO: Pass the temp file to the caller so that it can be cleaned up.
-        temp_file.leak();
+        // Avoid `temp-file` so this helper can be compiled under the `test-utils` feature.
+        let temp_dir = temp_dir::TempDir::with_prefix("test_wal_").unwrap();
+        let path = temp_dir.path().join("wal.log");
+        // NOTE: the returned path must outlive this function; the directory is cleaned by
+        // `Cleaner`.
+        temp_dir.leak();
         WalManagerConfig { wal_path: path }
     }
 
     pub struct Cleaner {
         wal_path: std::path::PathBuf,
+        wal_dir: Option<std::path::PathBuf>,
         checkpoint_dir: std::path::PathBuf,
     }
 
@@ -1299,6 +1314,7 @@ pub mod tests {
         ) -> Self {
             Self {
                 wal_path: wal_config.wal_path.clone(),
+                wal_dir: wal_config.wal_path.parent().map(|p| p.to_path_buf()),
                 checkpoint_dir: checkpoint_config.checkpoint_dir.clone(),
             }
         }
@@ -1308,6 +1324,9 @@ pub mod tests {
         fn drop(&mut self) {
             let _ = fs::remove_file(&self.wal_path);
             let _ = fs::remove_dir_all(&self.checkpoint_dir);
+            if let Some(dir) = &self.wal_dir {
+                let _ = fs::remove_dir_all(dir);
+            }
         }
     }
 
