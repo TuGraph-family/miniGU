@@ -1,0 +1,18 @@
+---
+source: minigu-cli/tests/shell_test.rs
+assertion_line: 45
+info:
+  program: minigu
+  args:
+    - shell
+  stdin: ":cd foo bar"
+---
+success: true
+exit_code: 0
+----- stdout -----
+Enter ":help" for usage hints.
+  × unknown argument: "bar"
+  help: enter ":help" for usage hints
+
+
+----- stderr -----

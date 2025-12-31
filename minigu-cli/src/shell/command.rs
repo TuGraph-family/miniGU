@@ -1,3 +1,6 @@
+use std::env;
+use std::path::PathBuf;
+
 use clap::error::{ContextKind, ContextValue, ErrorKind};
 use clap::{ColorChoice, Command, CommandFactory, FromArgMatches, Parser, ValueEnum};
 use itertools::Itertools;
@@ -53,6 +56,11 @@ pub enum ShellCommand {
         /// If not provided, the current status will be printed.
         status: Option<CliStatus>,
     },
+
+    /// Change the current working directory
+    #[command(name = ":cd")]
+    #[strum(serialize = "cd")]
+    CdDirectory { path: PathBuf },
 }
 
 #[derive(Debug, Clone, ValueEnum, Display)]
@@ -85,67 +93,80 @@ impl ShellCommand {
         let matches = ctx
             .command
             .try_get_matches_from_mut(input)
-            .map_err(|e| match e.kind() {
-                ErrorKind::InvalidSubcommand => {
-                    let invalid = e
-                        .get(ContextKind::InvalidSubcommand)
-                        .expect("invalid subcommand should be provided");
-                    let diag = miette::diagnostic!("unknown command: \"{}\"", invalid);
-                    let help = match e.get(ContextKind::SuggestedSubcommand) {
-                        Some(ContextValue::Strings(s)) if s.len() == 1 => {
-                            format!("did you mean \"{}\"?", s[0])
-                        }
-                        _ => "enter \":help\" for usage hints".into(),
-                    };
-                    diag.with_help(help)
-                }
-                ErrorKind::UnknownArgument => {
-                    let arg = e
-                        .get(ContextKind::InvalidArg)
-                        .expect("invalid arg should be provided");
-                    miette::diagnostic!("unknown argument: \"{}\"", arg)
-                        .with_help("enter \":help\" for usage hints")
-                }
-                ErrorKind::InvalidValue => {
-                    let invalid_arg = e
-                        .get(ContextKind::InvalidArg)
-                        .expect("invalid arg should be provided");
-                    let invalid_value = e
-                        .get(ContextKind::InvalidValue)
-                        .expect("invalid value should be provided");
-                    let diag = miette::diagnostic!(
-                        "invalid value for argument {}: \"{}\"",
-                        invalid_arg,
-                        invalid_value
-                    );
-                    let mut help = match e.get(ContextKind::ValidValue) {
-                        Some(ContextValue::Strings(s)) => {
-                            let values = s.iter().map(|s| format!("\"{}\"", s)).join(", ");
-                            format!("possible values: {}", values)
-                        }
-                        _ => String::new(),
-                    };
-                    if let Some(ContextValue::String(s)) = e.get(ContextKind::SuggestedValue) {
-                        help.push_str(&format!("\ndid you mean \"{}\"?", s));
-                    }
-                    if help.is_empty() {
-                        diag
-                    } else {
-                        diag.with_help(help)
-                    }
-                }
-                // TODO: Handle other error kinds.
-                _ => miette::diagnostic!("{e:?}"),
-            })?;
+            .map_err(map_clap_error)?;
         let cmd = Self::from_arg_matches(&matches).into_diagnostic()?;
 
         match cmd {
-            ShellCommand::Help { command } => help(ctx, command),
-            ShellCommand::Quit => quit(ctx),
-            ShellCommand::History => history(ctx),
+            Self::Help { command } => help(ctx, command),
+            Self::Quit => quit(ctx),
+            Self::History => history(ctx),
+            Self::CdDirectory { path } => cd(path),
             Self::Mode { mode_to_change } => mode(ctx, mode_to_change),
             Self::Metrics { status } => metrics(ctx, status),
         }
+    }
+}
+
+fn map_clap_error(e: clap::Error) -> miette::MietteDiagnostic {
+    match e.kind() {
+        ErrorKind::InvalidSubcommand => {
+            let invalid = e
+                .get(ContextKind::InvalidSubcommand)
+                .expect("invalid subcommand should be provided");
+            let diag = miette::diagnostic!("unknown command: \"{}\"", invalid);
+            let help = match e.get(ContextKind::SuggestedSubcommand) {
+                Some(ContextValue::Strings(s)) if s.len() == 1 => {
+                    format!("did you mean \"{}\"?", s[0])
+                }
+                _ => "enter \":help\" for usage hints".into(),
+            };
+            diag.with_help(help)
+        }
+        ErrorKind::UnknownArgument => {
+            let arg = e
+                .get(ContextKind::InvalidArg)
+                .expect("invalid arg should be provided");
+            miette::diagnostic!("unknown argument: \"{}\"", arg)
+                .with_help("enter \":help\" for usage hints")
+        }
+        ErrorKind::InvalidValue => {
+            let invalid_arg = e
+                .get(ContextKind::InvalidArg)
+                .expect("invalid arg should be provided");
+            let invalid_value = e
+                .get(ContextKind::InvalidValue)
+                .expect("invalid value should be provided");
+            let diag = miette::diagnostic!(
+                "invalid value for argument {}: \"{}\"",
+                invalid_arg,
+                invalid_value
+            );
+            let mut help = match e.get(ContextKind::ValidValue) {
+                Some(ContextValue::Strings(s)) => {
+                    let values = s.iter().map(|s| format!("\"{}\"", s)).join(", ");
+                    format!("possible values: {}", values)
+                }
+                _ => String::new(),
+            };
+            if let Some(ContextValue::String(s)) = e.get(ContextKind::SuggestedValue) {
+                help.push_str(&format!("\ndid you mean \"{}\"?", s));
+            }
+            if help.is_empty() {
+                diag
+            } else {
+                diag.with_help(help)
+            }
+        }
+        ErrorKind::MissingRequiredArgument => {
+            let usage = match e.get(ContextKind::Usage) {
+                Some(s) => s.to_string(),
+                None => String::new(),
+            };
+
+            miette::diagnostic!("{}", usage)
+        }
+        // TODO: Handle other error kinds.
+        _ => miette::diagnostic!("{e:?}"),
     }
 }
 
@@ -190,5 +211,19 @@ fn metrics(ctx: &mut ShellContext, status: Option<CliStatus>) -> Result<()> {
         let status = CliStatus::from(ctx.show_metrics);
         println!("show query metrics: {status}");
     }
+    Ok(())
+}
+
+fn cd(path: PathBuf) -> Result<()> {
+    let metadata = path
+        .metadata()
+        .map_err(|e| miette::diagnostic!("{}: {}", path.display(), e))?;
+
+    if !metadata.is_dir() {
+        Err(miette::diagnostic!("{}: Not a directory", path.display()))?;
+    }
+
+    env::set_current_dir(&path).map_err(|e| miette::diagnostic!("{}: {}", path.display(), e))?;
+
     Ok(())
 }

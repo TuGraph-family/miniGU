@@ -1,0 +1,17 @@
+---
+source: minigu-cli/tests/shell_test.rs
+assertion_line: 81
+info:
+  program: minigu
+  args:
+    - shell
+  stdin: ":cd foo"
+---
+success: true
+exit_code: 0
+----- stdout -----
+Enter ":help" for usage hints.
+  × foo: No such file or directory (os error 2)
+
+
+----- stderr -----
