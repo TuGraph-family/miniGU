@@ -5,25 +5,10 @@ use std::path::Path;
 use std::str::FromStr;
 
 use minigu_catalog::property::Property;
-use minigu_storage::tp::checkpoint::CheckpointManagerConfig;
-use minigu_storage::wal::graph_wal::WalManagerConfig;
 use serde::{Deserialize, Serialize};
 
 pub type Result<T> = std::result::Result<T, Box<dyn Error + Send + Sync + 'static>>;
 pub type RecordType = Vec<String>;
-
-pub(crate) fn create_ckpt_config<P: AsRef<Path>>(ckpt_dir: P) -> CheckpointManagerConfig {
-    CheckpointManagerConfig {
-        checkpoint_dir: ckpt_dir.as_ref().into(),
-        ..Default::default()
-    }
-}
-
-pub(crate) fn create_wal_config<P: AsRef<Path>>(wal_path: P) -> WalManagerConfig {
-    WalManagerConfig {
-        wal_path: wal_path.as_ref().into(),
-    }
-}
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct FileSpec {
