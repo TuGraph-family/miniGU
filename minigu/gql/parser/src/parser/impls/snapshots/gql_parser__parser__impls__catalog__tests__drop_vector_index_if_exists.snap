@@ -1,0 +1,13 @@
+---
+source: minigu/gql/parser/src/parser/impls/catalog.rs
+assertion_line: 419
+expression: parsed_if_exists
+---
+- DropVectorIndex:
+    name:
+      - idx_embeddings
+      - start: 31
+        end: 45
+    if_exists: true
+- start: 13
+  end: 55

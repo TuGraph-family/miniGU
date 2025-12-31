@@ -1,5 +1,6 @@
 use miette::Diagnostic;
 use minigu_catalog::error::CatalogError;
+use minigu_storage::error::StorageError;
 use thiserror::Error;
 
 #[derive(Debug, Error, Diagnostic)]
@@ -18,3 +19,15 @@ pub enum Error {
 }
 
 pub type SessionResult<T> = std::result::Result<T, Error>;
+
+#[derive(Debug, Error, Diagnostic)]
+pub enum IndexCatalogError {
+    #[error(transparent)]
+    Catalog(#[from] CatalogError),
+    #[error(transparent)]
+    Storage(#[from] StorageError),
+    #[error("vector index name already exists: {0}")]
+    NameAlreadyExists(String),
+}
+
+pub type IndexCatalogResult<T> = std::result::Result<T, IndexCatalogError>;

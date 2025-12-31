@@ -1,0 +1,53 @@
+---
+source: minigu-test/src/insta_test.rs
+assertion_line: 226
+---
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Utility:
+                      Explain:
+                        statement:
+                          - Catalog:
+                              - - CreateVectorIndex:
+                                    name:
+                                      - test_index
+                                      - start: 28
+                                        end: 38
+                                    if_not_exists: true
+                                    binding:
+                                      - n
+                                      - start: 58
+                                        end: 59
+                                    label:
+                                      - Movie
+                                      - start: 60
+                                        end: 65
+                                    property_binding:
+                                      - n
+                                      - start: 71
+                                        end: 72
+                                    property:
+                                      - embedding
+                                      - start: 73
+                                        end: 82
+                                - start: 8
+                                  end: 83
+                          - start: 8
+                            end: 83
+                  - start: 0
+                    end: 83
+                next_statements: []
+              - start: 0
+                end: 83
+            end: ~
+        - start: 0
+          end: 83
+      session_close: false
+    - start: 0
+      end: 83
