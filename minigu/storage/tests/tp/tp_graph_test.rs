@@ -246,8 +246,9 @@ fn test_graph_duplicate_vertex_id() -> StorageResult<()> {
         .begin_transaction(IsolationLevel::Serializable)
         .unwrap();
     let alice2 = create_test_vertex(1, "Alice2", 30);
-    graph.create_vertex(&txn2, alice2)?;
-    txn2.commit()?;
+    let dup_res = graph.create_vertex(&txn2, alice2);
+    assert!(dup_res.is_err(), "duplicate vertex id should be rejected");
+    txn2.abort()?;
 
     // Verify the vertex was updated/overwritten
     let txn3 = graph
@@ -286,8 +287,9 @@ fn test_graph_duplicate_edge_id() -> StorageResult<()> {
         .begin_transaction(IsolationLevel::Serializable)
         .unwrap();
     let edge2 = create_test_edge(1, 1, 2, FOLLOW_LABEL_ID);
-    graph.create_edge(&txn2, edge2)?;
-    txn2.commit()?;
+    let dup_res = graph.create_edge(&txn2, edge2);
+    assert!(dup_res.is_err(), "duplicate edge id should be rejected");
+    txn2.abort()?;
 
     // Verify the edge exists
     let txn3 = graph

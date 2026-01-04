@@ -2,11 +2,12 @@ use std::sync::Arc;
 
 use crossbeam_skiplist::SkipSet;
 use minigu_common::types::{EdgeId, VertexId};
+use minigu_transaction::LockStrategy;
 
 use crate::common::iterators::{AdjacencyIteratorTrait, Direction};
 use crate::common::model::edge::Neighbor;
 use crate::error::StorageResult;
-use crate::tp::transaction::MemTransaction;
+use crate::tp::transaction::{MemTransaction, WriteKind};
 
 type AdjFilter<'a> = Box<dyn Fn(&Neighbor) -> bool + 'a>;
 
@@ -97,22 +98,91 @@ impl<'a> AdjacencyIterator<'a> {
     /// Creates a new `AdjacencyIterator` for a given vertex and direction (incoming or outgoing).
     pub fn new(txn: &'a MemTransaction, vid: VertexId, direction: Direction) -> Self {
         let adjacency_list = txn.graph().adjacency_list.get(&vid);
+        let combined = SkipSet::new();
 
-        let mut result = Self {
-            adj_list: adjacency_list.map(|entry| match direction {
-                Direction::Incoming => entry.incoming().clone(),
-                Direction::Outgoing => entry.outgoing().clone(),
+        if let Some(entry) = adjacency_list {
+            match direction {
+                Direction::Incoming => {
+                    for neighbor in entry.incoming().iter() {
+                        combined.insert(*neighbor);
+                    }
+                }
+                Direction::Outgoing => {
+                    for neighbor in entry.outgoing().iter() {
+                        combined.insert(*neighbor);
+                    }
+                }
                 Direction::Both => {
-                    let combined = SkipSet::new();
                     for neighbor in entry.incoming().iter() {
                         combined.insert(*neighbor);
                     }
                     for neighbor in entry.outgoing().iter() {
                         combined.insert(*neighbor);
                     }
-                    Arc::new(combined)
                 }
-            }),
+            }
+        }
+
+        if matches!(txn.lock_strategy(), LockStrategy::Optimistic) {
+            let writes = txn.edge_writes.read().unwrap();
+            for intent in writes.values() {
+                match &intent.kind {
+                    WriteKind::InsertEdge(edge) | WriteKind::UpdateEdge { after: edge, .. } => {
+                        if edge.is_tombstone() {
+                            continue;
+                        }
+                        if matches!(direction, Direction::Outgoing | Direction::Both)
+                            && edge.src_id() == vid
+                        {
+                            combined.insert(Neighbor::new(
+                                edge.label_id(),
+                                edge.dst_id(),
+                                edge.eid(),
+                            ));
+                        }
+                        if matches!(direction, Direction::Incoming | Direction::Both)
+                            && edge.dst_id() == vid
+                        {
+                            combined.insert(Neighbor::new(
+                                edge.label_id(),
+                                edge.src_id(),
+                                edge.eid(),
+                            ));
+                        }
+                    }
+                    WriteKind::DeleteEdge { before } => {
+                        if matches!(direction, Direction::Outgoing | Direction::Both)
+                            && before.src_id() == vid
+                        {
+                            combined.remove(&Neighbor::new(
+                                before.label_id(),
+                                before.dst_id(),
+                                before.eid(),
+                            ));
+                        }
+                        if matches!(direction, Direction::Incoming | Direction::Both)
+                            && before.dst_id() == vid
+                        {
+                            combined.remove(&Neighbor::new(
+                                before.label_id(),
+                                before.src_id(),
+                                before.eid(),
+                            ));
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        let adj_list = if combined.is_empty() {
+            None
+        } else {
+            Some(Arc::new(combined))
+        };
+
+        let mut result = Self {
+            adj_list,
             current_entries: Vec::new(),
             current_index: 0,
             txn,

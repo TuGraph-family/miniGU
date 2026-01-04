@@ -7,6 +7,7 @@ pub mod vector_index;
 
 // Re-export commonly used types for OLTP
 pub use memory_graph::MemoryGraph;
+pub use minigu_transaction::LockStrategy;
 pub use transaction::MemTransaction;
 pub use txn_manager::MemTxnManager;
 pub use vector_index::{InMemANNAdapter, VectorIndex};
