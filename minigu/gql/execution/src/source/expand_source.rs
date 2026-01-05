@@ -159,35 +159,7 @@ mod tests {
     use super::*;
 
     fn create_test_graph() -> GraphContainer {
-        use std::fs;
-        use std::time::{SystemTime, UNIX_EPOCH};
-
-        use minigu_storage::tp::checkpoint::CheckpointManagerConfig;
-        use minigu_storage::wal::graph_wal::WalManagerConfig;
-
-        // Create temporary directories for checkpoint and WAL
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-
-        let checkpoint_dir =
-            std::env::temp_dir().join(format!("test_expand_checkpoint_{}", timestamp));
-        fs::create_dir_all(&checkpoint_dir).unwrap();
-
-        let wal_file = std::env::temp_dir().join(format!("test_expand_wal_{}.log", timestamp));
-
-        let checkpoint_config = CheckpointManagerConfig {
-            checkpoint_dir,
-            max_checkpoints: 3,
-            auto_checkpoint_interval_secs: 0,
-            checkpoint_prefix: "test_expand".to_string(),
-            transaction_timeout_secs: 10,
-        };
-
-        let wal_config = WalManagerConfig { wal_path: wal_file };
-
-        let graph = MemoryGraph::with_config_fresh(checkpoint_config, wal_config);
+        let graph = MemoryGraph::in_memory();
         let mut graph_type = MemoryGraphTypeCatalog::new();
 
         // Add labels

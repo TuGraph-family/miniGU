@@ -6,16 +6,14 @@ use rayon::ThreadPool;
 #[derive(Debug, Clone)]
 pub struct DatabaseConfig {
     pub num_threads: usize,
-    pub checkpoint_dir: PathBuf,
-    pub wal_path: PathBuf,
+    pub db_path: Option<PathBuf>,
 }
 
 impl Default for DatabaseConfig {
     fn default() -> Self {
         Self {
             num_threads: 1,
-            checkpoint_dir: PathBuf::from(".checkpoint"),
-            wal_path: PathBuf::from(".wal"),
+            db_path: None,
         }
     }
 }

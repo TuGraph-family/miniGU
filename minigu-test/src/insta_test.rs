@@ -118,8 +118,7 @@ fn setup_database() -> SessionDropGuard {
 
     let config = DatabaseConfig {
         // Ensure checkpoint/WAL writes are test-scoped (no repo pollution, no cross-test clashes).
-        checkpoint_dir: temp_dir_path.join(".checkpoint"),
-        wal_path: temp_dir_path.join(".wal"),
+        db_path: Some(temp_dir_path.join(".minigu")),
         ..Default::default()
     };
     let database = Database::open_in_memory(config).unwrap();
