@@ -325,12 +325,11 @@ impl PyMiniGU {
         // Execute all batches
         for (batch_index, batch) in batch_statements.iter().enumerate() {
             // Create a transaction for this batch using correct GQL syntax
-            // Based on the test code, we should use BEGIN TRANSACTION instead of START TRANSACTION
-            // INTO
-            let transaction_query = "BEGIN TRANSACTION".to_string();
+            // GQL uses "START TRANSACTION" (not "BEGIN TRANSACTION")
+            let transaction_query = "START TRANSACTION".to_string();
             session.query(&transaction_query).map_err(|e| {
                 PyErr::new::<pyo3::exceptions::PyException, _>(format!(
-                    "Failed to begin transaction for batch {}: {}",
+                    "Failed to start transaction for batch {}: {}",
                     batch_index, e
                 ))
             })?;
@@ -345,7 +344,8 @@ impl PyMiniGU {
             }
 
             // Commit the transaction
-            let commit_query = "COMMIT TRANSACTION".to_string();
+            // GQL uses "COMMIT" (not "COMMIT TRANSACTION")
+            let commit_query = "COMMIT".to_string();
             session.query(&commit_query).map_err(|e| {
                 PyErr::new::<pyo3::exceptions::PyException, _>(format!(
                     "Failed to commit transaction for batch {}: {}",
