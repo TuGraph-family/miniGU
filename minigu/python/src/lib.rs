@@ -12,22 +12,6 @@ use minigu::session::Session;
 use pyo3::prelude::*;
 use pyo3::types::{PyBool, PyDict, PyList, PyString};
 
-// Define custom exception types
-#[pyfunction]
-fn is_syntax_error(e: &Bound<PyAny>) -> PyResult<bool> {
-    // For now, we'll do a simple string check, but in a real implementation
-    // we would check the actual error type from the Rust side
-    let error_str: String = e.str()?.extract()?;
-    Ok(error_str.to_lowercase().contains("syntax")
-        || error_str.to_lowercase().contains("unexpected"))
-}
-
-#[pyfunction]
-fn is_timeout_error(e: &Bound<PyAny>) -> PyResult<bool> {
-    let error_str: String = e.str()?.extract()?;
-    Ok(error_str.to_lowercase().contains("timeout"))
-}
-
 /// Check if an exception is a transaction error
 #[pyfunction]
 fn is_transaction_error(e: &Bound<PyAny>) -> PyResult<bool> {
@@ -341,12 +325,11 @@ impl PyMiniGU {
         // Execute all batches
         for (batch_index, batch) in batch_statements.iter().enumerate() {
             // Create a transaction for this batch using correct GQL syntax
-            // Based on the test code, we should use BEGIN TRANSACTION instead of START TRANSACTION
-            // INTO
-            let transaction_query = "BEGIN TRANSACTION".to_string();
+            // GQL uses "START TRANSACTION" (not "BEGIN TRANSACTION")
+            let transaction_query = "START TRANSACTION".to_string();
             session.query(&transaction_query).map_err(|e| {
                 PyErr::new::<pyo3::exceptions::PyException, _>(format!(
-                    "Failed to begin transaction for batch {}: {}",
+                    "Failed to start transaction for batch {}: {}",
                     batch_index, e
                 ))
             })?;
@@ -361,7 +344,8 @@ impl PyMiniGU {
             }
 
             // Commit the transaction
-            let commit_query = "COMMIT TRANSACTION".to_string();
+            // GQL uses "COMMIT" (not "COMMIT TRANSACTION")
+            let commit_query = "COMMIT".to_string();
             session.query(&commit_query).map_err(|e| {
                 PyErr::new::<pyo3::exceptions::PyException, _>(format!(
                     "Failed to commit transaction for batch {}: {}",
@@ -614,13 +598,6 @@ impl PyMiniGU {
             "Transaction functionality not yet implemented in Rust backend",
         ))
     }
-
-    /// Get the error type for the last operation
-    fn get_last_error_type(&self, e: &Bound<PyAny>) -> PyResult<String> {
-        // This is a placeholder - in a real implementation we would analyze the actual error
-        let error_str: String = e.str()?.extract()?;
-        Ok(error_str)
-    }
 }
 
 /// Extract a value from an Arrow array at a specific index
@@ -694,8 +671,6 @@ fn convert_data_chunk(chunk: &DataChunk) -> PyResult<Vec<Vec<PyObject>>> {
 #[pymodule]
 fn minigu_python(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyMiniGU>()?;
-    m.add_function(wrap_pyfunction!(is_syntax_error, m)?)?;
-    m.add_function(wrap_pyfunction!(is_timeout_error, m)?)?;
     m.add_function(wrap_pyfunction!(is_transaction_error, m)?)?;
     m.add_function(wrap_pyfunction!(is_not_implemented_error, m)?)?;
     Ok(())

@@ -351,12 +351,18 @@ except minigu.MiniGUError as e:
 ## 运行测试
 
 运行测试的方法：
+```bash
+cd minigu/python
+python -m pytest test_minigu_api.py -v
 ```
+
+或者使用 unittest 直接运行：
+```bash
 cd minigu/python
 python test_minigu_api.py
 ```
 
-测试会验证所有API方法。
+测试包含26个测试用例，验证所有API方法，包括同步和异步接口。
 
 ## 故障排除
 

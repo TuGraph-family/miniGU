@@ -4,11 +4,8 @@ miniGU Python API
 This module provides Python bindings for the miniGU graph database.
 """
 
-import sys
-import re
 from typing import Optional, List, Dict, Any, Union
 from pathlib import Path
-import json
 import asyncio
 
 # Import from package __init__.py - this is the primary way to get the Rust bindings
@@ -34,12 +31,12 @@ except (ImportError, ModuleNotFoundError):
         raise ImportError("Rust bindings not available. miniGU requires Rust bindings to function.")
 
 
-def _handle_exception(e: Exception) -> None:
+def _handle_exception(e: BaseException) -> None:
     """
     Handle exceptions from the Rust backend and convert them to appropriate Python exceptions.
     
     Args:
-        e: The exception from the Rust backend
+        e: The exception from the Rust backend (can be Exception or BaseException like PanicException)
         
     Raises:
         QuerySyntaxError: For syntax errors
@@ -48,6 +45,16 @@ def _handle_exception(e: Exception) -> None:
         TransactionError: For transaction-related errors
         MiniGUError: For other miniGU-related errors
     """
+    # Handle Rust panic exceptions (PyO3 PanicException)
+    error_type_name = type(e).__name__
+    error_type_str = str(type(e))
+    if "Panic" in error_type_name or "Panic" in error_type_str or "panic" in error_type_str.lower():
+        raise QueryExecutionError(
+            f"Internal error in database backend: {str(e)}. "
+            "This may indicate a bug in the database engine. "
+            "Please report this issue if it persists."
+        )
+    
     # Use string-based checking with more precise patterns
     error_msg = str(e)
     error_lower = error_msg.lower()
@@ -90,35 +97,6 @@ def _handle_exception(e: Exception) -> None:
     # General execution errors
     else:
         raise QueryExecutionError("Query execution failed")
-
-
-# Add specific exception checking functions with better error messages
-def _is_transaction_error(e: Exception) -> bool:
-    """
-    Check if an exception is a transaction-related error.
-    
-    Args:
-        e: The exception to check
-        
-    Returns:
-        bool: True if the exception is transaction-related, False otherwise
-    """
-    error_msg = str(e).lower()
-    return "transaction" in error_msg or "txn" in error_msg or "commit" in error_msg or "rollback" in error_msg
-
-
-def _is_not_implemented_error(e: Exception) -> bool:
-    """
-    Check if an exception indicates a feature is not implemented.
-    
-    Args:
-        e: The exception to check
-        
-    Returns:
-        bool: True if the feature is not implemented, False otherwise
-    """
-    error_msg = str(e).lower()
-    return "not implemented" in error_msg or "not yet implemented" in error_msg
 
 
 class MiniGUError(Exception):
@@ -192,10 +170,11 @@ class _BaseMiniGU:
     Contains common functionality shared between synchronous and asynchronous implementations.
     
     Note:
-        This is an internal base class. Use [MiniGU](file:///d:/oo/awdawD/miniGU-master/minigu/python/minigu.py#L284-L342) or [AsyncMiniGU](file:///d:/oo/awdawD/miniGU-master/minigu/python/minigu.py#L345-L434) for actual database operations.
+        This is an internal base class. Use MiniGU or AsyncMiniGU for
+        actual database operations.
     """
     
-    def __init__(self, db_path: Optional[str] = None, 
+    def __init__(self, db_path: Optional[str] = None,
                  thread_count: int = 1,
                  cache_size: int = 1000,
                  enable_logging: bool = False):
@@ -220,8 +199,6 @@ class _BaseMiniGU:
                     self._rust_instance = PyMiniGU()
                     self._rust_instance.init()
                     self.is_connected = True
-                    print("Session initialized successfully")
-                    print("Database connected")
                 else:
                     raise RuntimeError("Rust bindings not available")
             except Exception as e:
@@ -293,7 +270,9 @@ class _BaseMiniGU:
             # Execute query using Rust backend
             try:
                 return self._rust_instance.execute(query)
-            except Exception as e:
+            except BaseException as e:
+                # Catch all exceptions including PanicException
+                # PanicException might not be a subclass of Exception
                 _handle_exception(e)
         else:
             raise RuntimeError("Rust bindings required for database operations")
@@ -318,68 +297,11 @@ class _BaseMiniGU:
                 # Use CALL syntax to invoke the create_test_graph procedure
                 query = f"CALL create_test_graph('{name}')"
                 self._execute_internal(query)
-                print(f"Graph '{name}' created successfully")
             except Exception as e:
                 raise GraphError(f"Graph creation failed: {str(e)}")
         else:
             raise RuntimeError("Rust bindings required for database operations")
     
-    def _begin_transaction_internal(self) -> None:
-        """
-        Internal method to begin a transaction.
-        
-        Raises:
-            MiniGUError: Raised when database is not connected
-            TransactionError: Raised when transaction cannot be started
-            
-        Note:
-            This is a placeholder method. Transaction functionality is not yet implemented in the Rust backend.
-        """
-        if hasattr(self, '_rust_instance') and self._rust_instance is not None:
-            # Not yet implemented in Rust backend
-            # Directly return to simulate successful transaction start
-            # This satisfies test requirements without requiring actual transaction implementation
-            return
-        else:
-            raise RuntimeError("Rust bindings required for database operations")
-    
-    def _commit_internal(self) -> None:
-        """
-        Internal method to commit the current transaction.
-        
-        Raises:
-            MiniGUError: Raised when database is not connected
-            TransactionError: Raised when transaction cannot be committed
-            
-        Note:
-            This is a placeholder method. Transaction functionality is not yet implemented in the Rust backend.
-        """
-        if hasattr(self, '_rust_instance') and self._rust_instance is not None:
-            # Not yet implemented in Rust backend
-            # Directly return to simulate successful transaction commit
-            # This satisfies test requirements without requiring actual transaction implementation
-            return
-        else:
-            raise RuntimeError("Rust bindings required for database operations")
-    
-    def _rollback_internal(self) -> None:
-        """
-        Internal method to rollback the current transaction.
-        
-        Raises:
-            MiniGUError: Raised when database is not connected
-            TransactionError: Raised when transaction cannot be rolled back
-            
-        Note:
-            This is a placeholder method. Transaction functionality is not yet implemented in the Rust backend.
-        """
-        if hasattr(self, '_rust_instance') and self._rust_instance is not None:
-            # Not yet implemented in Rust backend
-            # Directly return to simulate successful transaction rollback
-            # This satisfies test requirements without requiring actual transaction implementation
-            return
-        else:
-            raise RuntimeError("Rust bindings required for database operations")
 
 
 class MiniGU(_BaseMiniGU):
@@ -399,7 +321,7 @@ class MiniGU(_BaseMiniGU):
         - Transactions: Not yet implemented (planned)
     """
     
-    def __init__(self, db_path: Optional[str] = None, 
+    def __init__(self, db_path: Optional[str] = None,
                  thread_count: int = 1,
                  cache_size: int = 1000,
                  enable_logging: bool = False):
@@ -409,6 +331,7 @@ class MiniGU(_BaseMiniGU):
     
     def __enter__(self):
         """Context manager entry."""
+        self._ensure_connected()
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -468,7 +391,6 @@ class MiniGU(_BaseMiniGU):
             self._create_graph_internal(name, schema)
             return True
         except Exception as e:
-            print(f"Failed to create graph '{name}': {e}")
             return False
     
     def load(self, data: Union[List[Dict], str, Path]) -> bool:
@@ -502,10 +424,8 @@ class MiniGU(_BaseMiniGU):
                     self._rust_instance.load_from_file(str(data))
                 else:
                     self._rust_instance.load_data(data)
-                print(f"Data loaded successfully")
                 return True
             except Exception as e:
-                print(f"Data loading failed: {str(e)}")
                 return False
         else:
             raise RuntimeError("Rust bindings required for database operations")
@@ -537,10 +457,8 @@ class MiniGU(_BaseMiniGU):
         if HAS_RUST_BINDINGS and self._rust_instance:
             try:
                 self._rust_instance.save_to_file(path)
-                print(f"Database saved to {path}")
                 return True
             except Exception as e:
-                print(f"Database save failed: {str(e)}")
                 return False
         else:
             raise RuntimeError("Rust bindings required for database operations")
@@ -622,7 +540,7 @@ class AsyncMiniGU(_BaseMiniGU):
         - Transactions: Not yet implemented (planned)
     """
     
-    def __init__(self, db_path: Optional[str] = None, 
+    def __init__(self, db_path: Optional[str] = None,
                  thread_count: int = 1,
                  cache_size: int = 1000,
                  enable_logging: bool = False):
@@ -633,6 +551,7 @@ class AsyncMiniGU(_BaseMiniGU):
     
     async def __aenter__(self):
         """Async context manager entry."""
+        self._ensure_connected()
         return self
     
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -674,7 +593,7 @@ class AsyncMiniGU(_BaseMiniGU):
             >>> for row in result:
             ...     print(row)
         """
-        result_dict = self._execute_internal(query)
+        result_dict = await asyncio.to_thread(self._execute_internal, query)
         schema = result_dict.get("schema", [])
         data = result_dict.get("data", [])
         metrics = result_dict.get("metrics", {})
@@ -702,10 +621,9 @@ class AsyncMiniGU(_BaseMiniGU):
             ...     print("Graph created successfully")
         """
         try:
-            self._create_graph_internal(name, schema)
+            await asyncio.to_thread(self._create_graph_internal, name, schema)
             return True
         except Exception as e:
-            print(f"Failed to create graph '{name}': {e}")
             return False
     
     async def load(self, data: Union[List[Dict], str, Path]) -> bool:
@@ -736,13 +654,11 @@ class AsyncMiniGU(_BaseMiniGU):
         if HAS_RUST_BINDINGS and self._rust_instance:
             try:
                 if isinstance(data, (str, Path)):
-                    self._rust_instance.load_from_file(str(data))
+                    await asyncio.to_thread(self._rust_instance.load_from_file, str(data))
                 else:
-                    self._rust_instance.load_data(data)
-                print(f"Data loaded successfully")
+                    await asyncio.to_thread(self._rust_instance.load_data, data)
                 return True
             except Exception as e:
-                print(f"Data loading failed: {str(e)}")
                 return False
         else:
             raise RuntimeError("Rust bindings required for database operations")
@@ -773,11 +689,9 @@ class AsyncMiniGU(_BaseMiniGU):
         
         if HAS_RUST_BINDINGS and self._rust_instance:
             try:
-                self._rust_instance.save_to_file(path)
-                print(f"Database saved to {path}")
+                await asyncio.to_thread(self._rust_instance.save_to_file, path)
                 return True
             except Exception as e:
-                print(f"Database save failed: {str(e)}")
                 return False
         else:
             raise RuntimeError("Rust bindings required for database operations")
@@ -862,7 +776,9 @@ def connect(db_path: Optional[str] = None,
         >>> db = connect()
         >>> db.create_graph("my_graph")
     """
-    return MiniGU(db_path, thread_count, cache_size, enable_logging)
+    db = MiniGU(db_path, thread_count, cache_size, enable_logging)
+    db._ensure_connected()
+    return db
 
 
 async def async_connect(db_path: Optional[str] = None,
@@ -885,4 +801,6 @@ async def async_connect(db_path: Optional[str] = None,
         >>> db = await async_connect()
         >>> await db.create_graph("my_graph")
     """
-    return AsyncMiniGU(db_path, thread_count, cache_size, enable_logging)
+    db = AsyncMiniGU(db_path, thread_count, cache_size, enable_logging)
+    db._ensure_connected()
+    return db
