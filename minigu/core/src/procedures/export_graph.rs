@@ -44,6 +44,7 @@ use csv::{Writer, WriterBuilder};
 use minigu_catalog::label_set::LabelSet;
 use minigu_catalog::property::Property;
 use minigu_catalog::provider::{GraphProvider, GraphTypeProvider, SchemaProvider};
+use minigu_common::IsolationLevel;
 use minigu_common::data_type::LogicalType;
 use minigu_common::error::not_implemented;
 use minigu_common::types::{EdgeId, LabelId, VertexId};
@@ -52,7 +53,6 @@ use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::procedure::Procedure;
 use minigu_storage::common::{Edge, Vertex};
 use minigu_storage::tp::MemoryGraph;
-use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
 
 use super::common::{EdgeSpec, FileSpec, Manifest, RecordType, Result, VertexSpec};
 
@@ -391,6 +391,7 @@ mod tests {
     use minigu_catalog::memory::graph_type::{
         MemoryEdgeTypeCatalog, MemoryGraphTypeCatalog, MemoryVertexTypeCatalog,
     };
+    use minigu_common::IsolationLevel;
     use minigu_common::data_type::LogicalType;
     use minigu_common::types::{EdgeId, VertexId};
     use minigu_common::value::ScalarValue;
@@ -398,7 +399,6 @@ mod tests {
     use minigu_storage::tp::MemoryGraph;
     use minigu_storage::tp::checkpoint::CheckpointManagerConfig;
     use minigu_storage::wal::graph_wal::WalManagerConfig;
-    use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
     use walkdir::WalkDir;
 
     use super::*;
@@ -546,8 +546,11 @@ mod tests {
 
     fn mock_graph_type() -> MemoryGraphTypeCatalog {
         let mut graph_type = MemoryGraphTypeCatalog::new();
+        #[allow(deprecated)]
         let person_id = graph_type.add_label("person".to_string()).unwrap();
+        #[allow(deprecated)]
         let friend_id = graph_type.add_label("friend".to_string()).unwrap();
+        #[allow(deprecated)]
         let follow_id = graph_type.add_label("follow".to_string()).unwrap();
 
         let person_label_set = LabelSet::from_iter([person_id]);
@@ -562,7 +565,9 @@ mod tests {
             ],
         ));
 
+        #[allow(deprecated)]
         graph_type.add_vertex_type(person_label_set, vertex_type.clone());
+        #[allow(deprecated)]
         graph_type.add_edge_type(
             friend_label_set.clone(),
             Arc::new(MemoryEdgeTypeCatalog::new(
@@ -576,6 +581,7 @@ mod tests {
                 )],
             )),
         );
+        #[allow(deprecated)]
         graph_type.add_edge_type(
             follow_label_set.clone(),
             Arc::new(MemoryEdgeTypeCatalog::new(

@@ -1,46 +1,73 @@
-//! Transaction manager trait and related functionality
-//!
-//! This module defines the core transaction manager interface that handles
-//! transaction lifecycle management, watermarking, and garbage collection.
-
 use std::sync::Arc;
 
-use crate::transaction::Transaction;
-use crate::{IsolationLevel, Timestamp};
+use minigu_catalog::memory::graph_type::MemoryGraphTypeCatalog;
+use minigu_catalog::txn::CatalogTxnManager;
+use minigu_common::{
+    IsolationLevel, Timestamp, global_timestamp_generator, global_transaction_id_generator,
+};
+use minigu_storage::tp::MemoryGraph;
 
-/// Trait for transaction managers supporting MVCC operations.
-/// This trait abstracts the core functionality needed for managing transactions
-/// across different storage implementations.
+use crate::transaction::{CatalogTxnState, GraphTxnState, Transaction, TransactionCore, TxnError};
+
+/// Coordinates creation of a global transaction spanning catalog + graph.
 ///
-/// Note: Timestamp and transaction ID generation is handled by global generators
-/// accessible via `global_timestamp_generator()` and `global_transaction_id_generator()`.
-pub trait GraphTxnManager {
-    /// The transaction type that this manager handles
-    type Transaction: Transaction + Send + Sync;
-    /// The graph/storage context type
-    type GraphContext;
-    /// The error type for operations
-    type Error;
+/// Phase 1 implementation: only unifies `begin` / `begin_at` and constructs the existing
+/// `Transaction` object. Commit/abort logic remains on `Transaction`.
+#[derive(Clone)]
+pub struct TransactionManager {
+    graph: Arc<MemoryGraph>,
+    graph_type: Arc<MemoryGraphTypeCatalog>,
+    catalog_txn_mgr: Arc<CatalogTxnManager>,
+}
 
-    /// Begin a new transaction and return it.
-    /// This creates a new transaction, adds it to the active transaction set and updates
-    /// watermarks.
-    fn begin_transaction(
+impl TransactionManager {
+    pub fn new(
+        graph: Arc<MemoryGraph>,
+        graph_type: Arc<MemoryGraphTypeCatalog>,
+        catalog_txn_mgr: Arc<CatalogTxnManager>,
+    ) -> Self {
+        Self {
+            graph,
+            graph_type,
+            catalog_txn_mgr,
+        }
+    }
+
+    pub fn begin_transaction(
         &self,
         isolation_level: IsolationLevel,
-    ) -> Result<Arc<Self::Transaction>, Self::Error>;
+    ) -> Result<Transaction, TxnError> {
+        let txn_id = global_transaction_id_generator().next()?;
+        let start_ts = global_timestamp_generator().next()?;
+        self.begin_transaction_at(txn_id, start_ts, isolation_level, false)
+    }
 
-    /// Unregister a transaction when it completes (commits or aborts).
-    /// This removes the transaction from active set, updates watermarks,
-    /// and may trigger garbage collection.
-    fn finish_transaction(&self, txn: &Self::Transaction) -> Result<(), Self::Error>;
+    pub fn begin_transaction_at(
+        &self,
+        txn_id: Timestamp,
+        start_ts: Timestamp,
+        isolation_level: IsolationLevel,
+        graph_skip_wal: bool,
+    ) -> Result<Transaction, TxnError> {
+        let mem_txn = self.graph.txn_manager().begin_transaction_at(
+            Some(txn_id),
+            Some(start_ts),
+            isolation_level,
+            graph_skip_wal,
+        )?;
+        let graph_state = GraphTxnState::new(mem_txn);
 
-    /// Perform garbage collection to clean up expired transaction data.
-    /// This typically includes removing old transaction records and cleaning up
-    /// version chains that are no longer visible to any active transaction.
-    fn garbage_collect(&self, graph: &Self::GraphContext) -> Result<(), Self::Error>;
+        let catalog_txn = self.catalog_txn_mgr.begin_transaction_at(
+            Some(txn_id),
+            Some(start_ts),
+            isolation_level,
+        )?;
+        let catalog_state = Some(CatalogTxnState::new(
+            Arc::clone(&self.graph_type),
+            catalog_txn,
+        ));
 
-    /// Get the low watermark of the transaction manager.
-    /// The low watermark is the minimum start timestamp of the active transactions.
-    fn low_watermark(&self) -> Timestamp;
+        let core = TransactionCore::new(txn_id, start_ts, isolation_level);
+        Ok(Transaction::new(core, graph_state, catalog_state))
+    }
 }

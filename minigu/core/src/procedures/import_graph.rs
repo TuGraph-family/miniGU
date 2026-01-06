@@ -46,6 +46,7 @@ use minigu_catalog::memory::graph_type::{
 };
 use minigu_catalog::property::Property;
 use minigu_catalog::provider::{GraphTypeProvider, SchemaProvider};
+use minigu_common::IsolationLevel;
 use minigu_common::data_type::{DataSchema, LogicalType};
 use minigu_common::error::not_implemented;
 use minigu_common::types::VertexId;
@@ -57,7 +58,6 @@ use minigu_storage::common::wal::graph_wal::WalManagerConfig;
 use minigu_storage::common::{Edge, PropertyRecord, Vertex};
 use minigu_storage::tp::MemoryGraph;
 use minigu_storage::tp::checkpoint::CheckpointManagerConfig;
-use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
 
 use super::common::{EdgeSpec, FileSpec, Manifest, RecordType, Result, VertexSpec};
 use crate::procedures::common::{create_ckpt_config, create_wal_config};
@@ -150,7 +150,9 @@ pub fn import<P: AsRef<Path>>(
         GraphStorage::Memory(Arc::clone(&graph)),
     );
 
-    if !schema.add_graph(graph_name.clone(), Arc::new(container)) {
+    #[allow(deprecated)]
+    let added = schema.add_graph(graph_name.clone(), Arc::new(container));
+    if !added {
         return Err(anyhow::anyhow!("graph {graph_name} already exists").into());
     }
 
@@ -258,6 +260,7 @@ fn get_graph_type_from_manifest(manifest: &Manifest) -> Result<Arc<MemoryGraphTy
     // Vertex
     for vs in manifest.vertices_spec().iter() {
         let label = vs.label_name();
+        #[allow(deprecated)]
         let label_id = graph_type
             .add_label(label.clone())
             .expect("add label failed");
@@ -266,6 +269,7 @@ fn get_graph_type_from_manifest(manifest: &Manifest) -> Result<Arc<MemoryGraphTy
             label_set.clone(),
             vs.properties().clone(),
         ));
+        #[allow(deprecated)]
         graph_type.add_vertex_type(label_set, Arc::clone(&vertex_type));
 
         label_vertex_type.insert(label.clone(), vertex_type);
@@ -273,6 +277,7 @@ fn get_graph_type_from_manifest(manifest: &Manifest) -> Result<Arc<MemoryGraphTy
 
     // Edge
     for es in manifest.edges_spec().iter() {
+        #[allow(deprecated)]
         let label_id = graph_type
             .add_label(es.label_name().clone())
             .expect("add label failed");
@@ -290,6 +295,7 @@ fn get_graph_type_from_manifest(manifest: &Manifest) -> Result<Arc<MemoryGraphTy
             dst_type.clone(),
             es.properties().clone(),
         );
+        #[allow(deprecated)]
         graph_type.add_edge_type(label_set, Arc::new(edge_type));
     }
 

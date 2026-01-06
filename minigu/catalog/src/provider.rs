@@ -9,6 +9,7 @@ use minigu_common::types::{LabelId, PropertyId};
 use crate::error::CatalogResult;
 use crate::label_set::LabelSet;
 use crate::property::Property;
+use crate::txn::CatalogTxn;
 
 pub type DirectoryRef = Arc<dyn DirectoryProvider>;
 pub type SchemaRef = Arc<dyn SchemaProvider>;
@@ -32,8 +33,18 @@ pub trait DirectoryProvider: Debug + Send + Sync {
     /// Retrieves a child directory or schema by its name.
     fn get_child(&self, name: &str) -> CatalogResult<Option<DirectoryOrSchema>>;
 
+    /// Retrieves a child directory or schema by its name with a transactional view.
+    fn get_child_txn(
+        &self,
+        name: &str,
+        txn: &CatalogTxn,
+    ) -> CatalogResult<Option<DirectoryOrSchema>>;
+
     /// Returns the names of the children of the directory.
     fn children_names(&self) -> Vec<String>;
+
+    /// Returns the names of the children of the directory with a transactional view.
+    fn children_names_txn(&self, txn: &CatalogTxn) -> Vec<String>;
 }
 
 /// Represents a logical schema, which contains graphs and graph type definitions.
@@ -44,20 +55,46 @@ pub trait SchemaProvider: Debug + Send + Sync + DowncastSync {
     /// Returns the names of the graphs in the schema.
     fn graph_names(&self) -> Vec<String>;
 
+    /// Returns the names of the graphs in the schema under a transactional view.
+    fn graph_names_txn(&self, txn: &CatalogTxn) -> Vec<String>;
+
     /// Retrieves a graph by its name.
     fn get_graph(&self, name: &str) -> CatalogResult<Option<GraphRef>>;
+
+    /// Retrieves a graph by its name under a transactional view.
+    fn get_graph_txn(&self, name: &str, txn: &CatalogTxn) -> CatalogResult<Option<GraphRef>>;
 
     /// Returns the names of the graph types in the schema.
     fn graph_type_names(&self) -> Vec<String>;
 
+    /// Returns the names of the graph types in the schema under a transactional view.
+    fn graph_type_names_txn(&self, txn: &CatalogTxn) -> Vec<String>;
+
     /// Retrieves a graph type by its name.
     fn get_graph_type(&self, name: &str) -> CatalogResult<Option<GraphTypeRef>>;
+
+    /// Retrieves a graph type by its name under a transactional view.
+    fn get_graph_type_txn(
+        &self,
+        name: &str,
+        txn: &CatalogTxn,
+    ) -> CatalogResult<Option<GraphTypeRef>>;
 
     /// Returns the names of the procedures in the schema.
     fn procedure_names(&self) -> Vec<String>;
 
+    /// Returns the names of the procedures in the schema under a transactional view.
+    fn procedure_names_txn(&self, txn: &CatalogTxn) -> Vec<String>;
+
     /// Retrieves a procedure by its name.
     fn get_procedure(&self, name: &str) -> CatalogResult<Option<ProcedureRef>>;
+
+    /// Retrieves a procedure by its name under a transactional view.
+    fn get_procedure_txn(
+        &self,
+        name: &str,
+        txn: &CatalogTxn,
+    ) -> CatalogResult<Option<ProcedureRef>>;
 }
 
 impl_downcast!(sync SchemaProvider);
@@ -85,20 +122,46 @@ pub trait GraphTypeProvider: Debug + Send + Sync {
     /// Retrieves the ID of a label by its name.
     fn get_label_id(&self, name: &str) -> CatalogResult<Option<LabelId>>;
 
+    /// Retrieves the ID of a label by its name under a transactional view.
+    fn get_label_id_txn(&self, name: &str, txn: &CatalogTxn) -> CatalogResult<Option<LabelId>>;
+
     /// Returns the names of the labels in the graph type.
     fn label_names(&self) -> Vec<String>;
+
+    /// Returns the names of the labels in the graph type under a transactional view.
+    fn label_names_txn(&self, txn: &CatalogTxn) -> Vec<String>;
 
     /// Retrieves a vertex type by its key label set.
     fn get_vertex_type(&self, key: &LabelSet) -> CatalogResult<Option<VertexTypeRef>>;
 
+    /// Retrieves a vertex type by its key label set under a transactional view.
+    fn get_vertex_type_txn(
+        &self,
+        key: &LabelSet,
+        txn: &CatalogTxn,
+    ) -> CatalogResult<Option<VertexTypeRef>>;
+
     /// Returns the keys of the vertex types in the graph type.
     fn vertex_type_keys(&self) -> Vec<LabelSet>;
+
+    /// Returns the keys of the vertex types in the graph type under a transactional view.
+    fn vertex_type_keys_txn(&self, txn: &CatalogTxn) -> Vec<LabelSet>;
 
     /// Retrieves an edge type by its key label set.
     fn get_edge_type(&self, key: &LabelSet) -> CatalogResult<Option<EdgeTypeRef>>;
 
+    /// Retrieves an edge type by its key label set under a transactional view.
+    fn get_edge_type_txn(
+        &self,
+        key: &LabelSet,
+        txn: &CatalogTxn,
+    ) -> CatalogResult<Option<EdgeTypeRef>>;
+
     /// Returns the keys of the edge types in the graph type.
     fn edge_type_keys(&self) -> Vec<LabelSet>;
+
+    /// Returns the keys of the edge types in the graph type under a transactional view.
+    fn edge_type_keys_txn(&self, txn: &CatalogTxn) -> Vec<LabelSet>;
 }
 
 /// Represents a vertex type, which defines the structure of a vertex.

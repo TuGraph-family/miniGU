@@ -15,5 +15,8 @@ minigu-transaction = { workspace = true }
 rayon = { workspace = true }
 thiserror = { workspace = true }
 
+[dev-dependencies]
+minigu-storage = { workspace = true, features = ["test-utils"] }
+
 [lints]
 workspace = true

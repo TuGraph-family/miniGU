@@ -15,7 +15,6 @@ minigu-common = { workspace = true }
 minigu-context = { workspace = true }
 minigu-planner = { workspace = true }
 minigu-storage = { workspace = true }
-minigu-transaction = { workspace = true }
 ordered-float = { workspace = true }
 rayon = { workspace = true }
 temp-dir = { workspace = true }

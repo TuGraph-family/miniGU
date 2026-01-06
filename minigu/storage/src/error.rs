@@ -1,7 +1,7 @@
 use std::io;
 use std::num::NonZeroU32;
 
-use minigu_transaction::TimestampError;
+use minigu_common::TimestampError;
 use thiserror::Error;
 pub type StorageResult<T> = Result<T, StorageError>;
 

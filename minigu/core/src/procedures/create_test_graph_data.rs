@@ -6,6 +6,7 @@ use minigu_catalog::memory::graph_type::{
 };
 use minigu_catalog::named_ref::NamedGraphRef;
 use minigu_catalog::property::Property;
+use minigu_common::IsolationLevel::Serializable;
 use minigu_common::data_type::LogicalType;
 use minigu_common::types::{EdgeId, VertexId};
 use minigu_common::value::ScalarValue;
@@ -13,8 +14,6 @@ use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::procedure::Procedure;
 use minigu_storage::common::{Edge, PropertyRecord, Vertex};
 use minigu_storage::tp::MemoryGraph;
-use minigu_transaction::IsolationLevel::Serializable;
-use minigu_transaction::{GraphTxnManager, Transaction};
 
 use crate::procedures::common::{create_ckpt_config, create_wal_config};
 
@@ -55,11 +54,17 @@ pub fn build_procedure() -> Procedure {
         let mut graph_type = MemoryGraphTypeCatalog::new();
 
         // Add labels
+        #[allow(deprecated)]
         let person_label_id = graph_type.add_label("PERSON".to_string()).unwrap();
+        #[allow(deprecated)]
         let company_label_id = graph_type.add_label("COMPANY".to_string()).unwrap();
+        #[allow(deprecated)]
         let city_label_id = graph_type.add_label("CITY".to_string()).unwrap();
+        #[allow(deprecated)]
         let friend_label_id = graph_type.add_label("FRIEND".to_string()).unwrap();
+        #[allow(deprecated)]
         let works_at_label_id = graph_type.add_label("WORKS_AT".to_string()).unwrap();
+        #[allow(deprecated)]
         let located_in_label_id = graph_type.add_label("LOCATED_IN".to_string()).unwrap();
 
         // Create vertex types
@@ -127,18 +132,26 @@ pub fn build_procedure() -> Procedure {
             )],
         ));
 
+        #[allow(deprecated)]
         graph_type.add_vertex_type(person_label_set, person);
+        #[allow(deprecated)]
         graph_type.add_vertex_type(company_label_set, company);
+        #[allow(deprecated)]
         graph_type.add_vertex_type(city_label_set, city);
+        #[allow(deprecated)]
         graph_type.add_edge_type(friend_label_set, friend);
+        #[allow(deprecated)]
         graph_type.add_edge_type(works_at_label_set, works_at);
+        #[allow(deprecated)]
         graph_type.add_edge_type(located_in_label_set, located_in);
         let container = Arc::new(GraphContainer::new(
             Arc::new(graph_type),
             GraphStorage::Memory(graph.clone()),
         ));
 
-        if !schema.add_graph(graph_name.clone(), container.clone()) {
+        #[allow(deprecated)]
+        let added = schema.add_graph(graph_name.clone(), container.clone());
+        if !added {
             return Err(anyhow::anyhow!("graph `{graph_name}` already exists").into());
         }
 

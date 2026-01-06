@@ -6,8 +6,13 @@ repository = { workspace = true }
 version = { workspace = true }
 
 [dependencies]
-serde = { workspace = true }
+minigu-catalog = { workspace = true }
+minigu-common = { workspace = true }
+minigu-storage = { workspace = true }
 thiserror = { workspace = true }
+
+[dev-dependencies]
+minigu-storage = { workspace = true, features = ["test-utils"] }
 
 [lints]
 workspace = true

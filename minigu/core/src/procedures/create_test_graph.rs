@@ -34,7 +34,10 @@ pub fn build_procedure() -> Procedure {
         );
         let mut graph_type = MemoryGraphTypeCatalog::new();
         let container = GraphContainer::new(Arc::new(graph_type), GraphStorage::Memory(graph));
-        if !schema.add_graph(graph_name.clone(), Arc::new(container)) {
+
+        #[allow(deprecated)]
+        let added = schema.add_graph(graph_name.clone(), Arc::new(container));
+        if !added {
             return Err(anyhow::anyhow!("graph {graph_name} already exists").into());
         }
         Ok(vec![])
