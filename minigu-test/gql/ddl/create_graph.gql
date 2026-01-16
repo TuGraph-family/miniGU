@@ -1,3 +1,9 @@
+CREATE GRAPH mygraph {
+  (Person :Person {lastname STRING, firstname STRING, joined DATE}),
+  (City :City {name STRING, state STRING, country STRING}),
+  (Person)-[:LIVES_IN]->(City)
+};
+
 CREATE GRAPH mygraph ANY;
 
 CREATE GRAPH mygraph {

@@ -5,10 +5,10 @@ use crate::bound::{
 };
 use crate::error::PlanResult;
 use crate::logical_planner::LogicalPlanner;
-use crate::plan::catalog_modify::{CreateGraph, DropGraph};
 use crate::plan::PlanNode;
 use crate::plan::create_vector_index::CreateVectorIndex;
 use crate::plan::drop_vector_index::DropVectorIndex;
+use crate::plan::catalog_modify::{CreateGraph, DropGraph};
 
 impl LogicalPlanner {
     pub fn plan_catalog_modifying_statement(

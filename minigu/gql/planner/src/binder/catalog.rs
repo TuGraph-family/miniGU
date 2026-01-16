@@ -200,9 +200,17 @@ impl Binder<'_> {
         // Extract graph name
         let name = match statement.path.value().objects.as_slice() {
             [name] => name.value().clone(),
-            _ => return Err(BindError::InvalidObjectReference(
-                statement.path.value().objects.iter().map(|o| o.value().clone()).collect(),
-            )),
+            _ => {
+                return Err(BindError::InvalidObjectReference(
+                    statement
+                        .path
+                        .value()
+                        .objects
+                        .iter()
+                        .map(|o| o.value().clone())
+                        .collect(),
+                ));
+            }
         };
 
         // Bind create kind
@@ -241,9 +249,17 @@ impl Binder<'_> {
         // Extract graph name
         let name = match statement.path.value().objects.as_slice() {
             [name] => name.value().clone(),
-            _ => return Err(BindError::InvalidObjectReference(
-                statement.path.value().objects.iter().map(|o| o.value().clone()).collect(),
-            )),
+            _ => {
+                return Err(BindError::InvalidObjectReference(
+                    statement
+                        .path
+                        .value()
+                        .objects
+                        .iter()
+                        .map(|o| o.value().clone())
+                        .collect(),
+                ));
+            }
         };
 
         Ok(BoundDropGraphStatement {
@@ -285,12 +301,8 @@ impl Binder<'_> {
                 // For graph type references, we need to resolve them
                 not_implemented("graph type reference", None)
             }
-            OfGraphType::Like(_) => {
-                not_implemented("LIKE graph type", None)
-            }
-            OfGraphType::Any => {
-                not_implemented("ANY graph type", None)
-            }
+            OfGraphType::Like(_) => not_implemented("LIKE graph type", None),
+            OfGraphType::Any => not_implemented("ANY graph type", None),
         }
     }
 }

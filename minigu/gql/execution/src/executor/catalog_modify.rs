@@ -6,8 +6,8 @@ use minigu_catalog::memory::graph_type::{
     MemoryEdgeTypeCatalog, MemoryGraphTypeCatalog, MemoryVertexTypeCatalog,
 };
 use minigu_catalog::memory::schema::MemorySchemaCatalog;
-use minigu_catalog::provider::{GraphTypeProvider, SchemaProvider, VertexTypeRef};
 use minigu_catalog::property::Property;
+use minigu_catalog::provider::{GraphTypeProvider, SchemaProvider, VertexTypeRef};
 use minigu_common::data_type::DataField;
 use minigu_common::types::LabelId;
 use minigu_context::graph::{GraphContainer, GraphStorage};
@@ -44,11 +44,9 @@ impl IntoExecutor for CreateGraphBuilder {
     fn into_executor(self) -> Self::IntoExecutor {
         gen move {
             let CreateGraphBuilder { plan, session } = self;
-
-            let _result = create_graph_impl(&plan, &session);
-
-            // Return empty result for DDL operations
-            // yield Ok(DataChunk::empty())
+            if let Err(e) = create_graph_impl(&plan, &session) {
+                yield Err(e);
+            }
         }
         .into_executor()
     }
@@ -73,10 +71,12 @@ impl IntoExecutor for DropGraphBuilder {
         gen move {
             let DropGraphBuilder { plan, session } = self;
 
-            let _result = drop_graph_impl(&plan, &session);
-
-            // Return empty result for DDL operations
-            // yield Ok(DataChunk::empty())
+            match drop_graph_impl(&plan, &session) {
+                Ok(_) => {}
+                Err(e) => {
+                    yield Err(e);
+                }
+            }
         }
         .into_executor()
     }
@@ -139,7 +139,7 @@ fn create_graph_with_type(
     }
 
     let graph_type = Arc::new(graph_type);
-    let memory_graph = MemoryGraph::new();
+    let memory_graph = MemoryGraph::in_memory();
     let graph_storage = GraphStorage::Memory(memory_graph);
     let graph_container = Arc::new(GraphContainer::new(graph_type, graph_storage));
 
@@ -273,9 +273,7 @@ fn add_vertex_type_to_catalog(
     let label_set = vertex.labels.clone();
 
     if label_set.is_empty() {
-        return Err(execution_error(
-            "Vertex type must have at least one label",
-        ));
+        return Err(execution_error("Vertex type must have at least one label"));
     }
 
     let properties = convert_fields_to_properties(&vertex.properties);
@@ -299,7 +297,8 @@ fn add_edge_type_to_catalog(
     }
 
     // Resolve source and destination vertex types from NodeTypeRef
-    let src_vertex_type = resolve_vertex_type_from_node_ref(graph_type, &edge.left, label_registry)?;
+    let src_vertex_type =
+        resolve_vertex_type_from_node_ref(graph_type, &edge.left, label_registry)?;
     let dst_vertex_type =
         resolve_vertex_type_from_node_ref(graph_type, &edge.right, label_registry)?;
 
@@ -389,7 +388,13 @@ fn get_or_create_vertex_type_by_name(
 fn convert_fields_to_properties(fields: &[DataField]) -> Vec<Property> {
     fields
         .iter()
-        .map(|field| Property::new(field.name().to_string(), field.ty().clone(), field.is_nullable()))
+        .map(|field| {
+            Property::new(
+                field.name().to_string(),
+                field.ty().clone(),
+                field.is_nullable(),
+            )
+        })
         .collect()
 }
 

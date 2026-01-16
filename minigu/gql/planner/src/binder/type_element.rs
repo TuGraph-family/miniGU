@@ -9,14 +9,12 @@ use smol_str::SmolStr;
 
 use super::error::{BindError, BindResult};
 use crate::bound::{
-    BoundEdgeType, BoundGraphElementType, BoundVertexType, EdgeDirection, NodeTypeRef,
-    NodeOrEdgeTypeFiller as BoundNodeOrEdgeFiller,
+    BoundEdgeType, BoundGraphElementType, BoundVertexType, EdgeDirection,
+    NodeOrEdgeTypeFiller as BoundNodeOrEdgeFiller, NodeTypeRef,
 };
 
 /// Bind a graph element type (node or edge)
-pub fn bind_graph_element_type(
-    element: &GraphElementType,
-) -> BindResult<BoundGraphElementType> {
+pub fn bind_graph_element_type(element: &GraphElementType) -> BindResult<BoundGraphElementType> {
     match element {
         GraphElementType::Node(node) => {
             let bound_node = bind_node_type(node)?;
@@ -263,9 +261,7 @@ fn bind_signed_numeric_type(kind: &gql_parser::ast::NumericTypeKind) -> BindResu
 }
 
 /// Bind unsigned numeric type
-fn bind_unsigned_numeric_type(
-    kind: &gql_parser::ast::NumericTypeKind,
-) -> BindResult<LogicalType> {
+fn bind_unsigned_numeric_type(kind: &gql_parser::ast::NumericTypeKind) -> BindResult<LogicalType> {
     use gql_parser::ast::NumericTypeKind;
     match kind {
         NumericTypeKind::Int8 => Ok(LogicalType::UInt8),
