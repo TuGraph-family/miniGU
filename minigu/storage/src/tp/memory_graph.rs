@@ -1163,6 +1163,11 @@ impl MemoryGraph {
             .map(|entry| Arc::clone(entry.value()))
     }
 
+    /// Delete a vector index identified by the key. Returns true if an index was removed.
+    pub fn delete_vector_index(&self, index_key: VectorIndexKey) -> StorageResult<bool> {
+        Ok(self.vector_indices.remove(&index_key).is_some())
+    }
+
     /// Perform vector similarity search
     ///
     /// # Arguments

@@ -278,7 +278,13 @@ add_e2e_tests!("finbench", ["tsr1", "tsr2", "tsr3", "tsr4", "tsr5", "tsr6"]);
 add_e2e_tests!("snb", ["is1", "is2", "is3", "is4", "is5", "is6", "is7"]);
 add_e2e_tests!(
     "ddl",
-    ["create_graph", "create_schema", "ddl_drop", "ddl_truncate"]
+    [
+        "create_graph",
+        "create_schema",
+        "create_drop_vector_index",
+        "ddl_drop",
+        "ddl_truncate"
+    ]
 );
 add_e2e_tests!("dql", ["dql"]);
 add_e2e_tests!("dcl", ["session_set"]);
@@ -288,6 +294,8 @@ add_e2e_tests!(
     "utility",
     [
         "explain_call",
+        "explain_create_vector_index",
+        "explain_drop_vector_index",
         "explain_filter",
         "explain_limit",
         "explain_logical_match",
@@ -302,7 +310,13 @@ add_parser_tests!("finbench", ["tsr1", "tsr2", "tsr3", "tsr4", "tsr5", "tsr6"]);
 add_parser_tests!("snb", ["is1", "is2", "is3", "is4", "is5", "is6", "is7"]);
 add_parser_tests!(
     "ddl",
-    ["create_graph", "create_schema", "ddl_drop", "ddl_truncate"]
+    [
+        "create_graph",
+        "create_schema",
+        "create_drop_vector_index",
+        "ddl_drop",
+        "ddl_truncate"
+    ]
 );
 add_parser_tests!("dql", ["dql"]);
 add_parser_tests!("dcl", ["session_set"]);
@@ -312,6 +326,8 @@ add_parser_tests!(
     "utility",
     [
         "explain_call",
+        "explain_create_vector_index",
+        "explain_drop_vector_index",
         "explain_filter",
         "explain_limit",
         "explain_offset",

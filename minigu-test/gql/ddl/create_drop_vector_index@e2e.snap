@@ -1,0 +1,31 @@
+---
+source: minigu-test/src/insta_test.rs
+---
+Statement OK. No results
+---
+Statement OK. No results
+---
+Statement OK. No results
+---
+Error: Plan(
+    Bind(
+        VectorIndexAlreadyExists {
+            label: "PERSON",
+            property: "embedding",
+        },
+    ),
+)
+---
+Statement OK. No results
+---
+Statement OK. No results
+---
+Statement OK. No results
+---
+Error: Plan(
+    Bind(
+        VectorIndexNotFound {
+            name: "person_vec",
+        },
+    ),
+)

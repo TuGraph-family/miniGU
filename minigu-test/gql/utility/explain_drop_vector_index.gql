@@ -1,0 +1,8 @@
+CALL create_test_vector_graph_data("vec_graph", 20);
+SESSION SET GRAPH vec_graph;
+
+CREATE VECTOR INDEX test_index IF NOT EXISTS
+FOR (n:PERSON)
+ON (n.embedding);
+
+EXPLAIN DROP VECTOR INDEX test_index;
