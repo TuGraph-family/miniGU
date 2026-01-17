@@ -88,6 +88,6 @@ pub struct BoundDropVectorIndexStatement {
     pub name: SmolStr,
     pub if_exists: bool,
     pub index_key: Option<VectorIndexKey>,
-    pub metadata: Option<minigu_catalog::provider::VectorIndexMetadata>,
+    pub metadata: Option<minigu_catalog::provider::VectorIndexCatalogEntry>,
     pub no_op: bool,
 }

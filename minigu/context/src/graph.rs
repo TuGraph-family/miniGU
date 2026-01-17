@@ -7,8 +7,8 @@ use std::sync::{Arc, Mutex, RwLock};
 use minigu_catalog::error::CatalogResult;
 use minigu_catalog::memory::graph_type::MemoryGraphTypeCatalog;
 use minigu_catalog::provider::{
-    GraphIndexCatalog, GraphIndexCatalogRef, GraphProvider, GraphTypeRef, VectorIndexDefinitions,
-    VectorIndexMetadata,
+    GraphIndexCatalog, GraphIndexCatalogRef, GraphProvider, GraphTypeRef,
+    VectorIndexCatalogEntries, VectorIndexCatalogEntry,
 };
 use minigu_common::types::{LabelId, VectorIndexKey, VertexIdArray};
 use minigu_storage::error::StorageResult;
@@ -24,7 +24,7 @@ pub enum GraphStorage {
 
 #[derive(Debug, Default)]
 struct IndexCatalogState {
-    entries: HashMap<VectorIndexKey, VectorIndexMetadata>,
+    entries: HashMap<VectorIndexKey, VectorIndexCatalogEntry>,
     name_to_index: HashMap<String, VectorIndexKey>,
 }
 
@@ -34,18 +34,24 @@ struct MemoryGraphIndexCatalog {
 }
 
 impl GraphIndexCatalog for MemoryGraphIndexCatalog {
-    fn get_vector_index(&self, key: VectorIndexKey) -> CatalogResult<Option<VectorIndexMetadata>> {
+    fn get_vector_index(
+        &self,
+        key: VectorIndexKey,
+    ) -> CatalogResult<Option<VectorIndexCatalogEntry>> {
         let state = self.state.read().expect("index catalog should be readable");
         Ok(state.entries.get(&key).cloned())
     }
 
-    fn get_vector_index_by_name(&self, name: &str) -> CatalogResult<Option<VectorIndexMetadata>> {
+    fn get_vector_index_by_name(
+        &self,
+        name: &str,
+    ) -> CatalogResult<Option<VectorIndexCatalogEntry>> {
         let state = self.state.read().expect("index catalog should be readable");
         let key = state.name_to_index.get(name).copied();
         Ok(key.and_then(|key| state.entries.get(&key).cloned()))
     }
 
-    fn insert_vector_index(&self, meta: VectorIndexMetadata) -> CatalogResult<bool> {
+    fn insert_vector_index(&self, meta: VectorIndexCatalogEntry) -> CatalogResult<bool> {
         let mut state = self
             .state
             .write()
@@ -72,7 +78,7 @@ impl GraphIndexCatalog for MemoryGraphIndexCatalog {
         Ok(removed.is_some())
     }
 
-    fn list_vector_indices(&self) -> CatalogResult<VectorIndexDefinitions> {
+    fn list_vector_indices(&self) -> CatalogResult<VectorIndexCatalogEntries> {
         let state = self.state.read().expect("index catalog should be readable");
         Ok(state.entries.values().cloned().collect())
     }
@@ -114,7 +120,7 @@ impl GraphContainer {
         &self,
         graph: &MemoryGraph,
         txn: &Arc<MemTransaction>,
-        meta: VectorIndexMetadata,
+        meta: VectorIndexCatalogEntry,
     ) -> IndexCatalogResult<bool> {
         let _guard = self
             .index_op_lock
@@ -152,7 +158,7 @@ impl GraphContainer {
         &self,
         graph: &MemoryGraph,
         key: VectorIndexKey,
-        rollback_meta: Option<VectorIndexMetadata>,
+        rollback_meta: Option<VectorIndexCatalogEntry>,
     ) -> IndexCatalogResult<bool> {
         let _guard = self
             .index_op_lock

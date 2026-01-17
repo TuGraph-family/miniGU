@@ -1,4 +1,4 @@
-use minigu_catalog::provider::VectorIndexMetadata;
+use minigu_catalog::provider::VectorIndexCatalogEntry;
 use minigu_common::types::VectorIndexKey;
 use serde::Serialize;
 use smol_str::SmolStr;
@@ -11,7 +11,7 @@ pub struct DropVectorIndex {
     pub name: SmolStr,
     pub if_exists: bool,
     pub index_key: Option<VectorIndexKey>,
-    pub metadata: Option<VectorIndexMetadata>,
+    pub metadata: Option<VectorIndexCatalogEntry>,
     pub no_op: bool,
 }
 
@@ -20,7 +20,7 @@ impl DropVectorIndex {
         name: SmolStr,
         if_exists: bool,
         index_key: Option<VectorIndexKey>,
-        metadata: Option<VectorIndexMetadata>,
+        metadata: Option<VectorIndexCatalogEntry>,
         no_op: bool,
     ) -> Self {
         let base = PlanBase::new(None, vec![]);

@@ -3,6 +3,7 @@ use std::error::Error;
 use miette::Diagnostic;
 use minigu_catalog::error::CatalogError;
 use minigu_common::error::NotImplemented;
+use minigu_context::error::IndexCatalogError;
 use minigu_storage::error::StorageError;
 use thiserror::Error;
 
@@ -23,6 +24,9 @@ pub enum ExecutionError {
 
     #[error("catalog error")]
     Catalog(#[from] CatalogError),
+
+    #[error(transparent)]
+    IndexCatalog(#[from] IndexCatalogError),
 }
 
 pub type ExecutionResult<T> = Result<T, ExecutionError>;

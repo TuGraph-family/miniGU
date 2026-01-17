@@ -1,9 +1,8 @@
 use std::io;
 use std::sync::Arc;
 
-use minigu_catalog::provider::{GraphProvider, VectorIndexMetadata};
+use minigu_catalog::provider::{GraphProvider, VectorIndexCatalogEntry};
 use minigu_common::data_chunk::DataChunk;
-use minigu_context::error::IndexCatalogError;
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::session::SessionContext;
 use minigu_planner::plan::create_vector_index::CreateVectorIndex;
@@ -105,7 +104,7 @@ impl CreateVectorIndexExecutor {
         txn: &Arc<MemTransaction>,
         container: &GraphContainer,
     ) -> ExecutionResult<()> {
-        let meta = VectorIndexMetadata {
+        let meta = VectorIndexCatalogEntry {
             name: self.plan.name.clone(),
             key: self.plan.index_key,
             metric: self.plan.metric,
@@ -113,16 +112,7 @@ impl CreateVectorIndexExecutor {
         };
         let created = container
             .create_vector_index(graph, txn, meta.clone())
-            .map_err(|err| match err {
-                IndexCatalogError::Catalog(e) => ExecutionError::from(e),
-                IndexCatalogError::Storage(e) => ExecutionError::from(e),
-                IndexCatalogError::NameAlreadyExists(name) => {
-                    ExecutionError::Custom(Box::new(io::Error::new(
-                        io::ErrorKind::AlreadyExists,
-                        format!("vector index name {} already exists", name),
-                    )))
-                }
-            })?;
+            .map_err(ExecutionError::from)?;
         if !created && self.plan.if_not_exists {
             // Another session may have created the same index between binding and execution.
             return Ok(());

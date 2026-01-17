@@ -3,7 +3,6 @@ use std::sync::Arc;
 
 use minigu_catalog::provider::GraphProvider;
 use minigu_common::data_chunk::DataChunk;
-use minigu_context::error::IndexCatalogError;
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::session::SessionContext;
 use minigu_planner::plan::drop_vector_index::DropVectorIndex;
@@ -93,19 +92,7 @@ impl DropVectorIndexExecutor {
 
         let removed = container
             .drop_vector_index(graph, key, metadata.clone())
-            .map_err(|err| match err {
-                IndexCatalogError::Catalog(e) => ExecutionError::from(e),
-                IndexCatalogError::Storage(e) => ExecutionError::from(e),
-                IndexCatalogError::NameAlreadyExists(name) => {
-                    ExecutionError::Custom(Box::new(io::Error::new(
-                        io::ErrorKind::InvalidData,
-                        format!(
-                            "unexpected name conflict while dropping vector index {}",
-                            name
-                        ),
-                    )))
-                }
-            })?;
+            .map_err(ExecutionError::from)?;
         if !removed && !self.plan.if_exists {
             return Err(ExecutionError::Custom(Box::new(io::Error::new(
                 io::ErrorKind::NotFound,
