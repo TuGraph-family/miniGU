@@ -303,6 +303,50 @@ assertion_line: 311
                 binding_variable_defs: []
                 statement:
                   - Catalog:
+                      - - CreateVectorIndex:
+                            name:
+                              - person_vec105
+                              - start: 20
+                                end: 33
+                            if_not_exists: false
+                            binding:
+                              - n
+                              - start: 39
+                                end: 40
+                            label:
+                              - PERSON
+                              - start: 41
+                                end: 47
+                            property_binding:
+                              - n
+                              - start: 53
+                                end: 54
+                            property:
+                              - embedding105
+                              - start: 55
+                                end: 67
+                        - start: 0
+                          end: 68
+                  - start: 0
+                    end: 68
+                next_statements: []
+              - start: 0
+                end: 68
+            end: ~
+        - start: 0
+          end: 68
+      session_close: false
+    - start: 0
+      end: 68
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
                       - - DropVectorIndex:
                             name:
                               - person_vec

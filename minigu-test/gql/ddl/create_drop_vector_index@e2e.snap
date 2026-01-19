@@ -37,6 +37,18 @@ Error: Plan(
     ),
 )
 ---
+Error: Execution(
+    IndexCatalog(
+        Storage(
+            VectorIndex(
+                UnsupportedOperation(
+                    "Dimension 105 not supported. Only dimensions 104, 128, 256 are supported.",
+                ),
+            ),
+        ),
+    ),
+)
+---
 Statement OK. No results
 ---
 Statement OK. No results

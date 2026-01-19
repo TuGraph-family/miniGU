@@ -14,7 +14,10 @@ use minigu_storage::tp::MemoryGraph;
 use minigu_transaction::IsolationLevel::Serializable;
 use minigu_transaction::{GraphTxnManager, Transaction};
 
-/// Creates a test graph with a vector property (dimension 104) and sample data.
+const EMBEDDING_DIM: usize = 104;
+const EMBEDDING105_DIM: usize = 105;
+
+/// Creates a test graph with vector properties and sample data.
 pub fn build_procedure() -> Procedure {
     let parameters = vec![LogicalType::String, LogicalType::Int8];
 
@@ -50,7 +53,16 @@ pub fn build_procedure() -> Procedure {
             person_label_set.clone(),
             vec![
                 Property::new("name".to_string(), LogicalType::String, false),
-                Property::new("embedding".to_string(), LogicalType::Vector(104), false),
+                Property::new(
+                    "embedding".to_string(),
+                    LogicalType::Vector(EMBEDDING_DIM),
+                    false,
+                ),
+                Property::new(
+                    "embedding105".to_string(),
+                    LogicalType::Vector(EMBEDDING105_DIM),
+                    false,
+                ),
             ],
         ));
         graph_type.add_vertex_type(person_label_set, person);
@@ -71,28 +83,17 @@ pub fn build_procedure() -> Procedure {
         };
 
         let txn = mem.txn_manager().begin_transaction(Serializable)?;
-        let dimension = 104;
 
-        // Create PERSON vertices with deterministic vector embeddings.
-        //
-        // Example when n=3:
-        //   - person0: name="person0", embedding[0..3]=[0.00, 0.01, 0.02, 0.03]...
-        //   - person1: name="person1", embedding[0..3]=[0.01, 0.02, 0.03, 0.04]...
-        //   - person2: name="person2", embedding[0..3]=[0.02, 0.03, 0.04, 0.05]...
-        //
-        // Vertex IDs are sequential from 0..n-1. Embeddings are 104-dim and stable for tests.
         for i in 0..n {
-            let mut data = vec![F32::from(0.0); dimension];
-            for (idx, item) in data.iter_mut().enumerate() {
-                *item = F32::from((i as f32 + idx as f32) / 100.0);
-            }
-            let vector = VectorValue::new(data, dimension).map_err(|err| anyhow::anyhow!(err))?;
+            let vector = build_vector(i, EMBEDDING_DIM);
+            let vector105 = build_vector(i, EMBEDDING105_DIM);
             let vertex = Vertex::new(
                 VertexId::from(i as u64),
                 person_label_id,
                 PropertyRecord::new(vec![
                     ScalarValue::String(Some(format!("person{}", i))),
-                    ScalarValue::new_vector(dimension, Some(vector)),
+                    ScalarValue::new_vector(EMBEDDING_DIM, Some(vector)),
+                    ScalarValue::new_vector(EMBEDDING105_DIM, Some(vector105)),
                 ]),
             );
             mem.create_vertex(&txn, vertex)?;
@@ -101,4 +102,12 @@ pub fn build_procedure() -> Procedure {
         txn.commit()?;
         Ok(vec![])
     })
+}
+
+fn build_vector(seed: usize, dimension: usize) -> VectorValue {
+    let mut data = vec![F32::from(0.0); dimension];
+    for (idx, item) in data.iter_mut().enumerate() {
+        *item = F32::from((seed as f32 + idx as f32) / 100.0);
+    }
+    VectorValue::new(data, dimension).expect("vector should be constructable")
 }

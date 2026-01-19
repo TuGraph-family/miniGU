@@ -25,6 +25,11 @@ CREATE VECTOR INDEX alien_vec
 FOR (n:ALIEN)
 ON (n.embedding);
 
+-- negative case: property has unsupported dimension (105)
+CREATE VECTOR INDEX person_vec105
+FOR (n:PERSON)
+ON (n.embedding105);
+
 DROP VECTOR INDEX person_vec;
 
 DROP VECTOR INDEX person_vec IF EXISTS;
