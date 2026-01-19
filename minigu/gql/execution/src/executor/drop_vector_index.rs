@@ -92,7 +92,7 @@ impl DropVectorIndexExecutor {
             .drop_vector_index(graph, key, metadata.clone())
             .map_err(ExecutionError::from)?;
         if !removed && !self.plan.if_exists {
-            return Err(IndexCatalogError::NotFound(self.plan.name.to_string()).into());
+            return Err(IndexCatalogError::VectorIndexNotFound(self.plan.name.to_string()).into());
         }
 
         Ok(())

@@ -35,13 +35,13 @@ pub enum IndexCatalogError {
     Storage(#[from] StorageError),
 
     #[error("vector index name already exists: {0}")]
-    NameAlreadyExists(String),
+    VectorIndexNameAlreadyExists(String),
 
     #[error("vector index {0} not found")]
-    NotFound(String),
+    VectorIndexNotFound(String),
 
     #[error("vector index on label {0} property {1} already exists")]
-    AlreadyExists(String, String),
+    VectorIndexAlreadyExists(String, String),
 }
 
 pub type IndexCatalogResult<T> = std::result::Result<T, IndexCatalogError>;

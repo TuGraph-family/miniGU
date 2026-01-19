@@ -117,7 +117,7 @@ impl CreateVectorIndexExecutor {
             // Another session may have created the same index between binding and execution.
             return Ok(());
         } else if !created {
-            return Err(IndexCatalogError::AlreadyExists(
+            return Err(IndexCatalogError::VectorIndexAlreadyExists(
                 self.plan.label.to_string(),
                 self.plan.property.to_string(),
             )

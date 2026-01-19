@@ -138,7 +138,9 @@ impl GraphContainer {
             if existing.key == meta.key {
                 return Ok(false);
             }
-            return Err(IndexCatalogError::NameAlreadyExists(meta.name.to_string()));
+            return Err(IndexCatalogError::VectorIndexNameAlreadyExists(
+                meta.name.to_string(),
+            ));
         }
 
         let inserted = self.index_catalog.insert_vector_index(meta.clone())?;
@@ -466,7 +468,7 @@ mod tests {
         txn2.abort().unwrap();
 
         match err {
-            IndexCatalogError::NameAlreadyExists(name) => assert_eq!(
+            IndexCatalogError::VectorIndexNameAlreadyExists(name) => assert_eq!(
                 name, "person_vec",
                 "conflicting name should report offending index name"
             ),
