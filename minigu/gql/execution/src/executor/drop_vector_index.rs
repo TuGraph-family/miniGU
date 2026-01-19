@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use minigu_catalog::provider::GraphProvider;
 use minigu_common::data_chunk::DataChunk;
+use minigu_context::error::{Error, IndexCatalogError};
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::session::SessionContext;
 use minigu_planner::plan::drop_vector_index::DropVectorIndex;
@@ -59,12 +60,11 @@ impl Executor for DropVectorIndexExecutor {
 
 impl DropVectorIndexExecutor {
     fn execute(&self) -> ExecutionResult<()> {
-        let graph_ref = self.session_context.current_graph.clone().ok_or_else(|| {
-            ExecutionError::Custom(Box::new(io::Error::new(
-                io::ErrorKind::NotFound,
-                "current graph is not selected",
-            )))
-        })?;
+        let graph_ref = self
+            .session_context
+            .current_graph
+            .clone()
+            .ok_or(Error::CurrentGraphNotSet)?;
         let provider = graph_ref.object().clone();
         let container = GraphProvider::as_any(provider.as_ref())
             .downcast_ref::<GraphContainer>()
@@ -82,22 +82,17 @@ impl DropVectorIndexExecutor {
     }
 
     fn drop_index(&self, graph: &MemoryGraph, container: &GraphContainer) -> ExecutionResult<()> {
-        let key = self.plan.index_key.ok_or_else(|| {
-            ExecutionError::Custom(Box::new(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                "index key is missing for drop index",
-            )))
-        })?;
+        let key = self
+            .plan
+            .index_key
+            .ok_or_else(|| Error::Internal("index key is missing for drop index".to_string()))?;
         let metadata = self.plan.metadata.clone();
 
         let removed = container
             .drop_vector_index(graph, key, metadata.clone())
             .map_err(ExecutionError::from)?;
         if !removed && !self.plan.if_exists {
-            return Err(ExecutionError::Custom(Box::new(io::Error::new(
-                io::ErrorKind::NotFound,
-                format!("vector index {} not found", self.plan.name),
-            ))));
+            return Err(IndexCatalogError::NotFound(self.plan.name.to_string()).into());
         }
 
         Ok(())

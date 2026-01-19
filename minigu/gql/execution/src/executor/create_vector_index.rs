@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use minigu_catalog::provider::{GraphProvider, VectorIndexCatalogEntry};
 use minigu_common::data_chunk::DataChunk;
+use minigu_context::error::{Error, IndexCatalogError};
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::session::SessionContext;
 use minigu_planner::plan::create_vector_index::CreateVectorIndex;
@@ -62,12 +63,11 @@ impl CreateVectorIndexExecutor {
             return Ok(());
         }
 
-        let graph_ref = self.session_context.current_graph.clone().ok_or_else(|| {
-            ExecutionError::Custom(Box::new(io::Error::new(
-                io::ErrorKind::NotFound,
-                "current graph is not selected",
-            )))
-        })?;
+        let graph_ref = self
+            .session_context
+            .current_graph
+            .clone()
+            .ok_or(Error::CurrentGraphNotSet)?;
         let provider = graph_ref.object().clone();
         let container = GraphProvider::as_any(provider.as_ref())
             .downcast_ref::<GraphContainer>()
@@ -117,13 +117,11 @@ impl CreateVectorIndexExecutor {
             // Another session may have created the same index between binding and execution.
             return Ok(());
         } else if !created {
-            return Err(ExecutionError::Custom(Box::new(io::Error::new(
-                io::ErrorKind::AlreadyExists,
-                format!(
-                    "vector index on label {} property {} already exists",
-                    self.plan.label, self.plan.property
-                ),
-            ))));
+            return Err(IndexCatalogError::AlreadyExists(
+                self.plan.label.to_string(),
+                self.plan.property.to_string(),
+            )
+            .into());
         }
 
         Ok(())
