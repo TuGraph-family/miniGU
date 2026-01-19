@@ -272,3 +272,324 @@ impl GraphProvider for GraphContainer {
         self
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use minigu_catalog::label_set::LabelSet;
+    use minigu_catalog::memory::graph_type::MemoryVertexTypeCatalog;
+    use minigu_catalog::property::Property;
+    use minigu_common::data_type::LogicalType;
+    use minigu_common::types::{PropertyId, VectorMetric};
+    use minigu_common::value::{F32, ScalarValue, VectorValue};
+    use minigu_storage::common::{PropertyRecord, Vertex};
+    use minigu_transaction::Transaction;
+
+    use super::*;
+
+    const TEST_DIMENSION: usize = 104;
+    const UNSUPPORTED_DIMENSION: usize = 100;
+    const EMBEDDING_PROP_ID: PropertyId = 1;
+
+    fn build_container_with_vectors(
+        vertex_count: usize,
+        dimension: usize,
+    ) -> (GraphContainer, Arc<MemoryGraph>, VectorIndexKey) {
+        let graph = MemoryGraph::in_memory();
+        let mut graph_type = MemoryGraphTypeCatalog::new();
+
+        let person_label_id = graph_type
+            .add_label("PERSON".to_string())
+            .expect("label should be created");
+        let person_label_set: LabelSet = vec![person_label_id].into_iter().collect();
+        let person_type = Arc::new(MemoryVertexTypeCatalog::new(
+            person_label_set.clone(),
+            vec![
+                Property::new("name".to_string(), LogicalType::String, false),
+                Property::new(
+                    "embedding".to_string(),
+                    LogicalType::Vector(dimension),
+                    false,
+                ),
+            ],
+        ));
+        assert!(graph_type.add_vertex_type(person_label_set, person_type));
+
+        let container = GraphContainer::new(
+            Arc::new(graph_type),
+            GraphStorage::Memory(Arc::clone(&graph)),
+        );
+
+        populate_vertices(&graph, person_label_id, vertex_count, dimension);
+
+        let key = VectorIndexKey::new(person_label_id, EMBEDDING_PROP_ID);
+        (container, graph, key)
+    }
+
+    fn populate_vertices(
+        graph: &Arc<MemoryGraph>,
+        label_id: LabelId,
+        vertex_count: usize,
+        dimension: usize,
+    ) {
+        let txn = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .expect("transaction should begin");
+        for i in 0..vertex_count {
+            let vector = build_vector(i, dimension);
+            let vertex = Vertex::new(
+                i as u64,
+                label_id,
+                PropertyRecord::new(vec![
+                    ScalarValue::String(Some(format!("person{i}"))),
+                    ScalarValue::new_vector(dimension, Some(vector)),
+                ]),
+            );
+            graph
+                .create_vertex(&txn, vertex)
+                .expect("vertex should be inserted");
+        }
+        txn.commit().expect("vertex load transaction should commit");
+    }
+
+    fn build_vector(seed: usize, dimension: usize) -> VectorValue {
+        let mut data = Vec::with_capacity(dimension);
+        let denominator = dimension as f32;
+        for idx in 0..dimension {
+            data.push(F32::from(((seed + idx) as f32) / denominator));
+        }
+        VectorValue::new(data, dimension).expect("vector should be constructable")
+    }
+
+    fn make_entry(name: &str, key: VectorIndexKey, dimension: usize) -> VectorIndexCatalogEntry {
+        VectorIndexCatalogEntry {
+            name: name.into(),
+            key,
+            metric: VectorMetric::L2,
+            dimension,
+        }
+    }
+
+    #[test]
+    fn create_vector_index_registers_catalog_and_builds_storage() {
+        let dimension = TEST_DIMENSION;
+        let (container, graph, key) = build_container_with_vectors(4, dimension);
+        let txn = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        let entry = make_entry("person_vec", key, dimension);
+
+        assert!(
+            container
+                .create_vector_index(graph.as_ref(), &txn, entry.clone())
+                .unwrap(),
+            "first creation should insert catalog entry"
+        );
+
+        txn.commit().unwrap();
+
+        let indices = container.index_catalog().list_vector_indices().unwrap();
+        assert_eq!(indices.len(), 1, "catalog should contain exactly one entry");
+        assert_eq!(
+            indices[0].name.as_str(),
+            "person_vec",
+            "catalog entry should use provided index name"
+        );
+        assert!(
+            graph.get_vector_index(key).is_some(),
+            "storage should build matching vector index"
+        );
+    }
+
+    #[test]
+    fn create_vector_index_same_name_same_key_returns_false() {
+        let dimension = TEST_DIMENSION;
+        let (container, graph, key) = build_container_with_vectors(4, dimension);
+        let entry = make_entry("person_vec", key, dimension);
+
+        let txn1 = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        assert!(
+            container
+                .create_vector_index(graph.as_ref(), &txn1, entry.clone())
+                .unwrap(),
+            "initial creation should succeed"
+        );
+        txn1.commit().unwrap();
+
+        let txn2 = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        assert!(
+            !container
+                .create_vector_index(graph.as_ref(), &txn2, entry)
+                .unwrap(),
+            "duplicate key/name should return Ok(false)"
+        );
+        txn2.commit().unwrap();
+    }
+
+    #[test]
+    fn create_vector_index_conflicting_name_errors() {
+        let dimension = TEST_DIMENSION;
+        let (container, graph, key) = build_container_with_vectors(4, dimension);
+        let entry = make_entry("person_vec", key, dimension);
+
+        let txn1 = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        assert!(
+            container
+                .create_vector_index(graph.as_ref(), &txn1, entry)
+                .unwrap(),
+            "initial creation should succeed"
+        );
+        txn1.commit().unwrap();
+
+        let conflict_key = VectorIndexKey::new(key.label_id, key.property_id + 1);
+        let txn2 = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        let err = container
+            .create_vector_index(
+                graph.as_ref(),
+                &txn2,
+                make_entry("person_vec", conflict_key, dimension),
+            )
+            .unwrap_err();
+        txn2.abort().unwrap();
+
+        match err {
+            IndexCatalogError::NameAlreadyExists(name) => assert_eq!(
+                name, "person_vec",
+                "conflicting name should report offending index name"
+            ),
+            other => panic!("unexpected error: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn create_vector_index_rolls_back_on_build_failure() {
+        let dimension = TEST_DIMENSION;
+        let (container, graph, key) = build_container_with_vectors(4, dimension);
+        let invalid_key = VectorIndexKey::new(key.label_id, 0);
+        let txn = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        let err = container
+            .create_vector_index(
+                graph.as_ref(),
+                &txn,
+                make_entry("invalid_vec", invalid_key, dimension),
+            )
+            .unwrap_err();
+        txn.abort().unwrap();
+
+        assert!(
+            matches!(err, IndexCatalogError::Storage(_)),
+            "storage failure should bubble up as IndexCatalogError::Storage"
+        );
+        let entries = container.index_catalog().list_vector_indices().unwrap();
+        assert!(
+            entries.is_empty(),
+            "catalog should rollback insertion when storage build fails"
+        );
+        assert!(
+            graph.get_vector_index(invalid_key).is_none(),
+            "storage should not retain partially built index"
+        );
+    }
+
+    #[test]
+    fn create_vector_index_rejects_unsupported_dimension() {
+        let dimension = UNSUPPORTED_DIMENSION;
+        let (container, graph, key) = build_container_with_vectors(4, dimension);
+        let txn = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        let err = container
+            .create_vector_index(
+                graph.as_ref(),
+                &txn,
+                make_entry("bad_dim_vec", key, dimension),
+            )
+            .unwrap_err();
+        txn.abort().unwrap();
+
+        assert!(
+            matches!(err, IndexCatalogError::Storage(_)),
+            "empty dataset should surface as storage error"
+        );
+        assert!(
+            container
+                .index_catalog()
+                .list_vector_indices()
+                .unwrap()
+                .is_empty(),
+            "catalog should remain empty for unsupported dimension build"
+        );
+        assert!(
+            graph.get_vector_index(key).is_none(),
+            "storage should not create vector index for unsupported dimension"
+        );
+    }
+
+    #[test]
+    fn drop_vector_index_removes_index_and_catalog_entry() {
+        let dimension = TEST_DIMENSION;
+        let (container, graph, key) = build_container_with_vectors(4, dimension);
+        let txn = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        let entry = make_entry("person_vec", key, dimension);
+        assert!(
+            container
+                .create_vector_index(graph.as_ref(), &txn, entry.clone())
+                .unwrap(),
+            "setup should create index successfully"
+        );
+        txn.commit().unwrap();
+
+        assert!(
+            container
+                .drop_vector_index(graph.as_ref(), key, Some(entry))
+                .unwrap(),
+            "drop should remove existing index"
+        );
+
+        assert!(
+            container
+                .index_catalog()
+                .list_vector_indices()
+                .unwrap()
+                .is_empty(),
+            "catalog should not retain entry after drop"
+        );
+        assert!(
+            graph.get_vector_index(key).is_none(),
+            "storage vector index should be removed"
+        );
+    }
+
+    #[test]
+    fn drop_vector_index_missing_returns_false() {
+        let dimension = TEST_DIMENSION;
+        let (container, graph, key) = build_container_with_vectors(2, dimension);
+
+        assert!(
+            !container
+                .drop_vector_index(graph.as_ref(), key, None)
+                .unwrap(),
+            "dropping non-existent index should return Ok(false)"
+        );
+    }
+}

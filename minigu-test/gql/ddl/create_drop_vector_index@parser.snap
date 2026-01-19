@@ -1,5 +1,6 @@
 ---
 source: minigu-test/src/insta_test.rs
+assertion_line: 311
 ---
 - Ok:
     - activity:
@@ -214,6 +215,94 @@ source: minigu-test/src/insta_test.rs
                 binding_variable_defs: []
                 statement:
                   - Catalog:
+                      - - CreateVectorIndex:
+                            name:
+                              - name_vec
+                              - start: 20
+                                end: 28
+                            if_not_exists: false
+                            binding:
+                              - n
+                              - start: 34
+                                end: 35
+                            label:
+                              - PERSON
+                              - start: 36
+                                end: 42
+                            property_binding:
+                              - n
+                              - start: 48
+                                end: 49
+                            property:
+                              - name
+                              - start: 50
+                                end: 54
+                        - start: 0
+                          end: 55
+                  - start: 0
+                    end: 55
+                next_statements: []
+              - start: 0
+                end: 55
+            end: ~
+        - start: 0
+          end: 55
+      session_close: false
+    - start: 0
+      end: 55
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - CreateVectorIndex:
+                            name:
+                              - alien_vec
+                              - start: 20
+                                end: 29
+                            if_not_exists: false
+                            binding:
+                              - n
+                              - start: 35
+                                end: 36
+                            label:
+                              - ALIEN
+                              - start: 37
+                                end: 42
+                            property_binding:
+                              - n
+                              - start: 48
+                                end: 49
+                            property:
+                              - embedding
+                              - start: 50
+                                end: 59
+                        - start: 0
+                          end: 60
+                  - start: 0
+                    end: 60
+                next_statements: []
+              - start: 0
+                end: 60
+            end: ~
+        - start: 0
+          end: 60
+      session_close: false
+    - start: 0
+      end: 60
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
                       - - DropVectorIndex:
                             name:
                               - person_vec
@@ -289,3 +378,119 @@ source: minigu-test/src/insta_test.rs
       session_close: false
     - start: 0
       end: 28
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - Call:
+                            optional: false
+                            procedure:
+                              - Named:
+                                  name:
+                                    - Ref:
+                                        schema: ~
+                                        objects:
+                                          - - create_test_vector_graph_data
+                                            - start: 5
+                                              end: 34
+                                    - start: 5
+                                      end: 34
+                                  args:
+                                    - - Value:
+                                          Literal:
+                                            String:
+                                              kind: Char
+                                              literal: vec_graph_empty
+                                      - start: 35
+                                        end: 52
+                                    - - Value:
+                                          Literal:
+                                            Numeric:
+                                              Integer:
+                                                - kind: Decimal
+                                                  integer: "0"
+                                                - start: 54
+                                                  end: 55
+                                      - start: 54
+                                        end: 55
+                                  yield_clause: ~
+                              - start: 5
+                                end: 56
+                        - start: 0
+                          end: 56
+                  - start: 0
+                    end: 56
+                next_statements: []
+              - start: 0
+                end: 56
+            end: ~
+        - start: 0
+          end: 56
+      session_close: false
+    - start: 0
+      end: 56
+- Ok:
+    - activity:
+        - Session:
+            set:
+              - - Graph:
+                    - Name: vec_graph_empty
+                    - start: 18
+                      end: 33
+                - start: 0
+                  end: 33
+            reset: []
+        - start: 0
+          end: 33
+      session_close: false
+    - start: 0
+      end: 33
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - CreateVectorIndex:
+                            name:
+                              - empty_vec
+                              - start: 20
+                                end: 29
+                            if_not_exists: false
+                            binding:
+                              - n
+                              - start: 35
+                                end: 36
+                            label:
+                              - PERSON
+                              - start: 37
+                                end: 43
+                            property_binding:
+                              - n
+                              - start: 49
+                                end: 50
+                            property:
+                              - embedding
+                              - start: 51
+                                end: 60
+                        - start: 0
+                          end: 61
+                  - start: 0
+                    end: 61
+                next_statements: []
+              - start: 0
+                end: 61
+            end: ~
+        - start: 0
+          end: 61
+      session_close: false
+    - start: 0
+      end: 61

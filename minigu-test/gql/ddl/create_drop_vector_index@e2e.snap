@@ -1,5 +1,6 @@
 ---
 source: minigu-test/src/insta_test.rs
+assertion_line: 279
 ---
 Statement OK. No results
 ---
@@ -18,6 +19,24 @@ Error: Plan(
 ---
 Statement OK. No results
 ---
+Error: Plan(
+    Bind(
+        PropertyNotVector {
+            label: "PERSON",
+            property: "name",
+            ty: String,
+        },
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        LabelNotFound(
+            "ALIEN",
+        ),
+    ),
+)
+---
 Statement OK. No results
 ---
 Statement OK. No results
@@ -27,5 +46,19 @@ Error: Plan(
         VectorIndexNotFound {
             name: "person_vec",
         },
+    ),
+)
+---
+Statement OK. No results
+---
+Statement OK. No results
+---
+Error: Execution(
+    IndexCatalog(
+        Storage(
+            VectorIndex(
+                EmptyDataset,
+            ),
+        ),
     ),
 )
