@@ -1441,7 +1441,6 @@ dependencies = [
  "minigu-planner",
  "minigu-storage",
  "minigu-transaction",
- "rayon",
  "serde",
  "serde_json",
  "tempfile",
@@ -1524,7 +1523,6 @@ dependencies = [
  "minigu-storage",
  "minigu-transaction",
  "ordered-float",
- "rayon",
  "thiserror",
 ]
 
@@ -1590,6 +1588,16 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "thiserror",
+]
+
+[[package]]
+name = "minigu-wasm"
+version = "0.1.0"
+dependencies = [
+ "arrow",
+ "minigu",
+ "serde_json",
+ "wasm-bindgen",
 ]
 
 [[package]]

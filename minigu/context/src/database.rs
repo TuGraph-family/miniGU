@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
 use minigu_catalog::memory::MemoryCatalog;
-use rayon::ThreadPool;
+
+use crate::runtime::DatabaseRuntime;
 
 #[derive(Debug, Clone)]
 pub struct DatabaseConfig {
@@ -21,12 +22,12 @@ impl Default for DatabaseConfig {
 #[derive(Debug)]
 pub struct DatabaseContext {
     catalog: MemoryCatalog,
-    runtime: ThreadPool,
+    runtime: DatabaseRuntime,
     config: DatabaseConfig,
 }
 
 impl DatabaseContext {
-    pub fn new(catalog: MemoryCatalog, runtime: ThreadPool, config: DatabaseConfig) -> Self {
+    pub fn new(catalog: MemoryCatalog, runtime: DatabaseRuntime, config: DatabaseConfig) -> Self {
         Self {
             catalog,
             runtime,
@@ -40,7 +41,7 @@ impl DatabaseContext {
     }
 
     #[inline]
-    pub fn runtime(&self) -> &ThreadPool {
+    pub fn runtime(&self) -> &DatabaseRuntime {
         &self.runtime
     }
 

@@ -19,6 +19,7 @@ pub enum StorageError {
     Wal(#[from] WalError),
     #[error("Checkpoint error: {0}")]
     Checkpoint(#[from] CheckpointError),
+    #[cfg(not(target_family = "wasm"))]
     #[error("Database file error: {0}")]
     DbFile(#[from] DbFileError),
     #[error("Vector index error: {0}")]
@@ -112,6 +113,7 @@ pub enum CheckpointError {
 #[derive(Error, Debug)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum VectorIndexError {
+    #[cfg(not(target_family = "wasm"))]
     #[error("DiskANN error: {0}")]
     DiskANN(#[from] diskann::common::ANNError),
     #[error("Index not found: {0}")]
@@ -172,4 +174,5 @@ pub enum VectorIndexError {
 }
 
 // Re-export DbFileError from db_file module for convenience
+#[cfg(not(target_family = "wasm"))]
 pub use crate::db_file::DbFileError;

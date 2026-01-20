@@ -21,7 +21,6 @@ use minigu_planner::plan::PlanData;
 
 use crate::error::{Error, Result};
 use crate::metrics::QueryMetrics;
-use crate::procedures::import;
 use crate::result::QueryResult;
 
 pub struct Session {
@@ -135,7 +134,7 @@ impl Session {
 
         let schema = plan.schema().cloned();
         let start = Instant::now();
-        let chunks: Vec<_> = self.context.database().runtime().scope(|_| {
+        let chunks: Vec<_> = self.context.database().runtime().install(|| {
             let mut executor = ExecutorBuilder::new(self.context.clone()).build(&plan);
             executor.into_iter().try_collect()
         })?;
@@ -151,11 +150,14 @@ impl Session {
     // Test-harness helper: import a graph from an export manifest, then set it as current graph.
     //
     // This is intended for integration/system tests (e.g. `minigu-test`)
+    #[cfg(not(target_family = "wasm"))]
     pub fn import_graph<P: AsRef<Path>>(
         &mut self,
         graph_name: &str,
         manifest_path: P,
     ) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+        use crate::procedures::import;
+
         import(self.context.clone(), graph_name, manifest_path)?;
         // For simplicity, set the current graph to `graph_name`.
         self.context.set_current_graph(graph_name.to_string())?;

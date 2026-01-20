@@ -6,6 +6,8 @@ members = [
     "minigu-cli",
     # End-to-end tests
     "minigu-test",
+    # WASM bindings
+    "minigu-wasm",
     # Internal
     "minigu/catalog",
     "minigu/common",

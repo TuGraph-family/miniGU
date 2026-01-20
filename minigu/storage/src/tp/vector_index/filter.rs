@@ -1,5 +1,6 @@
 use bitvec::prelude::*;
-use diskann::common::FilterIndex as DiskANNFilterMask;
+
+use super::index::FilterIndex;
 
 /// Selectivity threshold for choosing between search strategies.
 /// Below this threshold (e.g., < 10% selectivity), use brute force search.
@@ -63,8 +64,7 @@ impl FilterMask {
     }
 }
 
-/// Implement DiskANN FilterMask trait for FilterMask
-impl DiskANNFilterMask for FilterMask {
+impl FilterIndex for FilterMask {
     fn contains_vector(&self, vector_id: u32) -> bool {
         self.contains_vector(vector_id)
     }
@@ -77,8 +77,6 @@ pub fn create_filter_mask(candidates: Vec<u32>, total_vector_num: usize) -> Filt
 
 #[cfg(test)]
 mod tests {
-    use diskann::common::FilterIndex as DiskANNFilterMask;
-
     use super::*;
 
     #[test]
@@ -204,14 +202,13 @@ mod tests {
     }
 
     #[test]
-    fn test_filter_mask_diskann_trait() {
+    fn test_filter_mask_trait() {
         let candidates = vec![1, 3, 5];
         let mask = FilterMask::new(candidates, 100);
 
-        // Test DiskANN FilterMask trait implementation
-        assert!(DiskANNFilterMask::contains_vector(&mask, 1));
-        assert!(DiskANNFilterMask::contains_vector(&mask, 5));
-        assert!(!DiskANNFilterMask::contains_vector(&mask, 2));
+        assert!(FilterIndex::contains_vector(&mask, 1));
+        assert!(FilterIndex::contains_vector(&mask, 5));
+        assert!(!FilterIndex::contains_vector(&mask, 2));
     }
 
     #[test]
