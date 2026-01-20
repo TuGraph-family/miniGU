@@ -1,4 +1,3 @@
-#[cfg(not(target_family = "wasm"))]
 use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, RwLock, Weak};
@@ -10,12 +9,13 @@ use minigu_common::types::{EdgeId, VectorIndexKey, VertexId};
 use minigu_common::value::{ScalarValue, VectorValue};
 use minigu_transaction::{IsolationLevel, Timestamp, Transaction};
 
+use super::db_file_persistence::DbFilePersistence;
 use super::in_memory_persistence::InMemoryPersistence;
 use super::persistence::PersistenceProvider;
 use super::transaction::{MemTransaction, UndoEntry, UndoPtr};
 use super::txn_manager::MemTxnManager;
-use super::vector_index::config::create_vector_index_config;
 use super::vector_index::filter::create_filter_mask;
+use super::vector_index::in_mem_diskann::create_vector_index_config;
 use super::vector_index::{InMemANNAdapter, VectorIndex};
 use crate::common::model::edge::{Edge, Neighbor};
 use crate::common::model::vertex::Vertex;
@@ -411,20 +411,16 @@ impl MemoryGraph {
     /// # Arguments
     ///
     /// * `path` - Path to the database file (`.minigu`)
-    #[cfg(not(target_family = "wasm"))]
     pub fn with_db_file<P: AsRef<Path>>(path: P) -> StorageResult<Arc<Self>> {
         Self::with_db_file_and_config(path, CheckpointConfig::default())
     }
 
     /// Creates a new [`MemoryGraph`] backed by a single database file with custom checkpoint
     /// config.
-    #[cfg(not(target_family = "wasm"))]
     fn with_db_file_and_config<P: AsRef<Path>>(
         path: P,
         checkpoint_config: CheckpointConfig,
     ) -> StorageResult<Arc<Self>> {
-        use super::db_file_persistence::DbFilePersistence;
-
         let persistence = Arc::new(DbFilePersistence::open(path)?);
         let graph = Self::with_persistence_and_config(persistence, checkpoint_config);
         graph.recover()?;
@@ -467,7 +463,6 @@ impl MemoryGraph {
     /// Recovers the graph from the persistence layer.
     ///
     /// This loads the checkpoint (if any) and replays WAL entries.
-    #[cfg(not(target_family = "wasm"))]
     fn recover(self: &Arc<Self>) -> StorageResult<()> {
         // Load checkpoint if it exists
         if let Some(checkpoint) = self.persistence.read_checkpoint()? {
@@ -482,7 +477,6 @@ impl MemoryGraph {
     }
 
     /// Applies a list of WAL entries to the graph
-    #[cfg(not(target_family = "wasm"))]
     fn apply_wal_entries(self: &Arc<Self>, entries: Vec<RedoEntry>) -> StorageResult<()> {
         let mut txn: Option<Arc<MemTransaction>> = None;
         for entry in entries {

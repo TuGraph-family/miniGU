@@ -140,7 +140,7 @@ pub struct CompressedEdgeBlock {
     pub edge_counter: usize,
     pub delta_bit_width: u8,
     pub first_dst_id: VertexId,
-    pub compressed_dst_ids: BitVec<usize, Lsb0>,
+    pub compressed_dst_ids: BitVec<u64, Lsb0>,
     pub label_ids: [Option<LabelId>; BLOCK_CAPACITY],
 }
 
@@ -229,8 +229,7 @@ impl OlapStorage {
             let required_bits = bit_width as usize * (edge_block.edge_counter - 1);
             let mut label_ids: [Option<LabelId>; BLOCK_CAPACITY] =
                 [NonZeroU32::new(1); BLOCK_CAPACITY];
-            let mut compressed_dst_ids: BitVec<usize, Lsb0> =
-                bitvec![usize, Lsb0; 0; required_bits];
+            let mut compressed_dst_ids: BitVec<u64, Lsb0> = bitvec![u64, Lsb0; 0; required_bits];
             let edges = edge_block.edges;
 
             // 3.2 Compress edges

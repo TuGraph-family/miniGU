@@ -2,7 +2,7 @@ use std::collections::BinaryHeap;
 use std::sync::atomic::{AtomicU32, Ordering};
 
 use dashmap::DashMap;
-use diskann::common::AlignedBoxWithSlice;
+use diskann::common::{AlignedBoxWithSlice, FilterIndex as DiskANNFilterMask};
 use diskann::index::{ANNInmemIndex, create_inmem_index};
 use diskann::model::IndexConfiguration;
 use diskann::model::configuration::index_write_parameters::IndexWriteParametersBuilder;
@@ -11,9 +11,8 @@ use ordered_float::OrderedFloat;
 use parking_lot::RwLock;
 use vector::{Metric, distance_l2_vector_f32};
 
-use super::config::VectorIndexConfig;
 use super::filter::{FilterMask, SELECTIVITY_THRESHOLD};
-use super::index::{FilterIndex, VectorIndex};
+use super::index::VectorIndex;
 use crate::error::{StorageError, StorageResult, VectorIndexError};
 
 /// Sharded vector-to-node mapping
@@ -215,25 +214,7 @@ pub struct InMemANNAdapter {
 }
 
 impl InMemANNAdapter {
-    pub fn new(config: VectorIndexConfig) -> StorageResult<Self> {
-        let write_params = IndexWriteParametersBuilder::new(100, 64)
-            .with_alpha(1.2)
-            .with_num_threads(1)
-            .build();
-
-        let config = IndexConfiguration {
-            index_write_parameter: write_params,
-            dist_metric: Metric::L2,
-            dim: config.dimension,
-            aligned_dim: config.dimension,
-            max_points: config.max_points,
-            num_frozen_pts: 0,
-            use_pq_dist: false,
-            num_pq_chunks: 0,
-            use_opq: false,
-            growth_potential: 2.0,
-        };
-
+    pub fn new(config: IndexConfiguration) -> StorageResult<Self> {
         // Validate distance metric type: only L2 distance is supported
         if config.dist_metric != Metric::L2 {
             return Err(StorageError::VectorIndex(
@@ -345,13 +326,10 @@ impl InMemANNAdapter {
         filter_mask: &FilterMask,
         should_pre: bool,
     ) -> StorageResult<Vec<(u64, f32)>> {
-        let filtered_results = self.ann_search(
-            query,
-            k,
-            l_value,
-            Some(filter_mask as &dyn FilterIndex),
-            should_pre,
-        )?;
+        // Convert miniGU FilterMask to DiskANN FilterMask
+        let diskann_filter = filter_mask as &dyn DiskANNFilterMask;
+        let filtered_results =
+            self.ann_search(query, k, l_value, Some(diskann_filter), should_pre)?;
 
         Ok(filtered_results)
     }
@@ -514,7 +492,7 @@ impl VectorIndex for InMemANNAdapter {
         query: &[f32],
         k: usize,
         l_value: u32,
-        filter_mask: Option<&dyn FilterIndex>,
+        filter_mask: Option<&dyn DiskANNFilterMask>,
         should_pre: bool,
     ) -> StorageResult<Vec<(u64, f32)>> {
         // Check if index is built
@@ -529,37 +507,18 @@ impl VectorIndex for InMemANNAdapter {
         }
         let mut vector_ids = vec![0u32; effective_k];
         let mut distances = vec![0.0f32; effective_k];
-        struct DiskAnnFilter<'a>(&'a dyn FilterIndex);
-        impl diskann::common::FilterIndex for DiskAnnFilter<'_> {
-            fn contains_vector(&self, vector_id: u32) -> bool {
-                self.0.contains_vector(vector_id)
-            }
-        }
-
-        let actual_count = match filter_mask {
-            None => self.inner.search(
+        let actual_count = self
+            .inner
+            .search(
                 query,
                 effective_k,
                 l_value,
                 &mut vector_ids,
                 &mut distances,
-                None,
+                filter_mask,
                 should_pre,
-            ),
-            Some(filter) => {
-                let filter = DiskAnnFilter(filter);
-                self.inner.search(
-                    query,
-                    effective_k,
-                    l_value,
-                    &mut vector_ids,
-                    &mut distances,
-                    Some(&filter),
-                    should_pre,
-                )
-            }
-        }
-        .map_err(|e| StorageError::VectorIndex(VectorIndexError::SearchError(e.to_string())))?;
+            )
+            .map_err(|e| StorageError::VectorIndex(VectorIndexError::SearchError(e.to_string())))?;
         let mut results = Vec::with_capacity(actual_count as usize);
         for (&vector_id, &distance) in vector_ids
             .iter()
@@ -766,6 +725,34 @@ impl VectorIndex for InMemANNAdapter {
         Err(StorageError::VectorIndex(VectorIndexError::NotSupported(
             "load() is not yet implemented for InMemANNAdapter".to_string(),
         )))
+    }
+}
+
+/// Create a vector index configuration with intelligent capacity management
+///
+/// This function calculates optimal DiskANN configuration parameters based on the actual
+/// dataset size, using a headroom ratio to provide growth capacity while maintaining
+/// efficiency.
+pub fn create_vector_index_config(dimension: usize, vector_count: usize) -> IndexConfiguration {
+    let write_params = IndexWriteParametersBuilder::new(100, 64)
+        .with_alpha(1.2)
+        .with_num_threads(1)
+        .build();
+
+    // Set max_points to actual vector count
+    let calculated_max_points = vector_count.min(u32::MAX as usize);
+
+    IndexConfiguration {
+        index_write_parameter: write_params,
+        dist_metric: Metric::L2,
+        dim: dimension,
+        aligned_dim: dimension,
+        max_points: calculated_max_points,
+        num_frozen_pts: 0,
+        use_pq_dist: false,
+        num_pq_chunks: 0,
+        use_opq: false,
+        growth_potential: 2.0, // Pre-allocation capacity in InmemDataset of DiskANN to insert
     }
 }
 

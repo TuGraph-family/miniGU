@@ -1,9 +1,7 @@
+use diskann::common::FilterIndex as DiskANNFilterMask;
+
 use super::filter::FilterMask;
 use crate::error::StorageResult;
-
-pub trait FilterIndex: Send + Sync {
-    fn contains_vector(&self, vector_id: u32) -> bool;
-}
 
 /// Vector index trait for approximate nearest neighbor search
 pub trait VectorIndex: Send + Sync {
@@ -19,7 +17,7 @@ pub trait VectorIndex: Send + Sync {
         query: &[f32],
         k: usize,
         l_value: u32,
-        filter_mask: Option<&dyn FilterIndex>,
+        filter_mask: Option<&dyn DiskANNFilterMask>,
         should_pre: bool,
     ) -> StorageResult<Vec<(u64, f32)>>;
 
