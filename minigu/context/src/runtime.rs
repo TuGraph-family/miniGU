@@ -1,21 +1,21 @@
 use miette::Diagnostic;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(not(target_arch = "wasm32"))]
 use rayon::ThreadPool;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(not(target_arch = "wasm32"))]
 use rayon::ThreadPoolBuilder;
 use thiserror::Error;
 
-#[cfg(target_family = "wasm")]
+#[cfg(target_arch = "wasm32")]
 #[derive(Debug, Clone, Default)]
 pub struct DatabaseRuntime;
 
-#[cfg(not(target_family = "wasm"))]
+#[cfg(not(target_arch = "wasm32"))]
 #[derive(Debug)]
 pub struct DatabaseRuntime {
     pool: ThreadPool,
 }
 
-#[cfg(target_family = "wasm")]
+#[cfg(target_arch = "wasm32")]
 impl DatabaseRuntime {
     #[inline]
     pub fn new(_num_threads: usize) -> Result<Self, RuntimeError> {
@@ -31,7 +31,7 @@ impl DatabaseRuntime {
     }
 }
 
-#[cfg(not(target_family = "wasm"))]
+#[cfg(not(target_arch = "wasm32"))]
 impl DatabaseRuntime {
     pub fn new(num_threads: usize) -> Result<Self, RuntimeError> {
         let pool = ThreadPoolBuilder::new().num_threads(num_threads).build()?;
@@ -48,12 +48,12 @@ impl DatabaseRuntime {
     }
 }
 
-#[cfg(target_family = "wasm")]
+#[cfg(target_arch = "wasm32")]
 #[derive(Debug, Error, Diagnostic)]
 #[error("runtime error")]
 pub struct RuntimeError;
 
-#[cfg(not(target_family = "wasm"))]
+#[cfg(not(target_arch = "wasm32"))]
 #[derive(Debug, Error, Diagnostic)]
 pub enum RuntimeError {
     #[error("rayon error")]

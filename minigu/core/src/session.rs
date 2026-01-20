@@ -150,7 +150,7 @@ impl Session {
     // Test-harness helper: import a graph from an export manifest, then set it as current graph.
     //
     // This is intended for integration/system tests (e.g. `minigu-test`)
-    #[cfg(not(target_family = "wasm"))]
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn import_graph<P: AsRef<Path>>(
         &mut self,
         graph_name: &str,
