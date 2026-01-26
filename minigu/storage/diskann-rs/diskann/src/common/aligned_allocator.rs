@@ -104,7 +104,7 @@ impl<T> AlignedBoxWithSlice<T> {
         range: Range<usize>,
         slice_len: usize,
     ) -> ANNResult<Vec<&mut [T]>> {
-        if range.len() % slice_len != 0 || range.end > self.len() {
+        if !range.len().is_multiple_of(slice_len) || range.end > self.len() {
             return Err(ANNError::IndexError {
                 err: format!(
                     "Cannot split range ({:?}) of AlignedBoxWithSlice (len: {}) into nonoverlapping mutable slices with length {}",

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+RUST_BACKTRACE=1
+
 set -euo pipefail
 
 # TOML 格式检查
@@ -8,7 +10,7 @@ taplo fmt --check --diff
 cargo fmt --check
 
 # Clippy 静态检查
-cargo clippy --tests --features "${DEFAULT_FEATURES:-std,serde,miette}" --no-deps
+RUSTFLAGS="-Dwarnings" cargo clippy --tests --features "${DEFAULT_FEATURES:-std,serde,miette}" --no-deps
 
 # 构建
 cargo build --features "${DEFAULT_FEATURES:-std,serde,miette}"

@@ -1,0 +1,48 @@
+call create_test_vector_graph_data("vec_graph", 20);
+
+session set graph vec_graph;
+
+CREATE VECTOR INDEX person_vec
+FOR (n:PERSON)
+ON (n.embedding);
+
+-- negative case: duplicate create should error
+CREATE VECTOR INDEX person_vec
+FOR (n:PERSON)
+ON (n.embedding);
+
+CREATE VECTOR INDEX person_vec IF NOT EXISTS
+FOR (n:PERSON)
+ON (n.embedding);
+
+-- negative case: property is not a vector column
+CREATE VECTOR INDEX name_vec
+FOR (n:PERSON)
+ON (n.name);
+
+-- negative case: label does not exist
+CREATE VECTOR INDEX alien_vec
+FOR (n:ALIEN)
+ON (n.embedding);
+
+-- negative case: property has unsupported dimension (105)
+CREATE VECTOR INDEX person_vec105
+FOR (n:PERSON)
+ON (n.embedding105);
+
+DROP VECTOR INDEX person_vec;
+
+DROP VECTOR INDEX person_vec IF EXISTS;
+
+-- negative case: drop after removal should error
+DROP VECTOR INDEX person_vec;
+
+-- rebuild graph with no vectors to trigger a storage error
+call create_test_vector_graph_data("vec_graph_empty", 0);
+
+session set graph vec_graph_empty;
+
+-- negative case: building vector index fails because dataset is empty
+CREATE VECTOR INDEX empty_vec
+FOR (n:PERSON)
+ON (n.embedding);

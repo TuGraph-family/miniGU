@@ -1,0 +1,2 @@
+CALL create_test_graph('test_graph_1');
+CALL create_test_graph('test_graph_2');

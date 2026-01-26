@@ -1,0 +1,641 @@
+---
+source: minigu-test/src/insta_test.rs
+---
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Conjunction:
+                        conjunction:
+                          - SetOp:
+                              kind:
+                                - Union
+                                - start: 307
+                                  end: 312
+                              quantifier: ~
+                          - start: 307
+                            end: 312
+                        left:
+                          - Primary:
+                              Ambient:
+                                Parts:
+                                  parts:
+                                    - - Match:
+                                          Simple:
+                                            - pattern:
+                                                - match_mode: ~
+                                                  patterns:
+                                                    - - variable: ~
+                                                        prefix: ~
+                                                        expr:
+                                                          - Concat:
+                                                              - - Pattern:
+                                                                    Node:
+                                                                      variable:
+                                                                        - message
+                                                                        - start: 7
+                                                                          end: 14
+                                                                      label: ~
+                                                                      predicate:
+                                                                        - Where:
+                                                                            - Binary:
+                                                                                op:
+                                                                                  - Eq
+                                                                                  - start: 32
+                                                                                    end: 33
+                                                                                left:
+                                                                                  - Property:
+                                                                                      source:
+                                                                                        - Variable: message
+                                                                                        - start: 21
+                                                                                          end: 28
+                                                                                      trailing_names:
+                                                                                        - - id
+                                                                                          - start: 29
+                                                                                            end: 31
+                                                                                  - start: 21
+                                                                                    end: 31
+                                                                                right:
+                                                                                  - Value:
+                                                                                      Literal:
+                                                                                        Numeric:
+                                                                                          Integer:
+                                                                                            - kind: Decimal
+                                                                                              integer: "274877907096"
+                                                                                            - start: 34
+                                                                                              end: 46
+                                                                                  - start: 34
+                                                                                    end: 46
+                                                                            - start: 21
+                                                                              end: 46
+                                                                        - start: 15
+                                                                          end: 46
+                                                                - start: 6
+                                                                  end: 47
+                                                              - - Pattern:
+                                                                    Edge:
+                                                                      kind: Right
+                                                                      filler:
+                                                                        variable:
+                                                                          - e
+                                                                          - start: 49
+                                                                            end: 50
+                                                                        label: ~
+                                                                        predicate: ~
+                                                                - start: 47
+                                                                  end: 53
+                                                              - - Pattern:
+                                                                    Node:
+                                                                      variable:
+                                                                        - person
+                                                                        - start: 54
+                                                                          end: 60
+                                                                      label:
+                                                                        - Label: Person
+                                                                        - start: 61
+                                                                          end: 67
+                                                                      predicate: ~
+                                                                - start: 53
+                                                                  end: 68
+                                                          - start: 6
+                                                            end: 68
+                                                      - start: 6
+                                                        end: 68
+                                                  keep: ~
+                                                  where_clause:
+                                                    - Binary:
+                                                        op:
+                                                          - Or
+                                                          - start: 136
+                                                            end: 138
+                                                        left:
+                                                          - Binary:
+                                                              op:
+                                                                - And
+                                                                - start: 104
+                                                                  end: 107
+                                                              left:
+                                                                - Binary:
+                                                                    op:
+                                                                      - Eq
+                                                                      - start: 95
+                                                                        end: 96
+                                                                    left:
+                                                                      - Function:
+                                                                          Generic:
+                                                                            name:
+                                                                              - label
+                                                                              - start: 80
+                                                                                end: 85
+                                                                            args:
+                                                                              - - Variable: message
+                                                                                - start: 86
+                                                                                  end: 93
+                                                                      - start: 80
+                                                                        end: 94
+                                                                    right:
+                                                                      - Value:
+                                                                          Literal:
+                                                                            String:
+                                                                              kind: Char
+                                                                              literal: Post
+                                                                      - start: 97
+                                                                        end: 103
+                                                                - start: 80
+                                                                  end: 103
+                                                              right:
+                                                                - Binary:
+                                                                    op:
+                                                                      - Eq
+                                                                      - start: 116
+                                                                        end: 117
+                                                                    left:
+                                                                      - Function:
+                                                                          Generic:
+                                                                            name:
+                                                                              - type
+                                                                              - start: 108
+                                                                                end: 112
+                                                                            args:
+                                                                              - - Variable: e
+                                                                                - start: 113
+                                                                                  end: 114
+                                                                      - start: 108
+                                                                        end: 115
+                                                                    right:
+                                                                      - Value:
+                                                                          Literal:
+                                                                            String:
+                                                                              kind: Char
+                                                                              literal: postHasCreator
+                                                                      - start: 118
+                                                                        end: 134
+                                                                - start: 108
+                                                                  end: 134
+                                                          - start: 79
+                                                            end: 135
+                                                        right:
+                                                          - Binary:
+                                                              op:
+                                                                - And
+                                                                - start: 171
+                                                                  end: 174
+                                                              left:
+                                                                - Binary:
+                                                                    op:
+                                                                      - Eq
+                                                                      - start: 159
+                                                                        end: 160
+                                                                    left:
+                                                                      - Function:
+                                                                          Generic:
+                                                                            name:
+                                                                              - label
+                                                                              - start: 144
+                                                                                end: 149
+                                                                            args:
+                                                                              - - Variable: message
+                                                                                - start: 150
+                                                                                  end: 157
+                                                                      - start: 144
+                                                                        end: 158
+                                                                    right:
+                                                                      - Value:
+                                                                          Literal:
+                                                                            String:
+                                                                              kind: Char
+                                                                              literal: Comment
+                                                                      - start: 161
+                                                                        end: 170
+                                                                - start: 144
+                                                                  end: 170
+                                                              right:
+                                                                - Binary:
+                                                                    op:
+                                                                      - Eq
+                                                                      - start: 183
+                                                                        end: 184
+                                                                    left:
+                                                                      - Function:
+                                                                          Generic:
+                                                                            name:
+                                                                              - type
+                                                                              - start: 175
+                                                                                end: 179
+                                                                            args:
+                                                                              - - Variable: e
+                                                                                - start: 180
+                                                                                  end: 181
+                                                                      - start: 175
+                                                                        end: 182
+                                                                    right:
+                                                                      - Value:
+                                                                          Literal:
+                                                                            String:
+                                                                              kind: Char
+                                                                              literal: commentHasCreator
+                                                                      - start: 185
+                                                                        end: 204
+                                                                - start: 175
+                                                                  end: 204
+                                                          - start: 143
+                                                            end: 205
+                                                    - start: 79
+                                                      end: 205
+                                                - start: 6
+                                                  end: 205
+                                              yield_clause: []
+                                            - start: 6
+                                              end: 205
+                                      - start: 0
+                                        end: 205
+                                  result:
+                                    - Return:
+                                        statement:
+                                          - quantifier: ~
+                                            items:
+                                              - Items:
+                                                  - - value:
+                                                        - Property:
+                                                            source:
+                                                              - Variable: person
+                                                              - start: 217
+                                                                end: 223
+                                                            trailing_names:
+                                                              - - id
+                                                                - start: 224
+                                                                  end: 226
+                                                        - start: 217
+                                                          end: 226
+                                                      alias:
+                                                        - personId
+                                                        - start: 230
+                                                          end: 238
+                                                    - start: 217
+                                                      end: 238
+                                                  - - value:
+                                                        - Property:
+                                                            source:
+                                                              - Variable: person
+                                                              - start: 244
+                                                                end: 250
+                                                            trailing_names:
+                                                              - - firstName
+                                                                - start: 251
+                                                                  end: 260
+                                                        - start: 244
+                                                          end: 260
+                                                      alias:
+                                                        - firstName
+                                                        - start: 264
+                                                          end: 273
+                                                    - start: 244
+                                                      end: 273
+                                                  - - value:
+                                                        - Property:
+                                                            source:
+                                                              - Variable: person
+                                                              - start: 279
+                                                                end: 285
+                                                            trailing_names:
+                                                              - - lastName
+                                                                - start: 286
+                                                                  end: 294
+                                                        - start: 279
+                                                          end: 294
+                                                      alias:
+                                                        - lastName
+                                                        - start: 298
+                                                          end: 306
+                                                    - start: 279
+                                                      end: 306
+                                              - start: 217
+                                                end: 306
+                                            group_by: ~
+                                          - start: 206
+                                            end: 306
+                                        order_by: ~
+                                    - start: 206
+                                      end: 306
+                          - start: 0
+                            end: 306
+                        right:
+                          - Primary:
+                              Ambient:
+                                Parts:
+                                  parts:
+                                    - - Match:
+                                          Simple:
+                                            - pattern:
+                                                - match_mode: ~
+                                                  patterns:
+                                                    - - variable: ~
+                                                        prefix: ~
+                                                        expr:
+                                                          - Concat:
+                                                              - - Pattern:
+                                                                    Node:
+                                                                      variable:
+                                                                        - message
+                                                                        - start: 320
+                                                                          end: 327
+                                                                      label: ~
+                                                                      predicate:
+                                                                        - Where:
+                                                                            - Binary:
+                                                                                op:
+                                                                                  - Eq
+                                                                                  - start: 345
+                                                                                    end: 346
+                                                                                left:
+                                                                                  - Property:
+                                                                                      source:
+                                                                                        - Variable: message
+                                                                                        - start: 334
+                                                                                          end: 341
+                                                                                      trailing_names:
+                                                                                        - - id
+                                                                                          - start: 342
+                                                                                            end: 344
+                                                                                  - start: 334
+                                                                                    end: 344
+                                                                                right:
+                                                                                  - Value:
+                                                                                      Literal:
+                                                                                        Numeric:
+                                                                                          Integer:
+                                                                                            - kind: Decimal
+                                                                                              integer: "3"
+                                                                                            - start: 347
+                                                                                              end: 348
+                                                                                  - start: 347
+                                                                                    end: 348
+                                                                            - start: 334
+                                                                              end: 348
+                                                                        - start: 328
+                                                                          end: 348
+                                                                - start: 319
+                                                                  end: 349
+                                                              - - Pattern:
+                                                                    Edge:
+                                                                      kind: Right
+                                                                      filler:
+                                                                        variable:
+                                                                          - e
+                                                                          - start: 351
+                                                                            end: 352
+                                                                        label: ~
+                                                                        predicate: ~
+                                                                - start: 349
+                                                                  end: 355
+                                                              - - Pattern:
+                                                                    Node:
+                                                                      variable:
+                                                                        - person
+                                                                        - start: 356
+                                                                          end: 362
+                                                                      label:
+                                                                        - Label: Person
+                                                                        - start: 363
+                                                                          end: 369
+                                                                      predicate: ~
+                                                                - start: 355
+                                                                  end: 370
+                                                          - start: 319
+                                                            end: 370
+                                                      - start: 319
+                                                        end: 370
+                                                  keep: ~
+                                                  where_clause:
+                                                    - Binary:
+                                                        op:
+                                                          - Or
+                                                          - start: 438
+                                                            end: 440
+                                                        left:
+                                                          - Binary:
+                                                              op:
+                                                                - And
+                                                                - start: 406
+                                                                  end: 409
+                                                              left:
+                                                                - Binary:
+                                                                    op:
+                                                                      - Eq
+                                                                      - start: 397
+                                                                        end: 398
+                                                                    left:
+                                                                      - Function:
+                                                                          Generic:
+                                                                            name:
+                                                                              - label
+                                                                              - start: 382
+                                                                                end: 387
+                                                                            args:
+                                                                              - - Variable: message
+                                                                                - start: 388
+                                                                                  end: 395
+                                                                      - start: 382
+                                                                        end: 396
+                                                                    right:
+                                                                      - Value:
+                                                                          Literal:
+                                                                            String:
+                                                                              kind: Char
+                                                                              literal: Post
+                                                                      - start: 399
+                                                                        end: 405
+                                                                - start: 382
+                                                                  end: 405
+                                                              right:
+                                                                - Binary:
+                                                                    op:
+                                                                      - Eq
+                                                                      - start: 418
+                                                                        end: 419
+                                                                    left:
+                                                                      - Function:
+                                                                          Generic:
+                                                                            name:
+                                                                              - type
+                                                                              - start: 410
+                                                                                end: 414
+                                                                            args:
+                                                                              - - Variable: e
+                                                                                - start: 415
+                                                                                  end: 416
+                                                                      - start: 410
+                                                                        end: 417
+                                                                    right:
+                                                                      - Value:
+                                                                          Literal:
+                                                                            String:
+                                                                              kind: Char
+                                                                              literal: postHasCreator
+                                                                      - start: 420
+                                                                        end: 436
+                                                                - start: 410
+                                                                  end: 436
+                                                          - start: 381
+                                                            end: 437
+                                                        right:
+                                                          - Binary:
+                                                              op:
+                                                                - And
+                                                                - start: 473
+                                                                  end: 476
+                                                              left:
+                                                                - Binary:
+                                                                    op:
+                                                                      - Eq
+                                                                      - start: 461
+                                                                        end: 462
+                                                                    left:
+                                                                      - Function:
+                                                                          Generic:
+                                                                            name:
+                                                                              - label
+                                                                              - start: 446
+                                                                                end: 451
+                                                                            args:
+                                                                              - - Variable: message
+                                                                                - start: 452
+                                                                                  end: 459
+                                                                      - start: 446
+                                                                        end: 460
+                                                                    right:
+                                                                      - Value:
+                                                                          Literal:
+                                                                            String:
+                                                                              kind: Char
+                                                                              literal: Comment
+                                                                      - start: 463
+                                                                        end: 472
+                                                                - start: 446
+                                                                  end: 472
+                                                              right:
+                                                                - Binary:
+                                                                    op:
+                                                                      - Eq
+                                                                      - start: 485
+                                                                        end: 486
+                                                                    left:
+                                                                      - Function:
+                                                                          Generic:
+                                                                            name:
+                                                                              - type
+                                                                              - start: 477
+                                                                                end: 481
+                                                                            args:
+                                                                              - - Variable: e
+                                                                                - start: 482
+                                                                                  end: 483
+                                                                      - start: 477
+                                                                        end: 484
+                                                                    right:
+                                                                      - Value:
+                                                                          Literal:
+                                                                            String:
+                                                                              kind: Char
+                                                                              literal: commentHasCreator
+                                                                      - start: 487
+                                                                        end: 506
+                                                                - start: 477
+                                                                  end: 506
+                                                          - start: 445
+                                                            end: 507
+                                                    - start: 381
+                                                      end: 507
+                                                - start: 319
+                                                  end: 507
+                                              yield_clause: []
+                                            - start: 319
+                                              end: 507
+                                      - start: 313
+                                        end: 507
+                                  result:
+                                    - Return:
+                                        statement:
+                                          - quantifier: ~
+                                            items:
+                                              - Items:
+                                                  - - value:
+                                                        - Property:
+                                                            source:
+                                                              - Variable: person
+                                                              - start: 519
+                                                                end: 525
+                                                            trailing_names:
+                                                              - - id
+                                                                - start: 526
+                                                                  end: 528
+                                                        - start: 519
+                                                          end: 528
+                                                      alias:
+                                                        - personId
+                                                        - start: 532
+                                                          end: 540
+                                                    - start: 519
+                                                      end: 540
+                                                  - - value:
+                                                        - Property:
+                                                            source:
+                                                              - Variable: person
+                                                              - start: 546
+                                                                end: 552
+                                                            trailing_names:
+                                                              - - firstName
+                                                                - start: 553
+                                                                  end: 562
+                                                        - start: 546
+                                                          end: 562
+                                                      alias:
+                                                        - firstName
+                                                        - start: 566
+                                                          end: 575
+                                                    - start: 546
+                                                      end: 575
+                                                  - - value:
+                                                        - Property:
+                                                            source:
+                                                              - Variable: person
+                                                              - start: 581
+                                                                end: 587
+                                                            trailing_names:
+                                                              - - lastName
+                                                                - start: 588
+                                                                  end: 596
+                                                        - start: 581
+                                                          end: 596
+                                                      alias:
+                                                        - lastName
+                                                        - start: 600
+                                                          end: 608
+                                                    - start: 581
+                                                      end: 608
+                                              - start: 519
+                                                end: 608
+                                            group_by: ~
+                                          - start: 508
+                                            end: 608
+                                        order_by: ~
+                                    - start: 508
+                                      end: 608
+                          - start: 313
+                            end: 608
+                  - start: 0
+                    end: 608
+                next_statements: []
+              - start: 0
+                end: 608
+            end: ~
+        - start: 0
+          end: 608
+      session_close: false
+    - start: 0
+      end: 608

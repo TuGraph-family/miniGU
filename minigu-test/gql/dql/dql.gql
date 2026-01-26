@@ -1,0 +1,14 @@
+call create_test_graph_data("test1", 5);
+call create_test_graph_data("test2", 10);
+
+session set graph test1;
+MATCH (n:PERSON) return n;
+MATCH (c:COMPANY) return c;
+MATCH (n:PERSON)-[w:WORKS_AT]->(c:COMPANY) return n,c;
+MATCH (n:PERSON)-[f:FRIEND]->(m:PERSON) return n,m;
+
+session set graph test2;
+MATCH (n:PERSON) return n;
+MATCH (c:COMPANY) return c;
+MATCH (n:PERSON)-[w:WORKS_AT]->(c:COMPANY) return n,c;
+MATCH (n:PERSON)-[f:FRIEND]->(m:PERSON) return n,m;

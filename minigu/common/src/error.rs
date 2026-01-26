@@ -1,3 +1,4 @@
+#![allow(unused_assignments)]
 use std::{env, fmt};
 
 use miette::Diagnostic;

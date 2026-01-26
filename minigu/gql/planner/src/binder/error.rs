@@ -50,6 +50,9 @@ pub enum BindError {
     #[error("variable not found: {0}")]
     VariableNotFound(SmolStr),
 
+    #[error("label not found: {0}")]
+    LabelNotFound(SmolStr),
+
     #[error("invalid integer: {0}")]
     InvalidInteger(SmolStr),
 
@@ -81,6 +84,49 @@ pub enum BindError {
         "append \"return *\" to the statement if you want to use \"{0}\" as a query procedure"
     ))]
     NotCatalogProcedure(SmolStr),
+
+    #[error("vector dimension mismatch: expected {expected}, got {actual}")]
+    VectorDimensionMismatch { expected: usize, actual: usize },
+
+    #[error("invalid vector element: {0}")]
+    InvalidVectorElement(String),
+
+    #[error("invalid vector literal: {0}")]
+    InvalidVectorLiteral(String),
+
+    #[error("argument {position} of VECTOR_DISTANCE must be a vector, but found {ty}")]
+    InvalidVectorDistanceArgument { position: usize, ty: LogicalType },
+
+    #[error("VECTOR_DISTANCE operands must share the same dimension: left {left}, right {right}")]
+    VectorDistanceDimensionMismatch { left: usize, right: usize },
+
+    #[error("invalid float literal: {0}")]
+    InvalidFloatLiteral(String),
+
+    #[error("property {property} on label {label} not found")]
+    PropertyNotFound { label: SmolStr, property: SmolStr },
+
+    #[error("property binding {property_binding} must match vector index binding {binding}")]
+    CreateVectorIndexBindingMismatch {
+        binding: SmolStr,
+        property_binding: SmolStr,
+    },
+
+    #[error("property {property} on label {label} must be a vector type, found {ty}")]
+    PropertyNotVector {
+        label: SmolStr,
+        property: SmolStr,
+        ty: LogicalType,
+    },
+
+    #[error("vector index on label {label} property {property} already exists")]
+    VectorIndexAlreadyExists { label: SmolStr, property: SmolStr },
+
+    #[error("vector index name {name} already exists")]
+    VectorIndexNameAlreadyExists { name: SmolStr },
+
+    #[error("vector index {name} not found")]
+    VectorIndexNotFound { name: SmolStr },
 
     // TODO: Remove this error variant
     #[error("unexpected bind error")]

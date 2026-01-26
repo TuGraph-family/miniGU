@@ -286,10 +286,10 @@ def_parser_alias!(
 
 pub fn match_statement(input: &mut TokenStream) -> ModalResult<Spanned<MatchStatement>> {
     dispatch! {peek(any);
-        TokenKind::Match => simple_match_statement.map(MatchStatement::Simple),
-        TokenKind::Optional => {
-            optional_match_statement.map(MatchStatement::Optional)
-        },
+        TokenKind::Match =>
+            simple_match_statement.map(|t| MatchStatement::Simple(Box::new(t))),
+        TokenKind::Optional =>
+            optional_match_statement.map(MatchStatement::Optional),
         _ => fail
     }
     .spanned()
@@ -308,7 +308,7 @@ pub fn optional_match_statement(
     let operand = dispatch! {peek(any);
         TokenKind::Match => {
             simple_match_statement
-                .map(MatchStatement::Simple)
+                .map(|t| MatchStatement::Simple(Box::new(t)))
                 .spanned()
                 .map(|simple| [simple].into())
         },
@@ -359,6 +359,32 @@ mod tests {
             RETURN a.id, count(b)
             ORDER BY a.id DESC NULLS LAST
             OFFSET 10
+            LIMIT 10"
+        );
+        assert_yaml_snapshot!(query);
+    }
+
+    #[test]
+    fn test_ambient_linear_query_statement_limit_approximate_vector_distance() {
+        let query = parse!(
+            ambient_linear_query_statement,
+            r"
+            MATCH (a:Articles)
+            RETURN VECTOR_DISTANCE(VECTOR [1, 2.3e-4, -4.53], a.article_vector, L2) AS distance
+            ORDER BY distance
+            LIMIT APPROXIMATE 10"
+        );
+        assert_yaml_snapshot!(query);
+    }
+
+    #[test]
+    fn test_ambient_linear_query_statement_limit_vector_distance() {
+        let query = parse!(
+            ambient_linear_query_statement,
+            r"
+            MATCH (a:Articles)
+            RETURN VECTOR_DISTANCE(VECTOR [1, 2.3e-4, -4.53], a.article_vector, L2) AS distance
+            ORDER BY distance
             LIMIT 10"
         );
         assert_yaml_snapshot!(query);

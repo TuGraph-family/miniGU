@@ -1,0 +1,95 @@
+---
+source: minigu-test/src/insta_test.rs
+---
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - Call:
+                            optional: false
+                            procedure:
+                              - Named:
+                                  name:
+                                    - Ref:
+                                        schema: ~
+                                        objects:
+                                          - - create_test_graph
+                                            - start: 5
+                                              end: 22
+                                    - start: 5
+                                      end: 22
+                                  args:
+                                    - - Value:
+                                          Literal:
+                                            String:
+                                              kind: Char
+                                              literal: test_graph_1
+                                      - start: 23
+                                        end: 37
+                                  yield_clause: ~
+                              - start: 5
+                                end: 38
+                        - start: 0
+                          end: 38
+                  - start: 0
+                    end: 38
+                next_statements: []
+              - start: 0
+                end: 38
+            end: ~
+        - start: 0
+          end: 38
+      session_close: false
+    - start: 0
+      end: 38
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - Call:
+                            optional: false
+                            procedure:
+                              - Named:
+                                  name:
+                                    - Ref:
+                                        schema: ~
+                                        objects:
+                                          - - create_test_graph
+                                            - start: 5
+                                              end: 22
+                                    - start: 5
+                                      end: 22
+                                  args:
+                                    - - Value:
+                                          Literal:
+                                            String:
+                                              kind: Char
+                                              literal: test_graph_2
+                                      - start: 23
+                                        end: 37
+                                  yield_clause: ~
+                              - start: 5
+                                end: 38
+                        - start: 0
+                          end: 38
+                  - start: 0
+                    end: 38
+                next_statements: []
+              - start: 0
+                end: 38
+            end: ~
+        - start: 0
+          end: 38
+      session_close: false
+    - start: 0
+      end: 38

@@ -1,24 +1,26 @@
 use std::sync::Arc;
 
 use gql_parser::ast::{
-    AmbientLinearQueryStatement, CompositeQueryStatement, FocusedLinearQueryStatement,
-    FocusedLinearQueryStatementPart, LinearQueryStatement, MatchStatement,
-    NullOrdering as AstNullOrdering, OrderByAndPageStatement, Ordering, QueryConjunction,
-    ResultStatement, Return, ReturnStatement, SetOp, SetOpKind, SetQuantifier,
-    SimpleQueryStatement, SortSpec,
+    AmbientLinearQueryStatement, CompositeQueryStatement, ExplainStatement,
+    FocusedLinearQueryStatement, FocusedLinearQueryStatementPart, LinearQueryStatement,
+    MatchStatement, NullOrdering as AstNullOrdering, OrderByAndPageStatement, Ordering,
+    QueryConjunction, ResultStatement, Return, ReturnStatement, SetOp, SetOpKind, SetQuantifier,
+    SimpleQueryStatement, SortSpec, UtilityStatement,
 };
 use itertools::Itertools;
-use minigu_common::data_type::{DataField, DataSchema, DataSchemaRef};
+use minigu_common::data_type::{DataField, DataSchema, DataSchemaRef, LogicalType};
 use minigu_common::error::not_implemented;
 use minigu_common::ordering::{NullOrdering, SortOrdering};
+use minigu_common::types::{VectorIndexKey, VectorMetric};
 
 use super::Binder;
 use super::error::{BindError, BindResult};
 use crate::bound::{
-    BoundCompositeQueryStatement, BoundExpr, BoundLinearQueryStatement,
-    BoundOrderByAndPageStatement, BoundQueryConjunction, BoundResultStatement,
-    BoundReturnStatement, BoundSetOp, BoundSetOpKind, BoundSetQuantifier,
-    BoundSimpleQueryStatement, BoundSortSpec,
+    BoundCompositeQueryStatement, BoundExpr, BoundExprKind, BoundLimitClause,
+    BoundLinearQueryStatement, BoundMatchStatement, BoundOrderByAndPageStatement,
+    BoundQueryConjunction, BoundResultStatement, BoundReturnStatement, BoundSetOp, BoundSetOpKind,
+    BoundSetQuantifier, BoundSimpleQueryStatement, BoundSortSpec, BoundUtilityStatement,
+    BoundVectorIndexScan,
 };
 
 impl Binder<'_> {
@@ -124,7 +126,10 @@ impl Binder<'_> {
         statement: &SimpleQueryStatement,
     ) -> BindResult<BoundSimpleQueryStatement> {
         match statement {
-            SimpleQueryStatement::Match(statement) => todo!(),
+            SimpleQueryStatement::Match(statement) => {
+                let statement = self.bind_match_statement(statement)?;
+                Ok(BoundSimpleQueryStatement::Match(statement))
+            }
             SimpleQueryStatement::Call(statement) => {
                 let statement = self.bind_call_procedure_statement(statement)?;
                 let schema = statement
@@ -143,11 +148,45 @@ impl Binder<'_> {
         }
     }
 
-    pub fn bind_match_statement(&mut self, statement: &MatchStatement) -> BindResult<()> {
+    // NOTE: `bind_vector_index_scan` is currently only invoked via placeholder wiring so executor
+    // and planner layers compile; once MATCH binding is implemented, vector scans will be
+    // produced inside the MATCH → ORDER BY → LIMIT APPROXIMATE pipeline (plain LIMIT keeps the
+    // exact distance path) rather than as a standalone simple statement.
+    #[allow(dead_code)]
+    fn bind_vector_index_scan(
+        &mut self,
+        _order_by: &OrderByAndPageStatement,
+    ) -> BindResult<BoundVectorIndexScan> {
+        // TODO(minigu-vector-search): Enable vector index scan binding once MATCH is able to
+        // provide the filtered candidate bitmap and schema context. Planned flow:
+        // 1. Locate ORDER BY VECTOR_DISTANCE(...) and validate operands/metric.
+        // 2. Resolve the MATCH binding to fetch label/property metadata and derive VectorIndexKey.
+        // 3. Capture LIMIT/APPROXIMATE information, the query vector expression, and the MATCH
+        //    candidate bitmap so vector search can run against it.
+        // 4. Append BoundVectorIndexScan so later phases can emit VectorIndexScan plan nodes.
+        let _ = (VectorIndexKey::new, VectorMetric::L2);
+        not_implemented("vector index scan binding", None)
+    }
+
+    pub fn bind_match_statement(
+        &mut self,
+        statement: &MatchStatement,
+    ) -> BindResult<BoundMatchStatement> {
         match statement {
-            MatchStatement::Simple(table) => todo!(),
+            MatchStatement::Simple(table) => {
+                let stmt = self.bind_graph_pattern_binding_table(table.value())?;
+                Ok(BoundMatchStatement::Simple(Box::new(stmt)))
+            }
             MatchStatement::Optional(_) => not_implemented("optional match statement", None),
         }
+    }
+
+    pub fn bind_explain_statement(
+        &mut self,
+        statement: &ExplainStatement,
+    ) -> BindResult<BoundUtilityStatement> {
+        let next_statement = self.bind_statement(statement.statement.value())?;
+        Ok(BoundUtilityStatement::Explain(Box::new(next_statement)))
     }
 
     pub fn bind_result_statement(
@@ -195,6 +234,7 @@ impl Binder<'_> {
             Return::Items(items) => {
                 let mut fields = Vec::new();
                 let mut exprs = Vec::new();
+                let mut schema = DataSchema::new(Vec::new());
                 for item in items {
                     let item = item.value();
                     let expr = self.bind_value_expression(item.value.value())?;
@@ -208,9 +248,22 @@ impl Binder<'_> {
                         expr.logical_type.clone(),
                         expr.nullable,
                     ));
+
+                    if let LogicalType::Vertex(_) = &expr.logical_type
+                        && let BoundExprKind::Variable(var_name) = &expr.kind
+                        && let Some(active_schema) = &self.active_data_schema
+                        && let Some(label_set) = active_schema.get_var_label(var_name)
+                    {
+                        schema.set_var_label(var_name.clone(), label_set);
+                    }
+
                     exprs.push(expr);
                 }
-                let schema = Arc::new(DataSchema::new(fields));
+                for field in &fields {
+                    schema.push_back(field);
+                }
+                let schema = Arc::new(schema);
+
                 Ok((Some(exprs), schema))
             }
             Return::All => {
@@ -224,6 +277,10 @@ impl Binder<'_> {
         }
     }
 
+    // TODO(minigu-vector-search): Once MATCH binding is implemented, extend this method (or its
+    // caller) to detect ORDER BY VECTOR_DISTANCE ... LIMIT APPROXIMATE, preserve the MATCH
+    // bindings/bitmap, and append a BoundVectorIndexScan (via `bind_vector_index_scan`) so the
+    // vector search operates on the filtered candidate set instead of discarding it.
     pub fn bind_order_by_and_page_statement(
         &self,
         order_by_and_page: &OrderByAndPageStatement,
@@ -242,9 +299,15 @@ impl Binder<'_> {
         let limit = order_by_and_page
             .limit
             .as_ref()
-            .map(|l| self.bind_non_negative_integer(l.value()))
+            .map(|l| {
+                self.bind_non_negative_integer(&l.value().count)
+                    .map(|bound_count| (bound_count, l.value().approximate))
+            })
             .transpose()?
-            .map(|l| l.to_usize());
+            .map(|(bound_count, approximate)| BoundLimitClause {
+                count: bound_count.to_usize(),
+                approximate,
+            });
         Ok(BoundOrderByAndPageStatement {
             order_by,
             offset,

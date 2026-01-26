@@ -2,8 +2,11 @@ use std::any::Any;
 use std::fmt::Debug;
 use std::sync::Arc;
 
+use downcast_rs::{DowncastSync, impl_downcast};
 use minigu_common::data_type::{DataSchemaRef, LogicalType};
-use minigu_common::types::{LabelId, PropertyId};
+use minigu_common::types::{LabelId, PropertyId, VectorIndexKey, VectorMetric};
+use serde::Serialize;
+use smol_str::SmolStr;
 
 use crate::error::CatalogResult;
 use crate::label_set::LabelSet;
@@ -16,6 +19,8 @@ pub type GraphTypeRef = Arc<dyn GraphTypeProvider>;
 pub type VertexTypeRef = Arc<dyn VertexTypeProvider>;
 pub type EdgeTypeRef = Arc<dyn EdgeTypeProvider>;
 pub type ProcedureRef = Arc<dyn ProcedureProvider>;
+pub type VectorIndexCatalogEntries = Vec<VectorIndexCatalogEntry>;
+pub type GraphIndexCatalogRef = Arc<dyn GraphIndexCatalog>;
 
 /// The top-level catalog provider, responsible for managing multiple directories and schemas,
 /// resembling a UNIX filesystem.
@@ -36,7 +41,7 @@ pub trait DirectoryProvider: Debug + Send + Sync {
 }
 
 /// Represents a logical schema, which contains graphs and graph type definitions.
-pub trait SchemaProvider: Debug + Send + Sync {
+pub trait SchemaProvider: Debug + Send + Sync + DowncastSync {
     /// Returns the parent directory ID of the schema.
     fn parent(&self) -> Option<DirectoryRef>;
 
@@ -59,16 +64,55 @@ pub trait SchemaProvider: Debug + Send + Sync {
     fn get_procedure(&self, name: &str) -> CatalogResult<Option<ProcedureRef>>;
 }
 
+impl_downcast!(sync SchemaProvider);
+
+/// Catalog responsible for managing vector index catalog entries.
+pub trait GraphIndexCatalog: Debug + Send + Sync {
+    /// Returns the catalog entry of a vector index by key, if present.
+    fn get_vector_index(
+        &self,
+        key: VectorIndexKey,
+    ) -> CatalogResult<Option<VectorIndexCatalogEntry>>;
+
+    /// Returns the catalog entry of a vector index by name, if present.
+    fn get_vector_index_by_name(
+        &self,
+        name: &str,
+    ) -> CatalogResult<Option<VectorIndexCatalogEntry>>;
+
+    /// Inserts a vector index catalog entry.
+    ///
+    /// Returns `false` if an index on the same `(label_id, property_id)` already exists.
+    fn insert_vector_index(&self, entry: VectorIndexCatalogEntry) -> CatalogResult<bool>;
+
+    /// Removes a vector index catalog entry by key. Returns true if removed.
+    fn remove_vector_index(&self, key: VectorIndexKey) -> CatalogResult<bool>;
+
+    /// Returns all registered vector index catalog entries on the graph.
+    fn list_vector_indices(&self) -> CatalogResult<VectorIndexCatalogEntries>;
+}
+
 /// Represents a graph, which is an instance of a graph type.
 ///
+/// The [`DowncastSync`] bound is added to allow safely downcasting
+/// `Arc<dyn GraphProvider>` back to its concrete implementation type at runtime
+/// using [`Arc::downcast`]. Without it, users would not be able to recover the
+/// concrete type from a trait object safely.
 /// Use [`Arc::downcast`] to cast the trait object into the concrete type.
-pub trait GraphProvider: Debug + Send + Sync + Any {
+pub trait GraphProvider: Debug + Send + Sync + Any + DowncastSync {
     /// Returns the graph type of the graph.
     fn graph_type(&self) -> GraphTypeRef;
+
+    /// Returns the index catalog of the graph, if available.
+    fn index_catalog(&self) -> Option<GraphIndexCatalogRef> {
+        None
+    }
 
     /// Returns a reference to the underlying graph.
     fn as_any(&self) -> &dyn Any;
 }
+
+impl_downcast!(sync GraphProvider);
 
 /// Represents a graph type, which defines the structure of a graph.
 /// It contains vertex types and edge types.
@@ -129,6 +173,14 @@ pub trait ProcedureProvider: Debug + Send + Sync + Any {
 
     /// Returns a reference to the underlying procedure.
     fn as_any(&self) -> &dyn Any;
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct VectorIndexCatalogEntry {
+    pub name: SmolStr,
+    pub key: VectorIndexKey,
+    pub metric: VectorMetric,
+    pub dimension: usize,
 }
 
 #[derive(Debug, Clone)]

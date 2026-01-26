@@ -1,0 +1,76 @@
+---
+source: minigu-test/src/insta_test.rs
+assertion_line: 279
+---
+Statement OK. No results
+---
+Statement OK. No results
+---
+Statement OK. No results
+---
+Error: Plan(
+    Bind(
+        VectorIndexAlreadyExists {
+            label: "PERSON",
+            property: "embedding",
+        },
+    ),
+)
+---
+Statement OK. No results
+---
+Error: Plan(
+    Bind(
+        PropertyNotVector {
+            label: "PERSON",
+            property: "name",
+            ty: String,
+        },
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        LabelNotFound(
+            "ALIEN",
+        ),
+    ),
+)
+---
+Error: Execution(
+    IndexCatalog(
+        Storage(
+            VectorIndex(
+                UnsupportedOperation(
+                    "Dimension 105 not supported. Only dimensions 104, 128, 256 are supported.",
+                ),
+            ),
+        ),
+    ),
+)
+---
+Statement OK. No results
+---
+Statement OK. No results
+---
+Error: Plan(
+    Bind(
+        VectorIndexNotFound {
+            name: "person_vec",
+        },
+    ),
+)
+---
+Statement OK. No results
+---
+Statement OK. No results
+---
+Error: Execution(
+    IndexCatalog(
+        Storage(
+            VectorIndex(
+                EmptyDataset,
+            ),
+        ),
+    ),
+)

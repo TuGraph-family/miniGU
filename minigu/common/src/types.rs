@@ -1,6 +1,11 @@
+use std::fmt::{Display, Formatter};
 use std::num::NonZeroU32;
+use std::str::FromStr;
 
 use arrow::array::UInt64Array;
+use serde::{Deserialize, Serialize};
+
+use crate::error::{NotImplemented, not_implemented};
 
 /// Internal identifier associated with a label.
 ///
@@ -38,7 +43,7 @@ pub type PropertyId = u32;
 pub type ProcedureId = u32;
 
 /// Uses (LabelId, PropertyId) to uniquely identify vector indices
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct VectorIndexKey {
     pub label_id: LabelId,
     pub property_id: PropertyId,
@@ -50,6 +55,32 @@ impl VectorIndexKey {
         Self {
             label_id,
             property_id,
+        }
+    }
+}
+
+/// Vector distance metrics for similarity search
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum VectorMetric {
+    L2,
+    // TODO: Future metrics to implement
+}
+
+impl Display for VectorMetric {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            VectorMetric::L2 => write!(f, "L2"),
+        }
+    }
+}
+
+impl FromStr for VectorMetric {
+    type Err = NotImplemented;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_uppercase().as_str() {
+            "L2" | "EUCLIDEAN" => Ok(VectorMetric::L2),
+            _ => not_implemented(format!("vector metric '{}'", s), None),
         }
     }
 }

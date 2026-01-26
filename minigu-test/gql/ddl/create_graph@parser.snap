@@ -1,0 +1,586 @@
+---
+source: minigu-test/src/insta_test.rs
+---
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - CreateGraph:
+                            path:
+                              - schema: ~
+                                objects:
+                                  - - mygraph
+                                    - start: 13
+                                      end: 20
+                              - start: 13
+                                end: 20
+                            kind:
+                              - Create
+                              - start: 0
+                                end: 12
+                            graph_type:
+                              - Any
+                              - start: 21
+                                end: 24
+                            source: ~
+                        - start: 0
+                          end: 24
+                  - start: 0
+                    end: 24
+                next_statements: []
+              - start: 0
+                end: 24
+            end: ~
+        - start: 0
+          end: 24
+      session_close: false
+    - start: 0
+      end: 24
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - CreateGraph:
+                            path:
+                              - schema: ~
+                                objects:
+                                  - - mygraph
+                                    - start: 13
+                                      end: 20
+                              - start: 13
+                                end: 20
+                            kind:
+                              - Create
+                              - start: 0
+                                end: 12
+                            graph_type:
+                              - Nested:
+                                  - - Node:
+                                        name: ~
+                                        alias:
+                                          - Person
+                                          - start: 26
+                                            end: 32
+                                        filler:
+                                          - key: ~
+                                            label_set:
+                                              - - - Person
+                                                  - start: 34
+                                                    end: 40
+                                              - start: 34
+                                                end: 40
+                                            property_types:
+                                              - - name:
+                                                    - lastname
+                                                    - start: 42
+                                                      end: 50
+                                                  value_type:
+                                                    - String:
+                                                        min_length: ~
+                                                        max_length: ~
+                                                        not_null: false
+                                                    - start: 51
+                                                      end: 57
+                                                - start: 42
+                                                  end: 57
+                                              - - name:
+                                                    - firstname
+                                                    - start: 59
+                                                      end: 68
+                                                  value_type:
+                                                    - String:
+                                                        min_length: ~
+                                                        max_length: ~
+                                                        not_null: false
+                                                    - start: 69
+                                                      end: 75
+                                                - start: 59
+                                                  end: 75
+                                              - - name:
+                                                    - joined
+                                                    - start: 76
+                                                      end: 82
+                                                  value_type:
+                                                    - Temporal:
+                                                        kind:
+                                                          - Date
+                                                          - start: 83
+                                                            end: 87
+                                                        not_null: false
+                                                    - start: 83
+                                                      end: 87
+                                                - start: 76
+                                                  end: 87
+                                          - start: 33
+                                            end: 88
+                                    - start: 25
+                                      end: 89
+                              - start: 21
+                                end: 91
+                            source: ~
+                        - start: 0
+                          end: 91
+                  - start: 0
+                    end: 91
+                next_statements: []
+              - start: 0
+                end: 91
+            end: ~
+        - start: 0
+          end: 91
+      session_close: false
+    - start: 0
+      end: 91
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - CreateGraph:
+                            path:
+                              - schema: ~
+                                objects:
+                                  - - mygraph
+                                    - start: 13
+                                      end: 20
+                              - start: 13
+                                end: 20
+                            kind:
+                              - Create
+                              - start: 0
+                                end: 12
+                            graph_type:
+                              - Ref:
+                                  - Ref:
+                                      schema: ~
+                                      objects:
+                                        - - mygraphtype
+                                          - start: 21
+                                            end: 32
+                                  - start: 21
+                                    end: 32
+                              - start: 21
+                                end: 32
+                            source: ~
+                        - start: 0
+                          end: 32
+                  - start: 0
+                    end: 32
+                next_statements: []
+              - start: 0
+                end: 32
+            end: ~
+        - start: 0
+          end: 32
+      session_close: false
+    - start: 0
+      end: 32
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - CreateGraph:
+                            path:
+                              - schema:
+                                  - Absolute: []
+                                  - start: 13
+                                    end: 14
+                                objects:
+                                  - - mygraph
+                                    - start: 14
+                                      end: 21
+                              - start: 13
+                                end: 21
+                            kind:
+                              - Create
+                              - start: 0
+                                end: 12
+                            graph_type:
+                              - Like:
+                                  - Ref:
+                                      Ref:
+                                        schema:
+                                          - Absolute: []
+                                          - start: 27
+                                            end: 28
+                                        objects:
+                                          - - mysrcgraph
+                                            - start: 28
+                                              end: 38
+                                  - start: 27
+                                    end: 38
+                              - start: 22
+                                end: 38
+                            source: ~
+                        - start: 0
+                          end: 38
+                  - start: 0
+                    end: 38
+                next_statements: []
+              - start: 0
+                end: 38
+            end: ~
+        - start: 0
+          end: 38
+      session_close: false
+    - start: 0
+      end: 38
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - CreateGraph:
+                            path:
+                              - schema: ~
+                                objects:
+                                  - - mygraph
+                                    - start: 13
+                                      end: 20
+                              - start: 13
+                                end: 20
+                            kind:
+                              - Create
+                              - start: 0
+                                end: 12
+                            graph_type:
+                              - Any
+                              - start: 21
+                                end: 24
+                            source:
+                              - Name: mysrcgraph
+                              - start: 36
+                                end: 46
+                        - start: 0
+                          end: 46
+                  - start: 0
+                    end: 46
+                next_statements: []
+              - start: 0
+                end: 46
+            end: ~
+        - start: 0
+          end: 46
+      session_close: false
+    - start: 0
+      end: 46
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - CreateGraph:
+                            path:
+                              - schema: ~
+                                objects:
+                                  - - mygraph
+                                    - start: 13
+                                      end: 20
+                              - start: 13
+                                end: 20
+                            kind:
+                              - Create
+                              - start: 0
+                                end: 12
+                            graph_type:
+                              - Nested:
+                                  - - Node:
+                                        name: ~
+                                        alias:
+                                          - Person
+                                          - start: 26
+                                            end: 32
+                                        filler:
+                                          - key: ~
+                                            label_set:
+                                              - - - Person
+                                                  - start: 34
+                                                    end: 40
+                                              - start: 34
+                                                end: 40
+                                            property_types:
+                                              - - name:
+                                                    - lastname
+                                                    - start: 42
+                                                      end: 50
+                                                  value_type:
+                                                    - String:
+                                                        min_length: ~
+                                                        max_length: ~
+                                                        not_null: false
+                                                    - start: 51
+                                                      end: 57
+                                                - start: 42
+                                                  end: 57
+                                              - - name:
+                                                    - firstname
+                                                    - start: 59
+                                                      end: 68
+                                                  value_type:
+                                                    - String:
+                                                        min_length: ~
+                                                        max_length: ~
+                                                        not_null: false
+                                                    - start: 69
+                                                      end: 75
+                                                - start: 59
+                                                  end: 75
+                                              - - name:
+                                                    - joined
+                                                    - start: 76
+                                                      end: 82
+                                                  value_type:
+                                                    - Temporal:
+                                                        kind:
+                                                          - Date
+                                                          - start: 83
+                                                            end: 87
+                                                        not_null: false
+                                                    - start: 83
+                                                      end: 87
+                                                - start: 76
+                                                  end: 87
+                                          - start: 33
+                                            end: 88
+                                    - start: 25
+                                      end: 89
+                              - start: 21
+                                end: 91
+                            source:
+                              - Name: mysrcgraph
+                              - start: 103
+                                end: 113
+                        - start: 0
+                          end: 113
+                  - start: 0
+                    end: 113
+                next_statements: []
+              - start: 0
+                end: 113
+            end: ~
+        - start: 0
+          end: 113
+      session_close: false
+    - start: 0
+      end: 113
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - CreateGraph:
+                            path:
+                              - schema: ~
+                                objects:
+                                  - - mySocialNetwork
+                                    - start: 13
+                                      end: 28
+                              - start: 13
+                                end: 28
+                            kind:
+                              - Create
+                              - start: 0
+                                end: 12
+                            graph_type:
+                              - Ref:
+                                  - Ref:
+                                      schema: ~
+                                      objects:
+                                        - - socialNetworkGraphType
+                                          - start: 31
+                                            end: 53
+                                  - start: 31
+                                    end: 53
+                              - start: 29
+                                end: 53
+                            source: ~
+                        - start: 0
+                          end: 53
+                  - start: 0
+                    end: 53
+                next_statements: []
+              - start: 0
+                end: 53
+            end: ~
+        - start: 0
+          end: 53
+      session_close: false
+    - start: 0
+      end: 53
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - CreateGraph:
+                            path:
+                              - schema: ~
+                                objects:
+                                  - - mySocialNetwork
+                                    - start: 13
+                                      end: 28
+                              - start: 13
+                                end: 28
+                            kind:
+                              - Create
+                              - start: 0
+                                end: 12
+                            graph_type:
+                              - Ref:
+                                  - Ref:
+                                      schema: ~
+                                      objects:
+                                        - - socialNetworkGraphType
+                                          - start: 35
+                                            end: 57
+                                  - start: 35
+                                    end: 57
+                              - start: 29
+                                end: 57
+                            source: ~
+                        - start: 0
+                          end: 57
+                  - start: 0
+                    end: 57
+                next_statements: []
+              - start: 0
+                end: 57
+            end: ~
+        - start: 0
+          end: 57
+      session_close: false
+    - start: 0
+      end: 57
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - CreateGraph:
+                            path:
+                              - schema: ~
+                                objects:
+                                  - - mySocialNetwork
+                                    - start: 13
+                                      end: 28
+                              - start: 13
+                                end: 28
+                            kind:
+                              - Create
+                              - start: 0
+                                end: 12
+                            graph_type:
+                              - Nested:
+                                  - - Node:
+                                        name: ~
+                                        alias:
+                                          - City
+                                          - start: 33
+                                            end: 37
+                                        filler:
+                                          - key: ~
+                                            label_set:
+                                              - - - City
+                                                  - start: 39
+                                                    end: 43
+                                              - start: 39
+                                                end: 43
+                                            property_types:
+                                              - - name:
+                                                    - name
+                                                    - start: 45
+                                                      end: 49
+                                                  value_type:
+                                                    - String:
+                                                        min_length: ~
+                                                        max_length: ~
+                                                        not_null: false
+                                                    - start: 50
+                                                      end: 56
+                                                - start: 45
+                                                  end: 56
+                                              - - name:
+                                                    - state
+                                                    - start: 58
+                                                      end: 63
+                                                  value_type:
+                                                    - String:
+                                                        min_length: ~
+                                                        max_length: ~
+                                                        not_null: false
+                                                    - start: 64
+                                                      end: 70
+                                                - start: 58
+                                                  end: 70
+                                              - - name:
+                                                    - country
+                                                    - start: 72
+                                                      end: 79
+                                                  value_type:
+                                                    - String:
+                                                        min_length: ~
+                                                        max_length: ~
+                                                        not_null: false
+                                                    - start: 80
+                                                      end: 86
+                                                - start: 72
+                                                  end: 86
+                                          - start: 38
+                                            end: 87
+                                    - start: 32
+                                      end: 88
+                              - start: 29
+                                end: 89
+                            source: ~
+                        - start: 0
+                          end: 89
+                  - start: 0
+                    end: 89
+                next_statements: []
+              - start: 0
+                end: 89
+            end: ~
+        - start: 0
+          end: 89
+      session_close: false
+    - start: 0
+      end: 89

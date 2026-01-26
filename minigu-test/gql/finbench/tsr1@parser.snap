@@ -1,0 +1,150 @@
+---
+source: minigu-test/src/insta_test.rs
+---
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - n
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: Account
+                                                                  - start: 9
+                                                                    end: 16
+                                                                predicate:
+                                                                  - Property:
+                                                                      - - name:
+                                                                            - id
+                                                                            - start: 17
+                                                                              end: 19
+                                                                          value:
+                                                                            - Value:
+                                                                                Literal:
+                                                                                  Numeric:
+                                                                                    Integer:
+                                                                                      - kind: Decimal
+                                                                                        integer: "12"
+                                                                                      - start: 20
+                                                                                        end: 22
+                                                                            - start: 20
+                                                                              end: 22
+                                                                        - start: 17
+                                                                          end: 22
+                                                                  - start: 16
+                                                                    end: 23
+                                                          - start: 6
+                                                            end: 24
+                                                    - start: 6
+                                                      end: 24
+                                                - start: 6
+                                                  end: 24
+                                            keep: ~
+                                            where_clause: ~
+                                          - start: 6
+                                            end: 24
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 24
+                                - start: 0
+                                  end: 24
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: n
+                                                        - start: 36
+                                                          end: 37
+                                                      trailing_names:
+                                                        - - createTime
+                                                          - start: 38
+                                                            end: 48
+                                                  - start: 36
+                                                    end: 48
+                                                alias:
+                                                  - createTime
+                                                  - start: 52
+                                                    end: 62
+                                              - start: 36
+                                                end: 62
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: n
+                                                        - start: 68
+                                                          end: 69
+                                                      trailing_names:
+                                                        - - isBlocked
+                                                          - start: 70
+                                                            end: 79
+                                                  - start: 68
+                                                    end: 79
+                                                alias:
+                                                  - isBlocked
+                                                  - start: 83
+                                                    end: 92
+                                              - start: 68
+                                                end: 92
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: n
+                                                        - start: 98
+                                                          end: 99
+                                                      trailing_names:
+                                                        - - type
+                                                          - start: 100
+                                                            end: 104
+                                                  - start: 98
+                                                    end: 104
+                                                alias:
+                                                  - type
+                                                  - start: 108
+                                                    end: 112
+                                              - start: 98
+                                                end: 112
+                                        - start: 36
+                                          end: 112
+                                      group_by: ~
+                                    - start: 25
+                                      end: 112
+                                  order_by: ~
+                              - start: 25
+                                end: 112
+                  - start: 0
+                    end: 112
+                next_statements: []
+              - start: 0
+                end: 112
+            end: ~
+        - start: 0
+          end: 112
+      session_close: false
+    - start: 0
+      end: 112

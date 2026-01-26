@@ -111,7 +111,7 @@ impl<T> ConcurrentQueue<T> {
     }
 }
 
-fn lock<T>(mutex: &Mutex<T>) -> ANNResult<MutexGuard<T>> {
+fn lock<T>(mutex: &Mutex<T>) -> ANNResult<MutexGuard<'_, T>> {
     let guard = mutex.lock().map_err(|err| {
         ANNError::log_lock_poison_error(format!("ConcurrentQueue lock is poisoned, err={err}"))
     })?;

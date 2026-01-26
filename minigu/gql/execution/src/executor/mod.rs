@@ -1,8 +1,11 @@
 pub mod aggregate;
+pub mod create_vector_index;
+pub mod drop_vector_index;
 pub mod expand;
 pub mod factorized_filter;
 pub mod filter;
 pub mod flatten;
+pub mod offset;
 pub mod procedure_call;
 
 // TODO: Implement join executor.
@@ -17,6 +20,7 @@ pub mod limit;
 pub mod project;
 pub mod sort;
 pub mod utils;
+pub mod vector_index_scan;
 pub mod vertex_property_scan;
 pub mod vertex_scan;
 
@@ -29,6 +33,8 @@ use factorized_filter::FactorizedFilterBuilder;
 use filter::FilterBuilder;
 use flatten::FlattenBuilder;
 use minigu_common::data_chunk::DataChunk;
+use minigu_common::types::{LabelId, PropertyId};
+use offset::OffsetBuilder;
 use project::ProjectBuilder;
 use sort::{SortBuilder, SortSpec};
 use vertex_property_scan::VertexPropertyScanBuilder;
@@ -37,7 +43,8 @@ use crate::error::ExecutionResult;
 use crate::evaluator::BoxedEvaluator;
 use crate::executor::join::{JoinBuilder, JoinCond};
 use crate::executor::limit::LimitBuilder;
-use crate::source::{ExpandSource, VertexPropertySource};
+use crate::executor::vertex_scan::VertexScanBuilder;
+use crate::source::{ExpandSource, VertexPropertySource, VertexSource};
 
 pub type BoxedExecutor = Box<dyn Executor>;
 
@@ -87,20 +94,46 @@ pub trait Executor {
         FactorizedFilterBuilder::new(self, predicate, unflat_column_indices).into_executor()
     }
 
-    fn expand<S>(self, input_column_index: usize, source: S) -> impl Executor
+    fn expand<S>(
+        self,
+        input_column_index: usize,
+        edge_labels: Option<Vec<Vec<LabelId>>>,
+        target_vertex_labels: Option<Vec<Vec<LabelId>>>,
+        source: S,
+    ) -> impl Executor
     where
         Self: Sized,
         S: ExpandSource,
     {
-        ExpandBuilder::new(self, input_column_index, source).into_executor()
+        ExpandBuilder::new(
+            self,
+            input_column_index,
+            edge_labels,
+            target_vertex_labels,
+            source,
+        )
+        .into_executor()
     }
 
-    fn scan_vertex_property<S>(self, input_column_index: usize, source: S) -> impl Executor
+    fn scan_vertex_property<S>(
+        self,
+        input_column_index: usize,
+        properties: Vec<PropertyId>,
+        source: S,
+    ) -> impl Executor
     where
         Self: Sized,
         S: VertexPropertySource,
     {
-        VertexPropertyScanBuilder::new(self, input_column_index, source).into_executor()
+        VertexPropertyScanBuilder::new(self, input_column_index, properties, source).into_executor()
+    }
+
+    fn scan_vertex<S>(self, source: S) -> impl Executor
+    where
+        Self: Sized,
+        S: VertexSource,
+    {
+        VertexScanBuilder::new(source).into_executor()
     }
 
     fn sort(self, specs: Vec<SortSpec>, max_chunk_size: usize) -> impl Executor
@@ -155,6 +188,13 @@ pub trait Executor {
         Self: Sized,
     {
         LimitBuilder::new(self, limit).into_executor()
+    }
+
+    fn offset(self, offset: usize) -> impl Executor
+    where
+        Self: Sized,
+    {
+        OffsetBuilder::new(self, offset).into_executor()
     }
 
     /// Convert this Executor into a FactorizedExecutor.

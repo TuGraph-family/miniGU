@@ -19,6 +19,8 @@ pub enum StorageError {
     Wal(#[from] WalError),
     #[error("Checkpoint error: {0}")]
     Checkpoint(#[from] CheckpointError),
+    #[error("Database file error: {0}")]
+    DbFile(#[from] DbFileError),
     #[error("Vector index error: {0}")]
     VectorIndex(#[from] VectorIndexError),
     #[error("Feature not supported: {0}")]
@@ -168,3 +170,6 @@ pub enum VectorIndexError {
         property_id: u32,
     },
 }
+
+// Re-export DbFileError from db_file module for convenience
+pub use crate::db_file::DbFileError;

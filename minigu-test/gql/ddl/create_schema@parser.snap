@@ -1,0 +1,113 @@
+---
+source: minigu-test/src/insta_test.rs
+---
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - CreateSchema:
+                            path:
+                              - - - Name: myschema
+                                  - start: 15
+                                    end: 23
+                              - start: 14
+                                end: 23
+                            if_not_exists: false
+                        - start: 0
+                          end: 23
+                  - start: 0
+                    end: 23
+                next_statements: []
+              - start: 0
+                end: 23
+            end: ~
+        - start: 0
+          end: 23
+      session_close: false
+    - start: 0
+      end: 23
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - CreateSchema:
+                            path:
+                              - - - Name: foo
+                                  - start: 15
+                                    end: 18
+                                - - Name: myschema
+                                  - start: 19
+                                    end: 27
+                              - start: 14
+                                end: 27
+                            if_not_exists: false
+                        - start: 0
+                          end: 27
+                  - start: 0
+                    end: 27
+                next_statements: []
+              - start: 0
+                end: 27
+            end: ~
+        - start: 0
+          end: 27
+      session_close: false
+    - start: 0
+      end: 27
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - CreateSchema:
+                            path:
+                              - - - Name: foo
+                                  - start: 15
+                                    end: 18
+                              - start: 14
+                                end: 18
+                            if_not_exists: false
+                        - start: 0
+                          end: 18
+                  - start: 0
+                    end: 18
+                next_statements:
+                  - - yield_clause: ~
+                      statement:
+                        - Catalog:
+                            - - CreateSchema:
+                                  path:
+                                    - - - Name: fee
+                                        - start: 39
+                                          end: 42
+                                    - start: 38
+                                      end: 42
+                                  if_not_exists: false
+                              - start: 24
+                                end: 42
+                        - start: 24
+                          end: 42
+                    - start: 19
+                      end: 42
+              - start: 0
+                end: 42
+            end: ~
+        - start: 0
+          end: 42
+      session_close: false
+    - start: 0
+      end: 42

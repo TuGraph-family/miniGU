@@ -26,6 +26,8 @@ pub enum TokenKind<'a> {
     And,
     #[token("any", ignore(case))]
     Any,
+    #[token("approximate", ignore(case))]
+    Approximate,
     #[token("array", ignore(case))]
     Array,
     #[token("as", ignore(case))]
@@ -156,6 +158,8 @@ pub enum TokenKind<'a> {
     Exists,
     #[token("exp", ignore(case))]
     Exp,
+    #[token("explain", ignore(case))]
+    Explain,
     #[token("false", ignore(case))]
     False,
     #[token("filter", ignore(case))]
@@ -440,6 +444,10 @@ pub enum TokenKind<'a> {
     Varchar,
     #[token("variable", ignore(case))]
     Variable,
+    #[token("vector", ignore(case))]
+    Vector,
+    #[token("vector_distance", ignore(case))]
+    VectorDistance,
     #[token("when", ignore(case))]
     When,
     #[token("where", ignore(case))]
@@ -500,6 +508,8 @@ pub enum TokenKind<'a> {
     Instant,
     #[token("infinity", ignore(case))]
     Infinity,
+    #[token("index", ignore(case))]
+    Index,
     #[token("number", ignore(case))]
     Number,
     #[token("numeric", ignore(case))]
@@ -758,6 +768,8 @@ pub enum TokenKind<'a> {
     UnsignedHexInteger(&'a str),
     #[regex(r"0b(_?[01])+")]
     UnsignedBinaryInteger(&'a str),
+    #[regex(r"((?:[0-9]+\.[0-9]*|\.[0-9]+)([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+)")]
+    UnsignedFloatLiteral(&'a str),
 
     // The followings are quoted character sequences.
     #[regex(r#"'|@'"#, handle_quoted)]
@@ -879,8 +891,13 @@ impl TokenKind<'_> {
     }
 
     #[inline]
+    pub fn is_prefix_of_unsigned_float(&self) -> bool {
+        matches!(self, Self::UnsignedFloatLiteral(_))
+    }
+
+    #[inline]
     pub fn is_prefix_of_numeric_literal(&self) -> bool {
-        self.is_prefix_of_unsigned_integer()
+        self.is_prefix_of_unsigned_integer() || self.is_prefix_of_unsigned_float()
     }
 
     #[inline]
@@ -958,6 +975,7 @@ impl TokenKind<'_> {
                 | Self::Except
                 | Self::Exists
                 | Self::Exp
+                | Self::Explain
                 | Self::False
                 | Self::Filter
                 | Self::Finish
@@ -1129,6 +1147,7 @@ impl TokenKind<'_> {
                 | Self::Grant
                 | Self::Instant
                 | Self::Infinity
+                | Self::Index
                 | Self::Number
                 | Self::Numeric
                 | Self::On
@@ -1252,6 +1271,7 @@ impl TokenKind<'_> {
                 | Self::Dec
                 | Self::Null
                 | Self::Nothing
+                | Self::Vector
         ) || self.is_prefix_of_signed_exact_numeric_type()
             || self.is_prefix_of_unsigned_exact_numeric_type()
             || self.is_prefix_of_temporal_type()
@@ -1433,7 +1453,9 @@ impl TokenKind<'_> {
 
     #[inline]
     pub fn is_prefix_of_value_function(&self) -> bool {
-        self.is_prefix_of_regular_identifier() || self.is_prefix_of_numeric_value_function()
+        self.is_prefix_of_regular_identifier()
+            || self.is_prefix_of_numeric_value_function()
+            || matches!(self, Self::VectorDistance)
     }
 }
 
@@ -1467,50 +1489,79 @@ mod tests {
     fn test_quoted() {
         let lexer = TokenKind::lexer(r#"'ab\ncd'"#);
         let tokens: Vec<_> = lexer.collect();
-        assert_eq!(tokens, vec![Ok(TokenKind::SingleQuoted(Quoted::Single(
-            r"ab\ncd"
-        )))]);
+        assert_eq!(
+            tokens,
+            vec![Ok(TokenKind::SingleQuoted(Quoted::Single(r"ab\ncd")))]
+        );
 
         let lexer = TokenKind::lexer(r#""ab\ncd""#);
         let tokens: Vec<_> = lexer.collect();
-        assert_eq!(tokens, vec![Ok(TokenKind::DoubleQuoted(Quoted::Double(
-            r"ab\ncd"
-        )))]);
+        assert_eq!(
+            tokens,
+            vec![Ok(TokenKind::DoubleQuoted(Quoted::Double(r"ab\ncd")))]
+        );
 
         let lexer = TokenKind::lexer(r#"`ab\ncd`"#);
         let tokens: Vec<_> = lexer.collect();
-        assert_eq!(tokens, vec![Ok(TokenKind::AccentQuoted(Quoted::Accent(
-            r"ab\ncd"
-        )))]);
+        assert_eq!(
+            tokens,
+            vec![Ok(TokenKind::AccentQuoted(Quoted::Accent(r"ab\ncd")))]
+        );
     }
 
     #[test]
     fn test_parameter_name() {
         let lexer = TokenKind::lexer(r#"$_abc"#);
         let tokens: Vec<_> = lexer.collect();
-        assert_eq!(tokens, vec![Ok(TokenKind::GeneralParameterReference(
-            ParameterName::Extended("_abc")
-        ))]);
+        assert_eq!(
+            tokens,
+            vec![Ok(TokenKind::GeneralParameterReference(
+                ParameterName::Extended("_abc")
+            ))]
+        );
 
         let lexer = TokenKind::lexer(r#"$$_abc"#);
         let tokens: Vec<_> = lexer.collect();
-        assert_eq!(tokens, vec![Ok(TokenKind::SubstitutedParameterReference(
-            ParameterName::Extended("_abc")
-        ))]);
+        assert_eq!(
+            tokens,
+            vec![Ok(TokenKind::SubstitutedParameterReference(
+                ParameterName::Extended("_abc")
+            ))]
+        );
 
         let lexer = TokenKind::lexer(r#"$@"a""bc""#);
         let tokens: Vec<_> = lexer.collect();
-        assert_eq!(tokens, vec![Ok(TokenKind::GeneralParameterReference(
-            ParameterName::Delimited(Quoted::UnescapedDouble("a\"\"bc"))
-        ))]);
+        assert_eq!(
+            tokens,
+            vec![Ok(TokenKind::GeneralParameterReference(
+                ParameterName::Delimited(Quoted::UnescapedDouble("a\"\"bc"))
+            ))]
+        );
 
         let lexer = TokenKind::lexer(r#"$'abc'"#);
         let tokens: Vec<_> = lexer.collect();
         // Single quoted sequence is not allowed in parameter reference.
-        assert_eq!(tokens, vec![
-            Err(TokenErrorKind::InvalidToken),
-            Ok(TokenKind::RegularIdentifier("abc")),
-            Err(TokenErrorKind::InvalidToken)
-        ]);
+        assert_eq!(
+            tokens,
+            vec![
+                Err(TokenErrorKind::InvalidToken),
+                Ok(TokenKind::RegularIdentifier("abc")),
+                Err(TokenErrorKind::InvalidToken)
+            ]
+        );
+    }
+
+    #[test]
+    fn test_float_literal_scientific() {
+        let lexer = TokenKind::lexer("1.23e-4 1e10 1.23");
+        let tokens: Vec<_> = lexer.collect();
+        assert_eq!(
+            tokens,
+            vec![
+                Ok(TokenKind::UnsignedFloatLiteral("1.23e-4")),
+                Ok(TokenKind::UnsignedFloatLiteral("1e10")),
+                Ok(TokenKind::UnsignedFloatLiteral("1.23"))
+            ]
+        );
     }
 }

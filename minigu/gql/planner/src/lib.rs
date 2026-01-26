@@ -7,7 +7,7 @@ use crate::logical_planner::LogicalPlanner;
 use crate::optimizer::Optimizer;
 use crate::plan::PlanNode;
 
-mod binder;
+pub mod binder;
 pub mod bound;
 pub mod error;
 mod logical_planner;
@@ -32,7 +32,7 @@ impl Planner {
             self.context.home_graph.clone(),
         );
         let bound = binder.bind(query)?;
-        let logical_plan = LogicalPlanner::new().create_logical_plan(bound)?;
+        let logical_plan = LogicalPlanner::new().create_logical_plan(bound.clone())?;
         Optimizer::new().create_physical_plan(&logical_plan)
     }
 }

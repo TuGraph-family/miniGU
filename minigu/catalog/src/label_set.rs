@@ -22,6 +22,11 @@ impl LabelSet {
     }
 
     #[inline]
+    pub fn first(&self) -> Option<LabelId> {
+        self.0.first().cloned()
+    }
+
+    #[inline]
     pub fn contains(&self, label: LabelId) -> bool {
         self.0.binary_search(&label).is_ok()
     }

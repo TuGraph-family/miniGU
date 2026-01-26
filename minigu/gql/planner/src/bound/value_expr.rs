@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 use minigu_common::data_type::LogicalType;
+use minigu_common::types::VectorMetric;
 use minigu_common::value::ScalarValue;
 use serde::Serialize;
 
@@ -8,6 +9,12 @@ use serde::Serialize;
 pub enum BoundExprKind {
     Value(ScalarValue),
     Variable(String),
+    VectorDistance {
+        lhs: Box<BoundExpr>,
+        rhs: Box<BoundExpr>,
+        metric: VectorMetric,
+        dimension: usize,
+    },
 }
 
 impl Display for BoundExprKind {
@@ -16,6 +23,11 @@ impl Display for BoundExprKind {
             // TODO: Use `Display` rather than `Debug` representation for `value`.
             BoundExprKind::Value(value) => write!(f, "{value:?}"),
             BoundExprKind::Variable(variable) => write!(f, "{variable}"),
+            BoundExprKind::VectorDistance {
+                lhs, rhs, metric, ..
+            } => {
+                write!(f, "VECTOR_DISTANCE({}, {}, {})", lhs, rhs, metric)
+            }
         }
     }
 }
@@ -40,6 +52,25 @@ impl BoundExpr {
         Self {
             kind: BoundExprKind::Variable(name),
             logical_type,
+            nullable,
+        }
+    }
+
+    pub fn vector_distance(
+        lhs: BoundExpr,
+        rhs: BoundExpr,
+        metric: VectorMetric,
+        dimension: usize,
+    ) -> Self {
+        let nullable = lhs.nullable || rhs.nullable;
+        Self {
+            kind: BoundExprKind::VectorDistance {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+                metric,
+                dimension,
+            },
+            logical_type: LogicalType::Float32,
             nullable,
         }
     }

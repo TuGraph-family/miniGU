@@ -1,0 +1,519 @@
+---
+source: minigu-test/src/insta_test.rs
+assertion_line: 167
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "MATCH (m:Movie) WHERE (m)<-[:ACTED_IN]-(:Person{name:'Tom Hanks'}) RETURN m.title",
+            span: 0..5,
+            position: (
+                1,
+                1,
+            ),
+        },
+    ),
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "MATCH (s:Stream) WHERE (s)-[:HAS_LANGUAGE]->(:Language{name:'en'}) AND (s)-[:PLAYS]->(:Game{name:'Rust'}) RETURN s.name",
+            span: 0..5,
+            position: (
+                1,
+                1,
+            ),
+        },
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "MATCH (q:Question)-[:TAGGED]->(t:Tag) RETURN q.title, size(collect(t.name)) AS tag_count ORDER BY tag_count DESC",
+            span: 52..53,
+            position: (
+                1,
+                53,
+            ),
+        },
+    ),
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "MATCH (p:Person)-[:ACTED_IN]->(m:Movie)-[:IN_GENRE]->(g:Genre) RETURN p.name, collect(DISTINCT g.name) AS genres",
+            span: 76..77,
+            position: (
+                1,
+                77,
+            ),
+        },
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "MATCH (u:User)-[:WROTE]->(r:Review)-[:REVIEWS]->(b:Business)-[:IN_CATEGORY]->(c:Category{name:'Restaurants'}) RETURN b.name, AVG(r.stars) AS avg_rating, COUNT(r) AS review_count WHERE review_count > 5 ORDER BY avg_rating DESC LIMIT 10",
+            span: 178..183,
+            position: (
+                1,
+                179,
+            ),
+        },
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)
+---
+Error: Parser(
+    Unexpected(
+        UnexpectedError {
+            input: "MATCH (a:Author), (b:Book) WHERE a.birth_year > 1900 AND b.year > 2000 RETURN a.name, b.title LIMIT 10",
+            span: 0..5,
+            position: (
+                1,
+                1,
+            ),
+        },
+    ),
+)

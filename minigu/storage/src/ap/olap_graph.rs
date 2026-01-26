@@ -245,10 +245,9 @@ impl OlapStorage {
 
             label_ids[0] = edges[0].label_id;
             // 3.3 Build compressed edge block
-            self.compressed_edges
-                .write()
-                .unwrap()
-                .insert(index, CompressedEdgeBlock {
+            self.compressed_edges.write().unwrap().insert(
+                index,
+                CompressedEdgeBlock {
                     pre_block_index: edge_block.pre_block_index,
                     cur_block_index: index,
                     max_label_id: edge_block.max_label_id,
@@ -261,7 +260,8 @@ impl OlapStorage {
                     first_dst_id: edge_block.edges[0].dst_id,
                     compressed_dst_ids,
                     label_ids,
-                })
+                },
+            )
         }
         let _ = std::mem::take(&mut *edges_borrow);
     }
@@ -309,13 +309,14 @@ impl OlapStorage {
                     *offset = ones_count;
                 }
 
-                compressed_blocks
-                    .blocks
-                    .insert(block_index, CompressedPropertyBlock {
+                compressed_blocks.blocks.insert(
+                    block_index,
+                    CompressedPropertyBlock {
                         bitmap,
                         offsets,
                         values,
-                    })
+                    },
+                )
             }
             compressed_properties.insert(column_index, compressed_blocks);
         }
@@ -582,9 +583,12 @@ impl MutOlapGraph for OlapStorage {
             let property_block = if let Some(block) = column.blocks.get_mut(vertex.block_offset) {
                 block
             } else {
-                column.blocks.insert(vertex.block_offset, PropertyBlock {
-                    values: vec![None; BLOCK_CAPACITY],
-                });
+                column.blocks.insert(
+                    vertex.block_offset,
+                    PropertyBlock {
+                        values: vec![None; BLOCK_CAPACITY],
+                    },
+                );
                 column.blocks.get_mut(vertex.block_offset).unwrap()
             };
 

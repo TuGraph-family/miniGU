@@ -176,10 +176,10 @@ impl ShardedVectorMap {
             let mut vec = shard.write();
 
             for (local_idx, _vector_id) in indices {
-                if local_idx < vec.len() {
-                    if let Some(node_id) = vec[local_idx].take() {
-                        deleted_nodes.push(node_id);
-                    }
+                if local_idx < vec.len()
+                    && let Some(node_id) = vec[local_idx].take()
+                {
+                    deleted_nodes.push(node_id);
                 }
             }
         }
@@ -295,11 +295,11 @@ impl InMemANNAdapter {
 
             if heap.len() < k {
                 heap.push((OrderedFloat(distance), vector_id));
-            } else if let Some((max_distance, _)) = heap.peek() {
-                if OrderedFloat(distance) < *max_distance {
-                    heap.pop();
-                    heap.push((OrderedFloat(distance), vector_id));
-                }
+            } else if let Some((max_distance, _)) = heap.peek()
+                && OrderedFloat(distance) < *max_distance
+            {
+                heap.pop();
+                heap.push((OrderedFloat(distance), vector_id));
             }
         }
         let results: Vec<_> = heap.into_sorted_vec();
@@ -416,15 +416,15 @@ impl VectorIndex for InMemANNAdapter {
 
         // Verify dimension consistency with index configuration
         // Note: Upper layer should ensure all vectors have consistent dimensions
-        if let Some((_, first_vector)) = vectors.first() {
-            if first_vector.len() != self.dimension {
-                return Err(StorageError::VectorIndex(
-                    VectorIndexError::InvalidDimension {
-                        expected: self.dimension,
-                        actual: first_vector.len(),
-                    },
-                ));
-            }
+        if let Some((_, first_vector)) = vectors.first()
+            && first_vector.len() != self.dimension
+        {
+            return Err(StorageError::VectorIndex(
+                VectorIndexError::InvalidDimension {
+                    expected: self.dimension,
+                    actual: first_vector.len(),
+                },
+            ));
         }
 
         let mut sorted_vectors: Vec<(u64, &[f32])> = vectors.to_vec();

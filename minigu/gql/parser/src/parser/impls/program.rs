@@ -5,7 +5,7 @@ use super::procedure_spec::procedure_specification;
 use super::session::{session_close_command, session_reset_command, session_set_command};
 use super::transaction::start_transaction_command;
 use crate::ast::{EndTransaction, Program, ProgramActivity, SessionActivity, TransactionActivity};
-use crate::imports::Vec;
+use crate::imports::{Box, Vec};
 use crate::lexer::TokenKind;
 use crate::parser::token::{TokenStream, any};
 use crate::parser::utils::{SpannedParserExt, ToSpanned};
@@ -29,7 +29,7 @@ pub fn gql_program(input: &mut TokenStream) -> ModalResult<Spanned<Program>> {
 pub fn program_activity(input: &mut TokenStream) -> ModalResult<Spanned<ProgramActivity>> {
     dispatch! {peek(any);
         TokenKind::Session => session_activity.map_inner(ProgramActivity::Session),
-        _ => transaction_activity.map_inner(ProgramActivity::Transaction),
+        _ => transaction_activity.map_inner(|t| ProgramActivity::Transaction(Box::new(t))),
     }
     .parse_next(input)
 }

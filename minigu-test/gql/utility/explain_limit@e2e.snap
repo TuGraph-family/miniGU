@@ -1,0 +1,9 @@
+---
+source: minigu-test/src/insta_test.rs
+assertion_line: 203
+---
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
+    ),
+)

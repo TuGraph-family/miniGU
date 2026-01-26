@@ -272,7 +272,7 @@ where
     }
 
     /// Convert into dto object
-    pub fn as_dto(&mut self) -> DatasetDto<T> {
+    pub fn as_dto(&mut self) -> DatasetDto<'_, T> {
         DatasetDto {
             data: &mut self.data,
             rounded_dim: N,

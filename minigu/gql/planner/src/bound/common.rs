@@ -1,16 +1,26 @@
 use std::sync::Arc;
 
+use gql_parser::ast::EdgePatternKind;
+use minigu_common::data_type::DataSchema;
 use minigu_common::types::LabelId;
 use serde::Serialize;
 
 use crate::bound::BoundExpr;
+use crate::plan::expand::ExpandDirection;
 
 #[derive(Debug, Clone, Serialize)]
 pub enum BoundLabelExpr {
+    // MATCH (n:Person:Student) -> Conjunction(Box::new(Label(person_id)),
+    // Box::new(Label(student_id)))
     Conjunction(Box<BoundLabelExpr>, Box<BoundLabelExpr>),
+    // MATCH (n:Person|Animal) -> Disjunction(Box::new(Label(person_id)),
+    // Box::new(Label(animal_id)))
     Disjunction(Box<BoundLabelExpr>, Box<BoundLabelExpr>),
+    // MATCH (n:!Bot) -> Negation(Box::new(Label(bot_id)))
     Negation(Box<BoundLabelExpr>),
+    // MATCH (n:Person) -> BoundLabelExpr::Label(person_id)
     Label(LabelId),
+    // MATCH (n) -> BoundLabelExpr::Any
     Any,
 }
 
@@ -49,6 +59,18 @@ pub struct BoundSubpathPattern {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub enum PathPatternInfo {
+    SingleVertex {
+        var: String,
+        label_specs: Vec<Vec<LabelId>>,
+    },
+    Path {
+        vertices: Vec<(String, Vec<Vec<LabelId>>)>,
+        edges: Vec<(Option<String>, Vec<Vec<LabelId>>, ExpandDirection)>,
+    },
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub enum BoundMatchMode {
     Repeatable,
     Different,
@@ -70,7 +92,8 @@ pub enum BoundElementPattern {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct BoundVertexPattern {
-    pub label: Option<BoundLabelExpr>,
+    pub var: String,
+    pub label: Vec<Vec<LabelId>>,
     pub predicate: Option<BoundExpr>,
 }
 
@@ -85,10 +108,26 @@ pub enum BoundEdgePatternKind {
     Any,
 }
 
+impl From<&EdgePatternKind> for BoundEdgePatternKind {
+    fn from(kind: &EdgePatternKind) -> Self {
+        use EdgePatternKind::*;
+        match kind {
+            Left => Self::Left,
+            LeftUndirected => Self::LeftUndirected,
+            LeftRight => Self::LeftRight,
+            Right => Self::Right,
+            RightUndirected => Self::RightUndirected,
+            Undirected => Self::Undirected,
+            Any => Self::Any,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct BoundEdgePattern {
+    pub var: Option<String>,
     pub kind: BoundEdgePatternKind,
-    pub label: Option<BoundLabelExpr>,
+    pub label: Vec<Vec<LabelId>>,
     pub predicate: Option<BoundExpr>,
 }
 
@@ -98,6 +137,13 @@ pub struct BoundGraphPattern {
     pub match_mode: Option<BoundMatchMode>,
     pub paths: Vec<Arc<BoundPathPattern>>,
     pub predicate: Option<BoundExpr>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct BoundGraphPatternBindingTable {
+    pub pattern: BoundGraphPattern,
+    pub yield_clause: Vec<BoundExpr>,
+    pub output_schema: DataSchema,
 }
 
 // match p1 = (a)-->()-->(b), p2 = (c)-->(d) return *;

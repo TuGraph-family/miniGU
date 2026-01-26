@@ -1,0 +1,124 @@
+---
+source: minigu-test/src/insta_test.rs
+---
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - Call:
+                            optional: false
+                            procedure:
+                              - Named:
+                                  name:
+                                    - Ref:
+                                        schema: ~
+                                        objects:
+                                          - - create_test_vector_graph_data
+                                            - start: 5
+                                              end: 34
+                                    - start: 5
+                                      end: 34
+                                  args:
+                                    - - Value:
+                                          Literal:
+                                            String:
+                                              kind: Char
+                                              literal: vec_graph
+                                      - start: 35
+                                        end: 46
+                                    - - Value:
+                                          Literal:
+                                            Numeric:
+                                              Integer:
+                                                - kind: Decimal
+                                                  integer: "20"
+                                                - start: 48
+                                                  end: 50
+                                      - start: 48
+                                        end: 50
+                                  yield_clause: ~
+                              - start: 5
+                                end: 51
+                        - start: 0
+                          end: 51
+                  - start: 0
+                    end: 51
+                next_statements: []
+              - start: 0
+                end: 51
+            end: ~
+        - start: 0
+          end: 51
+      session_close: false
+    - start: 0
+      end: 51
+- Ok:
+    - activity:
+        - Session:
+            set:
+              - - Graph:
+                    - Name: vec_graph
+                    - start: 18
+                      end: 27
+                - start: 0
+                  end: 27
+            reset: []
+        - start: 0
+          end: 27
+      session_close: false
+    - start: 0
+      end: 27
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Utility:
+                      Explain:
+                        statement:
+                          - Catalog:
+                              - - CreateVectorIndex:
+                                    name:
+                                      - test_index
+                                      - start: 28
+                                        end: 38
+                                    if_not_exists: true
+                                    binding:
+                                      - n
+                                      - start: 58
+                                        end: 59
+                                    label:
+                                      - PERSON
+                                      - start: 60
+                                        end: 66
+                                    property_binding:
+                                      - n
+                                      - start: 72
+                                        end: 73
+                                    property:
+                                      - embedding
+                                      - start: 74
+                                        end: 83
+                                - start: 8
+                                  end: 84
+                          - start: 8
+                            end: 84
+                  - start: 0
+                    end: 84
+                next_statements: []
+              - start: 0
+                end: 84
+            end: ~
+        - start: 0
+          end: 84
+      session_close: false
+    - start: 0
+      end: 84

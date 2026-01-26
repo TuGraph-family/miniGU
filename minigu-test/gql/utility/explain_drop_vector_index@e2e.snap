@@ -1,0 +1,11 @@
+---
+source: minigu-test/src/insta_test.rs
+---
+Statement OK. No results
+---
+Statement OK. No results
+---
+Statement OK. No results
+---
+Explain:
+  DropVectorIndex: name=test_index if_exists=false no_op=false key_present=true

@@ -1,13 +1,14 @@
+use std::path::Path;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
-use arrow::array::create_array;
-use gql_parser::ast::{Procedure, Program, ProgramActivity, SessionActivity, TransactionActivity};
+use gql_parser::ast::{
+    GraphExpr, Procedure, ProgramActivity, SessionActivity, SessionResetArgs, SessionSet,
+    TransactionActivity,
+};
 use gql_parser::parse_gql;
 use itertools::Itertools;
-use minigu_catalog::memory::MemoryCatalog;
 use minigu_catalog::memory::schema::MemorySchemaCatalog;
-use minigu_catalog::provider::SchemaRef;
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 use minigu_common::error::not_implemented;
@@ -20,6 +21,7 @@ use minigu_planner::plan::PlanData;
 
 use crate::error::{Error, Result};
 use crate::metrics::QueryMetrics;
+use crate::procedures::import;
 use crate::result::QueryResult;
 
 pub struct Session {
@@ -67,8 +69,44 @@ impl Session {
         Ok(result)
     }
 
-    fn handle_session_activity(&self, activity: &SessionActivity) -> Result<QueryResult> {
-        not_implemented("session activity", None)
+    fn handle_session_activity(&mut self, activity: &SessionActivity) -> Result<QueryResult> {
+        for s in &activity.set {
+            let set = s.value();
+            match &set {
+                SessionSet::Schema(sp_ref) => {
+                    self.context.set_current_schema(sp_ref.value().clone())?;
+                }
+                SessionSet::Graph(sp_ref) => match sp_ref.value() {
+                    GraphExpr::Name(graph_name) => {
+                        self.context.set_current_graph(graph_name.to_string())?;
+                    }
+                    _ => {
+                        return not_implemented("not allowed there", None);
+                    }
+                },
+                _ => {
+                    return not_implemented("not implemented ", None);
+                }
+            }
+        }
+        for reset in &activity.reset {
+            let reset = reset.value();
+            if let Some(args) = &reset.0 {
+                let arg = args.value();
+                match arg {
+                    SessionResetArgs::Schema => {
+                        self.context.reset_current_schema();
+                    }
+                    SessionResetArgs::Graph => {
+                        self.context.reset_current_graph();
+                    }
+                    _ => {
+                        return not_implemented("not allowed there", None);
+                    }
+                }
+            }
+        }
+        Ok(QueryResult::default())
     }
 
     fn handle_transaction_activity(&self, activity: &TransactionActivity) -> Result<QueryResult> {
@@ -92,13 +130,13 @@ impl Session {
 
         let start = Instant::now();
         let planner = Planner::new(self.context.clone());
-        let physical_plan = planner.plan_query(procedure)?;
+        let plan = planner.plan_query(procedure)?;
         metrics.planning_time = start.elapsed();
 
-        let schema = physical_plan.schema().cloned();
+        let schema = plan.schema().cloned();
         let start = Instant::now();
         let chunks: Vec<_> = self.context.database().runtime().scope(|_| {
-            let mut executor = ExecutorBuilder::new(self.context.clone()).build(&physical_plan);
+            let mut executor = ExecutorBuilder::new(self.context.clone()).build(&plan);
             executor.into_iter().try_collect()
         })?;
         metrics.execution_time = start.elapsed();
@@ -108,5 +146,19 @@ impl Session {
             metrics,
             chunks,
         })
+    }
+
+    // Test-harness helper: import a graph from an export manifest, then set it as current graph.
+    //
+    // This is intended for integration/system tests (e.g. `minigu-test`)
+    pub fn import_graph<P: AsRef<Path>>(
+        &mut self,
+        graph_name: &str,
+        manifest_path: P,
+    ) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+        import(self.context.clone(), graph_name, manifest_path)?;
+        // For simplicity, set the current graph to `graph_name`.
+        self.context.set_current_graph(graph_name.to_string())?;
+        Ok(())
     }
 }

@@ -1,7 +1,7 @@
 mod command;
 mod context;
 mod editor;
-mod output;
+pub mod output;
 
 use std::path::PathBuf;
 
@@ -48,9 +48,9 @@ pub struct ShellArgs {
 impl ShellArgs {
     pub fn run(self) -> Result<()> {
         let db = if let Some(path) = self.path {
-            Database::open(path, &DatabaseConfig::default())?
+            Database::open(path, DatabaseConfig::default())?
         } else {
-            Database::open_in_memory(&DatabaseConfig::default())?
+            Database::open_in_memory(DatabaseConfig::default())?
         };
         let session = db.session()?;
         let editor = build_editor()?;

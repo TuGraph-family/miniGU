@@ -1,0 +1,485 @@
+---
+source: minigu-test/src/insta_test.rs
+---
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - n
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: Account
+                                                                  - start: 9
+                                                                    end: 16
+                                                                predicate:
+                                                                  - Property:
+                                                                      - - name:
+                                                                            - id
+                                                                            - start: 17
+                                                                              end: 19
+                                                                          value:
+                                                                            - Value:
+                                                                                Literal:
+                                                                                  Numeric:
+                                                                                    Integer:
+                                                                                      - kind: Decimal
+                                                                                        integer: "12"
+                                                                                      - start: 20
+                                                                                        end: 22
+                                                                            - start: 20
+                                                                              end: 22
+                                                                        - start: 17
+                                                                          end: 22
+                                                                  - start: 16
+                                                                    end: 23
+                                                          - start: 6
+                                                            end: 24
+                                                    - start: 6
+                                                      end: 24
+                                                - start: 6
+                                                  end: 24
+                                            keep: ~
+                                            where_clause: ~
+                                          - start: 6
+                                            end: 24
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 24
+                                - start: 0
+                                  end: 24
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Variable: n
+                                                  - start: 32
+                                                    end: 33
+                                                alias: ~
+                                              - start: 32
+                                                end: 33
+                                        - start: 32
+                                          end: 33
+                                      group_by: ~
+                                    - start: 25
+                                      end: 33
+                                  order_by: ~
+                              - start: 25
+                                end: 33
+                  - start: 0
+                    end: 33
+                next_statements:
+                  - - yield_clause: ~
+                      statement:
+                        - Query:
+                            Primary:
+                              Ambient:
+                                Parts:
+                                  parts:
+                                    - - Match:
+                                          Simple:
+                                            - pattern:
+                                                - match_mode: ~
+                                                  patterns:
+                                                    - - variable: ~
+                                                        prefix: ~
+                                                        expr:
+                                                          - Concat:
+                                                              - - Pattern:
+                                                                    Node:
+                                                                      variable:
+                                                                        - n
+                                                                        - start: 46
+                                                                          end: 47
+                                                                      label: ~
+                                                                      predicate: ~
+                                                                - start: 45
+                                                                  end: 48
+                                                              - - Pattern:
+                                                                    Edge:
+                                                                      kind: Right
+                                                                      filler:
+                                                                        variable:
+                                                                          - e
+                                                                          - start: 50
+                                                                            end: 51
+                                                                        label:
+                                                                          - Label: transfer
+                                                                          - start: 52
+                                                                            end: 60
+                                                                        predicate: ~
+                                                                - start: 48
+                                                                  end: 63
+                                                              - - Pattern:
+                                                                    Node:
+                                                                      variable:
+                                                                        - m
+                                                                        - start: 64
+                                                                          end: 65
+                                                                      label:
+                                                                        - Label: Account
+                                                                        - start: 66
+                                                                          end: 73
+                                                                      predicate: ~
+                                                                - start: 63
+                                                                  end: 74
+                                                          - start: 45
+                                                            end: 74
+                                                      - start: 45
+                                                        end: 74
+                                                  keep: ~
+                                                  where_clause:
+                                                    - Binary:
+                                                        op:
+                                                          - And
+                                                          - start: 121
+                                                            end: 124
+                                                        left:
+                                                          - Binary:
+                                                              op:
+                                                                - And
+                                                                - start: 103
+                                                                  end: 106
+                                                              left:
+                                                                - Binary:
+                                                                    op:
+                                                                      - Gt
+                                                                      - start: 94
+                                                                        end: 95
+                                                                    left:
+                                                                      - Property:
+                                                                          source:
+                                                                            - Variable: e
+                                                                            - start: 85
+                                                                              end: 86
+                                                                          trailing_names:
+                                                                            - - amount
+                                                                              - start: 87
+                                                                                end: 93
+                                                                      - start: 85
+                                                                        end: 93
+                                                                    right:
+                                                                      - Value:
+                                                                          Literal:
+                                                                            Numeric:
+                                                                              Integer:
+                                                                                - kind: Decimal
+                                                                                  integer: "20"
+                                                                                - start: 96
+                                                                                  end: 98
+                                                                      - start: 96
+                                                                        end: 98
+                                                                - start: 85
+                                                                  end: 98
+                                                              right:
+                                                                - Binary:
+                                                                    op:
+                                                                      - Gt
+                                                                      - start: 112
+                                                                        end: 113
+                                                                    left:
+                                                                      - Property:
+                                                                          source:
+                                                                            - Variable: e
+                                                                            - start: 107
+                                                                              end: 108
+                                                                          trailing_names:
+                                                                            - - ts
+                                                                              - start: 109
+                                                                                end: 111
+                                                                      - start: 107
+                                                                        end: 111
+                                                                    right:
+                                                                      - Value:
+                                                                          Literal:
+                                                                            Numeric:
+                                                                              Integer:
+                                                                                - kind: Decimal
+                                                                                  integer: "30"
+                                                                                - start: 114
+                                                                                  end: 116
+                                                                      - start: 114
+                                                                        end: 116
+                                                                - start: 107
+                                                                  end: 116
+                                                          - start: 85
+                                                            end: 116
+                                                        right:
+                                                          - Binary:
+                                                              op:
+                                                                - Lt
+                                                                - start: 130
+                                                                  end: 131
+                                                              left:
+                                                                - Property:
+                                                                    source:
+                                                                      - Variable: e
+                                                                      - start: 125
+                                                                        end: 126
+                                                                    trailing_names:
+                                                                      - - ts
+                                                                        - start: 127
+                                                                          end: 129
+                                                                - start: 125
+                                                                  end: 129
+                                                              right:
+                                                                - Value:
+                                                                    Literal:
+                                                                      Numeric:
+                                                                        Integer:
+                                                                          - kind: Decimal
+                                                                            integer: "101"
+                                                                          - start: 132
+                                                                            end: 135
+                                                                - start: 132
+                                                                  end: 135
+                                                          - start: 125
+                                                            end: 135
+                                                    - start: 85
+                                                      end: 135
+                                                - start: 45
+                                                  end: 135
+                                              yield_clause: []
+                                            - start: 45
+                                              end: 135
+                                      - start: 39
+                                        end: 135
+                                  result:
+                                    - Return:
+                                        statement:
+                                          - quantifier: ~
+                                            items:
+                                              - Items:
+                                                  - - value:
+                                                        - Property:
+                                                            source:
+                                                              - Variable: m
+                                                              - start: 147
+                                                                end: 148
+                                                            trailing_names:
+                                                              - - id
+                                                                - start: 149
+                                                                  end: 151
+                                                        - start: 147
+                                                          end: 151
+                                                      alias:
+                                                        - dstId
+                                                        - start: 155
+                                                          end: 160
+                                                    - start: 147
+                                                      end: 160
+                                                  - - value:
+                                                        - Aggregate:
+                                                            General:
+                                                              kind:
+                                                                - Count
+                                                                - start: 166
+                                                                  end: 171
+                                                              quantifier: ~
+                                                              expr:
+                                                                - Variable: e
+                                                                - start: 172
+                                                                  end: 173
+                                                        - start: 166
+                                                          end: 174
+                                                      alias:
+                                                        - numEdges
+                                                        - start: 178
+                                                          end: 186
+                                                    - start: 166
+                                                      end: 186
+                                                  - - value:
+                                                        - Aggregate:
+                                                            General:
+                                                              kind:
+                                                                - Sum
+                                                                - start: 192
+                                                                  end: 195
+                                                              quantifier: ~
+                                                              expr:
+                                                                - Property:
+                                                                    source:
+                                                                      - Variable: e
+                                                                      - start: 196
+                                                                        end: 197
+                                                                    trailing_names:
+                                                                      - - amount
+                                                                        - start: 198
+                                                                          end: 204
+                                                                - start: 196
+                                                                  end: 204
+                                                        - start: 192
+                                                          end: 205
+                                                      alias:
+                                                        - sumAmount
+                                                        - start: 209
+                                                          end: 218
+                                                    - start: 192
+                                                      end: 218
+                                              - start: 147
+                                                end: 218
+                                            group_by: ~
+                                          - start: 136
+                                            end: 218
+                                        order_by: ~
+                                    - start: 136
+                                      end: 218
+                        - start: 39
+                          end: 218
+                    - start: 34
+                      end: 218
+                  - - yield_clause: ~
+                      statement:
+                        - Query:
+                            Primary:
+                              Ambient:
+                                Parts:
+                                  parts: []
+                                  result:
+                                    - Return:
+                                        statement:
+                                          - quantifier: ~
+                                            items:
+                                              - Items:
+                                                  - - value:
+                                                        - Variable: dstId
+                                                        - start: 235
+                                                          end: 240
+                                                      alias: ~
+                                                    - start: 235
+                                                      end: 240
+                                                  - - value:
+                                                        - Variable: numEdges
+                                                        - start: 246
+                                                          end: 254
+                                                      alias: ~
+                                                    - start: 246
+                                                      end: 254
+                                                  - - value:
+                                                        - Binary:
+                                                            op:
+                                                              - Div
+                                                              - start: 284
+                                                                end: 285
+                                                            left:
+                                                              - Function:
+                                                                  Generic:
+                                                                    name:
+                                                                      - round
+                                                                      - start: 260
+                                                                        end: 265
+                                                                    args:
+                                                                      - - Binary:
+                                                                            op:
+                                                                              - Mul
+                                                                              - start: 276
+                                                                                end: 277
+                                                                            left:
+                                                                              - Variable: sumAmount
+                                                                              - start: 266
+                                                                                end: 275
+                                                                            right:
+                                                                              - Value:
+                                                                                  Literal:
+                                                                                    Numeric:
+                                                                                      Integer:
+                                                                                        - kind: Decimal
+                                                                                          integer: "1000"
+                                                                                        - start: 278
+                                                                                          end: 282
+                                                                              - start: 278
+                                                                                end: 282
+                                                                        - start: 266
+                                                                          end: 282
+                                                              - start: 260
+                                                                end: 283
+                                                            right:
+                                                              - Value:
+                                                                  Literal:
+                                                                    Numeric:
+                                                                      Integer:
+                                                                        - kind: Decimal
+                                                                          integer: "1000"
+                                                                        - start: 286
+                                                                          end: 290
+                                                              - start: 286
+                                                                end: 290
+                                                        - start: 260
+                                                          end: 290
+                                                      alias:
+                                                        - sumAmount
+                                                        - start: 294
+                                                          end: 303
+                                                    - start: 260
+                                                      end: 303
+                                              - start: 235
+                                                end: 303
+                                            group_by: ~
+                                          - start: 224
+                                            end: 303
+                                        order_by:
+                                          - order_by:
+                                              - - key:
+                                                    - Variable: sumAmount
+                                                    - start: 313
+                                                      end: 322
+                                                  ordering:
+                                                    - Desc
+                                                    - start: 323
+                                                      end: 327
+                                                  null_ordering: ~
+                                                - start: 313
+                                                  end: 327
+                                              - - key:
+                                                    - Variable: dstId
+                                                    - start: 329
+                                                      end: 334
+                                                  ordering:
+                                                    - Asc
+                                                    - start: 335
+                                                      end: 338
+                                                  null_ordering: ~
+                                                - start: 329
+                                                  end: 338
+                                            offset: ~
+                                            limit: ~
+                                          - start: 304
+                                            end: 338
+                                    - start: 224
+                                      end: 338
+                        - start: 224
+                          end: 338
+                    - start: 219
+                      end: 338
+              - start: 0
+                end: 338
+            end: ~
+        - start: 0
+          end: 338
+      session_close: false
+    - start: 0
+      end: 338

@@ -452,10 +452,13 @@ mod tests {
             result: result_set,
             consumed: false,
         };
-        let aggregate_executor = FactorizedAggregateBuilder::new_simple(mock_input, vec![
-            SimpleAggregateSpec::sum(DataChunkPos(1), Some(Box::new(column_ref)), false),
-            SimpleAggregateSpec::sum(DataChunkPos(1), Some(Box::new(add_one_expr)), false),
-        ])
+        let aggregate_executor = FactorizedAggregateBuilder::new_simple(
+            mock_input,
+            vec![
+                SimpleAggregateSpec::sum(DataChunkPos(1), Some(Box::new(column_ref)), false),
+                SimpleAggregateSpec::sum(DataChunkPos(1), Some(Box::new(add_one_expr)), false),
+            ],
+        )
         .into_factorized_executor();
 
         let results: Vec<ResultSet> = aggregate_executor.into_iter().try_collect().unwrap();
@@ -503,10 +506,13 @@ mod tests {
             result: result_set,
             consumed: false,
         };
-        let aggregate_executor = FactorizedAggregateBuilder::new_simple(mock_input, vec![
-            SimpleAggregateSpec::min(DataChunkPos(1), Some(Box::new(column_ref))),
-            SimpleAggregateSpec::min(DataChunkPos(1), Some(Box::new(mul_two_expr))),
-        ])
+        let aggregate_executor = FactorizedAggregateBuilder::new_simple(
+            mock_input,
+            vec![
+                SimpleAggregateSpec::min(DataChunkPos(1), Some(Box::new(column_ref))),
+                SimpleAggregateSpec::min(DataChunkPos(1), Some(Box::new(mul_two_expr))),
+            ],
+        )
         .into_factorized_executor();
 
         let results: Vec<ResultSet> = aggregate_executor.into_iter().try_collect().unwrap();
@@ -554,10 +560,13 @@ mod tests {
             result: result_set,
             consumed: false,
         };
-        let aggregate_executor = FactorizedAggregateBuilder::new_simple(mock_input, vec![
-            SimpleAggregateSpec::max(DataChunkPos(1), Some(Box::new(column_ref))),
-            SimpleAggregateSpec::max(DataChunkPos(1), Some(Box::new(add_five_expr))),
-        ])
+        let aggregate_executor = FactorizedAggregateBuilder::new_simple(
+            mock_input,
+            vec![
+                SimpleAggregateSpec::max(DataChunkPos(1), Some(Box::new(column_ref))),
+                SimpleAggregateSpec::max(DataChunkPos(1), Some(Box::new(add_five_expr))),
+            ],
+        )
         .into_factorized_executor();
 
         let results: Vec<ResultSet> = aggregate_executor.into_iter().try_collect().unwrap();
@@ -605,10 +614,13 @@ mod tests {
             result: result_set,
             consumed: false,
         };
-        let aggregate_executor = FactorizedAggregateBuilder::new_simple(mock_input, vec![
-            SimpleAggregateSpec::avg(DataChunkPos(1), Some(Box::new(column_ref)), false),
-            SimpleAggregateSpec::avg(DataChunkPos(1), Some(Box::new(div_two_expr)), false),
-        ])
+        let aggregate_executor = FactorizedAggregateBuilder::new_simple(
+            mock_input,
+            vec![
+                SimpleAggregateSpec::avg(DataChunkPos(1), Some(Box::new(column_ref)), false),
+                SimpleAggregateSpec::avg(DataChunkPos(1), Some(Box::new(div_two_expr)), false),
+            ],
+        )
         .into_factorized_executor();
 
         let results: Vec<ResultSet> = aggregate_executor.into_iter().try_collect().unwrap();
@@ -657,14 +669,21 @@ mod tests {
             result: result_set,
             consumed: false,
         };
-        let aggregate_executor = FactorizedAggregateBuilder::new_simple(mock_input, vec![
-            SimpleAggregateSpec::count(),
-            SimpleAggregateSpec::sum(DataChunkPos(1), Some(Box::new(column_ref.clone())), false),
-            SimpleAggregateSpec::sum(DataChunkPos(1), Some(Box::new(add_ten_expr)), false),
-            SimpleAggregateSpec::min(DataChunkPos(1), Some(Box::new(column_ref.clone()))),
-            SimpleAggregateSpec::max(DataChunkPos(1), Some(Box::new(mul_five_expr))),
-            SimpleAggregateSpec::avg(DataChunkPos(1), Some(Box::new(column_ref)), false),
-        ])
+        let aggregate_executor = FactorizedAggregateBuilder::new_simple(
+            mock_input,
+            vec![
+                SimpleAggregateSpec::count(),
+                SimpleAggregateSpec::sum(
+                    DataChunkPos(1),
+                    Some(Box::new(column_ref.clone())),
+                    false,
+                ),
+                SimpleAggregateSpec::sum(DataChunkPos(1), Some(Box::new(add_ten_expr)), false),
+                SimpleAggregateSpec::min(DataChunkPos(1), Some(Box::new(column_ref.clone()))),
+                SimpleAggregateSpec::max(DataChunkPos(1), Some(Box::new(mul_five_expr))),
+                SimpleAggregateSpec::avg(DataChunkPos(1), Some(Box::new(column_ref)), false),
+            ],
+        )
         .into_factorized_executor();
 
         let results: Vec<ResultSet> = aggregate_executor.into_iter().try_collect().unwrap();

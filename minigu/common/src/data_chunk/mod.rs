@@ -321,6 +321,41 @@ impl DataChunk {
         RecordBatch::try_new(Arc::new(schema), chunk.columns)
             .expect("`schema` should match the data chunk")
     }
+
+    /// Prints the data chunk in a formatted table for debugging purposes.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// let chunk = DataChunk::new(...);
+    /// chunk.debug_print();
+    /// ```
+    pub fn debug_print(&self) {
+        use display::{TableBuilder, TableOptions, TableStyle};
+        let options = TableOptions::new().with_style(TableStyle::Sharp);
+        let table = TableBuilder::new(None, options).append_chunk(self).build();
+        println!("{}", table);
+    }
+
+    /// Prints the data chunk with schema headers in a formatted table for debugging purposes.
+    ///
+    /// # Arguments
+    /// * `schema` - The schema to use for column headers
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// let chunk = DataChunk::new(...);
+    /// let schema = DataSchema::new(...);
+    /// chunk.debug_print_with_schema(&schema);
+    /// ```
+    pub fn debug_print_with_schema(&self, schema: &DataSchema) {
+        use display::{TableBuilder, TableOptions, TableStyle};
+        let options = TableOptions::new().with_style(TableStyle::Sharp);
+        let schema_ref = Arc::new(schema.clone());
+        let table = TableBuilder::new(Some(schema_ref), options)
+            .append_chunk(self)
+            .build();
+        println!("{}", table);
+    }
 }
 
 impl FromIterator<DataChunk> for DataChunk {
@@ -358,6 +393,34 @@ mod tests {
 
     use super::*;
     use crate::data_type::{DataField, LogicalType};
+
+    #[test]
+    fn test_debug_print() {
+        let chunk = data_chunk!(
+            (Int32, [1, 2, 3, 4, 5]),
+            (Utf8, ["Alice", "Bob", "Carol", "David", "Eve"]),
+            (Int64, [25, 30, 28, 32, 27])
+        );
+
+        println!("=== Debug print without schema ===");
+        chunk.debug_print();
+
+        let schema = DataSchema::new(vec![
+            DataField::new("id".to_string(), LogicalType::Int32, false),
+            DataField::new("name".to_string(), LogicalType::String, false),
+            DataField::new("age".to_string(), LogicalType::Int64, false),
+        ]);
+        println!("\n=== Debug print with schema ===");
+        chunk.debug_print_with_schema(&schema);
+
+        let filtered_chunk = data_chunk!(
+            { true, false, true, false, true },
+            (Int32, [1, 2, 3, 4, 5]),
+            (Utf8, ["Alice", "Bob", "Carol", "David", "Eve"])
+        );
+        println!("\n=== Debug print filtered chunk (only showing rows where filter is true) ===");
+        filtered_chunk.debug_print();
+    }
 
     #[test]
     fn test_rows_1() {

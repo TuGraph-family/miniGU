@@ -499,11 +499,24 @@ pub fn predefined_type(input: &mut TokenStream) -> ModalResult<Spanned<ValueType
         TokenKind::Bytes | TokenKind::Binary | TokenKind::Varbinary => byte_string_type,
         TokenKind::Decimal | TokenKind::Dec => decimal_numeric_type,
         TokenKind::Null | TokenKind::Nothing => immaterial_type,
+        TokenKind::Vector => vector_type,
         kind if kind.is_prefix_of_signed_exact_numeric_type() => signed_binary_exact_numeric_type,
         kind if kind.is_prefix_of_unsigned_exact_numeric_type() => unsigned_binary_exact_numeric_type,
         kind if kind.is_prefix_of_temporal_type() => temporal_type,
         _ => fail
     }
+    .parse_next(input)
+}
+
+pub fn vector_type(input: &mut TokenStream) -> ModalResult<Spanned<ValueType>> {
+    seq! {ValueType::Vector {
+        _: TokenKind::Vector,
+        _: TokenKind::LeftParen,
+        dimension: unsigned_integer.map(Box::new),
+        _: TokenKind::RightParen,
+        not_null: opt(not_null).map(|not_null| not_null.is_some()),
+    }}
+    .spanned()
     .parse_next(input)
 }
 
@@ -1003,6 +1016,24 @@ mod tests {
     #[test]
     fn test_exact_numeric_type_5() {
         let parsed = parse!(value_type, "decimal(5,2)");
+        assert_yaml_snapshot!(parsed);
+    }
+
+    #[test]
+    fn test_vector_type_1() {
+        let parsed = parse!(value_type, "vector(128)");
+        assert_yaml_snapshot!(parsed);
+    }
+
+    #[test]
+    fn test_vector_type_2() {
+        let parsed = parse!(value_type, "vector(256) not null");
+        assert_yaml_snapshot!(parsed);
+    }
+
+    #[test]
+    fn test_vector_type_3() {
+        let parsed = parse!(value_type, "vector(4)");
         assert_yaml_snapshot!(parsed);
     }
 }

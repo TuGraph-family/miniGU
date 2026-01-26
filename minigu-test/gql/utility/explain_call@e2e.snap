@@ -1,0 +1,10 @@
+---
+source: minigu-test/e2e_test.rs
+---
+Error: Plan(
+    Bind(
+        NotCatalogProcedure(
+            "echo",
+        ),
+    ),
+)
