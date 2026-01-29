@@ -1,9 +1,10 @@
+use std::convert::TryFrom;
 use std::io;
 use std::sync::Arc;
 
-use arrow::array::{ArrayRef, BooleanArray, Float32Array, UInt64Array};
+use arrow::array::{Array, ArrayRef, AsArray, BooleanArray, Float32Array, UInt64Array};
+use arrow::datatypes::UInt64Type;
 use minigu_common::data_chunk::DataChunk;
-use minigu_common::error::not_implemented;
 use minigu_common::value::{ScalarValue, VectorValue};
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::session::SessionContext;
@@ -17,14 +18,11 @@ use crate::error::{ExecutionError, ExecutionResult};
 /// Default L parameter for DiskANN search
 const DEFAULT_L_VALUE: u32 = 100;
 
-/// Builds an executor that performs ANN search directly against the storage vector index.
-///
-/// TODO(minigu-vector-search): thread the MATCH-produced bitmap (and other execution hints) into
-/// this builder once the binder/planner can supply them
 pub struct VectorIndexScanBuilder {
     session_context: SessionContext,
     plan: Arc<VectorIndexScan>,
     child: BoxedExecutor,
+    binding_column_index: usize,
 }
 
 impl VectorIndexScanBuilder {
@@ -32,11 +30,13 @@ impl VectorIndexScanBuilder {
         session_context: SessionContext,
         plan: Arc<VectorIndexScan>,
         child: BoxedExecutor,
+        binding_column_index: usize,
     ) -> Self {
         Self {
             session_context,
             plan,
             child,
+            binding_column_index,
         }
     }
 
@@ -44,7 +44,8 @@ impl VectorIndexScanBuilder {
         Box::new(VectorIndexScanExecutor {
             session_context: self.session_context,
             plan: self.plan,
-            child: self.child,
+            child: Some(self.child),
+            binding_column_index: self.binding_column_index,
             finished: false,
         })
     }
@@ -53,7 +54,8 @@ impl VectorIndexScanBuilder {
 pub struct VectorIndexScanExecutor {
     session_context: SessionContext,
     plan: Arc<VectorIndexScan>,
-    child: BoxedExecutor,
+    child: Option<BoxedExecutor>,
+    binding_column_index: usize,
     finished: bool,
 }
 
@@ -70,6 +72,13 @@ impl Executor for VectorIndexScanExecutor {
 impl VectorIndexScanExecutor {
     fn execute_scan(&mut self) -> ExecutionResult<DataChunk> {
         let candidate_bitmap = self.consume_child_bitmap()?;
+        if self.plan.limit == 0 {
+            return Ok(Self::empty_result_chunk());
+        }
+        let candidate_bitmap = match candidate_bitmap {
+            CandidateBitmap::Empty => return Ok(Self::empty_result_chunk()),
+            CandidateBitmap::Filter(bitmap) => Some(bitmap),
+        };
         let graph = self.resolve_memory_graph()?;
         let txn = graph
             .txn_manager()
@@ -117,14 +126,6 @@ impl VectorIndexScanExecutor {
     ) -> ExecutionResult<DataChunk> {
         // TODO(minigu-vector-search): support parameter/column vector expressions once binder
         // permits.
-        if self.plan.limit == 0 {
-            let id_array: ArrayRef =
-                Arc::new(UInt64Array::from_iter_values(std::iter::empty::<u64>()));
-            let distance_array: ArrayRef =
-                Arc::new(Float32Array::from_iter_values(std::iter::empty::<f32>()));
-            return Ok(DataChunk::new(vec![id_array, distance_array]));
-        }
-
         let query_scalar = self.plan.query.clone().evaluate_scalar().ok_or_else(|| {
             ExecutionError::Custom(Box::new(io::Error::new(
                 io::ErrorKind::InvalidInput,
@@ -152,14 +153,24 @@ impl VectorIndexScanExecutor {
                 self.plan.limit,
                 l_value,
                 filter_bitmap,
-                false,
+                self.plan.approximate,
             )
             .map_err(ExecutionError::from)?;
 
-        let (vertex_ids, distances): (Vec<u64>, Vec<f32>) = results.into_iter().unzip();
-        let id_array: ArrayRef = Arc::new(UInt64Array::from_iter_values(vertex_ids));
-        let distance_array: ArrayRef = Arc::new(Float32Array::from_iter_values(distances));
-        Ok(DataChunk::new(vec![id_array, distance_array]))
+        // [node_id, distance]
+        let (vertex_ids, distances): (Vec<u64>, Vec<f32>) = results
+            .into_iter()
+            .map(|(vertex_id, distance)| (vertex_id, distance.sqrt()))
+            .unzip();
+        let mut columns: Vec<ArrayRef> = Vec::new();
+        let id_array: ArrayRef =
+            Arc::new(UInt64Array::from_iter_values(vertex_ids.iter().copied()));
+        let distance_array: ArrayRef =
+            Arc::new(Float32Array::from_iter_values(distances.iter().copied()));
+        columns.push(id_array);
+        columns.push(distance_array);
+
+        Ok(DataChunk::new(columns))
     }
 }
 
@@ -173,11 +184,78 @@ fn extract_vector(value: ScalarValue) -> ExecutionResult<VectorValue> {
 }
 
 impl VectorIndexScanExecutor {
-    fn consume_child_bitmap(&mut self) -> ExecutionResult<Option<BooleanArray>> {
-        let _ = &mut self.child;
-        not_implemented(
-            "vector index scan requires MATCH bitmap propagation (child bitmap generation)",
-            None,
-        )
+    fn empty_result_chunk() -> DataChunk {
+        let id_array: ArrayRef = Arc::new(UInt64Array::from_iter_values(std::iter::empty::<u64>()));
+        let distance_array: ArrayRef =
+            Arc::new(Float32Array::from_iter_values(std::iter::empty::<f32>()));
+        DataChunk::new(vec![id_array, distance_array])
     }
+
+    fn consume_child_bitmap(&mut self) -> ExecutionResult<CandidateBitmap> {
+        let child = self
+            .child
+            .take()
+            .expect("vector index scan child executor should exist");
+
+        let mut candidate_indices: Vec<usize> = Vec::new();
+        let mut max_index: Option<usize> = None;
+
+        for chunk in child.into_iter() {
+            let chunk = chunk?;
+            if chunk.is_empty() {
+                continue;
+            }
+            let column = chunk
+                .columns()
+                .get(self.binding_column_index)
+                .ok_or_else(|| {
+                    ExecutionError::Custom(Box::new(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        "binding column missing from child output",
+                    )))
+                })?;
+            let column = column.as_primitive::<UInt64Type>();
+            for row in 0..column.len() {
+                if column.is_null(row) {
+                    continue;
+                }
+                let node_id = column.value(row);
+                let idx = usize::try_from(node_id).map_err(|_| {
+                    ExecutionError::Custom(Box::new(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        format!("vertex id {node_id} exceeds usize range"),
+                    )))
+                })?;
+                if let Some(current_max) = max_index.as_mut() {
+                    if idx > *current_max {
+                        *current_max = idx;
+                    }
+                } else {
+                    max_index = Some(idx);
+                }
+                candidate_indices.push(idx);
+            }
+        }
+
+        let Some(max_index) = max_index else {
+            return Ok(CandidateBitmap::Empty);
+        };
+        let bitmap_len = max_index.checked_add(1).ok_or_else(|| {
+            ExecutionError::Custom(Box::new(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "vertex id overflow while building candidate bitmap",
+            )))
+        })?;
+        let mut filter_bits = vec![false; bitmap_len];
+        for idx in candidate_indices {
+            filter_bits[idx] = true;
+        }
+
+        Ok(CandidateBitmap::Filter(BooleanArray::from(filter_bits)))
+    }
+}
+
+enum CandidateBitmap {
+    Empty,
+    Filter(BooleanArray),
 }

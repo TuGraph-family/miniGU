@@ -95,7 +95,7 @@ impl PlanData for VectorIndexScan {
         let indent_str = " ".repeat(indent * 2);
         let mut output = String::new();
         output.push_str(&format!(
-            "{}VectorIndexScan: binding={}, distance_alias={}, index_key={:?}, metric={:?}, dimension={}, limit={}, approximate={}",
+            "{}VectorIndexScan: binding={}, distance_alias={}, index_key={:?}, metric={:?}, dimension={}, limit={}, approximate={}\n",
             indent_str,
             self.binding,
             self.distance_alias,

@@ -1,19 +1,20 @@
 use std::str::FromStr;
 
 use gql_parser::ast::{
-    BinaryOp, BooleanLiteral, Expr, Function, Literal, NonNegativeInteger, StringLiteral,
+    BinaryOp, BooleanLiteral, Expr, Function, Ident, Literal, NonNegativeInteger, StringLiteral,
     StringLiteralKind, UnaryOp, UnsignedInteger, UnsignedIntegerKind, UnsignedNumericLiteral,
     Value, VectorDistance, VectorLiteral,
 };
+use minigu_catalog::label_set::LabelSet;
 use minigu_common::constants::SESSION_USER;
 use minigu_common::data_type::LogicalType;
 use minigu_common::error::not_implemented;
-use minigu_common::types::VectorMetric;
+use minigu_common::types::{LabelId, VectorMetric};
 use minigu_common::value::{F32, F64, ScalarValue, VectorValue};
 
 use super::Binder;
 use super::error::{BindError, BindResult};
-use crate::bound::{BoundBinaryOp, BoundExpr, BoundUnsignedInteger};
+use crate::bound::{BoundBinaryOp, BoundExpr, BoundExprKind, BoundUnsignedInteger};
 
 impl Binder<'_> {
     pub fn bind_value_expression(&self, expr: &Expr) -> BindResult<BoundExpr> {
@@ -40,7 +41,10 @@ impl Binder<'_> {
             }
             Expr::Value(value) => bind_value(value),
             Expr::Path(_) => not_implemented("path expression", None),
-            Expr::Property { .. } => not_implemented("property expression", None),
+            Expr::Property {
+                source,
+                trailing_names,
+            } => self.bind_property_expression(source.as_ref().value(), trailing_names),
             Expr::Graph(_) => not_implemented("graph expression", None),
         }
     }
@@ -89,6 +93,65 @@ impl Binder<'_> {
         };
 
         Ok(BoundExpr::vector_distance(lhs, rhs, metric, lhs_dim))
+    }
+
+    fn bind_property_expression(
+        &self,
+        source: &Expr,
+        trailing_names: &[gql_parser::span::Spanned<Ident>],
+    ) -> BindResult<BoundExpr> {
+        if trailing_names.len() != 1 {
+            return not_implemented("nested property access", None);
+        }
+        let property = trailing_names[0].value().to_string();
+
+        // Source must be a variable for now.
+        let bound_source = self.bind_value_expression(source)?;
+        let binding = match &bound_source.kind {
+            BoundExprKind::Variable(name) => name.clone(),
+            _ => {
+                return not_implemented("property access on non-variable", None);
+            }
+        };
+
+        // Resolve label/property against current graph and variable labels.
+        let schema = self
+            .active_data_schema
+            .as_ref()
+            .ok_or(BindError::CurrentGraphNotSpecified)?;
+        let labels = schema
+            .get_var_label(binding.as_str())
+            .ok_or(BindError::LabelNotFound(binding.clone().into()))?;
+        if labels.len() != 1 || labels[0].len() != 1 {
+            return not_implemented("multi-label property resolution", None);
+        }
+        let label_id: LabelId = labels[0][0];
+
+        let graph = self
+            .current_graph
+            .as_ref()
+            .ok_or(BindError::CurrentGraphNotSpecified)?;
+        let graph_type = graph.graph_type();
+        let vertex_type = graph_type
+            .get_vertex_type(&LabelSet::from_iter([label_id]))?
+            .ok_or_else(|| BindError::LabelNotFound(binding.clone().into()))?;
+
+        let (property_id, property_def) =
+            vertex_type
+                .get_property(property.as_str())?
+                .ok_or_else(|| BindError::PropertyNotFound {
+                    label: binding.clone().into(),
+                    property: property.clone().into(),
+                })?;
+
+        Ok(BoundExpr::property(
+            binding,
+            property,
+            Some(label_id),
+            Some(property_id),
+            property_def.logical_type().clone(),
+            property_def.nullable(),
+        ))
     }
 
     pub fn bind_non_negative_integer(

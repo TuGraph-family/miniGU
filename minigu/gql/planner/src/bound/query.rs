@@ -109,9 +109,6 @@ pub struct BoundVectorIndexScan {
 pub enum BoundSimpleQueryStatement {
     Call(BoundCallProcedureStatement),
     Match(BoundMatchStatement),
-    // TODO(minigu-vector-search): once MATCH binding lands, retain the MATCH-produced
-    // candidate set (or bitmap) as input and append a VectorIndexScan to perform the
-    // ANN/precise search.
     VectorIndexScan(BoundVectorIndexScan),
 }
 

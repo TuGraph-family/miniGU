@@ -11,7 +11,6 @@ use itertools::Itertools;
 use minigu_common::data_type::{DataField, DataSchema, DataSchemaRef, LogicalType};
 use minigu_common::error::not_implemented;
 use minigu_common::ordering::{NullOrdering, SortOrdering};
-use minigu_common::types::{VectorIndexKey, VectorMetric};
 
 use super::Binder;
 use super::error::{BindError, BindResult};
@@ -20,7 +19,6 @@ use crate::bound::{
     BoundLinearQueryStatement, BoundMatchStatement, BoundOrderByAndPageStatement,
     BoundQueryConjunction, BoundResultStatement, BoundReturnStatement, BoundSetOp, BoundSetOpKind,
     BoundSetQuantifier, BoundSimpleQueryStatement, BoundSortSpec, BoundUtilityStatement,
-    BoundVectorIndexScan,
 };
 
 impl Binder<'_> {
@@ -43,7 +41,7 @@ impl Binder<'_> {
         &mut self,
         statement: &LinearQueryStatement,
     ) -> BindResult<BoundLinearQueryStatement> {
-        let mut statement = match statement {
+        let statement = match statement {
             LinearQueryStatement::Focused(statement) => {
                 self.bind_focused_linear_query_statement(statement)?
             }
@@ -51,10 +49,6 @@ impl Binder<'_> {
                 self.bind_ambient_linear_query_statement(statement)?
             }
         };
-        if let BoundLinearQueryStatement::Query { statements, result } = statement {
-            let (statements, result) = self.attach_vector_index_scan(statements, result)?;
-            statement = BoundLinearQueryStatement::Query { statements, result };
-        }
         Ok(statement)
     }
 
@@ -149,64 +143,6 @@ impl Binder<'_> {
             }
             SimpleQueryStatement::OrderByAndPage(_) => {
                 not_implemented("standalone order by and page statement", None)
-            }
-        }
-    }
-
-    fn bind_vector_index_scan(
-        &mut self,
-        input: BoundSimpleQueryStatement,
-        _return_statement: &BoundReturnStatement,
-        _order_by: &BoundOrderByAndPageStatement,
-    ) -> BindResult<BoundVectorIndexScan> {
-        // TODO(minigu-vector-search): Enable vector index scan binding once MATCH is able to
-        // provide the filtered candidate bitmap and schema context. Planned flow:
-        // 1. Locate ORDER BY VECTOR_DISTANCE(...) and validate operands/metric.
-        // 2. Resolve the MATCH binding to fetch label/property metadata and derive VectorIndexKey.
-        // 3. Capture LIMIT/APPROXIMATE information, the query vector expression, and the MATCH
-        //    candidate bitmap so vector search can run against it.
-        // 4. Append BoundVectorIndexScan so later phases can emit VectorIndexScan plan nodes.
-        let _ = (VectorIndexKey::new, VectorMetric::L2, input);
-        not_implemented("vector index scan binding", None)
-    }
-
-    fn attach_vector_index_scan(
-        &mut self,
-        mut statements: Vec<BoundSimpleQueryStatement>,
-        result: BoundResultStatement,
-    ) -> BindResult<(Vec<BoundSimpleQueryStatement>, BoundResultStatement)> {
-        let BoundResultStatement::Return {
-            statement: return_statement,
-            order_by_and_page,
-        } = &result
-        else {
-            return Ok((statements, result));
-        };
-        let Some(order_by_and_page) = order_by_and_page else {
-            return Ok((statements, result));
-        };
-        let Some(limit_clause) = &order_by_and_page.limit else {
-            return Ok((statements, result));
-        };
-        if !limit_clause.approximate || order_by_and_page.order_by.is_empty() {
-            return Ok((statements, result));
-        }
-        let Some(last_statement) = statements.pop() else {
-            return Ok((statements, result));
-        };
-        match last_statement {
-            BoundSimpleQueryStatement::Match(_) => {
-                let vector_scan = self.bind_vector_index_scan(
-                    last_statement,
-                    return_statement,
-                    order_by_and_page,
-                )?;
-                statements.push(BoundSimpleQueryStatement::VectorIndexScan(vector_scan));
-                Ok((statements, result))
-            }
-            other => {
-                statements.push(other);
-                Ok((statements, result))
             }
         }
     }
