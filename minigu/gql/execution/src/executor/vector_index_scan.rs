@@ -158,10 +158,7 @@ impl VectorIndexScanExecutor {
             .map_err(ExecutionError::from)?;
 
         // [node_id, distance]
-        let (vertex_ids, distances): (Vec<u64>, Vec<f32>) = results
-            .into_iter()
-            .map(|(vertex_id, distance)| (vertex_id, distance.sqrt()))
-            .unzip();
+        let (vertex_ids, distances): (Vec<u64>, Vec<f32>) = results.into_iter().unzip();
         let mut columns: Vec<ArrayRef> = Vec::new();
         let id_array: ArrayRef =
             Arc::new(UInt64Array::from_iter_values(vertex_ids.iter().copied()));
@@ -192,10 +189,14 @@ impl VectorIndexScanExecutor {
     }
 
     fn consume_child_bitmap(&mut self) -> ExecutionResult<CandidateBitmap> {
-        let child = self
-            .child
-            .take()
-            .expect("vector index scan child executor should exist");
+        let child = match self.child.take() {
+            Some(child) => child,
+            None => {
+                return Err(ExecutionError::Custom(Box::new(io::Error::other(
+                    "vector index scan child executor has already been consumed",
+                ))));
+            }
+        };
 
         let mut candidate_indices: Vec<usize> = Vec::new();
         let mut max_index: Option<usize> = None;

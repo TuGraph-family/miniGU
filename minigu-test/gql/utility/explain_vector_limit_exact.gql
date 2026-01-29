@@ -1,4 +1,4 @@
-CALL create_test_vector_graph_data("vec_graph", 8);
+CALL create_test_graph_data("vec_graph", 8);
 SESSION SET GRAPH vec_graph;
 
 EXPLAIN

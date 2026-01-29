@@ -13,6 +13,7 @@ use crate::plan::offset::Offset;
 use crate::plan::project::Project;
 use crate::plan::property_fetch::{PropertyOutput, VertexPropertyFetch};
 use crate::plan::sort::Sort;
+use crate::plan::vector_index_scan::VectorIndexScan;
 use crate::plan::{PlanData, PlanNode};
 
 /// Placeholder rewrite pass for vector index scans.
@@ -146,6 +147,10 @@ fn rewrite_node(plan: PlanNode) -> PlanResult<PlanNode> {
     }
 }
 
+/// Detects `LIMIT APPROXIMATE` plans of the form `Limit(Sort(Project(child)))` where the sort key
+/// is `VECTOR_DISTANCE(...)`, and rewrites them into `Project(HashJoin(VectorIndexScan, Fetch))`.
+/// The VectorIndexScan becomes the ANN entry point, while the Fetch/Join path brings back required
+/// properties for the projection.
 fn try_rewrite_vector_limit(limit: &Limit, child: PlanNode) -> PlanResult<Option<PlanNode>> {
     use crate::plan::PlanNode::*;
 
@@ -154,6 +159,7 @@ fn try_rewrite_vector_limit(limit: &Limit, child: PlanNode) -> PlanResult<Option
         _ => return Ok(None),
     };
 
+    // TODO: only support one sort key now
     if sorted.specs.len() != 1 {
         return Ok(None);
     }
@@ -191,7 +197,7 @@ fn try_rewrite_vector_limit(limit: &Limit, child: PlanNode) -> PlanResult<Option
         dimension,
     } = vector;
 
-    let scan = crate::plan::vector_index_scan::VectorIndexScan::new(
+    let scan = VectorIndexScan::new(
         base_child.clone(),
         binding.clone(),
         distance_alias,
@@ -203,7 +209,7 @@ fn try_rewrite_vector_limit(limit: &Limit, child: PlanNode) -> PlanResult<Option
         true,
     );
     let left_node = PlanNode::LogicalVectorIndexScan(Arc::new(scan));
-    let right_node = build_property_fetch_plan(base_child, &binding, &project_node.exprs);
+    let right_node = ensure_project_property_fetch(base_child, &project_node.exprs);
     let join = HashJoin::new(
         left_node,
         right_node,
@@ -221,21 +227,6 @@ fn try_rewrite_vector_limit(limit: &Limit, child: PlanNode) -> PlanResult<Option
             .clone(),
     );
     Ok(Some(PlanNode::LogicalProject(Arc::new(project))))
-}
-
-fn build_property_fetch_plan(child: PlanNode, binding: &str, exprs: &[BoundExpr]) -> PlanNode {
-    let mut all_specs: BTreeMap<String, BTreeMap<u32, PropertyOutput>> = BTreeMap::new();
-    for expr in exprs {
-        collect_property_refs(expr, &mut all_specs);
-    }
-    let binding_specs = match all_specs.get(binding) {
-        Some(specs) if !specs.is_empty() => specs.clone(),
-        _ => return child,
-    };
-
-    let (property_ids, outputs): (Vec<_>, Vec<_>) = binding_specs.into_iter().unzip();
-    let fetch = VertexPropertyFetch::new(child, binding.to_string(), property_ids, outputs);
-    PlanNode::LogicalVertexPropertyFetch(std::sync::Arc::new(fetch))
 }
 
 fn make_binding_expr(binding: &str) -> BoundExpr {

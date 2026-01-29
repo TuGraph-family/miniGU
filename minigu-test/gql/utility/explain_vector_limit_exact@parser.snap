@@ -18,45 +18,45 @@ source: minigu-test/src/insta_test.rs
                                     - Ref:
                                         schema: ~
                                         objects:
-                                          - - create_test_vector_graph_data
+                                          - - create_test_graph_data
                                             - start: 5
-                                              end: 34
+                                              end: 27
                                     - start: 5
-                                      end: 34
+                                      end: 27
                                   args:
                                     - - Value:
                                           Literal:
                                             String:
                                               kind: Char
                                               literal: vec_graph
-                                      - start: 35
-                                        end: 46
+                                      - start: 28
+                                        end: 39
                                     - - Value:
                                           Literal:
                                             Numeric:
                                               Integer:
                                                 - kind: Decimal
                                                   integer: "8"
-                                                - start: 48
-                                                  end: 49
-                                      - start: 48
-                                        end: 49
+                                                - start: 41
+                                                  end: 42
+                                      - start: 41
+                                        end: 42
                                   yield_clause: ~
                               - start: 5
-                                end: 50
+                                end: 43
                         - start: 0
-                          end: 50
+                          end: 43
                   - start: 0
-                    end: 50
+                    end: 43
                 next_statements: []
               - start: 0
-                end: 50
+                end: 43
             end: ~
         - start: 0
-          end: 50
+          end: 43
       session_close: false
     - start: 0
-      end: 50
+      end: 43
 - Ok:
     - activity:
         - Session:
