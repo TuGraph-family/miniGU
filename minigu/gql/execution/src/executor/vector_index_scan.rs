@@ -6,6 +6,7 @@ use arrow::array::{Array, ArrayRef, AsArray, BooleanArray, Float32Array, UInt64A
 use arrow::datatypes::UInt64Type;
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::value::{ScalarValue, VectorValue};
+use minigu_context::error::Error as ContextError;
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::session::SessionContext;
 use minigu_planner::plan::vector_index_scan::VectorIndexScan;
@@ -101,21 +102,17 @@ impl VectorIndexScanExecutor {
     }
 
     fn resolve_memory_graph(&self) -> Result<Arc<MemoryGraph>, ExecutionError> {
-        let graph_ref = self.session_context.current_graph.clone().ok_or_else(|| {
-            ExecutionError::Custom(Box::new(io::Error::new(
-                io::ErrorKind::NotFound,
-                "current graph is not selected",
-            )))
-        })?;
+        let graph_ref = self
+            .session_context
+            .current_graph
+            .clone()
+            .ok_or(ContextError::CurrentGraphNotSet)?;
         let provider = graph_ref.object().clone();
         let container = provider.downcast_ref::<GraphContainer>().ok_or_else(|| {
-            ExecutionError::Custom(Box::new(io::Error::new(
-                io::ErrorKind::InvalidData,
-                "only in-memory graphs support vector scans",
-            )))
+            ContextError::Internal("only in-memory graphs support vector scans".into())
         })?;
         match container.graph_storage() {
-            GraphStorage::Memory(graph) => Ok(Arc::clone(graph)),
+            GraphStorage::Memory(graph) => Ok(graph.clone()),
         }
     }
 
@@ -126,22 +123,19 @@ impl VectorIndexScanExecutor {
     ) -> ExecutionResult<DataChunk> {
         // TODO(minigu-vector-search): support parameter/column vector expressions once binder
         // permits.
-        let query_scalar = self.plan.query.clone().evaluate_scalar().ok_or_else(|| {
-            ExecutionError::Custom(Box::new(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                "query vector must be a constant expression",
-            )))
-        })?;
+        let query_scalar = self
+            .plan
+            .query
+            .clone()
+            .evaluate_scalar()
+            .ok_or_else(|| invalid_input("query vector must be a constant expression"))?;
         let vector_value = extract_vector(query_scalar)?;
         if vector_value.dimension() != self.plan.dimension {
-            return Err(ExecutionError::Custom(Box::new(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                format!(
-                    "query vector dimension {} does not match bound dimension {}",
-                    vector_value.dimension(),
-                    self.plan.dimension
-                ),
-            ))));
+            return Err(invalid_input(format!(
+                "query vector dimension {} does not match bound dimension {}",
+                vector_value.dimension(),
+                self.plan.dimension
+            )));
         }
 
         let l_value = DEFAULT_L_VALUE.max(self.plan.limit as u32);
@@ -173,10 +167,7 @@ impl VectorIndexScanExecutor {
 
 fn extract_vector(value: ScalarValue) -> ExecutionResult<VectorValue> {
     value.get_vector().map_err(|_| {
-        ExecutionError::Custom(Box::new(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "failed to extract vector from scalar value",
-        )))
+        invalid_input("failed to extract vector from scalar value")
     })
 }
 
@@ -259,4 +250,11 @@ impl VectorIndexScanExecutor {
 enum CandidateBitmap {
     Empty,
     Filter(BooleanArray),
+}
+
+fn invalid_input(message: impl Into<String>) -> ExecutionError {
+    ExecutionError::Custom(Box::new(io::Error::new(
+        io::ErrorKind::InvalidInput,
+        message.into(),
+    )))
 }

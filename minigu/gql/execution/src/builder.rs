@@ -356,7 +356,7 @@ impl ExecutorBuilder {
             BoundExprKind::Property {
                 binding, property, ..
             } => {
-                // Prefer qualified column name `{binding}_{property}`; fallback to bare property.
+                // Prefer qualified column name `{binding}_{property}`
                 let qualified = format!("{}_{}", binding, property);
                 let index = schema
                     .get_field_index_by_name(&qualified)
