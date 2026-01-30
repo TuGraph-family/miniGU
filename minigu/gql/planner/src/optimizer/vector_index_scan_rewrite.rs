@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
+use minigu_common::data_type::LogicalType;
 use minigu_common::types::{VectorIndexKey, VectorMetric};
 
 use crate::bound::{BoundExpr, BoundExprKind};
@@ -214,8 +215,8 @@ fn try_rewrite_vector_limit(limit: &Limit, child: PlanNode) -> PlanResult<Option
         left_node,
         right_node,
         vec![JoinCondition::new(
-            make_binding_expr(&binding),
-            make_binding_expr(&binding),
+            BoundExpr::variable(binding.clone(), LogicalType::UInt64, false),
+            BoundExpr::variable(binding.clone(), LogicalType::UInt64, false),
         )],
     );
     let project = Project::new(
@@ -227,14 +228,6 @@ fn try_rewrite_vector_limit(limit: &Limit, child: PlanNode) -> PlanResult<Option
             .clone(),
     );
     Ok(Some(PlanNode::LogicalProject(Arc::new(project))))
-}
-
-fn make_binding_expr(binding: &str) -> BoundExpr {
-    BoundExpr::variable(
-        binding.to_string(),
-        minigu_common::data_type::LogicalType::UInt64,
-        false,
-    )
 }
 
 fn resolve_sort_key(sort_key: &BoundExpr, project: &Project) -> BoundExpr {

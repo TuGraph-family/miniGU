@@ -5,11 +5,11 @@ use std::sync::Arc;
 use arrow::array::{Array, ArrayRef, AsArray, BooleanArray, Float32Array, UInt64Array};
 use arrow::datatypes::UInt64Type;
 use minigu_common::data_chunk::DataChunk;
-use minigu_common::value::{ScalarValue, VectorValue};
 use minigu_context::error::Error as ContextError;
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::session::SessionContext;
 use minigu_planner::plan::vector_index_scan::VectorIndexScan;
+use minigu_storage::error::{StorageError, VectorIndexError};
 use minigu_storage::tp::MemoryGraph;
 use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
 
@@ -123,19 +123,26 @@ impl VectorIndexScanExecutor {
     ) -> ExecutionResult<DataChunk> {
         // TODO(minigu-vector-search): support parameter/column vector expressions once binder
         // permits.
-        let query_scalar = self
-            .plan
-            .query
-            .clone()
-            .evaluate_scalar()
-            .ok_or_else(|| invalid_input("query vector must be a constant expression"))?;
-        let vector_value = extract_vector(query_scalar)?;
+        let query_scalar = self.plan.query.clone().evaluate_scalar().ok_or_else(|| {
+            ExecutionError::Custom(Box::new(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "query vector must be a constant expression",
+            )))
+        })?;
+        let vector_value = query_scalar.get_vector().map_err(|_| {
+            ExecutionError::Custom(Box::new(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "failed to extract vector from scalar value",
+            )))
+        })?;
         if vector_value.dimension() != self.plan.dimension {
-            return Err(invalid_input(format!(
-                "query vector dimension {} does not match bound dimension {}",
-                vector_value.dimension(),
-                self.plan.dimension
-            )));
+            return Err(
+                StorageError::VectorIndex(VectorIndexError::InvalidDimension {
+                    expected: self.plan.dimension,
+                    actual: vector_value.dimension(),
+                })
+                .into(),
+            );
         }
 
         let l_value = DEFAULT_L_VALUE.max(self.plan.limit as u32);
@@ -163,12 +170,6 @@ impl VectorIndexScanExecutor {
 
         Ok(DataChunk::new(columns))
     }
-}
-
-fn extract_vector(value: ScalarValue) -> ExecutionResult<VectorValue> {
-    value.get_vector().map_err(|_| {
-        invalid_input("failed to extract vector from scalar value")
-    })
 }
 
 impl VectorIndexScanExecutor {
@@ -250,11 +251,4 @@ impl VectorIndexScanExecutor {
 enum CandidateBitmap {
     Empty,
     Filter(BooleanArray),
-}
-
-fn invalid_input(message: impl Into<String>) -> ExecutionError {
-    ExecutionError::Custom(Box::new(io::Error::new(
-        io::ErrorKind::InvalidInput,
-        message.into(),
-    )))
 }
