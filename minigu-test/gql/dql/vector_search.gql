@@ -1,11 +1,68 @@
 CALL create_test_graph_data("vec_graph", 20);
 SESSION SET GRAPH vec_graph;
 
+-- negative case: search before index creation
+MATCH (a:PERSON)
+RETURN a.name,
+       VECTOR_DISTANCE(
+           VECTOR [
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0
+           ],
+           a.embedding,
+           L2
+       ) AS distance
+ORDER BY distance
+LIMIT APPROXIMATE 3;
+
+-- edge case: LIMIT APPROXIMATE 0 short-circuits
+MATCH (a:PERSON)
+RETURN a.name,
+       VECTOR_DISTANCE(
+           VECTOR [
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0
+           ],
+           a.embedding,
+           L2
+       ) AS distance
+ORDER BY distance
+LIMIT APPROXIMATE 0;
+
 CREATE VECTOR INDEX vec_idx IF NOT EXISTS
 FOR (n:PERSON)
 ON (n.embedding);
 
--- ANN path: LIMIT APPROXIMATE triggers vector index usage.
+-- negative case: query vector dimension mismatch
+MATCH (a:PERSON)
+RETURN a.name,
+       VECTOR_DISTANCE(
+           VECTOR [
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0
+           ],
+           a.embedding,
+           L2
+       ) AS distance
+ORDER BY distance
+LIMIT APPROXIMATE 3;
+
+-- ANN path returning vertices
 MATCH (a:PERSON)
 RETURN a,
        VECTOR_DISTANCE(
@@ -24,7 +81,7 @@ RETURN a,
 ORDER BY distance
 LIMIT APPROXIMATE 3;
 
--- ANN path: LIMIT APPROXIMATE triggers vector index usage.
+-- ANN path
 MATCH (a:PERSON)
 RETURN a.name,
        VECTOR_DISTANCE(
@@ -43,7 +100,7 @@ RETURN a.name,
 ORDER BY distance
 LIMIT APPROXIMATE 3;
 
--- Exact evaluation path (no approximate keyword) for comparison.
+-- exact path (no APPROXIMATE)
 MATCH (a:PERSON)
 RETURN a.name,
        VECTOR_DISTANCE(
@@ -62,7 +119,7 @@ RETURN a.name,
 ORDER BY distance
 LIMIT 3;
 
--- Filtered ANN path with a simple predicate.
+-- filtered ANN path
 MATCH (a:PERSON)
 WHERE a.age >= 21
 RETURN a.name,
@@ -82,7 +139,7 @@ RETURN a.name,
 ORDER BY distance
 LIMIT APPROXIMATE 2;
 
--- Edge traversal + ANN path: ensure bitmap after MATCH works with joins.
+-- ANN path with edge traversal
 MATCH (a:PERSON)-[:WORKS_AT]->(c:COMPANY)
 RETURN a,
        c,
@@ -102,7 +159,7 @@ RETURN a,
 ORDER BY distance
 LIMIT APPROXIMATE 2;
 
--- Edge traversal + ANN path: ensure bitmap after MATCH works with joins.
+-- ANN path with edge traversal
 MATCH (a:PERSON)-[:WORKS_AT]->(c:COMPANY)
 RETURN a.name,
        c.name,
@@ -122,7 +179,27 @@ RETURN a.name,
 ORDER BY distance
 LIMIT APPROXIMATE 2;
 
--- Edge traversal + ANN path + WHERE: ensure bitmap after MATCH works with joins.
+-- Exact path with edge traversal
+MATCH (a:PERSON)-[:WORKS_AT]->(c:COMPANY)
+RETURN a.name,
+       c.name,
+       VECTOR_DISTANCE(
+           VECTOR [
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0
+           ],
+           a.embedding,
+           L2
+       ) AS distance
+ORDER BY distance
+LIMIT 2;
+
+-- ANN path with edge traversal + filter
 MATCH (a:PERSON)-[:WORKS_AT]->(c:COMPANY)
 WHERE c.revenue > 1000000
 RETURN a.name,
@@ -142,5 +219,3 @@ RETURN a.name,
        ) AS distance
 ORDER BY distance
 LIMIT APPROXIMATE 2;
-
-
