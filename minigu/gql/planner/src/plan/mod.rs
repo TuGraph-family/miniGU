@@ -1,7 +1,7 @@
 pub mod call;
+pub mod catalog_modify;
 pub mod create_vector_index;
 pub mod drop_vector_index;
-pub mod catalog_modify;
 pub mod expand;
 pub mod explain;
 pub mod filter;
@@ -20,9 +20,9 @@ use minigu_common::data_type::DataSchemaRef;
 use serde::Serialize;
 
 use crate::plan::call::Call;
+use crate::plan::catalog_modify::{CreateGraph, DropGraph};
 use crate::plan::create_vector_index::CreateVectorIndex;
 use crate::plan::drop_vector_index::DropVectorIndex;
-use crate::plan::catalog_modify::{CreateGraph, DropGraph};
 use crate::plan::expand::Expand;
 use crate::plan::explain::Explain;
 use crate::plan::filter::Filter;

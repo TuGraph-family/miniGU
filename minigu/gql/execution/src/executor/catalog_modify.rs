@@ -5,16 +5,16 @@ use minigu_catalog::label_set::LabelSet;
 use minigu_catalog::memory::graph_type::{
     MemoryEdgeTypeCatalog, MemoryGraphTypeCatalog, MemoryVertexTypeCatalog,
 };
-use minigu_catalog::{CreateGraphResult, CreateKind as CatalogCreateKind, DropGraphResult};
-
 use minigu_catalog::property::Property;
 use minigu_catalog::provider::{GraphRef, GraphTypeProvider, VertexTypeRef};
+use minigu_catalog::{CreateGraphResult, CreateKind as CatalogCreateKind, DropGraphResult};
 use minigu_common::data_type::DataField;
 use minigu_common::types::LabelId;
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::session::SessionContext;
 use minigu_planner::bound::{
-    BoundEdgeType, BoundGraphElementType, BoundVertexType, CreateKind as PlannerCreateKind, NodeTypeRef,
+    BoundEdgeType, BoundGraphElementType, BoundVertexType, CreateKind as PlannerCreateKind,
+    NodeTypeRef,
 };
 use minigu_planner::plan::catalog_modify::{CreateGraph, DropGraph};
 use minigu_storage::tp::MemoryGraph;
@@ -98,22 +98,18 @@ fn create_graph_impl(plan: &CreateGraph, session: &SessionContext) -> ExecutionR
         PlannerCreateKind::CreateOrReplace => CatalogCreateKind::CreateOrReplace,
     };
 
-    let result = schema_catalog.create_graph(
-        plan.name.to_string(),
-        new_graph_container,
-        catalog_kind,
-    );
+    let result =
+        schema_catalog.create_graph(plan.name.to_string(), new_graph_container, catalog_kind);
 
     match (plan.kind, result) {
-        (PlannerCreateKind::Create, CreateGraphResult::AlreadyExists) => {
-            Err(execution_error(format!("Graph '{}' already exists", plan.name)))
-        }
+        (PlannerCreateKind::Create, CreateGraphResult::AlreadyExists) => Err(execution_error(
+            format!("Graph '{}' already exists", plan.name),
+        )),
         _ => Ok(()),
     }
 }
 
-/// 纯粹的工厂函数：构建图容器
-/// Pure Factory: Builds the graph container logic without side effects
+/// Factory: Builds the graph container logic without side effects
 fn build_graph_container(plan: &CreateGraph) -> ExecutionResult<GraphRef> {
     let graph_type = match &plan.graph_type {
         minigu_planner::bound::BoundGraphType::Nested(elements) => {
@@ -121,12 +117,16 @@ fn build_graph_container(plan: &CreateGraph) -> ExecutionResult<GraphRef> {
             populate_graph_type(&mut catalog, elements)?;
             Arc::new(catalog)
         }
-        _ => return Err(execution_error("Only nested graph type definitions are supported")),
+        _ => {
+            return Err(execution_error(
+                "Only nested graph type definitions are supported",
+            ));
+        }
     };
 
     let memory_graph = MemoryGraph::in_memory();
     let graph_storage = GraphStorage::Memory(memory_graph);
-    
+
     Ok(Arc::new(GraphContainer::new(graph_type, graph_storage)))
 }
 
@@ -383,8 +383,9 @@ fn drop_graph_impl(plan: &DropGraph, session: &SessionContext) -> ExecutionResul
     match schema_catalog.drop_graph(&plan.name) {
         DropGraphResult::Dropped => Ok(()),
         DropGraphResult::NotFound if plan.if_exists => Ok(()),
-        DropGraphResult::NotFound => {
-            Err(execution_error(format!("Graph '{}' does not exist", plan.name)))
-        }
+        DropGraphResult::NotFound => Err(execution_error(format!(
+            "Graph '{}' does not exist",
+            plan.name
+        ))),
     }
 }

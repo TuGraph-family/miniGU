@@ -65,11 +65,13 @@ impl MemorySchemaCatalog {
         }
     }
 
-    /// 统一的图删除接口
+    /// Unified Graph Deletion Interface
     pub fn drop_graph(&self, name: &str) -> DropGraphResult {
-        let mut map = self.graph_map.write()
+        let mut map = self
+            .graph_map
+            .write()
             .expect("Failed to acquire write lock");
-        
+
         if map.remove(name).is_some() {
             DropGraphResult::Dropped
         } else {
@@ -114,15 +116,15 @@ impl MemorySchemaCatalog {
         graph: GraphRef,
         kind: CreateKind,
     ) -> CreateGraphResult {
-        let mut map = self.graph_map.write()
+        let mut map = self
+            .graph_map
+            .write()
             .expect("Failed to acquire write lock");
-        
-        match (kind, map.entry(name)) {
-            (CreateKind::Create, Entry::Occupied(_)) =>
-                CreateGraphResult::AlreadyExists,
 
-            (CreateKind::CreateIfNotExists, Entry::Occupied(_)) =>
-                CreateGraphResult::AlreadyExists,
+        match (kind, map.entry(name)) {
+            (CreateKind::Create, Entry::Occupied(_)) => CreateGraphResult::AlreadyExists,
+
+            (CreateKind::CreateIfNotExists, Entry::Occupied(_)) => CreateGraphResult::AlreadyExists,
 
             (CreateKind::CreateOrReplace, Entry::Occupied(mut e)) => {
                 e.insert(graph);
@@ -136,8 +138,8 @@ impl MemorySchemaCatalog {
         }
     }
 
-    /// 原子地创建或替换图
-    /// 返回值：(是否替换了已存在的图, 是否成功)
+    /// Atomically create or replace a graph
+    /// Returns: (whether an existing graph was replaced, whether the operation succeeded)
     #[deprecated(note = "Use create_graph with CreateKind::CreateOrReplace instead")]
     pub fn create_or_replace_graph(&self, name: String, graph: GraphRef) -> (bool, bool) {
         let result = self.create_graph(name, graph, CreateKind::CreateOrReplace);

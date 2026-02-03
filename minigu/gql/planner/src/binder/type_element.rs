@@ -200,7 +200,11 @@ fn string_to_label_id(label: &str) -> LabelId {
 
     let mut hasher = DefaultHasher::new();
     label.hash(&mut hasher);
-    let hash_value = (hasher.finish() as u32) % 9999 + 1; // Range: 1-10000, avoiding 0
+    // Use the full u32 range (except 0) to minimize collisions.
+    let mut hash_value = hasher.finish() as u32;
+    if hash_value == 0 {
+        hash_value = 1;
+    }
     NonZeroU32::new(hash_value).unwrap()
 }
 
