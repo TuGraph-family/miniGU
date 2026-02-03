@@ -40,7 +40,7 @@ pub struct BoundCreateGraphStatement {
     pub source: Option<NamedGraphRef>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub enum CreateKind {
     Create,
     CreateIfNotExists,

@@ -5,15 +5,16 @@ use minigu_catalog::label_set::LabelSet;
 use minigu_catalog::memory::graph_type::{
     MemoryEdgeTypeCatalog, MemoryGraphTypeCatalog, MemoryVertexTypeCatalog,
 };
-use minigu_catalog::memory::schema::MemorySchemaCatalog;
+use minigu_catalog::{CreateGraphResult, CreateKind as CatalogCreateKind, DropGraphResult};
+
 use minigu_catalog::property::Property;
-use minigu_catalog::provider::{GraphTypeProvider, SchemaProvider, VertexTypeRef};
+use minigu_catalog::provider::{GraphRef, GraphTypeProvider, VertexTypeRef};
 use minigu_common::data_type::DataField;
 use minigu_common::types::LabelId;
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::session::SessionContext;
 use minigu_planner::bound::{
-    BoundEdgeType, BoundGraphElementType, BoundVertexType, CreateKind, NodeTypeRef,
+    BoundEdgeType, BoundGraphElementType, BoundVertexType, CreateKind as PlannerCreateKind, NodeTypeRef,
 };
 use minigu_planner::plan::catalog_modify::{CreateGraph, DropGraph};
 use minigu_storage::tp::MemoryGraph;
@@ -89,70 +90,44 @@ fn create_graph_impl(plan: &CreateGraph, session: &SessionContext) -> ExecutionR
         .as_ref()
         .ok_or_else(|| execution_error("No current schema set"))?;
 
-    let graph_exists = schema_catalog
-        .get_graph(&plan.name)
-        .map_err(|e| execution_error(format!("Failed to check graph existence: {}", e)))?
-        .is_some();
+    let new_graph_container = build_graph_container(plan)?;
 
-    match plan.kind {
-        CreateKind::Create => {
-            if graph_exists {
-                return Err(execution_error(format!(
-                    "Graph '{}' already exists",
-                    plan.name
-                )));
-            }
+    let catalog_kind = match plan.kind {
+        PlannerCreateKind::Create => CatalogCreateKind::Create,
+        PlannerCreateKind::CreateIfNotExists => CatalogCreateKind::CreateIfNotExists,
+        PlannerCreateKind::CreateOrReplace => CatalogCreateKind::CreateOrReplace,
+    };
+
+    let result = schema_catalog.create_graph(
+        plan.name.to_string(),
+        new_graph_container,
+        catalog_kind,
+    );
+
+    match (plan.kind, result) {
+        (PlannerCreateKind::Create, CreateGraphResult::AlreadyExists) => {
+            Err(execution_error(format!("Graph '{}' already exists", plan.name)))
         }
-        CreateKind::CreateIfNotExists => {
-            if graph_exists {
-                return Ok(());
-            }
-        }
-        CreateKind::CreateOrReplace => {
-            if graph_exists {
-                schema_catalog.remove_graph(&plan.name);
-            }
-        }
+        _ => Ok(()),
     }
-
-    create_graph_with_type(plan, schema_catalog)?;
-
-    Ok(())
 }
 
-/// Helper function to create graph with type definition
-fn create_graph_with_type(
-    plan: &CreateGraph,
-    schema_catalog: &MemorySchemaCatalog,
-) -> ExecutionResult<()> {
-    let mut graph_type = MemoryGraphTypeCatalog::new();
-
-    match &plan.graph_type {
+/// 纯粹的工厂函数：构建图容器
+/// Pure Factory: Builds the graph container logic without side effects
+fn build_graph_container(plan: &CreateGraph) -> ExecutionResult<GraphRef> {
+    let graph_type = match &plan.graph_type {
         minigu_planner::bound::BoundGraphType::Nested(elements) => {
-            populate_graph_type(&mut graph_type, elements)?;
+            let mut catalog = MemoryGraphTypeCatalog::new();
+            populate_graph_type(&mut catalog, elements)?;
+            Arc::new(catalog)
         }
-        _ => {
-            return Err(execution_error(
-                "Only nested graph type definitions are currently supported",
-            ));
-        }
-    }
+        _ => return Err(execution_error("Only nested graph type definitions are supported")),
+    };
 
-    let graph_type = Arc::new(graph_type);
     let memory_graph = MemoryGraph::in_memory();
     let graph_storage = GraphStorage::Memory(memory_graph);
-    let graph_container = Arc::new(GraphContainer::new(graph_type, graph_storage));
-
-    let success = schema_catalog.add_graph(plan.name.to_string(), graph_container);
-
-    if !success {
-        return Err(execution_error(format!(
-            "Failed to add graph '{}' to catalog",
-            plan.name
-        )));
-    }
-
-    Ok(())
+    
+    Ok(Arc::new(GraphContainer::new(graph_type, graph_storage)))
 }
 
 /// Populate graph type catalog with vertex and edge types
@@ -405,30 +380,11 @@ fn drop_graph_impl(plan: &DropGraph, session: &SessionContext) -> ExecutionResul
         .as_ref()
         .ok_or_else(|| execution_error("No current schema set"))?;
 
-    let graph_exists = schema_catalog
-        .get_graph(&plan.name)
-        .map_err(|e| execution_error(format!("Failed to check graph existence: {}", e)))?
-        .is_some();
-
-    if !graph_exists {
-        if plan.if_exists {
-            return Ok(());
-        } else {
-            return Err(execution_error(format!(
-                "Graph '{}' does not exist",
-                plan.name
-            )));
+    match schema_catalog.drop_graph(&plan.name) {
+        DropGraphResult::Dropped => Ok(()),
+        DropGraphResult::NotFound if plan.if_exists => Ok(()),
+        DropGraphResult::NotFound => {
+            Err(execution_error(format!("Graph '{}' does not exist", plan.name)))
         }
     }
-
-    let success = schema_catalog.remove_graph(&plan.name);
-
-    if !success {
-        return Err(execution_error(format!(
-            "Failed to remove graph '{}' from catalog",
-            plan.name
-        )));
-    }
-
-    Ok(())
 }
