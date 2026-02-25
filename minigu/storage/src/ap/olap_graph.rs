@@ -513,7 +513,7 @@ impl OlapStorage {
 
         // ensure property columns exist based on edge properties
         let mut property_columns = self.property_columns.write().unwrap();
-        while property_columns.len() <= edge.properties.properties.len() {
+        while property_columns.len() < edge.properties.properties.len() {
             property_columns.push(PropertyColumn { blocks: Vec::new() });
         }
 
@@ -581,6 +581,14 @@ impl OlapStorage {
         indices: Vec<usize>,
         props: Vec<ScalarValue>,
     ) -> StorageResult<()> {
+        if indices.len() != props.len() {
+            return Err(StorageError::NotSupported(format!(
+                "indices/props length mismatch: {} vs {}",
+                indices.len(),
+                props.len()
+            )));
+        }
+
         // Use EdgeId mapping for fast lookup
         let (block_idx, offset) = *self
             .edge_id_map
@@ -610,10 +618,15 @@ impl OlapStorage {
             ))));
         }
 
-        // collect old property values for undo
         let mut old_props: Vec<minigu_common::value::ScalarValue> = Vec::new();
         {
             let property_columns = self.property_columns.read().unwrap();
+            if indices.iter().any(|&idx| idx >= property_columns.len()) {
+                return Err(StorageError::NotSupported(
+                    "property index out of range".to_string(),
+                ));
+            }
+            // collect old property values for undo
             for &idx in indices.iter() {
                 if let Some(col) = property_columns.get(idx)
                     && let Some(pb) = col.blocks.get(block_idx)
@@ -719,20 +732,6 @@ impl OlapStorage {
         // Save old_commit_ts as timestamp in undo entry
         // Record original identifiers for rollback
         txn.record_deleted_edge(eid, old_label_id, old_dst_id);
-        let mut props_vec: Vec<minigu_common::value::ScalarValue> = Vec::new();
-        {
-            let property_columns = self.property_columns.read().unwrap();
-            for col in property_columns.iter() {
-                if let Some(pb) = col.blocks.get(block_idx)
-                    && let Some(versions) = pb.values.get(offset)
-                    && let Some(v) = latest_prop_value(versions)
-                {
-                    props_vec.push(v);
-                } else {
-                    props_vec.push(minigu_common::value::ScalarValue::Null);
-                }
-            }
-        }
         // Push DelEdge with the previous edge id (old_commit_ts passed as timestamp)
         txn.push_undo(crate::common::DeltaOp::DelEdge(eid), old_commit_ts);
 

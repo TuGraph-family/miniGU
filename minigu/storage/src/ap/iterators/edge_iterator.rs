@@ -136,10 +136,18 @@ impl Iterator for EdgeIterAtTs<'_> {
             // 2. Scan within block
             if self.offset < block.edges.len() {
                 let raw: &OlapStorageEdge = &block.edges[self.offset];
-                // 2.1 Scan next block once scanned empty edge
-                if raw.label_id == NonZeroU32::new(1) && raw.dst_id == 1 {
+                // 2.1 Determine logical end of block and skip tombstones
+                // Use eid == 0 as the end-of-block sentinel to avoid
+                // confusing transactional tombstones with padding.
+                if raw.eid == 0 {
+                    // No more valid edges in this block; move to next block.
                     self.offset = 0;
                     self.block_idx += 1;
+                    continue;
+                }
+                // Transactional delete tombstone: skip this edge but continue scanning.
+                if raw.label_id == NonZeroU32::new(1) && raw.dst_id == 1 {
+                    self.offset += 1;
                     continue;
                 }
                 // 2.2 Visibility filtering by edge commit_ts

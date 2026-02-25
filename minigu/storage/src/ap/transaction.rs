@@ -170,11 +170,21 @@ impl MemTransaction {
 
         // Clear deletion snapshots after commit bookkeeping
         self.deleted_edge_snapshot.write().clear();
+        self.undo_buffer.write().clear();
 
         Ok(commit_ts)
     }
 
     pub fn abort(&self) -> StorageResult<()> {
+        // Prevent abort from running after the transaction has been committed
+        if let Some(commit_ts) = self.commit_ts.get().copied() {
+            return Err(StorageError::Transaction(
+                TransactionError::TransactionAlreadyCommitted(format!(
+                    "abort called on already committed transaction at {:?}",
+                    commit_ts
+                )),
+            ));
+        }
         // Apply undo entries in reverse order
         let mut buffer = self.undo_buffer.write();
         let entries = buffer.clone();
@@ -282,11 +292,7 @@ impl MemTransaction {
                                 let pb = &mut column.blocks[block_idx];
                                 pb.min_ts = pb.min_ts.min(old_ts);
                                 pb.max_ts = pb.max_ts.max(old_ts);
-                                if let Some(last) = pb.values[offset].last()
-                                    && last.ts == self.txn_id
-                                {
-                                    pb.values[offset].pop();
-                                }
+                                pb.values[offset].retain(|v| v.ts != self.txn_id);
                                 let old_val = props_op.props[k].clone();
                                 pb.values[offset].push(crate::ap::olap_graph::PropertyVersion {
                                     ts: old_ts,
