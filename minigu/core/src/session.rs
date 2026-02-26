@@ -1,5 +1,7 @@
 use std::path::Path;
 use std::sync::Arc;
+use std::time::Duration;
+#[cfg(not(target_arch = "wasm32"))]
 use std::time::Instant;
 
 use gql_parser::ast::{
@@ -22,6 +24,30 @@ use minigu_planner::plan::PlanData;
 use crate::error::{Error, Result};
 use crate::metrics::QueryMetrics;
 use crate::result::QueryResult;
+
+#[cfg(not(target_arch = "wasm32"))]
+#[inline]
+fn instant_now() -> Instant {
+    Instant::now()
+}
+
+#[cfg(target_arch = "wasm32")]
+#[inline]
+fn instant_now() -> () {
+    ()
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+#[inline]
+fn instant_elapsed(start: Instant) -> Duration {
+    start.elapsed()
+}
+
+#[cfg(target_arch = "wasm32")]
+#[inline]
+fn instant_elapsed(_: ()) -> Duration {
+    Duration::ZERO
+}
 
 pub struct Session {
     context: SessionContext,
@@ -46,9 +72,9 @@ impl Session {
         if self.closed {
             return Err(Error::SessionClosed);
         }
-        let start = Instant::now();
+        let start = instant_now();
         let program = parse_gql(query)?;
-        let parsing_time = start.elapsed();
+        let parsing_time = instant_elapsed(start);
         let mut result = program
             .value()
             .activity
@@ -127,18 +153,18 @@ impl Session {
     fn handle_procedure(&self, procedure: &Procedure) -> Result<QueryResult> {
         let mut metrics = QueryMetrics::default();
 
-        let start = Instant::now();
+        let start = instant_now();
         let planner = Planner::new(self.context.clone());
         let plan = planner.plan_query(procedure)?;
-        metrics.planning_time = start.elapsed();
+        metrics.planning_time = instant_elapsed(start);
 
         let schema = plan.schema().cloned();
-        let start = Instant::now();
+        let start = instant_now();
         let chunks: Vec<_> = self.context.database().runtime().install(|| {
             let mut executor = ExecutorBuilder::new(self.context.clone()).build(&plan);
             executor.into_iter().try_collect()
         })?;
-        metrics.execution_time = start.elapsed();
+        metrics.execution_time = instant_elapsed(start);
 
         Ok(QueryResult {
             schema,

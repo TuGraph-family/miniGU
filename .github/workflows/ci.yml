@@ -114,7 +114,26 @@ jobs:
     - uses: actions-rust-lang/setup-rust-toolchain@v1
     - run: rustup target add wasm32-unknown-unknown
     - uses: Swatinem/rust-cache@v2
-    - run: cargo check -p minigu-wasm --target wasm32-unknown-unknown --features ${{ env.DEFAULT_FEATURES }}
+    - run: cargo check -p minigu-wasm --target wasm32-unknown-unknown
+
+  wasm_test:
+    needs: [ typos, toml, fmt, clippy, machete, deny ]
+    name: WASM Tests (minigu-wasm)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+    - run: rustup target add wasm32-unknown-unknown
+    - uses: taiki-e/install-action@v2
+      with:
+        tool: wasm-pack@0.13.1
+    - uses: Swatinem/rust-cache@v2
+    - run: wasm-pack test --node minigu-wasm
+    - run: wasm-pack test --headless --chrome minigu-wasm
 
   test:
     needs: [ typos, toml, fmt, clippy, machete, deny ]
