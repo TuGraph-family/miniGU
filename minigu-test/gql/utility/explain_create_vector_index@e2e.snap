@@ -1,0 +1,9 @@
+---
+source: minigu-test/src/insta_test.rs
+---
+Statement OK. No results
+---
+Statement OK. No results
+---
+Explain:
+  CreateVectorIndex: name=test_index, binding=(PERSON:embedding) metric=L2 dim=104 if_not_exists=true no_op=false

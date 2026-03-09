@@ -195,6 +195,14 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
             Ok(PlanNode::PhysicalVectorIndexScan(vector_scan.clone()))
         }
         PlanNode::LogicalExplain(explain) => Ok(PlanNode::PhysicalExplain(explain.clone())),
+        PlanNode::LogicalCreateVectorIndex(create_index) => {
+            assert!(children.is_empty());
+            Ok(PlanNode::PhysicalCreateVectorIndex(create_index.clone()))
+        }
+        PlanNode::LogicalDropVectorIndex(drop_index) => {
+            assert!(children.is_empty());
+            Ok(PlanNode::PhysicalDropVectorIndex(drop_index.clone()))
+        }
         _ => unreachable!(),
     }
 }

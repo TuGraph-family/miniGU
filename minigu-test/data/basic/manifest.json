@@ -1,0 +1,36 @@
+{
+  "vertices": [
+    {
+      "label": "person",
+      "file": {
+        "path": "person.csv",
+        "format": "csv"
+      },
+      "properties": [
+        {
+          "name": "name",
+          "logical_type": "String",
+          "nullable": false
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "label": "friend",
+      "src_label": "person",
+      "dst_label": "person",
+      "file": {
+        "path": "friend.csv",
+        "format": "csv"
+      },
+      "properties": [
+        {
+          "name": "since",
+          "logical_type": "String",
+          "nullable": false
+        }
+      ]
+    }
+  ]
+}

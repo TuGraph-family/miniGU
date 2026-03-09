@@ -79,7 +79,7 @@ libtest-mimic = "0.8.1"
 logos = { version = "0.15.0", default-features = false, features = [
     "export_derive",
 ] }
-lru = "0.16.0"
+lru = "0.16.3"
 macro_rules_attribute = "0.2.2"
 miette = { version = "7.6.0" }
 num-traits = "0.2.15"
@@ -102,11 +102,9 @@ smol_str = { version = "0.3.2", default-features = false }
 sqllogictest = "0.28"
 strum = { version = "0.27.2", features = ["derive"] }
 tabled = { version = "0.20.0", default-features = false, features = ["std"] }
-temp-dir = "0.1.16"
 temp-file = "0.1.9"
 tempfile = "3.20.0"
 thiserror = { version = "2.0.12", default-features = false }
-uuid = "1.17.0"
 vector = { path = "minigu/storage/diskann-rs/vector", version = "0.1.0" }
 walkdir = "2.5.0"
 winnow = { version = "0.7.12", default-features = false, features = ["alloc"] }

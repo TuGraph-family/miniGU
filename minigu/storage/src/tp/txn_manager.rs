@@ -13,7 +13,6 @@ use super::memory_graph::MemoryGraph;
 use super::transaction::{IsolationLevel, MemTransaction, UndoEntry};
 use crate::common::DeltaOp;
 use crate::common::model::edge::{Edge, Neighbor};
-use crate::common::wal::StorageWal;
 use crate::common::wal::graph_wal::{Operation, RedoEntry};
 use crate::error::{StorageError, StorageResult, TransactionError};
 
@@ -178,13 +177,7 @@ impl MemTxnManager {
 
         // Acquire the checkpoint lock to prevent new transactions from being created
         // while we are creating a checkpoint
-        let _checkpoint_lock = graph
-            .checkpoint_manager
-            .as_ref()
-            .unwrap()
-            .checkpoint_lock
-            .read()
-            .unwrap();
+        let _checkpoint_lock = graph.checkpoint_lock.read().unwrap();
 
         // Create the transaction
         let txn = Arc::new(MemTransaction::with_memgraph(
@@ -200,18 +193,12 @@ impl MemTxnManager {
         // unless the function is called when recovering from WAL
         if !skip_wal {
             let wal_entry = RedoEntry {
-                lsn: graph.wal_manager.next_lsn(),
+                lsn: graph.persistence.next_lsn(),
                 txn_id: txn.txn_id(),
                 iso_level: *txn.isolation_level(),
                 op: Operation::BeginTransaction(txn.start_ts()),
             };
-            graph
-                .wal_manager
-                .wal()
-                .write()
-                .unwrap()
-                .append(&wal_entry)
-                .unwrap();
+            graph.persistence.append_wal(&wal_entry).unwrap();
         }
 
         Ok(txn)

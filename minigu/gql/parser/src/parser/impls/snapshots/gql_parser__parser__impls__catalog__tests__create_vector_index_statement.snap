@@ -1,0 +1,29 @@
+---
+source: minigu/gql/parser/src/parser/impls/catalog.rs
+assertion_line: 400
+expression: parsed
+---
+- CreateVectorIndex:
+    name:
+      - idx_embeddings
+      - start: 33
+        end: 47
+    if_not_exists: true
+    binding:
+      - n
+      - start: 79
+        end: 80
+    label:
+      - Movie
+      - start: 81
+        end: 86
+    property_binding:
+      - n
+      - start: 104
+        end: 105
+    property:
+      - embedding
+      - start: 106
+        end: 115
+- start: 13
+  end: 116

@@ -1,6 +1,7 @@
 //! Common types and utilities for import/export functionality.
 
 use std::error::Error;
+use std::path::Path;
 use std::str::FromStr;
 
 use minigu_catalog::property::Property;

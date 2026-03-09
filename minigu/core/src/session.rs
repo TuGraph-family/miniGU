@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -20,6 +21,7 @@ use minigu_planner::plan::PlanData;
 
 use crate::error::{Error, Result};
 use crate::metrics::QueryMetrics;
+use crate::procedures::import;
 use crate::result::QueryResult;
 
 pub struct Session {
@@ -144,5 +146,19 @@ impl Session {
             metrics,
             chunks,
         })
+    }
+
+    // Test-harness helper: import a graph from an export manifest, then set it as current graph.
+    //
+    // This is intended for integration/system tests (e.g. `minigu-test`)
+    pub fn import_graph<P: AsRef<Path>>(
+        &mut self,
+        graph_name: &str,
+        manifest_path: P,
+    ) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+        import(self.context.clone(), graph_name, manifest_path)?;
+        // For simplicity, set the current graph to `graph_name`.
+        self.context.set_current_graph(graph_name.to_string())?;
+        Ok(())
     }
 }

@@ -10,7 +10,6 @@ use minigu_transaction::{
 pub use minigu_transaction::{IsolationLevel, Timestamp};
 
 use super::memory_graph::MemoryGraph;
-use crate::common::wal::StorageWal;
 use crate::common::wal::graph_wal::{Operation, RedoEntry};
 use crate::common::{DeltaOp, SetPropsOp};
 use crate::error::{
@@ -280,44 +279,51 @@ impl MemTransaction {
                 .drain(..)
                 .map(|mut entry| {
                     // Update LSN
-                    entry.lsn = self.graph.wal_manager.next_lsn();
+                    entry.lsn = self.graph.persistence.next_lsn();
                     entry
                 })
                 .collect::<Vec<_>>();
+
+            let wal_count = redo_entries.len();
+
             for entry in redo_entries {
-                self.graph
-                    .wal_manager
-                    .wal()
-                    .write()
-                    .unwrap()
-                    .append(&entry)?;
+                self.graph.persistence.append_wal(&entry)?;
             }
 
             // Write `Operation::CommitTransaction` to WAL
             let wal_entry = RedoEntry {
-                lsn: self.graph.wal_manager.next_lsn(),
+                lsn: self.graph.persistence.next_lsn(),
                 txn_id: self.txn_id(),
                 iso_level: self.isolation_level,
                 op: Operation::CommitTransaction(commit_ts),
             };
-            self.graph
-                .wal_manager
-                .wal()
-                .write()
-                .unwrap()
-                .append(&wal_entry)?;
-            self.graph.wal_manager.wal().write().unwrap().flush()?;
+            self.graph.persistence.append_wal(&wal_entry)?;
+            self.graph.persistence.flush_wal()?;
+
+            // Step 5: Increment WAL counter by actual number of WAL entries written
+            // This includes:
+            // - BeginTransaction (written at transaction start, not counted there)
+            // - All redo entries (deltas)
+            // - CommitTransaction (just written above)
+            // Total = 1 (begin) + wal_count (deltas) + 1 (commit)
+            for _ in 0..(wal_count + 2) {
+                self.graph.increment_wal_counter();
+            }
         }
 
-        // Step 5: Clean up transaction state and update the `latest_commit_ts`.
+        // Step 6: Clean up transaction state and update the `latest_commit_ts`.
         self.graph
             .txn_manager
             .latest_commit_ts
             .store(commit_ts.raw(), Ordering::SeqCst);
         self.graph.txn_manager.finish_transaction(self)?;
 
-        // Step 6: Check if an auto checkpoint should be created
-        self.graph.check_auto_checkpoint()?;
+        // Step 7: Check auto checkpoint (after transaction is finished)
+        // We only check for checkpoint if we actually wrote to WAL (and thus incremented the
+        // counter)
+        if !skip_wal {
+            self.graph.check_auto_checkpoint()?;
+        }
 
         // Mark the transaction as handled
         self.is_handled.store(true, Ordering::Release);
@@ -423,20 +429,15 @@ impl MemTransaction {
         // Write `Operation::AbortTransaction` to WAL,
         // unless the function is called when recovering from WAL
         if !skip_wal {
-            let lsn = self.graph.wal_manager.next_lsn();
+            let lsn = self.graph.persistence.next_lsn();
             let wal_entry = RedoEntry {
                 lsn,
                 txn_id: self.txn_id(),
                 iso_level: self.isolation_level,
                 op: Operation::AbortTransaction,
             };
-            self.graph
-                .wal_manager
-                .wal()
-                .write()
-                .unwrap()
-                .append(&wal_entry)?;
-            self.graph.wal_manager.wal().write().unwrap().flush()?;
+            self.graph.persistence.append_wal(&wal_entry)?;
+            self.graph.persistence.flush_wal()?;
         }
 
         // Remove transaction from transaction manager
@@ -473,7 +474,7 @@ mod tests {
 
     #[test]
     fn test_watermark_tracking() {
-        let (graph, _cleaner) = memory_graph::tests::mock_empty_graph();
+        let graph = memory_graph::tests::mock_empty_graph();
         let _base_commit_ts = graph.txn_manager.latest_commit_ts.load(Ordering::Acquire);
 
         // Start txn0

@@ -12,7 +12,7 @@ use crate::common::*;
 
 #[test]
 fn test_serializable_prevents_dirty_read_vertex() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     // Transaction 1 reads the vertex
     let txn1 = graph
@@ -41,7 +41,7 @@ fn test_serializable_prevents_dirty_read_vertex() {
 
 #[test]
 fn test_serializable_prevents_dirty_read_edge() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     // Transaction 1 reads the edge
     let txn1 = graph
@@ -80,7 +80,7 @@ fn test_serializable_prevents_dirty_read_edge() {
 
 #[test]
 fn test_serializable_prevents_dirty_read_new_vertex() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     // Transaction 1 reads vertex with vid 3
     let txn1 = graph
@@ -114,7 +114,7 @@ fn test_serializable_prevents_dirty_read_new_vertex() {
 
 #[test]
 fn test_serializable_prevents_non_repeatable_read() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     // Transaction 1 reads the vertex
     let txn1 = graph
@@ -143,7 +143,7 @@ fn test_serializable_prevents_non_repeatable_read() {
 
 #[test]
 fn test_serializable_prevents_non_repeatable_read_edge() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     // Transaction 1 reads the edge
     let txn1 = graph
@@ -185,7 +185,7 @@ fn test_serializable_prevents_non_repeatable_read_edge() {
 
 #[test]
 fn test_serializable_prevents_phantom_read_vertices() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     // Transaction 1 reads vertices within a certain age range
     let txn1 = graph
@@ -234,7 +234,7 @@ fn test_serializable_prevents_phantom_read_vertices() {
 
 #[test]
 fn test_serializable_prevents_phantom_read_edges() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     // Transaction 1 reads edges of a specific type (e.g., FRIEND)
     let txn1 = graph
@@ -278,7 +278,7 @@ fn test_serializable_prevents_phantom_read_edges() {
 
 #[test]
 fn test_serializable_write_write_conflict_vertex() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn1 = graph
         .txn_manager()
@@ -307,7 +307,7 @@ fn test_serializable_write_write_conflict_vertex() {
 
 #[test]
 fn test_serializable_write_write_conflict_edge() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn1 = graph
         .txn_manager()
@@ -348,7 +348,7 @@ fn test_serializable_write_write_conflict_edge() {
 
 #[test]
 fn test_serializable_delete_vertex_conflict() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn1 = graph
         .txn_manager()
@@ -373,7 +373,7 @@ fn test_serializable_delete_vertex_conflict() {
 
 #[test]
 fn test_serializable_delete_edge_conflict() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn1 = graph
         .txn_manager()
@@ -403,7 +403,7 @@ fn test_serializable_delete_edge_conflict() {
 
 #[test]
 fn test_serializable_read_deleted_vertex() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn1 = graph
         .txn_manager()
@@ -437,7 +437,7 @@ fn test_serializable_read_deleted_vertex() {
 
 #[test]
 fn test_serializable_read_deleted_edge() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn1 = graph
         .txn_manager()
@@ -473,7 +473,7 @@ fn test_serializable_read_deleted_edge() {
 
 #[test]
 fn test_serializable_adjacency_consistency() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn1 = graph
         .txn_manager()
@@ -522,7 +522,7 @@ fn test_serializable_adjacency_consistency() {
 
 #[test]
 fn test_serializable_complex_transaction_scenario() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     // Simulate a complex social network scenario
     let txn1 = graph
@@ -578,7 +578,7 @@ fn test_serializable_complex_transaction_scenario() {
 
 #[test]
 fn test_rollback_vertex_creation() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn1 = graph
         .txn_manager()
@@ -609,7 +609,7 @@ fn test_rollback_vertex_creation() {
 
 #[test]
 fn test_rollback_edge_creation() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn1 = graph
         .txn_manager()
@@ -639,7 +639,7 @@ fn test_rollback_edge_creation() {
 
 #[test]
 fn test_rollback_property_update() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn1 = graph
         .txn_manager()
@@ -668,7 +668,7 @@ fn test_rollback_property_update() {
 
 #[test]
 fn test_concurrent_transactions_stress() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let graph_clone = graph.clone();
 
@@ -729,7 +729,7 @@ fn test_concurrent_transactions_stress() {
 // ========== READ-ONLY TRANSACTION TESTS ==========
 #[test]
 fn test_read_only_transaction_consistency_under_concurrent_writes() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     // Start a read-only transaction to establish a consistent snapshot
     let read_txn = graph
@@ -904,7 +904,7 @@ fn test_read_only_transaction_consistency_under_concurrent_writes() {
 
 #[test]
 fn test_transaction_panic_during_vertex_creation() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     // Record initial state
     let initial_txn = graph
@@ -955,7 +955,7 @@ fn test_transaction_panic_during_vertex_creation() {
 
 #[test]
 fn test_transaction_panic_during_property_update() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     // Record initial age of Alice
     let initial_txn = graph
@@ -998,7 +998,7 @@ fn test_transaction_panic_during_property_update() {
 
 #[test]
 fn test_transaction_panic_during_deletion() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     // Assert that Bob exists
     let initial_txn = graph
@@ -1039,7 +1039,7 @@ fn test_transaction_panic_during_deletion() {
 
 #[test]
 fn test_serializable_concurrent_create_same_vertex() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn1 = graph
         .txn_manager()
@@ -1077,7 +1077,7 @@ fn test_serializable_concurrent_create_same_vertex() {
 
 #[test]
 fn test_serializable_concurrent_create_same_edge() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn1 = graph
         .txn_manager()
@@ -1112,7 +1112,7 @@ fn test_serializable_concurrent_create_same_edge() {
 
 #[test]
 fn test_serializable_update_after_delete_conflict() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn1 = graph
         .txn_manager()
@@ -1139,7 +1139,7 @@ fn test_serializable_update_after_delete_conflict() {
 
 #[test]
 fn test_serializable_delete_after_update_conflict() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn1 = graph
         .txn_manager()
@@ -1166,7 +1166,7 @@ fn test_serializable_delete_after_update_conflict() {
 
 #[test]
 fn test_serializable_multiple_property_updates() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn = graph
         .txn_manager()
@@ -1198,7 +1198,7 @@ fn test_serializable_multiple_property_updates() {
 
 #[test]
 fn test_serializable_batch_property_updates() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn = graph
         .txn_manager()
@@ -1232,7 +1232,7 @@ fn test_serializable_batch_property_updates() {
 
 #[test]
 fn test_serializable_multi_vertex_consistency() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn = graph
         .txn_manager()
@@ -1263,7 +1263,7 @@ fn test_serializable_multi_vertex_consistency() {
 
 #[test]
 fn test_serializable_multi_edge_consistency() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn = graph
         .txn_manager()
@@ -1305,7 +1305,7 @@ fn test_serializable_multi_edge_consistency() {
 
 #[test]
 fn test_serializable_bidirectional_edge_consistency() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn1 = graph
         .txn_manager()
@@ -1355,7 +1355,7 @@ fn test_serializable_bidirectional_edge_consistency() {
 
 #[test]
 fn test_serializable_delete_vertex_cascades_edges() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn = graph
         .txn_manager()
@@ -1377,7 +1377,7 @@ fn test_serializable_delete_vertex_cascades_edges() {
 
 #[test]
 fn test_serializable_orphaned_edge_prevention() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn1 = graph
         .txn_manager()
@@ -1401,7 +1401,7 @@ fn test_serializable_orphaned_edge_prevention() {
 
 #[test]
 fn test_empty_transaction_commit() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn = graph
         .txn_manager()
@@ -1412,7 +1412,7 @@ fn test_empty_transaction_commit() {
 
 #[test]
 fn test_empty_transaction_abort() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn = graph
         .txn_manager()
@@ -1425,7 +1425,7 @@ fn test_empty_transaction_abort() {
 
 #[test]
 fn test_vertex_iterator_snapshot_isolation() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn1 = graph
         .txn_manager()
@@ -1470,7 +1470,7 @@ fn test_vertex_iterator_snapshot_isolation() {
 
 #[test]
 fn test_edge_iterator_snapshot_isolation() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn1 = graph
         .txn_manager()
@@ -1519,7 +1519,7 @@ fn test_edge_iterator_snapshot_isolation() {
 
 #[test]
 fn test_filter_vertices_by_label() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn = graph
         .txn_manager()
@@ -1538,7 +1538,7 @@ fn test_filter_vertices_by_label() {
 
 #[test]
 fn test_filter_edges_by_label() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn = graph
         .txn_manager()
@@ -1559,7 +1559,7 @@ fn test_filter_edges_by_label() {
 
 #[test]
 fn test_large_batch_vertex_creation() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     let txn = graph
         .txn_manager()
@@ -1594,7 +1594,7 @@ fn test_large_batch_vertex_creation() {
 
 #[test]
 fn test_large_batch_edge_creation() {
-    let (graph, _cleaner) = create_test_graph();
+    let graph = create_test_graph();
 
     // First create vertices
     let txn1 = graph
