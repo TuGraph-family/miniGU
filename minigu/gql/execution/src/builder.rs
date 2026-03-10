@@ -11,7 +11,10 @@ use minigu_context::session::SessionContext;
 use minigu_planner::bound::{BoundExpr, BoundExprKind};
 use minigu_planner::plan::{PlanData, PlanNode};
 
+use minigu_planner::bound::BoundBinaryOp;
+
 use crate::evaluator::BoxedEvaluator;
+use crate::evaluator::binary::{Binary, BinaryOp};
 use crate::evaluator::column_ref::ColumnRef;
 use crate::evaluator::constant::Constant;
 use crate::evaluator::vector_distance::VectorDistanceEvaluator;
@@ -44,9 +47,72 @@ impl ExecutorBuilder {
         match physical_plan {
             PlanNode::PhysicalFilter(filter) => {
                 assert_eq!(children.len(), 1);
-                let schema = children[0].schema().expect("child should have a schema");
-                let predicate = self.build_evaluator(&filter.predicate, schema);
-                Box::new(self.build_executor(&children[0]).filter(move |c| {
+                let child_schema = children[0].schema().expect("child should have a schema");
+                let mut child_executor = self.build_executor(&children[0]);
+                let mut updated_schema = child_schema.clone();
+
+                // Insert property scans for vertex variables accessed via Property expressions
+                let property_sources = collect_property_sources(&filter.predicate);
+                for var_name in &property_sources {
+                    if let Some(field) = child_schema.get_field_by_name(var_name) {
+                        if matches!(field.ty(), LogicalType::Int64) {
+                            let vid_index = child_schema
+                                .get_field_index_by_name(var_name)
+                                .expect("variable should be present in child schema");
+
+                            let container: Arc<GraphContainer> = self
+                                .session
+                                .current_graph
+                                .clone()
+                                .expect("current graph should be set")
+                                .object()
+                                .clone()
+                                .downcast_arc::<GraphContainer>()
+                                .expect("failed to downcast to GraphContainer");
+
+                            let mut property_names = Vec::new();
+                            let property_list =
+                                if let Some(label_specs) = child_schema.get_var_label(var_name) {
+                                    let graph_type = container.graph_type();
+                                    let mut property_ids = Vec::new();
+                                    if let Some(first_label_set) = label_specs.first()
+                                        && let Ok(Some(vertex_type)) = graph_type.get_vertex_type(
+                                            &LabelSet::from_iter(first_label_set.clone()),
+                                        )
+                                    {
+                                        for property in vertex_type.properties().iter() {
+                                            property_ids.push(property.0);
+                                            property_names
+                                                .push(property.1.name().to_string());
+                                        }
+                                    }
+                                    property_ids
+                                } else {
+                                    Vec::new()
+                                };
+
+                            child_executor = Box::new(child_executor.scan_vertex_property(
+                                vid_index,
+                                property_list,
+                                container,
+                            ));
+
+                            let mut new_fields = updated_schema.fields().to_vec();
+                            for prop_name in &property_names {
+                                let qualified_name = format!("{}_{}", var_name, prop_name);
+                                new_fields.push(DataField::new(
+                                    qualified_name,
+                                    LogicalType::String,
+                                    true,
+                                ));
+                            }
+                            updated_schema = Arc::new(DataSchema::new(new_fields));
+                        }
+                    }
+                }
+
+                let predicate = self.build_evaluator(&filter.predicate, &updated_schema);
+                Box::new(child_executor.filter(move |c| {
                     predicate
                         .evaluate(c)
                         .map(|a| a.into_array().as_boolean().clone())
@@ -302,6 +368,40 @@ impl ExecutorBuilder {
                     .expect("variable should be present in the schema");
                 Box::new(ColumnRef::new(index))
             }
+            BoundExprKind::Binary { op, left, right } => {
+                let left_eval = self.build_evaluator(left.as_ref(), schema);
+                let right_eval = self.build_evaluator(right.as_ref(), schema);
+                let binary_op = match op {
+                    BoundBinaryOp::Add => BinaryOp::Add,
+                    BoundBinaryOp::Sub => BinaryOp::Sub,
+                    BoundBinaryOp::Mul => BinaryOp::Mul,
+                    BoundBinaryOp::Div => BinaryOp::Div,
+                    BoundBinaryOp::And => BinaryOp::And,
+                    BoundBinaryOp::Or => BinaryOp::Or,
+                    BoundBinaryOp::Lt => BinaryOp::Lt,
+                    BoundBinaryOp::Le => BinaryOp::Le,
+                    BoundBinaryOp::Gt => BinaryOp::Gt,
+                    BoundBinaryOp::Ge => BinaryOp::Ge,
+                    BoundBinaryOp::Eq => BinaryOp::Eq,
+                    BoundBinaryOp::Ne => BinaryOp::Ne,
+                    BoundBinaryOp::Concat | BoundBinaryOp::Xor => {
+                        unimplemented!("concat and xor binary ops not yet supported in evaluator")
+                    }
+                };
+                Box::new(Binary::new(binary_op, left_eval, right_eval))
+            }
+            BoundExprKind::Property { source, property } => {
+                let qualified_name = format!("{}_{}", source, property);
+                let index = schema
+                    .get_field_index_by_name(&qualified_name)
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "property column '{}' should be present in schema",
+                            qualified_name
+                        )
+                    });
+                Box::new(ColumnRef::new(index))
+            }
             BoundExprKind::VectorDistance {
                 lhs,
                 rhs,
@@ -313,5 +413,29 @@ impl ExecutorBuilder {
                 Box::new(VectorDistanceEvaluator::new(lhs, rhs, *metric, *dimension))
             }
         }
+    }
+}
+
+/// Collect unique vertex variable names that have property accesses in an expression.
+fn collect_property_sources(expr: &BoundExpr) -> Vec<String> {
+    let mut sources = Vec::new();
+    collect_property_sources_impl(expr, &mut sources);
+    sources.sort();
+    sources.dedup();
+    sources
+}
+
+fn collect_property_sources_impl(expr: &BoundExpr, sources: &mut Vec<String>) {
+    match &expr.kind {
+        BoundExprKind::Property { source, .. } => sources.push(source.clone()),
+        BoundExprKind::Binary { left, right, .. } => {
+            collect_property_sources_impl(left, sources);
+            collect_property_sources_impl(right, sources);
+        }
+        BoundExprKind::VectorDistance { lhs, rhs, .. } => {
+            collect_property_sources_impl(lhs, sources);
+            collect_property_sources_impl(rhs, sources);
+        }
+        _ => {}
     }
 }

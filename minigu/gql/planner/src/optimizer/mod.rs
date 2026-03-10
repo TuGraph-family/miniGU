@@ -32,9 +32,6 @@ impl Optimizer {
 }
 
 fn extract_path_pattern_from_graph_pattern(g: &BoundGraphPattern) -> PlanResult<PathPatternInfo> {
-    if g.predicate.is_some() {
-        return not_implemented("MATCH with predicate (WHERE) is not supported yet", Some(1));
-    }
     if g.paths.len() != 1 {
         return not_implemented("multiple paths in MATCH are not supported yet", Some(1));
     }
@@ -115,37 +112,55 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
         .map(create_physical_plan_impl)
         .try_collect()?;
     match logical_plan {
-        PlanNode::LogicalMatch(m) => match extract_path_pattern_from_graph_pattern(&m.pattern)? {
-            PathPatternInfo::SingleVertex { var, label_specs } => {
-                let node = NodeIdScan::new(var.as_str(), label_specs);
-                Ok(PlanNode::PhysicalNodeScan(Arc::new(node)))
+        PlanNode::LogicalMatch(m) => {
+            let mut plan =
+                match extract_path_pattern_from_graph_pattern(&m.pattern)? {
+                    PathPatternInfo::SingleVertex { var, label_specs } => {
+                        let node = NodeIdScan::new(var.as_str(), label_specs);
+                        PlanNode::PhysicalNodeScan(Arc::new(node))
+                    }
+                    PathPatternInfo::Path { vertices, edges } => {
+                        if vertices.is_empty() {
+                            return not_implemented("empty path patterns", None);
+                        }
+                        let (first_var, first_labels) = vertices[0].clone();
+                        let mut current_plan =
+                            PlanNode::PhysicalNodeScan(Arc::new(NodeIdScan::new(
+                                first_var.as_str(),
+                                first_labels,
+                            )));
+                        // After NodeScan, the source vertex is at column 0.
+                        // Each expand+flatten adds 2 columns (edge, target vertex),
+                        // so the target vertex of the Nth expand is at column 2*N.
+                        let mut input_column_index = 0;
+                        for (edge_info, next_vertex) in
+                            edges.iter().zip(vertices.iter().skip(1))
+                        {
+                            let (edge_var, edge_labels, direction) = edge_info;
+                            let (next_var, next_labels) = next_vertex;
+                            let expand = Expand::new(
+                                current_plan.clone(),
+                                input_column_index,
+                                edge_labels.clone(),
+                                Some(next_labels.clone()),
+                                edge_var.clone(),
+                                Some(next_var.clone()),
+                                direction.clone(),
+                            );
+                            current_plan = PlanNode::PhysicalExpand(Arc::new(expand));
+                            // After this expand+flatten, the target vertex is 2 columns
+                            // after the current input column (edge + target vertex).
+                            input_column_index += 2;
+                        }
+                        current_plan
+                    }
+                };
+            if let Some(predicate) = &m.pattern.predicate {
+                let filter = Filter::new(plan, predicate.clone());
+                plan = PlanNode::PhysicalFilter(Arc::new(filter));
             }
-            PathPatternInfo::Path { vertices, edges } => {
-                if vertices.is_empty() {
-                    return not_implemented("empty path patterns", None);
-                }
-                let (first_var, first_labels) = vertices[0].clone();
-                let mut current_plan = PlanNode::PhysicalNodeScan(Arc::new(NodeIdScan::new(
-                    first_var.as_str(),
-                    first_labels,
-                )));
-                for (edge_info, next_vertex) in edges.iter().zip(vertices.iter().skip(1)) {
-                    let (edge_var, edge_labels, direction) = edge_info;
-                    let (next_var, next_labels) = next_vertex;
-                    let expand = Expand::new(
-                        current_plan.clone(),
-                        0,
-                        edge_labels.clone(),
-                        Some(next_labels.clone()),
-                        edge_var.clone(),
-                        Some(next_var.clone()),
-                        direction.clone(),
-                    );
-                    current_plan = PlanNode::PhysicalExpand(Arc::new(expand));
-                }
-                Ok(current_plan)
-            }
-        },
+            Ok(plan)
+        }
         PlanNode::LogicalFilter(filter) => {
             let [child] = children
                 .try_into()

@@ -1,20 +1,13 @@
-<<<<<<< HEAD
-mod common;
-=======
 mod build_ldbc_mainfest;
->>>>>>> 2116190 (support gcard.)
+mod common;
 mod create_test_graph;
 mod create_test_graph_data;
 mod create_test_vector_graph_data;
 mod echo;
-<<<<<<< HEAD
 mod export_graph;
-mod import_graph;
-=======
-mod export_import;
 mod gcard_query;
+mod import_graph;
 mod mutate_graph;
->>>>>>> 2116190 (support gcard.)
 mod show_graph;
 mod show_procedures;
 

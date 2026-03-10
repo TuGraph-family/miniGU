@@ -370,14 +370,14 @@ fn get_graph_type_from_manifest(manifest: &Manifest) -> Result<Arc<MemoryGraphTy
 
     // Vertex
     for vs in manifest.vertices_spec().iter() {
-        let label = vs.label_name().to_lowercase();
+        let label = vs.label_name();
         let label_id = graph_type
             .add_label(label.clone())
             .expect("add label failed");
         let label_set = LabelSet::from_iter(vec![label_id]);
         let vertex_type = Arc::new(MemoryVertexTypeCatalog::new(
             label_set.clone(),
-            vs.properties_lowercase().clone(),
+            vs.properties().clone(),
         ));
         graph_type.add_vertex_type(label_set, Arc::clone(&vertex_type));
 
@@ -387,21 +387,21 @@ fn get_graph_type_from_manifest(manifest: &Manifest) -> Result<Arc<MemoryGraphTy
     // Edge
     for es in manifest.edges_spec().iter() {
         let label_id = graph_type
-            .add_label(es.label_name().to_lowercase())
+            .add_label(es.label_name().clone())
             .expect("add label failed");
         let label_set = LabelSet::from_iter(vec![label_id]);
         let src_type = label_vertex_type
-            .get(es.src_label().to_lowercase().as_str())
+            .get(es.src_label())
             .expect("vertex type not found");
         let dst_type = label_vertex_type
-            .get(es.dst_label().to_lowercase().as_str())
+            .get(es.dst_label())
             .expect("vertex type not found");
 
         let edge_type = MemoryEdgeTypeCatalog::new(
             label_set.clone(),
             src_type.clone(),
             dst_type.clone(),
-            es.properties_lowercase().clone(),
+            es.properties().clone(),
         );
         graph_type.add_edge_type(label_set, Arc::new(edge_type));
     }

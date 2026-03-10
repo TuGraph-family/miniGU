@@ -20,11 +20,6 @@ impl LabelSet {
     pub fn len(&self) -> usize {
         self.0.len()
     }
-    
-    #[inline]
-    pub fn first(&self) -> Option<LabelId> {
-        self.0.first().cloned()
-    }
 
     #[inline]
     pub fn first(&self) -> Option<LabelId> {
@@ -49,5 +44,3 @@ impl FromIterator<LabelId> for LabelSet {
         Self(set)
     }
 }
-
-
