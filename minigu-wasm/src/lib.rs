@@ -64,27 +64,72 @@ impl MiniGuDb {
 }
 
 fn result_to_table_string(result: &QueryResult) -> String {
-    if result.iter().count() == 0 {
+    let mut out = String::new();
+    let options = TableOptions::style_for_test();
+    if let Some(schema) = result.schema() {
+        let mut builder = TableBuilder::new(Some(schema.clone()), options);
+        let mut num_rows = 0;
+        for chunk in result.iter() {
+            num_rows += chunk.cardinality();
+            builder = builder.append_chunk(chunk);
+        }
+        let table = builder.build();
+        writeln!(&mut out, "{table}").unwrap();
+        writeln!(&mut out, "{num_rows} rows").unwrap();
+        return out;
+    }
+
+    let mut has_rows = false;
+    for chunk in result.iter() {
+        let row_count = chunk.cardinality();
+        let columns = chunk.columns();
+
+        for row_idx in 0..row_count {
+            has_rows = true;
+            let row_values: Vec<String> = columns
+                .iter()
+                .map(|column| extract_string_value(column, row_idx))
+                .collect();
+            out.push_str(&row_values.join("\t"));
+            out.push('\n');
+        }
+    }
+
+    if !has_rows {
         return "Statement OK. No results".to_string();
     }
 
-    let options = TableOptions::style_for_test();
-    let Some(schema) = result.schema() else {
-        return "Statement OK. No schema".to_string();
-    };
-
-    let mut builder = TableBuilder::new(Some(schema.clone()), options);
-    let mut num_rows = 0;
-    for chunk in result.iter() {
-        num_rows += chunk.cardinality();
-        builder = builder.append_chunk(chunk);
-    }
-    let table = builder.build();
-
-    let mut out = String::new();
-    writeln!(&mut out, "{table}").unwrap();
-    writeln!(&mut out, "{num_rows} rows").unwrap();
     out
+}
+
+fn extract_string_value(array: &ArrayRef, row_idx: usize) -> String {
+    use arrow::array::*;
+
+    if array.is_null(row_idx) {
+        return String::new();
+    }
+
+    if let Some(string_array) = array.as_any().downcast_ref::<StringArray>() {
+        string_array.value(row_idx).to_string()
+    } else if let Some(string_array) = array.as_any().downcast_ref::<LargeStringArray>() {
+        string_array.value(row_idx).to_string()
+    } else if let Some(int_array) = array.as_any().downcast_ref::<Int64Array>() {
+        int_array.value(row_idx).to_string()
+    } else if let Some(int_array) = array.as_any().downcast_ref::<Int32Array>() {
+        int_array.value(row_idx).to_string()
+    } else if let Some(uint_array) = array.as_any().downcast_ref::<UInt32Array>() {
+        uint_array.value(row_idx).to_string()
+    } else if let Some(uint_array) = array.as_any().downcast_ref::<UInt64Array>() {
+        uint_array.value(row_idx).to_string()
+    } else if let Some(double_array) = array.as_any().downcast_ref::<Float64Array>() {
+        double_array.value(row_idx).to_string()
+    } else if let Some(float_array) = array.as_any().downcast_ref::<Float32Array>() {
+        float_array.value(row_idx).to_string()
+    } else if let Some(bool_array) = array.as_any().downcast_ref::<BooleanArray>() {
+        bool_array.value(row_idx).to_string()
+    } else {
+        format!("{:?}", array.to_data())
+    }
 }
 
 fn result_to_json_string(result: &QueryResult) -> String {
@@ -190,7 +235,6 @@ mod tests {
 
         let out = db.query_json("MATCH (n:PERSON) RETURN n").unwrap();
         let v: Value = serde_json::from_str(&out).unwrap();
-        eprintln!("{:?}", v);
 
         let schema = v.get("schema").unwrap().as_array().unwrap();
         assert_eq!(schema.len(), 1);
@@ -201,5 +245,28 @@ mod tests {
         let first_row = rows[0].as_array().unwrap();
         let first_vertex = first_row[0].as_object().unwrap();
         assert!(first_vertex.get("_vid").is_some());
+    }
+
+    #[test]
+    fn wasm_wrapper_query_table_keeps_header_for_empty_result() {
+        let mut db = MiniGuDb::new().unwrap();
+        db.query_json("CALL create_test_graph_data(\"g\", 5)")
+            .unwrap();
+        db.query_json("SESSION SET GRAPH g").unwrap();
+
+        let out = db.query_table("MATCH (n:PERSON) RETURN n LIMIT 0").unwrap();
+
+        assert!(out.contains("vertex {"));
+        assert!(out.contains("0 rows"));
+    }
+
+    #[test]
+    fn wasm_wrapper_query_table_formats_schema_less_rows() {
+        let mut db = MiniGuDb::new().unwrap();
+        let out = db.query_table("EXPLAIN RETURN 1").unwrap();
+
+        assert!(!out.contains("Statement OK. No results"));
+        assert!(!out.contains("Statement OK. No schema"));
+        assert!(!out.trim().is_empty());
     }
 }

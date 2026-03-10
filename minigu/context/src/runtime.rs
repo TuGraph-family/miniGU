@@ -19,6 +19,8 @@ pub struct DatabaseRuntime {
 impl DatabaseRuntime {
     #[inline]
     pub fn new(_num_threads: usize) -> Result<Self, RuntimeError> {
+        // Keep the same config shape across targets. The wasm32 build runs synchronously on the
+        // host thread today, so `num_threads` is intentionally ignored here.
         Ok(Self)
     }
 
