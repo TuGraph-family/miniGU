@@ -168,7 +168,8 @@ pub fn import<P: AsRef<Path>>(
         return Err(anyhow::anyhow!("graph {graph_name} already exists").into());
     }
 
-    let (graph, graph_type) = import_internal(manifest_path.as_ref())?;
+    let db_path = context.database().config().db_path.clone();
+    let (graph, graph_type) = import_internal(manifest_path.as_ref(), db_path.as_deref(), &graph_name)?;
 
     let container = GraphContainer::new(
         Arc::clone(&graph_type),
@@ -179,18 +180,30 @@ pub fn import<P: AsRef<Path>>(
         return Err(anyhow::anyhow!("graph {graph_name} already exists").into());
     }
 
+    // Persist catalog if using on-disk database
+    if let Some(ref db_path) = db_path {
+        crate::catalog_persistence::save_catalog(db_path, schema)?;
+    }
+
     Ok(())
 }
 
 pub(crate) fn import_internal<P: AsRef<Path>>(
     manifest_path: P,
+    db_path: Option<&Path>,
+    graph_name: &str,
 ) -> Result<(Arc<MemoryGraph>, Arc<MemoryGraphTypeCatalog>)> {
     // Graph type
     let manifest = build_manifest(&manifest_path)?;
     let graph_type = get_graph_type_from_manifest(&manifest)?;
 
-    // Graph
-    let graph = MemoryGraph::in_memory();
+    // Graph - use file-backed storage when db_path is set
+    let graph = if let Some(db_path) = db_path {
+        let data_path = crate::catalog_persistence::graph_data_path(db_path, graph_name);
+        MemoryGraph::with_db_file(&data_path)?
+    } else {
+        MemoryGraph::in_memory()
+    };
     let txn = graph
         .txn_manager()
         .begin_transaction(IsolationLevel::Serializable)?;

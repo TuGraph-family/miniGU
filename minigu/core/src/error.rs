@@ -32,6 +32,15 @@ pub enum Error {
     #[error(transparent)]
     #[diagnostic(transparent)]
     NotImplemented(#[from] NotImplemented),
+
+    #[error("io error: {0}")]
+    Io(#[from] std::io::Error),
+
+    #[error("json error: {0}")]
+    Json(#[from] serde_json::Error),
+
+    #[error("storage error: {0}")]
+    Storage(#[from] minigu_storage::error::StorageError),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

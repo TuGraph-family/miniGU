@@ -1,6 +1,7 @@
 #![feature(impl_trait_in_assoc_type)]
 #![allow(unused)]
 
+pub mod catalog_persistence;
 pub mod database;
 pub mod error;
 pub mod metrics;

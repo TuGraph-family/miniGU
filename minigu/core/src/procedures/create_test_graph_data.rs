@@ -16,6 +16,8 @@ use minigu_storage::tp::MemoryGraph;
 use minigu_transaction::IsolationLevel::Serializable;
 use minigu_transaction::{GraphTxnManager, Transaction};
 
+use crate::catalog_persistence;
+
 /// Creates a test graph with multiple vertex types (PERSON, COMPANY, CITY) and edge types (FRIEND,
 /// WORKS_AT, LOCATED_IN) with sample data.
 pub fn build_procedure() -> Procedure {
@@ -44,7 +46,14 @@ pub fn build_procedure() -> Procedure {
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("current schema not set"))?;
 
-        let graph = MemoryGraph::in_memory();
+        // Use file-backed storage when db_path is set, otherwise in-memory
+        let db_path = context.database().config().db_path.clone();
+        let graph = if let Some(ref db_path) = db_path {
+            let data_path = catalog_persistence::graph_data_path(db_path, &graph_name);
+            MemoryGraph::with_db_file(&data_path)?
+        } else {
+            MemoryGraph::in_memory()
+        };
         let mut graph_type = MemoryGraphTypeCatalog::new();
 
         // Add labels
@@ -281,6 +290,12 @@ pub fn build_procedure() -> Procedure {
         }
 
         txn.commit()?;
+
+        // Persist catalog if using on-disk database
+        if let Some(ref db_path) = db_path {
+            catalog_persistence::save_catalog(db_path, schema)?;
+        }
+
         Ok(vec![])
     })
 }
