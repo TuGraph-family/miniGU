@@ -18,7 +18,12 @@ use crate::bound::{BoundBinaryOp, BoundExpr, BoundUnsignedInteger};
 impl Binder<'_> {
     pub fn bind_value_expression(&self, expr: &Expr) -> BindResult<BoundExpr> {
         match expr {
-            Expr::Binary { .. } => not_implemented("binary expression", None),
+            Expr::Binary { op, left, right } => {
+                let bound_left = self.bind_value_expression(left.value())?;
+                let bound_right = self.bind_value_expression(right.value())?;
+                let bound_op = bind_binary_op(op.value());
+                Ok(BoundExpr::binary(bound_op, bound_left, bound_right))
+            }
             Expr::Unary { .. } => not_implemented("unary expression", None),
             Expr::DurationBetween { .. } => not_implemented("duration between expression", None),
             Expr::Is { .. } => not_implemented("is expression", None),
@@ -40,7 +45,45 @@ impl Binder<'_> {
             }
             Expr::Value(value) => bind_value(value),
             Expr::Path(_) => not_implemented("path expression", None),
-            Expr::Property { .. } => not_implemented("property expression", None),
+            Expr::Property {
+                source,
+                trailing_names,
+            } => {
+                if let Expr::Variable(var_name) = source.value() {
+                    let schema = self
+                        .active_data_schema
+                        .as_ref()
+                        .ok_or_else(|| BindError::VariableNotFound(var_name.clone()))?;
+                    let field = schema
+                        .get_field_by_name(var_name)
+                        .ok_or_else(|| BindError::VariableNotFound(var_name.clone()))?;
+                    if let LogicalType::Vertex(vertex_fields) = field.ty() {
+                        if trailing_names.len() != 1 {
+                            return not_implemented("chained property access", None);
+                        }
+                        let prop_name = trailing_names[0].value().as_str();
+                        let prop_field = vertex_fields
+                            .iter()
+                            .find(|f| f.name() == prop_name)
+                            .ok_or_else(|| {
+                                BindError::VariableNotFound(
+                                    format!("{}.{}", var_name, prop_name).into(),
+                                )
+                            })?;
+                        Ok(BoundExpr::property(
+                            var_name.to_string(),
+                            prop_name.to_string(),
+                            prop_field.ty().clone(),
+                        ))
+                    } else {
+                        Err(BindError::VariableNotFound(
+                            format!("{} is not a vertex", var_name).into(),
+                        ))
+                    }
+                } else {
+                    not_implemented("non-variable property source", None)
+                }
+            }
             Expr::Graph(_) => not_implemented("graph expression", None),
         }
     }

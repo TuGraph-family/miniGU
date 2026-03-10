@@ -1,0 +1,24 @@
+-- Setup: create test graph and set as current
+CALL create_test_graph_data('g', 10);
+SESSION SET GRAPH g;
+
+-- Test 1: Simple property equality filter on single vertex
+MATCH (p:PERSON) WHERE p.name = 'person0' RETURN p;
+
+-- Test 2: Multi-hop with filter on target vertex
+MATCH (p:PERSON)-[w:WORKS_AT]->(c:COMPANY) WHERE c.name = 'company0' RETURN p, w, c;
+
+-- Test 3: Filter on source vertex in a path
+MATCH (p:PERSON)-[w:WORKS_AT]->(c:COMPANY) WHERE p.name = 'person0' RETURN p, w, c;
+
+-- Test 4: Comparison filter (age > value)
+MATCH (p:PERSON) WHERE p.age > 22 RETURN p;
+
+-- Test 5: Return only a property with filter
+MATCH (p:PERSON) WHERE p.age > 22 RETURN p.name;
+
+-- Test 6: Filter with no matching rows
+MATCH (p:PERSON) WHERE p.name = 'nonexistent' RETURN p;
+
+-- Test 7: Two-hop path with filter on source vertex
+MATCH (p:PERSON)-[f:FRIEND]->(p2:PERSON)-[w:WORKS_AT]->(c:COMPANY) WHERE p.name = 'person0' RETURN p, p2, c;

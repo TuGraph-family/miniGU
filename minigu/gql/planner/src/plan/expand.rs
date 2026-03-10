@@ -66,9 +66,26 @@ impl Expand {
             }
         }
 
-        let schema = Some(Arc::new(DataSchema::new(new_fields)));
+        let mut schema = DataSchema::new(new_fields);
+
+        // Propagate var_labels from child schema
+        if let Some(child_schema) = child.schema() {
+            for field in child_schema.fields() {
+                if let Some(labels) = child_schema.get_var_label(field.name()) {
+                    schema.set_var_label(field.name().to_string(), labels);
+                }
+            }
+        }
+
+        // Set var_label for target vertex
+        if let Some(vertex_var) = &target_vertex_var
+            && let Some(labels) = &target_vertex_labels
+        {
+            schema.set_var_label(vertex_var.clone(), labels.clone());
+        }
+
         let base = PlanBase {
-            schema,
+            schema: Some(Arc::new(schema)),
             children: vec![child],
         };
         Self {

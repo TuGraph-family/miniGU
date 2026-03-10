@@ -21,7 +21,8 @@ impl NodeIdScan {
     pub fn new(var: &str, labels: Vec<Vec<LabelId>>) -> Self {
         // For Single Node Scan, We just assume the id is only needed.
         let field = DataField::new(var.to_string(), LogicalType::Int64, false);
-        let schema = DataSchema::new(vec![field]);
+        let mut schema = DataSchema::new(vec![field]);
+        schema.set_var_label(var.to_string(), labels.clone());
         let base = PlanBase {
             schema: Some(Arc::new(schema)),
             children: vec![],

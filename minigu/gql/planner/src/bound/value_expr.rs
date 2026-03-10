@@ -9,6 +9,15 @@ use serde::Serialize;
 pub enum BoundExprKind {
     Value(ScalarValue),
     Variable(String),
+    Binary {
+        op: BoundBinaryOp,
+        left: Box<BoundExpr>,
+        right: Box<BoundExpr>,
+    },
+    Property {
+        source: String,
+        property: String,
+    },
     VectorDistance {
         lhs: Box<BoundExpr>,
         rhs: Box<BoundExpr>,
@@ -23,6 +32,12 @@ impl Display for BoundExprKind {
             // TODO: Use `Display` rather than `Debug` representation for `value`.
             BoundExprKind::Value(value) => write!(f, "{value:?}"),
             BoundExprKind::Variable(variable) => write!(f, "{variable}"),
+            BoundExprKind::Binary { op, left, right } => {
+                write!(f, "({} {:?} {})", left, op, right)
+            }
+            BoundExprKind::Property { source, property } => {
+                write!(f, "{}.{}", source, property)
+            }
             BoundExprKind::VectorDistance {
                 lhs, rhs, metric, ..
             } => {
@@ -53,6 +68,42 @@ impl BoundExpr {
             kind: BoundExprKind::Variable(name),
             logical_type,
             nullable,
+        }
+    }
+
+    pub fn binary(op: BoundBinaryOp, left: BoundExpr, right: BoundExpr) -> Self {
+        let nullable = left.nullable || right.nullable;
+        let logical_type = match &op {
+            BoundBinaryOp::Lt
+            | BoundBinaryOp::Le
+            | BoundBinaryOp::Gt
+            | BoundBinaryOp::Ge
+            | BoundBinaryOp::Eq
+            | BoundBinaryOp::Ne
+            | BoundBinaryOp::And
+            | BoundBinaryOp::Or
+            | BoundBinaryOp::Xor => LogicalType::Boolean,
+            BoundBinaryOp::Concat => LogicalType::String,
+            BoundBinaryOp::Add | BoundBinaryOp::Sub | BoundBinaryOp::Mul | BoundBinaryOp::Div => {
+                left.logical_type.clone()
+            }
+        };
+        Self {
+            kind: BoundExprKind::Binary {
+                op,
+                left: Box::new(left),
+                right: Box::new(right),
+            },
+            logical_type,
+            nullable,
+        }
+    }
+
+    pub fn property(source: String, property: String, logical_type: LogicalType) -> Self {
+        Self {
+            kind: BoundExprKind::Property { source, property },
+            logical_type,
+            nullable: true,
         }
     }
 
