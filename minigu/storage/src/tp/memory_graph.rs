@@ -430,8 +430,15 @@ impl MemoryGraph {
     /// Creates a new [`MemoryGraph`] with the given persistence provider.
     ///
     /// This is the core constructor that all other constructors delegate to.
+    #[cfg(not(target_arch = "wasm32"))]
     fn with_persistence(persistence: Arc<dyn PersistenceProvider>) -> Arc<Self> {
         Self::with_persistence_and_config(persistence, CheckpointConfig::default())
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    /// As an incremental wasm32 bring-up step, disable auto-checkpoint for now.
+    fn with_persistence(persistence: Arc<dyn PersistenceProvider>) -> Arc<Self> {
+        Self::with_persistence_and_config(persistence, CheckpointConfig { wal_threshold: 0 })
     }
 
     /// Creates a new [`MemoryGraph`] with the given persistence provider and checkpoint config.

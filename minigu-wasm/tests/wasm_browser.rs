@@ -25,6 +25,25 @@ fn query_json_returns_struct_rows() {
 }
 
 #[wasm_bindgen_test]
+fn create_test_graph_data_big() {
+    let mut db = MiniGuDb::new().unwrap();
+
+    db.query_json("CALL create_test_graph_data(\"g\", 100)")
+        .unwrap();
+    db.query_json("SESSION SET GRAPH g").unwrap();
+
+    let out = db.query_json("MATCH (n:PERSON) RETURN n").unwrap();
+    let v: serde_json::Value = serde_json::from_str(&out).unwrap();
+
+    let rows = v.get("rows").unwrap().as_array().unwrap();
+    assert!(!rows.is_empty());
+
+    let first_row = rows[0].as_array().unwrap();
+    let first_vertex = first_row[0].as_object().unwrap();
+    assert!(first_vertex.get("_vid").is_some());
+}
+
+#[wasm_bindgen_test]
 fn import_graph_is_unavailable() {
     let mut db = MiniGuDb::new().unwrap();
 
