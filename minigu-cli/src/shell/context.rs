@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use clap::Command;
 use gql_parser::error::TokenErrorKind;
 use gql_parser::tokenize_full;
@@ -21,6 +23,7 @@ pub struct ShellContext {
     pub header: bool,
     pub column_type: bool,
     pub show_metrics: bool,
+    pub timing: bool,
 }
 
 impl ShellContext {
@@ -62,6 +65,7 @@ impl ShellContext {
     }
 
     fn execute_query_segment(&mut self, segment: &str) -> Result<()> {
+        let start = Instant::now();
         let result = self.session.query(segment)?;
         let options = TableOptions::new()
             .with_style(self.mode.into())
@@ -87,6 +91,10 @@ impl ShellContext {
         }
         if self.show_metrics {
             println!("(compiling: {compiling_time:.3}ms, execution: {execution_time:.3}ms)");
+        }
+        if self.timing {
+            let elapsed = start.elapsed();
+            println!("Time: {:.3}s", elapsed.as_secs_f64());
         }
         Ok(())
     }

@@ -255,38 +255,44 @@ impl DbFile {
         let write_offset = self.header.wal_offset + self.header.wal_length;
         self.file.seek(SeekFrom::Start(write_offset))?;
 
-        // Write entry
+        // Write entry (buffered by OS, no fsync here)
         self.file.write_all(&len.to_le_bytes())?;
         self.file.write_all(&crc.to_le_bytes())?;
         self.file.write_all(&payload)?;
 
-        // CRITICAL: Sync WAL data BEFORE updating header
-        // This ensures that if we crash after updating the header,
-        // the WAL data it points to is guaranteed to be on disk
-        self.file.sync_data()?;
-
-        // Update header
+        // Update in-memory header (not yet persisted to disk)
         self.header.wal_length += entry_size as u64;
         self.header.flags.set(DbFileFlags::HAS_WAL);
         self.header.last_lsn = entry.lsn;
 
-        self.header.update_crc();
-        self.write_header()?;
-
-        // Sync header to ensure it's durable
-        self.file.sync_data()?;
-
         Ok(())
     }
 
-    /// Flushes buffered data and syncs to disk.
+    /// Flushes all buffered WAL data and header to disk atomically.
+    ///
+    /// This ensures crash safety by:
+    /// 1. Syncing WAL data first (fsync #1) — all entries are durable
+    /// 2. Writing and syncing header (fsync #2) — header now points to durable data
+    ///
+    /// The header is never persisted before the WAL data it references,
+    /// so a crash at any point leaves the file in a consistent state.
     pub fn flush(&mut self) -> DbFileResult<()> {
+        // Sync WAL data before updating header on disk
         self.file.sync_data()?;
+
+        // Persist header with updated wal_length and last_lsn
+        self.header.update_crc();
+        self.write_header()?;
+        self.file.sync_data()?;
+
         Ok(())
     }
 
     /// Syncs all data and metadata to disk.
     pub fn sync_all(&mut self) -> DbFileResult<()> {
+        // Persist header with updated wal_length and last_lsn
+        self.header.update_crc();
+        self.write_header()?;
         self.file.sync_all()?;
         Ok(())
     }

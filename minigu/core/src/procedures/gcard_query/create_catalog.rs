@@ -343,38 +343,54 @@ fn compute_len1_degrees(
         return Ok(());
     }
     let mut seen_alt_key: HashSet<AltKey> = HashSet::new();
-    let mut id = 0;
+    let mut pattern_to_handle: Vec<PathPattern> = Vec::new();
     for pattern in patterns {
-        let alt_key = pattern.to_alt_key();
-        if !seen_alt_key.insert(alt_key) {
-            continue;
+        if seen_alt_key.insert(pattern.to_alt_key()) {
+            pattern_to_handle.push(pattern.clone());
         }
-        let edge = &pattern.es[0];
-        let src_name = &pattern.vs[0];
-        let end_name = pattern.vs.last().unwrap();
-        let edge_info = edges
-            .get(edge)
-            .ok_or_else(|| anyhow::anyhow!("edge not found: {}", edge))?;
-        let edge_id = label_name_to_id
-            .get(edge)
-            .copied()
-            .ok_or_else(|| anyhow::anyhow!("label id not found: {}", edge))?;
-        let src_id = label_name_to_id
-            .get(&edge_info.src_label)
-            .copied()
-            .ok_or_else(|| anyhow::anyhow!("src label not found"))?;
-        let dst_id = label_name_to_id
-            .get(&edge_info.dst_label)
-            .copied()
-            .ok_or_else(|| anyhow::anyhow!("dst label not found"))?;
+    }
 
-        let left_deg = compute_degree_map_for_vertex_type(graph, txn, src_id, edge_id, true)?;
-        let right_deg = compute_degree_map_for_vertex_type(graph, txn, dst_id, edge_id, false)?;
+    let computed: Vec<Result<(PathPattern, String, DegreeMap, String, DegreeMap), anyhow::Error>> =
+        pattern_to_handle
+            .par_iter()
+            .map(|pattern| {
+                let edge = &pattern.es[0];
+                let edge_info = edges
+                    .get(edge)
+                    .ok_or_else(|| anyhow::anyhow!("edge not found: {}", edge))?;
+                let edge_id = label_name_to_id
+                    .get(edge)
+                    .copied()
+                    .ok_or_else(|| anyhow::anyhow!("label id not found: {}", edge))?;
+                let src_id = label_name_to_id
+                    .get(&edge_info.src_label)
+                    .copied()
+                    .ok_or_else(|| anyhow::anyhow!("src label not found"))?;
+                let dst_id = label_name_to_id
+                    .get(&edge_info.dst_label)
+                    .copied()
+                    .ok_or_else(|| anyhow::anyhow!("dst label not found"))?;
 
-        let mut m = HashMap::new();
-        m.insert(edge_info.src_label.clone(), left_deg);
-        m.insert(edge_info.dst_label.clone(), right_deg);
-        cache.entry(pattern.clone()).or_default().extend(m);
+                let left_deg =
+                    compute_degree_map_for_vertex_type(graph, txn, src_id, edge_id, true)?;
+                let right_deg =
+                    compute_degree_map_for_vertex_type(graph, txn, dst_id, edge_id, false)?;
+
+                Ok((
+                    pattern.clone(),
+                    edge_info.src_label.clone(),
+                    left_deg,
+                    edge_info.dst_label.clone(),
+                    right_deg,
+                ))
+            })
+            .collect();
+
+    for res in computed {
+        let (pattern, src_label, left_deg, dst_label, right_deg) = res?;
+        let entry = cache.entry(pattern).or_default();
+        entry.insert(src_label, left_deg);
+        entry.insert(dst_label, right_deg);
     }
     Ok(())
 }
@@ -826,7 +842,13 @@ pub fn build_procedure() -> Procedure {
     // 1. graph name
     // 2. max length of path.
     // 3. (optional) mode: 0 = layer-by-layer (default), 1 = neighbor-cached dependency-driven
-    let parameters = vec![LogicalType::String, LogicalType::Int8, LogicalType::UInt8];
+    // 4. (optional) num_threads: number of rayon threads (default = available parallelism)
+    let parameters = vec![
+        LogicalType::String,
+        LogicalType::Int8,
+        LogicalType::UInt8,
+        LogicalType::UInt8,
+    ];
     Procedure::new(parameters, None, move |mut context, args| {
         let graph_name = args[0]
             .try_as_string()
@@ -835,9 +857,14 @@ pub fn build_procedure() -> Procedure {
             .ok_or_else(|| anyhow::anyhow!("expecting string value for graph name"))?
             .to_string();
 
-        let num_threads = std::thread::available_parallelism()
+        let default_threads = std::thread::available_parallelism()
             .map(|n| n.get())
             .unwrap_or(8);
+        let num_threads = args
+            .get(3)
+            .and_then(|a| a.to_u8().ok())
+            .map(|n| if n == 0 { default_threads } else { n as usize })
+            .unwrap_or(default_threads);
 
         let _pool = ThreadPoolBuilder::new()
             .num_threads(num_threads)

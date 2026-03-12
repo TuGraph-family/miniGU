@@ -55,7 +55,8 @@ use minigu_context::procedure::Procedure;
 use minigu_context::session::SessionContext;
 use minigu_storage::common::{Edge, PropertyRecord, Vertex};
 use minigu_storage::tp::MemoryGraph;
-use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
+use minigu_transaction::GraphTxnManager;
+use rayon::prelude::*;
 
 use super::common::{EdgeSpec, FileSpec, Manifest, RecordType, Result, VertexSpec};
 
@@ -188,6 +189,23 @@ pub fn import<P: AsRef<Path>>(
     Ok(())
 }
 
+/// A parsed vertex record ready for insertion.
+struct ParsedVertex {
+    old_vid: VertexId,
+    label_id: LabelId,
+    props: Vec<ScalarValue>,
+}
+
+/// A parsed edge record ready for insertion.
+struct ParsedEdge {
+    old_src_id: VertexId,
+    old_dst_id: VertexId,
+    src_label_id: LabelId,
+    dst_label_id: LabelId,
+    label_id: LabelId,
+    props: Vec<ScalarValue>,
+}
+
 pub(crate) fn import_internal<P: AsRef<Path>>(
     manifest_path: P,
     db_path: Option<&Path>,
@@ -204,175 +222,244 @@ pub(crate) fn import_internal<P: AsRef<Path>>(
     } else {
         MemoryGraph::in_memory()
     };
-    let txn = graph
-        .txn_manager()
-        .begin_transaction(IsolationLevel::Serializable)?;
-
     let manifest_parent_dir = manifest_path.as_ref().parent().ok_or_else(|| {
         anyhow::anyhow!(
             "manifest path has no parent directory: {}",
             manifest_path.as_ref().display()
         )
     })?;
-    // Map each original vertex ID to it's newly assigned ID.
-    let mut vid_mapping: HashMap<LabelId, HashMap<VertexId, VertexId>> = HashMap::new();
 
-    // 1. Vertices
-    let mut vid = 1;
-    for vertex_spec in manifest.vertices.iter() {
-        let path = manifest_parent_dir.join(&vertex_spec.file.path);
-        let mut rdr = ReaderBuilder::new()
-            .has_headers(true)
-            .delimiter(b',')
-            .from_path(path)?;
-
-        let label_id = graph_type
-            .get_label_id(&vertex_spec.label.to_lowercase().as_str())?
-            .expect("label id not found");
-
-        for record in rdr.records() {
-            let record = record?;
+    // ========================================================================
+    // Phase 1: Parse all vertex CSV files in parallel (IO + CPU bound)
+    // ========================================================================
+    let parsed_vertices: Vec<Vec<ParsedVertex>> = manifest
+        .vertices
+        .par_iter()
+        .map(|vertex_spec| -> Result<Vec<ParsedVertex>> {
+            let path = manifest_parent_dir.join(&vertex_spec.file.path);
+            let label_id = graph_type
+                .get_label_id(&vertex_spec.label.to_lowercase().as_str())?
+                .expect("label id not found");
             let label_set = LabelSet::from_iter(vec![label_id]);
             let props_schema = graph_type
                 .get_vertex_type(&label_set)?
                 .expect("vertex type not found")
                 .properties();
 
-            assert_eq!(props_schema.len() + 1, record.len());
-            let old_vid_str = record.get(0).expect("record to short");
-            if old_vid_str.is_empty() {
-                eprintln!("Warning: Empty vertex ID in vertex '{}'. Skipping record.", vertex_spec.label);
-                continue;
+            let mut rdr = ReaderBuilder::new()
+                .has_headers(true)
+                .delimiter(b',')
+                .from_path(&path)?;
+
+            let mut results = Vec::new();
+            for record in rdr.records() {
+                let record = record?;
+                assert_eq!(props_schema.len() + 1, record.len());
+                let old_vid_str = record.get(0).expect("record too short");
+                if old_vid_str.is_empty() {
+                    eprintln!(
+                        "Warning: Empty vertex ID in vertex '{}'. Skipping record.",
+                        vertex_spec.label
+                    );
+                    continue;
+                }
+                let old_vid: VertexId = match old_vid_str.parse() {
+                    Ok(vid) => vid,
+                    Err(e) => {
+                        eprintln!(
+                            "Warning: Cannot parse vertex ID '{}' in vertex '{}': {}. Skipping record.",
+                            old_vid_str, vertex_spec.label, e
+                        );
+                        continue;
+                    }
+                };
+
+                let props = match build_properties(props_schema.clone(), record.iter().skip(1)) {
+                    Ok(p) => p,
+                    Err(e) => {
+                        eprintln!(
+                            "Warning: Failed to build properties for vertex '{}' with ID '{}': {}. Skipping record.",
+                            vertex_spec.label, old_vid, e
+                        );
+                        continue;
+                    }
+                };
+
+                results.push(ParsedVertex {
+                    old_vid,
+                    label_id,
+                    props,
+                });
             }
-            let old_vid: VertexId = match old_vid_str.parse() {
-                Ok(vid) => vid,
-                Err(e) => {
-                    eprintln!("Warning: Cannot parse vertex ID '{}' in vertex '{}': {}. Skipping record.", 
-                        old_vid_str, vertex_spec.label, e);
-                    continue;
-                }
-            };
+            Ok(results)
+        })
+        .collect::<Result<Vec<_>>>()?;
 
-            // 构建属性，如果失败则跳过该记录
-            let props = match build_properties(props_schema, record.iter().skip(1)) {
-                Ok(p) => p,
-                Err(e) => {
-                    println!("Warning: Failed to build properties for vertex '{}' with ID '{}': {}. Skipping record.", 
-                        vertex_spec.label, old_vid, e);
-                    continue;
-                }
-            };
-            let vertex = Vertex::new(vid, label_id, PropertyRecord::new(props));
-
-            graph.create_vertex(&txn, vertex)?;
-            // Update vid mapping
-            let entry = vid_mapping.entry(label_id).or_default();
-            if entry.insert(old_vid, vid).is_some() {
-                print!("conflict");
+    // Bulk insert vertices — bypass transaction system entirely
+    let mut vid_mapping: HashMap<LabelId, HashMap<VertexId, VertexId>> = HashMap::new();
+    let mut vid = 1u64;
+    for batch in &parsed_vertices {
+        for pv in batch {
+            let vertex = Vertex::new(vid, pv.label_id, PropertyRecord::new(pv.props.clone()));
+            graph.bulk_insert_vertex(vertex);
+            let entry = vid_mapping.entry(pv.label_id).or_default();
+            if entry.insert(pv.old_vid, vid).is_some() {
+                eprintln!(
+                    "Warning: Duplicate vertex ID {} for label {:?}.",
+                    pv.old_vid, pv.label_id
+                );
             }
             vid += 1;
         }
     }
 
-    // 2. Edges
-    let mut eid = 1;
-    for edge_spec in manifest.edges.iter() {
-        let path = manifest_parent_dir.join(&edge_spec.file.path);
-        let label_id = graph_type
-            .get_label_id(&edge_spec.label.to_lowercase().as_str())?
-            .expect("label id not found");
-
-        let mut rdr = ReaderBuilder::new().has_headers(true).delimiter(b',').from_path(path)?;
-
-        for record in rdr.records() {
-            let record = record?;
+    // ========================================================================
+    // Phase 2: Parse all edge CSV files in parallel, resolve vid mappings
+    // ========================================================================
+    let parsed_edges: Vec<Vec<ParsedEdge>> = manifest
+        .edges
+        .par_iter()
+        .map(|edge_spec| -> Result<Vec<ParsedEdge>> {
+            let path = manifest_parent_dir.join(&edge_spec.file.path);
+            let label_id = graph_type
+                .get_label_id(&edge_spec.label.to_lowercase().as_str())?
+                .expect("label id not found");
             let label_set = LabelSet::from_iter(vec![label_id]);
-
-            let props = graph_type
+            let edge_props_schema = graph_type
                 .get_edge_type(&label_set)?
                 .expect("edge type not found")
                 .properties();
+            let src_label_id = graph_type
+                .get_label_id(&edge_spec.src_label.to_lowercase().as_str())?
+                .expect("label id not found");
+            let dst_label_id = graph_type
+                .get_label_id(&edge_spec.dst_label.to_lowercase().as_str())?
+                .expect("label id not found");
 
-            assert_eq!(record.len() - 2, props.len());
-            
-            if record.len() < 2 {
-                println!("Warning: Edge record too short in edge '{}'. Expected at least 3 columns, got {}. Skipping record.", 
-                    edge_spec.label, record.len());
-                println!("  Record: {:?}", record.iter().collect::<Vec<_>>());
-                continue;
+            let mut rdr = ReaderBuilder::new()
+                .has_headers(true)
+                .delimiter(b',')
+                .from_path(&path)?;
+
+            let mut results = Vec::new();
+            for record in rdr.records() {
+                let record = record?;
+                if record.len() < 2 {
+                    eprintln!(
+                        "Warning: Edge record too short in edge '{}'. Expected at least 2 columns, got {}. Skipping record.",
+                        edge_spec.label, record.len()
+                    );
+                    continue;
+                }
+                assert_eq!(record.len() - 2, edge_props_schema.len());
+
+                let old_src_id_str = record.get(0).unwrap();
+                let old_dst_id_str = record.get(1).unwrap();
+
+                if old_src_id_str.is_empty() || old_dst_id_str.is_empty() {
+                    eprintln!(
+                        "Warning: Empty source or destination ID in edge '{}'. Skipping record.",
+                        edge_spec.label
+                    );
+                    continue;
+                }
+
+                let old_src_id: VertexId = match old_src_id_str.parse() {
+                    Ok(id) => id,
+                    Err(e) => {
+                        eprintln!(
+                            "Warning: Cannot parse source ID '{}' in edge '{}': {}. Skipping record.",
+                            old_src_id_str, edge_spec.label, e
+                        );
+                        continue;
+                    }
+                };
+
+                let old_dst_id: VertexId = match old_dst_id_str.parse() {
+                    Ok(id) => id,
+                    Err(e) => {
+                        eprintln!(
+                            "Warning: Cannot parse destination ID '{}' in edge '{}': {}. Skipping record.",
+                            old_dst_id_str, edge_spec.label, e
+                        );
+                        continue;
+                    }
+                };
+
+                let props =
+                    match build_properties(edge_props_schema.clone(), record.iter().skip(2)) {
+                        Ok(p) => p,
+                        Err(e) => {
+                            eprintln!(
+                            "Warning: Failed to build properties for edge '{}' (src: {}, dst: {}): {}. Skipping record.",
+                            edge_spec.label, old_src_id, old_dst_id, e
+                        );
+                            continue;
+                        }
+                    };
+
+                results.push(ParsedEdge {
+                    old_src_id,
+                    old_dst_id,
+                    src_label_id,
+                    dst_label_id,
+                    label_id,
+                    props,
+                });
             }
-            
-            let old_src_id_str = record.get(0).unwrap();
-            let old_dst_id_str = record.get(1).unwrap();
-            
-            if old_src_id_str.is_empty() || old_dst_id_str.is_empty() {
-                println!("Warning: Empty source or destination ID in edge '{}'. Skipping record.", edge_spec.label);
-                println!("  Record: {:?}", record.iter().collect::<Vec<_>>());
-                continue;
-            }
-            
-            let old_src_id: VertexId = match old_src_id_str.parse() {
-                Ok(id) => id,
-                Err(e) => {
-                    println!("Warning: Cannot parse source ID '{}' in edge '{}': {}. Skipping record.", 
-                        old_src_id_str, edge_spec.label, e);
-                    println!("  Record: {:?}", record.iter().collect::<Vec<_>>());
-                    continue;
-                }
-            };
-            
-            let old_dst_id: VertexId = match old_dst_id_str.parse() {
-                Ok(id) => id,
-                Err(e) => {
-                    eprintln!("Warning: Cannot parse destination ID '{}' in edge '{}': {}. Skipping record.", 
-                        old_dst_id_str, edge_spec.label, e);
-                    eprintln!("  Record: {:?}", record.iter().collect::<Vec<_>>());
-                    continue;
-                }
-            };
-            let src_label_id = graph_type.get_label_id(&edge_spec.src_label.to_lowercase().as_str())?.expect("label id not found");
-            let end_label_id = graph_type.get_label_id(&edge_spec.dst_label.to_lowercase().as_str())?.expect("label id not found");
-            
-            let src_id = match vid_mapping.get(&src_label_id).expect("should not null").get(&old_src_id) {
-                Some(id) => id,
+            Ok(results)
+        })
+        .collect::<Result<Vec<_>>>()?;
+
+    // Bulk insert edges — bypass transaction system entirely
+    let mut eid = 1u64;
+    for batch in &parsed_edges {
+        for pe in batch {
+            let src_id = match vid_mapping
+                .get(&pe.src_label_id)
+                .and_then(|m| m.get(&pe.old_src_id))
+            {
+                Some(id) => *id,
                 None => {
-                    eprintln!("Warning: Source vertex ID {} not found in mapping for edge '{}'. Skipping record.", 
-                        old_src_id, edge_spec.label);
+                    eprintln!(
+                        "Warning: Source vertex ID {} not found in mapping. Skipping record.",
+                        pe.old_src_id
+                    );
                     continue;
                 }
             };
 
-            let dst_id = match vid_mapping.get(&end_label_id).expect("should not null").get(&old_dst_id) {
-                Some(id) => id,
+            let dst_id = match vid_mapping
+                .get(&pe.dst_label_id)
+                .and_then(|m| m.get(&pe.old_dst_id))
+            {
+                Some(id) => *id,
                 None => {
-                    eprintln!("Warning: Destination vertex ID {} not found in mapping for edge '{}'. Skipping record.", 
-                        old_dst_id, edge_spec.label);
+                    eprintln!(
+                        "Warning: Destination vertex ID {} not found in mapping. Skipping record.",
+                        pe.old_dst_id
+                    );
                     continue;
                 }
             };
 
-            let vertex = graph.get_vertex(&txn,*src_id)?;
-            let src_label_name = graph_type.get_vertex_type(&LabelSet::from_label(vertex.label_id))?.expect("vertex label not found");
-
-            let vertex2 = graph.get_vertex(&txn,*dst_id)?;
-            let dst_label_name = graph_type.get_vertex_type(&LabelSet::from_label(vertex2.label_id))?;
-            
-            let props = match build_properties(props, record.iter().skip(2)) {
-                Ok(p) => p,
-                Err(e) => {
-                    eprintln!("Warning: Failed to build properties for edge '{}' (src: {}, dst: {}): {}. Skipping record.", 
-                        edge_spec.label, old_src_id, old_dst_id, e);
-                    continue;
-                }
-            };
-
-            let edge = Edge::new(eid, *src_id, *dst_id, label_id, PropertyRecord::new(props));
-            graph.create_edge(&txn, edge)?;
+            let edge = Edge::new(
+                eid,
+                src_id,
+                dst_id,
+                pe.label_id,
+                PropertyRecord::new(pe.props.clone()),
+            );
+            graph.bulk_insert_edge(edge);
             eid += 1;
         }
     }
 
-    let _ = txn.commit()?;
+    // Persist by writing a snapshot directly (bypasses WAL entirely).
+    // No transaction was used, so no WAL/undo/redo overhead.
+    if db_path.is_some() {
+        graph.create_checkpoint()?;
+    }
 
     Ok((graph, graph_type))
 }

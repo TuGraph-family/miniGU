@@ -49,6 +49,10 @@ pub enum ShellCommand {
         mode_to_change: Option<OutputMode>,
     },
 
+    /// Toggle wall-clock timing for each query.
+    #[command(name = ":timing")]
+    Timing,
+
     /// Set if query metrics should be printed.
     #[command(name = ":metrics")]
     Metrics {
@@ -102,6 +106,7 @@ impl ShellCommand {
             Self::History => history(ctx),
             Self::CdDirectory { path } => cd(path),
             Self::Mode { mode_to_change } => mode(ctx, mode_to_change),
+            Self::Timing => timing(ctx),
             Self::Metrics { status } => metrics(ctx, status),
         }
     }
@@ -201,6 +206,12 @@ fn mode(ctx: &mut ShellContext, mode_to_change: Option<OutputMode>) -> Result<()
     } else {
         println!("current output mode: {}", ctx.mode);
     }
+    Ok(())
+}
+
+fn timing(ctx: &mut ShellContext) -> Result<()> {
+    ctx.timing = !ctx.timing;
+    println!("Timing is {}", if ctx.timing { "on" } else { "off" });
     Ok(())
 }
 

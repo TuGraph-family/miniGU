@@ -1432,6 +1432,7 @@ dependencies = [
  "arrow",
  "bincode",
  "csv",
+ "dashmap",
  "gql-parser",
  "itertools 0.14.0",
  "miette",

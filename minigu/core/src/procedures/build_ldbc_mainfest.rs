@@ -294,16 +294,16 @@ fn infer_type_from_value(value: &str) -> (String, bool) {
     }
 
     if let Ok(_) = value.parse::<i64>() {
-        return ("Int64".to_string(), false);
+        return ("Int64".to_string(), true);
     }
 
     if let Ok(_) = value.parse::<f64>() {
-        return ("Float64".to_string(), false);
+        return ("Float64".to_string(), true);
     }
 
     if value == "true" || value == "false" {
-        return ("Boolean".to_string(), false);
+        return ("Boolean".to_string(), true);
     }
 
-    ("String".to_string(), false)
+    ("String".to_string(), true)
 }

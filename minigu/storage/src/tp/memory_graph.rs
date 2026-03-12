@@ -359,7 +359,7 @@ pub struct CheckpointConfig {
 impl Default for CheckpointConfig {
     fn default() -> Self {
         Self {
-            wal_threshold: 1000, // Default: checkpoint every 1000 WAL entries
+            wal_threshold: 100_000, // Default: checkpoint every 100k WAL entries
         }
     }
 }
@@ -551,7 +551,7 @@ impl MemoryGraph {
     /// 4. Reset the WAL counter
     ///
     /// Returns the checkpoint LSN.
-    fn create_checkpoint(self: &Arc<Self>) -> StorageResult<u64> {
+    pub fn create_checkpoint(self: &Arc<Self>) -> StorageResult<u64> {
         use super::checkpoint::GraphCheckpoint;
 
         // Acquire checkpoint lock to prevent concurrent modifications
@@ -565,11 +565,20 @@ impl MemoryGraph {
         }
 
         // Create checkpoint
+        let t0 = std::time::Instant::now();
         let checkpoint = GraphCheckpoint::new(self);
         let checkpoint_lsn = checkpoint.metadata.lsn;
+        eprintln!(
+            "[checkpoint] snapshot: {:.2}s ({} vertices, {} edges)",
+            t0.elapsed().as_secs_f64(),
+            checkpoint.vertices.len(),
+            checkpoint.edges.len(),
+        );
 
         // Write to persistence
+        let t1 = std::time::Instant::now();
         self.persistence.write_checkpoint(&checkpoint)?;
+        eprintln!("[checkpoint] write: {:.2}s", t1.elapsed().as_secs_f64());
 
         // Truncate old WAL entries
         self.persistence.truncate_wal_until(checkpoint_lsn)?;
@@ -578,7 +587,9 @@ impl MemoryGraph {
         self.wal_entries_since_checkpoint.store(0, Ordering::SeqCst);
 
         // Sync to disk
+        let t2 = std::time::Instant::now();
         self.persistence.sync_all()?;
+        eprintln!("[checkpoint] sync: {:.2}s", t2.elapsed().as_secs_f64());
 
         Ok(checkpoint_lsn)
     }
@@ -755,6 +766,46 @@ impl MemoryGraph {
     #[doc(hidden)]
     pub fn persistence(&self) -> &Arc<dyn PersistenceProvider> {
         &self.persistence
+    }
+
+    // ===== Bulk insert methods (bypass transaction system) =====
+
+    /// Inserts a vertex directly into the graph without transaction overhead.
+    ///
+    /// This bypasses undo/redo buffers and WAL entirely. The vertex is inserted
+    /// with commit_ts=0 (committed). Caller must call `create_checkpoint()` to persist.
+    ///
+    /// # Safety (logical)
+    /// Only use for bulk import where crash recovery is not needed (reimport on failure).
+    pub fn bulk_insert_vertex(&self, vertex: Vertex) {
+        let vid = vertex.vid();
+        self.vertices
+            .insert(vid, VersionedVertex::new(vertex));
+    }
+
+    /// Inserts an edge directly into the graph without transaction overhead.
+    ///
+    /// This bypasses undo/redo buffers and WAL entirely. Also updates the adjacency list.
+    /// Caller must call `create_checkpoint()` to persist.
+    pub fn bulk_insert_edge(&self, edge: Edge) {
+        let eid = edge.eid();
+        let src_id = edge.src_id();
+        let dst_id = edge.dst_id();
+        let label_id = edge.label_id();
+
+        self.edges
+            .insert(eid, VersionedEdge::new(edge));
+
+        self.adjacency_list
+            .entry(src_id)
+            .or_insert_with(AdjacencyContainer::new)
+            .outgoing()
+            .insert(Neighbor::new(label_id, dst_id, eid));
+        self.adjacency_list
+            .entry(dst_id)
+            .or_insert_with(AdjacencyContainer::new)
+            .incoming()
+            .insert(Neighbor::new(label_id, src_id, eid));
     }
 
     // ===== Mutable graph methods =====

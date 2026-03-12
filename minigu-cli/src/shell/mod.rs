@@ -64,6 +64,7 @@ impl ShellArgs {
             header: !self.no_header,
             column_type: !self.no_column_type,
             show_metrics: self.show_metrics,
+            timing: false,
         };
         context.run()
     }
