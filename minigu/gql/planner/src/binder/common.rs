@@ -346,15 +346,10 @@ impl Binder<'_> {
             )));
         }
 
-        let predicate = match &f.predicate {
-            None => None,
-            Some(sp) => None,
-        };
-
         Ok(BoundVertexPattern {
             var,
             label: label_set_vec,
-            predicate,
+            predicate: None,
         })
     }
 

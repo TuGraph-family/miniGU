@@ -288,7 +288,16 @@ add_e2e_tests!(
 );
 add_e2e_tests!("dql", ["dql"]);
 add_e2e_tests!("dcl", ["session_set"]);
-add_e2e_tests!("dml", ["insert", "match_and_insert", "match", "dml_dql"]);
+add_e2e_tests!(
+    "dml",
+    [
+        "insert",
+        "match_and_insert",
+        "match",
+        "match_filter",
+        "dml_dql"
+    ]
+);
 add_e2e_tests!("misc", ["text2graph", "vector_index"]);
 add_e2e_tests!(
     "utility",
@@ -320,7 +329,16 @@ add_parser_tests!(
 );
 add_parser_tests!("dql", ["dql"]);
 add_parser_tests!("dcl", ["session_set"]);
-add_parser_tests!("dml", ["insert", "match_and_insert", "match", "dml_dql"]);
+add_parser_tests!(
+    "dml",
+    [
+        "insert",
+        "match_and_insert",
+        "match",
+        "match_filter",
+        "dml_dql"
+    ]
+);
 add_parser_tests!("misc", ["text2graph", "vector_index"]);
 add_parser_tests!(
     "utility",
@@ -337,3 +355,60 @@ add_parser_tests!(
         "explain_vector_index_scan"
     ]
 );
+
+// ============================================================================
+// Persistence tests: open database, create data, close, reopen, verify data
+// ============================================================================
+
+#[test]
+fn e2e_persistence_reopen_database() {
+    let _guard = setup_insta_settings("e2e", "../gql/persistence/");
+
+    let temp_dir = tempdir().unwrap();
+    let db_path = temp_dir.path().join("test_db");
+
+    // Phase 1: Create database, create graph with data, close
+    let result_phase1 = {
+        let config = DatabaseConfig {
+            db_path: Some(db_path.clone()),
+            ..Default::default()
+        };
+        let db = Database::open(db_path.clone(), config).unwrap();
+        let mut session = db.session().unwrap();
+
+        // Create test graph with data
+        session
+            .query("CALL create_test_graph_data('g', 10)")
+            .unwrap();
+        session.query("SESSION SET GRAPH g").unwrap();
+
+        // Query to verify data exists
+        let result = session.query("MATCH (p:PERSON) RETURN p").unwrap();
+        result_to_string(&result)
+        // session and db dropped here — data should be persisted
+    };
+
+    // Phase 2: Reopen the same database, verify data is still there
+    let result_phase2 = {
+        let config = DatabaseConfig {
+            db_path: Some(db_path.clone()),
+            ..Default::default()
+        };
+        let db = Database::open(db_path.clone(), config).unwrap();
+        let mut session = db.session().unwrap();
+
+        // Set current graph (should be loaded from catalog.json)
+        session.query("SESSION SET GRAPH g").unwrap();
+
+        // Query again — should return the same data
+        let result = session.query("MATCH (p:PERSON) RETURN p").unwrap();
+        result_to_string(&result)
+    };
+
+    // Both phases should produce the same output
+    let output = format!(
+        "--- Phase 1: Initial data ---\n{}\n--- Phase 2: After reopen ---\n{}",
+        result_phase1, result_phase2
+    );
+    assert_snapshot!("persistence_reopen", &output);
+}

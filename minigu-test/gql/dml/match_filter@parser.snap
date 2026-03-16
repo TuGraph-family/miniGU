@@ -1,0 +1,992 @@
+---
+source: minigu-test/src/insta_test.rs
+---
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - Call:
+                            optional: false
+                            procedure:
+                              - Named:
+                                  name:
+                                    - Ref:
+                                        schema: ~
+                                        objects:
+                                          - - create_test_graph_data
+                                            - start: 5
+                                              end: 27
+                                    - start: 5
+                                      end: 27
+                                  args:
+                                    - - Value:
+                                          Literal:
+                                            String:
+                                              kind: Char
+                                              literal: g
+                                      - start: 28
+                                        end: 31
+                                    - - Value:
+                                          Literal:
+                                            Numeric:
+                                              Integer:
+                                                - kind: Decimal
+                                                  integer: "10"
+                                                - start: 33
+                                                  end: 35
+                                      - start: 33
+                                        end: 35
+                                  yield_clause: ~
+                              - start: 5
+                                end: 36
+                        - start: 0
+                          end: 36
+                  - start: 0
+                    end: 36
+                next_statements: []
+              - start: 0
+                end: 36
+            end: ~
+        - start: 0
+          end: 36
+      session_close: false
+    - start: 0
+      end: 36
+- Ok:
+    - activity:
+        - Session:
+            set:
+              - - Graph:
+                    - Name: g
+                    - start: 18
+                      end: 19
+                - start: 0
+                  end: 19
+            reset: []
+        - start: 0
+          end: 19
+      session_close: false
+    - start: 0
+      end: 19
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - p
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: PERSON
+                                                                  - start: 9
+                                                                    end: 15
+                                                                predicate: ~
+                                                          - start: 6
+                                                            end: 16
+                                                    - start: 6
+                                                      end: 16
+                                                - start: 6
+                                                  end: 16
+                                            keep: ~
+                                            where_clause:
+                                              - Binary:
+                                                  op:
+                                                    - Eq
+                                                    - start: 30
+                                                      end: 31
+                                                  left:
+                                                    - Property:
+                                                        source:
+                                                          - Variable: p
+                                                          - start: 23
+                                                            end: 24
+                                                        trailing_names:
+                                                          - - name
+                                                            - start: 25
+                                                              end: 29
+                                                    - start: 23
+                                                      end: 29
+                                                  right:
+                                                    - Value:
+                                                        Literal:
+                                                          String:
+                                                            kind: Char
+                                                            literal: person0
+                                                    - start: 32
+                                                      end: 41
+                                              - start: 23
+                                                end: 41
+                                          - start: 6
+                                            end: 41
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 41
+                                - start: 0
+                                  end: 41
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Variable: p
+                                                  - start: 49
+                                                    end: 50
+                                                alias: ~
+                                              - start: 49
+                                                end: 50
+                                        - start: 49
+                                          end: 50
+                                      group_by: ~
+                                    - start: 42
+                                      end: 50
+                                  order_by: ~
+                              - start: 42
+                                end: 50
+                  - start: 0
+                    end: 50
+                next_statements: []
+              - start: 0
+                end: 50
+            end: ~
+        - start: 0
+          end: 50
+      session_close: false
+    - start: 0
+      end: 50
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - p
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: PERSON
+                                                                  - start: 9
+                                                                    end: 15
+                                                                predicate: ~
+                                                          - start: 6
+                                                            end: 16
+                                                        - - Pattern:
+                                                              Edge:
+                                                                kind: Right
+                                                                filler:
+                                                                  variable:
+                                                                    - w
+                                                                    - start: 18
+                                                                      end: 19
+                                                                  label:
+                                                                    - Label: WORKS_AT
+                                                                    - start: 20
+                                                                      end: 28
+                                                                  predicate: ~
+                                                          - start: 16
+                                                            end: 31
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - c
+                                                                  - start: 32
+                                                                    end: 33
+                                                                label:
+                                                                  - Label: COMPANY
+                                                                  - start: 34
+                                                                    end: 41
+                                                                predicate: ~
+                                                          - start: 31
+                                                            end: 42
+                                                    - start: 6
+                                                      end: 42
+                                                - start: 6
+                                                  end: 42
+                                            keep: ~
+                                            where_clause:
+                                              - Binary:
+                                                  op:
+                                                    - Eq
+                                                    - start: 56
+                                                      end: 57
+                                                  left:
+                                                    - Property:
+                                                        source:
+                                                          - Variable: c
+                                                          - start: 49
+                                                            end: 50
+                                                        trailing_names:
+                                                          - - name
+                                                            - start: 51
+                                                              end: 55
+                                                    - start: 49
+                                                      end: 55
+                                                  right:
+                                                    - Value:
+                                                        Literal:
+                                                          String:
+                                                            kind: Char
+                                                            literal: company0
+                                                    - start: 58
+                                                      end: 68
+                                              - start: 49
+                                                end: 68
+                                          - start: 6
+                                            end: 68
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 68
+                                - start: 0
+                                  end: 68
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Variable: p
+                                                  - start: 76
+                                                    end: 77
+                                                alias: ~
+                                              - start: 76
+                                                end: 77
+                                            - - value:
+                                                  - Variable: w
+                                                  - start: 79
+                                                    end: 80
+                                                alias: ~
+                                              - start: 79
+                                                end: 80
+                                            - - value:
+                                                  - Variable: c
+                                                  - start: 82
+                                                    end: 83
+                                                alias: ~
+                                              - start: 82
+                                                end: 83
+                                        - start: 76
+                                          end: 83
+                                      group_by: ~
+                                    - start: 69
+                                      end: 83
+                                  order_by: ~
+                              - start: 69
+                                end: 83
+                  - start: 0
+                    end: 83
+                next_statements: []
+              - start: 0
+                end: 83
+            end: ~
+        - start: 0
+          end: 83
+      session_close: false
+    - start: 0
+      end: 83
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - p
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: PERSON
+                                                                  - start: 9
+                                                                    end: 15
+                                                                predicate: ~
+                                                          - start: 6
+                                                            end: 16
+                                                        - - Pattern:
+                                                              Edge:
+                                                                kind: Right
+                                                                filler:
+                                                                  variable:
+                                                                    - w
+                                                                    - start: 18
+                                                                      end: 19
+                                                                  label:
+                                                                    - Label: WORKS_AT
+                                                                    - start: 20
+                                                                      end: 28
+                                                                  predicate: ~
+                                                          - start: 16
+                                                            end: 31
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - c
+                                                                  - start: 32
+                                                                    end: 33
+                                                                label:
+                                                                  - Label: COMPANY
+                                                                  - start: 34
+                                                                    end: 41
+                                                                predicate: ~
+                                                          - start: 31
+                                                            end: 42
+                                                    - start: 6
+                                                      end: 42
+                                                - start: 6
+                                                  end: 42
+                                            keep: ~
+                                            where_clause:
+                                              - Binary:
+                                                  op:
+                                                    - Eq
+                                                    - start: 56
+                                                      end: 57
+                                                  left:
+                                                    - Property:
+                                                        source:
+                                                          - Variable: p
+                                                          - start: 49
+                                                            end: 50
+                                                        trailing_names:
+                                                          - - name
+                                                            - start: 51
+                                                              end: 55
+                                                    - start: 49
+                                                      end: 55
+                                                  right:
+                                                    - Value:
+                                                        Literal:
+                                                          String:
+                                                            kind: Char
+                                                            literal: person0
+                                                    - start: 58
+                                                      end: 67
+                                              - start: 49
+                                                end: 67
+                                          - start: 6
+                                            end: 67
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 67
+                                - start: 0
+                                  end: 67
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Variable: p
+                                                  - start: 75
+                                                    end: 76
+                                                alias: ~
+                                              - start: 75
+                                                end: 76
+                                            - - value:
+                                                  - Variable: w
+                                                  - start: 78
+                                                    end: 79
+                                                alias: ~
+                                              - start: 78
+                                                end: 79
+                                            - - value:
+                                                  - Variable: c
+                                                  - start: 81
+                                                    end: 82
+                                                alias: ~
+                                              - start: 81
+                                                end: 82
+                                        - start: 75
+                                          end: 82
+                                      group_by: ~
+                                    - start: 68
+                                      end: 82
+                                  order_by: ~
+                              - start: 68
+                                end: 82
+                  - start: 0
+                    end: 82
+                next_statements: []
+              - start: 0
+                end: 82
+            end: ~
+        - start: 0
+          end: 82
+      session_close: false
+    - start: 0
+      end: 82
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - p
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: PERSON
+                                                                  - start: 9
+                                                                    end: 15
+                                                                predicate: ~
+                                                          - start: 6
+                                                            end: 16
+                                                    - start: 6
+                                                      end: 16
+                                                - start: 6
+                                                  end: 16
+                                            keep: ~
+                                            where_clause:
+                                              - Binary:
+                                                  op:
+                                                    - Gt
+                                                    - start: 29
+                                                      end: 30
+                                                  left:
+                                                    - Property:
+                                                        source:
+                                                          - Variable: p
+                                                          - start: 23
+                                                            end: 24
+                                                        trailing_names:
+                                                          - - age
+                                                            - start: 25
+                                                              end: 28
+                                                    - start: 23
+                                                      end: 28
+                                                  right:
+                                                    - Value:
+                                                        Literal:
+                                                          Numeric:
+                                                            Integer:
+                                                              - kind: Decimal
+                                                                integer: "22"
+                                                              - start: 31
+                                                                end: 33
+                                                    - start: 31
+                                                      end: 33
+                                              - start: 23
+                                                end: 33
+                                          - start: 6
+                                            end: 33
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 33
+                                - start: 0
+                                  end: 33
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Variable: p
+                                                  - start: 41
+                                                    end: 42
+                                                alias: ~
+                                              - start: 41
+                                                end: 42
+                                        - start: 41
+                                          end: 42
+                                      group_by: ~
+                                    - start: 34
+                                      end: 42
+                                  order_by: ~
+                              - start: 34
+                                end: 42
+                  - start: 0
+                    end: 42
+                next_statements: []
+              - start: 0
+                end: 42
+            end: ~
+        - start: 0
+          end: 42
+      session_close: false
+    - start: 0
+      end: 42
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - p
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: PERSON
+                                                                  - start: 9
+                                                                    end: 15
+                                                                predicate: ~
+                                                          - start: 6
+                                                            end: 16
+                                                    - start: 6
+                                                      end: 16
+                                                - start: 6
+                                                  end: 16
+                                            keep: ~
+                                            where_clause:
+                                              - Binary:
+                                                  op:
+                                                    - Gt
+                                                    - start: 29
+                                                      end: 30
+                                                  left:
+                                                    - Property:
+                                                        source:
+                                                          - Variable: p
+                                                          - start: 23
+                                                            end: 24
+                                                        trailing_names:
+                                                          - - age
+                                                            - start: 25
+                                                              end: 28
+                                                    - start: 23
+                                                      end: 28
+                                                  right:
+                                                    - Value:
+                                                        Literal:
+                                                          Numeric:
+                                                            Integer:
+                                                              - kind: Decimal
+                                                                integer: "22"
+                                                              - start: 31
+                                                                end: 33
+                                                    - start: 31
+                                                      end: 33
+                                              - start: 23
+                                                end: 33
+                                          - start: 6
+                                            end: 33
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 33
+                                - start: 0
+                                  end: 33
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Property:
+                                                      source:
+                                                        - Variable: p
+                                                        - start: 41
+                                                          end: 42
+                                                      trailing_names:
+                                                        - - name
+                                                          - start: 43
+                                                            end: 47
+                                                  - start: 41
+                                                    end: 47
+                                                alias: ~
+                                              - start: 41
+                                                end: 47
+                                        - start: 41
+                                          end: 47
+                                      group_by: ~
+                                    - start: 34
+                                      end: 47
+                                  order_by: ~
+                              - start: 34
+                                end: 47
+                  - start: 0
+                    end: 47
+                next_statements: []
+              - start: 0
+                end: 47
+            end: ~
+        - start: 0
+          end: 47
+      session_close: false
+    - start: 0
+      end: 47
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - p
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: PERSON
+                                                                  - start: 9
+                                                                    end: 15
+                                                                predicate: ~
+                                                          - start: 6
+                                                            end: 16
+                                                    - start: 6
+                                                      end: 16
+                                                - start: 6
+                                                  end: 16
+                                            keep: ~
+                                            where_clause:
+                                              - Binary:
+                                                  op:
+                                                    - Eq
+                                                    - start: 30
+                                                      end: 31
+                                                  left:
+                                                    - Property:
+                                                        source:
+                                                          - Variable: p
+                                                          - start: 23
+                                                            end: 24
+                                                        trailing_names:
+                                                          - - name
+                                                            - start: 25
+                                                              end: 29
+                                                    - start: 23
+                                                      end: 29
+                                                  right:
+                                                    - Value:
+                                                        Literal:
+                                                          String:
+                                                            kind: Char
+                                                            literal: nonexistent
+                                                    - start: 32
+                                                      end: 45
+                                              - start: 23
+                                                end: 45
+                                          - start: 6
+                                            end: 45
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 45
+                                - start: 0
+                                  end: 45
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Variable: p
+                                                  - start: 53
+                                                    end: 54
+                                                alias: ~
+                                              - start: 53
+                                                end: 54
+                                        - start: 53
+                                          end: 54
+                                      group_by: ~
+                                    - start: 46
+                                      end: 54
+                                  order_by: ~
+                              - start: 46
+                                end: 54
+                  - start: 0
+                    end: 54
+                next_statements: []
+              - start: 0
+                end: 54
+            end: ~
+        - start: 0
+          end: 54
+      session_close: false
+    - start: 0
+      end: 54
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Query:
+                      Primary:
+                        Ambient:
+                          Parts:
+                            parts:
+                              - - Match:
+                                    Simple:
+                                      - pattern:
+                                          - match_mode: ~
+                                            patterns:
+                                              - - variable: ~
+                                                  prefix: ~
+                                                  expr:
+                                                    - Concat:
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - p
+                                                                  - start: 7
+                                                                    end: 8
+                                                                label:
+                                                                  - Label: PERSON
+                                                                  - start: 9
+                                                                    end: 15
+                                                                predicate: ~
+                                                          - start: 6
+                                                            end: 16
+                                                        - - Pattern:
+                                                              Edge:
+                                                                kind: Right
+                                                                filler:
+                                                                  variable:
+                                                                    - f
+                                                                    - start: 18
+                                                                      end: 19
+                                                                  label:
+                                                                    - Label: FRIEND
+                                                                    - start: 20
+                                                                      end: 26
+                                                                  predicate: ~
+                                                          - start: 16
+                                                            end: 29
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - p2
+                                                                  - start: 30
+                                                                    end: 32
+                                                                label:
+                                                                  - Label: PERSON
+                                                                  - start: 33
+                                                                    end: 39
+                                                                predicate: ~
+                                                          - start: 29
+                                                            end: 40
+                                                        - - Pattern:
+                                                              Edge:
+                                                                kind: Right
+                                                                filler:
+                                                                  variable:
+                                                                    - w
+                                                                    - start: 42
+                                                                      end: 43
+                                                                  label:
+                                                                    - Label: WORKS_AT
+                                                                    - start: 44
+                                                                      end: 52
+                                                                  predicate: ~
+                                                          - start: 40
+                                                            end: 55
+                                                        - - Pattern:
+                                                              Node:
+                                                                variable:
+                                                                  - c
+                                                                  - start: 56
+                                                                    end: 57
+                                                                label:
+                                                                  - Label: COMPANY
+                                                                  - start: 58
+                                                                    end: 65
+                                                                predicate: ~
+                                                          - start: 55
+                                                            end: 66
+                                                    - start: 6
+                                                      end: 66
+                                                - start: 6
+                                                  end: 66
+                                            keep: ~
+                                            where_clause:
+                                              - Binary:
+                                                  op:
+                                                    - Eq
+                                                    - start: 80
+                                                      end: 81
+                                                  left:
+                                                    - Property:
+                                                        source:
+                                                          - Variable: p
+                                                          - start: 73
+                                                            end: 74
+                                                        trailing_names:
+                                                          - - name
+                                                            - start: 75
+                                                              end: 79
+                                                    - start: 73
+                                                      end: 79
+                                                  right:
+                                                    - Value:
+                                                        Literal:
+                                                          String:
+                                                            kind: Char
+                                                            literal: person0
+                                                    - start: 82
+                                                      end: 91
+                                              - start: 73
+                                                end: 91
+                                          - start: 6
+                                            end: 91
+                                        yield_clause: []
+                                      - start: 6
+                                        end: 91
+                                - start: 0
+                                  end: 91
+                            result:
+                              - Return:
+                                  statement:
+                                    - quantifier: ~
+                                      items:
+                                        - Items:
+                                            - - value:
+                                                  - Variable: p
+                                                  - start: 99
+                                                    end: 100
+                                                alias: ~
+                                              - start: 99
+                                                end: 100
+                                            - - value:
+                                                  - Variable: p2
+                                                  - start: 102
+                                                    end: 104
+                                                alias: ~
+                                              - start: 102
+                                                end: 104
+                                            - - value:
+                                                  - Variable: c
+                                                  - start: 106
+                                                    end: 107
+                                                alias: ~
+                                              - start: 106
+                                                end: 107
+                                        - start: 99
+                                          end: 107
+                                      group_by: ~
+                                    - start: 92
+                                      end: 107
+                                  order_by: ~
+                              - start: 92
+                                end: 107
+                  - start: 0
+                    end: 107
+                next_statements: []
+              - start: 0
+                end: 107
+            end: ~
+        - start: 0
+          end: 107
+      session_close: false
+    - start: 0
+      end: 107
