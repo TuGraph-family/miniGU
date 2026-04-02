@@ -18,6 +18,8 @@ use crate::plan::scan::NodeIdScan;
 use crate::plan::sort::Sort;
 use crate::plan::{PlanData, PlanNode};
 
+mod vector_index_scan_rewrite;
+
 #[derive(Debug, Default)]
 pub struct Optimizer {}
 
@@ -27,8 +29,14 @@ impl Optimizer {
     }
 
     pub fn create_physical_plan(self, logical_plan: &PlanNode) -> PlanResult<PlanNode> {
-        create_physical_plan_impl(logical_plan)
+        let rewritten = run_logical_rewrite_passes(logical_plan.clone())?;
+        create_physical_plan_impl(&rewritten)
     }
+}
+
+fn run_logical_rewrite_passes(plan: PlanNode) -> PlanResult<PlanNode> {
+    let plan = vector_index_scan_rewrite::rewrite(plan)?;
+    Ok(plan)
 }
 
 fn extract_path_pattern_from_graph_pattern(g: &BoundGraphPattern) -> PlanResult<PathPatternInfo> {
@@ -191,8 +199,25 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
             Ok(PlanNode::PhysicalOffset(Arc::new(offset)))
         }
         PlanNode::LogicalVectorIndexScan(vector_scan) => {
-            assert!(children.is_empty());
-            Ok(PlanNode::PhysicalVectorIndexScan(vector_scan.clone()))
+            let [child] = children
+                .try_into()
+                .expect("vector index scan should have exactly one child");
+            let scan = vector_scan.clone().clone_with_child(child);
+            Ok(PlanNode::PhysicalVectorIndexScan(Arc::new(scan)))
+        }
+        PlanNode::LogicalHashJoin(join) => {
+            let [left, right] = children
+                .try_into()
+                .expect("hash join should have two children");
+            let join = join.clone().clone_with_children(left, right);
+            Ok(PlanNode::PhysicalHashJoin(Arc::new(join)))
+        }
+        PlanNode::LogicalVertexPropertyFetch(fetch) => {
+            let [child] = children
+                .try_into()
+                .expect("vertex property fetch should have exactly one child");
+            let fetch = fetch.clone().clone_with_child(child);
+            Ok(PlanNode::PhysicalVertexPropertyFetch(Arc::new(fetch)))
         }
         PlanNode::LogicalExplain(explain) => Ok(PlanNode::PhysicalExplain(explain.clone())),
         PlanNode::LogicalCreateVectorIndex(create_index) => {

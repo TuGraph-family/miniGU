@@ -1,0 +1,25 @@
+CALL create_test_graph_data("vec_graph", 8);
+SESSION SET GRAPH vec_graph;
+
+CREATE VECTOR INDEX vec_idx IF NOT EXISTS
+FOR (n:PERSON)
+ON (n.embedding);
+
+EXPLAIN
+MATCH (a:PERSON)
+RETURN a.name,
+       VECTOR_DISTANCE(
+           VECTOR [
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+               0, 0, 0, 0, 0, 0, 0, 0
+           ],
+           a.embedding,
+           L2
+       ) AS distance
+ORDER BY distance
+LIMIT APPROXIMATE 3;

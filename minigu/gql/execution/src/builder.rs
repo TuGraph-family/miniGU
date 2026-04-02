@@ -19,6 +19,7 @@ use crate::evaluator::vertex_constructor::VertexConstructor;
 use crate::executor::catalog_modify::{CreateGraphBuilder, DropGraphBuilder};
 use crate::executor::create_vector_index::CreateVectorIndexBuilder;
 use crate::executor::drop_vector_index::DropVectorIndexBuilder;
+use crate::executor::join::JoinCond;
 use crate::executor::procedure_call::ProcedureCallBuilder;
 use crate::executor::sort::SortSpec;
 use crate::executor::vector_index_scan::VectorIndexScanBuilder;
@@ -236,9 +237,59 @@ impl ExecutorBuilder {
                 Box::new(self.build_executor(&children[0]).offset(offset.offset))
             }
             PlanNode::PhysicalVectorIndexScan(vector_scan) => {
-                assert!(children.is_empty());
-                VectorIndexScanBuilder::new(self.session.clone(), vector_scan.clone())
-                    .into_executor()
+                assert_eq!(children.len(), 1);
+                let child_schema = children[0].schema().expect("child should have a schema");
+                let binding_column_index = child_schema
+                    .get_field_index_by_name(&vector_scan.binding)
+                    .expect("binding column should exist in child schema");
+                let child_executor = self.build_executor(&children[0]);
+                VectorIndexScanBuilder::new(
+                    self.session.clone(),
+                    vector_scan.clone(),
+                    child_executor,
+                    binding_column_index,
+                )
+                .into_executor()
+            }
+            PlanNode::PhysicalHashJoin(join) => {
+                assert_eq!(children.len(), 2);
+                let left_executor = self.build_executor(&children[0]);
+                let right_executor = self.build_executor(&children[1]);
+                let left_schema = children[0].schema().expect("left schema");
+                let right_schema = children[1].schema().expect("right schema");
+                let conds = join
+                    .conds
+                    .iter()
+                    .map(|cond| {
+                        let left_key = self.build_evaluator(&cond.left_key, left_schema);
+                        let right_key = self.build_evaluator(&cond.right_key, right_schema);
+                        JoinCond::new(left_key, right_key)
+                    })
+                    .collect();
+                Box::new(left_executor.join(right_executor, conds))
+            }
+            PlanNode::PhysicalVertexPropertyFetch(fetch) => {
+                assert_eq!(children.len(), 1);
+                let child_executor = self.build_executor(&children[0]);
+                let binding_idx = children[0]
+                    .schema()
+                    .expect("child schema should exist")
+                    .get_field_index_by_name(&fetch.binding)
+                    .expect("binding column should exist");
+                let container: Arc<GraphContainer> = self
+                    .session
+                    .current_graph
+                    .clone()
+                    .expect("current graph should be set")
+                    .object()
+                    .clone()
+                    .downcast_arc::<GraphContainer>()
+                    .expect("failed to downcast to GraphContainer");
+                Box::new(child_executor.scan_vertex_property(
+                    binding_idx,
+                    fetch.property_ids.clone(),
+                    container,
+                ))
             }
             PlanNode::PhysicalExplain(explain) => {
                 let explain_str = explain.explain(0).unwrap_or_default();
@@ -313,6 +364,16 @@ impl ExecutorBuilder {
                 let index = schema
                     .get_field_index_by_name(variable)
                     .expect("variable should be present in the schema");
+                Box::new(ColumnRef::new(index))
+            }
+            BoundExprKind::Property {
+                binding, property, ..
+            } => {
+                // Prefer qualified column name `{binding}_{property}`
+                let qualified = format!("{}_{}", binding, property);
+                let index = schema
+                    .get_field_index_by_name(&qualified)
+                    .expect("property column should be present in the schema");
                 Box::new(ColumnRef::new(index))
             }
             BoundExprKind::VectorDistance {

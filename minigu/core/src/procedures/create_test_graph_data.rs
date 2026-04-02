@@ -8,13 +8,16 @@ use minigu_catalog::named_ref::NamedGraphRef;
 use minigu_catalog::property::Property;
 use minigu_common::data_type::LogicalType;
 use minigu_common::types::{EdgeId, VertexId};
-use minigu_common::value::ScalarValue;
+use minigu_common::value::{F32, ScalarValue, VectorValue};
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::procedure::Procedure;
 use minigu_storage::common::{Edge, PropertyRecord, Vertex};
 use minigu_storage::tp::MemoryGraph;
 use minigu_transaction::IsolationLevel::Serializable;
 use minigu_transaction::{GraphTxnManager, Transaction};
+
+const PERSON_EMBEDDING_DIM: usize = 104;
+const CITY_EMBEDDING_DIM: usize = 105; // not support
 
 /// Creates a test graph with multiple vertex types (PERSON, COMPANY, CITY) and edge types (FRIEND,
 /// WORKS_AT, LOCATED_IN) with sample data.
@@ -62,6 +65,11 @@ pub fn build_procedure() -> Procedure {
             vec![
                 Property::new("name".to_string(), LogicalType::String, false),
                 Property::new("age".to_string(), LogicalType::Int8, false),
+                Property::new(
+                    "embedding".to_string(),
+                    LogicalType::Vector(PERSON_EMBEDDING_DIM),
+                    false,
+                ),
             ],
         ));
 
@@ -80,6 +88,11 @@ pub fn build_procedure() -> Procedure {
             vec![
                 Property::new("name".to_string(), LogicalType::String, false),
                 Property::new("population".to_string(), LogicalType::Int32, false),
+                Property::new(
+                    "embedding105".to_string(),
+                    LogicalType::Vector(CITY_EMBEDDING_DIM),
+                    false,
+                ),
             ],
         ));
 
@@ -148,9 +161,9 @@ pub fn build_procedure() -> Procedure {
         //   - num_persons = 2 (person0, person1)
         //   - num_companies = 1 (company0)
         //   - num_cities = 1 (city0)
-        let num_persons = (n / 2).max(1);
-        let num_companies = (n / 4).max(1);
-        let num_cities = (n / 4).max(1);
+        let num_persons = if n == 0 { 0 } else { (n / 2).max(1) };
+        let num_companies = if n == 0 { 0 } else { (n / 4).max(1) };
+        let num_cities = if n == 0 { 0 } else { (n / 4).max(1) };
 
         let mut person_ids: Vec<u64> = Vec::with_capacity(num_persons);
         let mut company_ids: Vec<u64> = Vec::with_capacity(num_companies);
@@ -159,12 +172,14 @@ pub fn build_procedure() -> Procedure {
         // Create PERSON vertices
         for i in 0..num_persons {
             let vid = i as u64;
+            let embedding = build_embedding(i, PERSON_EMBEDDING_DIM);
             let vertex = Vertex::new(
                 VertexId::from(vid),
                 person_label_id,
                 PropertyRecord::new(vec![
                     ScalarValue::String(Some(format!("person{}", i))),
                     ScalarValue::Int8(Some(20 + i as i8)),
+                    ScalarValue::new_vector(PERSON_EMBEDDING_DIM, Some(embedding)),
                 ]),
             );
             mem.create_vertex(&txn, vertex)?;
@@ -191,12 +206,14 @@ pub fn build_procedure() -> Procedure {
         let city_start_id = company_start_id + num_companies as u64;
         for i in 0..num_cities {
             let vid = city_start_id + i as u64;
+            let city_embedding = build_embedding(i + 1000, CITY_EMBEDDING_DIM);
             let vertex = Vertex::new(
                 VertexId::from(vid),
                 city_label_id,
                 PropertyRecord::new(vec![
                     ScalarValue::String(Some(format!("city{}", i))),
                     ScalarValue::Int32(Some(100000 * (i + 1) as i32)),
+                    ScalarValue::new_vector(CITY_EMBEDDING_DIM, Some(city_embedding)),
                 ]),
             );
             mem.create_vertex(&txn, vertex)?;
@@ -252,7 +269,11 @@ pub fn build_procedure() -> Procedure {
 
         // Create WORKS_AT edges - NOT all persons have jobs (partial connection)
         // This means PERSON-WORKS_AT-COMPANY does NOT yield all persons (some are unemployed)
-        let num_employed = (num_persons * 3 / 5).max(1); // 60% of persons have jobs
+        let num_employed = if num_persons == 0 {
+            0
+        } else {
+            (num_persons * 3 / 5).max(1)
+        }; // 60% of persons have jobs
         for (i, _) in person_ids.iter().enumerate().take(num_employed) {
             let company_idx = i % num_companies;
             let edge = Edge::new(
@@ -283,4 +304,13 @@ pub fn build_procedure() -> Procedure {
         txn.commit()?;
         Ok(vec![])
     })
+}
+
+fn build_embedding(seed: usize, dimension: usize) -> VectorValue {
+    let mut data = vec![F32::from(0.0); dimension];
+    for (idx, item) in data.iter_mut().enumerate() {
+        // Spread out values so nearby seeds have similar but distinct embeddings.
+        *item = F32::from(((seed + idx) as f32) / 100.0);
+    }
+    VectorValue::new(data, dimension).expect("embedding vector should be constructable")
 }

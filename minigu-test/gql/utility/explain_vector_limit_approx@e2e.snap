@@ -1,0 +1,16 @@
+---
+source: minigu-test/src/insta_test.rs
+---
+Statement OK. No results
+---
+Statement OK. No results
+---
+Statement OK. No results
+---
+Explain:
+  Project: a.name, VECTOR_DISTANCE(Vector { dimension: 104, value: Some(VectorValue { data: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] }) }, a.embedding, L2)
+    HashJoin: 1 conds
+      VectorIndexScan: binding=a, distance_alias=distance, index_key=VectorIndexKey { label_id: 1, property_id: 2 }, metric=L2, dimension=104, limit=3, approximate=true
+        LogicalMatch
+      VertexPropertyFetch: binding=a, properties=a_name,a_embedding ids=[0, 2]
+        LogicalMatch
