@@ -1221,8 +1221,11 @@ impl MemoryGraph {
             create_filter_mask(candidate_vector_ids, total_vector_num.try_into().unwrap())
         });
         let results = index_ref.search(&query_vec, k, l_value, filter_mask.as_ref(), should_pre)?;
-
-        Ok(results)
+        let normalized_results = results
+            .into_iter()
+            .map(|(vertex_id, distance_sq)| (vertex_id, distance_sq.sqrt()))
+            .collect();
+        Ok(normalized_results)
     }
 
     /// Extract node IDs from a boolean bitmap where the value is true

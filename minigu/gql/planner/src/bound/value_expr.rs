@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use minigu_common::data_type::LogicalType;
-use minigu_common::types::VectorMetric;
+use minigu_common::types::{LabelId, PropertyId, VectorMetric};
 use minigu_common::value::ScalarValue;
 use serde::Serialize;
 
@@ -9,6 +9,12 @@ use serde::Serialize;
 pub enum BoundExprKind {
     Value(ScalarValue),
     Variable(String),
+    Property {
+        binding: String,
+        property: String,
+        label_id: Option<LabelId>,
+        property_id: Option<PropertyId>,
+    },
     VectorDistance {
         lhs: Box<BoundExpr>,
         rhs: Box<BoundExpr>,
@@ -23,6 +29,11 @@ impl Display for BoundExprKind {
             // TODO: Use `Display` rather than `Debug` representation for `value`.
             BoundExprKind::Value(value) => write!(f, "{value:?}"),
             BoundExprKind::Variable(variable) => write!(f, "{variable}"),
+            BoundExprKind::Property {
+                binding, property, ..
+            } => {
+                write!(f, "{binding}.{property}")
+            }
             BoundExprKind::VectorDistance {
                 lhs, rhs, metric, ..
             } => {
@@ -51,6 +62,26 @@ impl BoundExpr {
     pub fn variable(name: String, logical_type: LogicalType, nullable: bool) -> Self {
         Self {
             kind: BoundExprKind::Variable(name),
+            logical_type,
+            nullable,
+        }
+    }
+
+    pub fn property(
+        binding: String,
+        property: String,
+        label_id: Option<LabelId>,
+        property_id: Option<PropertyId>,
+        logical_type: LogicalType,
+        nullable: bool,
+    ) -> Self {
+        Self {
+            kind: BoundExprKind::Property {
+                binding,
+                property,
+                label_id,
+                property_id,
+            },
             logical_type,
             nullable,
         }

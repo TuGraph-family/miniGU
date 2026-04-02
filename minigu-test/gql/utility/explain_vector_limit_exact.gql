@@ -1,0 +1,21 @@
+CALL create_test_graph_data("vec_graph", 8);
+SESSION SET GRAPH vec_graph;
+
+EXPLAIN
+MATCH (a:PERSON)
+RETURN a.name,
+       VECTOR_DISTANCE(
+           VECTOR [
+               1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+               1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+               1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+               1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+               1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+               1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+               1, 1, 1, 1, 1, 1, 1, 1
+           ],
+           a.embedding,
+           L2
+       ) AS distance
+ORDER BY distance
+LIMIT 3;
