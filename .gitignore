@@ -31,3 +31,6 @@ target/
 
 **/.checkpoint/
 *.wal
+
+# Claude Code (may contain credentials)
+.claude/settings.local.json
