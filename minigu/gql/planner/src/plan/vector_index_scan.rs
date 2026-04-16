@@ -5,7 +5,7 @@ use minigu_common::types::{VectorIndexKey, VectorMetric};
 use serde::Serialize;
 
 use crate::bound::BoundExpr;
-use crate::plan::{PlanBase, PlanData};
+use crate::plan::{PlanBase, PlanData, PlanNode};
 
 /// Plan node representing a vector index scan.
 ///
@@ -39,6 +39,7 @@ pub struct VectorIndexScan {
 impl VectorIndexScan {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
+        child: PlanNode,
         binding: String,
         distance_alias: String,
         index_key: VectorIndexKey,
@@ -52,7 +53,7 @@ impl VectorIndexScan {
             DataField::new(binding.clone(), LogicalType::UInt64, false),
             DataField::new(distance_alias.clone(), LogicalType::Float32, false),
         ]);
-        let base = PlanBase::new(Some(Arc::new(schema)), vec![]);
+        let base = PlanBase::new(Some(Arc::new(schema)), vec![child]);
         Self {
             base,
             binding,
@@ -64,6 +65,20 @@ impl VectorIndexScan {
             limit,
             approximate,
         }
+    }
+
+    pub fn clone_with_child(&self, child: PlanNode) -> Self {
+        Self::new(
+            child,
+            self.binding.clone(),
+            self.distance_alias.clone(),
+            self.index_key,
+            self.query.clone(),
+            self.metric,
+            self.dimension,
+            self.limit,
+            self.approximate,
+        )
     }
 
     pub fn schema(&self) -> Option<&DataSchemaRef> {
@@ -80,7 +95,7 @@ impl PlanData for VectorIndexScan {
         let indent_str = " ".repeat(indent * 2);
         let mut output = String::new();
         output.push_str(&format!(
-            "{}VectorIndexScan: binding={}, distance_alias={}, index_key={:?}, metric={:?}, dimension={}, limit={}, approximate={}",
+            "{}VectorIndexScan: binding={}, distance_alias={}, index_key={:?}, metric={:?}, dimension={}, limit={}, approximate={}\n",
             indent_str,
             self.binding,
             self.distance_alias,

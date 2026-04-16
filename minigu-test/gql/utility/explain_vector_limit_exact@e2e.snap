@@ -1,0 +1,13 @@
+---
+source: minigu-test/src/insta_test.rs
+---
+Statement OK. No results
+---
+Statement OK. No results
+---
+Explain:
+  Limit: 3
+    Sort: BoundSortSpec { key: BoundExpr { kind: Variable("distance"), logical_type: Float32, nullable: false }, ordering: Ascending, null_ordering: Last }
+      Project: a.name, VECTOR_DISTANCE(Vector { dimension: 104, value: Some(VectorValue { data: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] }) }, a.embedding, L2)
+        VertexPropertyFetch: binding=a, properties=a_name,a_embedding ids=[0, 2]
+          LogicalMatch

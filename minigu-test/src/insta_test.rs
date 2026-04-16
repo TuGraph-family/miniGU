@@ -286,7 +286,7 @@ add_e2e_tests!(
         "ddl_truncate"
     ]
 );
-add_e2e_tests!("dql", ["dql"]);
+add_e2e_tests!("dql", ["dql", "vector_search"]);
 add_e2e_tests!("dcl", ["session_set"]);
 add_e2e_tests!("dml", ["insert", "match_and_insert", "match", "dml_dql"]);
 add_e2e_tests!("misc", ["text2graph", "vector_index"]);
@@ -298,6 +298,8 @@ add_e2e_tests!(
         "explain_drop_vector_index",
         "explain_filter",
         "explain_limit",
+        "explain_vector_limit_approx",
+        "explain_vector_limit_exact",
         "explain_logical_match",
         "explain_one_row",
         "explain_sort",
@@ -318,7 +320,7 @@ add_parser_tests!(
         "ddl_truncate"
     ]
 );
-add_parser_tests!("dql", ["dql"]);
+add_parser_tests!("dql", ["dql", "vector_search"]);
 add_parser_tests!("dcl", ["session_set"]);
 add_parser_tests!("dml", ["insert", "match_and_insert", "match", "dml_dql"]);
 add_parser_tests!("misc", ["text2graph", "vector_index"]);
@@ -331,6 +333,8 @@ add_parser_tests!(
         "explain_filter",
         "explain_limit",
         "explain_offset",
+        "explain_vector_limit_approx",
+        "explain_vector_limit_exact",
         "explain_logical_match",
         "explain_one_row",
         "explain_sort",

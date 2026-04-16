@@ -1,9 +1,11 @@
 use std::sync::Arc;
 
 use arrow::array::{
-    ArrayRef, BooleanArray, Float32Array, Float64Array, Int8Array, Int16Array, Int32Array,
-    Int64Array, StringArray, UInt8Array, UInt16Array, UInt32Array, UInt64Array,
+    ArrayRef, BooleanArray, FixedSizeListArray, Float32Array, Float64Array, Int8Array, Int16Array,
+    Int32Array, Int64Array, NullBufferBuilder, StringArray, UInt8Array, UInt16Array, UInt32Array,
+    UInt64Array,
 };
+use arrow::datatypes::{DataType, Field};
 use minigu_common::types::{PropertyId, VertexIdArray};
 use minigu_common::value::ScalarValue;
 use minigu_context::graph::{GraphContainer, GraphStorage};
@@ -157,6 +159,50 @@ impl VertexPropertySource for GraphContainer {
                         StringArray,
                         String
                     )
+                }
+                ScalarValue::Vector { dimension, .. } => {
+                    let elem_field = Arc::new(Field::new("item", DataType::Float32, false));
+                    let list_size = *dimension as i32;
+                    let mut flat: Vec<f32> = Vec::with_capacity(values.len() * (*dimension));
+                    let mut nulls = NullBufferBuilder::new(values.len());
+                    let mut has_null = false;
+                    for value in values.iter() {
+                        match value {
+                            ScalarValue::Vector {
+                                value: Some(vector_value),
+                                ..
+                            } => {
+                                flat.extend(vector_value.to_f32_vec().into_iter());
+                                nulls.append_non_null();
+                            }
+                            ScalarValue::Vector { .. } | ScalarValue::Null => {
+                                flat.extend(std::iter::repeat_n(0.0, *dimension));
+                                nulls.append_null();
+                                has_null = true;
+                            }
+                            _ => {
+                                flat.extend(std::iter::repeat_n(0.0, *dimension));
+                                nulls.append_null();
+                                has_null = true;
+                            }
+                        }
+                    }
+                    let values_array = Arc::new(Float32Array::from(flat));
+                    let null_buffer = if has_null {
+                        Some(
+                            nulls
+                                .finish()
+                                .expect("vector null buffer should build successfully"),
+                        )
+                    } else {
+                        None
+                    };
+                    Arc::new(FixedSizeListArray::new(
+                        elem_field,
+                        list_size,
+                        values_array,
+                        null_buffer,
+                    )) as ArrayRef
                 }
                 ScalarValue::Null => {
                     Arc::new(Int64Array::from(vec![None::<i64>; values.len()])) as ArrayRef
