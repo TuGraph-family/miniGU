@@ -6,6 +6,7 @@ pub mod factorized_filter;
 pub mod filter;
 pub mod flatten;
 pub mod offset;
+pub mod optional_match;
 pub mod procedure_call;
 
 // TODO: Implement join executor.

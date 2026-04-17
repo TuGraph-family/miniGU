@@ -13,6 +13,7 @@ use crate::plan::expand::{Expand, ExpandDirection};
 use crate::plan::filter::Filter;
 use crate::plan::limit::Limit;
 use crate::plan::offset::Offset;
+use crate::plan::optional_match::PhysicalOptionalMatch;
 use crate::plan::project::Project;
 use crate::plan::scan::NodeIdScan;
 use crate::plan::sort::Sort;
@@ -227,6 +228,53 @@ fn create_physical_plan_impl(logical_plan: &PlanNode) -> PlanResult<PlanNode> {
         PlanNode::LogicalDropVectorIndex(drop_index) => {
             assert!(children.is_empty());
             Ok(PlanNode::PhysicalDropVectorIndex(drop_index.clone()))
+        }
+        PlanNode::LogicalOptionalMatch(optional_match) => {
+            // OPTIONAL MATCH is implemented as a LEFT JOIN.
+            // The left child is the input plan (from previous statements).
+            // The right child is the plan for the optional pattern.
+            let [left_child] = children
+                .try_into()
+                .expect("optional match should have exactly one child");
+
+            // Convert the optional pattern to a physical plan (similar to LogicalMatch)
+            let right_child = match extract_path_pattern_from_graph_pattern(&optional_match.pattern)? {
+                PathPatternInfo::SingleVertex { var, label_specs } => {
+                    let node = NodeIdScan::new(var.as_str(), label_specs);
+                    PlanNode::PhysicalNodeScan(Arc::new(node))
+                }
+                PathPatternInfo::Path { vertices, edges } => {
+                    if vertices.is_empty() {
+                        return not_implemented("empty path patterns in optional match", None);
+                    }
+                    let (first_var, first_labels) = vertices[0].clone();
+                    let mut current_plan = PlanNode::PhysicalNodeScan(Arc::new(NodeIdScan::new(
+                        first_var.as_str(),
+                        first_labels,
+                    )));
+                    for (edge_info, next_vertex) in edges.iter().zip(vertices.iter().skip(1)) {
+                        let (edge_var, edge_labels, direction) = edge_info;
+                        let (next_var, next_labels) = next_vertex;
+                        let expand = Expand::new(
+                            current_plan.clone(),
+                            0,
+                            edge_labels.clone(),
+                            Some(next_labels.clone()),
+                            edge_var.clone(),
+                            Some(next_var.clone()),
+                            direction.clone(),
+                        );
+                        current_plan = PlanNode::PhysicalExpand(Arc::new(expand));
+                    }
+                    current_plan
+                }
+            };
+
+            // Get the right schema from the optional pattern's output schema
+            let right_schema = optional_match.output_schema.clone();
+
+            let physical_optional = PhysicalOptionalMatch::new(left_child, right_child, right_schema);
+            Ok(PlanNode::PhysicalOptionalMatch(Arc::new(physical_optional)))
         }
         _ => unreachable!(),
     }

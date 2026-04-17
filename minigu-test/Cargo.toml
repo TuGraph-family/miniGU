@@ -37,6 +37,10 @@ path = "src/insta_test.rs"
 name = "sqllogictest"
 path = "src/sqllogictest.rs"
 
+[[test]]
+name = "optional_match_test"
+path = "src/optional_match_test.rs"
+
 [[bench]]
 harness = false
 name = "alloc"

@@ -115,7 +115,14 @@ pub enum BoundSimpleQueryStatement {
 #[derive(Debug, Clone, Serialize)]
 pub enum BoundMatchStatement {
     Simple(Box<BoundGraphPatternBindingTable>),
-    Optional,
+    /// OPTIONAL MATCH statement with LEFT JOIN semantics.
+    /// Contains the bound graph pattern and output schema with nullable columns.
+    Optional {
+        /// The bound graph pattern to optionally match
+        pattern: Box<BoundGraphPatternBindingTable>,
+        /// Output schema with nullable columns for variables introduced in the optional pattern
+        output_schema: DataSchemaRef,
+    },
 }
 
 #[derive(Debug, Clone, Serialize)]
