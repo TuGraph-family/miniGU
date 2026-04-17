@@ -271,7 +271,7 @@ impl MemTransaction {
                         {
                             // Restore props
                             let mut prop_cols = self.storage.property_columns.write().unwrap();
-                            for (k, idx) in props_op.indices.iter().enumerate() {
+                            for idx in props_op.indices.iter() {
                                 if prop_cols.get(*idx).is_none() {
                                     continue;
                                 }
@@ -293,11 +293,6 @@ impl MemTransaction {
                                 pb.min_ts = pb.min_ts.min(old_ts);
                                 pb.max_ts = pb.max_ts.max(old_ts);
                                 pb.values[offset].retain(|v| v.ts != self.txn_id);
-                                let old_val = props_op.props[k].clone();
-                                pb.values[offset].push(crate::ap::olap_graph::PropertyVersion {
-                                    ts: old_ts,
-                                    value: Some(old_val),
-                                });
                             }
                             // Restore commit_ts
                             block.edges[offset].commit_ts = old_ts;
