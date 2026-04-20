@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>miniGU WASM Demo</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <p class="eyebrow">Browser Demo</p>
+        <h1>miniGU WASM works in the browser.</h1>
+        <p class="hero-copy">
+          This page spins up an in-memory <code>MiniGuDb</code>, loads sample graph data, and runs
+          graph queries entirely inside WebAssembly.
+        </p>
+        <div class="hero-actions">
+          <button id="reset-db" class="button button-secondary" type="button">Reset DB</button>
+          <button id="run-demo" class="button" type="button">Run Smoke Demo</button>
+        </div>
+      </section>
+
+      <section class="panel status-panel">
+        <div class="panel-header">
+          <h2>Status</h2>
+          <span id="status-badge" class="status-badge status-idle">Idle</span>
+        </div>
+        <p id="status-text" class="status-text">
+          Build the WASM package, serve this directory over HTTP, then run the smoke demo.
+        </p>
+      </section>
+
+      <section class="workspace">
+        <section class="panel control-panel">
+          <div class="panel-header">
+            <h2>Script Runner</h2>
+            <div class="hero-actions">
+              <button id="run-script-table" class="button" type="button">Run Script (Table)</button>
+              <button id="run-script-json" class="button button-secondary" type="button">
+                Run Script (JSON)
+              </button>
+            </div>
+          </div>
+          <p class="panel-copy">
+            Each line is executed as a single miniGU statement. Setup statements run first in JSON
+            mode. The last statement uses the output mode you click, so mutating statements are not
+            executed twice.
+          </p>
+          <textarea id="script-input" spellcheck="false"></textarea>
+          <div class="preset-grid">
+            <button data-preset="seed" class="button button-secondary preset-button" type="button">
+              Load Seed Script
+            </button>
+            <button
+              data-preset="match"
+              class="button button-secondary preset-button"
+              type="button"
+            >
+              Load MATCH Query
+            </button>
+            <button
+              data-preset="inspect"
+              class="button button-secondary preset-button"
+              type="button"
+            >
+              Load Inspect Query
+            </button>
+          </div>
+        </section>
+
+        <section class="panel output-panel">
+          <div class="panel-header">
+            <h2>Latest Result</h2>
+            <span id="last-query" class="query-label">No query yet</span>
+          </div>
+          <div class="output-tabs">
+            <button class="tab is-active" data-view="table" type="button">Table</button>
+            <button class="tab" data-view="json" type="button">JSON</button>
+            <button class="tab" data-view="log" type="button">Log</button>
+          </div>
+          <pre id="output-table" class="output output-active"></pre>
+          <pre id="output-json" class="output"></pre>
+          <pre id="output-log" class="output"></pre>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
