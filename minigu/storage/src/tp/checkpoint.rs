@@ -8,8 +8,8 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use minigu_common::timestamp::Timestamp;
 use minigu_common::types::{EdgeId, VertexId};
-use minigu_transaction::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use super::memory_graph::{AdjacencyContainer, MemoryGraph, VersionedEdge, VersionedVertex};
@@ -265,9 +265,8 @@ impl GraphCheckpoint {
 #[cfg(test)]
 mod tests {
 
-    use minigu_common::types::VertexId;
+    use minigu_common::IsolationLevel;
     use minigu_common::value::ScalarValue;
-    use minigu_transaction::{GraphTxnManager, IsolationLevel};
 
     use super::*;
     use crate::tp::memory_graph;

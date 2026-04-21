@@ -51,8 +51,10 @@ fn init_memory_catalog() -> Result<(MemoryCatalog, Arc<MemorySchemaCatalog>)> {
     let parent = Arc::downgrade(&root);
     let default_schema = Arc::new(MemorySchemaCatalog::new(Some(parent)));
     for (name, procedure) in build_predefined_procedures() {
+        #[allow(deprecated)]
         default_schema.add_procedure(name, Arc::new(procedure));
     }
+    #[allow(deprecated)]
     root.add_child(
         DEFAULT_SCHEMA_NAME.into(),
         DirectoryOrSchema::Schema(default_schema.clone()),

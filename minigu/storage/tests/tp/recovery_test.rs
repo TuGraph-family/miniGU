@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use minigu_common::value::ScalarValue;
 use minigu_storage::tp::MemoryGraph;
 use minigu_storage::tp::checkpoint::GraphCheckpoint;
-use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
+use minigu_storage::tp::transaction::IsolationLevel;
 use serial_test::serial;
 
 use crate::common::*;

@@ -7,8 +7,23 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, OnceLock};
 
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 
-use crate::error::TimestampError;
+/// Errors that can occur during timestamp and transaction ID operations.
+#[derive(Error, Debug)]
+pub enum TimestampError {
+    #[error("expected commit-ts, but got txn-id ({0})")]
+    WrongDomainCommit(u64),
+
+    #[error("expected txn-id, but got commit-ts ({0})")]
+    WrongDomainTxnId(u64),
+
+    #[error("commit-ts overflow, reached {0}")]
+    CommitTsOverflow(u64),
+
+    #[error("txn-id overflow, reached {0}")]
+    TxnIdOverflow(u64),
+}
 
 /// Represents a commit timestamp used for multi-version concurrency control (MVCC).
 /// It can either represent a transaction ID which starts from 1 << 63,
@@ -152,6 +167,11 @@ impl TransactionIdGenerator {
     }
 
     /// Update the counter if the given transaction ID is greater than the current value
+    ///
+    /// CRITICAL: When starting a transaction with a specific ID (e.g., during WAL replay
+    /// or follower replication), we MUST advance the global generator.
+    /// This ensures that subsequent calls to `next()` (for new transactions) will
+    /// allocate strictly higher IDs, preventing ID collisions.
     pub fn update_if_greater(&self, txn_id: Timestamp) -> Result<(), TimestampError> {
         if !txn_id.is_txn_id() {
             return Err(TimestampError::WrongDomainTxnId(txn_id.raw()));

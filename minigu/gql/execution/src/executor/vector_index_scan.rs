@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use arrow::array::{Array, ArrayRef, AsArray, BooleanArray, Float32Array, UInt64Array};
 use arrow::datatypes::UInt64Type;
+use minigu_common::IsolationLevel;
 use minigu_common::data_chunk::DataChunk;
 use minigu_context::error::Error as ContextError;
 use minigu_context::graph::{GraphContainer, GraphStorage};
@@ -11,7 +12,6 @@ use minigu_context::session::SessionContext;
 use minigu_planner::plan::vector_index_scan::VectorIndexScan;
 use minigu_storage::error::{StorageError, VectorIndexError};
 use minigu_storage::tp::MemoryGraph;
-use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
 
 use super::{BoxedExecutor, Executor};
 use crate::error::{ExecutionError, ExecutionResult};

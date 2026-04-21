@@ -6,15 +6,17 @@ use std::sync::{Arc, Mutex, RwLock};
 
 use minigu_catalog::error::CatalogResult;
 use minigu_catalog::memory::graph_type::MemoryGraphTypeCatalog;
+use minigu_catalog::memory::txn_manager;
 use minigu_catalog::provider::{
     GraphIndexCatalog, GraphIndexCatalogRef, GraphProvider, GraphTypeRef,
     VectorIndexCatalogEntries, VectorIndexCatalogEntry,
 };
+use minigu_common::IsolationLevel;
 use minigu_common::types::{LabelId, VectorIndexKey, VertexIdArray};
 use minigu_storage::error::StorageResult;
 use minigu_storage::tp::MemoryGraph;
-use minigu_storage::tp::transaction::{IsolationLevel, MemTransaction};
-use minigu_transaction::manager::GraphTxnManager;
+use minigu_storage::tp::transaction::MemTransaction;
+use minigu_transaction::{Transaction, TransactionManager, TxnError};
 
 use crate::error::{IndexCatalogError, IndexCatalogResult};
 
@@ -87,18 +89,33 @@ impl GraphIndexCatalog for MemoryGraphIndexCatalog {
 pub struct GraphContainer {
     graph_type: Arc<MemoryGraphTypeCatalog>,
     graph_storage: GraphStorage,
+    txn_mgr: TransactionManager,
     index_catalog: Arc<dyn GraphIndexCatalog>,
     index_op_lock: Mutex<()>,
 }
 
 impl GraphContainer {
     pub fn new(graph_type: Arc<MemoryGraphTypeCatalog>, graph_storage: GraphStorage) -> Self {
+        let catalog_txn_mgr = Arc::clone(txn_manager());
+        let graph = match &graph_storage {
+            GraphStorage::Memory(mem) => Arc::clone(mem),
+        };
+        let txn_mgr =
+            TransactionManager::new(graph, Arc::clone(&graph_type), Arc::clone(&catalog_txn_mgr));
         Self {
             graph_type,
             graph_storage,
+            txn_mgr,
             index_catalog: Arc::new(MemoryGraphIndexCatalog::default()),
             index_op_lock: Mutex::new(()),
         }
+    }
+
+    pub fn begin_transaction(
+        &self,
+        isolation_level: IsolationLevel,
+    ) -> Result<Transaction, TxnError> {
+        self.txn_mgr.begin_transaction(isolation_level)
     }
 
     #[inline]
@@ -277,14 +294,20 @@ impl GraphProvider for GraphContainer {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use minigu_catalog::label_set::LabelSet;
-    use minigu_catalog::memory::graph_type::MemoryVertexTypeCatalog;
+    use minigu_catalog::memory::graph_type::{MemoryGraphTypeCatalog, MemoryVertexTypeCatalog};
     use minigu_catalog::property::Property;
+    use minigu_catalog::provider::{GraphProvider, GraphTypeProvider};
+    use minigu_catalog::txn::{CatalogTxnManager, CatalogTxnView};
+    use minigu_common::IsolationLevel;
     use minigu_common::data_type::LogicalType;
-    use minigu_common::types::{PropertyId, VectorMetric};
+    use minigu_common::types::{LabelId, PropertyId, VectorMetric};
     use minigu_common::value::{F32, ScalarValue, VectorValue};
     use minigu_storage::common::{PropertyRecord, Vertex};
-    use minigu_transaction::Transaction;
+    use minigu_storage::tp::memory_graph;
+    use minigu_transaction::TxnState;
 
     use super::*;
 
@@ -292,15 +315,23 @@ mod tests {
     const UNSUPPORTED_DIMENSION: usize = 100;
     const EMBEDDING_PROP_ID: PropertyId = 1;
 
+    fn label_id_1() -> LabelId {
+        LabelId::new(1).expect("label id should be non-zero")
+    }
+
     fn build_container_with_vectors(
         vertex_count: usize,
         dimension: usize,
     ) -> (GraphContainer, Arc<MemoryGraph>, VectorIndexKey) {
         let graph = MemoryGraph::in_memory();
-        let mut graph_type = MemoryGraphTypeCatalog::new();
+        let graph_type = MemoryGraphTypeCatalog::new();
+        let catalog_txn_mgr = CatalogTxnManager::new();
+        let catalog_txn = catalog_txn_mgr
+            .begin_transaction(IsolationLevel::Serializable)
+            .expect("catalog transaction should begin");
 
         let person_label_id = graph_type
-            .add_label("PERSON".to_string())
+            .add_label_txn("PERSON".to_string(), catalog_txn.as_ref())
             .expect("label should be created");
         let person_label_set: LabelSet = vec![person_label_id].into_iter().collect();
         let person_type = Arc::new(MemoryVertexTypeCatalog::new(
@@ -314,7 +345,12 @@ mod tests {
                 ),
             ],
         ));
-        assert!(graph_type.add_vertex_type(person_label_set, person_type));
+        graph_type
+            .add_vertex_type_txn(person_label_set, person_type, catalog_txn.as_ref())
+            .expect("vertex type should be created");
+        catalog_txn
+            .commit()
+            .expect("catalog transaction should commit");
 
         let container = GraphContainer::new(
             Arc::new(graph_type),
@@ -370,6 +406,203 @@ mod tests {
             metric: VectorMetric::L2,
             dimension,
         }
+    }
+
+    #[test]
+    fn test_graph_container_new_invariants() {
+        let graph = memory_graph::tests::mock_empty_graph();
+        let graph_type = Arc::new(MemoryGraphTypeCatalog::new());
+        let container = GraphContainer::new(
+            Arc::clone(&graph_type),
+            GraphStorage::Memory(Arc::clone(&graph)),
+        );
+
+        assert!(Arc::ptr_eq(&container.graph_type(), &graph_type));
+
+        match container.graph_storage() {
+            GraphStorage::Memory(mem) => assert!(Arc::ptr_eq(mem, &graph)),
+        }
+    }
+
+    #[test]
+    fn test_begin_transaction_creates_global_transaction() {
+        let graph = memory_graph::tests::mock_empty_graph();
+        let graph_type = Arc::new(MemoryGraphTypeCatalog::new());
+        let container = GraphContainer::new(
+            Arc::clone(&graph_type),
+            GraphStorage::Memory(Arc::clone(&graph)),
+        );
+
+        let txn = container
+            .begin_transaction(IsolationLevel::Serializable)
+            .expect("begin_transaction should succeed");
+
+        assert_eq!(txn.state(), TxnState::Active);
+        assert!(Arc::ptr_eq(txn.graph.mem().graph(), &graph));
+        assert!(txn.catalog().is_some());
+    }
+
+    #[test]
+    fn test_graph_provider_graph_type_consistency() {
+        let graph = memory_graph::tests::mock_empty_graph();
+        let graph_type = Arc::new(MemoryGraphTypeCatalog::new());
+        let container = GraphContainer::new(
+            Arc::clone(&graph_type),
+            GraphStorage::Memory(Arc::clone(&graph)),
+        );
+
+        let provider_graph_type = container.graph_type();
+
+        // Commit a catalog change using the concrete type...
+        let mgr = CatalogTxnManager::new();
+        let txn = mgr
+            .begin_transaction(IsolationLevel::Serializable)
+            .expect("begin_transaction should succeed");
+        let id = graph_type
+            .add_label_txn("A".to_string(), txn.as_ref())
+            .expect("add_label_txn should succeed");
+        txn.commit().expect("commit should succeed");
+
+        // ...and observe it via both access paths.
+        let seen_via_container = graph_type
+            .get_label_id("A")
+            .expect("get_label_id should succeed");
+        let seen_via_provider = provider_graph_type
+            .get_label_id("A")
+            .expect("get_label_id should succeed");
+        assert_eq!(seen_via_container, Some(id));
+        assert_eq!(seen_via_provider, Some(id));
+    }
+
+    #[test]
+    fn test_as_any_downcast_ref_graph_container() {
+        let graph = memory_graph::tests::mock_empty_graph();
+        let graph_type = Arc::new(MemoryGraphTypeCatalog::new());
+        let container = GraphContainer::new(graph_type, GraphStorage::Memory(graph));
+
+        let provider: &dyn GraphProvider = &container;
+        let downcasted = GraphProvider::as_any(provider).downcast_ref::<GraphContainer>();
+        assert!(downcasted.is_some());
+    }
+
+    #[test]
+    fn test_global_commit_makes_graph_and_catalog_visible() {
+        let graph = memory_graph::tests::mock_empty_graph();
+        let graph_type = Arc::new(MemoryGraphTypeCatalog::new());
+        let container = GraphContainer::new(
+            Arc::clone(&graph_type),
+            GraphStorage::Memory(Arc::clone(&graph)),
+        );
+
+        let mut txn = container
+            .begin_transaction(IsolationLevel::Serializable)
+            .expect("begin_transaction should succeed");
+
+        graph_type
+            .add_label_txn("A".to_string(), txn.catalog_txn())
+            .expect("add_label_txn should succeed");
+        txn.create_vertex(Vertex::new(1, label_id_1(), PropertyRecord::new(vec![])))
+            .expect("create_vertex should succeed");
+
+        txn.commit().expect("commit should succeed");
+        assert_eq!(txn.state(), TxnState::Committed);
+
+        // Graph visibility.
+        let read_txn_g = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .expect("begin graph txn");
+        assert!(graph.get_vertex(&read_txn_g, 1).is_ok());
+        read_txn_g.abort().ok();
+
+        // Catalog visibility.
+        let read_mgr = CatalogTxnManager::new();
+        let read_txn_c = read_mgr
+            .begin_transaction(IsolationLevel::Serializable)
+            .expect("begin catalog txn");
+        let label = graph_type
+            .get_label_id_txn("A", read_txn_c.as_ref())
+            .expect("get_label_id_txn should succeed");
+        assert!(label.is_some());
+        read_txn_c.abort().ok();
+    }
+
+    #[test]
+    fn test_global_abort_makes_graph_and_catalog_invisible_and_idempotent() {
+        let graph = memory_graph::tests::mock_empty_graph();
+        let graph_type = Arc::new(MemoryGraphTypeCatalog::new());
+        let container = GraphContainer::new(
+            Arc::clone(&graph_type),
+            GraphStorage::Memory(Arc::clone(&graph)),
+        );
+
+        let mut txn = container
+            .begin_transaction(IsolationLevel::Serializable)
+            .expect("begin_transaction should succeed");
+        graph_type
+            .add_label_txn("A".to_string(), txn.catalog_txn())
+            .expect("add_label_txn should succeed");
+        txn.create_vertex(Vertex::new(1, label_id_1(), PropertyRecord::new(vec![])))
+            .expect("create_vertex should succeed");
+
+        txn.abort().expect("abort should succeed");
+        assert_eq!(txn.state(), TxnState::Aborted);
+        txn.abort().expect("abort should be idempotent");
+
+        let read_txn_g = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .expect("begin graph txn");
+        assert!(graph.get_vertex(&read_txn_g, 1).is_err());
+        read_txn_g.abort().ok();
+
+        let read_mgr = CatalogTxnManager::new();
+        let read_txn_c = read_mgr
+            .begin_transaction(IsolationLevel::Serializable)
+            .expect("begin catalog txn");
+        let label = graph_type
+            .get_label_id_txn("A", read_txn_c.as_ref())
+            .expect("get_label_id_txn should succeed");
+        assert!(label.is_none());
+        read_txn_c.abort().ok();
+    }
+
+    #[test]
+    fn test_drop_is_implicit_abort_container_level() {
+        let graph = memory_graph::tests::mock_empty_graph();
+        let graph_type = Arc::new(MemoryGraphTypeCatalog::new());
+        let container = GraphContainer::new(
+            Arc::clone(&graph_type),
+            GraphStorage::Memory(Arc::clone(&graph)),
+        );
+
+        {
+            let txn = container
+                .begin_transaction(IsolationLevel::Serializable)
+                .expect("begin_transaction should succeed");
+            graph_type
+                .add_label_txn("A".to_string(), txn.catalog_txn())
+                .expect("add_label_txn should succeed");
+            txn.create_vertex(Vertex::new(1, label_id_1(), PropertyRecord::new(vec![])))
+                .expect("create_vertex should succeed");
+        }
+
+        let read_txn_g = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .expect("begin graph txn");
+        assert!(graph.get_vertex(&read_txn_g, 1).is_err());
+        read_txn_g.abort().ok();
+
+        let read_mgr = CatalogTxnManager::new();
+        let read_txn_c = read_mgr
+            .begin_transaction(IsolationLevel::Serializable)
+            .expect("begin catalog txn");
+        let label = graph_type
+            .get_label_id_txn("A", read_txn_c.as_ref())
+            .expect("get_label_id_txn should succeed");
+        assert!(label.is_none());
+        read_txn_c.abort().ok();
     }
 
     #[test]
