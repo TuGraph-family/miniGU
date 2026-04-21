@@ -103,7 +103,7 @@ def _handle_exception(e: Exception) -> None:
 class QueryResult:
     """Query result wrapper."""
 
-    def __init__(self, schema: List[Dict],  List[List], metrics: Dict[str, Any]):
+    def __init__(self, schema: List[Dict], data: List[List], metrics: Dict[str, Any]):
         self.schema = schema
         self.data = data
         self.metrics = metrics
@@ -168,12 +168,15 @@ class MiniGU:
         """Check if database is connected."""
         return self._connected and self._db is not None and self._db.is_connected
 
-    def create_graph(self, name: str) -> bool:
+    def create_graph(self, name: str, num_vertices: Optional[int] = None) -> bool:
         """
         Create a new graph.
 
         Args:
             name: Graph name (alphanumeric and underscore only)
+            num_vertices: Optional number of test vertices to create.
+                          If specified, creates a graph with test data (PERSON, COMPANY, CITY nodes).
+                          If None, creates an empty graph.
 
         Returns:
             True if graph was created successfully
@@ -186,7 +189,7 @@ class MiniGU:
             raise ConnectionError("Database not initialized. Call init() first.")
 
         try:
-            return self._db.create_graph(name)
+            return self._db.create_graph(name, num_vertices)
         except Exception as e:
             _handle_exception(e)
 
@@ -218,7 +221,7 @@ class MiniGU:
         except Exception as e:
             _handle_exception(e)
 
-    def load(self,  Union[List[Dict[str, Any]], str]) -> bool:
+    def load(self, data: Union[List[Dict[str, Any]], str]) -> bool:
         """
         Load data into the database.
 
@@ -308,10 +311,10 @@ class AsyncMiniGU:
         """Check if database is connected."""
         return self._sync_db.is_connected
 
-    async def create_graph(self, name: str) -> bool:
+    async def create_graph(self, name: str, num_vertices: Optional[int] = None) -> bool:
         """Create a new graph asynchronously."""
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self._sync_db.create_graph, name)
+        return await loop.run_in_executor(None, lambda: self._sync_db.create_graph(name, num_vertices))
 
     async def execute(self, query: str) -> QueryResult:
         """Execute a GQL query asynchronously."""

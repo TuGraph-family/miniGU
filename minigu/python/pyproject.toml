@@ -14,3 +14,4 @@ dev = ["pytest>=7.0", "pytest-asyncio>=0.21"]
 [tool.maturin]
 features = ["pyo3/extension-module"]
 module-name = "minigu.minigu_python"
+python-source = "."

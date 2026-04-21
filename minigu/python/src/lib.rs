@@ -153,8 +153,8 @@ impl PyMiniGU {
         Ok(dict.into())
     }
 
-    /// Create a new graph
-    fn create_graph(&mut self, graph_name: &str) -> PyResult<bool> {
+    /// Create a new graph with optional test data
+    fn create_graph(&mut self, graph_name: &str, num_vertices: Option<i8>) -> PyResult<bool> {
         let session = self.session.as_mut().ok_or_else(|| {
             PyErr::new::<pyo3::exceptions::PyException, _>("Session not initialized")
         })?;
@@ -172,10 +172,25 @@ impl PyMiniGU {
             ));
         }
 
-        let query = format!("CALL create_test_graph('{}')", sanitized_name);
+        // Create graph with test data if num_vertices is specified, otherwise create empty graph
+        let query = if let Some(n) = num_vertices {
+            format!("CALL create_test_graph_data('{}', {})", sanitized_name, n)
+        } else {
+            format!("CALL create_test_graph('{}')", sanitized_name)
+        };
+
         session.query(&query).map_err(|e| {
             PyErr::new::<pyo3::exceptions::PyException, _>(format!(
                 "Failed to create graph '{}': {}",
+                sanitized_name, e
+            ))
+        })?;
+
+        // Set the current graph
+        let set_graph_query = format!("session set graph {}", sanitized_name);
+        session.query(&set_graph_query).map_err(|e| {
+            PyErr::new::<pyo3::exceptions::PyException, _>(format!(
+                "Failed to set current graph '{}': {}",
                 sanitized_name, e
             ))
         })?;
@@ -263,7 +278,7 @@ impl PyMiniGU {
 
             if !properties.is_empty() {
                 let props_str = properties.join(", ");
-                let statement = format!("INSERT (:{} {{ {} }}) INTO {}", label, props_str, graph_name);
+                let statement = format!("INSERT (n:{} {{ {} }});", label, props_str);
                 session.query(&statement).map_err(|e| {
                     PyErr::new::<pyo3::exceptions::PyException, _>(format!(
                         "Failed to insert data: {}",
