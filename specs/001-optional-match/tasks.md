@@ -2,22 +2,22 @@
 
 **Feature**: 001-optional-match
 **Created**: 2026-04-17
-**Status**: Ready for Implementation
+**Status**: ✅ Completed
 
 ## Task Overview
 
 | ID | Task | Priority | Status | Dependencies |
 |----|------|----------|--------|--------------|
-| T1 | Update BoundMatchStatement for Optional | P1 | pending | - |
-| T2 | Implement bind_match_statement for Optional | P1 | pending | T1 |
-| T3 | Create LogicalOptionalMatch plan node | P1 | pending | T2 |
-| T4 | Implement plan_match_statement for Optional | P1 | pending | T3 |
-| T5 | Create PhysicalOptionalMatch node | P1 | pending | T4 |
-| T6 | Implement OptionalMatchExecutor | P1 | pending | T5 |
-| T7 | Update ExecutorBuilder | P1 | pending | T6 |
-| T8 | Add unit tests | P2 | pending | T7 |
-| T9 | Validate finbench/tsr2.gql | P2 | pending | T8 |
-| T10 | Validate snb/is7.gql | P2 | pending | T8 |
+| T1 | Update BoundMatchStatement for Optional | P1 | ✅ done | - |
+| T2 | Implement bind_match_statement for Optional | P1 | ✅ done | T1 |
+| T3 | Create LogicalOptionalMatch plan node | P1 | ✅ done | T2 |
+| T4 | Implement plan_match_statement for Optional | P1 | ✅ done | T3 |
+| T5 | Create PhysicalOptionalMatch node | P1 | ✅ done | T4 |
+| T6 | Implement OptionalMatchExecutor | P1 | ✅ done | T5 |
+| T7 | Update ExecutorBuilder | P1 | ✅ done | T6 |
+| T8 | Add unit tests | P2 | ✅ done | T7 |
+| T9 | Validate finbench/tsr2.gql | P2 | ✅ done | T8 |
+| T10 | Validate snb/is7.gql | P2 | ✅ done | T8 |
 | T11 | Update documentation | P3 | pending | T9, T10 |
 
 ---
@@ -509,10 +509,22 @@ Update user documentation with OPTIONAL MATCH usage.
 ## Progress Tracking
 
 - **Total Tasks**: 11
-- **Completed**: 0
+- **Completed**: 10
 - **In Progress**: 0
-- **Pending**: 11
+- **Pending**: 1 (documentation)
 - **Blocked**: 0
+
+## Implementation Summary
+
+Implemented in commit `12221e9`:
+- `BoundMatchStatement::Optional` variant with pattern and output_schema
+- `bind_match_statement` for OPTIONAL MATCH with nullable schema
+- `LogicalOptionalMatch` and `PhysicalOptionalMatch` plan nodes
+- Optimizer rules to convert logical to physical plan
+- `OptionalMatchExecutor` with LEFT JOIN semantics
+- Unit tests and integration tests
+
+**Tests**: All 83 tests pass, including tsr2.gql and is7.gql.
 
 ## Notes
 
