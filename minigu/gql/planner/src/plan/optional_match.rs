@@ -81,15 +81,12 @@ impl PhysicalOptionalMatch {
     pub fn new(left: PlanNode, right: PlanNode, right_schema: DataSchema) -> Self {
         // Output schema is left schema + right schema (with nullable columns)
         let left_schema = left.schema().expect("left child must have schema");
-        let mut output_fields: Vec<minigu_common::data_type::DataField> = left_schema.fields().to_vec();
+        let mut output_fields: Vec<minigu_common::data_type::DataField> =
+            left_schema.fields().to_vec();
         for field in right_schema.fields() {
             use minigu_common::data_type::DataField;
             // Make right columns nullable
-            let nullable_field = DataField::new(
-                field.name().to_string(),
-                field.ty().clone(),
-                true,
-            );
+            let nullable_field = DataField::new(field.name().to_string(), field.ty().clone(), true);
             output_fields.push(nullable_field);
         }
         let output_schema = Arc::new(DataSchema::new(output_fields));

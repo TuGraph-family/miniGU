@@ -28,12 +28,14 @@ fn test_optional_match_parse_and_plan() {
             let error_msg = e.to_string();
             // Check that it's not a parse error or not implemented error
             assert!(
-                !error_msg.contains("parse error") &&
-                !error_msg.contains("not implemented"),
+                !error_msg.contains("parse error") && !error_msg.contains("not implemented"),
                 "Query failed with parse/plan error: {}",
                 error_msg
             );
-            println!("Query failed with runtime error (expected for empty database): {}", error_msg);
+            println!(
+                "Query failed with runtime error (expected for empty database): {}",
+                error_msg
+            );
         }
     }
 }
@@ -56,8 +58,7 @@ fn test_optional_match_with_edge_pattern() {
         Err(e) => {
             let error_msg = e.to_string();
             assert!(
-                !error_msg.contains("parse error") &&
-                !error_msg.contains("not implemented"),
+                !error_msg.contains("parse error") && !error_msg.contains("not implemented"),
                 "Query failed with parse/plan error: {}",
                 error_msg
             );

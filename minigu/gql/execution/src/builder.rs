@@ -314,7 +314,10 @@ impl ExecutorBuilder {
                 let left_executor = self.build_executor(&children[0]);
                 let right_executor = self.build_executor(&children[1]);
                 let right_schema = optional_match.right_schema.clone();
-                Box::new(OptionalMatchBuilder::new(left_executor, right_executor, right_schema).into_executor())
+                Box::new(
+                    OptionalMatchBuilder::new(left_executor, right_executor, right_schema)
+                        .into_executor(),
+                )
             }
             _ => unreachable!(),
         }
