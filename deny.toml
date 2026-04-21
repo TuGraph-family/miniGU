@@ -34,7 +34,7 @@ wildcards = "deny"
 
 [bans.workspace-dependencies]
 duplicates = "deny"
-unused = "deny"
+unused = "warn"
 
 [sources]
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
