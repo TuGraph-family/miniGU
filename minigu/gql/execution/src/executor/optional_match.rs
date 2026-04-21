@@ -93,7 +93,7 @@ where
                 } else {
                     // Cross join: emit left row paired with each right row
                     // Clone right_chunks to avoid borrow across yield
-                    let right_chunks_clone: Vec<_> = right_chunks.iter().map(|c| c.clone()).collect();
+                    let right_chunks_clone = right_chunks.to_vec();
                     for right_chunk in right_chunks_clone {
                         let right_row_count = right_chunk.len();
 
@@ -198,7 +198,7 @@ where
                 } else {
                     // Cross join: emit all combinations
                     // Clone right_chunks to avoid borrow across yield
-                    let right_chunks_clone: Vec<_> = right_chunks.iter().map(|c| c.clone()).collect();
+                    let right_chunks_clone = right_chunks.to_vec();
                     for right_chunk in right_chunks_clone {
                         let right_row_count = right_chunk.len();
 
