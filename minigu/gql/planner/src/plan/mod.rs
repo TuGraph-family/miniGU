@@ -9,6 +9,7 @@ pub mod limit;
 pub mod logical_match;
 pub mod offset;
 pub mod one_row;
+pub mod optional_match;
 pub mod project;
 pub mod property_fetch;
 pub mod scan;
@@ -31,6 +32,7 @@ use crate::plan::limit::Limit;
 use crate::plan::logical_match::LogicalMatch;
 use crate::plan::offset::Offset;
 use crate::plan::one_row::OneRow;
+use crate::plan::optional_match::{LogicalOptionalMatch, PhysicalOptionalMatch};
 use crate::plan::project::Project;
 use crate::plan::property_fetch::VertexPropertyFetch;
 use crate::plan::scan::NodeIdScan;
@@ -81,6 +83,7 @@ pub trait PlanData {
 #[derive(Debug, Clone, Serialize)]
 pub enum PlanNode {
     LogicalMatch(Arc<LogicalMatch>),
+    LogicalOptionalMatch(Arc<LogicalOptionalMatch>),
     LogicalFilter(Arc<Filter>),
     LogicalProject(Arc<Project>),
     LogicalCall(Arc<Call>),
@@ -98,6 +101,7 @@ pub enum PlanNode {
     LogicalCreateVectorIndex(Arc<CreateVectorIndex>),
     LogicalDropVectorIndex(Arc<DropVectorIndex>),
 
+    PhysicalOptionalMatch(Arc<PhysicalOptionalMatch>),
     PhysicalFilter(Arc<Filter>),
     PhysicalProject(Arc<Project>),
     PhysicalCall(Arc<Call>),
@@ -125,6 +129,7 @@ impl PlanData for PlanNode {
     fn base(&self) -> &PlanBase {
         match self {
             PlanNode::LogicalMatch(node) => node.base(),
+            PlanNode::LogicalOptionalMatch(node) => node.base(),
             PlanNode::LogicalFilter(node) => node.base(),
             PlanNode::LogicalProject(node) => node.base(),
             PlanNode::LogicalCall(node) => node.base(),
@@ -139,6 +144,7 @@ impl PlanData for PlanNode {
             PlanNode::LogicalDropVectorIndex(node) => node.base(),
             PlanNode::LogicalOffset(node) => node.base(),
 
+            PlanNode::PhysicalOptionalMatch(node) => node.base(),
             PlanNode::PhysicalFilter(node) => node.base(),
             PlanNode::PhysicalProject(node) => node.base(),
             PlanNode::PhysicalCall(node) => node.base(),
@@ -160,6 +166,7 @@ impl PlanData for PlanNode {
     fn explain(&self, indent: usize) -> Option<String> {
         match self {
             PlanNode::LogicalMatch(node) => node.explain(indent),
+            PlanNode::LogicalOptionalMatch(node) => node.explain(indent),
             PlanNode::LogicalFilter(node) => node.explain(indent),
             PlanNode::LogicalProject(node) => node.explain(indent),
             PlanNode::LogicalCall(node) => node.explain(indent),
@@ -174,6 +181,7 @@ impl PlanData for PlanNode {
             PlanNode::LogicalCreateVectorIndex(node) => node.explain(indent),
             PlanNode::LogicalDropVectorIndex(node) => node.explain(indent),
 
+            PlanNode::PhysicalOptionalMatch(node) => node.explain(indent),
             PlanNode::PhysicalFilter(node) => node.explain(indent),
             PlanNode::PhysicalProject(node) => node.explain(indent),
             PlanNode::PhysicalCall(node) => node.explain(indent),

@@ -1,0 +1,10 @@
+-- Test basic OPTIONAL MATCH
+-- This test verifies the OPTIONAL MATCH parsing and planning
+
+-- Basic OPTIONAL MATCH with no matches (should return NULL for optional columns)
+OPTIONAL MATCH (n:Person) WHERE n.id = 999 RETURN n.name;
+
+-- OPTIONAL MATCH with pattern
+OPTIONAL MATCH (a:Account)-[e:transfer]->(b:Account)
+WHERE e.amount > 100
+RETURN a, b, e.amount;

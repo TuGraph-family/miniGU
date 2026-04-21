@@ -14,6 +14,7 @@ use crate::plan::limit::Limit;
 use crate::plan::logical_match::{LogicalMatch, MatchKind};
 use crate::plan::offset::Offset;
 use crate::plan::one_row::OneRow;
+use crate::plan::optional_match::LogicalOptionalMatch;
 use crate::plan::project::Project;
 use crate::plan::sort::Sort;
 use crate::plan::vector_index_scan::VectorIndexScan;
@@ -87,7 +88,21 @@ impl LogicalPlanner {
                 );
                 Ok(PlanNode::LogicalMatch(Arc::new(node)))
             }
-            BoundMatchStatement::Optional => not_implemented("match statement optional", None),
+            BoundMatchStatement::Optional {
+                pattern,
+                output_schema,
+            } => {
+                // For a standalone OPTIONAL MATCH, use OneRow as the child.
+                // This represents the "left" side of the LEFT JOIN with no prior rows.
+                let child = PlanNode::LogicalOneRow(Arc::new(OneRow::new()));
+                let node = LogicalOptionalMatch::new(
+                    child,
+                    pattern.pattern,
+                    pattern.yield_clause,
+                    output_schema.as_ref().clone(),
+                );
+                Ok(PlanNode::LogicalOptionalMatch(Arc::new(node)))
+            }
         }
     }
 
