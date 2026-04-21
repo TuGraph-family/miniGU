@@ -18,7 +18,7 @@
 | T8 | Add unit tests | P2 | ✅ done | T7 |
 | T9 | Validate finbench/tsr2.gql | P2 | ✅ done | T8 |
 | T10 | Validate snb/is7.gql | P2 | ✅ done | T8 |
-| T11 | Update documentation | P3 | pending | T9, T10 |
+| T11 | Update documentation | P3 | ✅ done | T9, T10 |
 
 ---
 
@@ -509,9 +509,9 @@ Update user documentation with OPTIONAL MATCH usage.
 ## Progress Tracking
 
 - **Total Tasks**: 11
-- **Completed**: 10
+- **Completed**: 11
 - **In Progress**: 0
-- **Pending**: 1 (documentation)
+- **Pending**: 0
 - **Blocked**: 0
 
 ## Implementation Summary
@@ -525,6 +525,8 @@ Implemented in commit `12221e9`:
 - Unit tests and integration tests
 
 **Tests**: All 83 tests pass, including tsr2.gql and is7.gql.
+
+**Documentation**: User guide updated with OPTIONAL MATCH section in `docs/user-guide.md`.
 
 ## Notes
 
