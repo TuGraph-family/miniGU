@@ -303,7 +303,7 @@ class AsyncMiniGU:
 
     async def init(self) -> None:
         """Initialize the database connection asynchronously."""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, self._sync_db.init)
 
     @property
@@ -313,27 +313,27 @@ class AsyncMiniGU:
 
     async def create_graph(self, name: str, num_vertices: Optional[int] = None) -> bool:
         """Create a new graph asynchronously."""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, lambda: self._sync_db.create_graph(name, num_vertices))
 
     async def execute(self, query: str) -> QueryResult:
         """Execute a GQL query asynchronously."""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, self._sync_db.execute, query)
 
     async def load(self, data: Union[List[Dict[str, Any]], str]) -> bool:
         """Load data into the database asynchronously."""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, self._sync_db.load, data)
 
     async def save(self, path: str) -> bool:
         """Save database to a file asynchronously."""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, self._sync_db.save, path)
 
     async def close(self) -> None:
         """Close the database connection asynchronously."""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, self._sync_db.close)
 
     async def __aenter__(self) -> "AsyncMiniGU":

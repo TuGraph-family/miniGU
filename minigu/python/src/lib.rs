@@ -154,7 +154,7 @@ impl PyMiniGU {
     }
 
     /// Create a new graph with optional test data
-    fn create_graph(&mut self, graph_name: &str, num_vertices: Option<i8>) -> PyResult<bool> {
+    fn create_graph(&mut self, graph_name: &str, num_vertices: Option<i64>) -> PyResult<bool> {
         let session = self.session.as_mut().ok_or_else(|| {
             PyErr::new::<pyo3::exceptions::PyException, _>("Session not initialized")
         })?;
@@ -235,7 +235,7 @@ impl PyMiniGU {
             PyErr::new::<pyo3::exceptions::PyException, _>("Expected a list of dictionaries or a file path")
         })?;
 
-        let graph_name = self.current_graph.as_deref().unwrap_or("default_graph");
+        let _graph_name = self.current_graph.as_deref().unwrap_or("default_graph");
 
         for (index, item) in list.iter().enumerate() {
             let dict = item.downcast::<PyDict>().map_err(|_| {
@@ -276,16 +276,18 @@ impl PyMiniGU {
                 }
             }
 
-            if !properties.is_empty() {
+            let statement = if !properties.is_empty() {
                 let props_str = properties.join(", ");
-                let statement = format!("INSERT (n:{} {{ {} }});", label, props_str);
-                session.query(&statement).map_err(|e| {
-                    PyErr::new::<pyo3::exceptions::PyException, _>(format!(
-                        "Failed to insert data: {}",
-                        e
-                    ))
-                })?;
-            }
+                format!("INSERT (n:{} {{ {} }});", label, props_str)
+            } else {
+                format!("INSERT (n:{});", label)
+            };
+            session.query(&statement).map_err(|e| {
+                PyErr::new::<pyo3::exceptions::PyException, _>(format!(
+                    "Failed to insert data: {}",
+                    e
+                ))
+            })?;
         }
 
         Ok(true)
