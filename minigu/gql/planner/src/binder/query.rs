@@ -160,10 +160,7 @@ impl Binder<'_> {
                 // OPTIONAL MATCH can contain multiple match statements
                 // For now, we support single statement case
                 if statements.len() != 1 {
-                    return not_implemented(
-                        "multiple statements in optional match",
-                        None,
-                    );
+                    return not_implemented("multiple statements in optional match", None);
                 }
                 let inner = &statements[0];
                 match inner.value() {
@@ -176,9 +173,7 @@ impl Binder<'_> {
                             output_schema,
                         })
                     }
-                    MatchStatement::Optional(_) => {
-                        not_implemented("nested optional match", None)
-                    }
+                    MatchStatement::Optional(_) => not_implemented("nested optional match", None),
                 }
             }
         }

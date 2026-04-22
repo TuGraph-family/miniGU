@@ -5,7 +5,7 @@
 //! - If a match is found on the right (optional pattern) side, the rows are combined
 //! - If no match is found, NULL values are generated for the right side columns
 
-use arrow::array::{new_null_array, UInt32Array};
+use arrow::array::{UInt32Array, new_null_array};
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::data_type::DataSchema;
 
@@ -93,13 +93,14 @@ where
                 } else {
                     // Cross join: emit left row paired with each right row
                     // Clone right_chunks to avoid borrow across yield
-                    let right_chunks_clone: Vec<_> = right_chunks.iter().map(|c| c.clone()).collect();
+                    let right_chunks_clone: Vec<_> = right_chunks.to_vec();
                     for right_chunk in right_chunks_clone {
                         let right_row_count = right_chunk.len();
 
                         // Expand left chunk to match right chunk size
                         let mut left_indices = Vec::with_capacity(left_row_count * right_row_count);
-                        let mut right_indices = Vec::with_capacity(left_row_count * right_row_count);
+                        let mut right_indices =
+                            Vec::with_capacity(left_row_count * right_row_count);
 
                         for left_row in 0..left_row_count {
                             for right_row in 0..right_row_count {
@@ -198,13 +199,14 @@ where
                 } else {
                     // Cross join: emit all combinations
                     // Clone right_chunks to avoid borrow across yield
-                    let right_chunks_clone: Vec<_> = right_chunks.iter().map(|c| c.clone()).collect();
+                    let right_chunks_clone: Vec<_> = right_chunks.to_vec();
                     for right_chunk in right_chunks_clone {
                         let right_row_count = right_chunk.len();
 
                         // Expand left chunk to match right chunk size
                         let mut left_indices = Vec::with_capacity(left_row_count * right_row_count);
-                        let mut right_indices = Vec::with_capacity(left_row_count * right_row_count);
+                        let mut right_indices =
+                            Vec::with_capacity(left_row_count * right_row_count);
 
                         for left_row in 0..left_row_count {
                             for right_row in 0..right_row_count {
@@ -244,7 +246,8 @@ mod tests {
         let left_executor = [Ok(left_chunk)].into_executor();
         let right_executor = std::iter::empty::<ExecutionResult<DataChunk>>().into_executor();
 
-        let optional_executor = OptionalMatchBuilder::new(left_executor, right_executor, right_schema).into_executor();
+        let optional_executor =
+            OptionalMatchBuilder::new(left_executor, right_executor, right_schema).into_executor();
         let results: Vec<DataChunk> = optional_executor.into_iter().try_collect().unwrap();
 
         assert_eq!(results.len(), 1);
@@ -255,12 +258,17 @@ mod tests {
     fn test_optional_match_with_right_data() {
         let left_chunk = data_chunk!((Int32, [1, 2]));
         let right_chunk = data_chunk!((Int32, [10, 20]));
-        let right_schema = DataSchema::new(vec![DataField::new("right_col".to_string(), LogicalType::Int32, true)]);
+        let right_schema = DataSchema::new(vec![DataField::new(
+            "right_col".to_string(),
+            LogicalType::Int32,
+            true,
+        )]);
 
         let left_executor = [Ok(left_chunk)].into_executor();
         let right_executor = [Ok(right_chunk)].into_executor();
 
-        let optional_executor = OptionalMatchBuilder::new(left_executor, right_executor, right_schema).into_executor();
+        let optional_executor =
+            OptionalMatchBuilder::new(left_executor, right_executor, right_schema).into_executor();
         let results: Vec<DataChunk> = optional_executor.into_iter().try_collect().unwrap();
 
         // Cross join: 2 left rows * 2 right rows = 4 total rows

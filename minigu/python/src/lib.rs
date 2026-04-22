@@ -146,8 +146,14 @@ impl PyMiniGU {
         let metrics = query_result.metrics();
         let metrics_dict = PyDict::new(py);
         metrics_dict.set_item("parsing_time_ms", metrics.parsing_time().as_millis() as f64)?;
-        metrics_dict.set_item("planning_time_ms", metrics.planning_time().as_millis() as f64)?;
-        metrics_dict.set_item("execution_time_ms", metrics.execution_time().as_millis() as f64)?;
+        metrics_dict.set_item(
+            "planning_time_ms",
+            metrics.planning_time().as_millis() as f64,
+        )?;
+        metrics_dict.set_item(
+            "execution_time_ms",
+            metrics.execution_time().as_millis() as f64,
+        )?;
         dict.set_item("metrics", metrics_dict)?;
 
         Ok(dict.into())
@@ -232,7 +238,9 @@ impl PyMiniGU {
 
         // Load from list of dictionaries
         let list = data.downcast::<PyList>().map_err(|_| {
-            PyErr::new::<pyo3::exceptions::PyException, _>("Expected a list of dictionaries or a file path")
+            PyErr::new::<pyo3::exceptions::PyException, _>(
+                "Expected a list of dictionaries or a file path",
+            )
         })?;
 
         let _graph_name = self.current_graph.as_deref().unwrap_or("default_graph");
@@ -419,7 +427,11 @@ fn extract_value_from_array(array: &ArrayRef, index: usize) -> PyResult<PyObject
                 Ok(py.None())
             } else {
                 let bound = arr.value(index).into_pyobject(py)?;
-                Ok(<pyo3::Bound<'_, pyo3::types::PyBool> as Clone>::clone(&bound).into_any().unbind())
+                Ok(
+                    <pyo3::Bound<'_, pyo3::types::PyBool> as Clone>::clone(&bound)
+                        .into_any()
+                        .unbind(),
+                )
             }
         }
         _ => Ok(py.None()),
