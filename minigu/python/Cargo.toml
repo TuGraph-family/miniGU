@@ -1,0 +1,25 @@
+[package]
+edition.workspace = true
+license.workspace = true
+name = "minigu-python"
+repository.workspace = true
+version.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+name = "minigu_python"
+
+[dependencies]
+arrow = { workspace = true }
+minigu = { workspace = true }
+pyo3 = { workspace = true, features = ["extension-module", "abi3-py37"] }
+
+[build-dependencies]
+pyo3-build-config = "0.24.2"
+
+[features]
+default = ["pyo3/extension-module"]
+extension-module = ["pyo3/extension-module"]
+
+[lints]
+workspace = true

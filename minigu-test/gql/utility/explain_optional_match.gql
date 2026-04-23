@@ -1,0 +1,2 @@
+-- Explain OPTIONAL MATCH plan
+EXPLAIN OPTIONAL MATCH (n:Person) RETURN n;

@@ -16,6 +16,7 @@ reason = "bincode 1.3.3 is declared complete; used only for internal serializati
 allow = [
     "MIT",
     "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
     "Zlib",
     "BSL-1.0",
     "ISC",

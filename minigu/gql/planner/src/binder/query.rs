@@ -156,8 +156,43 @@ impl Binder<'_> {
                 let stmt = self.bind_graph_pattern_binding_table(table.value())?;
                 Ok(BoundMatchStatement::Simple(Box::new(stmt)))
             }
-            MatchStatement::Optional(_) => not_implemented("optional match statement", None),
+            MatchStatement::Optional(statements) => {
+                // OPTIONAL MATCH can contain multiple match statements
+                // For now, we support single statement case
+                if statements.len() != 1 {
+                    return not_implemented("multiple statements in optional match", None);
+                }
+                let inner = &statements[0];
+                match inner.value() {
+                    MatchStatement::Simple(table) => {
+                        let bound = self.bind_graph_pattern_binding_table(table.value())?;
+                        // Mark all variables introduced in the optional pattern as nullable
+                        let output_schema = self.make_schema_nullable(&bound.output_schema);
+                        Ok(BoundMatchStatement::Optional {
+                            pattern: Box::new(bound),
+                            output_schema,
+                        })
+                    }
+                    MatchStatement::Optional(_) => not_implemented("nested optional match", None),
+                }
+            }
         }
+    }
+
+    /// Mark all fields in the schema as nullable for OPTIONAL MATCH output
+    fn make_schema_nullable(&self, schema: &DataSchema) -> DataSchemaRef {
+        let nullable_fields: Vec<DataField> = schema
+            .fields()
+            .iter()
+            .map(|f| {
+                DataField::new(
+                    f.name().to_string(),
+                    f.ty().clone(),
+                    true, // Mark as nullable
+                )
+            })
+            .collect();
+        Arc::new(DataSchema::new(nullable_fields))
     }
 
     pub fn bind_explain_statement(

@@ -1,0 +1,17 @@
+[build-system]
+build-backend = "maturin"
+requires = ["maturin>=1.0,<2.0"]
+
+[project]
+description = "A graph database for learning purposes"
+name = "minigu"
+requires-python = ">=3.7"
+version = "0.1.0"
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "pytest-asyncio>=0.21"]
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+module-name = "minigu.minigu_python"
+python-source = "."

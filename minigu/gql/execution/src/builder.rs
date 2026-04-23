@@ -19,6 +19,7 @@ use crate::evaluator::vertex_constructor::VertexConstructor;
 use crate::executor::create_vector_index::CreateVectorIndexBuilder;
 use crate::executor::drop_vector_index::DropVectorIndexBuilder;
 use crate::executor::join::JoinCond;
+use crate::executor::optional_match::OptionalMatchBuilder;
 use crate::executor::procedure_call::ProcedureCallBuilder;
 use crate::executor::sort::SortSpec;
 use crate::executor::vector_index_scan::VectorIndexScanBuilder;
@@ -307,6 +308,16 @@ impl ExecutorBuilder {
                 assert!(children.is_empty());
                 DropVectorIndexBuilder::new(self.session.clone(), drop_index.clone())
                     .into_executor()
+            }
+            PlanNode::PhysicalOptionalMatch(optional_match) => {
+                assert_eq!(children.len(), 2);
+                let left_executor = self.build_executor(&children[0]);
+                let right_executor = self.build_executor(&children[1]);
+                let right_schema = optional_match.right_schema.clone();
+                Box::new(
+                    OptionalMatchBuilder::new(left_executor, right_executor, right_schema)
+                        .into_executor(),
+                )
             }
             _ => unreachable!(),
         }
