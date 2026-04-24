@@ -59,7 +59,7 @@ mod tests {
     use minigu_common::data_chunk;
     use minigu_common::data_type::{DataField, DataSchema, LogicalType};
     use minigu_context::database::{DatabaseConfig, DatabaseContext};
-    use rayon::ThreadPoolBuilder;
+    use minigu_context::runtime::DatabaseRuntime;
 
     use super::*;
 
@@ -79,7 +79,7 @@ mod tests {
     fn test_procedure_call() {
         let root = Arc::new(MemorySchemaCatalog::new(None));
         let catalog = MemoryCatalog::new(DirectoryOrSchema::Schema(root));
-        let runtime = ThreadPoolBuilder::new().build().unwrap();
+        let runtime = DatabaseRuntime::new(1).unwrap();
         let database = Arc::new(DatabaseContext::new(
             catalog,
             runtime,

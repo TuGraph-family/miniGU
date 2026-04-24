@@ -2,6 +2,7 @@
 #![feature(gen_blocks)]
 #![feature(impl_trait_in_assoc_type)]
 
+#[cfg(not(target_arch = "wasm32"))]
 pub mod ap;
 pub mod common;
 pub mod db_file;

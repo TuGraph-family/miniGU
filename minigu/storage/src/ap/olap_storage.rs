@@ -1,3 +1,4 @@
+use minigu_common::Timestamp;
 use minigu_common::value::ScalarValue;
 
 use crate::error::StorageResult;
@@ -5,6 +6,9 @@ use crate::error::StorageResult;
 /// Trait defining basic transaction operations.
 pub trait StorageTransaction {
     type CommitTimestamp;
+
+    /// Get the unique transaction ID.
+    fn txn_id(&self) -> Timestamp;
 
     /// Commit the current transaction, returning a commit timestamp on success.
     fn commit(&self) -> StorageResult<Self::CommitTimestamp>;
@@ -27,7 +31,13 @@ pub trait OlapGraph {
     type EdgeIter<'a>: Iterator<Item = StorageResult<Self::Edge>>
     where
         Self: 'a;
+    type EdgeIterAtTs<'a>: Iterator<Item = StorageResult<Self::Edge>>
+    where
+        Self: 'a;
     type AdjacencyIter<'a>: Iterator<Item = StorageResult<Self::Adjacency>>
+    where
+        Self: 'a;
+    type AdjacencyIterAtTs<'a>: Iterator<Item = StorageResult<Self::Adjacency>>
     where
         Self: 'a;
 
@@ -41,6 +51,13 @@ pub trait OlapGraph {
     /// Retrieve an edge by its ID within a transaction.
     fn get_edge(&self, txn: &Self::Transaction, id: Self::EdgeID) -> StorageResult<Self::Edge>;
 
+    /// Retrieve an edge by its ID at a specific timestamp within a transaction.
+    fn get_edge_at_ts(
+        &self,
+        txn: &Self::Transaction,
+        id: Self::EdgeID,
+    ) -> StorageResult<Option<Self::Edge>>;
+
     /// Get an iterator over all vertices in the graph within a transaction.
     fn iter_vertices<'a>(
         &'a self,
@@ -49,6 +66,12 @@ pub trait OlapGraph {
     /// Get an iterator over all edges in the graph within a transaction.
     fn iter_edges<'a>(&'a self, txn: &'a Self::Transaction) -> StorageResult<Self::EdgeIter<'a>>;
 
+    /// Get an iterator over all edges in the graph at a specific timestamp within a transaction.
+    fn iter_edges_at_ts<'a>(
+        &'a self,
+        txn: &'a Self::Transaction,
+    ) -> StorageResult<Self::EdgeIterAtTs<'a>>;
+
     /// Get an iterator over adjacency entries (edges connected to a vertex)
     /// in a given direction (incoming or outgoing) within a transaction.
     fn iter_adjacency<'a>(
@@ -56,6 +79,13 @@ pub trait OlapGraph {
         txn: &'a Self::Transaction,
         vid: Self::VertexID,
     ) -> StorageResult<Self::AdjacencyIter<'a>>;
+
+    /// Get an iterator over adjacency entries at a specific timestamp within a transaction.
+    fn iter_adjacency_at_ts<'a>(
+        &'a self,
+        txn: &'a Self::Transaction,
+        vid: Self::VertexID,
+    ) -> StorageResult<Self::AdjacencyIterAtTs<'a>>;
 }
 
 pub trait MutOlapGraph: OlapGraph {

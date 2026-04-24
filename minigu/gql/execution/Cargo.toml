@@ -16,7 +16,6 @@ minigu-context = { workspace = true }
 minigu-planner = { workspace = true }
 minigu-storage = { workspace = true }
 ordered-float = { workspace = true }
-rayon = { workspace = true }
 thiserror = { workspace = true }
 
 [lints]

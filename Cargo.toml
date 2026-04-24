@@ -6,6 +6,8 @@ members = [
     "minigu-cli",
     # End-to-end tests
     "minigu-test",
+    # WASM bindings
+    "minigu-wasm",
     # Internal
     "minigu/catalog",
     "minigu/common",
@@ -68,6 +70,7 @@ dashmap = "6.1.0"
 diskann = { path = "minigu/storage/diskann-rs/diskann", version = "0.1.0" }
 divan = "0.1.21"
 downcast-rs = "1"
+getrandom = "0.3.4"
 glob = "0.3"
 half = "2.2.1"
 hashbrown = "0.13.2"

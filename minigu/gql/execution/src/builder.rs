@@ -16,6 +16,7 @@ use crate::evaluator::column_ref::ColumnRef;
 use crate::evaluator::constant::Constant;
 use crate::evaluator::vector_distance::VectorDistanceEvaluator;
 use crate::evaluator::vertex_constructor::VertexConstructor;
+use crate::executor::catalog_modify::{CreateGraphBuilder, DropGraphBuilder};
 use crate::executor::create_vector_index::CreateVectorIndexBuilder;
 use crate::executor::drop_vector_index::DropVectorIndexBuilder;
 use crate::executor::join::JoinCond;
@@ -307,6 +308,18 @@ impl ExecutorBuilder {
                 assert!(children.is_empty());
                 DropVectorIndexBuilder::new(self.session.clone(), drop_index.clone())
                     .into_executor()
+            }
+            PlanNode::PhysicalCreateGraph(create_graph) => {
+                assert!(children.is_empty());
+                let plan = (**create_graph).clone();
+                let session = self.session.clone();
+                Box::new(CreateGraphBuilder::new(plan, session).into_executor())
+            }
+            PlanNode::PhysicalDropGraph(drop_graph) => {
+                assert!(children.is_empty());
+                let plan = (**drop_graph).clone();
+                let session = self.session.clone();
+                Box::new(DropGraphBuilder::new(plan, session).into_executor())
             }
             _ => unreachable!(),
         }

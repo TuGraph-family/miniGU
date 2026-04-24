@@ -1,12 +1,21 @@
 ---
 source: minigu-test/src/insta_test.rs
-assertion_line: 178
+---
+Statement OK. No results
+---
+Statement OK. No results
+---
+Error: Execution(
+    Custom(
+        "Graph 'mygraph' does not exist",
+    ),
+)
 ---
 Error: Parser(
     Unexpected(
         UnexpectedError {
             input: "CREATE GRAPH test_graph {
-  (Entity: EntityLabel {
+  (Entity :EntityLabel {
     id STRING,
     entity_type STRING,
     deleted INT64,
@@ -20,7 +29,7 @@ Error: Parser(
     test3 STRING,
     PRIMARY KEY (id)
   }),
-  (Entity)-[Rel: RelLabel {
+  (Entity)-[:RelLabel {
     timestamp\tINT64,
     deleted\tINT64,
     rel_scene\tSTRING,
@@ -253,16 +262,9 @@ Error: Parser(
     ),
 )
 ---
-Error: Plan(
-    Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "drop graph statement",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
+Error: Execution(
+    Custom(
+        "Graph 'test_graph' does not exist",
     ),
 )
 ---

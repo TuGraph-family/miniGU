@@ -9,7 +9,7 @@ use minigu_catalog::provider::{CatalogProvider, DirectoryOrSchema, SchemaRef};
 use minigu_common::constants::DEFAULT_SCHEMA_NAME;
 pub use minigu_context::database::DatabaseConfig;
 use minigu_context::database::DatabaseContext;
-use rayon::ThreadPoolBuilder;
+use minigu_context::runtime::DatabaseRuntime;
 
 use crate::error::Result;
 use crate::procedures::build_predefined_procedures;
@@ -27,9 +27,7 @@ impl Database {
 
     pub fn open_in_memory(config: DatabaseConfig) -> Result<Self> {
         let (catalog, default_schema) = init_memory_catalog()?;
-        let runtime = ThreadPoolBuilder::new()
-            .num_threads(config.num_threads)
-            .build()?;
+        let runtime = DatabaseRuntime::new(config.num_threads)?;
         let context = Arc::new(DatabaseContext::new(catalog, runtime, config));
         Ok(Self {
             context,

@@ -12,6 +12,29 @@ use crate::provider::{
 use crate::txn::versioned::{VersionedMap, WriteOp};
 use crate::txn::{CatalogTxn, CatalogTxnError};
 
+/// Result of a create graph operation
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CreateGraphResult {
+    Created,
+    AlreadyExists,
+    Replaced,
+}
+
+/// Kind of create operation
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CreateKind {
+    Create,
+    CreateIfNotExists,
+    CreateOrReplace,
+}
+
+/// Result of a drop graph operation
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DropGraphResult {
+    Dropped,
+    NotFound,
+}
+
 pub struct MemorySchemaCatalog {
     parent: Option<Weak<dyn DirectoryProvider>>,
     graph_map: Arc<VersionedMap<String, GraphRef>>,
@@ -156,23 +179,30 @@ impl MemorySchemaCatalog {
     /// **Legacy API**: Automatically wraps the operation in a standalone transaction.
     ///
     /// This method is deprecated because it does not compose with external transactions.
-    /// Use [`remove_graph_txn`](Self::remove_graph_txn) instead for transactional correctness.
+    /// Use [`drop_graph`](Self::drop_graph) or [`remove_graph_txn`](Self::remove_graph_txn)
+    /// instead for transactional correctness.
     #[inline]
     #[deprecated(
         note = "Use the `_txn` variant for transactional contexts. This method uses an internal auto-commit transaction."
     )]
     pub fn remove_graph(&self, name: &str) -> bool {
+        matches!(self.drop_graph(name), DropGraphResult::Dropped)
+    }
+
+    /// Unified Graph Deletion Interface.
+    pub fn drop_graph(&self, name: &str) -> DropGraphResult {
         let txn = match txn_manager().begin_transaction(IsolationLevel::Serializable) {
             Ok(txn) => txn,
-            Err(_) => return false,
+            Err(_) => return DropGraphResult::NotFound,
         };
         let res = self.remove_graph_txn(name, txn.as_ref());
         match res {
-            Ok(_) => txn.commit().is_ok(),
+            Ok(_) if txn.commit().is_ok() => DropGraphResult::Dropped,
             Err(_) => {
                 txn.abort().ok();
-                false
+                DropGraphResult::NotFound
             }
+            _ => DropGraphResult::NotFound,
         }
     }
 
@@ -220,6 +250,68 @@ impl MemorySchemaCatalog {
                 txn.abort().ok();
                 false
             }
+        }
+    }
+
+    pub fn create_graph_txn(
+        &self,
+        name: String,
+        graph: GraphRef,
+        kind: CreateKind,
+        txn: &CatalogTxn,
+    ) -> Result<CreateGraphResult, CatalogTxnError> {
+        let existed = self.graph_map.get(&name, txn).is_some();
+        match (kind, existed) {
+            (CreateKind::Create, true) | (CreateKind::CreateIfNotExists, true) => {
+                Ok(CreateGraphResult::AlreadyExists)
+            }
+            (CreateKind::CreateOrReplace, true) => {
+                let node = self.graph_map.put(name.clone(), Arc::new(graph), txn)?;
+                txn.record_write(&self.graph_map, name, node, WriteOp::Replace);
+                Ok(CreateGraphResult::Replaced)
+            }
+            (_, false) => {
+                let node = self.graph_map.put(name.clone(), Arc::new(graph), txn)?;
+                txn.record_write(&self.graph_map, name, node, WriteOp::Create);
+                Ok(CreateGraphResult::Created)
+            }
+        }
+    }
+
+    /// Unified graph creation interface supporting all CreateKind cases.
+    pub fn create_graph(
+        &self,
+        name: String,
+        graph: GraphRef,
+        kind: CreateKind,
+    ) -> CreateGraphResult {
+        let txn = match txn_manager().begin_transaction(IsolationLevel::Serializable) {
+            Ok(txn) => txn,
+            Err(_) => return CreateGraphResult::AlreadyExists,
+        };
+        let res = self.create_graph_txn(name, graph, kind, txn.as_ref());
+        match res {
+            Ok(result) if result == CreateGraphResult::AlreadyExists => {
+                txn.abort().ok();
+                result
+            }
+            Ok(result) if txn.commit().is_ok() => result,
+            Ok(_) | Err(_) => {
+                txn.abort().ok();
+                CreateGraphResult::AlreadyExists
+            }
+        }
+    }
+
+    /// Atomically create or replace a graph.
+    /// Returns: (whether an existing graph was replaced, whether the operation succeeded).
+    #[deprecated(note = "Use create_graph with CreateKind::CreateOrReplace instead")]
+    pub fn create_or_replace_graph(&self, name: String, graph: GraphRef) -> (bool, bool) {
+        let result = self.create_graph(name, graph, CreateKind::CreateOrReplace);
+        match result {
+            CreateGraphResult::Replaced => (true, true),
+            CreateGraphResult::Created => (false, true),
+            CreateGraphResult::AlreadyExists => (false, false),
         }
     }
 

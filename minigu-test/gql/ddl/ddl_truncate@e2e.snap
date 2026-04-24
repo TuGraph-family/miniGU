@@ -1,6 +1,5 @@
 ---
 source: minigu-test/src/insta_test.rs
-assertion_line: 178
 ---
 Error: Parser(
     Unexpected(
@@ -250,15 +249,8 @@ Error: Parser(
     ),
 )
 ---
-Error: Plan(
-    Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "drop graph statement",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
+Error: Execution(
+    Custom(
+        "Graph 'test_graph' does not exist",
     ),
 )

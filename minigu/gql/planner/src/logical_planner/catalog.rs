@@ -6,6 +6,7 @@ use crate::bound::{
 use crate::error::PlanResult;
 use crate::logical_planner::LogicalPlanner;
 use crate::plan::PlanNode;
+use crate::plan::catalog_modify::{CreateGraph, DropGraph};
 use crate::plan::create_vector_index::CreateVectorIndex;
 use crate::plan::drop_vector_index::DropVectorIndex;
 
@@ -50,7 +51,29 @@ impl LogicalPlanner {
                 let plan = DropVectorIndex::new(name, if_exists, index_key, metadata, no_op);
                 Ok(PlanNode::LogicalDropVectorIndex(Arc::new(plan)))
             }
+            BoundCatalogModifyingStatement::CreateGraph(create_graph) => {
+                self.plan_create_graph_statement(create_graph)
+            }
+            BoundCatalogModifyingStatement::DropGraph(drop_graph) => {
+                self.plan_drop_graph_statement(drop_graph)
+            }
             _ => todo!(),
         }
+    }
+
+    fn plan_create_graph_statement(
+        &self,
+        statement: crate::bound::BoundCreateGraphStatement,
+    ) -> PlanResult<PlanNode> {
+        let plan = CreateGraph::new(statement.name, statement.kind, statement.graph_type);
+        Ok(PlanNode::PhysicalCreateGraph(Arc::new(plan)))
+    }
+
+    fn plan_drop_graph_statement(
+        &self,
+        statement: crate::bound::BoundDropGraphStatement,
+    ) -> PlanResult<PlanNode> {
+        let plan = DropGraph::new(statement.name, statement.if_exists);
+        Ok(PlanNode::PhysicalDropGraph(Arc::new(plan)))
     }
 }
