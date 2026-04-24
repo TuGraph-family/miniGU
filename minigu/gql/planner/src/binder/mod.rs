@@ -8,6 +8,7 @@ mod object_ref;
 mod procedure_call;
 mod procedure_spec;
 mod query;
+mod type_element;
 mod value_expr;
 
 use gql_parser::ast::Procedure;

@@ -1,9 +1,256 @@
 ---
 source: minigu-test/src/insta_test.rs
 ---
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - CreateGraph:
+                            path:
+                              - schema: ~
+                                objects:
+                                  - - mygraph
+                                    - start: 13
+                                      end: 20
+                              - start: 13
+                                end: 20
+                            kind:
+                              - Create
+                              - start: 0
+                                end: 12
+                            graph_type:
+                              - Nested:
+                                  - - Node:
+                                        name: ~
+                                        alias:
+                                          - Person
+                                          - start: 26
+                                            end: 32
+                                        filler:
+                                          - key: ~
+                                            label_set:
+                                              - - - Person
+                                                  - start: 34
+                                                    end: 40
+                                              - start: 34
+                                                end: 40
+                                            property_types:
+                                              - - name:
+                                                    - lastname
+                                                    - start: 42
+                                                      end: 50
+                                                  value_type:
+                                                    - String:
+                                                        min_length: ~
+                                                        max_length: ~
+                                                        not_null: false
+                                                    - start: 51
+                                                      end: 57
+                                                - start: 42
+                                                  end: 57
+                                              - - name:
+                                                    - firstname
+                                                    - start: 59
+                                                      end: 68
+                                                  value_type:
+                                                    - String:
+                                                        min_length: ~
+                                                        max_length: ~
+                                                        not_null: false
+                                                    - start: 69
+                                                      end: 75
+                                                - start: 59
+                                                  end: 75
+                                              - - name:
+                                                    - joined
+                                                    - start: 77
+                                                      end: 83
+                                                  value_type:
+                                                    - Temporal:
+                                                        kind:
+                                                          - Date
+                                                          - start: 84
+                                                            end: 88
+                                                        not_null: false
+                                                    - start: 84
+                                                      end: 88
+                                                - start: 77
+                                                  end: 88
+                                          - start: 33
+                                            end: 89
+                                    - start: 25
+                                      end: 90
+                                  - - Node:
+                                        name: ~
+                                        alias:
+                                          - City
+                                          - start: 95
+                                            end: 99
+                                        filler:
+                                          - key: ~
+                                            label_set:
+                                              - - - City
+                                                  - start: 101
+                                                    end: 105
+                                              - start: 101
+                                                end: 105
+                                            property_types:
+                                              - - name:
+                                                    - name
+                                                    - start: 107
+                                                      end: 111
+                                                  value_type:
+                                                    - String:
+                                                        min_length: ~
+                                                        max_length: ~
+                                                        not_null: false
+                                                    - start: 112
+                                                      end: 118
+                                                - start: 107
+                                                  end: 118
+                                              - - name:
+                                                    - state
+                                                    - start: 120
+                                                      end: 125
+                                                  value_type:
+                                                    - String:
+                                                        min_length: ~
+                                                        max_length: ~
+                                                        not_null: false
+                                                    - start: 126
+                                                      end: 132
+                                                - start: 120
+                                                  end: 132
+                                              - - name:
+                                                    - country
+                                                    - start: 134
+                                                      end: 141
+                                                  value_type:
+                                                    - String:
+                                                        min_length: ~
+                                                        max_length: ~
+                                                        not_null: false
+                                                    - start: 142
+                                                      end: 148
+                                                - start: 134
+                                                  end: 148
+                                          - start: 100
+                                            end: 149
+                                    - start: 94
+                                      end: 150
+                                  - - Edge:
+                                        Pattern:
+                                          name: ~
+                                          direction: LeftToRight
+                                          left:
+                                            - Alias: Person
+                                            - start: 154
+                                              end: 162
+                                          filler:
+                                            - key: ~
+                                              label_set:
+                                                - - - LIVES_IN
+                                                    - start: 165
+                                                      end: 173
+                                                - start: 165
+                                                  end: 173
+                                              property_types: ~
+                                            - start: 162
+                                              end: 176
+                                          right:
+                                            - Alias: City
+                                            - start: 176
+                                              end: 182
+                                    - start: 154
+                                      end: 182
+                              - start: 21
+                                end: 184
+                            source: ~
+                        - start: 0
+                          end: 184
+                  - start: 0
+                    end: 184
+                next_statements: []
+              - start: 0
+                end: 184
+            end: ~
+        - start: 0
+          end: 184
+      session_close: false
+    - start: 0
+      end: 184
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - DropGraph:
+                            path:
+                              - schema: ~
+                                objects:
+                                  - - mygraph
+                                    - start: 11
+                                      end: 18
+                              - start: 11
+                                end: 18
+                            if_exists: false
+                        - start: 0
+                          end: 18
+                  - start: 0
+                    end: 18
+                next_statements: []
+              - start: 0
+                end: 18
+            end: ~
+        - start: 0
+          end: 18
+      session_close: false
+    - start: 0
+      end: 18
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Catalog:
+                      - - DropGraph:
+                            path:
+                              - schema: ~
+                                objects:
+                                  - - mygraph
+                                    - start: 11
+                                      end: 18
+                              - start: 11
+                                end: 18
+                            if_exists: false
+                        - start: 0
+                          end: 18
+                  - start: 0
+                    end: 18
+                next_statements: []
+              - start: 0
+                end: 18
+            end: ~
+        - start: 0
+          end: 18
+      session_close: false
+    - start: 0
+      end: 18
 - Err:
     Unexpected:
-      input: "CREATE GRAPH test_graph {\n  (Entity: EntityLabel {\n    id STRING,\n    entity_type STRING,\n    deleted INT64,\n    gen_time INT64,\n    name STRING,\n    guid STRING,\n    status INT64,\n    props STRING,\n    test1 INT64,\n    test2 INT64,\n    test3 STRING,\n    PRIMARY KEY (id)\n  }),\n  (Entity)-[Rel: RelLabel {\n    timestamp\tINT64,\n    deleted\tINT64,\n    rel_scene\tSTRING,\n    rel_type\tSTRING,\n    gen_time\tINT64,\n    rel_chain\tSTRING,\n    dst_guid\tSTRING,\n    src_guid\tSTRING,\n    status\tINT64,\n    props\tSTRING,\n    PRIMARY KEY (SOURCE_PRIMARY_KEY, timestamp, DESTINATION_PRIMARY_KEY)\n  }]->(Entity),\n}"
+      input: "CREATE GRAPH test_graph {\n  (Entity :EntityLabel {\n    id STRING,\n    entity_type STRING,\n    deleted INT64,\n    gen_time INT64,\n    name STRING,\n    guid STRING,\n    status INT64,\n    props STRING,\n    test1 INT64,\n    test2 INT64,\n    test3 STRING,\n    PRIMARY KEY (id)\n  }),\n  (Entity)-[:RelLabel {\n    timestamp\tINT64,\n    deleted\tINT64,\n    rel_scene\tSTRING,\n    rel_type\tSTRING,\n    gen_time\tINT64,\n    rel_chain\tSTRING,\n    dst_guid\tSTRING,\n    src_guid\tSTRING,\n    status\tINT64,\n    props\tSTRING,\n    PRIMARY KEY (SOURCE_PRIMARY_KEY, timestamp, DESTINATION_PRIMARY_KEY)\n  }]->(Entity),\n}"
       span:
         start: 0
         end: 6

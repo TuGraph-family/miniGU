@@ -1,5 +1,15 @@
+CREATE GRAPH mygraph {
+  (Person :Person {lastname STRING, firstname STRING, joined DATE}),
+  (City :City {name STRING, state STRING, country STRING}),
+  (Person)-[:LIVES_IN]->(City)
+};
+
+DROP GRAPH mygraph;
+
+DROP GRAPH mygraph;
+
 CREATE GRAPH test_graph {
-  (Entity: EntityLabel {
+  (Entity :EntityLabel {
     id STRING,
     entity_type STRING,
     deleted INT64,
@@ -13,7 +23,7 @@ CREATE GRAPH test_graph {
     test3 STRING,
     PRIMARY KEY (id)
   }),
-  (Entity)-[Rel: RelLabel {
+  (Entity)-[:RelLabel {
     timestamp	INT64,
     deleted	INT64,
     rel_scene	STRING,

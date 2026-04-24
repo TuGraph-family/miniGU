@@ -1,12 +1,32 @@
 ---
 source: minigu-test/src/insta_test.rs
-assertion_line: 178
+---
+Statement OK. No results
 ---
 Error: Plan(
     Bind(
         NotImplemented(
             NotImplemented {
-                feature: "create graph statement",
+                feature: "ANY graph type",
+                issue: TrackingIssue(
+                    None,
+                ),
+            },
+        ),
+    ),
+)
+---
+Error: Execution(
+    Custom(
+        "Graph 'mygraph' already exists",
+    ),
+)
+---
+Error: Plan(
+    Bind(
+        NotImplemented(
+            NotImplemented {
+                feature: "graph type reference",
                 issue: TrackingIssue(
                     None,
                 ),
@@ -19,7 +39,7 @@ Error: Plan(
     Bind(
         NotImplemented(
             NotImplemented {
-                feature: "create graph statement",
+                feature: "LIKE graph type",
                 issue: TrackingIssue(
                     None,
                 ),
@@ -32,7 +52,7 @@ Error: Plan(
     Bind(
         NotImplemented(
             NotImplemented {
-                feature: "create graph statement",
+                feature: "ANY graph type",
                 issue: TrackingIssue(
                     None,
                 ),
@@ -45,7 +65,7 @@ Error: Plan(
     Bind(
         NotImplemented(
             NotImplemented {
-                feature: "create graph statement",
+                feature: "graph expression from name",
                 issue: TrackingIssue(
                     None,
                 ),
@@ -58,7 +78,7 @@ Error: Plan(
     Bind(
         NotImplemented(
             NotImplemented {
-                feature: "create graph statement",
+                feature: "graph type reference",
                 issue: TrackingIssue(
                     None,
                 ),
@@ -71,7 +91,7 @@ Error: Plan(
     Bind(
         NotImplemented(
             NotImplemented {
-                feature: "create graph statement",
+                feature: "graph type reference",
                 issue: TrackingIssue(
                     None,
                 ),
@@ -80,41 +100,4 @@ Error: Plan(
     ),
 )
 ---
-Error: Plan(
-    Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "create graph statement",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
-    ),
-)
----
-Error: Plan(
-    Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "create graph statement",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
-    ),
-)
----
-Error: Plan(
-    Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "create graph statement",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
-    ),
-)
+Statement OK. No results
