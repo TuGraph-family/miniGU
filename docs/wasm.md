@@ -99,7 +99,7 @@ objects recursively.
 
 - **Persistence is not supported in WASM**
   - There is no on-disk database support in the browser build.
-  - Storage modules that require filesystem access are not compiled for WASM.
+  - Storage modules that require filesystem access are not supported and are unused at runtime in the browser build.
 - **`import_graph` / `export_graph` are not available in WASM**
   - These procedures are filesystem-based and are excluded from the WASM build.
 - **Single-threaded runtime**
