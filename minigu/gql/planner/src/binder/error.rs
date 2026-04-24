@@ -127,6 +127,11 @@ pub enum BindError {
 
     #[error("vector index {name} not found")]
     VectorIndexNotFound { name: SmolStr },
+    #[error("invalid node reference")]
+    InvalidNodeReference,
+
+    #[error("unsupported value type")]
+    UnsupportedValueType,
 
     // TODO: Remove this error variant
     #[error("unexpected bind error")]

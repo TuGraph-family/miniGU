@@ -8,6 +8,29 @@ use crate::provider::{
     DirectoryProvider, DirectoryRef, GraphRef, GraphTypeRef, ProcedureRef, SchemaProvider,
 };
 
+/// Result of a create graph operation
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CreateGraphResult {
+    Created,
+    AlreadyExists,
+    Replaced,
+}
+
+/// Kind of create operation
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CreateKind {
+    Create,
+    CreateIfNotExists,
+    CreateOrReplace,
+}
+
+/// Result of a drop graph operation
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DropGraphResult {
+    Dropped,
+    NotFound,
+}
+
 #[derive(Debug)]
 pub struct MemorySchemaCatalog {
     parent: Option<Weak<dyn DirectoryProvider>>,
@@ -42,13 +65,24 @@ impl MemorySchemaCatalog {
         }
     }
 
-    #[inline]
-    pub fn remove_graph(&self, name: &str) -> bool {
-        let mut graph_map = self
+    /// Unified Graph Deletion Interface
+    pub fn drop_graph(&self, name: &str) -> DropGraphResult {
+        let mut map = self
             .graph_map
             .write()
-            .expect("the write lock should be acquired successfully");
-        graph_map.remove(name).is_some()
+            .expect("Failed to acquire write lock");
+
+        if map.remove(name).is_some() {
+            DropGraphResult::Dropped
+        } else {
+            DropGraphResult::NotFound
+        }
+    }
+
+    #[inline]
+    #[deprecated(note = "Use drop_graph instead")]
+    pub fn remove_graph(&self, name: &str) -> bool {
+        matches!(self.drop_graph(name), DropGraphResult::Dropped)
     }
 
     #[inline]
@@ -73,6 +107,47 @@ impl MemorySchemaCatalog {
             .write()
             .expect("the write lock should be acquired successfully");
         graph_type_map.remove(name).is_some()
+    }
+
+    /// 统一的图创建接口，支持所有 CreateKind 场景
+    pub fn create_graph(
+        &self,
+        name: String,
+        graph: GraphRef,
+        kind: CreateKind,
+    ) -> CreateGraphResult {
+        let mut map = self
+            .graph_map
+            .write()
+            .expect("Failed to acquire write lock");
+
+        match (kind, map.entry(name)) {
+            (CreateKind::Create, Entry::Occupied(_)) => CreateGraphResult::AlreadyExists,
+
+            (CreateKind::CreateIfNotExists, Entry::Occupied(_)) => CreateGraphResult::AlreadyExists,
+
+            (CreateKind::CreateOrReplace, Entry::Occupied(mut e)) => {
+                e.insert(graph);
+                CreateGraphResult::Replaced
+            }
+
+            (_, Entry::Vacant(e)) => {
+                e.insert(graph);
+                CreateGraphResult::Created
+            }
+        }
+    }
+
+    /// Atomically create or replace a graph
+    /// Returns: (whether an existing graph was replaced, whether the operation succeeded)
+    #[deprecated(note = "Use create_graph with CreateKind::CreateOrReplace instead")]
+    pub fn create_or_replace_graph(&self, name: String, graph: GraphRef) -> (bool, bool) {
+        let result = self.create_graph(name, graph, CreateKind::CreateOrReplace);
+        match result {
+            CreateGraphResult::Replaced => (true, true),
+            CreateGraphResult::Created => (false, true),
+            CreateGraphResult::AlreadyExists => unreachable!(),
+        }
     }
 
     #[inline]

@@ -129,16 +129,9 @@ Error: Parser(
     ),
 )
 ---
-Error: Plan(
-    Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "drop graph statement",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
+Error: Execution(
+    Custom(
+        "Graph 'test_graph' does not exist",
     ),
 )
 ---
@@ -1319,15 +1312,8 @@ Error: Parser(
     ),
 )
 ---
-Error: Plan(
-    Bind(
-        NotImplemented(
-            NotImplemented {
-                feature: "drop graph statement",
-                issue: TrackingIssue(
-                    None,
-                ),
-            },
-        ),
+Error: Execution(
+    Custom(
+        "Graph 'test_graph' does not exist",
     ),
 )

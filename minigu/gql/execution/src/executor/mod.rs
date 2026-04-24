@@ -1,4 +1,5 @@
 pub mod aggregate;
+pub mod catalog_modify;
 pub mod create_vector_index;
 pub mod drop_vector_index;
 pub mod expand;
