@@ -12,6 +12,7 @@ pub mod vector_index;
 pub use db_file_persistence::DbFilePersistence;
 pub use in_memory_persistence::InMemoryPersistence;
 pub use memory_graph::MemoryGraph;
+pub use minigu_transaction::LockStrategy;
 pub use persistence::PersistenceProvider;
 pub use transaction::MemTransaction;
 pub use txn_manager::MemTxnManager;

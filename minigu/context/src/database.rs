@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use minigu_catalog::memory::MemoryCatalog;
+use minigu_transaction::TxnOptions;
 
 use crate::runtime::DatabaseRuntime;
 
@@ -8,6 +9,7 @@ use crate::runtime::DatabaseRuntime;
 pub struct DatabaseConfig {
     pub num_threads: usize,
     pub db_path: Option<PathBuf>,
+    pub txn_options: TxnOptions,
 }
 
 impl Default for DatabaseConfig {
@@ -15,6 +17,7 @@ impl Default for DatabaseConfig {
         Self {
             num_threads: 1,
             db_path: None,
+            txn_options: TxnOptions::default(),
         }
     }
 }
