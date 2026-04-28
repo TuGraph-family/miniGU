@@ -1,3 +1,5 @@
+use std::io::{self, IsTerminal};
+
 use clap::Command;
 use gql_parser::error::TokenErrorKind;
 use gql_parser::tokenize_full;
@@ -26,8 +28,13 @@ pub struct ShellContext {
 impl ShellContext {
     pub fn run(mut self) -> Result<()> {
         println!("{}", PROLOGUE);
+        let prompt = if io::stdin().is_terminal() {
+            "minigu> "
+        } else {
+            ""
+        };
         while !self.should_quit {
-            let result = match self.editor.readline("minigu> ") {
+            let result = match self.editor.readline(prompt) {
                 Ok(line) => {
                     let trimmed = line.trim_start();
                     if trimmed.is_empty() {
