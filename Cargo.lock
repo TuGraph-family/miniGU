@@ -1460,7 +1460,6 @@ dependencies = [
  "minigu-execution",
  "minigu-planner",
  "minigu-storage",
- "minigu-transaction",
  "serde",
  "serde_json",
  "tempfile",
@@ -1474,6 +1473,7 @@ version = "0.1.0"
 dependencies = [
  "downcast-rs",
  "minigu-common",
+ "parking_lot",
  "serde",
  "smallvec",
  "smol_str",
@@ -1541,7 +1541,6 @@ dependencies = [
  "minigu-context",
  "minigu-planner",
  "minigu-storage",
- "minigu-transaction",
  "ordered-float",
  "thiserror",
 ]
@@ -1574,7 +1573,6 @@ dependencies = [
  "diskann",
  "getrandom 0.3.4",
  "minigu-common",
- "minigu-transaction",
  "ordered-float",
  "parking_lot",
  "postcard",
@@ -1607,7 +1605,9 @@ dependencies = [
 name = "minigu-transaction"
 version = "0.1.0"
 dependencies = [
- "serde",
+ "minigu-catalog",
+ "minigu-common",
+ "minigu-storage",
  "thiserror",
 ]
 

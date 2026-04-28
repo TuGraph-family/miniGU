@@ -204,7 +204,7 @@ impl RecoveryData {
 mod tests {
     use std::fs;
 
-    use minigu_transaction::{IsolationLevel, Timestamp};
+    use minigu_common::{IsolationLevel, Timestamp};
     use serial_test::serial;
 
     use super::*;

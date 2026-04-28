@@ -3,12 +3,12 @@ use std::sync::{Arc, Barrier, mpsc};
 use std::thread;
 
 use minigu_common::value::ScalarValue;
+use minigu_common::{IsolationLevel, Timestamp};
 use minigu_storage::ap::olap_graph::{OlapEdge, OlapPropertyStore, OlapStorage, OlapVertex};
 use minigu_storage::ap::transaction::MemTransaction;
 use minigu_storage::ap::{MutOlapGraph, OlapGraph};
 use minigu_storage::common::model::properties::PropertyRecord;
 use minigu_storage::error::StorageError;
-use minigu_transaction::{IsolationLevel, Timestamp};
 
 fn make_storage() -> OlapStorage {
     super::ap_graph_test::mock_olap_graph(0)

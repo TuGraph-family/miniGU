@@ -7,9 +7,9 @@ use bitvec::bitvec;
 use bitvec::prelude::Lsb0;
 use bitvec::vec::BitVec;
 use dashmap::DashMap;
+use minigu_common::Timestamp;
 use minigu_common::types::{EdgeId, LabelId, VertexId};
 use minigu_common::value::ScalarValue;
-use minigu_transaction::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::ap::iterators::{
@@ -304,9 +304,7 @@ impl OlapStorage {
             }
 
             label_ids[0] = edges[0].label_id;
-            let version_ts = minigu_transaction::global_timestamp_generator()
-                .next()
-                .unwrap();
+            let version_ts = minigu_common::global_timestamp_generator().next().unwrap();
             // 3.3 Build compressed edge block
             self.compressed_edges.write().unwrap().insert(
                 index,
@@ -344,9 +342,7 @@ impl OlapStorage {
 
         let mut compressed_properties = self.compressed_properties.write().unwrap();
         let _column_cnt = property_columns.len();
-        let version_ts = minigu_transaction::global_timestamp_generator()
-            .next()
-            .unwrap();
+        let version_ts = minigu_common::global_timestamp_generator().next().unwrap();
 
         // 3. Traverse property columns
         for (column_index, column) in property_columns.iter().enumerate() {
