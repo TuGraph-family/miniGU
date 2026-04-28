@@ -1460,8 +1460,6 @@ dependencies = [
  "minigu-execution",
  "minigu-planner",
  "minigu-storage",
- "minigu-transaction",
- "rayon",
  "serde",
  "serde_json",
  "tempfile",
