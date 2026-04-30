@@ -481,7 +481,7 @@ fn test_serializable_adjacency_consistency() {
         .unwrap();
 
     // Read Alice's adjacency list
-    let adj_iter1 = txn1.iter_adjacency(1);
+    let adj_iter1 = txn1.iter_adjacency(1, 64);
     let count1 = adj_iter1.count();
     assert_eq!(count1, 1); // Alice has one outgoing edge to Bob
 
@@ -511,7 +511,7 @@ fn test_serializable_adjacency_consistency() {
     txn2.commit().unwrap();
 
     // Transaction 1 reads adjacency list again, should be consistent
-    let adj_iter2 = txn1.iter_adjacency(1);
+    let adj_iter2 = txn1.iter_adjacency(1, 64);
     let count2 = adj_iter2.count();
     assert_eq!(count2, 1); // Still 1 edge
 
@@ -532,7 +532,7 @@ fn test_serializable_complex_transaction_scenario() {
 
     // Transaction 1: Count Alice's friends
     let friends_count_1 = txn1
-        .iter_adjacency_outgoing(1)
+        .iter_adjacency_outgoing(1, 64)
         .filter_map(|adj| adj.ok())
         .filter(|adj| adj.label_id() == FRIEND_LABEL_ID)
         .count();
@@ -565,7 +565,7 @@ fn test_serializable_complex_transaction_scenario() {
 
     // Transaction 1 counts again, should be consistent
     let friends_count_2 = txn1
-        .iter_adjacency_outgoing(1)
+        .iter_adjacency_outgoing(1, 64)
         .filter_map(|adj| adj.ok())
         .filter(|adj| adj.label_id() == FRIEND_LABEL_ID)
         .count();
@@ -1314,14 +1314,14 @@ fn test_serializable_bidirectional_edge_consistency() {
 
     // Check outgoing edges from Alice
     let outgoing_count = txn1
-        .iter_adjacency_outgoing(1)
+        .iter_adjacency_outgoing(1, 64)
         .filter_map(|adj| adj.ok())
         .count();
     assert_eq!(outgoing_count, 1);
 
     // Check incoming edges to Bob
     let incoming_count = txn1
-        .iter_adjacency_incoming(2)
+        .iter_adjacency_incoming(2, 64)
         .filter_map(|adj| adj.ok())
         .count();
     assert_eq!(incoming_count, 1);
@@ -1343,7 +1343,7 @@ fn test_serializable_bidirectional_edge_consistency() {
 
     // Transaction 1 should still see consistent view
     let outgoing_count2 = txn1
-        .iter_adjacency_outgoing(1)
+        .iter_adjacency_outgoing(1, 64)
         .filter_map(|adj| adj.ok())
         .count();
     assert_eq!(outgoing_count2, 1);

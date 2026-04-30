@@ -12,14 +12,14 @@ use crate::common::wal::graph_wal::RedoEntry;
 use crate::tp::checkpoint::GraphCheckpoint;
 
 /// Configuration for single-file database operations.
+///
+/// Note: Auto-checkpoint is managed by `MemoryGraph` via `CheckpointConfig`, not by this struct.
 #[derive(Debug, Clone)]
 pub struct SingleFileConfig {
     /// Path to the database file.
     pub db_path: PathBuf,
     /// Whether to create the file if it doesn't exist.
     pub create_if_missing: bool,
-    /// Automatic checkpoint interval in number of WAL entries (0 = disabled).
-    pub auto_checkpoint_entries: usize,
 }
 
 impl SingleFileConfig {
@@ -28,19 +28,12 @@ impl SingleFileConfig {
         Self {
             db_path: db_path.as_ref().to_path_buf(),
             create_if_missing: true,
-            auto_checkpoint_entries: 0,
         }
     }
 
     /// Sets whether to create the file if it doesn't exist.
     pub fn with_create_if_missing(mut self, create: bool) -> Self {
         self.create_if_missing = create;
-        self
-    }
-
-    /// Sets the automatic checkpoint interval.
-    pub fn with_auto_checkpoint(mut self, entries: usize) -> Self {
-        self.auto_checkpoint_entries = entries;
         self
     }
 }
@@ -52,8 +45,6 @@ impl SingleFileConfig {
 pub struct SingleFileManager {
     /// The underlying database file.
     db_file: DbFile,
-    /// Configuration.
-    config: SingleFileConfig,
     /// Number of WAL entries since last checkpoint.
     entries_since_checkpoint: usize,
 }
@@ -74,7 +65,6 @@ impl SingleFileManager {
 
         Ok(Self {
             db_file,
-            config,
             entries_since_checkpoint: 0,
         })
     }
@@ -143,12 +133,6 @@ impl SingleFileManager {
     /// Returns the number of WAL entries since the last checkpoint.
     pub fn entries_since_checkpoint(&self) -> usize {
         self.entries_since_checkpoint
-    }
-
-    /// Checks if an automatic checkpoint should be triggered.
-    pub fn should_auto_checkpoint(&self) -> bool {
-        self.config.auto_checkpoint_entries > 0
-            && self.entries_since_checkpoint >= self.config.auto_checkpoint_entries
     }
 
     /// Returns a mutable reference to the underlying DbFile.

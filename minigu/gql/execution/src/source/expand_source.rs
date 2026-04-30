@@ -74,7 +74,8 @@ impl ExpandSource for GraphContainer {
 
         // Use the transaction's adjacency iterator to get all visible outgoing neighbors
         let mut neighbors = Vec::new();
-        let mut adj_iter = txn.iter_adjacency_outgoing(vertex);
+        let adj_batch_size = self.adjacency_batch_size();
+        let mut adj_iter = txn.iter_adjacency_outgoing(vertex, adj_batch_size);
 
         // Filter by edge labels
         if let Some(labels) = &edge_labels {
@@ -125,11 +126,12 @@ impl ExpandSource for GraphContainer {
             }
         }
 
-        // TODO:Should add GlobalConfig to determine the batch_size;
+        let expand_batch_size = self.expand_batch_size();
+        debug_assert!(expand_batch_size > 0, "batch_size must be greater than 0");
         Some(GraphExpandIter {
             neighbors,
             offset: 0,
-            batch_size: 64,
+            batch_size: expand_batch_size,
             _graph_storage: match self.graph_storage() {
                 GraphStorage::Memory(m) => GraphStorage::Memory(Arc::clone(m)),
             },

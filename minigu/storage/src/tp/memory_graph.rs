@@ -748,8 +748,9 @@ impl MemoryGraph {
         &'a self,
         txn: &'a Arc<MemTransaction>,
         vid: VertexId,
+        batch_size: usize,
     ) -> StorageResult<Box<dyn Iterator<Item = StorageResult<Neighbor>> + 'a>> {
-        Ok(Box::new(txn.iter_adjacency(vid)))
+        Ok(Box::new(txn.iter_adjacency(vid, batch_size)))
     }
 
     /// Returns a reference to the underlying persistence provider.
@@ -1800,7 +1801,7 @@ pub mod tests {
 
         // Check the adjacency list of alice
         {
-            let iter = txn3.iter_adjacency(vid_alice);
+            let iter = txn3.iter_adjacency(vid_alice, 64);
             let mut count = 0;
             for _ in iter {
                 count += 1;
@@ -1810,7 +1811,7 @@ pub mod tests {
 
         // Check the outgoing adjacency list of alice
         {
-            let iter = txn3.iter_adjacency_outgoing(vid_alice);
+            let iter = txn3.iter_adjacency_outgoing(vid_alice, 64);
             let mut count = 0;
             for _ in iter {
                 count += 1;
@@ -1820,7 +1821,7 @@ pub mod tests {
 
         // Check the incoming adjacency list of eve
         {
-            let iter = txn3.iter_adjacency_incoming(vid1);
+            let iter = txn3.iter_adjacency_incoming(vid1, 64);
             let mut count = 0;
             for _ in iter {
                 count += 1;
@@ -1844,7 +1845,7 @@ pub mod tests {
             .unwrap();
         {
             // Check the adjacency list of alice
-            let iter = txn5.iter_adjacency(vid_alice);
+            let iter = txn5.iter_adjacency(vid_alice, 64);
             let mut count = 0;
             for _ in iter {
                 count += 1;
@@ -2027,7 +2028,7 @@ pub mod tests {
             .begin_transaction(IsolationLevel::Serializable)
             .unwrap();
         {
-            let iter1 = txn2.iter_adjacency(vid1);
+            let iter1 = txn2.iter_adjacency(vid1, 64);
             let mut count = 0;
             for _ in iter1 {
                 count += 1;
@@ -2101,7 +2102,7 @@ pub mod tests {
                     .is_some()
             );
             // However, iter will check the visibility of the adjacency
-            let iter = txn2.iter_adjacency(vid1);
+            let iter = txn2.iter_adjacency(vid1, 64);
             let mut count = 0;
             for _ in iter {
                 count += 1;
@@ -2210,7 +2211,7 @@ pub mod tests {
             // assert adjacency list
             assert!(graph.adjacency_list.get(&vid1).unwrap().outgoing().len() == 2);
             assert!(graph.adjacency_list.get(&vid1).unwrap().incoming().len() == 1);
-            let iter = txn2.iter_adjacency(vid1);
+            let iter = txn2.iter_adjacency(vid1, 64);
             let mut count = 0;
             for _ in iter {
                 count += 1;
@@ -2258,7 +2259,7 @@ pub mod tests {
             }
             assert!(count == 3);
             // Check visible edges
-            let iter = txn1.iter_adjacency(vid);
+            let iter = txn1.iter_adjacency(vid, 64);
             let mut count = 0;
             for _ in iter {
                 count += 1;
@@ -2288,7 +2289,7 @@ pub mod tests {
             }
             assert!(count == 3);
             // Check visible edges
-            let iter = txn2.iter_adjacency(vid);
+            let iter = txn2.iter_adjacency(vid, 64);
             let mut count = 0;
             for _ in iter {
                 count += 1;
