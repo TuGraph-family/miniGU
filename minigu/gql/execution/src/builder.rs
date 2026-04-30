@@ -26,8 +26,6 @@ use crate::executor::vector_index_scan::VectorIndexScanBuilder;
 use crate::executor::{BoxedExecutor, Executor, IntoExecutor};
 use crate::source::VertexSource;
 
-const DEFAULT_CHUNK_SIZE: usize = 2048;
-
 pub struct ExecutorBuilder {
     session: SessionContext,
 }
@@ -67,9 +65,12 @@ impl ExecutorBuilder {
                     .downcast_arc::<GraphContainer>()
                     .expect("failed to downcast to GraphContainer");
 
-                // TODO:Should add GlobalConfig to determine the batch_size in vertex_source;
+                let config = self.session.database().config();
                 let batches = container
-                    .vertex_source(&Some(node_scan.labels.clone()), 1024)
+                    .vertex_source(
+                        &Some(node_scan.labels.clone()),
+                        config.execution.vertex_scan_batch_size,
+                    )
                     .expect("failed to create vertex source");
                 let source = batches.map(|arr: Arc<VertexIdArray>| Ok(arr));
                 Box::new(source.scan_vertex())
@@ -86,6 +87,11 @@ impl ExecutorBuilder {
                     .clone()
                     .downcast_arc::<GraphContainer>()
                     .expect("failed to downcast to GraphContainer");
+
+                // Inject batch sizes from config into the container
+                let config = self.session.database().config();
+                container.set_expand_batch_size(config.execution.expand_batch_size);
+                container.set_adjacency_batch_size(config.storage.batch_size);
 
                 // Get the number of columns before expand
                 let child_schema = children[0].schema().expect("child should have a schema");
@@ -223,10 +229,8 @@ impl ExecutorBuilder {
                         SortSpec::new(key, s.ordering, s.null_ordering)
                     })
                     .collect();
-                Box::new(
-                    self.build_executor(&children[0])
-                        .sort(specs, DEFAULT_CHUNK_SIZE),
-                )
+                let chunk_size = self.session.database().config().execution.sort_chunk_size;
+                Box::new(self.build_executor(&children[0]).sort(specs, chunk_size))
             }
             PlanNode::PhysicalLimit(limit) => {
                 assert_eq!(children.len(), 1);

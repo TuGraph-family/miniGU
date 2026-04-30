@@ -49,7 +49,7 @@ fn test_graph_basic_operations() -> StorageResult<()> {
     // 7. Test adjacency iterator
     {
         let mut adj_count = 0;
-        let adj_iter = txn.iter_adjacency(alice_id);
+        let adj_iter = txn.iter_adjacency(alice_id, 64);
         for adj_result in adj_iter {
             let adj = adj_result?;
             assert!(adj.eid() == friend_edge_id || adj.eid() == another_friend_edge_id);
@@ -177,7 +177,7 @@ fn test_graph_basic_operations() -> StorageResult<()> {
     // Check Adjacency Iterator
     {
         let mut adj_count = 0;
-        let adj_iter = verify_txn.iter_adjacency(carol_id);
+        let adj_iter = verify_txn.iter_adjacency(carol_id, 64);
         for adj_result in adj_iter {
             let adj = adj_result?;
             assert!(adj.eid() == follow_edge_id);
@@ -403,7 +403,7 @@ fn test_graph_empty_adjacency_list() -> StorageResult<()> {
     graph.create_vertex(&txn, alice)?;
 
     // Check adjacency list is empty
-    let adj_count = txn.iter_adjacency(1).count();
+    let adj_count = txn.iter_adjacency(1, 64).count();
     assert_eq!(adj_count, 0);
 
     txn.abort()?;
@@ -454,11 +454,11 @@ fn test_graph_bidirectional_edges() -> StorageResult<()> {
     graph.create_edge(&txn, edge2)?;
 
     // Check Alice's outgoing
-    let alice_out = txn.iter_adjacency_outgoing(1).count();
+    let alice_out = txn.iter_adjacency_outgoing(1, 64).count();
     assert_eq!(alice_out, 1);
 
     // Check Alice's incoming
-    let alice_in = txn.iter_adjacency_incoming(1).count();
+    let alice_in = txn.iter_adjacency_incoming(1, 64).count();
     assert_eq!(alice_in, 1);
 
     txn.commit()?;
@@ -485,12 +485,12 @@ fn test_graph_multiple_edge_types() -> StorageResult<()> {
     graph.create_edge(&txn, follow_edge)?;
 
     // Verify both edges exist
-    let total_edges = txn.iter_adjacency(1).count();
+    let total_edges = txn.iter_adjacency(1, 64).count();
     assert_eq!(total_edges, 2);
 
     // Filter by edge type
     let friend_count = txn
-        .iter_adjacency_outgoing(1)
+        .iter_adjacency_outgoing(1, 64)
         .filter_map(|adj| adj.ok())
         .filter(|adj| adj.label_id() == FRIEND_LABEL_ID)
         .count();

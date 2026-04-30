@@ -10,8 +10,6 @@ use crate::tp::transaction::MemTransaction;
 
 type AdjFilter<'a> = Box<dyn Fn(&Neighbor) -> bool + 'a>;
 
-const BATCH_SIZE: usize = 64;
-
 /// An adjacency list iterator that supports filtering (for iterating over a single vertex's
 /// adjacency list).
 pub struct AdjacencyIterator<'a> {
@@ -21,6 +19,7 @@ pub struct AdjacencyIterator<'a> {
     txn: &'a MemTransaction,                  // Reference to the transaction
     filters: Vec<AdjFilter<'a>>,              // List of filtering predicates
     current_adj: Option<Neighbor>,            // Current adjacency entry
+    batch_size: usize,                        // Batch size for iteration
 }
 
 impl Iterator for AdjacencyIterator<'_> {
@@ -78,7 +77,7 @@ impl<'a> AdjacencyIterator<'a> {
 
             // Load the next batch of entries
             self.current_entries.push(*current.value());
-            for _ in 0..BATCH_SIZE {
+            for _ in 0..self.batch_size {
                 if let Some(entry) = current.next() {
                     self.current_entries.push(*entry.value());
                     current = entry;
@@ -95,7 +94,12 @@ impl<'a> AdjacencyIterator<'a> {
     }
 
     /// Creates a new `AdjacencyIterator` for a given vertex and direction (incoming or outgoing).
-    pub fn new(txn: &'a MemTransaction, vid: VertexId, direction: Direction) -> Self {
+    pub fn new(
+        txn: &'a MemTransaction,
+        vid: VertexId,
+        direction: Direction,
+        batch_size: usize,
+    ) -> Self {
         let adjacency_list = txn.graph().adjacency_list.get(&vid);
 
         let mut result = Self {
@@ -118,6 +122,7 @@ impl<'a> AdjacencyIterator<'a> {
             txn,
             filters: Vec::new(),
             current_adj: None,
+            batch_size,
         };
 
         // Preload the first batch of data
@@ -162,17 +167,25 @@ impl<'a> AdjacencyIteratorTrait<'a> for AdjacencyIterator<'a> {
 impl MemTransaction {
     /// Returns an iterator over the adjacency list of a given vertex.
     /// Filtering conditions can be applied using the `filter` method.
-    pub fn iter_adjacency(&self, vid: VertexId) -> AdjacencyIterator<'_> {
-        AdjacencyIterator::new(self, vid, Direction::Both)
+    pub fn iter_adjacency(&self, vid: VertexId, batch_size: usize) -> AdjacencyIterator<'_> {
+        AdjacencyIterator::new(self, vid, Direction::Both, batch_size)
     }
 
     #[allow(dead_code)]
-    pub fn iter_adjacency_outgoing(&self, vid: VertexId) -> AdjacencyIterator<'_> {
-        AdjacencyIterator::new(self, vid, Direction::Outgoing)
+    pub fn iter_adjacency_outgoing(
+        &self,
+        vid: VertexId,
+        batch_size: usize,
+    ) -> AdjacencyIterator<'_> {
+        AdjacencyIterator::new(self, vid, Direction::Outgoing, batch_size)
     }
 
     #[allow(dead_code)]
-    pub fn iter_adjacency_incoming(&self, vid: VertexId) -> AdjacencyIterator<'_> {
-        AdjacencyIterator::new(self, vid, Direction::Incoming)
+    pub fn iter_adjacency_incoming(
+        &self,
+        vid: VertexId,
+        batch_size: usize,
+    ) -> AdjacencyIterator<'_> {
+        AdjacencyIterator::new(self, vid, Direction::Incoming, batch_size)
     }
 }

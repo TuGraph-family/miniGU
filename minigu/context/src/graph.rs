@@ -2,6 +2,7 @@ use std::any::Any;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::fmt::{self, Debug};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 
 use minigu_catalog::error::CatalogResult;
@@ -89,6 +90,10 @@ pub struct GraphContainer {
     graph_storage: GraphStorage,
     index_catalog: Arc<dyn GraphIndexCatalog>,
     index_op_lock: Mutex<()>,
+    /// Batch size for expand source (neighbor iteration). Injected from config.
+    expand_batch_size: AtomicUsize,
+    /// Batch size for adjacency list iteration. Injected from config.
+    adjacency_batch_size: AtomicUsize,
 }
 
 impl GraphContainer {
@@ -98,7 +103,29 @@ impl GraphContainer {
             graph_storage,
             index_catalog: Arc::new(MemoryGraphIndexCatalog::default()),
             index_op_lock: Mutex::new(()),
+            expand_batch_size: AtomicUsize::new(64),
+            adjacency_batch_size: AtomicUsize::new(64),
         }
+    }
+
+    /// Sets the batch size for expand operations.
+    pub fn set_expand_batch_size(&self, size: usize) {
+        self.expand_batch_size.store(size, Ordering::Relaxed);
+    }
+
+    /// Sets the batch size for adjacency list iteration.
+    pub fn set_adjacency_batch_size(&self, size: usize) {
+        self.adjacency_batch_size.store(size, Ordering::Relaxed);
+    }
+
+    #[inline]
+    pub fn expand_batch_size(&self) -> usize {
+        self.expand_batch_size.load(Ordering::Relaxed)
+    }
+
+    #[inline]
+    pub fn adjacency_batch_size(&self) -> usize {
+        self.adjacency_batch_size.load(Ordering::Relaxed)
     }
 
     #[inline]
@@ -236,6 +263,7 @@ impl GraphContainer {
         // Remove once ORDER BY is supported.
         ids.sort_unstable();
 
+        debug_assert!(batch_size > 0, "batch_size must be greater than 0");
         let mut pos = 0usize;
         let iter = std::iter::from_fn(move || {
             if pos >= ids.len() {
