@@ -16,4 +16,4 @@ pub use timestamp::{
     global_timestamp_generator, global_transaction_id_generator, init_global_timestamp_generator,
     init_global_transaction_id_generator,
 };
-pub use transaction::IsolationLevel;
+pub use transaction::{IsolationLevel, LockStrategy, TxnOptions};

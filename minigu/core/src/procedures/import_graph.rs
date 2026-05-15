@@ -46,11 +46,11 @@ use minigu_catalog::memory::graph_type::{
 };
 use minigu_catalog::property::Property;
 use minigu_catalog::provider::{GraphTypeProvider, SchemaProvider};
-use minigu_common::IsolationLevel;
 use minigu_common::data_type::{DataSchema, LogicalType};
 use minigu_common::error::not_implemented;
 use minigu_common::types::VertexId;
 use minigu_common::value::ScalarValue;
+use minigu_common::{IsolationLevel, TxnOptions};
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::procedure::Procedure;
 use minigu_context::session::SessionContext;
@@ -138,7 +138,8 @@ pub fn import<P: AsRef<Path>>(
         return Err(anyhow::anyhow!("graph {graph_name} already exists").into());
     }
 
-    let (graph, graph_type) = import_internal(manifest_path.as_ref())?;
+    let txn_options = context.database().config().txn_options;
+    let (graph, graph_type) = import_internal(manifest_path.as_ref(), txn_options)?;
 
     let container = GraphContainer::new(
         Arc::clone(&graph_type),
@@ -156,13 +157,14 @@ pub fn import<P: AsRef<Path>>(
 
 pub(crate) fn import_internal<P: AsRef<Path>>(
     manifest_path: P,
+    txn_options: TxnOptions,
 ) -> Result<(Arc<MemoryGraph>, Arc<MemoryGraphTypeCatalog>)> {
     // Graph type
     let manifest = build_manifest(&manifest_path)?;
     let graph_type = get_graph_type_from_manifest(&manifest)?;
 
     // Graph
-    let graph = MemoryGraph::in_memory();
+    let graph = MemoryGraph::in_memory_with_options(txn_options);
     let txn = graph
         .txn_manager()
         .begin_transaction(IsolationLevel::Serializable)?;
@@ -315,4 +317,48 @@ pub fn build_procedure() -> Procedure {
 
         Ok(vec![])
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+
+    use minigu_common::{IsolationLevel, LockStrategy};
+    use tempfile::tempdir;
+
+    use super::*;
+
+    #[test]
+    fn import_internal_uses_txn_options_default_lock() {
+        let tmp_dir = tempdir().unwrap();
+        let manifest_path = tmp_dir.path().join("manifest.json");
+        let vertex_file = tmp_dir.path().join("person.csv");
+
+        fs::write(&vertex_file, "1\n").unwrap();
+
+        let manifest = Manifest {
+            vertices: vec![VertexSpec::new(
+                "PERSON".to_string(),
+                FileSpec::new("person.csv".to_string(), "csv".to_string()),
+                vec![],
+            )],
+            edges: vec![],
+        };
+        fs::write(&manifest_path, serde_json::to_vec(&manifest).unwrap()).unwrap();
+
+        let (graph, _graph_type) = import_internal(
+            &manifest_path,
+            TxnOptions {
+                default_lock: LockStrategy::Optimistic,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        let txn = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Snapshot)
+            .unwrap();
+        assert_eq!(txn.lock_strategy(), LockStrategy::Optimistic);
+    }
 }

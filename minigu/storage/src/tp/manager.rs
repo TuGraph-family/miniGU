@@ -3,13 +3,14 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, Weak};
 
 use crossbeam_skiplist::SkipMap;
-use minigu_common::timestamp::{
-    Timestamp, global_timestamp_generator, global_transaction_id_generator,
-};
 use minigu_common::types::{EdgeId, VertexId};
+use minigu_common::{
+    IsolationLevel, LockStrategy, Timestamp, global_timestamp_generator,
+    global_transaction_id_generator,
+};
 
 use super::memory_graph::MemoryGraph;
-use super::transaction::{IsolationLevel, MemTransaction, UndoEntry};
+use super::transaction::{MemTransaction, UndoEntry};
 use crate::common::DeltaOp;
 use crate::common::model::edge::{Edge, Neighbor};
 use crate::common::wal::graph_wal::{Operation, RedoEntry};
@@ -33,6 +34,10 @@ pub struct MemTxnManager {
     watermark: AtomicU64,
     /// Last garbage collection timestamp
     last_gc_ts: AtomicU64,
+    /// Default lock strategy for new transactions on this graph
+    pub(super) default_lock_strategy: LockStrategy,
+    /// Default isolation level when callers want to rely on sensible defaults.
+    pub(super) default_isolation_level: IsolationLevel,
 }
 
 impl Default for MemTxnManager {
@@ -45,6 +50,8 @@ impl Default for MemTxnManager {
             latest_commit_ts: AtomicU64::new(0),
             watermark: AtomicU64::new(0),
             last_gc_ts: AtomicU64::new(0),
+            default_lock_strategy: LockStrategy::Pessimistic,
+            default_isolation_level: IsolationLevel::Snapshot,
         }
     }
 }
@@ -54,7 +61,13 @@ impl MemTxnManager {
         &self,
         isolation_level: IsolationLevel,
     ) -> Result<Arc<MemTransaction>, StorageError> {
-        self.begin_transaction_at(None, None, isolation_level, false)
+        self.begin_transaction_at(
+            None,
+            None,
+            isolation_level,
+            self.default_lock_strategy,
+            false,
+        )
     }
 
     pub fn finish_transaction(&self, txn: &MemTransaction) -> Result<(), StorageError> {
@@ -138,6 +151,7 @@ impl MemTxnManager {
         txn_id: Option<Timestamp>,
         start_ts: Option<Timestamp>,
         isolation_level: IsolationLevel,
+        lock_strategy: LockStrategy,
         skip_wal: bool,
     ) -> Result<Arc<MemTransaction>, StorageError> {
         let graph = self.graph.upgrade().ok_or_else(|| {
@@ -178,6 +192,7 @@ impl MemTxnManager {
             txn_id,
             start_ts,
             isolation_level,
+            lock_strategy,
         ));
         self.active_txns.insert(txn.txn_id(), txn.clone());
         self.update_watermark();
@@ -195,6 +210,21 @@ impl MemTxnManager {
         }
 
         Ok(txn)
+    }
+
+    /// Begin a new transaction using the manager's default isolation level.
+    pub fn begin_transaction_default(&self) -> Result<Arc<MemTransaction>, StorageError> {
+        self.begin_transaction_at(
+            None,
+            None,
+            self.default_isolation_level,
+            self.default_lock_strategy,
+            false,
+        )
+    }
+
+    pub fn default_lock_strategy(&self) -> LockStrategy {
+        self.default_lock_strategy
     }
 
     /// Update the watermark based on currently active transactions.

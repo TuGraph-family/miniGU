@@ -53,6 +53,7 @@ impl TransactionManager {
             Some(txn_id),
             Some(start_ts),
             isolation_level,
+            self.graph.txn_manager().default_lock_strategy(),
             graph_skip_wal,
         )?;
         let graph_state = GraphTxnState::new(mem_txn);

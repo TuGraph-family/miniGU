@@ -20,7 +20,7 @@ use minigu_planner::bound::{
     NodeTypeRef,
 };
 use minigu_planner::plan::catalog_modify::{CreateGraph, DropGraph};
-use minigu_storage::tp::MemoryGraph;
+use minigu_storage::tp::{CheckpointConfig, MemoryGraph};
 
 use super::{Executor, IntoExecutor};
 use crate::error::ExecutionResult;
@@ -93,7 +93,7 @@ fn create_graph_impl(plan: &CreateGraph, session: &SessionContext) -> ExecutionR
         .as_ref()
         .ok_or_else(|| execution_error("No current schema set"))?;
 
-    let new_graph_container = build_graph_container(plan)?;
+    let new_graph_container = build_graph_container(plan, session)?;
 
     let catalog_kind = match plan.kind {
         PlannerCreateKind::Create => CatalogCreateKind::Create,
@@ -113,7 +113,10 @@ fn create_graph_impl(plan: &CreateGraph, session: &SessionContext) -> ExecutionR
 }
 
 /// Factory: Builds the graph container logic without side effects
-fn build_graph_container(plan: &CreateGraph) -> ExecutionResult<GraphRef> {
+fn build_graph_container(
+    plan: &CreateGraph,
+    session: &SessionContext,
+) -> ExecutionResult<GraphRef> {
     let graph_type = match &plan.graph_type {
         minigu_planner::bound::BoundGraphType::Nested(elements) => {
             let catalog = MemoryGraphTypeCatalog::new();
@@ -135,7 +138,13 @@ fn build_graph_container(plan: &CreateGraph) -> ExecutionResult<GraphRef> {
         }
     };
 
-    let memory_graph = MemoryGraph::in_memory();
+    let config = session.database().config();
+    let memory_graph = MemoryGraph::in_memory_with_checkpoint_config_and_options(
+        CheckpointConfig {
+            wal_threshold: config.storage.wal_threshold,
+        },
+        config.txn_options,
+    );
     let graph_storage = GraphStorage::Memory(memory_graph);
 
     Ok(Arc::new(GraphContainer::new(graph_type, graph_storage)))
@@ -440,5 +449,45 @@ fn drop_graph_impl(plan: &DropGraph, session: &SessionContext) -> ExecutionResul
             "Graph '{}' does not exist",
             plan.name
         ))),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use minigu_catalog::memory::MemoryCatalog;
+    use minigu_catalog::memory::directory::MemoryDirectoryCatalog;
+    use minigu_catalog::provider::DirectoryOrSchema;
+    use minigu_context::database::{DatabaseConfig, DatabaseContext};
+    use minigu_context::runtime::DatabaseRuntime;
+    use minigu_planner::bound::BoundGraphType;
+
+    use super::*;
+
+    #[test]
+    fn build_graph_container_uses_storage_wal_threshold() {
+        let root = Arc::new(MemoryDirectoryCatalog::new(None));
+        let catalog = MemoryCatalog::new(DirectoryOrSchema::Directory(root));
+        let runtime = DatabaseRuntime::new(1).unwrap();
+        let mut config = DatabaseConfig::default();
+        config.storage.wal_threshold = 7;
+        let session = SessionContext::new(Arc::new(DatabaseContext::new(catalog, runtime, config)));
+        let plan = CreateGraph::new(
+            "g".into(),
+            PlannerCreateKind::Create,
+            BoundGraphType::Nested(vec![]),
+        );
+
+        let graph = build_graph_container(&plan, &session).unwrap();
+        let container = graph
+            .downcast_arc::<GraphContainer>()
+            .expect("graph should be a GraphContainer");
+
+        match container.graph_storage() {
+            GraphStorage::Memory(memory_graph) => {
+                assert_eq!(memory_graph.checkpoint_wal_threshold(), 7);
+            }
+        }
     }
 }

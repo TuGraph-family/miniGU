@@ -44,11 +44,11 @@ use csv::{Writer, WriterBuilder};
 use minigu_catalog::label_set::LabelSet;
 use minigu_catalog::property::Property;
 use minigu_catalog::provider::{GraphProvider, GraphTypeProvider, SchemaProvider};
-use minigu_common::IsolationLevel;
 use minigu_common::data_type::LogicalType;
 use minigu_common::error::not_implemented;
 use minigu_common::types::{EdgeId, LabelId, VertexId};
 use minigu_common::value::ScalarValue;
+use minigu_common::{IsolationLevel, TxnOptions};
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::procedure::Procedure;
 use minigu_storage::common::{Edge, Vertex};
@@ -663,7 +663,8 @@ mod tests {
 
         {
             let manifest_path = export_dir1.join(manifest_rel_path);
-            let (graph, graph_type) = import_internal(manifest_path).unwrap();
+            let (graph, graph_type) =
+                import_internal(manifest_path, TxnOptions::default()).unwrap();
 
             export(
                 graph,

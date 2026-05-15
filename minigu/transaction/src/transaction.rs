@@ -141,7 +141,7 @@ impl Transaction {
     ) -> TxnResult<Box<dyn Iterator<Item = minigu_storage::error::StorageResult<Neighbor>> + '_>>
     {
         let graph = self.graph.mem().graph();
-        graph.iter_adjacency(self, vid).map_err(TxnError::from)
+        graph.iter_adjacency(self, vid, 64).map_err(TxnError::from)
     }
 
     pub fn create_vertex(&self, vertex: Vertex) -> TxnResult<VertexId> {
@@ -357,7 +357,7 @@ mod tests {
     use minigu_catalog::txn::transaction::TxnHook;
     use minigu_catalog::txn::{CatalogTxnManager, CatalogTxnView};
     use minigu_common::types::LabelId;
-    use minigu_common::{IsolationLevel, Timestamp};
+    use minigu_common::{IsolationLevel, LockStrategy, Timestamp};
     use minigu_storage::common::model::properties::PropertyRecord;
     use minigu_storage::tp::{MemoryGraph, memory_graph};
 
@@ -398,6 +398,7 @@ mod tests {
                 Some(txn_id),
                 Some(start_ts),
                 IsolationLevel::Serializable,
+                LockStrategy::Pessimistic,
                 true,
             )
             .expect("begin graph txn");
