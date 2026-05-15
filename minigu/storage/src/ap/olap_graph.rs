@@ -256,6 +256,43 @@ pub struct OlapStorage {
 
 #[allow(dead_code)]
 impl OlapStorage {
+    fn resolve_edge_location(
+        &self,
+        edge_blocks: &[EdgeBlock],
+        eid: EdgeId,
+        preferred: Option<(usize, usize)>,
+    ) -> Option<(usize, usize)> {
+        if let Some((block_idx, offset)) = preferred
+            && let Some(block) = edge_blocks.get(block_idx)
+            && offset < block.edge_counter
+            && block.edges[offset].eid == eid
+        {
+            return Some((block_idx, offset));
+        }
+
+        if let Some(loc) = self.edge_id_map.get(&eid) {
+            let (block_idx, offset) = *loc.value();
+            if let Some(block) = edge_blocks.get(block_idx)
+                && offset < block.edge_counter
+                && block.edges[offset].eid == eid
+            {
+                return Some((block_idx, offset));
+            }
+        }
+
+        for (block_idx, block) in edge_blocks.iter().enumerate() {
+            if let Some(offset) = block.edges[..block.edge_counter]
+                .iter()
+                .position(|edge| edge.eid == eid)
+            {
+                self.edge_id_map.insert(eid, (block_idx, offset));
+                return Some((block_idx, offset));
+            }
+        }
+
+        None
+    }
+
     pub fn compress_edge(&self) {
         if self.is_edge_compressed.load(Ordering::SeqCst) {
             return;
@@ -590,7 +627,7 @@ impl OlapStorage {
         }
 
         // Use EdgeId mapping for fast lookup
-        let (block_idx, offset) = *self
+        let initial_location = *self
             .edge_id_map
             .get(&eid)
             .ok_or_else(|| {
@@ -599,6 +636,11 @@ impl OlapStorage {
             .value();
 
         let mut edges_lock = self.edges.write().unwrap();
+        let (block_idx, offset) = self
+            .resolve_edge_location(&edges_lock, eid, Some(initial_location))
+            .ok_or_else(|| {
+                StorageError::EdgeNotFound(EdgeNotFound(format!("Edge {} not found", eid)))
+            })?;
         let block = edges_lock.get_mut(block_idx).ok_or_else(|| {
             StorageError::EdgeNotFound(EdgeNotFound(format!("Edge block {} not found", block_idx)))
         })?;
@@ -694,7 +736,7 @@ impl OlapStorage {
         eid: <OlapStorage as OlapGraph>::EdgeID,
     ) -> StorageResult<()> {
         // Use EdgeId mapping for fast lookup
-        let (block_idx, offset) = *self
+        let initial_location = *self
             .edge_id_map
             .get(&eid)
             .ok_or_else(|| {
@@ -703,6 +745,11 @@ impl OlapStorage {
             .value();
 
         let mut edges_lock = self.edges.write().unwrap();
+        let (block_idx, offset) = self
+            .resolve_edge_location(&edges_lock, eid, Some(initial_location))
+            .ok_or_else(|| {
+                StorageError::EdgeNotFound(EdgeNotFound(format!("Edge {} not found", eid)))
+            })?;
         let (old_commit_ts, old_label_id, old_dst_id) = {
             let block = edges_lock.get(block_idx).ok_or_else(|| {
                 StorageError::EdgeNotFound(EdgeNotFound(format!(

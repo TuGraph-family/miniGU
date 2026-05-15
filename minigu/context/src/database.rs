@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use minigu_catalog::memory::MemoryCatalog;
+use minigu_transaction::TxnOptions;
 
 use crate::runtime::DatabaseRuntime;
 
@@ -49,6 +50,7 @@ pub struct DatabaseConfig {
     pub db_path: Option<PathBuf>,
     pub storage: StorageConfig,
     pub execution: ExecutionConfig,
+    pub txn_options: TxnOptions,
 }
 
 impl Default for DatabaseConfig {
@@ -58,6 +60,7 @@ impl Default for DatabaseConfig {
             db_path: None,
             storage: StorageConfig::default(),
             execution: ExecutionConfig::default(),
+            txn_options: TxnOptions::default(),
         }
     }
 }

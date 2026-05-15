@@ -127,9 +127,13 @@ fn build_graph_container(
         }
     };
 
-    let memory_graph = MemoryGraph::in_memory_with_checkpoint_config(CheckpointConfig {
-        wal_threshold: session.database().config().storage.wal_threshold,
-    });
+    let config = session.database().config();
+    let memory_graph = MemoryGraph::in_memory_with_checkpoint_config_and_options(
+        CheckpointConfig {
+            wal_threshold: config.storage.wal_threshold,
+        },
+        config.txn_options,
+    );
     let graph_storage = GraphStorage::Memory(memory_graph);
 
     Ok(Arc::new(GraphContainer::new(graph_type, graph_storage)))
