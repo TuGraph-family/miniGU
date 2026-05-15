@@ -11,8 +11,6 @@ use crate::tp::transaction::{MemTransaction, WriteKind};
 
 type AdjFilter<'a> = Box<dyn Fn(&Neighbor) -> bool + 'a>;
 
-const BATCH_SIZE: usize = 64;
-
 /// An adjacency list iterator that supports filtering (for iterating over a single vertex's
 /// adjacency list).
 pub struct AdjacencyIterator<'a> {
@@ -22,6 +20,7 @@ pub struct AdjacencyIterator<'a> {
     txn: &'a MemTransaction,                  // Reference to the transaction
     filters: Vec<AdjFilter<'a>>,              // List of filtering predicates
     current_adj: Option<Neighbor>,            // Current adjacency entry
+    batch_size: usize,                        // Batch size for iteration
 }
 
 impl Iterator for AdjacencyIterator<'_> {
@@ -100,7 +99,7 @@ impl<'a> AdjacencyIterator<'a> {
 
             // Load the next batch of entries
             self.current_entries.push(*current.value());
-            for _ in 0..BATCH_SIZE {
+            for _ in 1..self.batch_size {
                 if let Some(entry) = current.next() {
                     self.current_entries.push(*entry.value());
                     current = entry;
@@ -117,7 +116,16 @@ impl<'a> AdjacencyIterator<'a> {
     }
 
     /// Creates a new `AdjacencyIterator` for a given vertex and direction (incoming or outgoing).
-    pub fn new(txn: &'a MemTransaction, vid: VertexId, direction: Direction) -> Self {
+    pub fn new(
+        txn: &'a MemTransaction,
+        vid: VertexId,
+        direction: Direction,
+        batch_size: usize,
+    ) -> Self {
+        assert!(
+            batch_size > 0,
+            "adjacency batch size must be greater than 0"
+        );
         let adjacency_entry = txn.graph().adjacency_list.get(&vid);
 
         // Fast-path: in pessimistic mode, the adjacency lists are already updated in-place and
@@ -224,6 +232,7 @@ impl<'a> AdjacencyIterator<'a> {
             txn,
             filters: Vec::new(),
             current_adj: None,
+            batch_size,
         };
 
         // Preload the first batch of data
@@ -268,18 +277,26 @@ impl<'a> AdjacencyIteratorTrait<'a> for AdjacencyIterator<'a> {
 impl MemTransaction {
     /// Returns an iterator over the adjacency list of a given vertex.
     /// Filtering conditions can be applied using the `filter` method.
-    pub fn iter_adjacency(&self, vid: VertexId) -> AdjacencyIterator<'_> {
-        AdjacencyIterator::new(self, vid, Direction::Both)
+    pub fn iter_adjacency(&self, vid: VertexId, batch_size: usize) -> AdjacencyIterator<'_> {
+        AdjacencyIterator::new(self, vid, Direction::Both, batch_size)
     }
 
     #[allow(dead_code)]
-    pub fn iter_adjacency_outgoing(&self, vid: VertexId) -> AdjacencyIterator<'_> {
-        AdjacencyIterator::new(self, vid, Direction::Outgoing)
+    pub fn iter_adjacency_outgoing(
+        &self,
+        vid: VertexId,
+        batch_size: usize,
+    ) -> AdjacencyIterator<'_> {
+        AdjacencyIterator::new(self, vid, Direction::Outgoing, batch_size)
     }
 
     #[allow(dead_code)]
-    pub fn iter_adjacency_incoming(&self, vid: VertexId) -> AdjacencyIterator<'_> {
-        AdjacencyIterator::new(self, vid, Direction::Incoming)
+    pub fn iter_adjacency_incoming(
+        &self,
+        vid: VertexId,
+        batch_size: usize,
+    ) -> AdjacencyIterator<'_> {
+        AdjacencyIterator::new(self, vid, Direction::Incoming, batch_size)
     }
 }
 
@@ -288,14 +305,67 @@ mod tests {
     use std::sync::Arc;
 
     use minigu_common::types::LabelId;
-    use minigu_transaction::{IsolationLevel, LockStrategy};
+    use minigu_transaction::{GraphTxnManager, IsolationLevel, LockStrategy, Transaction};
 
-    use super::AdjacencyIterator;
-    use crate::common::iterators::Direction;
-    use crate::model::edge::{Edge, Neighbor};
-    use crate::model::properties::PropertyRecord;
-    use crate::model::vertex::Vertex;
-    use crate::tp::memory_graph::MemoryGraph;
+    use super::*;
+    use crate::common::{Edge, Neighbor, PropertyRecord, Vertex};
+    use crate::tp::MemoryGraph;
+
+    fn populate_outgoing_edges(edge_count: u64) -> (std::sync::Arc<MemoryGraph>, VertexId) {
+        let graph = MemoryGraph::in_memory();
+        let txn = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        let label = LabelId::new(1).unwrap();
+        let src = 1;
+
+        graph
+            .create_vertex(&txn, Vertex::new(src, label, PropertyRecord::new(vec![])))
+            .unwrap();
+        for dst in 2..=(edge_count + 1) {
+            graph
+                .create_vertex(&txn, Vertex::new(dst, label, PropertyRecord::new(vec![])))
+                .unwrap();
+            graph
+                .create_edge(
+                    &txn,
+                    Edge::new(dst - 1, src, dst, label, PropertyRecord::new(vec![])),
+                )
+                .unwrap();
+        }
+        txn.commit().unwrap();
+
+        (graph, src)
+    }
+
+    #[test]
+    fn load_next_batch_loads_at_most_configured_batch_size() {
+        let (graph, src) = populate_outgoing_edges(4);
+        let txn = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        let mut iter = txn.iter_adjacency_outgoing(src, 2);
+
+        assert_eq!(iter.current_entries.len(), 2);
+        assert!(iter.next().is_some());
+        assert!(iter.next().is_some());
+        assert!(iter.next().is_some());
+        assert_eq!(iter.current_entries.len(), 2);
+    }
+
+    #[test]
+    #[should_panic(expected = "adjacency batch size must be greater than 0")]
+    fn adjacency_iterator_rejects_zero_batch_size() {
+        let (graph, src) = populate_outgoing_edges(1);
+        let txn = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+
+        let _ = txn.iter_adjacency(src, 0);
+    }
 
     #[test]
     fn adjacency_iterator_pessimistic_outgoing_reuses_arc() {
@@ -315,7 +385,7 @@ mod tests {
         let expected = graph.adjacency_list.get(&vid).unwrap().outgoing().clone();
         assert!(!expected.is_empty());
 
-        let iter = AdjacencyIterator::new(txn.as_ref(), vid, Direction::Outgoing);
+        let iter = AdjacencyIterator::new(txn.as_ref(), vid, Direction::Outgoing, 64);
         let actual = iter.adj_list.expect("adj_list should exist");
 
         assert!(Arc::ptr_eq(&actual, &expected));
@@ -339,7 +409,7 @@ mod tests {
         let expected = graph.adjacency_list.get(&vid).unwrap().incoming().clone();
         assert!(!expected.is_empty());
 
-        let iter = AdjacencyIterator::new(txn.as_ref(), vid, Direction::Incoming);
+        let iter = AdjacencyIterator::new(txn.as_ref(), vid, Direction::Incoming, 64);
         let actual = iter.adj_list.expect("adj_list should exist");
 
         assert!(Arc::ptr_eq(&actual, &expected));
@@ -373,7 +443,10 @@ mod tests {
             )
             .unwrap();
 
-        let neighbors: Vec<Neighbor> = txn.iter_adjacency_outgoing(1).map(|r| r.unwrap()).collect();
+        let neighbors: Vec<Neighbor> = txn
+            .iter_adjacency_outgoing(1, 64)
+            .map(|r| r.unwrap())
+            .collect();
 
         assert_eq!(neighbors, vec![Neighbor::new(label, 2, 10)]);
     }
