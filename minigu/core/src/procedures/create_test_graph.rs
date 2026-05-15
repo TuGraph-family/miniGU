@@ -2,10 +2,10 @@ use std::sync::Arc;
 
 use arrow::array::{ArrayRef, StringArray};
 use itertools::Itertools;
-use minigu_catalog::memory::MemoryCatalog;
 use minigu_catalog::memory::directory::MemoryDirectoryCatalog;
 use minigu_catalog::memory::graph_type::MemoryGraphTypeCatalog;
 use minigu_catalog::memory::schema::MemorySchemaCatalog;
+use minigu_catalog::memory::{MemoryCatalog, txn_manager};
 use minigu_catalog::provider::{DirectoryOrSchema, GraphProvider, SchemaProvider};
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::data_type::{DataField, DataSchema, LogicalType};
@@ -54,10 +54,16 @@ mod tests {
         let root = Arc::new(MemoryDirectoryCatalog::new(None));
         let parent = Arc::downgrade(&root);
         let schema = Arc::new(MemorySchemaCatalog::new(Some(parent)));
-        assert!(root.add_child(
+        let txn = txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        root.add_child_txn(
             "default".to_string(),
-            DirectoryOrSchema::Schema(schema.clone())
-        ));
+            DirectoryOrSchema::Schema(schema.clone()),
+            txn.as_ref(),
+        )
+        .unwrap();
+        txn.commit().unwrap();
 
         let catalog = MemoryCatalog::new(DirectoryOrSchema::Directory(root));
         let runtime = DatabaseRuntime::new(1).unwrap();
