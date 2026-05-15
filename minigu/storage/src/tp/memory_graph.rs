@@ -403,6 +403,17 @@ impl MemoryGraph {
         Self::with_persistence(persistence)
     }
 
+    /// Creates a new in-memory [`MemoryGraph`] instance with custom checkpoint configuration.
+    pub fn in_memory_with_checkpoint_config(checkpoint_config: CheckpointConfig) -> Arc<Self> {
+        #[cfg(target_arch = "wasm32")]
+        let checkpoint_config = {
+            let _ = checkpoint_config;
+            CheckpointConfig { wal_threshold: 0 }
+        };
+        let persistence = Arc::new(InMemoryPersistence::new());
+        Self::with_persistence_and_config(persistence, checkpoint_config)
+    }
+
     /// Creates a new [`MemoryGraph`] backed by a single database file.
     ///
     /// If the file exists, the graph will be recovered from the checkpoint
@@ -611,6 +622,11 @@ impl MemoryGraph {
     pub(crate) fn increment_wal_counter(&self) {
         self.wal_entries_since_checkpoint
             .fetch_add(1, Ordering::SeqCst);
+    }
+
+    /// Returns the configured WAL threshold for automatic checkpoints.
+    pub fn checkpoint_wal_threshold(&self) -> usize {
+        self.checkpoint_config.wal_threshold
     }
 
     /// Returns a reference to the transaction manager.

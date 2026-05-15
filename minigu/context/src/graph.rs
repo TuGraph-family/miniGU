@@ -110,11 +110,13 @@ impl GraphContainer {
 
     /// Sets the batch size for expand operations.
     pub fn set_expand_batch_size(&self, size: usize) {
+        assert!(size > 0, "expand batch size must be greater than 0");
         self.expand_batch_size.store(size, Ordering::Relaxed);
     }
 
     /// Sets the batch size for adjacency list iteration.
     pub fn set_adjacency_batch_size(&self, size: usize) {
+        assert!(size > 0, "adjacency batch size must be greater than 0");
         self.adjacency_batch_size.store(size, Ordering::Relaxed);
     }
 
@@ -263,7 +265,10 @@ impl GraphContainer {
         // Remove once ORDER BY is supported.
         ids.sort_unstable();
 
-        debug_assert!(batch_size > 0, "batch_size must be greater than 0");
+        assert!(
+            batch_size > 0,
+            "vertex source batch size must be greater than 0"
+        );
         let mut pos = 0usize;
         let iter = std::iter::from_fn(move || {
             if pos >= ids.len() {
@@ -353,6 +358,32 @@ mod tests {
 
         let key = VectorIndexKey::new(person_label_id, EMBEDDING_PROP_ID);
         (container, graph, key)
+    }
+
+    fn empty_container() -> GraphContainer {
+        GraphContainer::new(
+            Arc::new(MemoryGraphTypeCatalog::new()),
+            GraphStorage::Memory(MemoryGraph::in_memory()),
+        )
+    }
+
+    #[test]
+    #[should_panic(expected = "expand batch size must be greater than 0")]
+    fn set_expand_batch_size_rejects_zero() {
+        empty_container().set_expand_batch_size(0);
+    }
+
+    #[test]
+    #[should_panic(expected = "adjacency batch size must be greater than 0")]
+    fn set_adjacency_batch_size_rejects_zero() {
+        empty_container().set_adjacency_batch_size(0);
+    }
+
+    #[test]
+    #[should_panic(expected = "vertex source batch size must be greater than 0")]
+    fn vertex_source_rejects_zero_batch_size() {
+        let container = empty_container();
+        let _ = container.vertex_source(&None, 0);
     }
 
     fn populate_vertices(

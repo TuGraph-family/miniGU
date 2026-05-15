@@ -127,7 +127,6 @@ impl ExpandSource for GraphContainer {
         }
 
         let expand_batch_size = self.expand_batch_size();
-        debug_assert!(expand_batch_size > 0, "batch_size must be greater than 0");
         Some(GraphExpandIter {
             neighbors,
             offset: 0,

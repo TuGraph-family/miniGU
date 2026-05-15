@@ -11,7 +11,7 @@ pub mod vector_index;
 // Re-export commonly used types for OLTP
 pub use db_file_persistence::DbFilePersistence;
 pub use in_memory_persistence::InMemoryPersistence;
-pub use memory_graph::MemoryGraph;
+pub use memory_graph::{CheckpointConfig, MemoryGraph};
 pub use persistence::PersistenceProvider;
 pub use transaction::MemTransaction;
 pub use txn_manager::MemTxnManager;

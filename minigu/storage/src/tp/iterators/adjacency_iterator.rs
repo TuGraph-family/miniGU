@@ -77,7 +77,7 @@ impl<'a> AdjacencyIterator<'a> {
 
             // Load the next batch of entries
             self.current_entries.push(*current.value());
-            for _ in 0..self.batch_size {
+            for _ in 1..self.batch_size {
                 if let Some(entry) = current.next() {
                     self.current_entries.push(*entry.value());
                     current = entry;
@@ -100,6 +100,10 @@ impl<'a> AdjacencyIterator<'a> {
         direction: Direction,
         batch_size: usize,
     ) -> Self {
+        assert!(
+            batch_size > 0,
+            "adjacency batch size must be greater than 0"
+        );
         let adjacency_list = txn.graph().adjacency_list.get(&vid);
 
         let mut result = Self {
@@ -187,5 +191,71 @@ impl MemTransaction {
         batch_size: usize,
     ) -> AdjacencyIterator<'_> {
         AdjacencyIterator::new(self, vid, Direction::Incoming, batch_size)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use minigu_common::types::LabelId;
+    use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
+
+    use super::*;
+    use crate::common::{Edge, PropertyRecord, Vertex};
+    use crate::tp::MemoryGraph;
+
+    fn populate_outgoing_edges(edge_count: u64) -> (std::sync::Arc<MemoryGraph>, VertexId) {
+        let graph = MemoryGraph::in_memory();
+        let txn = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        let label = LabelId::new(1).unwrap();
+        let src = 1;
+
+        graph
+            .create_vertex(&txn, Vertex::new(src, label, PropertyRecord::new(vec![])))
+            .unwrap();
+        for dst in 2..=(edge_count + 1) {
+            graph
+                .create_vertex(&txn, Vertex::new(dst, label, PropertyRecord::new(vec![])))
+                .unwrap();
+            graph
+                .create_edge(
+                    &txn,
+                    Edge::new(dst - 1, src, dst, label, PropertyRecord::new(vec![])),
+                )
+                .unwrap();
+        }
+        txn.commit().unwrap();
+
+        (graph, src)
+    }
+
+    #[test]
+    fn load_next_batch_loads_at_most_configured_batch_size() {
+        let (graph, src) = populate_outgoing_edges(4);
+        let txn = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        let mut iter = txn.iter_adjacency_outgoing(src, 2);
+
+        assert_eq!(iter.current_entries.len(), 2);
+        assert!(iter.next().is_some());
+        assert!(iter.next().is_some());
+        assert!(iter.next().is_some());
+        assert_eq!(iter.current_entries.len(), 2);
+    }
+
+    #[test]
+    #[should_panic(expected = "adjacency batch size must be greater than 0")]
+    fn adjacency_iterator_rejects_zero_batch_size() {
+        let (graph, src) = populate_outgoing_edges(1);
+        let txn = graph
+            .txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+
+        let _ = txn.iter_adjacency(src, 0);
     }
 }
