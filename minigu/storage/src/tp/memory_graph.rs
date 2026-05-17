@@ -556,6 +556,26 @@ impl MemoryGraph {
         Self::with_persistence(persistence, txn_options)
     }
 
+    /// Creates a new in-memory [`MemoryGraph`] instance with custom checkpoint configuration.
+    pub fn in_memory_with_checkpoint_config(checkpoint_config: CheckpointConfig) -> Arc<Self> {
+        Self::in_memory_with_checkpoint_config_and_options(checkpoint_config, TxnOptions::default())
+    }
+
+    /// Creates a new in-memory [`MemoryGraph`] with custom checkpoint configuration and
+    /// transaction defaults.
+    pub fn in_memory_with_checkpoint_config_and_options(
+        checkpoint_config: CheckpointConfig,
+        txn_options: TxnOptions,
+    ) -> Arc<Self> {
+        #[cfg(target_arch = "wasm32")]
+        let checkpoint_config = {
+            let _ = checkpoint_config;
+            CheckpointConfig { wal_threshold: 0 }
+        };
+        let persistence = Arc::new(InMemoryPersistence::new());
+        Self::with_persistence_and_config(persistence, checkpoint_config, txn_options)
+    }
+
     /// Creates a new [`MemoryGraph`] backed by a single database file.
     ///
     /// If the file exists, the graph will be recovered from the checkpoint
@@ -793,6 +813,11 @@ impl MemoryGraph {
             .fetch_add(1, Ordering::SeqCst);
     }
 
+    /// Returns the configured WAL threshold for automatic checkpoints.
+    pub fn checkpoint_wal_threshold(&self) -> usize {
+        self.checkpoint_config.wal_threshold
+    }
+
     /// Returns a reference to the transaction manager.
     pub fn txn_manager(&self) -> &MemTxnManager {
         &self.txn_manager
@@ -978,8 +1003,9 @@ impl MemoryGraph {
         &'a self,
         txn: &'a Arc<MemTransaction>,
         vid: VertexId,
+        batch_size: usize,
     ) -> StorageResult<Box<dyn Iterator<Item = StorageResult<Neighbor>> + 'a>> {
-        Ok(Box::new(txn.iter_adjacency(vid)))
+        Ok(Box::new(txn.iter_adjacency(vid, batch_size)))
     }
 
     /// Returns a reference to the underlying persistence provider.
@@ -2649,7 +2675,7 @@ pub mod tests {
 
         // Check the adjacency list of alice
         {
-            let iter = txn3.iter_adjacency(vid_alice);
+            let iter = txn3.iter_adjacency(vid_alice, 64);
             let mut count = 0;
             for _ in iter {
                 count += 1;
@@ -2659,7 +2685,7 @@ pub mod tests {
 
         // Check the outgoing adjacency list of alice
         {
-            let iter = txn3.iter_adjacency_outgoing(vid_alice);
+            let iter = txn3.iter_adjacency_outgoing(vid_alice, 64);
             let mut count = 0;
             for _ in iter {
                 count += 1;
@@ -2669,7 +2695,7 @@ pub mod tests {
 
         // Check the incoming adjacency list of eve
         {
-            let iter = txn3.iter_adjacency_incoming(vid1);
+            let iter = txn3.iter_adjacency_incoming(vid1, 64);
             let mut count = 0;
             for _ in iter {
                 count += 1;
@@ -2693,7 +2719,7 @@ pub mod tests {
             .unwrap();
         {
             // Check the adjacency list of alice
-            let iter = txn5.iter_adjacency(vid_alice);
+            let iter = txn5.iter_adjacency(vid_alice, 64);
             let mut count = 0;
             for _ in iter {
                 count += 1;
@@ -2876,7 +2902,7 @@ pub mod tests {
             .begin_transaction(IsolationLevel::Serializable)
             .unwrap();
         {
-            let iter1 = txn2.iter_adjacency(vid1);
+            let iter1 = txn2.iter_adjacency(vid1, 64);
             let mut count = 0;
             for _ in iter1 {
                 count += 1;
@@ -2950,7 +2976,7 @@ pub mod tests {
                     .is_some()
             );
             // However, iter will check the visibility of the adjacency
-            let iter = txn2.iter_adjacency(vid1);
+            let iter = txn2.iter_adjacency(vid1, 64);
             let mut count = 0;
             for _ in iter {
                 count += 1;
@@ -3059,7 +3085,7 @@ pub mod tests {
             // assert adjacency list
             assert!(graph.adjacency_list.get(&vid1).unwrap().outgoing().len() == 2);
             assert!(graph.adjacency_list.get(&vid1).unwrap().incoming().len() == 1);
-            let iter = txn2.iter_adjacency(vid1);
+            let iter = txn2.iter_adjacency(vid1, 64);
             let mut count = 0;
             for _ in iter {
                 count += 1;
@@ -3107,7 +3133,7 @@ pub mod tests {
             }
             assert!(count == 3);
             // Check visible edges
-            let iter = txn1.iter_adjacency(vid);
+            let iter = txn1.iter_adjacency(vid, 64);
             let mut count = 0;
             for _ in iter {
                 count += 1;
@@ -3137,7 +3163,7 @@ pub mod tests {
             }
             assert!(count == 3);
             // Check visible edges
-            let iter = txn2.iter_adjacency(vid);
+            let iter = txn2.iter_adjacency(vid, 64);
             let mut count = 0;
             for _ in iter {
                 count += 1;
@@ -5259,7 +5285,7 @@ pub mod tests {
         graph.create_edge(&txn, edge).unwrap();
 
         let outgoing: Vec<_> = txn
-            .iter_adjacency_outgoing(400)
+            .iter_adjacency_outgoing(400, 64)
             .filter_map(|res| res.ok())
             .collect();
         assert!(
@@ -5270,7 +5296,7 @@ pub mod tests {
         );
 
         let incoming: Vec<_> = txn
-            .iter_adjacency_incoming(401)
+            .iter_adjacency_incoming(401, 64)
             .filter_map(|res| res.ok())
             .collect();
         assert!(
@@ -5283,7 +5309,7 @@ pub mod tests {
         graph.delete_edge(&txn, 500).unwrap();
 
         let outgoing_after_delete: Vec<_> = txn
-            .iter_adjacency_outgoing(400)
+            .iter_adjacency_outgoing(400, 64)
             .filter_map(|res| res.ok())
             .collect();
         assert!(
