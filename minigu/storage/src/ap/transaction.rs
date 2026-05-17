@@ -83,15 +83,15 @@ impl MemTransaction {
                         )))
                     })?;
                     if offset >= block.edge_counter || block.edges[offset].eid != edge.eid() {
-                        return Err(StorageError::Transaction(
-                            TransactionError::InvalidState(format!(
+                        return Err(StorageError::Transaction(TransactionError::InvalidState(
+                            format!(
                                 "commit: created edge {} at ({}, {}) has mismatched eid or invalid offset, txn {:?}",
                                 edge.eid(),
                                 block_idx,
                                 offset,
                                 self.txn_id
-                            )),
-                        ));
+                            ),
+                        )));
                     }
                     if block.edges[offset].commit_ts != self.txn_id {
                         return Err(StorageError::Transaction(
@@ -119,12 +119,12 @@ impl MemTransaction {
                         )))
                     })?;
                     if offset >= block.edge_counter || block.edges[offset].eid != *eid {
-                        return Err(StorageError::Transaction(
-                            TransactionError::InvalidState(format!(
+                        return Err(StorageError::Transaction(TransactionError::InvalidState(
+                            format!(
                                 "commit: edge {} at ({}, {}) has mismatched eid or invalid offset, txn {:?}",
                                 eid, block_idx, offset, self.txn_id
-                            )),
-                        ));
+                            ),
+                        )));
                     }
                     if block.edges[offset].commit_ts != self.txn_id {
                         return Err(StorageError::Transaction(
@@ -150,12 +150,12 @@ impl MemTransaction {
                         )))
                     })?;
                     if offset >= block.edge_counter || block.edges[offset].eid != *eid {
-                        return Err(StorageError::Transaction(
-                            TransactionError::InvalidState(format!(
+                        return Err(StorageError::Transaction(TransactionError::InvalidState(
+                            format!(
                                 "commit: deleted edge {} at ({}, {}) has mismatched eid or invalid offset, txn {:?}",
                                 eid, block_idx, offset, self.txn_id
-                            )),
-                        ));
+                            ),
+                        )));
                     }
                     if block.edges[offset].commit_ts != self.txn_id {
                         return Err(StorageError::Transaction(
@@ -204,19 +204,23 @@ impl MemTransaction {
                                 if let Some(pb) = column.blocks.get_mut(block_idx)
                                     && offset < pb.values.len()
                                 {
+                                    let mut promoted = false;
                                     for v in pb.values[offset].iter_mut() {
                                         if v.ts == self.txn_id {
                                             v.ts = commit_ts;
+                                            promoted = true;
                                         }
                                     }
-                                    pb.min_ts = pb.min_ts.min(commit_ts);
-                                    pb.max_ts = pb.max_ts.max(commit_ts);
+                                    if promoted {
+                                        pb.min_ts = pb.min_ts.min(commit_ts);
+                                        pb.max_ts = pb.max_ts.max(commit_ts);
+                                    }
                                 }
                             }
                         }
                     }
                 }
-                DeltaOp::SetEdgeProps(eid, _) => {
+                DeltaOp::SetEdgeProps(eid, set_op) => {
                     if let Some(loc) = self.storage.edge_id_map.get(&eid) {
                         let (block_idx, offset) = *loc.value();
                         if let Some(block) = edges.get_mut(block_idx)
@@ -235,18 +239,24 @@ impl MemTransaction {
                             } else {
                                 block.max_ts.max(commit_ts)
                             };
+                            // Promote only the property columns that this operation touched
                             let mut prop_cols = self.storage.property_columns.write().unwrap();
-                            for column in prop_cols.iter_mut() {
-                                if let Some(pb) = column.blocks.get_mut(block_idx)
+                            for &idx in set_op.indices.iter() {
+                                if let Some(column) = prop_cols.get_mut(idx)
+                                    && let Some(pb) = column.blocks.get_mut(block_idx)
                                     && offset < pb.values.len()
                                 {
+                                    let mut promoted = false;
                                     for v in pb.values[offset].iter_mut() {
                                         if v.ts == self.txn_id {
                                             v.ts = commit_ts;
+                                            promoted = true;
                                         }
                                     }
-                                    pb.min_ts = pb.min_ts.min(commit_ts);
-                                    pb.max_ts = pb.max_ts.max(commit_ts);
+                                    if promoted {
+                                        pb.min_ts = pb.min_ts.min(commit_ts);
+                                        pb.max_ts = pb.max_ts.max(commit_ts);
+                                    }
                                 }
                             }
                         }
@@ -376,9 +386,7 @@ impl MemTransaction {
                             }
                             // Restore edge commit_ts (properties are still in storage)
                             block.edges[offset].commit_ts = old_ts;
-                            if let Some((label_id, dst_id)) =
-                                deleted_snapshots.get(&eid).cloned()
-                            {
+                            if let Some((label_id, dst_id)) = deleted_snapshots.get(&eid).cloned() {
                                 block.edges[offset].label_id = label_id;
                                 block.edges[offset].dst_id = dst_id;
                             }
