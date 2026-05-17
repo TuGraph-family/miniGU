@@ -67,7 +67,7 @@ impl MemTransaction {
             match op {
                 DeltaOp::CreateEdge(edge) => {
                     let loc = self.storage.edge_id_map.get(&edge.eid()).ok_or_else(|| {
-                        StorageError::Transaction(TransactionError::WriteWriteConflict(format!(
+                        StorageError::Transaction(TransactionError::InvalidState(format!(
                             "commit: created edge {} not found in edge_id_map, txn {:?}",
                             edge.eid(),
                             self.txn_id
@@ -75,7 +75,7 @@ impl MemTransaction {
                     })?;
                     let (block_idx, offset) = *loc.value();
                     let block = edges.get(block_idx).ok_or_else(|| {
-                        StorageError::Transaction(TransactionError::WriteWriteConflict(format!(
+                        StorageError::Transaction(TransactionError::InvalidState(format!(
                             "commit: edge block {} not found for created edge {}, txn {:?}",
                             block_idx,
                             edge.eid(),
@@ -84,7 +84,7 @@ impl MemTransaction {
                     })?;
                     if offset >= block.edge_counter || block.edges[offset].eid != edge.eid() {
                         return Err(StorageError::Transaction(
-                            TransactionError::WriteWriteConflict(format!(
+                            TransactionError::InvalidState(format!(
                                 "commit: created edge {} at ({}, {}) has mismatched eid or invalid offset, txn {:?}",
                                 edge.eid(),
                                 block_idx,
@@ -106,21 +106,21 @@ impl MemTransaction {
                 }
                 DeltaOp::SetEdgeProps(eid, _) => {
                     let loc = self.storage.edge_id_map.get(eid).ok_or_else(|| {
-                        StorageError::Transaction(TransactionError::WriteWriteConflict(format!(
+                        StorageError::Transaction(TransactionError::InvalidState(format!(
                             "commit: edge {} not found in edge_id_map, txn {:?}",
                             eid, self.txn_id
                         )))
                     })?;
                     let (block_idx, offset) = *loc.value();
                     let block = edges.get(block_idx).ok_or_else(|| {
-                        StorageError::Transaction(TransactionError::WriteWriteConflict(format!(
+                        StorageError::Transaction(TransactionError::InvalidState(format!(
                             "commit: edge block {} not found for edge {}, txn {:?}",
                             block_idx, eid, self.txn_id
                         )))
                     })?;
                     if offset >= block.edge_counter || block.edges[offset].eid != *eid {
                         return Err(StorageError::Transaction(
-                            TransactionError::WriteWriteConflict(format!(
+                            TransactionError::InvalidState(format!(
                                 "commit: edge {} at ({}, {}) has mismatched eid or invalid offset, txn {:?}",
                                 eid, block_idx, offset, self.txn_id
                             )),
@@ -137,21 +137,21 @@ impl MemTransaction {
                 }
                 DeltaOp::DelEdge(eid) => {
                     let loc = self.storage.edge_id_map.get(eid).ok_or_else(|| {
-                        StorageError::Transaction(TransactionError::WriteWriteConflict(format!(
+                        StorageError::Transaction(TransactionError::InvalidState(format!(
                             "commit: deleted edge {} not found in edge_id_map, txn {:?}",
                             eid, self.txn_id
                         )))
                     })?;
                     let (block_idx, offset) = *loc.value();
                     let block = edges.get(block_idx).ok_or_else(|| {
-                        StorageError::Transaction(TransactionError::WriteWriteConflict(format!(
+                        StorageError::Transaction(TransactionError::InvalidState(format!(
                             "commit: edge block {} not found for deleted edge {}, txn {:?}",
                             block_idx, eid, self.txn_id
                         )))
                     })?;
                     if offset >= block.edge_counter || block.edges[offset].eid != *eid {
                         return Err(StorageError::Transaction(
-                            TransactionError::WriteWriteConflict(format!(
+                            TransactionError::InvalidState(format!(
                                 "commit: deleted edge {} at ({}, {}) has mismatched eid or invalid offset, txn {:?}",
                                 eid, block_idx, offset, self.txn_id
                             )),
@@ -295,9 +295,15 @@ impl MemTransaction {
                 )),
             ));
         }
-        // Apply undo entries in reverse order
-        let mut buffer = self.undo_buffer.write();
-        let entries = buffer.clone();
+        // Take undo entries and release the undo_buffer lock BEFORE acquiring storage
+        // locks. This avoids a lock-order inversion: write paths hold edges/property
+        // locks then call push_undo (locking undo_buffer), so abort must not hold
+        // undo_buffer while acquiring edges/property.
+        let entries = {
+            let buffer = self.undo_buffer.write();
+            buffer.clone()
+        };
+        let deleted_snapshots = self.deleted_edge_snapshot.read().clone();
         let mut edges = self.storage.edges.write().unwrap();
         for (op, old_ts) in entries.into_iter().rev() {
             match op {
@@ -371,7 +377,7 @@ impl MemTransaction {
                             // Restore edge commit_ts (properties are still in storage)
                             block.edges[offset].commit_ts = old_ts;
                             if let Some((label_id, dst_id)) =
-                                self.deleted_edge_snapshot.read().get(&eid).cloned()
+                                deleted_snapshots.get(&eid).cloned()
                             {
                                 block.edges[offset].label_id = label_id;
                                 block.edges[offset].dst_id = dst_id;
@@ -435,8 +441,11 @@ impl MemTransaction {
             }
         }
 
+        // Release storage locks before cleaning up transaction-local state
+        drop(edges);
+
         // clear undo buffer after abort
-        buffer.clear();
+        self.undo_buffer.write().clear();
         self.deleted_edge_snapshot.write().clear();
 
         Ok(())

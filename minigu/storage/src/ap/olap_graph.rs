@@ -660,6 +660,17 @@ impl OlapStorage {
             ))));
         }
 
+        // Write-write conflict detection: check ownership before reading property columns
+        let old_commit_ts = edge.commit_ts;
+        if old_commit_ts.is_txn_id() && old_commit_ts != txn.txn_id {
+            return Err(StorageError::Transaction(
+                TransactionError::WriteWriteConflict(format!(
+                    "edge {} is being modified by txn {:?}, current txn {:?}",
+                    eid, old_commit_ts, txn.txn_id
+                )),
+            ));
+        }
+
         let mut old_props: Vec<minigu_common::value::ScalarValue> = Vec::new();
         {
             let property_columns = self.property_columns.read().unwrap();
@@ -680,19 +691,6 @@ impl OlapStorage {
                     old_props.push(minigu_common::value::ScalarValue::Null);
                 }
             }
-        }
-
-        // capture old commit_ts
-        let old_commit_ts = edge.commit_ts;
-
-        // Write-write conflict detection: another uncommitted txn already owns the write intent
-        if old_commit_ts.is_txn_id() && old_commit_ts != txn.txn_id {
-            return Err(StorageError::Transaction(
-                TransactionError::WriteWriteConflict(format!(
-                    "edge {} is being modified by txn {:?}, current txn {:?}",
-                    eid, old_commit_ts, txn.txn_id
-                )),
-            ));
         }
 
         let set_op = crate::common::SetPropsOp {
