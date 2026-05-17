@@ -19,7 +19,7 @@ use crate::ap::olap_storage::{MutOlapGraph, OlapGraph};
 use crate::common::DeltaOp;
 use crate::error::EdgeNotFoundError::EdgeNotFound;
 use crate::error::VertexNotFoundError::VertexNotFound;
-use crate::error::{StorageError, StorageResult};
+use crate::error::{StorageError, StorageResult, TransactionError};
 use crate::model::properties::PropertyRecord;
 
 pub const BLOCK_CAPACITY: usize = 256;
@@ -685,6 +685,16 @@ impl OlapStorage {
         // capture old commit_ts
         let old_commit_ts = edge.commit_ts;
 
+        // Write-write conflict detection: another uncommitted txn already owns the write intent
+        if old_commit_ts.is_txn_id() && old_commit_ts != txn.txn_id {
+            return Err(StorageError::Transaction(
+                TransactionError::WriteWriteConflict(format!(
+                    "edge {} is being modified by txn {:?}, current txn {:?}",
+                    eid, old_commit_ts, txn.txn_id
+                )),
+            ));
+        }
+
         let set_op = crate::common::SetPropsOp {
             indices: indices.clone(),
             props: old_props.clone(),
@@ -775,6 +785,16 @@ impl OlapStorage {
 
             (edge_data.commit_ts, edge_data.label_id, edge_data.dst_id)
         };
+
+        // Write-write conflict detection: another uncommitted txn already owns the write intent
+        if old_commit_ts.is_txn_id() && old_commit_ts != txn.txn_id {
+            return Err(StorageError::Transaction(
+                TransactionError::WriteWriteConflict(format!(
+                    "edge {} is being modified by txn {:?}, current txn {:?}",
+                    eid, old_commit_ts, txn.txn_id
+                )),
+            ));
+        }
 
         // Save old_commit_ts as timestamp in undo entry
         // Record original identifiers for rollback
