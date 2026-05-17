@@ -77,16 +77,19 @@ impl MemTransaction {
                     let block = edges.get(block_idx).ok_or_else(|| {
                         StorageError::Transaction(TransactionError::WriteWriteConflict(format!(
                             "commit: edge block {} not found for created edge {}, txn {:?}",
-                            block_idx, edge.eid(), self.txn_id
+                            block_idx,
+                            edge.eid(),
+                            self.txn_id
                         )))
                     })?;
-                    if offset >= block.edge_counter
-                        || block.edges[offset].eid != edge.eid()
-                    {
+                    if offset >= block.edge_counter || block.edges[offset].eid != edge.eid() {
                         return Err(StorageError::Transaction(
                             TransactionError::WriteWriteConflict(format!(
                                 "commit: created edge {} at ({}, {}) has mismatched eid or invalid offset, txn {:?}",
-                                edge.eid(), block_idx, offset, self.txn_id
+                                edge.eid(),
+                                block_idx,
+                                offset,
+                                self.txn_id
                             )),
                         ));
                     }
@@ -94,7 +97,9 @@ impl MemTransaction {
                         return Err(StorageError::Transaction(
                             TransactionError::WriteWriteConflict(format!(
                                 "commit: created edge {} write intent is not owned by txn {:?}, current owner: {:?}",
-                                edge.eid(), self.txn_id, block.edges[offset].commit_ts
+                                edge.eid(),
+                                self.txn_id,
+                                block.edges[offset].commit_ts
                             )),
                         ));
                     }
@@ -113,9 +118,7 @@ impl MemTransaction {
                             block_idx, eid, self.txn_id
                         )))
                     })?;
-                    if offset >= block.edge_counter
-                        || block.edges[offset].eid != *eid
-                    {
+                    if offset >= block.edge_counter || block.edges[offset].eid != *eid {
                         return Err(StorageError::Transaction(
                             TransactionError::WriteWriteConflict(format!(
                                 "commit: edge {} at ({}, {}) has mismatched eid or invalid offset, txn {:?}",
@@ -146,9 +149,7 @@ impl MemTransaction {
                             block_idx, eid, self.txn_id
                         )))
                     })?;
-                    if offset >= block.edge_counter
-                        || block.edges[offset].eid != *eid
-                    {
+                    if offset >= block.edge_counter || block.edges[offset].eid != *eid {
                         return Err(StorageError::Transaction(
                             TransactionError::WriteWriteConflict(format!(
                                 "commit: deleted edge {} at ({}, {}) has mismatched eid or invalid offset, txn {:?}",

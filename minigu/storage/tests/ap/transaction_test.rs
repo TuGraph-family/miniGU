@@ -1284,7 +1284,9 @@ fn test_write_conflict_on_uncommitted_write_intent() {
     assert!(
         matches!(
             result,
-            Err(StorageError::Transaction(TransactionError::WriteWriteConflict(_)))
+            Err(StorageError::Transaction(
+                TransactionError::WriteWriteConflict(_)
+            ))
         ),
         "Second writer should get WriteWriteConflict on uncommitted write intent, got: {:?}",
         result
@@ -1370,12 +1372,7 @@ fn test_concurrent_commit_and_abort_with_barrier_conflict_detection() {
         );
         sb_commit.wait();
         storage_commit
-            .set_edge_property_in_txn(
-                &txn,
-                eid,
-                vec![0],
-                vec![ScalarValue::Int32(Some(1111))],
-            )
+            .set_edge_property_in_txn(&txn, eid, vec![0], vec![ScalarValue::Int32(Some(1111))])
             .expect("Commit txn set_edge should succeed");
         // Signal abort thread that write intent is taken
         itb_commit.wait();
@@ -1408,7 +1405,9 @@ fn test_concurrent_commit_and_abort_with_barrier_conflict_detection() {
         assert!(
             matches!(
                 result,
-                Err(StorageError::Transaction(TransactionError::WriteWriteConflict(_)))
+                Err(StorageError::Transaction(
+                    TransactionError::WriteWriteConflict(_)
+                ))
             ),
             "Abort txn must get WriteWriteConflict when commit holds write intent, got: {:?}",
             result
