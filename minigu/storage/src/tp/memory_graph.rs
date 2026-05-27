@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 use std::path::Path;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, RwLock, Weak};
 
 use arrow::array::BooleanArray;
@@ -397,6 +397,15 @@ pub struct MemoryGraph {
     // ---- WAL entries counter since last checkpoint ----
     wal_entries_since_checkpoint: AtomicUsize,
 
+    // ---- ID allocators for INSERT statements ----
+    // These counters hand out fresh vertex/edge IDs to the executor when a GQL
+    // `INSERT` statement does not provide explicit IDs. They are bumped via
+    // `fetch_add(1, ..)` so concurrent inserts get distinct IDs. Recovery
+    // resets each counter to one past the largest replayed ID so we don't
+    // collide with persisted state.
+    next_vertex_id: AtomicU64,
+    next_edge_id: AtomicU64,
+
     // ---- Vector indices ----
     pub(super) vector_indices: DashMap<VectorIndexKey, Arc<RwLock<Box<dyn VectorIndex>>>>,
 }
@@ -634,6 +643,8 @@ impl MemoryGraph {
             checkpoint_lock: RwLock::new(()),
             checkpoint_config,
             wal_entries_since_checkpoint: AtomicUsize::new(0),
+            next_vertex_id: AtomicU64::new(1),
+            next_edge_id: AtomicU64::new(1),
             vector_indices: DashMap::new(),
         });
 
@@ -700,9 +711,11 @@ impl MemoryGraph {
                     if let Some(txn) = txn.as_ref() {
                         match delta {
                             DeltaOp::CreateVertex(vertex) => {
+                                self.observe_vertex_id(vertex.vid());
                                 self.create_vertex(txn, vertex)?;
                             }
                             DeltaOp::CreateEdge(edge) => {
+                                self.observe_edge_id(edge.eid());
                                 self.create_edge(txn, edge)?;
                             }
                             DeltaOp::DelVertex(vid) => {
@@ -796,6 +809,56 @@ impl MemoryGraph {
     /// Returns a reference to the transaction manager.
     pub fn txn_manager(&self) -> &MemTxnManager {
         &self.txn_manager
+    }
+
+    /// Allocates a fresh vertex id for INSERT statements. IDs start at 1 and
+    /// are monotonically increasing within a graph instance. After recovery
+    /// the counter is positioned past the largest persisted id.
+    pub fn alloc_vertex_id(&self) -> VertexId {
+        self.next_vertex_id.fetch_add(1, Ordering::Relaxed)
+    }
+
+    /// Allocates a fresh edge id. See [`alloc_vertex_id`] for semantics.
+    pub fn alloc_edge_id(&self) -> EdgeId {
+        self.next_edge_id.fetch_add(1, Ordering::Relaxed)
+    }
+
+    /// Bumps the vertex id counter so that any future [`alloc_vertex_id`] call
+    /// returns a value strictly greater than `seen`. No-op if the counter is
+    /// already ahead.
+    pub fn observe_vertex_id(&self, seen: VertexId) {
+        let target = seen.saturating_add(1);
+        loop {
+            let current = self.next_vertex_id.load(Ordering::Relaxed);
+            if current >= target {
+                return;
+            }
+            if self
+                .next_vertex_id
+                .compare_exchange_weak(current, target, Ordering::Relaxed, Ordering::Relaxed)
+                .is_ok()
+            {
+                return;
+            }
+        }
+    }
+
+    /// Like [`observe_vertex_id`] but for edge ids.
+    pub fn observe_edge_id(&self, seen: EdgeId) {
+        let target = seen.saturating_add(1);
+        loop {
+            let current = self.next_edge_id.load(Ordering::Relaxed);
+            if current >= target {
+                return;
+            }
+            if self
+                .next_edge_id
+                .compare_exchange_weak(current, target, Ordering::Relaxed, Ordering::Relaxed)
+                .is_ok()
+            {
+                return;
+            }
+        }
     }
 
     /// Returns a reference to the vertices storage.
@@ -1002,6 +1065,9 @@ impl MemoryGraph {
         vertex: Vertex,
     ) -> StorageResult<VertexId> {
         let vid = vertex.vid();
+        // Keep the allocator monotone with any externally supplied id so a
+        // future `alloc_vertex_id()` call cannot collide with this one.
+        self.observe_vertex_id(vid);
         // NOTE: Vertex IDs are not reusable once tombstoned.
         if let Some(entry) = self.vertices.get(&vid)
             && entry.chain.current.read().unwrap().data.is_tombstone()
@@ -1084,6 +1150,8 @@ impl MemoryGraph {
         let src_id = edge.src_id();
         let dst_id = edge.dst_id();
         let label_id = edge.label_id();
+        // Keep the allocator monotone with any externally supplied id.
+        self.observe_edge_id(eid);
 
         // Check if the source/destination vertices and the edge exist
         self.get_vertex(txn, edge.src_id())?;
