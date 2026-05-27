@@ -75,7 +75,9 @@ impl Binder<'_> {
             // Insert paths have shape `Node (Edge Node)*` so the first element
             // is a node and after that pairs of (edge, node).
             let mut iter = path.elements.iter().peekable();
-            let first = iter.next().ok_or_else(|| BindError::InsertPathTooComplex(0))?;
+            let first = iter
+                .next()
+                .ok_or_else(|| BindError::InsertPathTooComplex(0))?;
             let first_var = self.bind_insert_vertex(
                 first.value(),
                 graph_type.as_ref(),
@@ -176,11 +178,11 @@ impl Binder<'_> {
         let label_id = bind_single_label(filler.label.as_ref(), graph_type)
             .ok_or(BindError::InsertVertexLabelMissing)??;
         let label_set: LabelSet = LabelSet::from_iter([label_id]);
-        let vertex_type = graph_type
-            .get_vertex_type(&label_set)?
-            .ok_or_else(|| BindError::InsertVertexTypeNotFound {
+        let vertex_type = graph_type.get_vertex_type(&label_set)?.ok_or_else(|| {
+            BindError::InsertVertexTypeNotFound {
                 label: label_id_to_smol(graph_type, label_id),
-            })?;
+            }
+        })?;
 
         let label_name = label_id_to_smol(graph_type, label_id);
         let properties = bind_property_list(
@@ -240,8 +242,11 @@ impl Binder<'_> {
         }
 
         let label_name = label_id_to_smol(graph_type, label_id);
-        let properties =
-            bind_property_list(filler.predicate.as_ref(), edge_type.properties(), &label_name)?;
+        let properties = bind_property_list(
+            filler.predicate.as_ref(),
+            edge_type.properties(),
+            &label_name,
+        )?;
 
         let variable = filler
             .variable
@@ -309,20 +314,21 @@ fn bind_property_list(
                     label: label.clone(),
                     property: SmolStr::new(name),
                 })?;
+        let value = literal_scalar_from_expr(field.value().value.value()).ok_or_else(|| {
+            BindError::InsertNonLiteralProperty {
+                property: SmolStr::new(name),
+            }
+        })?;
         let value =
-            literal_scalar_from_expr(field.value().value.value()).ok_or_else(|| {
-                BindError::InsertNonLiteralProperty {
+            coerce_scalar_to_type(value, declared_prop.logical_type()).ok_or_else(|| {
+                BindError::InsertPropertyTypeMismatch {
+                    label: label.clone(),
                     property: SmolStr::new(name),
+                    expected: declared_prop.logical_type().clone(),
+                    actual: LogicalType::Null, /* best-effort; precise actual omitted to keep msg
+                                                * simple */
                 }
             })?;
-        let value = coerce_scalar_to_type(value, declared_prop.logical_type()).ok_or_else(
-            || BindError::InsertPropertyTypeMismatch {
-                label: label.clone(),
-                property: SmolStr::new(name),
-                expected: declared_prop.logical_type().clone(),
-                actual: LogicalType::Null, // best-effort; precise actual omitted to keep msg simple
-            },
-        )?;
         by_name.insert(
             declared_prop.name(),
             BoundInsertProperty {

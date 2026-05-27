@@ -44,9 +44,8 @@ fn insert_statement(input: &mut TokenStream) -> ModalResult<Spanned<InsertStatem
 fn insert_path(input: &mut TokenStream) -> ModalResult<Spanned<InsertPath>> {
     (
         node_pattern,
-        repeat(0.., (edge_pattern, node_pattern)).map(
-            |pairs: Vec<(Spanned<ElementPattern>, Spanned<ElementPattern>)>| pairs,
-        ),
+        repeat(0.., (edge_pattern, node_pattern))
+            .map(|pairs: Vec<(Spanned<ElementPattern>, Spanned<ElementPattern>)>| pairs),
     )
         .map(|(first, rest)| {
             let mut elements: VecSpanned<ElementPattern> = Vec::with_capacity(1 + rest.len() * 2);

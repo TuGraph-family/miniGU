@@ -1,6 +1,6 @@
 //! AST definitions for *data-modifying statements*.
 
-use super::{ElementPattern};
+use super::ElementPattern;
 use crate::macros::base;
 use crate::span::{Spanned, VecSpanned};
 
