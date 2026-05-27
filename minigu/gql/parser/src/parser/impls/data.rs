@@ -6,6 +6,7 @@ use crate::ast::{
     DataModifyingStatement, ElementPattern, InsertPath, InsertStatement,
     LinearDataModifyingStatement,
 };
+use crate::imports::Vec;
 use crate::lexer::TokenKind;
 use crate::parser::token::{TokenStream, any};
 use crate::parser::utils::{SpannedParserExt, ToSpanned};
