@@ -64,29 +64,15 @@ Error: Parser(
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id:'table1001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table1001',status:1,props:'table1001',test1:1001,test2:1,test3:'table1001',test4:'table1001',test5:'table1001',test6:'table1001',test7:'table1001',test8:'table1001',test9:'table1001',test10:'table1001',test11:'table1001',test12:'table1001'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id:'table10001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table1001',status:1,props:'table1001',test1:1001,test2:1,test3:'table1001',test4:'table1001',test5:'table1001',test6:'table1001',test7:'table1001',test8:'table1001',test9:'table1001',test10:'table1001',test11:'table1001',test12:'table1001'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
@@ -233,237 +219,111 @@ Error: Parser(
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id: 30001, entity_type: 'table30001', deleted: 0, gen_time: 1001, name: 'table30001', guid:'table30001', status: 1, props: 'table30001', test1: 'table30001', test2: 'table30001', test3: 'table30001', test4: 'table30001', test5: 'table30001', test6: 'table30001', test7: 'table30001', test8: 'table30001', test9: 'table30001', test10: 'table30001', test11: 'table30001', test12: 'table30001'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id: 30002, entity_type: 'table30002', deleted: 0, gen_time: 1001, name: 'table30002', guid:'table30002', status: 1, props: 'table30002', test1: 'table30002', test2: 'table30002', test3: 'table30002', test4: 'table30002', test5: 'table30002', test6: 'table30002', test7: 'table30002', test8: 'table30002', test9: 'table30002', test10: 'table30002', test11: 'table30002', test12: 'table30002'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id: 30003, entity_type: 'table30003', deleted: 0, gen_time: 1001, name: 'table30003', guid:'table30003', status: 1, props: 'table30003', test1: 'table30003', test2: 'table30003', test3: 'table30003', test4: 'table30003', test5: 'table30003', test6: 'table30003', test7: 'table30003', test8: 'table30003', test9: 'table30003', test10: 'table30003', test11: 'table30003', test12: 'table30003'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id: 30004, entity_type: 'table30004', deleted: 0, gen_time: 1001, name: 'table30004', guid:'table30004', status: 1, props: 'table30004', test1: 'table30004', test2: 'table30004', test3: 'table30004', test4: 'table30004', test5: 'table30004', test6: 'table30004', test7: 'table30004', test8: 'table30004', test9: 'table30004', test10: 'table30004', test11: 'table30004', test12: 'table30004'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id: 30005, entity_type: 'table30005', deleted: 0, gen_time: 1001, name: 'table30005', guid:'table30005', status: 1, props: 'table30005', test1: 'table30005', test2: 'table30005', test3: 'table30005', test4: 'table30005', test5: 'table30005', test6: 'table30005', test7: 'table30005', test8: 'table30005', test9: 'table30005', test10: 'table30005', test11: 'table30005', test12: 'table30005'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id: 30006, entity_type: 'table30006', deleted: 0, gen_time: 1001, name: 'table30006', guid:'table30006', status: 1, props: 'table30006', test1: 'table30006', test2: 'table30006', test3: 'table30006', test4: 'table30006', test5: 'table30006', test6: 'table30006', test7: 'table30006', test8: 'table30006', test9: 'table30006', test10: 'table30006', test11: 'table30006', test12: 'table30006'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id: 30007, entity_type: 'table30007', deleted: 0, gen_time: 1001, name: 'table30007', guid:'table30007', status: 1, props: 'table30007', test1: 'table30007', test2: 'table30007', test3: 'table30007', test4: 'table30007', test5: 'table30007', test6: 'table30007', test7: 'table30007', test8: 'table30007', test9: 'table30007', test10: 'table30007', test11: 'table30007', test12: 'table30007'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id: 30008, entity_type: 'table30008', deleted: 0, gen_time: 1001, name: 'table30008', guid:'table30008', status: 1, props: 'table30008', test1: 'table30008', test2: 'table30008', test3: 'table30008', test4: 'table30008', test5: 'table30008', test6: 'table30008', test7: 'table30008', test8: 'table30008', test9: 'table30008', test10: 'table30008', test11: 'table30008', test12: 'table30008'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id: 401, entity_type: 'e', deleted: 0, gen_time: 1001, name: 'table401', guid:'table401', status: 1, props: 'table401', test1: 'FAKE', test2: 'FAKE', test3: 'FAKE', test4: 'FAKE', test5: 'FAKE', test6: 'FAKE', test7: 'FAKE', test8: 'FAKE', test9: 'FAKE', test10: 'FAKE', test11: 'FAKE', test12: 'FAKE'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id: 402, entity_type: 'e', deleted: 0, gen_time: 1001, name: 'table402', guid:'table402', status: 1, props: 'table402', test1: 'FAKE', test2: 'FAKE', test3: 'FAKE', test4: 'FAKE', test5: 'FAKE', test6: 'FAKE', test7: 'FAKE', test8: 'FAKE', test9: 'FAKE', test10: 'FAKE', test11: 'FAKE', test12: 'FAKE'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id: 403, entity_type: 'e', deleted: 0, gen_time: 1001, name: 'table403', guid:'table403', status: 1, props: 'table403', test1: 'FAKE', test2: 'FAKE', test3: 'FAKE', test4: 'FAKE', test5: 'FAKE', test6: 'FAKE', test7: 'FAKE', test8: 'FAKE', test9: 'FAKE', test10: 'FAKE', test11: 'FAKE', test12: 'FAKE'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id: 404, entity_type: 'e', deleted: 0, gen_time: 1001, name: 'table404', guid:'table404', status: 1, props: 'table404', test1: 'FAKE', test2: 'FAKE', test3: 'FAKE', test4: 'FAKE', test5: 'FAKE', test6: 'FAKE', test7: 'FAKE', test8: 'FAKE', test9: 'FAKE', test10: 'FAKE', test11: 'FAKE', test12: 'FAKE'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity1 {id:1000, entity_type: 'Bob1000', deleted:0})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity1 {id:1001, entity_type: 'Bob1001', deleted:0})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity2 {id:1002, entity_type: 'Bob1002', deleted:0, gen_time:1002})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity2 {id:1003, entity_type: 'Bob1003', deleted:0, gen_time:1003})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity2 {id:1004, entity_type: 'Bob1004', deleted:0, gen_time:1004})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity3 {id:1, name: 'Bob'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
@@ -480,120 +340,57 @@ Error: Parser(
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity3 {id:2, name: 'Bob1'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity3 {id:3, name: 'Bob12'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity3 {id:4, name: 'Bob123'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity3 {id:5, name: 'Bob222'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity3 {id:6, name: '666'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity4 {id:7, text: 'hello world'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity4 {id:8, text: '666'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity4 {id:9, text: '{\"a\":1, \"b\":2}'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity4 {id:10, text: '{\"a\":3}'})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
@@ -1156,29 +953,15 @@ Error: Plan(
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id: 28, name: 'Bob8', deleted:0, gen_time:99})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id: 29, name: 'Bob9', deleted:0, gen_time:100})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
@@ -1195,16 +978,9 @@ Error: Parser(
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id: 30, name: 'Bob10', deleted:0, gen_time:100})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
@@ -1221,29 +997,15 @@ Error: Parser(
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id: 38, name: 'Bob38', deleted:0, gen_time:99})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id: 381, name: 'Bob381', deleted:0, gen_time:99})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---
@@ -1260,16 +1022,9 @@ Error: Parser(
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id: 39, name: 'Bob39', deleted:0, gen_time:100})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---

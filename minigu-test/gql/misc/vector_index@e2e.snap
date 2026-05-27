@@ -37,16 +37,9 @@ Error: Parser(
     ),
 )
 ---
-Error: Parser(
-    Unexpected(
-        UnexpectedError {
-            input: "INSERT (n:Entity {id: 30001, embedding: VECTOR [1.0, -2.5, 3.14, -0.5]})",
-            span: 0..6,
-            position: (
-                1,
-                1,
-            ),
-        },
+Error: Plan(
+    Bind(
+        CurrentGraphNotSpecified,
     ),
 )
 ---

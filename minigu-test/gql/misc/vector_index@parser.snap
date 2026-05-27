@@ -19,15 +19,130 @@ source: minigu-test/src/insta_test.rs
       position:
         - 1
         - 1
-- Err:
-    Unexpected:
-      input: "INSERT (n:Entity {id: 30001, embedding: VECTOR [1.0, -2.5, 3.14, -0.5]})"
-      span:
-        start: 0
-        end: 6
-      position:
-        - 1
-        - 1
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Data:
+                      - - Insert:
+                            paths:
+                              - - elements:
+                                    - - Node:
+                                          variable:
+                                            - n
+                                            - start: 8
+                                              end: 9
+                                          label:
+                                            - Label: Entity
+                                            - start: 10
+                                              end: 16
+                                          predicate:
+                                            - Property:
+                                                - - name:
+                                                      - id
+                                                      - start: 18
+                                                        end: 20
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "30001"
+                                                                - start: 22
+                                                                  end: 27
+                                                      - start: 22
+                                                        end: 27
+                                                  - start: 18
+                                                    end: 27
+                                                - - name:
+                                                      - embedding
+                                                      - start: 29
+                                                        end: 38
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Vector:
+                                                              elems:
+                                                                - - Value:
+                                                                      Literal:
+                                                                        Numeric:
+                                                                          Float:
+                                                                            - float: "1.0"
+                                                                            - start: 48
+                                                                              end: 51
+                                                                  - start: 48
+                                                                    end: 51
+                                                                - - Unary:
+                                                                      op:
+                                                                        - Minus
+                                                                        - start: 53
+                                                                          end: 54
+                                                                      child:
+                                                                        - Value:
+                                                                            Literal:
+                                                                              Numeric:
+                                                                                Float:
+                                                                                  - float: "2.5"
+                                                                                  - start: 54
+                                                                                    end: 57
+                                                                        - start: 54
+                                                                          end: 57
+                                                                  - start: 53
+                                                                    end: 57
+                                                                - - Value:
+                                                                      Literal:
+                                                                        Numeric:
+                                                                          Float:
+                                                                            - float: "3.14"
+                                                                            - start: 59
+                                                                              end: 63
+                                                                  - start: 59
+                                                                    end: 63
+                                                                - - Unary:
+                                                                      op:
+                                                                        - Minus
+                                                                        - start: 65
+                                                                          end: 66
+                                                                      child:
+                                                                        - Value:
+                                                                            Literal:
+                                                                              Numeric:
+                                                                                Float:
+                                                                                  - float: "0.5"
+                                                                                  - start: 66
+                                                                                    end: 69
+                                                                        - start: 66
+                                                                          end: 69
+                                                                  - start: 65
+                                                                    end: 69
+                                                      - start: 40
+                                                        end: 70
+                                                  - start: 29
+                                                    end: 70
+                                            - start: 17
+                                              end: 71
+                                      - start: 7
+                                        end: 72
+                                - start: 7
+                                  end: 72
+                        - start: 0
+                          end: 72
+                  - start: 0
+                    end: 72
+                next_statements: []
+              - start: 0
+                end: 72
+            end: ~
+        - start: 0
+          end: 72
+      session_close: false
+    - start: 0
+      end: 72
 - Ok:
     - activity:
         - Transaction:
