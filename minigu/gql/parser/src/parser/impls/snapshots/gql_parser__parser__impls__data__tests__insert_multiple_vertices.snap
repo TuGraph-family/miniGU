@@ -1,0 +1,75 @@
+---
+source: minigu/gql/parser/src/parser/impls/data.rs
+assertion_line: 86
+expression: parsed.unwrap()
+---
+- - - Insert:
+        paths:
+          - - elements:
+                - - Node:
+                      variable:
+                        - a
+                        - start: 8
+                          end: 9
+                      label:
+                        - Label: PERSON
+                        - start: 10
+                          end: 16
+                      predicate:
+                        - Property:
+                            - - name:
+                                  - name
+                                  - start: 18
+                                    end: 22
+                                value:
+                                  - Value:
+                                      Literal:
+                                        String:
+                                          kind: Char
+                                          literal: A
+                                  - start: 24
+                                    end: 27
+                              - start: 18
+                                end: 27
+                        - start: 17
+                          end: 28
+                  - start: 7
+                    end: 29
+            - start: 7
+              end: 29
+          - - elements:
+                - - Node:
+                      variable:
+                        - b
+                        - start: 32
+                          end: 33
+                      label:
+                        - Label: COMPANY
+                        - start: 34
+                          end: 41
+                      predicate:
+                        - Property:
+                            - - name:
+                                  - name
+                                  - start: 43
+                                    end: 47
+                                value:
+                                  - Value:
+                                      Literal:
+                                        String:
+                                          kind: Char
+                                          literal: B
+                                  - start: 49
+                                    end: 52
+                              - start: 43
+                                end: 52
+                        - start: 42
+                          end: 53
+                  - start: 31
+                    end: 54
+            - start: 31
+              end: 54
+    - start: 0
+      end: 54
+- start: 0
+  end: 54

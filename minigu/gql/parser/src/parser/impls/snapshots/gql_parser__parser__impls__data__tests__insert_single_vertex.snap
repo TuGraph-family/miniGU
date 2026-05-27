@@ -1,0 +1,60 @@
+---
+source: minigu/gql/parser/src/parser/impls/data.rs
+assertion_line: 77
+expression: parsed.unwrap()
+---
+- - - Insert:
+        paths:
+          - - elements:
+                - - Node:
+                      variable:
+                        - a
+                        - start: 8
+                          end: 9
+                      label:
+                        - Label: PERSON
+                        - start: 10
+                          end: 16
+                      predicate:
+                        - Property:
+                            - - name:
+                                  - name
+                                  - start: 18
+                                    end: 22
+                                value:
+                                  - Value:
+                                      Literal:
+                                        String:
+                                          kind: Char
+                                          literal: Alice
+                                  - start: 24
+                                    end: 31
+                              - start: 18
+                                end: 31
+                            - - name:
+                                  - age
+                                  - start: 33
+                                    end: 36
+                                value:
+                                  - Value:
+                                      Literal:
+                                        Numeric:
+                                          Integer:
+                                            - kind: Decimal
+                                              integer: "30"
+                                            - start: 38
+                                              end: 40
+                                  - start: 38
+                                    end: 40
+                              - start: 33
+                                end: 40
+                        - start: 17
+                          end: 41
+                  - start: 7
+                    end: 42
+            - start: 7
+              end: 42
+    - start: 0
+      end: 42
+- start: 0
+  end: 42

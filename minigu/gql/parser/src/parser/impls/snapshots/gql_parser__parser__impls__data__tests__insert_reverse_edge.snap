@@ -1,0 +1,83 @@
+---
+source: minigu/gql/parser/src/parser/impls/data.rs
+assertion_line: 104
+expression: parsed.unwrap()
+---
+- - - Insert:
+        paths:
+          - - elements:
+                - - Node:
+                      variable:
+                        - a
+                        - start: 8
+                          end: 9
+                      label:
+                        - Label: PERSON
+                        - start: 10
+                          end: 16
+                      predicate:
+                        - Property:
+                            - - name:
+                                  - name
+                                  - start: 18
+                                    end: 22
+                                value:
+                                  - Value:
+                                      Literal:
+                                        String:
+                                          kind: Char
+                                          literal: A
+                                  - start: 24
+                                    end: 27
+                              - start: 18
+                                end: 27
+                        - start: 17
+                          end: 28
+                  - start: 7
+                    end: 29
+                - - Edge:
+                      kind: Left
+                      filler:
+                        variable: ~
+                        label:
+                          - Label: KNOWS
+                          - start: 33
+                            end: 38
+                        predicate: ~
+                  - start: 29
+                    end: 40
+                - - Node:
+                      variable:
+                        - b
+                        - start: 41
+                          end: 42
+                      label:
+                        - Label: PERSON
+                        - start: 43
+                          end: 49
+                      predicate:
+                        - Property:
+                            - - name:
+                                  - name
+                                  - start: 51
+                                    end: 55
+                                value:
+                                  - Value:
+                                      Literal:
+                                        String:
+                                          kind: Char
+                                          literal: B
+                                  - start: 57
+                                    end: 60
+                              - start: 51
+                                end: 60
+                        - start: 50
+                          end: 61
+                  - start: 40
+                    end: 62
+            - start: 7
+              end: 62
+    - start: 0
+      end: 62
+- start: 0
+  end: 62
