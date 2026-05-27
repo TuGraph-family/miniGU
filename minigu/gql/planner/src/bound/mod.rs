@@ -1,5 +1,6 @@
 mod catalog;
 mod common;
+mod data;
 mod lexical;
 mod object_ref;
 mod procedure_call;
@@ -10,6 +11,7 @@ mod value_expr;
 
 pub use catalog::*;
 pub use common::*;
+pub use data::*;
 pub use lexical::*;
 pub use object_ref::*;
 pub use procedure_call::*;

@@ -137,6 +137,69 @@ pub enum BindError {
     #[error("unexpected bind error")]
     Unexpected,
 
+    #[error("INSERT: vertex type for label {label} not found in current graph")]
+    InsertVertexTypeNotFound { label: SmolStr },
+
+    #[error("INSERT: edge type for label {label} not found in current graph")]
+    InsertEdgeTypeNotFound { label: SmolStr },
+
+    #[error(
+        "INSERT: edge {label} expects {expected_src} -> {expected_dst}, got {actual_src} -> {actual_dst}"
+    )]
+    InsertEdgeEndpointTypeMismatch {
+        label: SmolStr,
+        expected_src: SmolStr,
+        expected_dst: SmolStr,
+        actual_src: SmolStr,
+        actual_dst: SmolStr,
+    },
+
+    #[error("INSERT: duplicate variable name `{0}` in the same statement")]
+    InsertDuplicateVariable(SmolStr),
+
+    #[error("INSERT: edge endpoint `{0}` is not defined as a vertex in this statement")]
+    InsertEndpointNotDefined(SmolStr),
+
+    #[error("INSERT: vertex must declare a label")]
+    InsertVertexLabelMissing,
+
+    #[error("INSERT: edge must declare a label")]
+    InsertEdgeLabelMissing,
+
+    #[error("INSERT: vertex label must be a single name, not a complex label expression")]
+    InsertComplexLabelNotSupported,
+
+    #[error("INSERT: vertex variable name is required (anonymous vertices are not supported)")]
+    InsertAnonymousVertexNotSupported,
+
+    #[error("INSERT: WHERE / search-condition predicate is not allowed; use a property list")]
+    InsertWherePredicateNotAllowed,
+
+    #[error(
+        "INSERT: property `{property}` on label `{label}` expects type {expected}, got {actual}"
+    )]
+    InsertPropertyTypeMismatch {
+        label: SmolStr,
+        property: SmolStr,
+        expected: LogicalType,
+        actual: LogicalType,
+    },
+
+    #[error("INSERT: required property `{property}` on label `{label}` is missing")]
+    InsertRequiredPropertyMissing { label: SmolStr, property: SmolStr },
+
+    #[error("INSERT: property `{property}` on label `{label}` does not exist on this type")]
+    InsertUnknownProperty { label: SmolStr, property: SmolStr },
+
+    #[error("INSERT: property `{property}` value must be a literal expression")]
+    InsertNonLiteralProperty { property: SmolStr },
+
+    #[error("INSERT: undirected edges are not supported yet")]
+    InsertUndirectedEdgeNotSupported,
+
+    #[error("INSERT: only single-segment paths are accepted (got {0} elements)")]
+    InsertPathTooComplex(usize),
+
     #[error(transparent)]
     #[diagnostic(transparent)]
     NotImplemented(#[from] NotImplemented),

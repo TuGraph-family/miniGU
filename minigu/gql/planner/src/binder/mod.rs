@@ -2,6 +2,7 @@
 
 mod catalog;
 pub mod common;
+mod data;
 pub mod error;
 mod object_expr;
 mod object_ref;
