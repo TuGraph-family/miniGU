@@ -1,6 +1,7 @@
 pub mod aggregate;
 pub mod catalog_modify;
 pub mod create_vector_index;
+pub mod data_modify;
 pub mod drop_vector_index;
 pub mod expand;
 pub mod factorized_filter;
