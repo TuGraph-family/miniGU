@@ -32,6 +32,9 @@ jobs:
 
       - name: Cache Rust build artifacts
         uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: v1-rust-no-bin
+          cache-bin: false
 
       - name: Install wasm-bindgen CLI
         uses: taiki-e/install-action@v2
