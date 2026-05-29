@@ -59,19 +59,129 @@ impl MemTransaction {
                 .map_err(TransactionError::Timestamp)?
         };
 
+        // Walk undo buffer: validate all entries BEFORE setting self.commit_ts.
+        // This ensures a failed commit can still be aborted.
+        let undo_entries = self.undo_buffer.read().clone();
+        let mut edges = self.storage.edges.write().unwrap();
+
+        for (op, _ts) in undo_entries.iter() {
+            match op {
+                DeltaOp::CreateEdge(edge) => {
+                    let loc = self.storage.edge_id_map.get(&edge.eid()).ok_or_else(|| {
+                        StorageError::Transaction(TransactionError::InvalidState(format!(
+                            "commit: created edge {} not found in edge_id_map, txn {:?}",
+                            edge.eid(),
+                            self.txn_id
+                        )))
+                    })?;
+                    let (block_idx, offset) = *loc.value();
+                    let block = edges.get(block_idx).ok_or_else(|| {
+                        StorageError::Transaction(TransactionError::InvalidState(format!(
+                            "commit: edge block {} not found for created edge {}, txn {:?}",
+                            block_idx,
+                            edge.eid(),
+                            self.txn_id
+                        )))
+                    })?;
+                    if offset >= block.edge_counter || block.edges[offset].eid != edge.eid() {
+                        return Err(StorageError::Transaction(TransactionError::InvalidState(
+                            format!(
+                                "commit: created edge {} at ({}, {}) has mismatched eid or invalid offset, txn {:?}",
+                                edge.eid(),
+                                block_idx,
+                                offset,
+                                self.txn_id
+                            ),
+                        )));
+                    }
+                    if block.edges[offset].commit_ts != self.txn_id {
+                        return Err(StorageError::Transaction(
+                            TransactionError::WriteWriteConflict(format!(
+                                "commit: created edge {} write intent is not owned by txn {:?}, current owner: {:?}",
+                                edge.eid(),
+                                self.txn_id,
+                                block.edges[offset].commit_ts
+                            )),
+                        ));
+                    }
+                }
+                DeltaOp::SetEdgeProps(eid, _) => {
+                    let loc = self.storage.edge_id_map.get(eid).ok_or_else(|| {
+                        StorageError::Transaction(TransactionError::InvalidState(format!(
+                            "commit: edge {} not found in edge_id_map, txn {:?}",
+                            eid, self.txn_id
+                        )))
+                    })?;
+                    let (block_idx, offset) = *loc.value();
+                    let block = edges.get(block_idx).ok_or_else(|| {
+                        StorageError::Transaction(TransactionError::InvalidState(format!(
+                            "commit: edge block {} not found for edge {}, txn {:?}",
+                            block_idx, eid, self.txn_id
+                        )))
+                    })?;
+                    if offset >= block.edge_counter || block.edges[offset].eid != *eid {
+                        return Err(StorageError::Transaction(TransactionError::InvalidState(
+                            format!(
+                                "commit: edge {} at ({}, {}) has mismatched eid or invalid offset, txn {:?}",
+                                eid, block_idx, offset, self.txn_id
+                            ),
+                        )));
+                    }
+                    if block.edges[offset].commit_ts != self.txn_id {
+                        return Err(StorageError::Transaction(
+                            TransactionError::WriteWriteConflict(format!(
+                                "commit: edge {} write intent is not owned by txn {:?}, current owner: {:?}",
+                                eid, self.txn_id, block.edges[offset].commit_ts
+                            )),
+                        ));
+                    }
+                }
+                DeltaOp::DelEdge(eid) => {
+                    let loc = self.storage.edge_id_map.get(eid).ok_or_else(|| {
+                        StorageError::Transaction(TransactionError::InvalidState(format!(
+                            "commit: deleted edge {} not found in edge_id_map, txn {:?}",
+                            eid, self.txn_id
+                        )))
+                    })?;
+                    let (block_idx, offset) = *loc.value();
+                    let block = edges.get(block_idx).ok_or_else(|| {
+                        StorageError::Transaction(TransactionError::InvalidState(format!(
+                            "commit: edge block {} not found for deleted edge {}, txn {:?}",
+                            block_idx, eid, self.txn_id
+                        )))
+                    })?;
+                    if offset >= block.edge_counter || block.edges[offset].eid != *eid {
+                        return Err(StorageError::Transaction(TransactionError::InvalidState(
+                            format!(
+                                "commit: deleted edge {} at ({}, {}) has mismatched eid or invalid offset, txn {:?}",
+                                eid, block_idx, offset, self.txn_id
+                            ),
+                        )));
+                    }
+                    if block.edges[offset].commit_ts != self.txn_id {
+                        return Err(StorageError::Transaction(
+                            TransactionError::WriteWriteConflict(format!(
+                                "commit: deleted edge {} write intent is not owned by txn {:?}, current owner: {:?}",
+                                eid, self.txn_id, block.edges[offset].commit_ts
+                            )),
+                        ));
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        // All validations passed — now safe to mark the transaction as committed
         if self.commit_ts.set(commit_ts).is_err() {
             return Err(StorageError::Transaction(
                 TransactionError::TransactionAlreadyCommitted(format!("{:?}", commit_ts)),
             ));
         }
 
-        // Walk undo buffer and for create/set/del edge ops, replace commit_ts markers
-        let undo_entries = self.undo_buffer.read().clone();
-        let mut edges = self.storage.edges.write().unwrap();
+        // Promote all undo entries from txn_id to commit_ts
         for (op, _ts) in undo_entries.into_iter() {
             match op {
                 DeltaOp::CreateEdge(edge) => {
-                    // Use EdgeId mapping to find and update commit_ts
                     if let Some(loc) = self.storage.edge_id_map.get(&edge.eid()) {
                         let (block_idx, offset) = *loc.value();
                         if let Some(block) = edges.get_mut(block_idx)
@@ -90,24 +200,28 @@ impl MemTransaction {
                             } else {
                                 block.max_ts.max(commit_ts)
                             };
-                            // promote property versions written in this txn to committed
                             let mut prop_cols = self.storage.property_columns.write().unwrap();
                             for column in prop_cols.iter_mut() {
                                 if let Some(pb) = column.blocks.get_mut(block_idx)
                                     && offset < pb.values.len()
-                                    && let Some(last) = pb.values[offset].last_mut()
-                                    && last.ts == self.txn_id
                                 {
-                                    last.ts = commit_ts;
-                                    pb.min_ts = pb.min_ts.min(commit_ts);
-                                    pb.max_ts = pb.max_ts.max(commit_ts);
+                                    let mut promoted = false;
+                                    for v in pb.values[offset].iter_mut() {
+                                        if v.ts == self.txn_id {
+                                            v.ts = commit_ts;
+                                            promoted = true;
+                                        }
+                                    }
+                                    if promoted {
+                                        pb.min_ts = pb.min_ts.min(commit_ts);
+                                        pb.max_ts = pb.max_ts.max(commit_ts);
+                                    }
                                 }
                             }
                         }
                     }
                 }
-                DeltaOp::SetEdgeProps(eid, _) => {
-                    // Use EdgeId mapping to find and update commit_ts
+                DeltaOp::SetEdgeProps(eid, set_op) => {
                     if let Some(loc) = self.storage.edge_id_map.get(&eid) {
                         let (block_idx, offset) = *loc.value();
                         if let Some(block) = edges.get_mut(block_idx)
@@ -126,24 +240,30 @@ impl MemTransaction {
                             } else {
                                 block.max_ts.max(commit_ts)
                             };
-                            // promote property versions written in this txn to committed
+                            // Promote only the property columns that this operation touched
                             let mut prop_cols = self.storage.property_columns.write().unwrap();
-                            for column in prop_cols.iter_mut() {
-                                if let Some(pb) = column.blocks.get_mut(block_idx)
+                            for &idx in set_op.indices.iter() {
+                                if let Some(column) = prop_cols.get_mut(idx)
+                                    && let Some(pb) = column.blocks.get_mut(block_idx)
                                     && offset < pb.values.len()
-                                    && let Some(last) = pb.values[offset].last_mut()
-                                    && last.ts == self.txn_id
                                 {
-                                    last.ts = commit_ts;
-                                    pb.min_ts = pb.min_ts.min(commit_ts);
-                                    pb.max_ts = pb.max_ts.max(commit_ts);
+                                    let mut promoted = false;
+                                    for v in pb.values[offset].iter_mut() {
+                                        if v.ts == self.txn_id {
+                                            v.ts = commit_ts;
+                                            promoted = true;
+                                        }
+                                    }
+                                    if promoted {
+                                        pb.min_ts = pb.min_ts.min(commit_ts);
+                                        pb.max_ts = pb.max_ts.max(commit_ts);
+                                    }
                                 }
                             }
                         }
                     }
                 }
                 DeltaOp::DelEdge(eid) => {
-                    // Use EdgeId mapping to find and update commit_ts
                     if let Some(loc) = self.storage.edge_id_map.get(&eid) {
                         let (block_idx, offset) = *loc.value();
                         if let Some(block) = edges.get_mut(block_idx)
@@ -186,9 +306,15 @@ impl MemTransaction {
                 )),
             ));
         }
-        // Apply undo entries in reverse order
-        let mut buffer = self.undo_buffer.write();
-        let entries = buffer.clone();
+        // Take undo entries and release the undo_buffer lock BEFORE acquiring storage
+        // locks. This avoids a lock-order inversion: write paths hold edges/property
+        // locks then call push_undo (locking undo_buffer), so abort must not hold
+        // undo_buffer while acquiring edges/property.
+        let entries = {
+            let buffer = self.undo_buffer.write();
+            buffer.clone()
+        };
+        let deleted_snapshots = self.deleted_edge_snapshot.read().clone();
         let mut edges = self.storage.edges.write().unwrap();
         for (op, old_ts) in entries.into_iter().rev() {
             match op {
@@ -250,14 +376,23 @@ impl MemTransaction {
                             && offset < block.edge_counter
                             && block.edges[offset].eid == eid
                         {
+                            // Owner check: only the owner can abort the write intent
+                            if block.edges[offset].commit_ts != self.txn_id {
+                                return Err(StorageError::Transaction(
+                                    TransactionError::WriteWriteConflict(format!(
+                                        "abort: edge {} write intent is not owned by txn {:?}, current owner: {:?}",
+                                        eid, self.txn_id, block.edges[offset].commit_ts
+                                    )),
+                                ));
+                            }
                             // Restore edge commit_ts (properties are still in storage)
                             block.edges[offset].commit_ts = old_ts;
-                            if let Some((label_id, dst_id)) =
-                                self.deleted_edge_snapshot.read().get(&eid).cloned()
-                            {
+                            if let Some((label_id, dst_id)) = deleted_snapshots.get(&eid).cloned() {
                                 block.edges[offset].label_id = label_id;
                                 block.edges[offset].dst_id = dst_id;
                             }
+                            block.min_ts = block.min_ts.min(old_ts);
+                            block.max_ts = block.max_ts.max(old_ts);
                         }
                     }
                 }
@@ -270,6 +405,15 @@ impl MemTransaction {
                             && offset < block.edge_counter
                             && block.edges[offset].eid == eid
                         {
+                            // Owner check: only the owner can abort the write intent
+                            if block.edges[offset].commit_ts != self.txn_id {
+                                return Err(StorageError::Transaction(
+                                    TransactionError::WriteWriteConflict(format!(
+                                        "abort: edge {} write intent is not owned by txn {:?}, current owner: {:?}",
+                                        eid, self.txn_id, block.edges[offset].commit_ts
+                                    )),
+                                ));
+                            }
                             // Restore props
                             let mut prop_cols = self.storage.property_columns.write().unwrap();
                             for idx in props_op.indices.iter() {
@@ -295,8 +439,10 @@ impl MemTransaction {
                                 pb.max_ts = pb.max_ts.max(old_ts);
                                 pb.values[offset].retain(|v| v.ts != self.txn_id);
                             }
-                            // Restore commit_ts
+                            // Restore commit_ts and update block-level ts
                             block.edges[offset].commit_ts = old_ts;
+                            block.min_ts = block.min_ts.min(old_ts);
+                            block.max_ts = block.max_ts.max(old_ts);
                         }
                     }
                 }
@@ -304,8 +450,11 @@ impl MemTransaction {
             }
         }
 
+        // Release storage locks before cleaning up transaction-local state
+        drop(edges);
+
         // clear undo buffer after abort
-        buffer.clear();
+        self.undo_buffer.write().clear();
         self.deleted_edge_snapshot.write().clear();
 
         Ok(())

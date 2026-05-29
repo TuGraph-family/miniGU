@@ -8,7 +8,7 @@ use minigu_storage::ap::olap_graph::{OlapEdge, OlapPropertyStore, OlapStorage, O
 use minigu_storage::ap::transaction::MemTransaction;
 use minigu_storage::ap::{MutOlapGraph, OlapGraph};
 use minigu_storage::common::model::properties::PropertyRecord;
-use minigu_storage::error::StorageError;
+use minigu_storage::error::{StorageError, TransactionError};
 
 fn make_storage() -> OlapStorage {
     super::ap_graph_test::mock_olap_graph(0)
@@ -1142,6 +1142,9 @@ fn test_concurrent_insert_and_set_preserves_properties() {
     );
 }
 
+// This test is sequential: commit thread completes first, then abort thread runs.
+// With first-writer-wins conflict detection, abort will properly restore to the
+// previous COMMITTED value (1111), not the original setup value (10).
 #[test]
 fn test_concurrent_commit_and_abort_preserve_committed_value() {
     let storage = make_storage();
@@ -1176,10 +1179,8 @@ fn test_concurrent_commit_and_abort_preserve_committed_value() {
         .commit_at(None)
         .expect("Setup commit should succeed");
 
-    let barrier = Arc::new(Barrier::new(2));
-
+    // Step 1: commit thread writes 1111 and commits
     let storage_commit = arc_storage.clone();
-    let barrier_commit = barrier.clone();
     let handle_commit = thread::spawn(move || {
         let txn = MemTransaction::new(
             storage_commit.clone(),
@@ -1187,37 +1188,25 @@ fn test_concurrent_commit_and_abort_preserve_committed_value() {
             Timestamp::with_ts(41),
             IsolationLevel::Snapshot,
         );
-        barrier_commit.wait();
-        let _ = storage_commit.set_edge_property_in_txn(
-            &txn,
-            eid,
-            vec![0],
-            vec![ScalarValue::Int32(Some(1111))],
-        );
+        storage_commit
+            .set_edge_property_in_txn(&txn, eid, vec![0], vec![ScalarValue::Int32(Some(1111))])
+            .expect("Commit txn set_edge should succeed");
         txn.commit_at(None).expect("Commit txn should succeed");
     });
-
-    let storage_abort = arc_storage.clone();
-    let barrier_abort = barrier.clone();
-    let handle_abort = thread::spawn(move || {
-        let txn = MemTransaction::new(
-            storage_abort.clone(),
-            Timestamp::with_ts(Timestamp::TXN_ID_START + 42),
-            Timestamp::with_ts(42),
-            IsolationLevel::Snapshot,
-        );
-        barrier_abort.wait();
-        let _ = storage_abort.set_edge_property_in_txn(
-            &txn,
-            eid,
-            vec![0],
-            vec![ScalarValue::Int32(Some(2222))],
-        );
-        txn.abort().expect("Abort txn should succeed");
-    });
-
     handle_commit.join().expect("Commit thread should finish");
-    handle_abort.join().expect("Abort thread should finish");
+
+    // Step 2: abort thread writes 2222 and aborts — should restore to 1111
+    let storage_abort = arc_storage.clone();
+    let txn = MemTransaction::new(
+        storage_abort.clone(),
+        Timestamp::with_ts(Timestamp::TXN_ID_START + 42),
+        Timestamp::with_ts(42),
+        IsolationLevel::Snapshot,
+    );
+    storage_abort
+        .set_edge_property_in_txn(&txn, eid, vec![0], vec![ScalarValue::Int32(Some(2222))])
+        .expect("Abort txn set_edge should succeed");
+    txn.abort().expect("Abort txn should succeed");
 
     let read_txn = MemTransaction::new(
         arc_storage.clone(),
@@ -1231,6 +1220,220 @@ fn test_concurrent_commit_and_abort_preserve_committed_value() {
         props.get(0),
         Some(ScalarValue::Int32(Some(1111))),
         "Committed value should win over aborted update"
+    );
+}
+
+#[test]
+fn test_write_conflict_on_uncommitted_write_intent() {
+    let storage = make_storage();
+    let arc_storage = Arc::new(storage);
+
+    let setup_txn = MemTransaction::new(
+        arc_storage.clone(),
+        Timestamp::with_ts(Timestamp::TXN_ID_START + 45),
+        Timestamp::with_ts(45),
+        IsolationLevel::Snapshot,
+    );
+    let _ = arc_storage.create_vertex(
+        &setup_txn,
+        OlapVertex {
+            vid: 2,
+            properties: PropertyRecord::default(),
+            block_offset: 0,
+        },
+    );
+    let eid = arc_storage
+        .create_edge_in_txn(
+            &setup_txn,
+            OlapEdge {
+                label_id: NonZeroU32::new(500),
+                src_id: 2,
+                dst_id: 20,
+                properties: OlapPropertyStore::new(vec![Some(ScalarValue::Int32(Some(50)))]),
+            },
+        )
+        .unwrap();
+    setup_txn
+        .commit_at(None)
+        .expect("Setup commit should succeed");
+
+    // Txn A writes but does NOT commit yet
+    let txn_a = MemTransaction::new(
+        arc_storage.clone(),
+        Timestamp::with_ts(Timestamp::TXN_ID_START + 46),
+        Timestamp::with_ts(46),
+        IsolationLevel::Snapshot,
+    );
+    arc_storage
+        .set_edge_property_in_txn(&txn_a, eid, vec![0], vec![ScalarValue::Int32(Some(100))])
+        .expect("First writer should succeed");
+
+    // Txn B tries to write the same edge — should fail with WriteWriteConflict
+    let txn_b = MemTransaction::new(
+        arc_storage.clone(),
+        Timestamp::with_ts(Timestamp::TXN_ID_START + 47),
+        Timestamp::with_ts(47),
+        IsolationLevel::Snapshot,
+    );
+    let result = arc_storage.set_edge_property_in_txn(
+        &txn_b,
+        eid,
+        vec![0],
+        vec![ScalarValue::Int32(Some(200))],
+    );
+    assert!(
+        matches!(
+            result,
+            Err(StorageError::Transaction(
+                TransactionError::WriteWriteConflict(_)
+            ))
+        ),
+        "Second writer should get WriteWriteConflict on uncommitted write intent, got: {:?}",
+        result
+    );
+
+    // Txn A commits
+    txn_a.commit_at(None).expect("Txn A commit should succeed");
+
+    // Txn B abort is a no-op (no changes were made)
+    txn_b.abort().expect("Txn B abort should succeed (no-op)");
+
+    // Read: should see Txn A's committed value 100
+    let read_txn = MemTransaction::new(
+        arc_storage.clone(),
+        Timestamp::with_ts(Timestamp::TXN_ID_START + 48),
+        Timestamp::max_commit_ts(),
+        IsolationLevel::Snapshot,
+    );
+    let edge = arc_storage.get_edge_at_ts(&read_txn, eid).unwrap();
+    let props = edge.unwrap().properties;
+    assert_eq!(
+        props.get(0),
+        Some(ScalarValue::Int32(Some(100))),
+        "First writer's committed value should persist"
+    );
+}
+
+// Real concurrent test using Barrier: commit thread writes first, abort thread
+// attempts write and must get WriteWriteConflict. The committed value wins.
+#[test]
+fn test_concurrent_commit_and_abort_with_barrier_conflict_detection() {
+    let storage = make_storage();
+    let arc_storage = Arc::new(storage);
+
+    let setup_txn = MemTransaction::new(
+        arc_storage.clone(),
+        Timestamp::with_ts(Timestamp::TXN_ID_START + 55),
+        Timestamp::with_ts(55),
+        IsolationLevel::Snapshot,
+    );
+    let _ = arc_storage.create_vertex(
+        &setup_txn,
+        OlapVertex {
+            vid: 3,
+            properties: PropertyRecord::default(),
+            block_offset: 0,
+        },
+    );
+    let eid = arc_storage
+        .create_edge_in_txn(
+            &setup_txn,
+            OlapEdge {
+                label_id: NonZeroU32::new(600),
+                src_id: 3,
+                dst_id: 30,
+                properties: OlapPropertyStore::new(vec![Some(ScalarValue::Int32(Some(10)))]),
+            },
+        )
+        .unwrap();
+    setup_txn
+        .commit_at(None)
+        .expect("Setup commit should succeed");
+
+    // Three barriers:
+    //   start_barrier — initial sync
+    //   intent_taken_barrier — commit signals after taking write intent; abort waits
+    //   abort_checked_barrier — abort signals after verifying WriteWriteConflict; commit waits
+    // This guarantees abort's set_edge runs while commit's write intent is still active.
+    let start_barrier = Arc::new(Barrier::new(2));
+    let intent_taken_barrier = Arc::new(Barrier::new(2));
+    let abort_checked_barrier = Arc::new(Barrier::new(2));
+
+    let storage_commit = arc_storage.clone();
+    let sb_commit = start_barrier.clone();
+    let itb_commit = intent_taken_barrier.clone();
+    let acb_commit = abort_checked_barrier.clone();
+    let handle_commit = thread::spawn(move || {
+        let txn = MemTransaction::new(
+            storage_commit.clone(),
+            Timestamp::with_ts(Timestamp::TXN_ID_START + 56),
+            Timestamp::with_ts(56),
+            IsolationLevel::Snapshot,
+        );
+        sb_commit.wait();
+        storage_commit
+            .set_edge_property_in_txn(&txn, eid, vec![0], vec![ScalarValue::Int32(Some(1111))])
+            .expect("Commit txn set_edge should succeed");
+        // Signal abort thread that write intent is taken
+        itb_commit.wait();
+        // Wait for abort to verify the conflict before committing
+        acb_commit.wait();
+        txn.commit_at(None).expect("Commit txn should succeed");
+    });
+
+    let storage_abort = arc_storage.clone();
+    let sb_abort = start_barrier.clone();
+    let itb_abort = intent_taken_barrier.clone();
+    let acb_abort = abort_checked_barrier.clone();
+    let handle_abort = thread::spawn(move || {
+        let txn = MemTransaction::new(
+            storage_abort.clone(),
+            Timestamp::with_ts(Timestamp::TXN_ID_START + 57),
+            Timestamp::with_ts(57),
+            IsolationLevel::Snapshot,
+        );
+        sb_abort.wait();
+        // Wait for commit thread to take the write intent
+        itb_abort.wait();
+        let result = storage_abort.set_edge_property_in_txn(
+            &txn,
+            eid,
+            vec![0],
+            vec![ScalarValue::Int32(Some(2222))],
+        );
+        // Must get WriteWriteConflict — commit still holds the write intent
+        assert!(
+            matches!(
+                result,
+                Err(StorageError::Transaction(
+                    TransactionError::WriteWriteConflict(_)
+                ))
+            ),
+            "Abort txn must get WriteWriteConflict when commit holds write intent, got: {:?}",
+            result
+        );
+        // Abort is a no-op (no changes were made)
+        txn.abort().expect("Abort txn should succeed (no-op)");
+        // Signal commit thread it can proceed
+        acb_abort.wait();
+    });
+
+    handle_commit.join().expect("Commit thread should finish");
+    handle_abort.join().expect("Abort thread should finish");
+
+    // Final assertion: committed value (1111) must win.
+    let read_txn = MemTransaction::new(
+        arc_storage.clone(),
+        Timestamp::with_ts(Timestamp::TXN_ID_START + 58),
+        Timestamp::max_commit_ts(),
+        IsolationLevel::Snapshot,
+    );
+    let edge = arc_storage.get_edge_at_ts(&read_txn, eid).unwrap();
+    let props = edge.unwrap().properties;
+    assert_eq!(
+        props.get(0),
+        Some(ScalarValue::Int32(Some(1111))),
+        "Committed value should win"
     );
 }
 
