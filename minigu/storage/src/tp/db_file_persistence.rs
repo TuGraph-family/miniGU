@@ -122,7 +122,7 @@ mod tests {
     use std::fs;
     use std::path::PathBuf;
 
-    use minigu_transaction::{IsolationLevel, Timestamp};
+    use minigu_common::{IsolationLevel, Timestamp};
     use serial_test::serial;
 
     use super::*;

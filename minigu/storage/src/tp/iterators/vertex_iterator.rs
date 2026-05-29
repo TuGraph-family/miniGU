@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use dashmap::iter::Iter;
+use minigu_common::LockStrategy;
 use minigu_common::types::VertexId;
-use minigu_transaction::LockStrategy;
 
 use crate::common::iterators::{ChunkData, VertexIteratorTrait};
 use crate::common::model::vertex::Vertex;

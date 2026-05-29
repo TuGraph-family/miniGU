@@ -6,11 +6,12 @@ repository.workspace = true
 version.workspace = true
 
 [dependencies]
-downcast-rs = "1"
+downcast-rs = { workspace = true }
 minigu-common = { workspace = true }
+parking_lot = { workspace = true, features = ["arc_lock"] }
 serde = { workspace = true }
 smallvec = { workspace = true, features = ["union", "serde"] }
-smol_str = { workspace = true }
+smol_str = { workspace = true, features = ["serde"] }
 thiserror = { workspace = true }
 
 [lints]

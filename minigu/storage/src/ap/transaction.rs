@@ -3,9 +3,10 @@ use std::num::NonZeroU32;
 use std::sync::{Arc, OnceLock};
 
 use minigu_common::types::{EdgeId, LabelId, VertexId};
-use minigu_transaction::{IsolationLevel, Timestamp, Transaction, global_timestamp_generator};
+use minigu_common::{IsolationLevel, Timestamp, global_timestamp_generator};
 
 use crate::ap::olap_graph::{OlapStorage, OlapStorageEdge};
+use crate::ap::olap_storage::StorageTransaction;
 use crate::common::DeltaOp;
 use crate::error::{StorageError, StorageResult, TransactionError};
 
@@ -325,30 +326,18 @@ impl MemTransaction {
     }
 }
 
-impl Transaction for MemTransaction {
-    type Error = StorageError;
+impl StorageTransaction for MemTransaction {
+    type CommitTimestamp = Timestamp;
 
     fn txn_id(&self) -> Timestamp {
         self.txn_id
     }
 
-    fn start_ts(&self) -> Timestamp {
-        self.start_ts
-    }
-
-    fn commit_ts(&self) -> Option<Timestamp> {
-        self.commit_ts.get().copied()
-    }
-
-    fn isolation_level(&self) -> &IsolationLevel {
-        &self.isolation_level
-    }
-
-    fn commit(&self) -> Result<Timestamp, Self::Error> {
+    fn commit(&self) -> StorageResult<Timestamp> {
         self.commit_at(None)
     }
 
-    fn abort(&self) -> Result<(), Self::Error> {
+    fn abort(&self) -> StorageResult<()> {
         MemTransaction::abort(self)
     }
 }

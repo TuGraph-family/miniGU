@@ -3,7 +3,7 @@
 //! This module defines the core WAL entry types used by the persistence layer.
 //! The actual WAL implementation is in `DbFilePersistence` (single-file format).
 
-use minigu_transaction::{IsolationLevel, Timestamp};
+use minigu_common::{IsolationLevel, Timestamp};
 use serde::{Deserialize, Serialize};
 
 use super::LogRecord;

@@ -1,6 +1,6 @@
 use std::num::NonZeroU32;
 
-use minigu_transaction::Timestamp;
+use minigu_common::Timestamp;
 
 use crate::ap::olap_graph::{OlapEdge, OlapPropertyStore, OlapStorage, OlapStorageEdge};
 use crate::error::StorageError;
