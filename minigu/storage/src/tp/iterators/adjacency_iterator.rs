@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use crossbeam_skiplist::SkipSet;
+use minigu_common::LockStrategy;
 use minigu_common::types::{EdgeId, VertexId};
-use minigu_transaction::LockStrategy;
 
 use crate::common::iterators::{AdjacencyIteratorTrait, Direction};
 use crate::common::model::edge::Neighbor;
@@ -305,7 +305,7 @@ mod tests {
     use std::sync::Arc;
 
     use minigu_common::types::LabelId;
-    use minigu_transaction::{GraphTxnManager, IsolationLevel, LockStrategy, Transaction};
+    use minigu_common::{IsolationLevel, LockStrategy};
 
     use super::*;
     use crate::common::{Edge, Neighbor, PropertyRecord, Vertex};

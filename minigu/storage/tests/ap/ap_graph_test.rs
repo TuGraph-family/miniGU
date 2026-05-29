@@ -12,6 +12,7 @@ use bitvec::prelude::BitVec;
 use dashmap::DashMap;
 use minigu_common::types::{LabelId, VertexId};
 use minigu_common::value::{F32, F64, ScalarValue};
+use minigu_common::{IsolationLevel, Timestamp};
 use minigu_storage::ap::olap_graph::{
     BLOCK_CAPACITY, CompressedEdgeBlock, CompressedPropertyBlock, CompressedPropertyColumn,
     EdgeBlock, OlapEdge, OlapPropertyStore, OlapStorage, OlapStorageEdge, OlapVertex,
@@ -20,7 +21,6 @@ use minigu_storage::ap::olap_graph::{
 use minigu_storage::ap::transaction::MemTransaction;
 use minigu_storage::ap::{MutOlapGraph, OlapGraph};
 use minigu_storage::model::properties::PropertyRecord;
-use minigu_transaction::{IsolationLevel, Timestamp};
 
 const PATH: &str = "";
 

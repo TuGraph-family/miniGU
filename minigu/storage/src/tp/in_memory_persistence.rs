@@ -99,7 +99,7 @@ impl PersistenceProvider for InMemoryPersistence {
 
 #[cfg(test)]
 mod tests {
-    use minigu_transaction::{IsolationLevel, Timestamp};
+    use minigu_common::{IsolationLevel, Timestamp};
 
     use super::*;
     use crate::common::DeltaOp;

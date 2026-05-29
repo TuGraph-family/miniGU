@@ -4,13 +4,13 @@ use std::sync::{Arc, Mutex, Weak};
 
 use crossbeam_skiplist::SkipMap;
 use minigu_common::types::{EdgeId, VertexId};
-use minigu_transaction::{
-    GraphTxnManager, LockStrategy, Timestamp, Transaction, global_timestamp_generator,
+use minigu_common::{
+    IsolationLevel, LockStrategy, Timestamp, global_timestamp_generator,
     global_transaction_id_generator,
 };
 
 use super::memory_graph::MemoryGraph;
-use super::transaction::{IsolationLevel, MemTransaction, UndoEntry};
+use super::transaction::{MemTransaction, UndoEntry};
 use crate::common::DeltaOp;
 use crate::common::model::edge::{Edge, Neighbor};
 use crate::common::wal::graph_wal::{Operation, RedoEntry};
@@ -56,15 +56,11 @@ impl Default for MemTxnManager {
     }
 }
 
-impl GraphTxnManager for MemTxnManager {
-    type Error = StorageError;
-    type GraphContext = MemoryGraph;
-    type Transaction = MemTransaction;
-
-    fn begin_transaction(
+impl MemTxnManager {
+    pub fn begin_transaction(
         &self,
         isolation_level: IsolationLevel,
-    ) -> Result<Arc<Self::Transaction>, Self::Error> {
+    ) -> Result<Arc<MemTransaction>, StorageError> {
         self.begin_transaction_at(
             None,
             None,
@@ -74,7 +70,7 @@ impl GraphTxnManager for MemTxnManager {
         )
     }
 
-    fn finish_transaction(&self, txn: &Self::Transaction) -> Result<(), Self::Error> {
+    pub fn finish_transaction(&self, txn: &MemTransaction) -> Result<(), StorageError> {
         let txn_entry = self.active_txns.remove(&txn.txn_id());
         if let Some(txn_arc) = txn_entry {
             // Check if the transaction has been committed (by checking if it has a commit_ts)
@@ -99,7 +95,7 @@ impl GraphTxnManager for MemTxnManager {
         ))
     }
 
-    fn garbage_collect(&self, graph: &Self::GraphContext) -> Result<(), Self::Error> {
+    pub fn garbage_collect(&self, graph: &MemoryGraph) -> Result<(), StorageError> {
         let min_read_ts = self.low_watermark().raw();
         let mut expired_txns = Vec::new();
         let mut expired_undo_entries = Vec::new();
@@ -135,12 +131,10 @@ impl GraphTxnManager for MemTxnManager {
         Ok(())
     }
 
-    fn low_watermark(&self) -> Timestamp {
+    pub fn low_watermark(&self) -> Timestamp {
         Timestamp::with_ts(self.watermark.load(Ordering::Acquire))
     }
-}
 
-impl MemTxnManager {
     /// Create a new MemTxnManager
     pub fn new() -> Self {
         Self::default()
@@ -227,6 +221,10 @@ impl MemTxnManager {
             self.default_lock_strategy,
             false,
         )
+    }
+
+    pub fn default_lock_strategy(&self) -> LockStrategy {
+        self.default_lock_strategy
     }
 
     /// Update the watermark based on currently active transactions.

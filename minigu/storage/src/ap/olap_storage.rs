@@ -1,3 +1,4 @@
+use minigu_common::Timestamp;
 use minigu_common::value::ScalarValue;
 
 use crate::error::StorageResult;
@@ -7,7 +8,7 @@ pub trait StorageTransaction {
     type CommitTimestamp;
 
     /// Get the unique transaction ID.
-    fn txn_id(&self) -> minigu_transaction::Timestamp;
+    fn txn_id(&self) -> Timestamp;
 
     /// Commit the current transaction, returning a commit timestamp on success.
     fn commit(&self) -> StorageResult<Self::CommitTimestamp>;

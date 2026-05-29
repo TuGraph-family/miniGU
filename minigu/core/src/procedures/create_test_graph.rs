@@ -2,22 +2,21 @@ use std::sync::Arc;
 
 use arrow::array::{ArrayRef, StringArray};
 use itertools::Itertools;
-use minigu_catalog::memory::MemoryCatalog;
 use minigu_catalog::memory::directory::MemoryDirectoryCatalog;
 use minigu_catalog::memory::graph_type::MemoryGraphTypeCatalog;
 use minigu_catalog::memory::schema::MemorySchemaCatalog;
+use minigu_catalog::memory::{MemoryCatalog, txn_manager};
 use minigu_catalog::provider::{DirectoryOrSchema, GraphProvider, SchemaProvider};
-use minigu_common::data_chunk;
 use minigu_common::data_chunk::DataChunk;
 use minigu_common::data_type::{DataField, DataSchema, LogicalType};
 use minigu_common::value::ScalarValue;
+use minigu_common::{IsolationLevel, LockStrategy, TxnOptions, data_chunk};
 use minigu_context::database::{DatabaseConfig, DatabaseContext};
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::procedure::Procedure;
 use minigu_context::runtime::DatabaseRuntime;
 use minigu_context::session::SessionContext;
 use minigu_storage::tp::MemoryGraph;
-use minigu_transaction::{GraphTxnManager, IsolationLevel, LockStrategy, TxnOptions};
 
 /// Create a test graph with the given name in the current schema.
 pub fn build_procedure() -> Procedure {
@@ -35,7 +34,10 @@ pub fn build_procedure() -> Procedure {
         let graph = MemoryGraph::in_memory_with_options(context.database().config().txn_options);
         let mut graph_type = MemoryGraphTypeCatalog::new();
         let container = GraphContainer::new(Arc::new(graph_type), GraphStorage::Memory(graph));
-        if !schema.add_graph(graph_name.clone(), Arc::new(container)) {
+
+        #[allow(deprecated)]
+        let added = schema.add_graph(graph_name.clone(), Arc::new(container));
+        if !added {
             return Err(anyhow::anyhow!("graph {graph_name} already exists").into());
         }
         Ok(vec![])
@@ -52,10 +54,16 @@ mod tests {
         let root = Arc::new(MemoryDirectoryCatalog::new(None));
         let parent = Arc::downgrade(&root);
         let schema = Arc::new(MemorySchemaCatalog::new(Some(parent)));
-        assert!(root.add_child(
+        let txn = txn_manager()
+            .begin_transaction(IsolationLevel::Serializable)
+            .unwrap();
+        root.add_child_txn(
             "default".to_string(),
-            DirectoryOrSchema::Schema(schema.clone())
-        ));
+            DirectoryOrSchema::Schema(schema.clone()),
+            txn.as_ref(),
+        )
+        .unwrap();
+        txn.commit().unwrap();
 
         let catalog = MemoryCatalog::new(DirectoryOrSchema::Directory(root));
         let runtime = DatabaseRuntime::new(1).unwrap();

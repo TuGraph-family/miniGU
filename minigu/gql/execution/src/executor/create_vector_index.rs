@@ -2,13 +2,13 @@ use std::io;
 use std::sync::Arc;
 
 use minigu_catalog::provider::{GraphProvider, VectorIndexCatalogEntry};
+use minigu_common::IsolationLevel;
 use minigu_common::data_chunk::DataChunk;
 use minigu_context::error::{Error, IndexCatalogError};
 use minigu_context::graph::{GraphContainer, GraphStorage};
 use minigu_context::session::SessionContext;
 use minigu_planner::plan::create_vector_index::CreateVectorIndex;
 use minigu_storage::tp::{MemTransaction, MemoryGraph};
-use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
 
 use super::{BoxedExecutor, Executor};
 use crate::error::{ExecutionError, ExecutionResult};

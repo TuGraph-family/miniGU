@@ -9,7 +9,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use minigu_transaction::{IsolationLevel, Timestamp};
+use minigu_common::{IsolationLevel, Timestamp};
 use serial_test::serial;
 
 use crate::common::DeltaOp;

@@ -8,13 +8,13 @@ use crossbeam_skiplist::SkipSet;
 use dashmap::DashMap;
 use minigu_common::types::{EdgeId, VectorIndexKey, VertexId};
 use minigu_common::value::{ScalarValue, VectorValue};
-use minigu_transaction::{IsolationLevel, LockStrategy, Timestamp, Transaction, TxnOptions};
+use minigu_common::{IsolationLevel, LockStrategy, Timestamp, TxnOptions};
 
 use super::db_file_persistence::DbFilePersistence;
 use super::in_memory_persistence::InMemoryPersistence;
+use super::manager::MemTxnManager;
 use super::persistence::PersistenceProvider;
-use super::transaction::{MemTransaction, UndoEntry, UndoPtr, WriteKind};
-use super::txn_manager::MemTxnManager;
+use super::transaction::{GraphTxnView, MemTransaction, UndoEntry, UndoPtr, WriteKind};
 use super::vector_index::filter::create_filter_mask;
 use super::vector_index::in_mem_diskann::create_vector_index_config;
 use super::vector_index::{InMemANNAdapter, VectorIndex};
@@ -835,7 +835,8 @@ impl MemoryGraph {
 
     // ===== Read-only graph methods =====
     /// Retrieves a vertex by its ID within the context of a transaction.
-    pub fn get_vertex(&self, txn: &Arc<MemTransaction>, vid: VertexId) -> StorageResult<Vertex> {
+    pub fn get_vertex(&self, txn: &impl GraphTxnView, vid: VertexId) -> StorageResult<Vertex> {
+        let txn = txn.mem_txn();
         // Under optimistic locking, reads should first consult this transaction's own write intent
         // so we can read our uncommitted changes ("read your writes").
         if txn.lock_strategy() == LockStrategy::Optimistic
@@ -909,7 +910,8 @@ impl MemoryGraph {
     }
 
     /// Retrieves an edge by its ID within the context of a transaction.
-    pub fn get_edge(&self, txn: &Arc<MemTransaction>, eid: EdgeId) -> StorageResult<Edge> {
+    pub fn get_edge(&self, txn: &impl GraphTxnView, eid: EdgeId) -> StorageResult<Edge> {
+        let txn = txn.mem_txn();
         // Under optimistic locking, reads should first consult this transaction's own write intent
         // so we can read our uncommitted changes ("read your writes").
         if txn.lock_strategy() == LockStrategy::Optimistic
@@ -985,26 +987,29 @@ impl MemoryGraph {
     /// Returns an iterator over all vertices within a transaction.
     pub fn iter_vertices<'a>(
         &'a self,
-        txn: &'a Arc<MemTransaction>,
+        txn: &'a impl GraphTxnView,
     ) -> StorageResult<Box<dyn Iterator<Item = StorageResult<Vertex>> + 'a>> {
+        let txn = txn.mem_txn();
         Ok(Box::new(txn.iter_vertices()))
     }
 
     /// Returns an iterator over all edges within a transaction.
     pub fn iter_edges<'a>(
         &'a self,
-        txn: &'a Arc<MemTransaction>,
+        txn: &'a impl GraphTxnView,
     ) -> StorageResult<Box<dyn Iterator<Item = StorageResult<Edge>> + 'a>> {
+        let txn = txn.mem_txn();
         Ok(Box::new(txn.iter_edges()))
     }
 
     /// Returns an iterator over the adjacency list of a vertex in a given direction.
     pub fn iter_adjacency<'a>(
         &'a self,
-        txn: &'a Arc<MemTransaction>,
+        txn: &'a impl GraphTxnView,
         vid: VertexId,
         batch_size: usize,
     ) -> StorageResult<Box<dyn Iterator<Item = StorageResult<Neighbor>> + 'a>> {
+        let txn = txn.mem_txn();
         Ok(Box::new(txn.iter_adjacency(vid, batch_size)))
     }
 
@@ -1024,9 +1029,10 @@ impl MemoryGraph {
     /// Inserts a new vertex into the graph within a transaction.
     pub fn create_vertex(
         &self,
-        txn: &Arc<MemTransaction>,
+        txn: &impl GraphTxnView,
         vertex: Vertex,
     ) -> StorageResult<VertexId> {
+        let txn = txn.mem_txn();
         let vid = vertex.vid();
         // NOTE: Vertex IDs are not reusable once tombstoned.
         if let Some(entry) = self.vertices.get(&vid)
@@ -1105,7 +1111,8 @@ impl MemoryGraph {
     }
 
     /// Inserts a new edge into the graph within a transaction.
-    pub fn create_edge(&self, txn: &Arc<MemTransaction>, edge: Edge) -> StorageResult<EdgeId> {
+    pub fn create_edge(&self, txn: &impl GraphTxnView, edge: Edge) -> StorageResult<EdgeId> {
+        let txn = txn.mem_txn();
         let eid = edge.eid();
         let src_id = edge.src_id();
         let dst_id = edge.dst_id();
@@ -1199,7 +1206,8 @@ impl MemoryGraph {
     }
 
     /// Deletes a vertex from the graph within a transaction.
-    pub fn delete_vertex(&self, txn: &Arc<MemTransaction>, vid: VertexId) -> StorageResult<()> {
+    pub fn delete_vertex(&self, txn: &impl GraphTxnView, vid: VertexId) -> StorageResult<()> {
+        let txn = txn.mem_txn();
         match txn.lock_strategy() {
             LockStrategy::Pessimistic => {
                 // Pessimistic mode mutates shared state immediately after conflict checks.
@@ -1330,7 +1338,8 @@ impl MemoryGraph {
     }
 
     /// Deletes an edge from the graph within a transaction.
-    pub fn delete_edge(&self, txn: &Arc<MemTransaction>, eid: EdgeId) -> StorageResult<()> {
+    pub fn delete_edge(&self, txn: &impl GraphTxnView, eid: EdgeId) -> StorageResult<()> {
+        let txn = txn.mem_txn();
         match txn.lock_strategy() {
             LockStrategy::Pessimistic => {
                 // Pessimistic mode mutates shared state immediately after conflict checks.
@@ -1439,11 +1448,12 @@ impl MemoryGraph {
     /// Updates the properties of a vertex within a transaction.
     pub fn set_vertex_property(
         &self,
-        txn: &Arc<MemTransaction>,
+        txn: &impl GraphTxnView,
         vid: VertexId,
         indices: Vec<usize>,
         props: Vec<ScalarValue>,
     ) -> StorageResult<()> {
+        let txn = txn.mem_txn();
         match txn.lock_strategy() {
             LockStrategy::Pessimistic => {
                 // Pessimistic mode updates shared version-chain state immediately.
@@ -1584,11 +1594,12 @@ impl MemoryGraph {
     /// Updates the properties of an edge within a transaction.
     pub fn set_edge_property(
         &self,
-        txn: &Arc<MemTransaction>,
+        txn: &impl GraphTxnView,
         eid: EdgeId,
         indices: Vec<usize>,
         props: Vec<ScalarValue>,
     ) -> StorageResult<()> {
+        let txn = txn.mem_txn();
         match txn.lock_strategy() {
             LockStrategy::Pessimistic => {
                 // Pessimistic mode updates shared version-chain state immediately.
@@ -1757,10 +1768,11 @@ impl MemoryGraph {
     /// Collect vectors from specified node IDs for the given index key
     fn collect_vectors_from_nodes(
         &self,
-        txn: &Arc<MemTransaction>,
+        txn: &impl GraphTxnView,
         index_key: VectorIndexKey,
         node_ids: &[u64],
     ) -> StorageResult<Vec<(u64, VectorValue)>> {
+        let txn = txn.mem_txn();
         let mut vectors = Vec::new();
 
         for &node_id in node_ids {
@@ -1780,9 +1792,10 @@ impl MemoryGraph {
     /// Collect vectors from graph nodes for the specified vector index
     fn collect_vectors_for_index(
         &self,
-        txn: &Arc<MemTransaction>,
+        txn: &impl GraphTxnView,
         index_key: VectorIndexKey,
     ) -> StorageResult<Vec<(u64, VectorValue)>> {
+        let txn = txn.mem_txn();
         let mut vectors = Vec::new();
 
         // Iterate through all vertices in the graph
@@ -1803,9 +1816,10 @@ impl MemoryGraph {
     /// Build a vector index for the specified property within a specific label
     pub fn build_vector_index(
         &self,
-        txn: &Arc<MemTransaction>,
+        txn: &impl GraphTxnView,
         index_key: VectorIndexKey,
     ) -> StorageResult<()> {
+        let txn = txn.mem_txn();
         let vectors = self.collect_vectors_for_index(txn, index_key)?;
         if vectors.is_empty() {
             return Err(StorageError::VectorIndex(VectorIndexError::EmptyDataset));
@@ -1959,10 +1973,11 @@ impl MemoryGraph {
     /// Insert vectors into the specified vector index
     pub fn insert_into_vector_index(
         &self,
-        txn: &Arc<MemTransaction>,
+        txn: &impl GraphTxnView,
         index_key: VectorIndexKey,
         node_ids: &[u64],
     ) -> StorageResult<()> {
+        let txn = txn.mem_txn();
         if node_ids.is_empty() {
             return Ok(());
         }
@@ -2095,13 +2110,14 @@ fn check_write_conflict(commit_ts: Timestamp, txn: &Arc<MemTransaction>) -> Stor
     }
 }
 
-#[cfg(test)]
+#[cfg(any(test, feature = "test-utils"))]
+#[cfg_attr(feature = "test-utils", allow(dead_code))]
 pub mod tests {
     // use std::fs;
 
+    use minigu_common::IsolationLevel;
     use minigu_common::types::{LabelId, PropertyId};
     use minigu_common::value::{F32, ScalarValue, VectorValue};
-    use minigu_transaction::{GraphTxnManager, IsolationLevel, Transaction};
     use {Edge, Vertex};
 
     use super::*;
