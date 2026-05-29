@@ -34,6 +34,3 @@ target/
 
 # wasm demo build output
 docs/wasm-demo/pkg/
-
-# claude local files
-.claude/
