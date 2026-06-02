@@ -220,6 +220,7 @@ impl GraphCheckpoint {
             drop(current);
 
             graph.vertices.insert(*vid, versioned_vertex);
+            graph.observe_vertex_id(*vid);
         }
 
         // Restore edges
@@ -231,6 +232,7 @@ impl GraphCheckpoint {
             drop(current);
 
             graph.edges.insert(*eid, versioned_edge);
+            graph.observe_edge_id(*eid);
         }
 
         // Restore adjacency list

@@ -1,0 +1,137 @@
+# INSERT statement tests
+#
+# Schema produced by `create_insert_test_graph`:
+#   PERSON   (name: String, age: Int32)
+#   COMPANY  (name: String, revenue: Int64)
+#   KNOWS    PERSON  -> PERSON   (since: Int32)
+#   WORKS_AT PERSON  -> COMPANY  (role:  String)
+
+statement ok
+CALL create_insert_test_graph('g')
+
+statement ok
+SESSION SET GRAPH g
+
+# ---------------------------------------------------------------
+# Section 1: INSERT — happy paths
+# ---------------------------------------------------------------
+
+# 1.1 single vertex
+statement ok
+INSERT (a:PERSON {name: 'Alice', age: 30})
+
+# 1.2 multiple vertices in one statement
+statement ok
+INSERT (b:PERSON {name: 'Bob', age: 25}), (c:COMPANY {name: 'Acme', revenue: 1000000})
+
+# 1.3 vertex + edge in the same statement (both endpoints defined inline)
+statement ok
+INSERT (p:PERSON {name: 'Carol', age: 22})-[:WORKS_AT {role: 'eng'}]->(co:COMPANY {name: 'Beta', revenue: 500000})
+
+# 1.4 edge between two new PERSON vertices (self-type edge)
+statement ok
+INSERT (x:PERSON {name: 'Dan', age: 40})-[:KNOWS {since: 2020}]->(y:PERSON {name: 'Eve', age: 38})
+
+# 1.5 two new vertices reused across two edges (bidirectional KNOWS)
+statement ok
+INSERT (p:PERSON {name: 'Frank', age: 35}),
+       (q:PERSON {name: 'Grace', age: 33}),
+       (p)-[:KNOWS {since: 2018}]->(q),
+       (q)-[:KNOWS {since: 2019}]->(p)
+
+# 1.6 COMPANY with a zero numeric property (boundary value)
+statement ok
+INSERT (h:COMPANY {name: 'Hub', revenue: 0})
+
+# 1.7 reverse-direction edge: `(a)<-[..]-(b)` means b -> a
+statement ok
+INSERT (a:PERSON {name: 'I', age: 20})<-[:KNOWS {since: 2021}]-(b:PERSON {name: 'J', age: 21})
+
+# ---------------------------------------------------------------
+# Section 2: INSERT — error paths
+# ---------------------------------------------------------------
+
+# 2.1 unknown vertex label
+statement error
+INSERT (x:UNKNOWN_LABEL {name: 'x'})
+
+# 2.2 property name not in the vertex type
+statement error
+INSERT (x:PERSON {name: 'X', nonexistent_prop: 1})
+
+# 2.3 missing a required (non-nullable) property
+statement error
+INSERT (x:PERSON {name: 'NoAge'})
+
+# 2.4 property value type mismatch (Int expected, String given)
+statement error
+INSERT (x:PERSON {name: 'X', age: 'thirty'})
+
+# 2.5 edge endpoint variable not defined in this statement
+statement error
+INSERT (a:PERSON {name: 'A', age: 1})-[:KNOWS {since: 2020}]->(ghost)
+
+# 2.6 duplicate variable name within the same INSERT
+statement error
+INSERT (a:PERSON {name: 'X', age: 1}), (a:PERSON {name: 'Y', age: 2})
+
+# 2.7 edge type endpoint mismatch (KNOWS expects PERSON->PERSON; got COMPANY->PERSON)
+statement error
+INSERT (c:COMPANY {name: 'C', revenue: 1})-[:KNOWS {since: 2020}]->(p:PERSON {name: 'P', age: 1})
+
+# 2.8 edge property value type mismatch (since: Int32 expected, String given)
+statement error
+INSERT (a:PERSON {name: 'A', age: 1})-[:KNOWS {since: 'recent'}]->(b:PERSON {name: 'B', age: 2})
+
+# ---------------------------------------------------------------
+# Section 3: end-to-end verification — inserted data is visible to MATCH
+# ---------------------------------------------------------------
+#
+# Successfully inserted (Sections 1.1–1.7):
+#   PERSON   (9): Alice, Bob, Carol, Dan, Eve, Frank, Grace, I, J
+#   COMPANY  (3): Acme, Beta, Hub
+#   KNOWS    (4): Dan->Eve, Frank->Grace, Grace->Frank, J->I
+#   WORKS_AT (1): Carol->Beta
+#
+# NOTE: aggregate functions, binary expressions (`WHERE p.name = 'x'`),
+# and ORDER BY on property paths are not yet implemented in the binder.
+# Once they land, this section can be extended with `count(p)`,
+# `WHERE`-filtered checks, and deterministic ordering. For now we use
+# `query TI rowsort` so the comparison ignores row order.
+
+# All inserted PERSON rows.
+query TI rowsort
+MATCH (p:PERSON) RETURN p.name, p.age
+----
+Alice 30
+Bob 25
+Carol 22
+Dan 40
+Eve 38
+Frank 35
+Grace 33
+I 20
+J 21
+
+# All inserted COMPANY rows.
+query TI rowsort
+MATCH (c:COMPANY) RETURN c.name, c.revenue
+----
+Acme 1000000
+Beta 500000
+Hub 0
+
+# WORKS_AT edge connects PERSON to COMPANY with the right endpoints.
+query TT rowsort
+MATCH (p:PERSON)-[:WORKS_AT]->(co:COMPANY) RETURN p.name, co.name
+----
+Carol Beta
+
+# All KNOWS edges (4 inserted).
+query TT rowsort
+MATCH (src:PERSON)-[:KNOWS]->(dst:PERSON) RETURN src.name, dst.name
+----
+Dan Eve
+Frank Grace
+Grace Frank
+J I

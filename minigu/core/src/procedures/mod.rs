@@ -1,4 +1,5 @@
 mod common;
+mod create_insert_test_graph;
 mod create_test_graph;
 mod create_test_graph_data;
 mod echo;
@@ -27,6 +28,10 @@ pub fn build_predefined_procedures() -> Vec<(String, Procedure)> {
         (
             "create_test_graph_data".to_string(),
             create_test_graph_data::build_procedure(),
+        ),
+        (
+            "create_insert_test_graph".to_string(),
+            create_insert_test_graph::build_procedure(),
         ),
         // Show graph in current schema.
         ("show_graph".to_string(), show_graph::build_procedure()),

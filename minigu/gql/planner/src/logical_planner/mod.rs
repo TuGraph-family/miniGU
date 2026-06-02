@@ -1,4 +1,5 @@
 mod catalog;
+mod data;
 mod procedure_call;
 mod procedure_spec;
 mod query;

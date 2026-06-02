@@ -2,6 +2,7 @@ use minigu_common::data_type::DataSchemaRef;
 use serde::Serialize;
 
 use super::catalog::BoundCatalogModifyingStatement;
+use super::data::BoundDataModifyingStatement;
 use super::query::BoundCompositeQueryStatement;
 
 #[derive(Debug, Clone, Serialize)]
@@ -26,7 +27,7 @@ pub enum BoundStatement {
     Catalog(Vec<BoundCatalogModifyingStatement>),
     Query(BoundCompositeQueryStatement),
     Utility(Box<BoundUtilityStatement>),
-    // Data(BoundLinearDataModifyingStatement),
+    Data(Vec<BoundDataModifyingStatement>),
 }
 
 #[derive(Debug, Clone, Serialize)]

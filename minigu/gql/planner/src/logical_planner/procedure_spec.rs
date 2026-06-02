@@ -27,6 +27,16 @@ impl LogicalPlanner {
                 self.plan_catalog_modifying_statement(statement)
             }
             BoundStatement::Query(statement) => self.plan_composite_query_statement(statement),
+            BoundStatement::Data(mut statements) => {
+                assert!(!statements.is_empty());
+                if statements.len() > 1 {
+                    return not_implemented("multiple data-modifying statements", None);
+                }
+                let statement = statements
+                    .pop()
+                    .expect("at least one statement should be present");
+                self.plan_data_modifying_statement(statement)
+            }
             BoundStatement::Utility(utility) => match utility.as_ref() {
                 BoundUtilityStatement::Explain(explain) => self.plan_explain_statement(explain),
             },

@@ -1,6 +1,7 @@
 pub mod call;
 pub mod catalog_modify;
 pub mod create_vector_index;
+pub mod data_modify;
 pub mod drop_vector_index;
 pub mod expand;
 pub mod explain;
@@ -24,6 +25,7 @@ use serde::Serialize;
 use crate::plan::call::Call;
 use crate::plan::catalog_modify::{CreateGraph, DropGraph};
 use crate::plan::create_vector_index::CreateVectorIndex;
+use crate::plan::data_modify::Insert;
 use crate::plan::drop_vector_index::DropVectorIndex;
 use crate::plan::expand::Expand;
 use crate::plan::explain::Explain;
@@ -122,6 +124,7 @@ pub enum PlanNode {
     PhysicalDropVectorIndex(Arc<DropVectorIndex>),
     PhysicalCreateGraph(Arc<CreateGraph>),
     PhysicalDropGraph(Arc<DropGraph>),
+    PhysicalInsert(Arc<Insert>),
 }
 
 impl PlanData for PlanNode {
@@ -159,6 +162,7 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalDropVectorIndex(node) => node.base(),
             PlanNode::PhysicalCreateGraph(node) => node.base(),
             PlanNode::PhysicalDropGraph(node) => node.base(),
+            PlanNode::PhysicalInsert(node) => node.base(),
         }
     }
 
@@ -196,6 +200,7 @@ impl PlanData for PlanNode {
             PlanNode::PhysicalDropVectorIndex(node) => node.explain(indent),
             PlanNode::PhysicalCreateGraph(node) => node.explain(indent),
             PlanNode::PhysicalDropGraph(node) => node.explain(indent),
+            PlanNode::PhysicalInsert(node) => node.explain(indent),
         }
     }
 }

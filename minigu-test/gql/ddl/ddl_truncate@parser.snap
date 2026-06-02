@@ -19,24 +19,428 @@ source: minigu-test/src/insta_test.rs
       position:
         - 1
         - 1
-- Err:
-    Unexpected:
-      input: "INSERT (n:Entity {id:'table1001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table1001',status:1,props:'table1001',test1:1001,test2:1,test3:'table1001'})"
-      span:
-        start: 0
-        end: 6
-      position:
-        - 1
-        - 1
-- Err:
-    Unexpected:
-      input: "INSERT (n:Entity {id:'table10001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table1001',status:1,props:'table1001',test1:1001,test2:1,test3:'table1001'})"
-      span:
-        start: 0
-        end: 6
-      position:
-        - 1
-        - 1
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Data:
+                      - - Insert:
+                            paths:
+                              - - elements:
+                                    - - Node:
+                                          variable:
+                                            - n
+                                            - start: 8
+                                              end: 9
+                                          label:
+                                            - Label: Entity
+                                            - start: 10
+                                              end: 16
+                                          predicate:
+                                            - Property:
+                                                - - name:
+                                                      - id
+                                                      - start: 18
+                                                        end: 20
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: table1001
+                                                      - start: 21
+                                                        end: 32
+                                                  - start: 18
+                                                    end: 32
+                                                - - name:
+                                                      - entity_type
+                                                      - start: 33
+                                                        end: 44
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: table
+                                                      - start: 45
+                                                        end: 52
+                                                  - start: 33
+                                                    end: 52
+                                                - - name:
+                                                      - deleted
+                                                      - start: 53
+                                                        end: 60
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "0"
+                                                                - start: 61
+                                                                  end: 62
+                                                      - start: 61
+                                                        end: 62
+                                                  - start: 53
+                                                    end: 62
+                                                - - name:
+                                                      - gen_time
+                                                      - start: 63
+                                                        end: 71
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "0"
+                                                                - start: 72
+                                                                  end: 73
+                                                      - start: 72
+                                                        end: 73
+                                                  - start: 63
+                                                    end: 73
+                                                - - name:
+                                                      - name
+                                                      - start: 74
+                                                        end: 78
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: dml-test
+                                                      - start: 79
+                                                        end: 89
+                                                  - start: 74
+                                                    end: 89
+                                                - - name:
+                                                      - guid
+                                                      - start: 90
+                                                        end: 94
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: table1001
+                                                      - start: 95
+                                                        end: 106
+                                                  - start: 90
+                                                    end: 106
+                                                - - name:
+                                                      - status
+                                                      - start: 107
+                                                        end: 113
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "1"
+                                                                - start: 114
+                                                                  end: 115
+                                                      - start: 114
+                                                        end: 115
+                                                  - start: 107
+                                                    end: 115
+                                                - - name:
+                                                      - props
+                                                      - start: 116
+                                                        end: 121
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: table1001
+                                                      - start: 122
+                                                        end: 133
+                                                  - start: 116
+                                                    end: 133
+                                                - - name:
+                                                      - test1
+                                                      - start: 134
+                                                        end: 139
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "1001"
+                                                                - start: 140
+                                                                  end: 144
+                                                      - start: 140
+                                                        end: 144
+                                                  - start: 134
+                                                    end: 144
+                                                - - name:
+                                                      - test2
+                                                      - start: 145
+                                                        end: 150
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "1"
+                                                                - start: 151
+                                                                  end: 152
+                                                      - start: 151
+                                                        end: 152
+                                                  - start: 145
+                                                    end: 152
+                                                - - name:
+                                                      - test3
+                                                      - start: 153
+                                                        end: 158
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: table1001
+                                                      - start: 159
+                                                        end: 170
+                                                  - start: 153
+                                                    end: 170
+                                            - start: 17
+                                              end: 171
+                                      - start: 7
+                                        end: 172
+                                - start: 7
+                                  end: 172
+                        - start: 0
+                          end: 172
+                  - start: 0
+                    end: 172
+                next_statements: []
+              - start: 0
+                end: 172
+            end: ~
+        - start: 0
+          end: 172
+      session_close: false
+    - start: 0
+      end: 172
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Data:
+                      - - Insert:
+                            paths:
+                              - - elements:
+                                    - - Node:
+                                          variable:
+                                            - n
+                                            - start: 8
+                                              end: 9
+                                          label:
+                                            - Label: Entity
+                                            - start: 10
+                                              end: 16
+                                          predicate:
+                                            - Property:
+                                                - - name:
+                                                      - id
+                                                      - start: 18
+                                                        end: 20
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: table10001
+                                                      - start: 21
+                                                        end: 33
+                                                  - start: 18
+                                                    end: 33
+                                                - - name:
+                                                      - entity_type
+                                                      - start: 34
+                                                        end: 45
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: table
+                                                      - start: 46
+                                                        end: 53
+                                                  - start: 34
+                                                    end: 53
+                                                - - name:
+                                                      - deleted
+                                                      - start: 54
+                                                        end: 61
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "0"
+                                                                - start: 62
+                                                                  end: 63
+                                                      - start: 62
+                                                        end: 63
+                                                  - start: 54
+                                                    end: 63
+                                                - - name:
+                                                      - gen_time
+                                                      - start: 64
+                                                        end: 72
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "0"
+                                                                - start: 73
+                                                                  end: 74
+                                                      - start: 73
+                                                        end: 74
+                                                  - start: 64
+                                                    end: 74
+                                                - - name:
+                                                      - name
+                                                      - start: 75
+                                                        end: 79
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: dml-test
+                                                      - start: 80
+                                                        end: 90
+                                                  - start: 75
+                                                    end: 90
+                                                - - name:
+                                                      - guid
+                                                      - start: 91
+                                                        end: 95
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: table1001
+                                                      - start: 96
+                                                        end: 107
+                                                  - start: 91
+                                                    end: 107
+                                                - - name:
+                                                      - status
+                                                      - start: 108
+                                                        end: 114
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "1"
+                                                                - start: 115
+                                                                  end: 116
+                                                      - start: 115
+                                                        end: 116
+                                                  - start: 108
+                                                    end: 116
+                                                - - name:
+                                                      - props
+                                                      - start: 117
+                                                        end: 122
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: table1001
+                                                      - start: 123
+                                                        end: 134
+                                                  - start: 117
+                                                    end: 134
+                                                - - name:
+                                                      - test1
+                                                      - start: 135
+                                                        end: 140
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "1001"
+                                                                - start: 141
+                                                                  end: 145
+                                                      - start: 141
+                                                        end: 145
+                                                  - start: 135
+                                                    end: 145
+                                                - - name:
+                                                      - test2
+                                                      - start: 146
+                                                        end: 151
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "1"
+                                                                - start: 152
+                                                                  end: 153
+                                                      - start: 152
+                                                        end: 153
+                                                  - start: 146
+                                                    end: 153
+                                                - - name:
+                                                      - test3
+                                                      - start: 154
+                                                        end: 159
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: table1001
+                                                      - start: 160
+                                                        end: 171
+                                                  - start: 154
+                                                    end: 171
+                                            - start: 17
+                                              end: 172
+                                      - start: 7
+                                        end: 173
+                                - start: 7
+                                  end: 173
+                        - start: 0
+                          end: 173
+                  - start: 0
+                    end: 173
+                next_statements: []
+              - start: 0
+                end: 173
+            end: ~
+        - start: 0
+          end: 173
+      session_close: false
+    - start: 0
+      end: 173
 - Err:
     Unexpected:
       input: "MATCH (n:Entity{id:'table10001'}), (m:Entity{id:'table1001'})\nINSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'table2table',gen_time:0,rel_chain:'0',dst_guid:'table1001',src_guid:'table10001',status:0,props:'table10001_table2table_table1001'}]->(m)"
@@ -352,24 +756,428 @@ source: minigu-test/src/insta_test.rs
       session_close: false
     - start: 0
       end: 67
-- Err:
-    Unexpected:
-      input: "INSERT (n:Entity {id:'table2001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table2001',status:1,props:'table2001',test1:2001,test2:1,test3:'table2001'})"
-      span:
-        start: 0
-        end: 6
-      position:
-        - 1
-        - 1
-- Err:
-    Unexpected:
-      input: "INSERT (n:Entity {id:'table20001',entity_type:'table',deleted:0,gen_time:0,name:'dml-test',guid:'table2001',status:1,props:'table2001',test1:2001,test2:1,test3:'table2001'})"
-      span:
-        start: 0
-        end: 6
-      position:
-        - 1
-        - 1
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Data:
+                      - - Insert:
+                            paths:
+                              - - elements:
+                                    - - Node:
+                                          variable:
+                                            - n
+                                            - start: 8
+                                              end: 9
+                                          label:
+                                            - Label: Entity
+                                            - start: 10
+                                              end: 16
+                                          predicate:
+                                            - Property:
+                                                - - name:
+                                                      - id
+                                                      - start: 18
+                                                        end: 20
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: table2001
+                                                      - start: 21
+                                                        end: 32
+                                                  - start: 18
+                                                    end: 32
+                                                - - name:
+                                                      - entity_type
+                                                      - start: 33
+                                                        end: 44
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: table
+                                                      - start: 45
+                                                        end: 52
+                                                  - start: 33
+                                                    end: 52
+                                                - - name:
+                                                      - deleted
+                                                      - start: 53
+                                                        end: 60
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "0"
+                                                                - start: 61
+                                                                  end: 62
+                                                      - start: 61
+                                                        end: 62
+                                                  - start: 53
+                                                    end: 62
+                                                - - name:
+                                                      - gen_time
+                                                      - start: 63
+                                                        end: 71
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "0"
+                                                                - start: 72
+                                                                  end: 73
+                                                      - start: 72
+                                                        end: 73
+                                                  - start: 63
+                                                    end: 73
+                                                - - name:
+                                                      - name
+                                                      - start: 74
+                                                        end: 78
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: dml-test
+                                                      - start: 79
+                                                        end: 89
+                                                  - start: 74
+                                                    end: 89
+                                                - - name:
+                                                      - guid
+                                                      - start: 90
+                                                        end: 94
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: table2001
+                                                      - start: 95
+                                                        end: 106
+                                                  - start: 90
+                                                    end: 106
+                                                - - name:
+                                                      - status
+                                                      - start: 107
+                                                        end: 113
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "1"
+                                                                - start: 114
+                                                                  end: 115
+                                                      - start: 114
+                                                        end: 115
+                                                  - start: 107
+                                                    end: 115
+                                                - - name:
+                                                      - props
+                                                      - start: 116
+                                                        end: 121
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: table2001
+                                                      - start: 122
+                                                        end: 133
+                                                  - start: 116
+                                                    end: 133
+                                                - - name:
+                                                      - test1
+                                                      - start: 134
+                                                        end: 139
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "2001"
+                                                                - start: 140
+                                                                  end: 144
+                                                      - start: 140
+                                                        end: 144
+                                                  - start: 134
+                                                    end: 144
+                                                - - name:
+                                                      - test2
+                                                      - start: 145
+                                                        end: 150
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "1"
+                                                                - start: 151
+                                                                  end: 152
+                                                      - start: 151
+                                                        end: 152
+                                                  - start: 145
+                                                    end: 152
+                                                - - name:
+                                                      - test3
+                                                      - start: 153
+                                                        end: 158
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: table2001
+                                                      - start: 159
+                                                        end: 170
+                                                  - start: 153
+                                                    end: 170
+                                            - start: 17
+                                              end: 171
+                                      - start: 7
+                                        end: 172
+                                - start: 7
+                                  end: 172
+                        - start: 0
+                          end: 172
+                  - start: 0
+                    end: 172
+                next_statements: []
+              - start: 0
+                end: 172
+            end: ~
+        - start: 0
+          end: 172
+      session_close: false
+    - start: 0
+      end: 172
+- Ok:
+    - activity:
+        - Transaction:
+            start: ~
+            procedure:
+              - at: ~
+                binding_variable_defs: []
+                statement:
+                  - Data:
+                      - - Insert:
+                            paths:
+                              - - elements:
+                                    - - Node:
+                                          variable:
+                                            - n
+                                            - start: 8
+                                              end: 9
+                                          label:
+                                            - Label: Entity
+                                            - start: 10
+                                              end: 16
+                                          predicate:
+                                            - Property:
+                                                - - name:
+                                                      - id
+                                                      - start: 18
+                                                        end: 20
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: table20001
+                                                      - start: 21
+                                                        end: 33
+                                                  - start: 18
+                                                    end: 33
+                                                - - name:
+                                                      - entity_type
+                                                      - start: 34
+                                                        end: 45
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: table
+                                                      - start: 46
+                                                        end: 53
+                                                  - start: 34
+                                                    end: 53
+                                                - - name:
+                                                      - deleted
+                                                      - start: 54
+                                                        end: 61
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "0"
+                                                                - start: 62
+                                                                  end: 63
+                                                      - start: 62
+                                                        end: 63
+                                                  - start: 54
+                                                    end: 63
+                                                - - name:
+                                                      - gen_time
+                                                      - start: 64
+                                                        end: 72
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "0"
+                                                                - start: 73
+                                                                  end: 74
+                                                      - start: 73
+                                                        end: 74
+                                                  - start: 64
+                                                    end: 74
+                                                - - name:
+                                                      - name
+                                                      - start: 75
+                                                        end: 79
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: dml-test
+                                                      - start: 80
+                                                        end: 90
+                                                  - start: 75
+                                                    end: 90
+                                                - - name:
+                                                      - guid
+                                                      - start: 91
+                                                        end: 95
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: table2001
+                                                      - start: 96
+                                                        end: 107
+                                                  - start: 91
+                                                    end: 107
+                                                - - name:
+                                                      - status
+                                                      - start: 108
+                                                        end: 114
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "1"
+                                                                - start: 115
+                                                                  end: 116
+                                                      - start: 115
+                                                        end: 116
+                                                  - start: 108
+                                                    end: 116
+                                                - - name:
+                                                      - props
+                                                      - start: 117
+                                                        end: 122
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: table2001
+                                                      - start: 123
+                                                        end: 134
+                                                  - start: 117
+                                                    end: 134
+                                                - - name:
+                                                      - test1
+                                                      - start: 135
+                                                        end: 140
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "2001"
+                                                                - start: 141
+                                                                  end: 145
+                                                      - start: 141
+                                                        end: 145
+                                                  - start: 135
+                                                    end: 145
+                                                - - name:
+                                                      - test2
+                                                      - start: 146
+                                                        end: 151
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            Numeric:
+                                                              Integer:
+                                                                - kind: Decimal
+                                                                  integer: "1"
+                                                                - start: 152
+                                                                  end: 153
+                                                      - start: 152
+                                                        end: 153
+                                                  - start: 146
+                                                    end: 153
+                                                - - name:
+                                                      - test3
+                                                      - start: 154
+                                                        end: 159
+                                                    value:
+                                                      - Value:
+                                                          Literal:
+                                                            String:
+                                                              kind: Char
+                                                              literal: table2001
+                                                      - start: 160
+                                                        end: 171
+                                                  - start: 154
+                                                    end: 171
+                                            - start: 17
+                                              end: 172
+                                      - start: 7
+                                        end: 173
+                                - start: 7
+                                  end: 173
+                        - start: 0
+                          end: 173
+                  - start: 0
+                    end: 173
+                next_statements: []
+              - start: 0
+                end: 173
+            end: ~
+        - start: 0
+          end: 173
+      session_close: false
+    - start: 0
+      end: 173
 - Err:
     Unexpected:
       input: "MATCH (n:Entity{id:'table20001'}), (m:Entity{id:'table2001'}) INSERT (n)-[r:Rel{timestamp:0,deleted:0,rel_scene:'0',rel_type:'table2table',gen_time:0,rel_chain:'0',dst_guid:'table2001',src_guid:'table20001',status:0,props:'table20001_table2table_table2001'}]->(m)"

@@ -35,7 +35,9 @@ impl Binder<'_> {
             Statement::Query(statement) => self
                 .bind_composite_query_statement(statement)
                 .map(BoundStatement::Query),
-            Statement::Data(_) => not_implemented("data-modifying statement".to_string(), None),
+            Statement::Data(statements) => self
+                .bind_linear_data_modifying_statement(statements)
+                .map(BoundStatement::Data),
             Statement::Utility(utility) => match utility {
                 gql_parser::ast::UtilityStatement::Explain(explain) => self
                     .bind_explain_statement(explain)
